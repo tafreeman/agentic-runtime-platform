@@ -2992,6 +2992,11 @@
 <h1 id="adr-035-rag-pipeline-architecture-lancedb-voyage-4-hybrid-search">ADR-035: RAG Pipeline Architecture (LanceDB + Voyage 4 Hybrid Search)<a class="headerlink" href="#adr-035-rag-pipeline-architecture-lancedb-voyage-4-hybrid-search" title="Permanent link">&para;</a></h1>
 <p><strong>Status:</strong> Accepted
 <strong>Date:</strong> 2026-06-17
+<strong>Amended:</strong> 2026-07-28 — reconciled with the as-built code. The original text
+described the pipeline as intended; several capabilities it described in the
+present tense were never written. The sections below now state what exists and
+name what does not. The title is unchanged because <code>ADR-INDEX.md</code> and four other
+documents link this ADR by title.
 <strong>Related:</strong> <a href="../ADR-014-pydantic-wire-format/">ADR-014</a> (wire-format contract discipline), <a href="../ADR-001-002-003-architecture-decisions/">ADR-002</a> (SmartModelRouter), <a href="../ADR-019-dag-executor-top-level-timeout/">ADR-019</a> (DAG timeout), <a href="../ADR-023-executionkit-runtime-contract-relationship/">ADR-023</a> (ExecutionKit execution kernel)</p>
 <hr />
 <h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
@@ -3021,13 +3026,30 @@ Voyage 4, OpenAI text-embedding-3-small, Nomic Embed Text v2, Voyage Code-3,
 and local sentence-transformers.</p>
 <hr />
 <h2 id="decision">Decision<a class="headerlink" href="#decision" title="Permanent link">&para;</a></h2>
-<p>Adopt <strong>LanceDB as the primary vector store</strong> with <strong>Voyage 4 as the default
-embedding model</strong>, connected through a <strong>LiteLLM abstraction layer</strong>, with
-<strong>three-stage hybrid retrieval</strong> (dense + BM25 → RRF fusion → cross-encoder
-reranking) and full <strong>Pydantic v2 typed contracts</strong> at every data boundary.</p>
-<p>The pipeline is implemented as a peer module at <code>agentic_v2/rag/</code> and exposed
-to agents through a thin bridge tool (<code>tools/rag_tool.py</code>). Configuration
-follows the existing YAML pattern with per-workflow overrides via <code>_extends</code>.</p>
+<p>Adopt <strong>LanceDB as the persistent vector store</strong> and <strong>LiteLLM as the embedding
+abstraction layer</strong> — Voyage, OpenAI, and a local Ollama model all reached
+through one code path — with <strong>three-stage hybrid retrieval</strong> (dense + BM25 →
+RRF fusion → cross-encoder reranking) and <strong>Pydantic v2 typed contracts</strong> at
+every data boundary.</p>
+<p>The pipeline is implemented as a peer module at <code>agentic_v2/rag/</code>.
+<code>agentic_v2/rag/factory.py</code> is what reads the configuration: it resolves
+<code>RAGConfig.vectorstore_type</code>, <code>EmbeddingConfig.provider</code>, and
+<code>RerankerConfig.strategy</code> into constructed components, exposed as
+<code>build_embedder()</code>, <code>build_vectorstore()</code>, <code>build_reranker()</code>, and
+<code>build_rag_components()</code>.</p>
+<p>Three details differ from the original draft of this ADR and are recorded here
+rather than quietly corrected, because a reader comparing this document to the
+code will hit them:</p>
+<ul>
+<li>The agent-facing bridge is <code>agentic_v2/rag/tools.py</code> (<code>RAGSearchTool</code>,
+  <code>RAGIngestTool</code>), <strong>not</strong> <code>tools/rag_tool.py</code> — that path does not exist. The
+  bridge is not auto-registered by any tool registry; a caller constructs it.</li>
+<li>There is <strong>no RAG YAML configuration layer</strong> and no <code>_extends</code> support.
+  <code>RAGConfig</code> is constructed in Python and has no <code>from_yaml()</code> classmethod. No
+  RAG YAML file exists in the repository.</li>
+<li><code>RAGConfig.vectorstore_type</code> defaults to <code>"memory"</code>. LanceDB is opt-in and
+  requires <code>db_path</code> (enforced by a <code>model_validator</code> on <code>RAGConfig</code>).</li>
+</ul>
 <p><strong>Store selection — LanceDB over alternatives:</strong></p>
 <table>
 <thead>
@@ -3083,106 +3105,276 @@ follows the existing YAML pattern with per-workflow overrides via <code>_extends
 </tr>
 </tbody>
 </table>
-<p>LanceDB's decisive advantages: native <code>LanceModel</code> with <code>Vector(768)</code> type hints
-(Pydantic-native, no adapter layer), <code>connect_async()</code> async API, built-in hybrid
-search with integrated RRF and cross-encoder rerankers, and automatic data
-versioning on every write. Qdrant is the strong runner-up for infrastructure-
-focused use cases; LanceDB is selected for its data engineering fluency and
-modern Python alignment with the existing codebase.</p>
-<p><strong>Embedding selection — Voyage 4 with LiteLLM abstraction:</strong></p>
-<p>Voyage 4 ($0.06/1M tokens) tops the RTEB retrieval leaderboard as of early 2026,
-supports 32K token context windows, Matryoshka dimensionality (256–2048), and
-offers a shared embedding space across the family so documents indexed with
-<code>voyage-4-large</code> can be queried with <code>voyage-4-lite</code> without re-indexing. The
-LiteLLM abstraction (<code>embedding()</code> unified interface) enables zero-code provider
-switching. Fallback order: Voyage 4 → OpenAI text-embedding-3-small → local
-Nomic Embed Text v2 via Ollama.</p>
+<p>LanceDB was selected for its data engineering fluency and modern Python
+alignment with the existing codebase; Qdrant is the strong runner-up for
+infrastructure-focused use cases.</p>
+<p>What the shipped <code>LanceDBVectorStore</code> (<code>agentic_v2/rag/vectorstore.py</code>) actually
+uses is narrower than the evaluation table suggests. It does <strong>not</strong> use
+<code>LanceModel</code>/<code>Vector(768)</code> typed tables and does <strong>not</strong> use <code>connect_async()</code>;
+it calls the synchronous LanceDB API and keeps the event loop free by wrapping
+each call in <code>asyncio.to_thread</code>. It does not use LanceDB's built-in hybrid
+search or its bundled rerankers — hybrid retrieval and reranking are implemented
+in this repository (see below). Lance-format versioning on write is a property of
+the storage engine and holds regardless.</p>
+<p><code>agentic_v2/rag/vectorstore.py</code> also defines <code>InMemoryVectorStore</code>, which is the
+default and has no optional dependency. <code>LanceDBVectorStore</code> is defined only
+inside an <code>if _LANCEDB_AVAILABLE:</code> block and is bound to <code>None</code> otherwise, so
+importing the package never requires <code>lancedb</code>.</p>
+<p><strong>Embedding selection — Voyage with a LiteLLM abstraction:</strong></p>
+<p>Voyage was selected as the recommended hosted provider: it topped the RTEB
+retrieval leaderboard as of early 2026 at $0.06/1M tokens, supports 32K token
+context windows and Matryoshka dimensionality (256–2048), and offers a shared
+embedding space across the family so documents indexed with one family member
+can be queried with another without re-indexing.</p>
+<p>The abstraction is <code>LiteLLMEmbedder</code> in <code>agentic_v2/rag/embeddings.py</code>. It
+satisfies <code>EmbeddingProtocol</code> and is constructed from an <code>EmbeddingConfig</code>. Two
+module-level maps are the whole routing rule, and both are assertable without a
+network call:</p>
+<table>
+<thead>
+<tr>
+<th><code>EmbeddingConfig.provider</code></th>
+<th>LiteLLM model string</th>
+<th>Credential env var</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>voyage</code></td>
+<td><code>voyage/{model_name}</code></td>
+<td><code>VOYAGE_API_KEY</code></td>
+</tr>
+<tr>
+<td><code>openai</code></td>
+<td><code>openai/{model_name}</code></td>
+<td><code>OPENAI_API_KEY</code></td>
+</tr>
+<tr>
+<td><code>local</code></td>
+<td><code>ollama/{model_name}</code></td>
+<td>none</td>
+</tr>
+<tr>
+<td><code>litellm</code></td>
+<td><code>{model_name}</code> verbatim</td>
+<td>none — LiteLLM resolves its own</td>
+</tr>
+</tbody>
+</table>
+<p>An unrecognised provider raises <code>EmbeddingError</code>; it never degrades to a
+placeholder. <code>litellm</code> is imported lazily inside a module-level <code>_load_litellm()</code>
+function, so importing <code>agentic_v2.rag</code> — or constructing a <code>LiteLLMEmbedder</code> —
+never requires the <code>rag</code> extra; a missing install surfaces as an <code>EmbeddingError</code>
+naming <code>pip install -e ".[rag]"</code> at the first <code>embed()</code> call.</p>
+<p>Credentials are read with <code>os.getenv</code> at call time, never taken as a constructor
+argument, never logged, and scrubbed out of provider error text before it reaches
+an <code>EmbeddingError</code> message.</p>
+<p><strong>Fallback order — kept, with a constraint the original text did not state.</strong>
+The documented order is Voyage → OpenAI <code>text-embedding-3-small</code> → local Nomic
+Embed Text v2 via Ollama, and <code>FALLBACK_PROVIDER_ORDER</code> in
+<code>agentic_v2/rag/factory.py</code> implements exactly that, with the configured provider
+leading the chain. It is <strong>opt-in</strong> (<code>build_embedder(config, fallback=True)</code>),
+not the default, for two reasons:</p>
+<ol>
+<li><strong>Different providers embed into different semantic spaces.</strong> A vector from
+   <code>openai/text-embedding-3-small</code> is not comparable to one from <code>voyage/…</code>.
+   Mixing them in a single index degrades retrieval without ever raising. The
+   chain is therefore safe for a <em>fresh</em> index or a read-only query path, and
+   unsafe against an index already populated by another provider. <code>FallbackEmbedder</code>
+   refuses a mixed chain unless the caller passes
+   <code>allow_mixed_provider_identities=True</code>; the factory passes it and logs a
+   warning naming every model in the chain.</li>
+<li><strong><code>FallbackEmbedder</code> requires one shared dimensionality</strong>, so every chain
+   member inherits <code>EmbeddingConfig.dimensions</code>. <code>LiteLLMEmbedder</code> does not
+   forward a <code>dimensions=</code> request parameter to LiteLLM, so a provider whose
+   native width differs from the configured value fails the width check and the
+   chain advances. At the <code>EmbeddingConfig</code> default of 1536 that means the
+   Voyage and Nomic members cannot succeed. Failing loudly is the right
+   behaviour — a silently truncated or padded vector would corrupt the index —
+   but it makes the chain usable in practice only when every provider natively
+   emits the configured width.</li>
+</ol>
+<p><code>InMemoryEmbedder</code> (also in <code>embeddings.py</code>) remains what it always was: a
+deterministic SHA-256 hash expansion, for tests and offline development. No
+factory path returns it for a production provider string.</p>
 <p><strong>Retrieval architecture — three-stage pipeline:</strong></p>
 <ol>
-<li><strong>Hybrid retrieval.</strong> Dense vector search (LanceDB) and BM25 sparse search
-   in parallel via <code>asyncio.gather</code>. LanceDB native hybrid: <code>table.search("query",
-   query_type="hybrid")</code>.</li>
+<li><strong>Hybrid retrieval.</strong> Dense vector search and BM25 sparse search in parallel
+   via <code>asyncio.gather</code>. Implemented in this repository — <code>BM25Index</code> and
+   <code>HybridRetriever</code> in <code>agentic_v2/rag/retrieval.py</code> — and therefore identical
+   for the in-memory and LanceDB stores. LanceDB's own <code>query_type="hybrid"</code> is
+   <strong>not</strong> used.</li>
 <li><strong>RRF fusion.</strong> Reciprocal Rank Fusion: <code>score(d) = Σ 1/(k + rank_i(d))</code>,
-   k=60. Combines ranked lists from stage 1.</li>
-<li><strong>Cross-encoder reranking.</strong> Top 20–50 fused candidates reranked to final 3–5
-   using <code>cross-encoder/ms-marco-MiniLM-L-12-v2</code>. ColBERT late-interaction is
-   the upgrade path for latency-sensitive deployments.</li>
+   k=60. <code>reciprocal_rank_fusion()</code> in <code>agentic_v2/rag/retrieval.py</code>.</li>
+<li><strong>Cross-encoder reranking.</strong> Fused candidates reranked by
+   <code>CrossEncoderReranker</code> in <code>agentic_v2/rag/reranking.py</code>, which defaults to
+   <code>cross-encoder/ms-marco-MiniLM-L-6-v2</code> — not the <code>…-L-12-v2</code> this ADR
+   originally named. <code>RerankerConfig.model_name</code> can supply the L-12 model; the
+   out-of-the-box default is L-6. <code>LLMReranker</code> (LLM-as-judge) and
+   <code>NoOpReranker</code> are the other two strategies; <code>"none"</code> is the default.
+   <strong>ColBERT late-interaction is not implemented</strong> and appears nowhere in the
+   codebase — it remains an upgrade path, not a shipped option.</li>
 </ol>
 <p><strong>Document ingestion:</strong></p>
 <ul>
-<li><code>RecursiveCharacterTextSplitter</code> at 400–512 tokens with 10–20% overlap as the
+<li>Recursive character splitting at 400–512 tokens with 10–20% overlap as the
   default chunking strategy (69% accuracy vs. 54% for semantic chunking, per
-  February 2026 Firecrawl benchmark).</li>
-<li>Content-hash keyed deduplication: on re-ingestion, only changed chunks are
-  re-embedded.</li>
-<li>Required chunk metadata: <code>source_file</code>, <code>page_number</code>, <code>section_header</code>,
-  <code>document_id</code>, <code>ingested_at</code>, <code>content_hash</code>, <code>chunk_index</code>.</li>
+  February 2026 Firecrawl benchmark). Shipped as <code>RecursiveChunker</code> in
+  <code>agentic_v2/rag/chunking.py</code>. <strong><code>SemanticChunker</code> is not implemented</strong> —
+  <code>ChunkingConfig.strategy</code> accepts <code>"semantic"</code> as a <code>Literal</code> value, but only
+  the recursive chunker exists.</li>
+<li>Content-hash keying: <code>Chunk.content_hash</code> is a <code>computed_field</code> (SHA-256 of
+  the content) on the contract. The <strong>deduplication logic that would use it is
+  not implemented</strong> — <code>IngestionPipeline.ingest()</code> loads and chunks, and does not
+  compare hashes against an existing index or skip unchanged chunks. Incremental
+  re-ingestion is a property of the contract, not yet of the pipeline.</li>
+<li>Chunk fields carried today: <code>chunk_id</code>, <code>document_id</code>, <code>chunk_index</code>,
+  <code>content</code>, <code>content_hash</code>, and a free-form <code>metadata</code> dict. The named metadata
+  keys (<code>source_file</code>, <code>page_number</code>, <code>section_header</code>, <code>ingested_at</code>) are a
+  convention within that dict, not typed fields.</li>
 </ul>
 <p><strong>Typed contracts:</strong></p>
-<p>Pydantic v2 models at all boundaries: <code>ChunkMetadata</code>, <code>RetrievalQuery</code> (with
-<code>min_length</code> validation, bounded <code>top_k</code>), <code>RetrievalResult</code> (with <code>computed_field</code>
-for <code>is_high_confidence</code>), <code>DocumentIngestionRequest</code> (with <code>model_validator</code>
-ensuring overlap &lt; chunk_size), and <code>EmbeddingConfig</code> as a discriminated union
-across providers. All models use <code>ConfigDict(extra='forbid')</code> (ADR-014 additive-
-only discipline).</p>
+<p>Pydantic v2 models at all boundaries. <code>agentic_v2/rag/contracts.py</code> defines
+<code>Document</code>, <code>Chunk</code>, <code>RetrievalResult</code> (with a <code>computed_field</code> for
+<code>is_high_confidence</code>), and <code>RAGResponse</code>. <code>agentic_v2/rag/config.py</code> defines
+<code>ChunkingConfig</code> (with the <code>model_validator</code> ensuring overlap &lt; chunk_size),
+<code>EmbeddingConfig</code>, <code>RerankerConfig</code>, and <code>RAGConfig</code> (whose <code>model_validator</code>
+requires <code>db_path</code> when <code>vectorstore_type</code> is <code>"lancedb"</code>). Every one is
+<code>frozen=True</code> with <code>ConfigDict(extra='forbid')</code> (ADR-014 additive-only
+discipline).</p>
+<p>Two names this ADR originally listed do not exist: <code>ChunkMetadata</code> (chunk
+metadata is a <code>dict[str, Any]</code> on <code>Chunk</code>) and <code>DocumentIngestionRequest</code> (the
+overlap validator lives on <code>ChunkingConfig</code> instead). <code>RetrievalQuery</code> also does
+not exist as a model; <code>HybridRetriever.retrieve()</code> takes a plain query string and
+<code>top_k</code>. And <code>EmbeddingConfig</code> is <strong>not</strong> a discriminated union — <code>provider</code> is a
+flat <code>Literal["openai", "voyage", "local", "litellm"]</code>, which is sufficient
+because <code>LiteLLMEmbedder</code> takes the same constructor arguments for every
+provider.</p>
 <p><strong>Resilience:</strong></p>
-<p>Layered: retry with exponential backoff (tenacity, transient errors only:
-<code>RateLimitError</code>, <code>APIError</code>) → circuit breaker (opens after 5 consecutive
-failures, falls back to local sentence-transformers) → embedding cache (content-
-hash keyed). Each layer returns a typed <code>EmbeddingResult</code> with a <code>source</code> field
-("api", "local_fallback", "cache") for observability.</p>
+<p>One layer is implemented, not four. <code>FallbackEmbedder</code>
+(<code>agentic_v2/rag/embeddings.py</code>) tries each provider in order and advances to the
+next <strong>only</strong> on <code>EmbeddingError</code> — any other exception propagates, because a
+<code>TypeError</code> from a provider is a bug, not a transient fault. When every provider
+fails it raises a single <code>EmbeddingError</code> naming all of them.</p>
+<p>Explicitly <strong>not implemented</strong>, and named here so the gap is not rediscovered by
+reading the old text as fact:</p>
+<ul>
+<li>No retry and no exponential backoff. <code>tenacity</code> is not a dependency of this
+  package. LiteLLM's own <code>num_retries</code> is not set, so a 429 surfaces as an
+  <code>EmbeddingError</code> and advances the fallback chain instead of retrying.</li>
+<li>No circuit breaker. Nothing counts consecutive failures; the runtime's
+  <code>SmartModelRouter</code> breakers cover chat completions, not this path.</li>
+<li>No embedding cache.</li>
+<li>No <code>EmbeddingResult</code> type and no <code>source</code> field. <code>embed()</code> returns
+  <code>list[list[float]]</code> per <code>EmbeddingProtocol</code>, so a caller cannot tell which
+  chain member produced a vector.</li>
+<li><code>asyncio.gather</code> over batches runs without <code>return_exceptions=True</code>: the first
+  batch failure propagates immediately, but sibling in-flight batches are not
+  cancelled, so a failed <code>embed()</code> can still consume provider quota (bounded by
+  <code>EmbeddingConfig.max_concurrent</code>).</li>
+</ul>
 <p><strong>Observability:</strong></p>
-<p>Full OTEL span tree per query: <code>rag.query</code> (root) → <code>rag.embed_query</code> →
-<code>rag.vector_search</code> → <code>rag.rerank</code> → <code>rag.assemble_context</code> → <code>rag.llm_inference</code>.
-Key span attributes: embedding latency, model name, result count, top/min scores,
-token counts, estimated cost. Exports to LangSmith or Langfuse via OTLP.</p>
+<p><code>agentic_v2/rag/tracing.py</code> defines <code>RAGTracer</code>, which emits <strong>string-named
+events through an injected <code>TraceAdapter</code> callback</strong> — it does not import
+<code>opentelemetry</code> and does not open spans. The events are <code>rag.query_start</code>,
+<code>rag.embed</code>, <code>rag.search</code>, <code>rag.assemble</code>, <code>rag.query_complete</code>,
+<code>rag.ingest_start</code>, and <code>rag.ingest_complete</code>, carrying latency, result counts,
+and token counts. <code>query_span()</code> and <code>ingest_span()</code> are context managers over
+that event pair, not OTEL spans.</p>
+<p>The OTEL span tree described in the original draft (<code>rag.embed_query</code> →
+<code>rag.vector_search</code> → <code>rag.rerank</code> → <code>rag.assemble_context</code> →
+<code>rag.llm_inference</code>), the cost attributes, and OTLP export to LangSmith or
+Langfuse are <strong>not implemented</strong>. Wiring <code>RAGTracer</code>'s adapter to the platform's
+existing OTEL exporter is the path to closing that gap; nothing does so today.</p>
 <p><strong>Module layout:</strong></p>
+<p>Seventeen modules as built (the original draft listed sixteen and named several
+that do not exist):</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>agentic_v2/rag/           # peer to agents/, workflows/, tools/
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    __init__.py            # public API exports
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    config.py              # Pydantic settings with from_yaml() classmethod
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    contracts.py           # all typed contracts (ChunkMetadata, RetrievalQuery, etc.)
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    ingestion.py           # IngestionPipeline orchestrator
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    loaders.py             # document loaders (plain text, Markdown)
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    chunking.py            # strategy pattern: RecursiveChunker, SemanticChunker
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    embeddings.py          # EmbeddingProvider protocol + LiteLLM-backed factory
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    vectorstore.py         # VectorStore protocol + factory (LanceDB primary)
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    retrieval.py           # base retriever with hybrid search strategy
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    reranking.py           # cross-encoder and ColBERT reranking
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    memory.py              # MemoryStore integration (InMemoryStore / RAGMemoryStore)
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    protocols.py           # EmbeddingProvider, VectorStore protocols
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    errors.py              # RAG-specific error hierarchy
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    tracing.py             # OTEL span helpers
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    tools.py               # thin bridge: wraps rag/ as a discoverable tool
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    __init__.py            # flat public API re-exports
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    config.py              # frozen Pydantic settings (no from_yaml())
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    contracts.py           # Document, Chunk, RetrievalResult, RAGResponse
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    protocols.py           # LoaderProtocol, ChunkerProtocol, EmbeddingProtocol,
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>                           #   RerankerProtocol, VectorStoreProtocol
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    errors.py              # RAG error hierarchy (RAGError and five subclasses)
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    loaders.py             # document loaders (plain text, Markdown)
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    chunking.py            # RecursiveChunker (only)
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    ingestion.py           # IngestionPipeline: load + chunk
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    embeddings.py          # InMemoryEmbedder, FallbackEmbedder, LiteLLMEmbedder
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    vectorstore.py         # InMemoryVectorStore, LanceDBVectorStore (guarded)
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    factory.py             # config → components; reads vectorstore_type,
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>                           #   embedding.provider, reranker.strategy
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    retrieval.py           # BM25Index, reciprocal_rank_fusion, HybridRetriever
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    reranking.py           # NoOpReranker, CrossEncoderReranker, LLMReranker
 </span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    context_assembly.py    # token-budget-aware context assembler
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    memory.py              # RAGMemoryStore
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    tracing.py             # RAGTracer: callback events (not OTEL spans)
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    tools.py               # RAGSearchTool / RAGIngestTool bridge
 </span></code></pre></div>
+<p>Protocol names are <code>EmbeddingProtocol</code> and <code>VectorStoreProtocol</code> — not
+<code>EmbeddingProvider</code> / <code>VectorStore</code> as the original draft wrote them.</p>
 <hr />
 <h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
 <h3 id="positive">Positive<a class="headerlink" href="#positive" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Agents gain access to document corpora that exceed their context window without
-  any per-agent integration work — RAG is registered once as a shared tool.</li>
-<li>Native async throughout the pipeline eliminates event-loop blocking under
-  concurrent workflow load.</li>
-<li>LiteLLM abstraction makes provider switches zero-code; only config YAML changes.</li>
-<li>Content-hash deduplication keeps ingestion incremental; large corpora do not
-  require full re-indexing on updates.</li>
+<li>Agents can reach document corpora that exceed their context window through
+  <code>RAGSearchTool</code> / <code>RAGIngestTool</code> without per-agent integration work.</li>
+<li>Async throughout the pipeline: LanceDB's synchronous calls are offloaded with
+  <code>asyncio.to_thread</code> and LiteLLM's synchronous <code>embedding</code> entrypoint is
+  offloaded to the default executor when the installed version exposes no
+  <code>aembedding</code>, so no retrieval path blocks the event loop.</li>
+<li>Provider switches are a one-line config change — <code>EmbeddingConfig.provider</code>
+  plus <code>model_name</code> — with no new code, because <code>LiteLLMEmbedder</code> and
+  <code>build_embedder()</code> handle all four provider strings identically. (There is no
+  YAML layer, so "config" here means the Pydantic model, not a file.)</li>
 <li>Three-stage retrieval (dense + BM25 → RRF → reranking) achieves up to 67%
   reduction in retrieval failures over single-stage dense search (per Anthropic
   contextual retrieval research).</li>
-<li>Pydantic v2 contracts at every boundary catch config typos at load time rather
-  than silently at inference time.</li>
-<li>RAGAS + DeepEval integration brings RAG quality metrics into the existing YAML
-  rubric eval framework — no second harness required.</li>
+<li>Pydantic v2 contracts at every boundary catch config typos at construction time
+  rather than silently at inference time; <code>extra='forbid'</code> rejects unknown keys.</li>
+<li>Optional backends stay optional. <code>import agentic_v2.rag</code> succeeds with neither
+  <code>litellm</code> nor <code>lancedb</code> installed, and requesting a backend that is missing
+  raises a typed error naming <code>pip install -e ".[rag]"</code> rather than an
+  <code>ImportError</code> or a <code>TypeError</code> from calling <code>None</code>.</li>
 </ul>
 <h3 id="negative">Negative<a class="headerlink" href="#negative" title="Permanent link">&para;</a></h3>
 <ul>
-<li>LanceDB is an optional dependency (<code>pip install -e ".[rag]"</code>); RAG features
-  are unavailable without it. The runtime starts cleanly without the extra.</li>
-<li>Voyage 4 is a paid API; the local Ollama fallback degrades embedding quality.</li>
+<li><code>lancedb</code> and <code>litellm</code> are optional (<code>pip install -e ".[rag]"</code>); the
+  persistent store and every hosted embedding provider are unavailable without
+  the extra. The runtime starts cleanly without it, falling back to
+  <code>InMemoryVectorStore</code>.</li>
+<li><strong>No CI job installs the <code>rag</code> extra.</strong> <code>ci.yml</code> installs
+  <code>[dev,server,mcp,langchain,tracing]</code> (plus <code>ek</code> in one job) and
+  <code>windows-workflows-ci.yml</code> runs <code>uv sync --frozen --extra dev --extra server
+  --extra langchain</code>. <code>litellm</code> and <code>lancedb</code> are therefore absent everywhere in
+  CI, so <code>LiteLLMEmbedder</code> and <code>LanceDBVectorStore</code> are exercised <strong>only against
+  fakes</strong>. No automated test anywhere makes a live embedding call. See
+  <a href="../../KNOWN_LIMITATIONS/"><code>KNOWN_LIMITATIONS.md</code> §4.6</a>.</li>
+<li>Voyage is a paid API; the local Ollama fallback degrades embedding quality, and
+  its endpoint is not configurable — <code>EmbeddingConfig</code> is frozen with
+  <code>extra='forbid'</code> and carries no <code>api_base</code>, so <code>local</code> always resolves to
+  LiteLLM's own Ollama default.</li>
+<li>The fallback chain is opt-in and narrow: it pins every member to one
+  dimensionality, cannot request a provider-side dimension, and mixes semantic
+  spaces. See the Embedding selection section above and
+  <a href="../../KNOWN_LIMITATIONS/"><code>KNOWN_LIMITATIONS.md</code> §4.7</a>.</li>
 <li>Cross-encoder reranking runs synchronously via <code>asyncio.to_thread</code>; it adds
-  latency on the retrieval hot path for large candidate sets.</li>
-<li>Parent-child chunking (small child for retrieval, large parent for context)
-  requires two LanceDB tables per collection, increasing storage overhead.</li>
+  latency on the retrieval hot path for large candidate sets. It also depends on
+  <code>sentence-transformers</code>, which <strong>no extra in <code>pyproject.toml</code> declares</strong> — a
+  fully installed <code>.[rag]</code> machine still raises <code>ImportError</code> unless the caller
+  passes <code>predict_fn=</code> to <code>build_reranker()</code>. The <code>"llm"</code> strategy has no default
+  scorer at all. <code>build_rag_components(config)</code> is therefore fully config-driven
+  only for <code>strategy="none"</code>.</li>
+<li><code>RerankerConfig.top_k</code> is inert at construction: no reranker takes it as a
+  constructor argument, so a caller must thread it into the <code>rerank()</code> call
+  themselves or silently get the library default of 5.</li>
+<li>Two implementations do not structurally match their protocol.
+  <code>NoOpReranker.rerank</code> names its first parameter <code>_query</code> where
+  <code>RerankerProtocol</code> declares <code>query</code>, so keyword calls fail for the default
+  strategy; <code>LanceDBVectorStore.search</code> names its third <code>_metadata_filter</code> and
+  absorbs <code>metadata_filter=</code> into <code>**kwargs</code>, returning <strong>unfiltered</strong> results
+  rather than erroring. Both are recorded in <code>factory.py</code>'s docstrings.</li>
+<li>Parent-child chunking is not implemented; only <code>RecursiveChunker</code> exists. If
+  added, it would need two LanceDB tables per collection.</li>
 </ul>
 <hr />
 <h2 id="alternatives-considered">Alternatives Considered<a class="headerlink" href="#alternatives-considered" title="Permanent link">&para;</a></h2>
@@ -3212,7 +3404,7 @@ token counts, estimated cost. Exports to LangSmith or Langfuse via OTLP.</p>
 </tr>
 <tr>
 <td>OpenAI text-embedding-3-small as default</td>
-<td>Retained as first fallback; not the primary because Voyage 4 outperforms it on RTEB at comparable cost.</td>
+<td>Retained as the first fallback after the configured provider (<code>FALLBACK_PROVIDER_ORDER</code>); not the recommended primary because Voyage outperforms it on RTEB at comparable cost. It is, however, the value <code>EmbeddingConfig.provider</code> and <code>model_name</code> default to, so an unconfigured pipeline uses OpenAI.</td>
 </tr>
 <tr>
 <td>Single-stage dense retrieval only</td>
@@ -3226,15 +3418,46 @@ token counts, estimated cost. Exports to LangSmith or Langfuse via OTLP.</p>
 </table>
 <hr />
 <h2 id="implementation">Implementation<a class="headerlink" href="#implementation" title="Permanent link">&para;</a></h2>
-<p>The pipeline is live in <code>agentic-workflows-v2/agentic_v2/rag/</code> (thirteen modules).
-The thin tool bridge at <code>tools/rag_tool.py</code> registers it under the existing tool
-registry auto-import pattern. RAG configuration follows the same YAML style as
-existing workflow definitions, with per-workflow overrides using <code>_extends</code>.</p>
-<p>Evaluation integration: RAG eval suites are defined in YAML matching the existing
-rubric config style. NDCG@10 is the primary ranking quality metric; CI gates
-Precision@k, Recall@k, MRR, and NDCG trends across merges.</p>
-<p>See <a href="../RAG-pipeline-blueprint/"><code>adr/RAG-pipeline-blueprint.md</code></a> for the full
-research backing and implementation rationale that informed this decision.</p>
+<p>The pipeline lives in <code>agentic-workflows-v2/agentic_v2/rag/</code> (seventeen modules,
+listed above). The tool bridge is <code>agentic_v2/rag/tools.py</code>; it is constructed by
+a caller, not auto-registered by the tool registry. There is no RAG YAML
+configuration layer.</p>
+<p><strong>Implemented and covered by tests</strong></p>
+<ul>
+<li><code>LiteLLMEmbedder</code> — <code>voyage</code>, <code>openai</code>, <code>local</code> (Ollama), and <code>litellm</code>
+  passthrough, with lazy import, per-provider credential env vars, credential
+  scrubbing, batching, bounded concurrency, order-preserving results, and ten
+  distinct <code>EmbeddingError</code> conditions. Tests:
+  <code>agentic-workflows-v2/tests/test_rag_embeddings_litellm.py</code>.</li>
+<li><code>factory.py</code> — <code>build_embedder</code>, <code>build_vectorstore</code>, <code>build_reranker</code>,
+  <code>build_rag_components</code>. Tests: <code>agentic-workflows-v2/tests/test_rag_factory.py</code>.</li>
+<li>Hybrid retrieval, RRF, in-memory and LanceDB stores, all three rerankers,
+  chunking, ingestion, context assembly, memory store, tracing — the pre-existing
+  suites under <code>agentic-workflows-v2/tests/test_rag_*.py</code>.</li>
+</ul>
+<p>Both new suites are written so they pass <strong>with the <code>rag</code> extra absent</strong>, and
+neither uses <code>pytest.importorskip</code> — that would skip silently in CI and leave the
+code unproven while the run stayed green. They inject a fake <code>litellm</code> instead,
+by monkeypatching the <code>_load_litellm()</code> seam or by setting <code>sys.modules["litellm"]</code>
+directly; the factory suite additionally monkeypatches
+<code>vectorstore.LanceDBVectorStore</code> to <code>None</code> to exercise the missing-extra error
+path regardless of what is installed locally.</p>
+<p>The consequence is the one stated in the Negative list: <strong>no automated test makes
+a live embedding call or exercises a real LanceDB table in CI.</strong> The one suite
+that does need a real LanceDB, <code>tests/test_vectorstore_lancedb.py</code>, uses
+<code>pytest.importorskip("lancedb")</code> and is skipped there.</p>
+<p><strong>Not implemented</strong> — carried as open work, not as shipped capability: retry /
+backoff / circuit breaker / embedding cache; the OTEL span tree and OTLP export;
+<code>SemanticChunker</code>; ingestion-time content-hash deduplication; parent-child
+chunking; ColBERT reranking; a YAML config layer; and RAG evaluation. There is no
+RAGAS or DeepEval integration, no NDCG@10 metric, and no CI gate on Precision@k,
+Recall@k, or MRR — those strings appear nowhere in the repository. The
+<a href="../../KNOWN_LIMITATIONS/"><code>KNOWN_LIMITATIONS.md</code></a> entries §4.6–§4.10 track the
+operational consequences.</p>
+<p>See <a href="../RAG-pipeline-blueprint/"><code>adr/RAG-pipeline-blueprint.md</code></a> for the research
+backing that informed this decision. That document is a pre-implementation
+research artifact and describes several capabilities listed above as
+unimplemented; read it as rationale, not as a description of the code.</p>
 
 
 
@@ -3257,7 +3480,7 @@ research backing and implementation rationale that informed this decision.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 22, 2026 14:33:35 UTC">July 22, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:56:55 UTC">July 29, 2026</span>
   </span>
 
     
