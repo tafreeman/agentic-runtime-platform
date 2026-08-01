@@ -17,9 +17,8 @@ Run from the repo root unless a per-package entrypoint is noted.
 | Docs link/fence check | `just docs` |
 
 CI runs the unit suite with `-m "not integration and not slow"` and
-`--ignore=tests/e2e`. Mark anything that hits the network or takes >5s with
-`@pytest.mark.integration` or `@pytest.mark.slow` so it stays out of the fast
-pass. `asyncio_mode = "auto"` is set, so `async def test_*` needs no decorator.
+`--ignore=tests/e2e` (marker conventions and the `asyncio_mode` setting are in
+the imported testing rules).
 
 ## Running without provider credentials
 
@@ -55,7 +54,7 @@ omitted module expecting it to be measured.
   CI also fails if `ruff check --fix` would still change anything, so apply
   autofixes and commit them.
 - **mypy** runs strict on `agentic_v2/engine` + `agentic_v2/contracts`
-  (`--disallow-untyped-defs --warn-return-any`). Type hints on every signature.
+  (`--disallow-untyped-defs --warn-return-any`).
 - `pre-commit run --all-files` covers black, isort (profile=black), ruff,
   docformatter, detect-secrets, and the scoped mypy/pydocstyle hooks.
 
@@ -79,8 +78,7 @@ opening a PR, confirm:
 - `just test && just docs && pre-commit run --all-files` are green locally.
 - Conventional-commit subject (`type(scope): subject`); scope matches the
   package/subsystem (`engine`, `contracts`, `server`, `mcp/results`, `eval`, …).
-- An ADR is added under `docs/adr/` when the change introduces a wire-format
-  contract, swaps an engine/adapter/storage backend, moves a security boundary,
-  or picks a pattern a future contributor might challenge. Use the existing
-  numbering scheme; ADRs 004-006 are intentionally unused.
+- An ADR is added when the change warrants one — see CONTRIBUTING.md's "Write
+  an ADR" section for the criteria, and `docs/adr/ADR-INDEX.md` for the next
+  free number.
 - No secrets committed — configuration flows through env vars and `.env.example`.

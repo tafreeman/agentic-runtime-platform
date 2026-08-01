@@ -19,8 +19,7 @@ rather than inventing new ones.
   end-to-end tests live in the repo-root `tests/e2e/`.
 - Mirror the source layout: a test for `agentic_v2/engine/context.py` belongs in
   `tests/engine/` or a top-level `tests/test_context_*.py`.
-- Files are `test_*.py`; functions are `test_*`; use Arrange–Act–Assert and
-  assert on behavior/output for an input, not on internal implementation.
+- Files are `test_*.py`; functions are `test_*`.
 - `asyncio_mode = "auto"` is configured, so `async def test_*` functions run
   without an explicit `@pytest.mark.asyncio` decorator.
 
@@ -33,19 +32,21 @@ CI's unit pass runs `-m "not integration and not slow"` and ignores `tests/e2e`.
 - `@pytest.mark.e2e` — cross-package integration (also lives under `tests/e2e/`).
 
 A unit test must be deterministic and key-free: set `AGENTIC_NO_LLM=1` (or patch
-the model client) instead of calling a real provider. Flaky tests are bugs —
-fix or delete them.
+the model client) instead of calling a real provider.
 
 ## Fixtures and isolation
 
-- Shared fixtures live in the nearest `conftest.py`. The root
-  `tests/conftest.py` already resets the global LLM client to backend-less
-  placeholder mode and snapshots/restores `os.environ` around every test.
+- Shared fixtures live in the nearest `conftest.py`.
+  `agentic-workflows-v2/tests/conftest.py` resets the global LLM client to
+  backend-less placeholder mode and snapshots/restores `os.environ` around
+  every test via an autouse fixture — there is no repo-root `tests/conftest.py`.
 - Never write to `os.environ` directly — use `monkeypatch.setenv` so the change
   is unwound. Direct writes leak across tests and make the suite order-dependent.
 - Static inputs go under `tests/fixtures/` (e.g. `deterministic_input.json`,
   `code_review_input.json`). Reference them via
   `Path(__file__).parent / "fixtures"`, not hardcoded absolute paths.
+- No real secrets in fixtures; use the redaction/secrets corpora under
+  `tests/fixtures/` when exercising sanitization.
 
 ## Golden / snapshot tests
 
@@ -62,14 +63,6 @@ fix or delete them.
 
 ## Coverage expectation
 
-New backend code targets 80% coverage on changed lines (the suite-wide gate is
-80% on `agentic_v2`). Cover the happy path plus at least one edge case — error
-paths, boundaries, and the empty/permission-denied distinctions are where real
-bugs hide, so prioritize those over trivial getter/constructor tests.
-
-## Don't
-
-- No `print` in tests — assert instead.
-- No bare `except:` — catch the specific exception you expect.
-- No real secrets in fixtures; use the redaction/secrets corpora under
-  `tests/fixtures/` when exercising sanitization.
+New backend code should clear the repo's enforced coverage gate on changed
+lines — see `.claude/rules/ci.md` for the exact threshold and the rounding
+gotcha that makes 79.93% fail.

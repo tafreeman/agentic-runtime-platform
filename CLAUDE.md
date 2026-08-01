@@ -18,9 +18,6 @@ rule files under `.claude/rules/` via `@import`.
   for tier/model selection, `ExecutionContext` for run state and checkpoints,
   `ConversationMemory` for history, the MCP client stack for tool calls, and the
   shared error classification helpers.
-- Style: immutable patterns (return new objects, never mutate inputs), type hints
-  on every signature, files under 800 lines, no bare `except`, structured logging
-  (no `print`). Write tests alongside the change.
 - Secrets only via environment variables or `.env.example`. Never read, edit, or
   commit `.env`.
 
@@ -51,8 +48,10 @@ the EK-extra blind spot) live in the imported portfolio rules.
 
 ## Where things live
 
-- Architecture decisions: `docs/adr/` (use the existing numbering scheme; 004-006
-  are intentionally unused).
+- Architecture decisions: `docs/adr/` — `docs/adr/ADR-INDEX.md` tracks the next
+  free number and the intentionally-unused numbering gaps; don't hardcode the
+  gap list here, it drifts.
 - Contributor gates and the full command catalogue: `CONTRIBUTING.md`.
-- Runnable demonstrations of platform primitives: `examples/` (each is guarded to
-  no-op without `ANTHROPIC_API_KEY`).
+- Runnable demonstrations of platform primitives: `examples/` — not uniformly
+  safe to run without a provider; see `examples/README.md` for which files
+  need one and which are currently broken.
