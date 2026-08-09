@@ -2804,6 +2804,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#415-eleven-toolstests-cases-assert-an-api-that-no-longer-exists" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.15 Eleven tools/tests cases assert an API that no longer exists
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3530,6 +3541,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#415-eleven-toolstests-cases-assert-an-api-that-no-longer-exists" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.15 Eleven tools/tests cases assert an API that no longer exists
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3774,7 +3796,7 @@ configured.</p>
   <code>python -m pytest agentic-workflows-v2/tests -k "rag or vectorstore or embed" -q</code>.
   Treat that as a pre-release step, not a per-PR one.</li>
 <li><strong>Status:</strong> Accepted. The extra is heavy (<code>litellm</code> pulls a large dependency tree), and the fake-injection pattern is what keeps the LiteLLM and factory code measured rather than skipped — <code>agentic_v2/rag/*</code> is <strong>not</strong> in <code>[tool.coverage.run] omit</code>, unlike the optional surfaces in §1.2, so uncovered lines there would drag the gated 80% figure down.</li>
-<li><strong>Upstream fix:</strong> Future sprint — an optional, non-blocking <code>rag-extra-tests</code> job installing <code>[dev,rag]</code> and running the RAG suites plus <code>tests/test_vectorstore_lancedb.py</code>, so the LanceDB path is exercised at least once per merge. A live-provider embedding call would need a credential and belongs in a cron lane, not a PR gate.</li>
+<li><strong>Upstream fix:</strong> <strong>Implemented.</strong> <code>ci.yml</code> now carries the <code>rag-extra-tests</code> job described here — installing <code>[dev,rag]</code>, asserting <code>lancedb</code> and <code>litellm</code> actually import (so a resolution failure cannot pass as a silent skip), and running the RAG suites plus <code>tests/test_vectorstore_lancedb.py</code>. It is <code>continue-on-error</code> as specified above; promote it to required once it has a stable history. A live-provider embedding call still needs a credential and still belongs in a cron lane, not a PR gate.</li>
 </ul>
 <h3 id="47-cross-provider-embedding-fallback-mixes-semantic-spaces-and-pins-a-single-dimensionality">4.7 Cross-provider embedding fallback mixes semantic spaces and pins a single dimensionality<a class="headerlink" href="#47-cross-provider-embedding-fallback-mixes-semantic-spaces-and-pins-a-single-dimensionality" title="Permanent link">&para;</a></h3>
 <p><code>build_embedder(config, fallback=True)</code> wraps the configured provider in the ADR-035 chain — configured provider first, then the remaining providers in the documented Voyage → OpenAI → local order (<code>FALLBACK_PROVIDER_ORDER</code> in <code>agentic_v2/rag/factory.py</code>). It is opt-in and <strong>must stay opt-in</strong>, for two independent reasons.</p>
@@ -3899,6 +3921,37 @@ LangChain local ONNX builder do not call it.</p>
   add strict-mode tests for every local model backend.</li>
 </ul>
 <hr />
+<h3 id="415-eleven-toolstests-cases-assert-an-api-that-no-longer-exists">4.15 Eleven <code>tools/tests</code> cases assert an API that no longer exists<a class="headerlink" href="#415-eleven-toolstests-cases-assert-an-api-that-no-longer-exists" title="Permanent link">&para;</a></h3>
+<p><code>tools/tests</code> holds 17 test files that <strong>no CI job had ever collected</strong>. The whole-repo
+coverage step measures <code>--cov=tools</code> but only collects <code>agentic-workflows-v2/tests</code> and
+<code>agentic-v2-eval/tests</code>, so <code>tools/</code> was <em>measured</em> but never <em>exercised</em> — its coverage
+number was whatever the workflow suites happened to import.</p>
+<p>The <code>tools-tests</code> job in <code>ci.yml</code> now collects them. Running them for the first time
+surfaced 11 failures. They are not flaky; they are stale, and they are stale precisely
+because nothing ever ran them:</p>
+<ul>
+<li><code>test_errors.py::TestClassifyError::test_return_code_param_accepted</code> calls
+  <code>classify_error(..., return_code=124)</code>; the parameter no longer exists.</li>
+<li>
+<p>Ten cases across <code>test_benchmark_pipeline.py</code> and <code>test_evaluation_pipeline.py</code>
+  (<code>TestEvaluateTaskOutputLlm</code>) patch <code>evaluation_pipeline.print_evaluation_report</code>,
+  a symbol the module no longer defines.</p>
+</li>
+<li>
+<p><strong>Surface:</strong> <code>tools/tests/test_errors.py</code>, <code>tools/tests/test_benchmark_pipeline.py</code>,
+  <code>tools/tests/test_evaluation_pipeline.py</code>; the <code>tools-tests</code> job in <code>.github/workflows/ci.yml</code>.</p>
+</li>
+<li><strong>Risk:</strong> Low for runtime behaviour — the implementations are current and the other 410
+  cases pass. The real cost is that these three files' intent is now unverified, so a
+  regression in the surrounding code would not be caught by them.</li>
+<li><strong>Workaround:</strong> None needed; the 11 are deselected by node id in the CI job, so the
+  remaining cases in those same files still gate.</li>
+<li><strong>Status:</strong> Accepted, short-term. Deselecting by node id rather than by file is
+  deliberate — it keeps the debt greppable and keeps the rest of each file enforcing.</li>
+<li><strong>Upstream fix:</strong> Decide per case whether the test or the API is right, then either
+  update the assertions or delete the case. Once the list is empty, drop the <code>--deselect</code>
+  flags so the whole suite gates unconditionally.</li>
+</ul>
 <h2 id="5-documentation-and-process">5. Documentation and process<a class="headerlink" href="#5-documentation-and-process" title="Permanent link">&para;</a></h2>
 <h3 id="51-implementation-plans-for-epics-3-5-and-6-are-retrospective">5.1 Implementation plans for Epics 3, 5, and 6 are retrospective<a class="headerlink" href="#51-implementation-plans-for-epics-3-5-and-6-are-retrospective" title="Permanent link">&para;</a></h3>
 <p>Epics 1 and 2 have proper pre-implementation plan docs. Epics 3, 5, and 6 shipped without prospective plan docs — decision history for those epics is reconstructed from commit messages and ADRs rather than dedicated planning artifacts.</p>
@@ -3946,7 +3999,7 @@ exist.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 9, 2026 13:38:16 UTC">August 9, 2026</span>
   </span>
 
     
