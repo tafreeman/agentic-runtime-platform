@@ -241,7 +241,7 @@ langgraph-checkpoint==4.1.1
     #   langgraph-checkpoint-postgres
     #   langgraph-checkpoint-sqlite
     #   langgraph-prebuilt
-langgraph-checkpoint-postgres==3.0.5
+langgraph-checkpoint-postgres==3.1.1
     # via agentic-workflows-v2
 langgraph-checkpoint-sqlite==3.1.0
     # via agentic-workflows-v2

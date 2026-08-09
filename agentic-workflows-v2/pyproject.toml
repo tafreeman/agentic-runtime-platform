@@ -117,7 +117,7 @@ sqlite = [
     "aiosqlite>=0.19,<1",
 ]
 postgres = [
-    "langgraph-checkpoint-postgres>=2.0,<4",
+    "langgraph-checkpoint-postgres>=3.1.1,<4",
     "psycopg[binary]>=3.1,<4",
 ]
 
