@@ -31,7 +31,7 @@ import urllib.request
 from pathlib import Path
 from typing import Any, Callable
 
-logger = logging.getLogger(__name__)
+from tools.llm._redact import redact_inventory
 
 logger = logging.getLogger(__name__)
 
@@ -607,7 +607,7 @@ def main(argv: list[str]) -> int:
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     active = "--active" in argv or "--active-probe" in argv
     inv = build_inventory(active_probes=active)
-    logger.info(json.dumps(inv, indent=2, default=str))
+    logger.info(json.dumps(redact_inventory(inv), indent=2, default=str))
     return 0 if inv.get("ok") else 1
 
 

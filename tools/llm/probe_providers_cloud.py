@@ -27,6 +27,7 @@ from tools.llm.probe_config import (
     ENV_GITHUB_TOKEN,
     ENV_GOOGLE_API_KEY,
     ENV_OPENAI_API_KEY,
+    ENV_OPENROUTER_API_KEY,
     ERROR_STANDARD_LENGTH,
     GH_CLI_ARG_MAX_TOKENS,
     GH_CLI_PROBE_MAX_TOKENS,
@@ -36,6 +37,7 @@ from tools.llm.probe_config import (
     PREFIX_GITHUB,
     PREFIX_GITHUB_ALT,
     PREFIX_OPENAI,
+    PREFIX_OPENROUTER,
     TAB_SEPARATOR,
     TIMEOUT_CLOUD_HTTP,
     TIMEOUT_GH_AUTH,
@@ -474,6 +476,77 @@ def probe_claude(model: str, _log: LogFn = None) -> ProbeResult:
         return ProbeResult(
             model=model,
             provider="claude",
+            usable=False,
+            error_code=code.value,
+            error_message=str(e)[:ERROR_STANDARD_LENGTH],
+            should_retry=retry,
+            probe_time=datetime.now().isoformat(),
+            duration_ms=int((time.time() - start) * 1000),
+        )
+
+
+def probe_openrouter(model: str, _log: LogFn = None) -> ProbeResult:
+    """Probe an OpenRouter model.
+
+    Checks for OPENROUTER_API_KEY, then hits OpenRouter's models
+    endpoint to confirm the key is valid and reachable.
+    """
+    start = time.time()
+
+    api_key = os.getenv(ENV_OPENROUTER_API_KEY)
+    if not api_key:
+        return ProbeResult(
+            model=model,
+            provider="openrouter",
+            usable=False,
+            error_code=ErrorCode.PERMISSION_DENIED.value,
+            error_message="No OPENROUTER_API_KEY environment variable",
+            probe_time=datetime.now().isoformat(),
+            duration_ms=int((time.time() - start) * 1000),
+        )
+
+    import urllib.error
+    import urllib.request
+
+    try:
+        url = "https://openrouter.ai/api/v1/models"
+        req = urllib.request.Request(
+            url,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Accept": CONTENT_TYPE_JSON,
+            },
+        )
+        with urllib.request.urlopen(req, timeout=TIMEOUT_CLOUD_HTTP) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            return ProbeResult(
+                model=model,
+                provider="openrouter",
+                usable=bool(data.get("data", [])),
+                probe_time=datetime.now().isoformat(),
+                duration_ms=int((time.time() - start) * 1000),
+            )
+    except urllib.error.HTTPError as e:
+        code_val = (
+            ErrorCode.PERMISSION_DENIED.value
+            if e.code in (401, 403)
+            else ErrorCode.NETWORK_ERROR.value
+        )
+        return ProbeResult(
+            model=model,
+            provider="openrouter",
+            usable=False,
+            error_code=code_val,
+            error_message=f"OpenRouter API HTTP {e.code}: {str(e.reason)[:200]}",
+            should_retry=e.code not in (401, 403),
+            probe_time=datetime.now().isoformat(),
+            duration_ms=int((time.time() - start) * 1000),
+        )
+    except Exception as e:
+        code, retry = classify_error(str(e))
+        return ProbeResult(
+            model=model,
+            provider="openrouter",
             usable=False,
             error_code=code.value,
             error_message=str(e)[:ERROR_STANDARD_LENGTH],

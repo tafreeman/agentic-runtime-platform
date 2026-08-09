@@ -35,6 +35,7 @@ def discover_all_models(verbose: bool = False) -> dict[str, Any]:
         _probe_ollama,
         _probe_ollama_cloud,
         _probe_openai,
+        _probe_openrouter,
         _probe_windows_ai,
     )
 
@@ -118,6 +119,11 @@ def discover_all_models(verbose: bool = False) -> dict[str, Any]:
     if verbose:
         logger.info("[Discovery] Checking NVIDIA NIM...")
     discovered["providers"]["nvidia_nim"] = _probe_nvidia()
+
+    # 14. OpenRouter (unified multi-provider gateway; requires OPENROUTER_API_KEY)
+    if verbose:
+        logger.info("[Discovery] Checking OpenRouter...")
+    discovered["providers"]["openrouter"] = _probe_openrouter()
 
     # Summary
     total_available = sum(

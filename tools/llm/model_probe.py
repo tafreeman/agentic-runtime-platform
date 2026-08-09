@@ -40,6 +40,7 @@ logger = logging.getLogger(__name__)
 
 # Re-export everything callers used to import from this module
 from tools.core.errors import ErrorCode
+from tools.llm._redact import redact_inventory
 from tools.llm.probe_config import (
     CACHE_VERSION,
     ProbeResult,
@@ -498,7 +499,9 @@ def main(argv: list[str]) -> int:
         discovered = discover_all_models(verbose=args.verbose)
 
         if args.output:
-            Path(args.output).write_text(json.dumps(discovered, indent=2))
+            Path(args.output).write_text(
+                json.dumps(redact_inventory(discovered), indent=2)
+            )
             logger.info(f"Discovery saved to: {args.output}")
         else:
             _print_discovery_report(discovered)

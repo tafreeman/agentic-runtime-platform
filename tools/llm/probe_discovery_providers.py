@@ -54,9 +54,13 @@ from tools.llm.probe_config import (
     ENV_NVIDIA_NIM_HOST,
     ENV_OLLAMA_API_KEY,
     ENV_OLLAMA_HOST,
+    ENV_OPENROUTER_API_KEY,
+    ENV_OPENROUTER_BASE_URL,
     ENV_OPENAI_API_BASE,
     ENV_OPENAI_API_KEY,
     ENV_OPENAI_BASE_URL,
+    OPENROUTER_DEFAULT_BASE_URL,
+    PREFIX_OPENROUTER,
     ERROR_BRIEF_LENGTH,
     GH_CLI_OUTPUT_MODELS_LIMIT,
     GITHUB_MODELS_API_BASE,
@@ -682,6 +686,44 @@ def _probe_nvidia() -> dict[str, Any]:
         "key_accounts": len(nvidia_keys),
         "rotation_keys": rotation_keys,
         "error": nvidia_error,
+    }
+
+
+def _probe_openrouter() -> dict[str, Any]:
+    """Probe OpenRouter's unified model catalog (requires OPENROUTER_API_KEY)."""
+    api_key = os.getenv(ENV_OPENROUTER_API_KEY)
+    base = (os.getenv(ENV_OPENROUTER_BASE_URL) or OPENROUTER_DEFAULT_BASE_URL).rstrip("/")
+    openrouter_models: list[str] = []
+    openrouter_error = None
+
+    if not api_key:
+        return {
+            "configured": False,
+            "available": [],
+            "count": 0,
+            "error": "No OPENROUTER_API_KEY environment variable",
+        }
+
+    try:
+        url = f"{base}/models"
+        req = urllib.request.Request(
+            url,
+            headers={"Authorization": f"Bearer {api_key}", "Accept": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            for m in data.get("data", []):
+                model_id = m.get("id", "") if isinstance(m, dict) else ""
+                if model_id:
+                    openrouter_models.append(f"{PREFIX_OPENROUTER}{model_id}")
+    except Exception as e:
+        openrouter_error = str(e)[:200]
+
+    return {
+        "configured": True,
+        "available": openrouter_models,
+        "count": len(openrouter_models),
+        "error": openrouter_error,
     }
 
 
