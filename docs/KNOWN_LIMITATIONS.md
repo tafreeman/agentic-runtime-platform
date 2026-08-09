@@ -178,7 +178,7 @@ What that leaves unproven is the part a fake cannot stand in for: **no automated
   `python -m pytest agentic-workflows-v2/tests -k "rag or vectorstore or embed" -q`.
   Treat that as a pre-release step, not a per-PR one.
 - **Status:** Accepted. The extra is heavy (`litellm` pulls a large dependency tree), and the fake-injection pattern is what keeps the LiteLLM and factory code measured rather than skipped — `agentic_v2/rag/*` is **not** in `[tool.coverage.run] omit`, unlike the optional surfaces in §1.2, so uncovered lines there would drag the gated 80% figure down.
-- **Upstream fix:** Future sprint — an optional, non-blocking `rag-extra-tests` job installing `[dev,rag]` and running the RAG suites plus `tests/test_vectorstore_lancedb.py`, so the LanceDB path is exercised at least once per merge. A live-provider embedding call would need a credential and belongs in a cron lane, not a PR gate.
+- **Upstream fix:** **Implemented.** `ci.yml` now carries the `rag-extra-tests` job described here — installing `[dev,rag]`, asserting `lancedb` and `litellm` actually import (so a resolution failure cannot pass as a silent skip), and running the RAG suites plus `tests/test_vectorstore_lancedb.py`. It is `continue-on-error` as specified above; promote it to required once it has a stable history. A live-provider embedding call still needs a credential and still belongs in a cron lane, not a PR gate.
 
 ### 4.7 Cross-provider embedding fallback mixes semantic spaces and pins a single dimensionality
 
@@ -314,6 +314,36 @@ LangChain local ONNX builder do not call it.
   add strict-mode tests for every local model backend.
 
 ---
+
+### 4.15 Eleven `tools/tests` cases assert an API that no longer exists
+
+`tools/tests` holds 17 test files that **no CI job had ever collected**. The whole-repo
+coverage step measures `--cov=tools` but only collects `agentic-workflows-v2/tests` and
+`agentic-v2-eval/tests`, so `tools/` was *measured* but never *exercised* — its coverage
+number was whatever the workflow suites happened to import.
+
+The `tools-tests` job in `ci.yml` now collects them. Running them for the first time
+surfaced 11 failures. They are not flaky; they are stale, and they are stale precisely
+because nothing ever ran them:
+
+- `test_errors.py::TestClassifyError::test_return_code_param_accepted` calls
+  `classify_error(..., return_code=124)`; the parameter no longer exists.
+- Ten cases across `test_benchmark_pipeline.py` and `test_evaluation_pipeline.py`
+  (`TestEvaluateTaskOutputLlm`) patch `evaluation_pipeline.print_evaluation_report`,
+  a symbol the module no longer defines.
+
+- **Surface:** `tools/tests/test_errors.py`, `tools/tests/test_benchmark_pipeline.py`,
+  `tools/tests/test_evaluation_pipeline.py`; the `tools-tests` job in `.github/workflows/ci.yml`.
+- **Risk:** Low for runtime behaviour — the implementations are current and the other 410
+  cases pass. The real cost is that these three files' intent is now unverified, so a
+  regression in the surrounding code would not be caught by them.
+- **Workaround:** None needed; the 11 are deselected by node id in the CI job, so the
+  remaining cases in those same files still gate.
+- **Status:** Accepted, short-term. Deselecting by node id rather than by file is
+  deliberate — it keeps the debt greppable and keeps the rest of each file enforcing.
+- **Upstream fix:** Decide per case whether the test or the API is right, then either
+  update the assertions or delete the case. Once the list is empty, drop the `--deselect`
+  flags so the whole suite gates unconditionally.
 
 ## 5. Documentation and process
 
