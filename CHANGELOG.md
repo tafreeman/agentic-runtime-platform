@@ -6,6 +6,12 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### agentic-evalkit pin moved to the published 0.3.x series (2026-08-09)
+
+- **The `eval` extra now pins `agentic-evalkit>=0.3.0,<0.4.0`**, was `>=0.1.1,<0.2.0` — two minor series behind the published release. The constraints export no longer excludes the package (`--no-emit-package agentic-evalkit` dropped from `ci.yml` and both `justfile` targets), so the extra is actually constrained in CI rather than silently unpinned.
+- **CI now installs and exercises the extra.** A new `evalkit-bridge-tests` job installs the `eval` extra plus `agentic-v2-eval`, asserts `agentic_evalkit` really imports (so a resolution failure cannot pass as a silent skip), and runs the bridge and boundary suites. Both previously `importorskip`ed in every job, so the ARP-to-EvalKit adapter had never actually run in CI.
+- The boundary test's version assertion is now **derived from the pin in `pyproject.toml`** instead of a hardcoded `0.1.` prefix. The hardcoded literal is what silently rotted when the pin moved, and nothing caught it because no job installed the extra.
+
 ### Typed step artifact contracts — ADR-052 (2026-07-14)
 
 - **Typed step artifact contracts (ADR-052).** A live `fullstack_generation` run reported 8/8 steps successful while every downstream consumer received an `api_code` placeholder ("see backend_code for implementation") instead of the real `backend_code` file map — `coalesce()` picks the first non-null value, and key presence was the only success criterion. New opt-in per-step `input_contracts`/`output_contracts` (first kind: `code_artifact`) validate artifact content through one shared validator in both execution engines: canonical-first alias promotion, placeholder/refusal-prose rejection, unsafe-path rejection, structured diagnostics. `fullstack_generation` adopts the contract for `backend_code`/`backend_tests` (`api_code`/`api_tests` remain parse-only migration aliases), and a placeholder-only `AGENTIC_NO_LLM=1` run now reports `failed` instead of a hollow success. String payloads are parsed with the canonical FILE/ENDFILE grammar from `engine/llm_output_parsing.py` — contract validation defines no grammar of its own.

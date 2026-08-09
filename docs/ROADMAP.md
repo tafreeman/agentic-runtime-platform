@@ -122,8 +122,10 @@ June's work landed as a run of accepted ADRs rather than a named epic; the [ADR 
 | Bounded human-approval gate timeout — a hung `ApprovalProvider` fails closed (DENIED) within a configurable bound (default 30 min) | [ADR-041](adr/ADR-041-approval-gate-timeout.md) | 2026-06-29 |
 
 **In flight:** [ADR-042](adr/ADR-042-agentic-evalkit-adoption.md) remains
-Proposed. `agentic-evalkit>=0.1.1,<0.2.0` is available through the runtime's
-optional `eval` extra, and the additive `evalkit_bridge` module has landed.
+Proposed. `agentic-evalkit>=0.3.0,<0.4.0` is available through the runtime's
+optional `eval` extra, and the additive `evalkit_bridge` module has landed. The
+pin tracks the published PyPI release, and CI installs the extra in the
+`evalkit-bridge-tests` job, so the bridge is exercised rather than skipped.
 `step_scoring.py` still imports the in-tree `agentic_v2_eval` package, so the
 cutover and later package removal have not happened.
 
