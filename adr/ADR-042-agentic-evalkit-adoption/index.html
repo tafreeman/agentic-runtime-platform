@@ -3008,6 +3008,21 @@
 (new, this slice), <code>agentic_v2/models/llm.py</code>, ADR-032 (extract scoring
 package), ADR-033 (eval-config root resolution), ADR-023 (ExecutionKit
 external-package precedent)</p>
+<blockquote>
+<p><strong>Update 2026-08-09.</strong> Two premises in this ADR have since changed. The
+original text is left as written, for the record.</p>
+<p><code>agentic-evalkit</code> now has a public remote and is published to PyPI, so the
+install-mechanism ladder below reached <strong>rung 3 (version-range pin) directly</strong>
+— the git-pin rung was skipped. The extra pins <code>&gt;=0.3.0,&lt;0.4.0</code>.</p>
+<p>CI <em>does</em> now install it. The <code>evalkit-bridge-tests</code> job in <code>ci.yml</code> installs
+the <code>eval</code> extra, asserts <code>agentic_evalkit</code> genuinely imports, and runs
+<code>tests/test_evalkit_bridge.py</code> and <code>tests/contract/test_evalkit_boundary.py</code>.
+So "no public git remote today" and "CI for <code>agentic-workflows-v2</code> does not
+install <code>agentic-evalkit</code>" are both obsolete.</p>
+<p>Everything else stands, and still matters: the guarded import, the
+<code>RuntimeError</code>-rather-than-ImportError contract, and the one-way boundary are
+unchanged requirements.</p>
+</blockquote>
 <h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
 <p><code>agentic-v2-eval</code> is ARP's in-tree evaluation package: rubric-YAML scoring
 (<code>Scorer</code>), an LLM-as-judge, dataset adapters, sandboxed execution, and
@@ -3242,7 +3257,7 @@ package index entry), so:</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 27, 2026 12:43:26 UTC">July 27, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 9, 2026 16:35:06 UTC">August 9, 2026</span>
   </span>
 
     
