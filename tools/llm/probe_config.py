@@ -135,6 +135,7 @@ PREFIX_CLAUDE = "claude:"
 PREFIX_LMSTUDIO = "lmstudio:"
 PREFIX_LMSTUDIO_ALT = "lm-studio:"
 PREFIX_LOCAL_API = "local-api:"
+PREFIX_OPENROUTER = "openrouter:"
 
 # Environment variable names
 ENV_GITHUB_TOKEN = "GITHUB_TOKEN"
@@ -160,6 +161,9 @@ ENV_NVIDIA_NIM_HOST = "NVIDIA_NIM_HOST"
 ENV_NVIDIA_NIM_API_KEY = "NVIDIA_NIM_API_KEY"
 NVIDIA_NIM_TOKEN_SLOT_RANGE = 10  # Check NVIDIA_NIM_API_KEY_0 .. NVIDIA_NIM_API_KEY_9
 ENV_ANTHROPIC_BASE_URL = "ANTHROPIC_URI"  # custom base URL override for Anthropic
+ENV_OPENROUTER_API_KEY = "OPENROUTER_API_KEY"
+ENV_OPENROUTER_BASE_URL = "OPENROUTER_BASE_URL"
+OPENROUTER_DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
 
 # Canonical base URL for real OpenAI API — always use this, never rely on env var override
 OPENAI_CANONICAL_BASE_URL = "https://api.openai.com/v1"
