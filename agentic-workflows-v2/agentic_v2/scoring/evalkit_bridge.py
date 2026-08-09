@@ -50,16 +50,17 @@ def _require_evalkit() -> None:
 
     Raises:
         RuntimeError: Always, when ``EVALKIT_AVAILABLE`` is ``False``. The
-            message names the install path so a caller in a dev environment
-            knows exactly what to do; callers in CI simply never reach here
-            because this module's functions are never invoked from
-            ``step_scoring.py`` yet (Slice B is additive-only).
+            message names the supported install so a caller knows exactly what
+            to do; callers in CI simply never reach here because this module's
+            functions are never invoked from ``step_scoring.py`` yet (Slice B
+            is additive-only).
     """
     if not EVALKIT_AVAILABLE:
         raise RuntimeError(
             "agentic-evalkit is not installed. It is an optional dependency "
-            "until it has a public git remote (see ADR-042). Install it for "
-            "local development with: pip install -e '../agentic-evalkit'"
+            "(see ADR-042). Enable it with the extra: "
+            "pip install 'agentic-workflows-v2[eval]' — or install the "
+            "published package directly: pip install 'agentic-evalkit>=0.3.0,<0.4.0'"
         )
 
 
