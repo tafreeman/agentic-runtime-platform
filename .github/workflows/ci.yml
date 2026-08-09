@@ -592,3 +592,86 @@ jobs:
             exit 1
           fi
           echo "All pip install lines in $dockerfile reference ci-constraints.txt."
+
+  rag-extra-tests:
+    # The `rag` extra (lancedb, litellm) is installed by no other job, so the
+    # LanceDB path is proven only against fakes: tests/test_vectorstore_lancedb.py
+    # `importorskip`s lancedb and therefore SKIPS everywhere while the run stays
+    # green. This is the job docs/KNOWN_LIMITATIONS.md §4.6 specifies as the
+    # upstream fix.
+    #
+    # Deliberately non-blocking (continue-on-error), exactly as §4.6 prescribes:
+    # the extra pulls a large dependency tree, and a resolution failure in a
+    # heavy optional extra should not block an unrelated PR. Promote it to
+    # required once it has a stable history.
+    name: RAG extra (lancedb/litellm) tests
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install packages (with the rag extra)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "." -c ci-constraints.txt
+          pip install -e "agentic-workflows-v2/[dev,rag]" -c ci-constraints.txt
+      - name: Verify lancedb and litellm are importable
+        # Guard the silent-skip failure mode this job exists to close: if the
+        # extra stops resolving, fail here rather than let the suite below
+        # importorskip its way to a green run.
+        run: |
+          python -c "import lancedb, litellm; print('lancedb', lancedb.__version__)"
+      - name: Run the RAG suites against the real backends
+        run: |
+          set -euo pipefail
+          cd agentic-workflows-v2
+          python -m pytest \
+            tests/test_rag_embeddings_litellm.py \
+            tests/test_rag_factory.py \
+            tests/test_vectorstore_lancedb.py \
+            -q --timeout=300
+
+  tools-tests:
+    # tools/tests holds 17 files that NO job has ever collected: the whole-repo
+    # coverage step measures --cov=tools but only collects agentic-workflows-v2
+    # and agentic-v2-eval. So tools/ was measured but never exercised, and the
+    # redaction tests guarding the clear-text CodeQL fixes would never run.
+    #
+    # 11 tests are deselected below. They are not flaky — they are stale, and
+    # they are stale *because* nothing ever ran them: they assert an API that no
+    # longer exists (classify_error() lost its return_code parameter;
+    # evaluation_pipeline lost print_evaluation_report, which the mocks patch).
+    # They are listed individually rather than excluded by file so the debt is
+    # greppable and the surviving tests in those same files still gate. Fixing
+    # them is tracked in docs/KNOWN_LIMITATIONS.md.
+    name: tools/ tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install packages
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "." -c ci-constraints.txt
+          pip install -e "agentic-workflows-v2/[dev]" -c ci-constraints.txt
+      - name: Run the tools suite
+        run: |
+          set -euo pipefail
+          python -m pytest tools/tests -q --timeout=120 \
+            --deselect tools/tests/test_errors.py::TestClassifyError::test_return_code_param_accepted \
+            --deselect tools/tests/test_benchmark_pipeline.py::TestEvaluateTaskOutputLlm::test_successful_evaluation \
+            --deselect tools/tests/test_benchmark_pipeline.py::TestEvaluateTaskOutputLlm::test_saves_report_when_output_dir \
+            --deselect tools/tests/test_benchmark_pipeline.py::TestEvaluateTaskOutputLlm::test_creates_minimal_gold_when_none_found \
+            --deselect tools/tests/test_evaluation_pipeline.py::TestEvaluateTaskOutputLlm::test_creates_minimal_gold_data_when_none_found \
+            --deselect tools/tests/test_evaluation_pipeline.py::TestEvaluateTaskOutputLlm::test_uses_existing_gold_data_when_found \
+            --deselect tools/tests/test_evaluation_pipeline.py::TestEvaluateTaskOutputLlm::test_returns_eval_dict \
+            --deselect tools/tests/test_evaluation_pipeline.py::TestEvaluateTaskOutputLlm::test_saves_report_when_output_dir_given \
+            --deselect tools/tests/test_evaluation_pipeline.py::TestEvaluateTaskOutputLlm::test_does_not_save_report_when_output_dir_none \
+            --deselect tools/tests/test_evaluation_pipeline.py::TestEvaluateTaskOutputLlm::test_verbose_calls_print_evaluation_report \
+            --deselect tools/tests/test_evaluation_pipeline.py::TestEvaluateTaskOutputLlm::test_passes_evaluator_model_to_evaluate_with_llm
