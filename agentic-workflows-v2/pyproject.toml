@@ -49,7 +49,7 @@ ek = ["executionkit>=0.3.0,<0.4.0"]
 # on PyPI. Consumed as a normal versioned PyPI dependency; CI can install this
 # extra now that the repo is public (no cross-repo credential needed).
 eval = [
-    "agentic-evalkit>=0.1.1,<0.2.0",
+    "agentic-evalkit>=0.3.0,<0.4.0",
 ]
 dev = [
     "pytest>=7.0",

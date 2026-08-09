@@ -89,6 +89,20 @@ def _encode_dataset_path(dataset_source: str, dataset_id: str) -> str:
     return f"/api/eval/datasets/{encoded_source}/{encoded_dataset_id}/samples"
 
 
+def _safe_relative_redirect(url: str) -> str:
+    """Return ``url`` only if it is a site-relative path, else reject it.
+
+    Every redirect in this module is built on a constant ``/api/eval/...``
+    prefix, so a caller cannot currently steer it off-site. Asserting that
+    explicitly keeps the property local to the redirect instead of resting on
+    the prefix staying constant, and is the barrier CodeQL recognizes for
+    ``py/url-redirection``.
+    """
+    if not url.startswith("/") or url.startswith("//") or "\\" in url:
+        raise HTTPException(status_code=400, detail="Invalid redirect target")
+    return url
+
+
 def _extract_sample_summary_text(sample: dict[str, Any], field_names: list[str]) -> str:
     """Return the first non-identifier string field, truncated to 200 chars."""
     for key in field_names:
@@ -405,7 +419,7 @@ async def list_dataset_samples(
     if workflow:
         params["workflow"] = workflow
     redirect_url = f"{new_path}?{urlencode(params)}"
-    return RedirectResponse(url=redirect_url, status_code=302)
+    return RedirectResponse(url=_safe_relative_redirect(redirect_url), status_code=302)
 
 
 @router.get(
@@ -432,7 +446,7 @@ async def get_dataset_sample_detail(
     if workflow:
         params["workflow"] = workflow
     redirect_url = new_path if not params else f"{new_path}?{urlencode(params)}"
-    return RedirectResponse(url=redirect_url, status_code=302)
+    return RedirectResponse(url=_safe_relative_redirect(redirect_url), status_code=302)
 
 
 # ---------------------------------------------------------------------------
