@@ -31,7 +31,6 @@ import pytest
 
 try:
     from executionkit.cost import CostTracker
-    from executionkit.patterns.base import _TrackedProvider
     from executionkit.provider import BudgetExhaustedError
 
     from agentic_v2.contracts import ReviewStatus, StepStatus
@@ -59,6 +58,24 @@ except ImportError:  # pragma: no cover — guarded for isolated environments
         "(ADR-023 dependency); Phase 6 step-delegation suite skipped.",
         allow_module_level=True,
     )
+
+# Imported OUTSIDE the skip boundary above, deliberately. `_TrackedProvider` is a
+# private, unexported ExecutionKit symbol that
+# `agentic_v2.engine.ek_step_delegation` imports at module scope, and this suite
+# exists to catch its removal. Inside that block a rename would raise ImportError,
+# be swallowed by the module-level skip, and report green for precisely the break
+# it is meant to detect — while ARP would fail at import time in production. The
+# `ek-delegation-tests` job's own guard only checks `import executionkit`, so it
+# would not catch it either.
+try:
+    from executionkit.patterns.base import _TrackedProvider
+except ImportError as exc:  # pragma: no cover
+    raise AssertionError(
+        "executionkit is importable but no longer exposes "
+        "executionkit.patterns.base._TrackedProvider, which "
+        "agentic_v2.engine.ek_step_delegation imports. Failing loudly rather "
+        "than skipping: this is the consumer break the suite exists to detect."
+    ) from exc
 
 
 @pytest.fixture(autouse=True, scope="module")

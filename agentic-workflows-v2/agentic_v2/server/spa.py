@@ -8,13 +8,12 @@ remaining paths to support client-side routing.
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-
-from agentic_v2.utils.path_safety import ensure_within_base
 
 logger = logging.getLogger(__name__)
 
@@ -35,16 +34,24 @@ def _mount_spa(app: FastAPI) -> None:
 
     @app.get("/{path:path}")
     async def spa_fallback(request: Request, path: str):
-        # Serve real files from dist/, but prevent directory traversal.
+        # Serve real files from dist/, but prevent directory traversal. Resolve
+        # the candidate and confirm it stays within the dist tree using
+        # os.path.commonpath — a sanitizer pattern CodeQL recognizes for
+        # py/path-injection (the prior `in .parents` check was equivalent but
+        # not recognized as a barrier).
         if path:
+            base = os.path.realpath(UI_DIST_DIR_RESOLVED)
+            candidate = os.path.realpath(os.path.join(base, path))
+            # commonpath raises ValueError when the two paths live on different
+            # drives (Windows: candidate normalized onto another volume). Treat
+            # that as "outside the dist tree" and fall through to index.html
+            # rather than letting it surface as an HTTP 500.
             try:
-                candidate = ensure_within_base(
-                    UI_DIST_DIR_RESOLVED / path, UI_DIST_DIR_RESOLVED
-                )
-                if candidate.is_file():
-                    return FileResponse(str(candidate))
-            except (ValueError, OSError):
-                pass
+                within = os.path.commonpath([base, candidate]) == base
+            except ValueError:
+                within = False
+            if within and os.path.isfile(candidate):
+                return FileResponse(candidate)
         return FileResponse(index_html)
 
     logger.info("Serving UI from %s", UI_DIST_DIR)
