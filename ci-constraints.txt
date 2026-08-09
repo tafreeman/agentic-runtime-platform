@@ -383,7 +383,7 @@ psycopg-pool==3.3.1
     # via langgraph-checkpoint-postgres
 pyarrow==23.0.1
     # via lancedb
-pyasn1==0.6.3
+pyasn1==0.6.4
     # via pyasn1-modules
 pyasn1-modules==0.4.2
     # via google-auth
