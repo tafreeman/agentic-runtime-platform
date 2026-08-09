@@ -276,6 +276,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e "." -c ci-constraints.txt
           pip install -e "agentic-workflows-v2/[dev,server,mcp,langchain,tracing,eval]" -c ci-constraints.txt
+          # tests/test_evalkit_bridge.py imports agentic_v2_eval (the in-tree
+          # legacy eval package). Without this the job dies at COLLECTION with
+          # ModuleNotFoundError, not on an assertion.
+          pip install -e "agentic-v2-eval/[dev]" -c ci-constraints.txt
       - name: Verify agentic_evalkit is importable
         # Fail loudly if the extra stops resolving, rather than letting the
         # tests below quietly importorskip and report green.

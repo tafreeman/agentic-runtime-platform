@@ -8,6 +8,7 @@ remaining paths to support client-side routing.
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -36,13 +37,25 @@ def _mount_spa(app: FastAPI) -> None:
     @app.get("/{path:path}")
     async def spa_fallback(request: Request, path: str):
         # Serve real files from dist/, but prevent directory traversal.
+        #
+        # `path` is a route parameter, so it is a direct user-controlled taint
+        # source. ensure_within_base already decides containment, but it does so
+        # in its own frame: CodeQL does not carry that barrier across the call,
+        # so the FileResponse below still reads as uncontrolled-data-in-a-path
+        # (py/path-injection) on this call site alone. The commonpath check is
+        # therefore repeated here, in the same frame as the use. It is redundant
+        # at runtime and deliberately so — removing it re-opens the alert.
         if path:
             try:
                 candidate = ensure_within_base(
                     UI_DIST_DIR_RESOLVED / path, UI_DIST_DIR_RESOLVED
                 )
-                if candidate.is_file():
-                    return FileResponse(str(candidate))
+                resolved = os.path.realpath(candidate)
+                base = os.path.realpath(UI_DIST_DIR_RESOLVED)
+                if os.path.commonpath([base, resolved]) == base and os.path.isfile(
+                    resolved
+                ):
+                    return FileResponse(resolved)
             except (ValueError, OSError):
                 pass
         return FileResponse(index_html)
