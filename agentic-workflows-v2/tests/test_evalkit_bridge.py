@@ -1,11 +1,12 @@
 """Tests for agentic_v2.scoring.evalkit_bridge (ADR-042, Slice B).
 
 Skips cleanly (module-level ``importorskip``) in any environment without
-``agentic-evalkit`` installed — it is an optional dependency until the
-library has a public git remote, so CI for ``agentic-workflows-v2`` does not
-install it. ``agentic_v2_eval`` (the legacy in-tree package) IS installed in
-ARP dev/CI environments, so ``Scorer`` parity comparisons import it directly
-rather than mocking it.
+``agentic-evalkit`` installed — it stays an optional dependency, so most jobs
+do not install it. The ``evalkit-bridge-tests`` job in ``ci.yml`` does: it
+installs the ``eval`` extra and runs this file, so the bridge is exercised on
+every run rather than skipped everywhere. ``agentic_v2_eval`` (the legacy
+in-tree package) IS installed in ARP dev/CI environments, so ``Scorer`` parity
+comparisons import it directly rather than mocking it.
 """
 
 from __future__ import annotations
