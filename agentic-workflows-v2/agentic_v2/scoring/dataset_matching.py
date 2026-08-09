@@ -422,6 +422,8 @@ def _materialize_file_input(
     if not isinstance(value, str):
         return value
 
+    from agentic_v2.utils.path_safety import ensure_within_base
+
     artifacts_dir.mkdir(parents=True, exist_ok=True)
     artifacts_root = artifacts_dir.resolve()
 
@@ -436,14 +438,12 @@ def _materialize_file_input(
     candidate: Path | None = None
     if any(sep in value for sep in ("/", "\\")) or value.endswith((".py", ".txt")):
         try:
-            candidate = (artifacts_root / value).resolve()
-            try:
-                candidate.relative_to(artifacts_root)
-                if candidate.is_file():
-                    return str(candidate)
-            except ValueError:
-                candidate = None
-        except (OSError, ValueError):
+            candidate = ensure_within_base(
+                artifacts_root / value, artifacts_root
+            )
+            if candidate.is_file():
+                return str(candidate)
+        except (ValueError, OSError):
             candidate = None
 
     suffix = ".py" if looks_python else ".txt"

@@ -24,12 +24,14 @@ no live keys, no network.
 
 from __future__ import annotations
 
+import inspect
 from typing import Any
 
 import pytest
 
 try:
     from executionkit.cost import CostTracker
+    from executionkit.patterns.base import _TrackedProvider
     from executionkit.provider import BudgetExhaustedError
 
     from agentic_v2.contracts import ReviewStatus, StepStatus
@@ -79,6 +81,34 @@ def _force_no_llm_env() -> Any:
     finally:
         mp.undo()
         get_settings.cache_clear()
+
+
+# ── Consumer contract: EK _TrackedProvider ────────────────────────────
+# ARP imports ``executionkit.patterns.base._TrackedProvider`` — a private,
+# unexported symbol.  EK could rename it without semver signal, breaking ARP
+# at import time.  This test asserts the symbol exists and has the interface
+# we depend on, so a rename is caught the next time this suite runs (the
+# ``ek-delegation-tests`` CI job).
+
+
+def test_ek_tracked_provider_interface() -> None:
+    """Assert that ``_TrackedProvider`` has the interface ARP depends on."""
+    # Existence: the import at module level already validates this.
+    assert _TrackedProvider is not None
+
+    # Constructor signature: (provider, tracker, metadata, budget, retry, context)
+    sig = inspect.signature(_TrackedProvider.__init__)
+    params = list(sig.parameters.keys())
+    for expected in ("provider", "tracker", "metadata", "budget", "retry", "context"):
+        assert expected in params, (
+            f"_TrackedProvider.__init__ missing expected parameter {expected!r}; "
+            f"got {params}"
+        )
+
+    # Must have a ``complete`` method (the async method we call)
+    assert hasattr(_TrackedProvider, "complete"), (
+        "_TrackedProvider is missing the ``complete`` method"
+    )
 
 
 _TIER = ModelTier.TIER_2

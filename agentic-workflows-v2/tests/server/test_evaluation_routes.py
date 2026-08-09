@@ -16,10 +16,12 @@ from dataclasses import dataclass
 from typing import Any
 
 import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 from agentic_v2.server import datasets as datasets_module
 from agentic_v2.server.app import create_app
+from agentic_v2.server.routes.evaluation_routes import _safe_relative_redirect
 
 # ---------------------------------------------------------------------------
 # Test doubles
@@ -363,6 +365,37 @@ def test_old_sample_detail_endpoint_redirects_to_new_path(
     assert "Location" in response.headers
     location = response.headers["Location"]
     assert "/api/eval/datasets/repository/humaneval/samples/5" in location
+
+
+class TestSafeRelativeRedirect:
+    """The redirect targets must stay on this site."""
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "/api/eval/datasets/repository/humaneval/samples",
+            "/api/eval/datasets/repository/humaneval/samples?offset=10",
+        ],
+    )
+    def test_site_relative_paths_pass_through(self, url: str) -> None:
+        """A normal in-app path is returned unchanged."""
+        assert _safe_relative_redirect(url) == url
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "//evil.example.com/steal",  # protocol-relative → off-site
+            "https://evil.example.com/steal",  # absolute → off-site
+            "/\\evil.example.com/steal",  # backslash variant browsers accept
+            "api/eval/relative",  # not rooted
+            "",
+        ],
+    )
+    def test_off_site_targets_rejected(self, url: str) -> None:
+        """Anything that could leave the origin is a 400, not a redirect."""
+        with pytest.raises(HTTPException) as exc_info:
+            _safe_relative_redirect(url)
+        assert exc_info.value.status_code == 400
 
 
 def test_dataset_id_with_slashes_in_path_based_endpoint(

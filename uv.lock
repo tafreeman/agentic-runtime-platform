@@ -18,7 +18,7 @@ members = [
 
 [[package]]
 name = "agentic-evalkit"
-version = "0.1.1"
+version = "0.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
@@ -29,9 +29,9 @@ dependencies = [
     { name = "rich" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9b/af/e6b5ed9e00c9359b181166f27015e35d835f5570b7a3323740bef0daa5c2/agentic_evalkit-0.1.1.tar.gz", hash = "sha256:536d8d253a9d88f901fdfd9a9074ee4fcf00c9073c3509f82cd70a2215cec1e9", size = 521768, upload-time = "2026-07-08T08:33:13.76Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a0/b9/d6ea1b7433f64b26733cdb468e20ba87a18e747843f0ad3de8e69a71dc72/agentic_evalkit-0.3.0.tar.gz", hash = "sha256:ee0daa014f80f0d745fa7b437862f857089081781df107249066a221fdb90f3a", size = 877323, upload-time = "2026-07-24T10:02:09.901Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ee/f6/e36d2416e312ec31bf36bf83be64ee74b57002130f997623eab109957054/agentic_evalkit-0.1.1-py3-none-any.whl", hash = "sha256:0bedcb89f16d8e1354508a3c65f0dbc45bb381b5225efb5608c8a66350e1b0b5", size = 134128, upload-time = "2026-07-08T08:33:11.942Z" },
+    { url = "https://files.pythonhosted.org/packages/61/ef/c629f961e5e194b0d692b23b20278c449fc624808796a2d8b9ea091b35fb/agentic_evalkit-0.3.0-py3-none-any.whl", hash = "sha256:0a16cefa704736acd611f1b2f48092f5db224fbcb1d45ff25f7c5a8d23844169", size = 244335, upload-time = "2026-07-24T10:02:08.124Z" },
 ]
 
 [[package]]
@@ -219,7 +219,7 @@ tracing = [
 
 [package.metadata]
 requires-dist = [
-    { name = "agentic-evalkit", marker = "extra == 'eval'", specifier = ">=0.1.1,<0.2.0" },
+    { name = "agentic-evalkit", marker = "extra == 'eval'", specifier = ">=0.3.0,<0.4.0" },
     { name = "agentic-tools", editable = "." },
     { name = "aiofiles", specifier = ">=23.0,<26" },
     { name = "aiohttp", specifier = ">=3.14.3,<4" },
