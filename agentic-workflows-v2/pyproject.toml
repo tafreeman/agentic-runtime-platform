@@ -100,10 +100,6 @@ claude = [
     "anthropic>=0.40,<1",
     "claude-agent-sdk>=0.1,<1",
 ]
-rag = [
-    "lancedb>=0.15,<1",
-    "litellm>=1.84,<2",
-]
 devex = [
     "psutil>=6.0",
 ]

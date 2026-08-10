@@ -2,7 +2,6 @@
 
 Covers:
 - InMemoryStore (core/memory.py) — full CRUD + search + list_keys
-- RAGMemoryStore (rag/memory.py) — semantic search backed memory
 
 TDD: Tests written FIRST, then implementations.
 """
@@ -12,8 +11,6 @@ from __future__ import annotations
 import pytest
 
 from agentic_v2.core.memory import InMemoryStore, MemoryStoreProtocol
-from agentic_v2.rag import InMemoryEmbedder, InMemoryVectorStore
-from agentic_v2.rag.memory import RAGMemoryStore
 
 # ── InMemoryStore Tests ──────────────────────────────────────────────
 
@@ -240,152 +237,3 @@ class TestInMemoryStoreMetadata:
         results = await store.search("value1")
         assert len(results) == 1
         assert results[0]["metadata"] == {}
-
-
-# ── RAGMemoryStore Tests ─────────────────────────────────────────────
-
-
-class TestRAGMemoryStoreProtocolConformance:
-    """Verify RAGMemoryStore satisfies MemoryStoreProtocol."""
-
-    def test_protocol_conformance(self) -> None:
-        embedder = InMemoryEmbedder(dimensions=64)
-        vectorstore = InMemoryVectorStore()
-        store = RAGMemoryStore(embedder=embedder, vectorstore=vectorstore)
-        assert isinstance(store, MemoryStoreProtocol)
-
-
-class TestRAGMemoryStoreStoreAndRetrieve:
-    """Store and retrieve values using the RAG backend."""
-
-    @pytest.mark.asyncio
-    async def test_store_and_retrieve(self) -> None:
-        embedder = InMemoryEmbedder(dimensions=64)
-        vectorstore = InMemoryVectorStore()
-        store = RAGMemoryStore(embedder=embedder, vectorstore=vectorstore)
-
-        await store.store("fact1", "The sky is blue")
-        result = await store.retrieve("fact1")
-        assert result == "The sky is blue"
-
-    @pytest.mark.asyncio
-    async def test_retrieve_missing_returns_none(self) -> None:
-        embedder = InMemoryEmbedder(dimensions=64)
-        vectorstore = InMemoryVectorStore()
-        store = RAGMemoryStore(embedder=embedder, vectorstore=vectorstore)
-
-        result = await store.retrieve("nonexistent")
-        assert result is None
-
-
-class TestRAGMemoryStoreSearch:
-    """Search returns results from the vector store."""
-
-    @pytest.mark.asyncio
-    async def test_search_returns_results(self) -> None:
-        embedder = InMemoryEmbedder(dimensions=64)
-        vectorstore = InMemoryVectorStore()
-        store = RAGMemoryStore(embedder=embedder, vectorstore=vectorstore)
-
-        await store.store("fact1", "Python is a programming language")
-        await store.store("fact2", "JavaScript runs in browsers")
-        await store.store("fact3", "Rust is memory safe")
-
-        results = await store.search("programming")
-        assert len(results) > 0
-        # Each result should have the expected structure
-        for r in results:
-            assert "key" in r
-            assert "value" in r
-            assert "score" in r
-            assert "metadata" in r
-
-    @pytest.mark.asyncio
-    async def test_search_empty_store_returns_empty(self) -> None:
-        embedder = InMemoryEmbedder(dimensions=64)
-        vectorstore = InMemoryVectorStore()
-        store = RAGMemoryStore(embedder=embedder, vectorstore=vectorstore)
-
-        results = await store.search("anything")
-        assert results == []
-
-    @pytest.mark.asyncio
-    async def test_search_respects_top_k(self) -> None:
-        embedder = InMemoryEmbedder(dimensions=64)
-        vectorstore = InMemoryVectorStore()
-        store = RAGMemoryStore(embedder=embedder, vectorstore=vectorstore)
-
-        for i in range(10):
-            await store.store(f"item{i}", f"stored value number {i}")
-
-        results = await store.search("stored value", top_k=3)
-        assert len(results) <= 3
-
-
-class TestRAGMemoryStoreDelete:
-    """Delete removes entries from vector store and internal mapping."""
-
-    @pytest.mark.asyncio
-    async def test_delete_removes(self) -> None:
-        embedder = InMemoryEmbedder(dimensions=64)
-        vectorstore = InMemoryVectorStore()
-        store = RAGMemoryStore(embedder=embedder, vectorstore=vectorstore)
-
-        await store.store("fact1", "temporary data")
-        deleted = await store.delete("fact1")
-        assert deleted is True
-
-        result = await store.retrieve("fact1")
-        assert result is None
-
-    @pytest.mark.asyncio
-    async def test_delete_missing_returns_false(self) -> None:
-        embedder = InMemoryEmbedder(dimensions=64)
-        vectorstore = InMemoryVectorStore()
-        store = RAGMemoryStore(embedder=embedder, vectorstore=vectorstore)
-
-        deleted = await store.delete("nonexistent")
-        assert deleted is False
-
-
-class TestRAGMemoryStoreListKeys:
-    """List keys from internal mapping."""
-
-    @pytest.mark.asyncio
-    async def test_list_keys(self) -> None:
-        embedder = InMemoryEmbedder(dimensions=64)
-        vectorstore = InMemoryVectorStore()
-        store = RAGMemoryStore(embedder=embedder, vectorstore=vectorstore)
-
-        await store.store("mem:1", "first")
-        await store.store("mem:2", "second")
-        await store.store("other:1", "third")
-
-        keys = await store.list_keys()
-        assert set(keys) == {"mem:1", "mem:2", "other:1"}
-
-    @pytest.mark.asyncio
-    async def test_list_keys_with_prefix(self) -> None:
-        embedder = InMemoryEmbedder(dimensions=64)
-        vectorstore = InMemoryVectorStore()
-        store = RAGMemoryStore(embedder=embedder, vectorstore=vectorstore)
-
-        await store.store("mem:1", "first")
-        await store.store("mem:2", "second")
-        await store.store("other:1", "third")
-
-        keys = await store.list_keys(prefix="mem:")
-        assert set(keys) == {"mem:1", "mem:2"}
-
-    @pytest.mark.asyncio
-    async def test_list_keys_after_delete(self) -> None:
-        embedder = InMemoryEmbedder(dimensions=64)
-        vectorstore = InMemoryVectorStore()
-        store = RAGMemoryStore(embedder=embedder, vectorstore=vectorstore)
-
-        await store.store("a", "first")
-        await store.store("b", "second")
-        await store.delete("a")
-
-        keys = await store.list_keys()
-        assert keys == ["b"]
