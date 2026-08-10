@@ -25,9 +25,13 @@ on:
   workflow_dispatch:
     inputs:
       pr_number:
-        description: "Open Dependabot pip PR number to relock (e.g. 261)"
+        description: "Open Dependabot pip PR number to relock (e.g. 260)"
         required: true
         type: number
+      upgrade_package:
+        description: "Optional: also upgrade this one package in the lock (for security PRs that edit ci-constraints.txt directly, e.g. cryptography)"
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -91,14 +95,32 @@ jobs:
           python-version: "3.11"
 
       - name: Relock uv.lock and regenerate ci-constraints.txt
-        # Mirrors `just relock` exactly (see justfile), pinning the same uv
-        # version the lockfile-constraints CI job uses so the two never
-        # disagree over what "in sync" means.
+        # Pins the same uv version the lockfile-constraints CI job uses so the
+        # two never disagree over what "in sync" means.
+        #
+        # Deliberately `uv lock`, NOT `uv lock --upgrade` as `just relock` does.
+        # The failure being fixed is that Dependabot edits pyproject.toml and
+        # ci-constraints.txt but not uv.lock, so `uv export --locked` refuses.
+        # Plain `uv lock` reconciles the lockfile against pyproject and stops.
+        # `--upgrade` resolves the whole workspace to latest: run 31349698246
+        # turned PR #260's 3-package bump into 100 upgraded packages and a
+        # 4336-line uv.lock rewrite. That is the unreviewable-bundle problem
+        # this repo's dependency grouping exists to prevent.
+        #
+        # `upgrade_package` is the escape hatch for security PRs that bump a
+        # pin in ci-constraints.txt directly and never touch pyproject.toml
+        # (e.g. #246, cryptography): plain `uv lock` would regenerate the
+        # constraint from the still-old lock and silently revert the bump.
         run: |
           set -euo pipefail
           python -m pip install --upgrade pip
           pip install "uv==0.11.2"
-          uv lock --upgrade
+          if [ -n "${{ inputs.upgrade_package }}" ]; then
+            echo "Upgrading single package: ${{ inputs.upgrade_package }}"
+            uv lock --upgrade-package "${{ inputs.upgrade_package }}"
+          else
+            uv lock
+          fi
           uv export --locked --no-hashes --no-emit-workspace \
             --all-packages --all-extras -o ci-constraints.txt
 
