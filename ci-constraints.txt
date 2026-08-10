@@ -23,7 +23,7 @@ annotated-doc==0.0.4
     #   typer
 annotated-types==0.7.0
     # via pydantic
-anthropic==0.109.1
+anthropic==0.120.2
     # via
     #   agentic-tools
     #   agentic-workflows-v2
@@ -66,7 +66,7 @@ cfgv==3.5.0
     # via pre-commit
 charset-normalizer==3.4.7
     # via requests
-claude-agent-sdk==0.2.101
+claude-agent-sdk==0.2.132
     # via agentic-workflows-v2
 click==8.4.2
     # via
@@ -124,7 +124,7 @@ fsspec==2026.3.0
     # via huggingface-hub
 google-auth==2.49.2
     # via google-genai
-google-genai==2.7.0
+google-genai==2.17.0
     # via langchain-google-genai
 googleapis-common-protos==1.74.0
     # via
@@ -205,11 +205,11 @@ lance-namespace-urllib3-client==0.6.1
     # via lance-namespace
 lancedb==0.30.2
     # via agentic-workflows-v2
-langchain==1.3.11
+langchain==1.3.14
     # via agentic-workflows-v2
-langchain-anthropic==1.4.8
+langchain-anthropic==1.5.4
     # via agentic-workflows-v2
-langchain-core==1.4.7
+langchain-core==1.5.3
     # via
     #   agentic-tools
     #   agentic-workflows-v2
@@ -222,17 +222,17 @@ langchain-core==1.4.7
     #   langgraph-checkpoint
     #   langgraph-prebuilt
     #   langgraph-sdk
-langchain-google-genai==4.2.4
+langchain-google-genai==4.3.2
     # via agentic-workflows-v2
 langchain-ollama==1.1.0
     # via agentic-workflows-v2
-langchain-openai==1.2.2
+langchain-openai==1.4.1
     # via agentic-workflows-v2
-langchain-protocol==0.0.16
+langchain-protocol==0.0.18
     # via
     #   langchain-core
     #   langgraph-sdk
-langgraph==1.2.9
+langgraph==1.2.10
     # via
     #   agentic-workflows-v2
     #   langchain
@@ -293,7 +293,7 @@ ollama==0.6.1
     # via
     #   agentic-workflows-v2
     #   langchain-ollama
-openai==2.41.1
+openai==2.53.0
     # via
     #   agentic-tools
     #   langchain-openai
@@ -542,7 +542,7 @@ tenacity==9.1.4
     # via
     #   google-genai
     #   langchain-core
-tiktoken==0.12.0
+tiktoken==0.13.0
     # via
     #   langchain-openai
     #   litellm
