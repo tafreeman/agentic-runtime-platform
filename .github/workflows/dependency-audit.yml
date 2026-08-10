@@ -267,53 +267,14 @@ jobs:
           # Adding an entry is a security decision, not a build fix — it goes
           # in the PR description, not quietly into this list.
           # ------------------------------------------------------------------
-          ALLOWLIST = [
-              {
-                  "id": "GHSA-qwww-vcr4-c8h2",
-                  "package": "react-router",
-                  "review_by": "2026-10-23",
-                  "reason": (
-                      "React Router: RSC Mode CSRF Bypass Allows Action "
-                      "Execution Before 400 Response. The installed "
-                      "react-router 7.18.1 (pulled in by react-router-dom "
-                      "7.18.1) is inside the affected range 7.12.0 - 8.2.0, "
-                      "but the bypass is reachable only through React "
-                      "Router's RSC (React Server Components) request "
-                      "handler. This UI does not have one: it is a "
-                      "client-only Vite SPA. src/main.tsx mounts "
-                      "<BrowserRouter>, and every react-router-dom import in "
-                      "src/ is a client primitive (Link, NavLink, Routes, "
-                      "Route, Navigate, useNavigate, useParams, "
-                      "useSearchParams, useLocation; MemoryRouter in tests). "
-                      "Nothing imports an RSC entry point, no route module "
-                      "exports an action, and there is no server-side "
-                      "rendering or route handler to execute one. "
-                      "Neither remediation npm offers is viable: "
-                      "react-router-dom has no 8.x line (it ends at 7.18.1), "
-                      "so the patched react-router (>8.2.0) is unreachable "
-                      "without dropping react-router-dom and repointing 25+ "
-                      "imports, and `npm audit fix --force` proposes a "
-                      "DOWNGRADE to react-router-dom 7.11.0 — below the "
-                      "affected range, but also a breaking change that "
-                      "trades a non-reachable advisory for real regressions."
-                  ),
-              },
-          ]
-
-          # Why 2026-10-23: roughly 90 days (one quarter) after the 2026-07-25
-          # decision. Long enough that the exception is not re-litigated every
-          # week, short enough that the reasoning above is still fresh and
-          # checkable when it comes due. When that date arrives this job goes
-          # RED until someone does one of:
-          #   1. Re-verify the premise — confirm the UI still has no RSC entry
-          #      point or route actions — and extend with a NEW date and an
-          #      updated reason. Bumping the date without redoing this check
-          #      defeats the entire mechanism.
-          #   2. Upgrade — check whether react-router-dom has shipped a 7.x
-          #      above the affected range (or a maintained successor) and bump
-          #      it, then DELETE this entry.
-          #   3. Migrate — drop react-router-dom for react-router >8.2.0
-          #      directly and repoint the imports, then DELETE this entry.
+          # Currently empty, and that is the desired steady state. The last
+          # entry (GHSA-qwww-vcr4-c8h2, react-router) was retired on 2026-08-09
+          # by resolution 2 of its own exit criteria: react-router moved to
+          # 7.18.2, npm audit no longer reports the advisory against this tree,
+          # and the post-processor flagged the entry as matching nothing. An
+          # allowlist entry that matches nothing is worse than no entry — it
+          # reads as an accepted risk that is in fact untracked.
+          ALLOWLIST: list[dict[str, str]] = []
 
           BLOCKING_SEVERITIES = {"high", "critical"}
           REQUIRED_FIELDS = ("id", "package", "reason", "review_by")
