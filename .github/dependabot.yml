@@ -10,7 +10,18 @@ version: 2
 # and docker patch/minor PRs self-merge once the required checks pass. pip is
 # deliberately NOT auto-merged — Dependabot does not regenerate uv.lock, so a pip
 # PR must have its lock + ci-constraints.txt re-synced before merge (one grouped
-# PR per directory, merged by hand after `just relock` (re-locks + regenerates ci-constraints.txt).
+# PR per directory, merged by hand — or via .github/workflows/dependabot-relock.yml
+# (workflow_dispatch) — after `uv lock --upgrade` + re-export, i.e. `just relock`).
+#
+# pip-root is split into pip-root-prod / pip-root-dev (dependency-type filter,
+# see below): the root directory's 84-plus tracked packages (7 direct runtime
+# deps, ~9 dev-tool deps, plus everything transitive pinned in
+# ci-constraints.txt) were arriving as one unreviewable PR. Runtime deps
+# (anthropic, openai, langchain-core, pydantic, ...) carry real behavior risk
+# and get their own PR; dev-tooling (pytest, ruff, mypy, black, pre-commit,
+# ...) is lower-risk and reviewable at a glance separately. pip-runtime and
+# pip-eval stay single groups — each is already small (3 and a handful of
+# updates respectively).
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -43,7 +54,12 @@ updates:
       - "python"
     open-pull-requests-limit: 10
     groups:
-      pip-root:
+      pip-root-prod:
+        dependency-type: "production"
+        patterns:
+          - "*"
+      pip-root-dev:
+        dependency-type: "development"
         patterns:
           - "*"
     ignore:

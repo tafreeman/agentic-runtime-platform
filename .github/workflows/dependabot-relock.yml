@@ -1,0 +1,109 @@
+name: Relock Dependabot pip PR
+
+# Dependabot's `pip` ecosystem bumps pyproject.toml (and, for security
+# alerts raised against the generated ci-constraints.txt, that file
+# directly) but never touches uv.lock — see dependabot.yml and the
+# justfile's `relock` recipe. `uv export --locked` in the
+# "ci-constraints.txt in sync with uv.lock" CI job then hard-fails with
+# "the lockfile needs to be updated" before it ever reaches the diff check,
+# so every pip Dependabot PR opens red on a required check. The fix was
+# already documented as a manual step — clone, `just relock`, review,
+# commit, push — this workflow runs those same three commands on demand so
+# a maintainer can unblock a PR from the Actions tab instead of a local
+# checkout.
+#
+# Deliberately workflow_dispatch-only, never `pull_request`: GitHub
+# force-downgrades GITHUB_TOKEN to read-only and withholds repository
+# secrets for any run associated with a Dependabot-authored PR ref, on both
+# `pull_request` and `pull_request_target` — a push-back step wired to
+# those events cannot obtain write access without a PAT this repo does not
+# provision. A manually dispatched run against an arbitrary ref is not
+# subject to that restriction, so it can push the relocked files straight
+# back onto the PR branch with the default token.
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Open Dependabot pip PR number to relock (e.g. 261)"
+        required: true
+        type: number
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  relock:
+    name: Relock uv.lock + ci-constraints.txt
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Resolve PR metadata
+        id: pr
+        run: |
+          set -euo pipefail
+          state=$(gh pr view "${{ inputs.pr_number }}" --json state --jq .state)
+          author=$(gh pr view "${{ inputs.pr_number }}" --json author --jq .author.login)
+          head_ref=$(gh pr view "${{ inputs.pr_number }}" --json headRefName --jq .headRefName)
+          echo "state=$state" >> "$GITHUB_OUTPUT"
+          echo "author=$author" >> "$GITHUB_OUTPUT"
+          echo "head_ref=$head_ref" >> "$GITHUB_OUTPUT"
+
+      - name: Guard — only relock open Dependabot pip/uv PRs
+        run: |
+          set -euo pipefail
+          if [ "${{ steps.pr.outputs.state }}" != "OPEN" ]; then
+            echo "::error::PR #${{ inputs.pr_number }} is ${{ steps.pr.outputs.state }}, not OPEN"
+            exit 1
+          fi
+          if [ "${{ steps.pr.outputs.author }}" != "dependabot[bot]" ]; then
+            echo "::error::PR #${{ inputs.pr_number }} author is '${{ steps.pr.outputs.author }}', not dependabot[bot] — refusing to relock a human PR"
+            exit 1
+          fi
+          case "${{ steps.pr.outputs.head_ref }}" in
+            dependabot/pip/*|dependabot/uv/*) ;;
+            *)
+              echo "::error::Head ref '${{ steps.pr.outputs.head_ref }}' doesn't look like a pip/uv Dependabot branch — refusing"
+              exit 1
+              ;;
+          esac
+
+      - name: Check out the PR branch
+        run: |
+          set -euo pipefail
+          git fetch origin "${{ steps.pr.outputs.head_ref }}"
+          git checkout "${{ steps.pr.outputs.head_ref }}"
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Relock uv.lock and regenerate ci-constraints.txt
+        # Mirrors `just relock` exactly (see justfile), pinning the same uv
+        # version the lockfile-constraints CI job uses so the two never
+        # disagree over what "in sync" means.
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          pip install "uv==0.11.2"
+          uv lock --upgrade
+          uv export --locked --no-hashes --no-emit-workspace \
+            --all-packages --all-extras -o ci-constraints.txt
+
+      - name: Commit and push if changed
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- uv.lock ci-constraints.txt; then
+            echo "uv.lock and ci-constraints.txt are already in sync — nothing to push."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add uv.lock ci-constraints.txt
+          git commit -m "chore(deps): relock uv.lock for PR #${{ inputs.pr_number }}"
+          git push origin "HEAD:refs/heads/${{ steps.pr.outputs.head_ref }}"
