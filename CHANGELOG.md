@@ -6,6 +6,13 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### RAG package removed — superseded by groundkit (2026-08-10)
+
+- **`agentic_v2.rag` is removed outright.** The 17-module package (`agentic_v2/rag/`), the `agentic rag` CLI group (`cli/rag_commands.py` plus the RAG helpers in `cli/helpers.py`), 14 dedicated test files plus the RAG sections of `tests/test_protocol_conformance.py`, the `[rag]` optional extra (`lancedb>=0.15,<1`, `litellm>=1.84,<2`), `docs/rag/`, `examples/02_rag_pipeline.py`, and the non-blocking `rag-extra-tests` CI job are all gone. See [ADR-057](docs/adr/ADR-057-remove-rag-package.md).
+- **Superseded, not deprecated in place: the standalone groundkit repo replaces it.** groundkit's `ADR-0001-promote-vs-rewrite` (Accepted 2026-08-10) ran a 9-agent inventory over this package, confirmed every claimed production gap (no cross-process persistence, no directory-scale ingestion, unimplemented metadata filtering, Protocol-naming mismatches, and more), and recorded the owner decision explicitly: no cherry-pick of fixes back into ARP.
+- **No deprecation shim.** A repo-wide import scan found zero non-test consumers of `agentic_v2.rag` outside its own CLI wiring, so there was no call site to protect with a warning period — this is a clean removal, not a phased migration.
+- **Migration:** projects that need RAG functionality should target groundkit once it ships v0.1.0; there is no ARP-side replacement or compatibility layer in the interim, and `pip install agentic-workflows-v2[rag]` no longer resolves.
+
 ### agentic-evalkit pin moved to the published 0.3.x series (2026-08-09)
 
 - **The `eval` extra now pins `agentic-evalkit>=0.3.0,<0.4.0`**, was `>=0.1.1,<0.2.0` — two minor series behind the published release. The constraints export no longer excludes the package (`--no-emit-package agentic-evalkit` dropped from `ci.yml` and both `justfile` targets), so the extra is actually constrained in CI rather than silently unpinned.
