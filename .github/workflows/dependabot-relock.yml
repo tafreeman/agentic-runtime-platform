@@ -60,10 +60,17 @@ jobs:
             echo "::error::PR #${{ inputs.pr_number }} is ${{ steps.pr.outputs.state }}, not OPEN"
             exit 1
           fi
-          if [ "${{ steps.pr.outputs.author }}" != "dependabot[bot]" ]; then
-            echo "::error::PR #${{ inputs.pr_number }} author is '${{ steps.pr.outputs.author }}', not dependabot[bot] — refusing to relock a human PR"
-            exit 1
-          fi
+          # `gh pr view --json author --jq .author.login` reports a GitHub App as
+          # `app/dependabot`, not the `dependabot[bot]` form that appears in the
+          # web UI and in `github.actor`. Accept both so the guard does not reject
+          # every real Dependabot PR (it did, on run 31347536267).
+          case "${{ steps.pr.outputs.author }}" in
+            "app/dependabot"|"dependabot[bot]") ;;
+            *)
+              echo "::error::PR #${{ inputs.pr_number }} author is '${{ steps.pr.outputs.author }}', not Dependabot — refusing to relock a human PR"
+              exit 1
+              ;;
+          esac
           case "${{ steps.pr.outputs.head_ref }}" in
             dependabot/pip/*|dependabot/uv/*) ;;
             *)
