@@ -3685,7 +3685,7 @@ payloads remain manually maintained.</p>
 <h3 id="21-langchain-adapter-requires-a-separate-extras-install">2.1 LangChain adapter requires a separate extras install<a class="headerlink" href="#21-langchain-adapter-requires-a-separate-extras-install" title="Permanent link">&para;</a></h3>
 <p>Running <code>agentic run &lt;workflow&gt; --adapter langchain</code> requires that the package was installed with the <code>[langchain]</code> extras:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s2">&quot;./agentic-workflows-v2[dev,server,langchain]&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s2">"./agentic-workflows-v2[dev,server,langchain]"</span><span class="w"> </span><span class="se">\</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-c<span class="w"> </span>ci-constraints.txt
 </span></code></pre></div>
 <p>A runtime install without the <code>langchain</code> extra succeeds, but

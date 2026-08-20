@@ -3021,8 +3021,8 @@
 <p>Add <code>AdapterRegistry.validate_selected(name: str) -&gt; None</code> and call it during FastAPI's lifespan startup sequence.</p>
 <ul>
 <li><strong><code>validate_selected(name)</code></strong> checks whether the named adapter is importable and fully initialised. For the <code>langchain</code> adapter, this means attempting the import that was previously deferred. If the import fails, the method raises <code>ConfigurationError</code> with a human-readable message that includes the install hint:
-  <div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ConfigurationError: Adapter &#39;langchain&#39; requires optional extras.
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>Install with: pip install -e &quot;.[langchain]&quot;
+  <div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ConfigurationError: Adapter 'langchain' requires optional extras.
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>Install with: pip install -e ".[langchain]"
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>Set AGENTIC_DEFAULT_ADAPTER=native to use the built-in engine instead.
 </span></code></pre></div></li>
 <li><strong><code>AGENTIC_DEFAULT_ADAPTER</code></strong> (default <code>langchain</code>) selects which adapter is validated. Setting it to <code>native</code> skips the LangChain extras check.</li>

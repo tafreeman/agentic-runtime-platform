@@ -3296,7 +3296,7 @@ sensitive data.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2.contracts.events</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_event</span>
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">event</span> <span class="o">=</span> <span class="n">validate_event</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">wire_value</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;json&quot;</span><span class="p">)</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">wire_value</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"json"</span><span class="p">)</span>
 </span></code></pre></div>
 <p>The UI's generated event union is
 <code>agentic-workflows-v2/ui/src/api/events.generated.ts</code>. Client-only connection

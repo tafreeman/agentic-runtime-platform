@@ -3270,7 +3270,7 @@ prompt strategy produces better code than another?</strong></p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>┌──────────────────────────────────────────────────────────────────┐
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│       THREE QUESTIONS THE EVAL HARNESS MUST ANSWER               │
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>├──────────────────────────────────────────────────────────────────┤
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│  Q1 │ What is ground-truth &quot;correct&quot; output for a code task?     │
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│  Q1 │ What is ground-truth "correct" output for a code task?     │
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│  Q2 │ How do we isolate two strategies to compare them fairly?   │
 </span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│  Q3 │ How do we score a generated patch vs. the gold standard?   │
 </span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>└──────────────────────────────────────────────────────────────────┘
@@ -3375,7 +3375,7 @@ adaptive test log parsing.</p>
 <p><strong><code>SandboxManager</code></strong> creates one git worktree at the pre-commit state:</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>git worktree add /tmp/eval-{uuid} &lt;sha&gt;~1   # isolate at pre-task state
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  [run Contestant A — agent writes files]
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>git -C /tmp/eval-{uuid} checkout -f HEAD     # wipe A&#39;s changes (index op only)
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>git -C /tmp/eval-{uuid} checkout -f HEAD     # wipe A's changes (index op only)
 </span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>  [run Contestant B — agent writes files]
 </span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>git worktree remove /tmp/eval-{uuid} --force # cleanup
 </span></code></pre></div>

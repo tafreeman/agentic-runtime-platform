@@ -3377,9 +3377,15 @@ only five:</p>
 <td>Accepted</td>
 <td><a href="../ADR-056-prompt-versioning-registry/">ADR-056</a></td>
 </tr>
+<tr>
+<td><strong>058</strong></td>
+<td>Claude subscription backend — <code>ClaudeSubscriptionBackend</code> behind a new <code>claude:</code> prefix, registered by <em>capability</em> (<code>claude-agent-sdk</code> importable) rather than by API key, so a subscription-only operator finally gets a Claude backend instead of an Ollama-only fallback; <code>subscription_env()</code> blanks <code>ANTHROPIC_API_KEY</code>/<code>ANTHROPIC_AUTH_TOKEN</code> in the CLI subprocess because <code>agentic_v2.models.secrets</code> puts them in <code>os.environ</code> and the child would otherwise silently bill the API account; also repairs <code>ClaudeSDKAgent</code>, which raised <code>AttributeError</code> on every run (<code>message.type</code> on dataclasses that have no <code>.type</code>)</td>
+<td>Accepted</td>
+<td><a href="../ADR-058-claude-subscription-backend/">ADR-058</a></td>
+</tr>
 </tbody>
 </table>
-<p><strong>Note:</strong> ADRs 004-006 and 013 were never created or were withdrawn; those numbering gaps are intentional and should not be reclaimed. ADR-049, ADR-053, and ADR-054 are claimed by parked or in-flight work (an ADR-049 noncompensatory-gates draft in a stashed working set; ADR-053 by the memoryctl branch behind PR #205; ADR-054 by open PR #210) — do not reclaim those numbers either. (The decision once numbered ADR-013 in the <code>agentic-systems-lab</code> fork was salvaged into this repo as <strong>ADR-031</strong>, not as 013.) ADR-023 working notes (migration plan, phase tracker, finish plan, divergence audit, preservation matrix) were moved to <a href="../drafts/"><code>drafts/</code></a> on 2026-06-17 to resolve a naming collision; the canonical decision record remains at ADR-023.</p>
+<p><strong>Note:</strong> ADRs 004-006 and 013 were never created or were withdrawn; those numbering gaps are intentional and should not be reclaimed. ADR-049, ADR-053, ADR-054, and ADR-057 are claimed by parked or in-flight work (an ADR-049 noncompensatory-gates draft in a stashed working set; ADR-053 by the memoryctl branch behind PR #205; ADR-054 by open PR #210; ADR-057 by the in-flight rag-removal branch) — do not reclaim those numbers either. (The decision once numbered ADR-013 in the <code>agentic-systems-lab</code> fork was salvaged into this repo as <strong>ADR-031</strong>, not as 013.) ADR-023 working notes (migration plan, phase tracker, finish plan, divergence audit, preservation matrix) were moved to <a href="../drafts/"><code>drafts/</code></a> on 2026-06-17 to resolve a naming collision; the canonical decision record remains at ADR-023.</p>
 <hr />
 <h2 id="lineage-chains">Lineage chains<a class="headerlink" href="#lineage-chains" title="Permanent link">&para;</a></h2>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Engine Domain:
@@ -3425,10 +3431,10 @@ only five:</p>
 </span><span id="__span-0-41"><a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a>  ADR-035 (RAG Pipeline Architecture) ─── builds on ADR-014 (Pydantic contracts) + ADR-002 (SmartModelRouter) + ADR-019 (DAG timeout); promoted from RAG-pipeline-blueprint.md
 </span><span id="__span-0-42"><a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a>
 </span><span id="__span-0-43"><a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a>Eval / Scoring Domain:
-</span><span id="__span-0-44"><a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a>  ADR-032 (Extract Scoring Package) ─── standalone; removes server &quot;god package&quot; coupling
+</span><span id="__span-0-44"><a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a>  ADR-032 (Extract Scoring Package) ─── standalone; removes server "god package" coupling
 </span><span id="__span-0-45"><a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a>  ADR-033 (Eval-Config Project-Root Resolution) ─── extends ADR-032; import-time path fix
 </span><span id="__span-0-46"><a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a>  ADR-042 (Adopt agentic-evalkit, sliced migration) ─── supersedes agentic-v2-eval;
-</span><span id="__span-0-47"><a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a>    builds on ADR-032&#39;s scoring package as the landing site for the new bridge module;
+</span><span id="__span-0-47"><a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a>    builds on ADR-032's scoring package as the landing site for the new bridge module;
 </span><span id="__span-0-48"><a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a>    follows the external-package precedent set by ADR-023 (ExecutionKit)
 </span></code></pre></div>
 <hr />
@@ -3691,7 +3697,7 @@ not a statement about implementation state.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 07:30:23 UTC">July 29, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 20, 2026 05:18:44 UTC">August 20, 2026</span>
   </span>
 
     

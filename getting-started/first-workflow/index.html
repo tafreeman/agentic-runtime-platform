@@ -3272,7 +3272,7 @@ focus on the YAML contract.</p>
 <p>Save this file as <code>my-first-workflow.yaml</code> in the repository root:</p>
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my_first_workflow</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Process text and count the result</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.0&quot;</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">"1.0"</span>
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="nt">inputs</span><span class="p">:</span>
 </span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span><span class="nt">input_text</span><span class="p">:</span>
@@ -3356,14 +3356,14 @@ internal context alias. Downstream expressions use the public name on the left.<
 <p>The final compilation check requires the <code>langchain</code> extra even if you later
 run with <code>--adapter native</code>.</p>
 <p>Expected result:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>OK Workflow &#39;my_first_workflow&#39; is valid!
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>OK Workflow 'my_first_workflow' is valid!
 </span></code></pre></div>
 <h2 id="3-create-an-input-file">3. Create an input file<a class="headerlink" href="#3-create-an-input-file" title="Permanent link">&para;</a></h2>
 <p>Bash:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">printf</span><span class="w"> </span><span class="s1">&#39;{&quot;input_text&quot;:&quot;hello&quot;}\n&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>/tmp/my-first-input.json
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">printf</span><span class="w"> </span><span class="s1">'{"input_text":"hello"}\n'</span><span class="w"> </span>&gt;<span class="w"> </span>/tmp/my-first-input.json
 </span></code></pre></div>
 <p>PowerShell:</p>
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="s1">&#39;{&quot;input_text&quot;:&quot;hello&quot;}&#39;</span> <span class="p">|</span>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="s1">'{"input_text":"hello"}'</span> <span class="p">|</span>
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>  <span class="nb">Set-Content</span> <span class="n">-Encoding</span> <span class="n">utf8</span> <span class="p">.\</span><span class="n">my-first-input</span><span class="p">.</span><span class="n">json</span>
 </span></code></pre></div>
 <h2 id="4-run">4. Run<a class="headerlink" href="#4-run" title="Permanent link">&para;</a></h2>
@@ -3373,7 +3373,7 @@ run with <code>--adapter native</code>.</p>
 </span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>--verbose
 </span></code></pre></div>
 <p>PowerShell:</p>
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nv">$env:AGENTIC_NO_LLM</span> <span class="p">=</span> <span class="s2">&quot;1&quot;</span>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nv">$env:AGENTIC_NO_LLM</span> <span class="p">=</span> <span class="s2">"1"</span>
 </span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">agentic</span> <span class="n">run</span> <span class="p">.\</span><span class="n">my-first-workflow</span><span class="p">.</span><span class="n">yaml</span> <span class="p">`</span>
 </span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>  <span class="p">-</span><span class="n">-input</span> <span class="p">.\</span><span class="n">my-first-input</span><span class="p">.</span><span class="n">json</span> <span class="p">`</span>
 </span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>  <span class="p">-</span><span class="n">-verbose</span>

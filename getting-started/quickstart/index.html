@@ -3154,10 +3154,10 @@ by the default named-workflow adapter.</p>
 <p><code>agentic run --input</code> accepts a JSON file path. The deterministic workflow
 requires one string named <code>input_text</code>.</p>
 <p>Bash:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">printf</span><span class="w"> </span><span class="s1">&#39;{&quot;input_text&quot;:&quot;hello&quot;}\n&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>/tmp/agentic-input.json
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">printf</span><span class="w"> </span><span class="s1">'{"input_text":"hello"}\n'</span><span class="w"> </span>&gt;<span class="w"> </span>/tmp/agentic-input.json
 </span></code></pre></div>
 <p>PowerShell:</p>
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="s1">&#39;{&quot;input_text&quot;:&quot;hello&quot;}&#39;</span> <span class="p">|</span>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="s1">'{"input_text":"hello"}'</span> <span class="p">|</span>
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  <span class="nb">Set-Content</span> <span class="n">-Encoding</span> <span class="n">utf8</span> <span class="p">.\</span><span class="n">agentic-input</span><span class="p">.</span><span class="n">json</span>
 </span></code></pre></div>
 <h2 id="3-run-the-workflow">3. Run the workflow<a class="headerlink" href="#3-run-the-workflow" title="Permanent link">&para;</a></h2>
@@ -3166,7 +3166,7 @@ requires one string named <code>input_text</code>.</p>
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--input<span class="w"> </span>/tmp/agentic-input.json
 </span></code></pre></div>
 <p>PowerShell:</p>
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nv">$env:AGENTIC_NO_LLM</span> <span class="p">=</span> <span class="s2">&quot;1&quot;</span>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nv">$env:AGENTIC_NO_LLM</span> <span class="p">=</span> <span class="s2">"1"</span>
 </span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">agentic</span> <span class="n">run</span> <span class="n">test_deterministic</span> <span class="p">-</span><span class="n">-input</span> <span class="p">.\</span><span class="n">agentic-input</span><span class="p">.</span><span class="n">json</span>
 </span></code></pre></div>
 <p>The expected status is:</p>
@@ -3209,7 +3209,7 @@ warnings while still completing successfully.</p>
 <li>errors and metadata when present.</li>
 </ul>
 <p>Inspect the resolved outputs:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import json; print(json.load(open(&#39;result.json&#39;))[&#39;final_output&#39;])&quot;</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import json; print(json.load(open('result.json'))['final_output'])"</span>
 </span></code></pre></div>
 <p>PowerShell:</p>
 <div class="language-powershell highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="p">(</span><span class="nb">Get-Content</span> <span class="p">.\</span><span class="n">result</span><span class="p">.</span><span class="n">json</span> <span class="n">-Raw</span> <span class="p">|</span> <span class="nb">ConvertFrom-Json</span><span class="p">).</span><span class="n">final_output</span>

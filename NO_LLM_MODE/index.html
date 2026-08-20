@@ -3153,7 +3153,7 @@ UI flow. Do not use it to test output meaning or provider behavior.</p>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--input<span class="w"> </span>agentic-workflows-v2/tests/fixtures/deterministic_input.json
 </span></code></pre></div>
 <p>PowerShell:</p>
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nv">$env:AGENTIC_NO_LLM</span> <span class="p">=</span> <span class="s2">&quot;1&quot;</span>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nv">$env:AGENTIC_NO_LLM</span> <span class="p">=</span> <span class="s2">"1"</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="p">.\.</span><span class="n">venv</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">agentic</span><span class="p">.</span><span class="n">exe</span> <span class="n">run</span> <span class="n">test_deterministic</span> <span class="p">`</span>
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  <span class="p">-</span><span class="n">-input</span> <span class="n">agentic-workflows-v2</span><span class="p">\</span><span class="n">tests</span><span class="p">\</span><span class="n">fixtures</span><span class="p">\</span><span class="n">deterministic_input</span><span class="p">.</span><span class="n">json</span>
 </span></code></pre></div>
@@ -3164,7 +3164,7 @@ values instead of contacting a provider. The workflow finishes with
 as an executor smoke test, not as proof that its step outputs are meaningful.</p>
 <p>Depending on the client path, placeholder output may be a fixed text value or
 a small mapping such as:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>{&quot;placeholder&quot;: true, &quot;reason&quot;: &quot;llm_unavailable&quot;}
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>{"placeholder": true, "reason": "llm_unavailable"}
 </span></code></pre></div>
 <h2 id="what-it-covers">What it covers<a class="headerlink" href="#what-it-covers" title="Permanent link">&para;</a></h2>
 <ul>
@@ -3176,7 +3176,7 @@ a small mapping such as:</p>
 </ul>
 <p>The LangChain adapter still requires the <code>langchain</code> extra because its graph
 and message types must be importable:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>python -m pip install -e &quot;./agentic-workflows-v2[langchain]&quot;
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>python -m pip install -e "./agentic-workflows-v2[langchain]"
 </span></code></pre></div>
 <h2 id="what-it-does-not-prove">What it does not prove<a class="headerlink" href="#what-it-does-not-prove" title="Permanent link">&para;</a></h2>
 <p>Placeholder mode does not test:</p>
@@ -3207,7 +3207,7 @@ that the same step will fail with a configured model.</p>
 </ul>
 <h2 id="dashboard-use">Dashboard use<a class="headerlink" href="#dashboard-use" title="Permanent link">&para;</a></h2>
 <p>Set the variable in the shell that starts the backend:</p>
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nv">$env:AGENTIC_NO_LLM</span> <span class="p">=</span> <span class="s2">&quot;1&quot;</span>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nv">$env:AGENTIC_NO_LLM</span> <span class="p">=</span> <span class="s2">"1"</span>
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">just</span> <span class="n">dev</span>
 </span></code></pre></div>
 <p>The combined development environment uses FastAPI port <code>8010</code> and Vite port

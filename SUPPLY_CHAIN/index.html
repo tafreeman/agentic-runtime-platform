@@ -3133,13 +3133,13 @@ SHA-256 digest are added in sorted order. Adding, removing, renaming, or
 changing a file changes the directory digest.</p>
 <h2 id="compute-a-digest">Compute a digest<a class="headerlink" href="#compute-a-digest" title="Permanent link">&para;</a></h2>
 <p>From the repository root:</p>
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">python</span> <span class="n">-c</span> <span class="s2">&quot;from pathlib import Path; from agentic_v2.models.weight_integrity import compute_model_sha256; print(compute_model_sha256(Path(r&#39;C:\models\reviewed-model&#39;)))&quot;</span>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">python</span> <span class="n">-c</span> <span class="s2">"from pathlib import Path; from agentic_v2.models.weight_integrity import compute_model_sha256; print(compute_model_sha256(Path(r'C:\models\reviewed-model')))"</span>
 </span></code></pre></div>
 <p>Review where the model came from before adding its digest. Computing a hash
 from an untrusted download and immediately trusting that same hash does not
 establish a trustworthy source.</p>
 <h2 id="verify-explicitly">Verify explicitly<a class="headerlink" href="#verify-explicitly" title="Permanent link">&para;</a></h2>
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">python</span> <span class="n">-c</span> <span class="s2">&quot;from pathlib import Path; from agentic_v2.models.weight_integrity import verify_model_weights; print(verify_model_weights(Path(r&#39;C:\models\reviewed-model&#39;)))&quot;</span>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">python</span> <span class="n">-c</span> <span class="s2">"from pathlib import Path; from agentic_v2.models.weight_integrity import verify_model_weights; print(verify_model_weights(Path(r'C:\models\reviewed-model')))"</span>
 </span></code></pre></div>
 <p>Without strict mode:</p>
 <ul>
@@ -3148,12 +3148,12 @@ establish a trustworthy source.</p>
 <li>a mismatch returns <code>mismatch</code> and logs a warning.</li>
 </ul>
 <p>Enable strict behavior inside code paths that call the verifier:</p>
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nv">$env:AGENTIC_STRICT_MODEL_VERIFY</span> <span class="p">=</span> <span class="s2">&quot;1&quot;</span>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nv">$env:AGENTIC_STRICT_MODEL_VERIFY</span> <span class="p">=</span> <span class="s2">"1"</span>
 </span></code></pre></div>
 <p>In strict mode, an unknown hash, mismatch, or malformed trust file raises
 <code>ModelWeightVerificationError</code>.</p>
 <p>Select another trust file with:</p>
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nv">$env:AGENTIC_TRUSTED_MODEL_HASHES</span> <span class="p">=</span> <span class="s2">&quot;C:\secure-config\model-hashes.yaml&quot;</span>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nv">$env:AGENTIC_TRUSTED_MODEL_HASHES</span> <span class="p">=</span> <span class="s2">"C:\secure-config\model-hashes.yaml"</span>
 </span></code></pre></div>
 <p>Protect that file separately from the model artifacts. If an attacker can
 change both the model and its expected digest, the check has no value.</p>

@@ -3410,7 +3410,7 @@
 
 <h1 id="cli-reference">CLI reference<a class="headerlink" href="#cli-reference" title="Permanent link">&para;</a></h1>
 <p>The <code>agentic</code> command is installed by the <code>agentic-workflows-v2</code> package:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;./agentic-workflows-v2[server,langchain]&quot;</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">"./agentic-workflows-v2[server,langchain]"</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>agentic<span class="w"> </span>--help
 </span></code></pre></div>
 <p>Run commands from the repository root or pass explicit paths. Relative workflow
@@ -3584,7 +3584,7 @@ LangGraph path for named YAML workflows.</p>
 </tr>
 </tbody>
 </table>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>agentic<span class="w"> </span>orchestrate<span class="w"> </span><span class="s2">&quot;Summarize the changed Python modules&quot;</span><span class="w"> </span>--max-parallel<span class="w"> </span><span class="m">2</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>agentic<span class="w"> </span>orchestrate<span class="w"> </span><span class="s2">"Summarize the changed Python modules"</span><span class="w"> </span>--max-parallel<span class="w"> </span><span class="m">2</span>
 </span></code></pre></div>
 <p>This command needs a usable model provider unless <code>AGENTIC_NO_LLM=1</code> is set.
 Placeholder mode tests orchestration flow, not the quality of the generated
@@ -3708,7 +3708,7 @@ adapter.</p>
 <h2 id="agentic-rag"><code>agentic rag</code><a class="headerlink" href="#agentic-rag" title="Permanent link">&para;</a></h2>
 <p>The command group currently has two commands:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>agentic<span class="w"> </span>rag<span class="w"> </span>ingest<span class="w"> </span>--source<span class="w"> </span>./notes.md
-</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>agentic<span class="w"> </span>rag<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;deployment requirements&quot;</span><span class="w"> </span>--top-k<span class="w"> </span><span class="m">5</span>
+</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>agentic<span class="w"> </span>rag<span class="w"> </span>search<span class="w"> </span><span class="s2">"deployment requirements"</span><span class="w"> </span>--top-k<span class="w"> </span><span class="m">5</span>
 </span></code></pre></div>
 <h3 id="agentic-rag-ingest"><code>agentic rag ingest</code><a class="headerlink" href="#agentic-rag-ingest" title="Permanent link">&para;</a></h3>
 <table>
