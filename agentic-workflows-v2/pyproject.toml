@@ -179,6 +179,12 @@ omit = [
     "agentic_v2/engine/ek_step_delegation.py",
     "agentic_v2/models/ek_adapters.py",
     "agentic_v2/models/ek_provider.py",
+    # Same shape as the EK bridge above: gated on the optional `claude` extra,
+    # which the CI coverage job does not install (it installs
+    # dev,server,mcp,langchain,tracing). Covered by the dedicated
+    # claude-subscription-tests job, which installs the extra and hard-guards
+    # the import so the skip cannot go green unnoticed.
+    "agentic_v2/models/backends_claude.py",
     "agentic_v2/integrations/mcp/*",
     "agentic_v2/langchain/agents.py",
     "agentic_v2/langchain/model_builders.py",

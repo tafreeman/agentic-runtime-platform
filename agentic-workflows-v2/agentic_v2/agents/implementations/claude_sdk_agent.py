@@ -13,6 +13,16 @@ that benefit from direct filesystem and shell access.
 Named sub-agents can be registered via the ``subagents`` parameter, enabling
 the orchestrator to delegate subtasks through the SDK's ``Task`` tool.
 
+Authenticates with the operator's Claude subscription sign-in: the SDK spawns
+the Claude Code CLI, which resolves credentials itself. The CLI subprocess
+inherits ``os.environ``, and ``agentic_v2.models.secrets`` puts
+``ANTHROPIC_API_KEY`` there during backend auto-configuration -- so without an
+explicit scrub the child silently authenticates with the API key instead,
+billing the wrong account and failing outright when that key is unfunded. The
+credential variables are therefore blanked in the child env (see
+:func:`~agentic_v2.models.backends_claude.subscription_env`); pass ``env`` to
+override that deliberately.
+
 Requires the ``claude-agent-sdk`` package (install via
 ``pip install 'agentic-workflows-v2[claude]'``).
 
@@ -31,12 +41,20 @@ Example::
 from __future__ import annotations
 
 import logging
+from collections.abc import AsyncIterator
 from typing import Any
 
 logger = logging.getLogger(__name__)
 
 try:
-    from claude_agent_sdk import AgentDefinition, ClaudeAgentOptions, query
+    from claude_agent_sdk import (
+        AgentDefinition,
+        AssistantMessage,
+        ClaudeAgentOptions,
+        ResultMessage,
+        TextBlock,
+        query,
+    )
 except ImportError as e:
     raise ImportError(
         "claude-agent-sdk is required: pip install 'agentic-workflows-v2[claude]'"
@@ -73,13 +91,14 @@ class ClaudeSDKAgent:
 
     def __init__(
         self,
-        model: str = "claude-opus-4-6",
+        model: str = "claude-opus-5",
         tools: list[str] | None = None,
         cwd: str | None = None,
         system_prompt: str | None = None,
         max_turns: int = 50,
         permission_mode: str = "default",
         subagents: dict[str, dict[str, Any]] | None = None,
+        env: dict[str, str] | None = None,
     ):
         """
         Args:
@@ -91,6 +110,8 @@ class ClaudeSDKAgent:
             permission_mode: "default" | "acceptEdits" | "bypassPermissions".
             subagents: Named sub-agents the orchestrator can spawn via Task.
                        Each value is a dict with keys: description, prompt, tools.
+            env: Extra environment for the CLI subprocess, applied over the
+                 API-key scrub. Use it to deliberately restore API-key auth.
         """
         self._model = model
         self._tools = tools or BUILTIN_TOOLS
@@ -99,25 +120,54 @@ class ClaudeSDKAgent:
         self._max_turns = max_turns
         self._permission_mode = permission_mode
         self._subagents = self._build_subagents(subagents or {})
+        self._env = env or {}
 
     # ------------------------------------------------------------------
     # Public interface
     # ------------------------------------------------------------------
 
     async def run(self, prompt: str) -> str:
-        """Run the agent and return the final result string."""
+        """Run the agent and return its final text.
+
+        Dispatch is by ``isinstance`` against the SDK's message dataclasses:
+        none of them carries a ``.type`` attribute, so an earlier
+        ``message.type == "result"`` check raised ``AttributeError`` on the
+        first message of every run.
+
+        ``ResultMessage.result`` is preferred when the harness supplies it, and
+        the concatenated assistant text is the fallback -- a run that ends
+        without a ``ResultMessage`` (max turns, an interrupted stream) still
+        returns whatever the model produced rather than an empty string.
+        """
         prompt = await self._sanitize_prompt(prompt)
         options = self._build_options()
-        result = ""
+
+        text_parts: list[str] = []
+        final: str | None = None
 
         async for message in query(prompt=prompt, options=options):
-            if message.type == "result":
-                result = message.result or ""
+            if isinstance(message, AssistantMessage):
+                text_parts.extend(
+                    block.text
+                    for block in message.content
+                    if isinstance(block, TextBlock)
+                )
+            elif isinstance(message, ResultMessage):
+                if message.is_error:
+                    detail = "; ".join(message.errors or []) or message.subtype
+                    raise RuntimeError(f"Claude SDK agent run failed: {detail}")
+                final = message.result
 
-        return result
+        return final if final is not None else "".join(text_parts)
 
-    async def stream(self, prompt: str):
-        """Async-iterate over (type, content) tuples from the agent."""
+    async def stream(self, prompt: str) -> AsyncIterator[Any]:
+        """Async-iterate over the SDK's own message objects.
+
+        Yields ``AssistantMessage`` / ``ResultMessage`` / ``SystemMessage`` /
+        ``RateLimitEvent`` dataclasses verbatim, not ``(type, content)`` tuples
+        as this docstring previously claimed. Consumers must dispatch with
+        ``isinstance``; the messages carry no ``.type`` attribute.
+        """
         prompt = await self._sanitize_prompt(prompt)
         options = self._build_options()
 
@@ -154,11 +204,17 @@ class ClaudeSDKAgent:
         return str(sanitized[0]["content"])
 
     def _build_options(self) -> ClaudeAgentOptions:
+        from ...models.backends_claude import subscription_env
+
         kwargs: dict[str, Any] = {
             "model": self._model,
             "allowed_tools": self._tools,
             "permission_mode": self._permission_mode,
             "max_turns": self._max_turns,
+            # Pins the CLI to the subscription sign-in; without it the child
+            # inherits ANTHROPIC_API_KEY from os.environ and bills the API
+            # account instead. See the module docstring.
+            "env": subscription_env(self._env),
         }
         if self._cwd:
             kwargs["cwd"] = self._cwd
