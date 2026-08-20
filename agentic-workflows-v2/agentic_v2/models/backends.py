@@ -4,6 +4,7 @@ Provides concrete backends for:
 - GitHub Models API (gh:* models)
 - OpenAI API (openai:* models)
 - Anthropic Claude API (anthropic:* models)
+- Anthropic Claude via a Claude subscription sign-in (claude:* models)
 - Google Gemini API (gemini:* models)
 - Azure OpenAI Service (azure:* models)
 - Azure AI Foundry (azure-foundry:* models)
@@ -38,6 +39,7 @@ PLACEHOLDER_RESPONSE_TEXT = (
 )
 
 from .backends_base import LLMBackend
+from .backends_claude import ClaudeSubscriptionBackend, claude_sdk_available
 from .backends_cloud import (
     AnthropicBackend,
     AzureFoundryBackend,
@@ -65,6 +67,7 @@ PREFIX_MAP: dict[str, str] = {
     "nvidia:": "nvidia",
     "openrouter:": "openrouter",
     "anthropic:": "anthropic",
+    "claude:": "claude",  # Claude via a subscription sign-in, not an API key
     "gemini:": "gemini",
     "azure:": "azure",
     "azure-foundry:": "azure_foundry",
@@ -390,6 +393,19 @@ def _register_cloud_backends(
             "Registered Anthropic backend",
         )
 
+    # Claude via a subscription sign-in. Probed on capability rather than on a
+    # key, like the ONNX backend below: the Claude Code CLI owns credential
+    # resolution, so there is no environment variable to test. Registered
+    # alongside -- never instead of -- the API-key backend above, so an operator
+    # holding both keeps both and picks per call which one to spend.
+    if claude_sdk_available():
+        _try_register_backend(
+            backends,
+            "claude",
+            ClaudeSubscriptionBackend,
+            "Registered Claude subscription backend (claude-agent-sdk)",
+        )
+
     # GitHub Models (check both GITHUB_TOKEN and GH_TOKEN)
     github_token = get_first_secret(
         "GITHUB_TOKEN",
@@ -490,6 +506,7 @@ __all__ = [
     "NvidiaBackend",
     "OpenRouterBackend",
     "AnthropicBackend",
+    "ClaudeSubscriptionBackend",
     "GeminiBackend",
     "AzureOpenAIBackend",
     "AzureFoundryBackend",
