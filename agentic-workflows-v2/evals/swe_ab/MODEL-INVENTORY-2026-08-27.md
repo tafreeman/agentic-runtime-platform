@@ -60,6 +60,50 @@ Until then the iGPU and NPU remain reachable through ONNX Runtime (VitisAI /
 MIGraphX / WebGPU) and llama.cpp — Lemonade and Foundry Local both use those and
 both work today.
 
+## Precision floor on gfx1150, measured
+
+Once the 7.2 venv worked, every dtype was tested for allocation and for an
+actual matmul, each in its own process — because one of them does not fail
+politely.
+
+| dtype | matmul | time (2048³) | TFLOP/s | note |
+|---|---|---|---|---|
+| float32 | ✅ | 21.6 ms | 0.80 | matches CPU |
+| float16 | ✅ | 2.9 ms | 6.02 | matches CPU |
+| **bfloat16** | ✅ | **2.0 ms** | **8.42** | matches CPU — the fast path |
+| float8_e4m3fn | ❌ | — | — | casts fine; `_scaled_mm` raises RuntimeError |
+| float8_e5m2 | ❌ | — | — | same |
+| int8 (`_int_mm`) | 💥 | — | — | **access violation, kills the process** |
+| int8 → bf16 dequant | ✅ | 3.0 ms | 5.79 | 8-bit storage, 16-bit compute |
+| 4-bit | n/a | — | — | no native torch dtype |
+
+**16 bits is the compute floor.** Below it the GPU stores narrow and computes
+wide: `int8 → bf16` dequantise-on-the-fly runs at 5.79 TFLOP/s, only about 30%
+off pure bf16, which is the trade every quantised inference stack makes anyway
+(bitsandbytes, GPTQ, AWQ, llama.cpp's Q4/Q8 all dequantise into a 16-bit matmul).
+
+Two hazards worth knowing:
+
+- `torch._int_mm` does not raise on this GPU, it **segfaults**. Any library that
+  probes for int8 tensor-core support by calling it will take the whole process
+  down rather than falling back. If a quantisation stack dies without a
+  traceback here, this is why.
+- fp8 *allocates*, so a capability check that only tests `torch.zeros(...,
+  dtype=torch.float8_e4m3fn)` will wrongly conclude fp8 works. Only the matmul
+  reveals it does not.
+
+### What 72 GB buys, by precision
+
+| Precision | Weights that fit |
+|---|---|
+| bf16 / fp16 | ~36 B parameters |
+| 8-bit | ~72 B parameters |
+| 4-bit | ~144 B parameters |
+
+Capacity is not the constraint on this machine — an iGPU shares system memory,
+so a 70B model at 4-bit fits with room to spare. Bandwidth is the constraint,
+and it is why the free cloud endpoints still beat local for the A/B.
+
 ## Serving paths, probed live
 
 | Runtime | Endpoint | Status | Models |
