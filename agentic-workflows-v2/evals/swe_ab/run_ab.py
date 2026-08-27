@@ -188,6 +188,18 @@ async def main() -> int:
     parser.add_argument("--arm", choices=sorted(ARMS), required=True)
     parser.add_argument("--model", default="ollama:deepseek-v4-flash:0731-cloud")
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument(
+        "--cases",
+        default=str(CASES_JSONL),
+        help="case index to run (default: the full set). Use a filtered index "
+        "to re-run a subset without redoing the cases that already have a verdict.",
+    )
+    parser.add_argument(
+        "--suffix",
+        default="",
+        help="appended to the report filename, so a subset run does not "
+        "overwrite the full run it supplements",
+    )
     parser.add_argument("--attempts", type=int, default=1)
     parser.add_argument("--concurrency", type=int, default=1)
     parser.add_argument("--timeout", type=float, default=300.0)
@@ -200,9 +212,11 @@ async def main() -> int:
     args = parser.parse_args()
 
     workflow, run_name = ARMS[args.arm]
+    cases_path = Path(args.cases)
+    report_name = run_name + args.suffix
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
-    provider = LocalDatasetProvider(allowed_roots=(CASES_JSONL.parent,))
+    provider = LocalDatasetProvider(allowed_roots=(cases_path.parent,))
     catalog = _LocalCatalogAdapter(provider)
 
     target = SubprocessTarget(
@@ -211,7 +225,7 @@ async def main() -> int:
         max_output_bytes=4 * 1024 * 1024,
     )
 
-    worktrees = prepare_grading_worktrees(CASES_JSONL)
+    worktrees = prepare_grading_worktrees(cases_path)
     print(f"grading worktrees: { {k: str(v) for k, v in worktrees.items()} }")
     grader = build_grader(worktrees=worktrees)
     runner = EvalRunner(
@@ -224,7 +238,7 @@ async def main() -> int:
 
     manifest = EvalRunManifest(
         run_name=run_name,
-        dataset_ref=DatasetRef(provider="local", dataset_id=str(CASES_JSONL)),
+        dataset_ref=DatasetRef(provider="local", dataset_id=str(cases_path)),
         adapter=ADAPTER_NAME,
         grader=GRADER_NAME,
         target_name=f"arp-{workflow}",
@@ -242,11 +256,11 @@ async def main() -> int:
             for name, worktree in worktrees.items():
                 cleanup_worktree(REPO_WORKTREES[name][0], worktree)
 
-    report_path = REPORTS_DIR / f"{run_name}.json"
+    report_path = REPORTS_DIR / f"{report_name}.json"
     JsonReporter().write(result, report_path)
     summary = result.summary
     print(
-        f"[{run_name}] total={summary.total} passed={summary.passed} "
+        f"[{report_name}] total={summary.total} passed={summary.passed} "
         f"failed={summary.failed} errors={summary.errors} "
         f"timeouts={summary.timeouts} unavailable={summary.unavailable}"
     )

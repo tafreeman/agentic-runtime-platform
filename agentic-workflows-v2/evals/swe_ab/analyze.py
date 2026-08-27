@@ -47,6 +47,22 @@ def load(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def merge_outcomes(paths: list[Path]) -> dict[str, dict[str, Any]]:
+    """Union several reports for one arm, later paths winning on collision.
+
+    A subset re-run supplements a full run rather than replacing it: when a
+    broken oracle is fixed, only the cases it spoiled need re-executing, and
+    those results supersede the earlier ones for the same sample ids. This is
+    only sound because every run in the union shares an arm, a model, and a
+    configuration -- it unions disjoint evidence about one system, it does not
+    average two systems together.
+    """
+    merged: dict[str, dict[str, Any]] = {}
+    for path in paths:
+        merged.update(outcomes(load(path)))
+    return merged
+
+
 def outcomes(report: dict[str, Any]) -> dict[str, dict[str, Any]]:
     """Map sample_id -> {passed, status, exec_status, metadata}."""
     result: dict[str, dict[str, Any]] = {}
@@ -159,18 +175,35 @@ def summarise(name: str, data: dict[str, dict[str, Any]]) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--left", default=str(REPORTS_DIR / "arm-a-direct.json"))
-    parser.add_argument("--right", default=str(REPORTS_DIR / "arm-b-review-loop.json"))
+    parser.add_argument(
+        "--left",
+        action="append",
+        default=None,
+        help="arm A report; repeat to union a subset re-run over the full run",
+    )
+    parser.add_argument(
+        "--right", action="append", default=None, help="arm B report; repeatable"
+    )
     args = parser.parse_args()
 
-    left_path, right_path = Path(args.left), Path(args.right)
-    for path in (left_path, right_path):
+    left_paths = [Path(p) for p in (args.left or [str(REPORTS_DIR / "arm-a-direct.json")])]
+    right_paths = [
+        Path(p) for p in (args.right or [str(REPORTS_DIR / "arm-b-review-loop.json")])
+    ]
+    for path in (*left_paths, *right_paths):
         if not path.is_file():
             print(f"missing report: {path}")
             return 1
 
+    left_path, right_path = left_paths[0], right_paths[0]
     left_report, right_report = load(left_path), load(right_path)
-    left, right = outcomes(left_report), outcomes(right_report)
+    left, right = merge_outcomes(left_paths), merge_outcomes(right_paths)
+    if len(left_paths) > 1 or len(right_paths) > 1:
+        print(
+            f"\n(unioned {len(left_paths)} report(s) for A, "
+            f"{len(right_paths)} for B -- later runs supersede earlier ones "
+            f"for the same sample id)"
+        )
 
     print("=" * 74)
     print("SWE-fix A/B: Arm A (direct) vs Arm B (review loop)")
