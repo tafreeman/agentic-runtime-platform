@@ -1,0 +1,17 @@
+{
+  "case_id": "django__django-11066",
+  "kind": "SWEBENCH",
+  "source_repo": "swebench",
+  "instance_id": "django__django-11066",
+  "repo": "django/django",
+  "base_commit": "4b45b6c8e4d7c9701a332e80d3b1c84209dc36e2",
+  "target_file": "django/contrib/contenttypes/management/__init__.py",
+  "image": "swebench/sweb.eval.x86_64.django_1776_django-11066:latest",
+  "fail_to_pass": [
+    "test_existing_content_type_rename_other_database (contenttypes_tests.test_operations.ContentTypeOperationsTests)"
+  ],
+  "difficulty": "<15 min fix",
+  "retrieval": "oracle",
+  "max_changed_lines": 120,
+  "contamination_risk": "high"
+}

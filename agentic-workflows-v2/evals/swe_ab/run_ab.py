@@ -103,6 +103,9 @@ class SweCaseAdapter:
     api_version = "1"
     name = ADAPTER_NAME
 
+    def __init__(self, grader_name: str = GRADER_NAME) -> None:
+        self._grader_name = grader_name
+
     def prepare(self, record: SourceRecord) -> EvalSample:
         data: dict[str, Any] = dict(record.data)
         sample_id = str(data["sample_id"])
@@ -110,7 +113,12 @@ class SweCaseAdapter:
         # The bridge reads the broken file from the case directory rather than
         # receiving it inline, so the request line stays small regardless of
         # how large the module under repair is.
-        payload["case_dir"] = str(KIT_ROOT / "dataset" / "cases" / sample_id)
+        existing = str(payload.get("repo_path") or "")
+        payload["case_dir"] = (
+            existing
+            if existing and Path(existing).is_dir()
+            else str(KIT_ROOT / "dataset" / "cases" / sample_id)
+        )
         metadata = {str(k): str(v) for k, v in (data.get("metadata") or {}).items()}
         return EvalSample(
             sample_id=sample_id,
@@ -120,7 +128,9 @@ class SweCaseAdapter:
             source_digest=record.digest,
             adapter=ADAPTER_NAME,
             metadata=metadata,
-            grader=GraderSpec(name=GRADER_NAME, grader_type="composite", hard_gate=True),
+            grader=GraderSpec(
+                name=self._grader_name, grader_type="composite", hard_gate=True
+            ),
         )
 
 
@@ -189,6 +199,13 @@ async def main() -> int:
     parser.add_argument("--model", default="ollama:deepseek-v4-flash:0731-cloud")
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument(
+        "--grader",
+        choices=("mutation", "swebench"),
+        default="mutation",
+        help="mutation: local pytest oracle. swebench: the official Docker "
+        "harness running the instance's real FAIL_TO_PASS tests.",
+    )
+    parser.add_argument(
         "--cases",
         default=str(CASES_JSONL),
         help="case index to run (default: the full set). Use a filtered index "
@@ -225,14 +242,22 @@ async def main() -> int:
         max_output_bytes=4 * 1024 * 1024,
     )
 
-    worktrees = prepare_grading_worktrees(cases_path)
-    print(f"grading worktrees: { {k: str(v) for k, v in worktrees.items()} }")
-    grader = build_grader(worktrees=worktrees)
+    if args.grader == "swebench":
+        from swebench_graders import build_swebench_grader
+
+        grader = build_swebench_grader()
+        grader_name = "swebench-composite@1"
+        print("grader: official SWE-bench Docker harness")
+    else:
+        worktrees = prepare_grading_worktrees(cases_path)
+        print(f"grading worktrees: { {k: str(v) for k, v in worktrees.items()} }")
+        grader = build_grader(worktrees=worktrees)
+        grader_name = GRADER_NAME
     runner = EvalRunner(
         catalog=catalog,
-        adapters={ADAPTER_NAME: SweCaseAdapter()},
+        adapters={ADAPTER_NAME: SweCaseAdapter(grader_name)},
         targets={f"arp-{workflow}": target},
-        graders={GRADER_NAME: grader},
+        graders={grader_name: grader},
         artifact_store=ArtifactStore(KIT_ROOT / "artifacts"),
     )
 
@@ -240,7 +265,7 @@ async def main() -> int:
         run_name=run_name,
         dataset_ref=DatasetRef(provider="local", dataset_id=str(cases_path)),
         adapter=ADAPTER_NAME,
-        grader=GRADER_NAME,
+        grader=grader_name,
         target_name=f"arp-{workflow}",
         selection=DatasetSelection(limit=args.limit) if args.limit else DatasetSelection(),
         sampling=SamplingPolicy(attempts=args.attempts, temperature=0.0, seed=20260827),

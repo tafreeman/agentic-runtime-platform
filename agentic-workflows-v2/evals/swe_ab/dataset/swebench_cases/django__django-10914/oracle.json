@@ -1,0 +1,17 @@
+{
+  "case_id": "django__django-10914",
+  "kind": "SWEBENCH",
+  "source_repo": "swebench",
+  "instance_id": "django__django-10914",
+  "repo": "django/django",
+  "base_commit": "e7fd69d051eaa67cb17f172a39b57253e9cb831a",
+  "target_file": "django/conf/global_settings.py",
+  "image": "swebench/sweb.eval.x86_64.django_1776_django-10914:latest",
+  "fail_to_pass": [
+    "test_override_file_upload_permissions (test_utils.tests.OverrideSettingsTests)"
+  ],
+  "difficulty": "<15 min fix",
+  "retrieval": "oracle",
+  "max_changed_lines": 120,
+  "contamination_risk": "high"
+}
