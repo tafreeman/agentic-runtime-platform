@@ -398,7 +398,12 @@ REPOS = {
         path=Path("C:/Users/tandf/source/repos/memoryctl"),
         package_root="memoryctl",
         test_root="tests",
-        test_command=["python", "-m", "pytest", "-x", "-q", "--no-cov"],
+        # Absolute interpreter on purpose: a bare "python" resolves against the
+        # PATH of whoever runs the command, and the grader runs under
+        # `uv run`, whose managed interpreter has no pytest at all.
+        test_command=[
+            "C:/Python313/python.exe", "-m", "pytest", "-x", "-q", "--no-cov",
+        ],
     ),
 }
 

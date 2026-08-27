@@ -162,6 +162,34 @@ class PytestHarnessExecutor:
             finally:
                 target.write_text(original, encoding="utf-8")
 
+        # A run that never got as far as executing tests is an infrastructure
+        # failure, not a wrong answer, and ADR-0008 forbids folding one into
+        # the other. This is not hypothetical: a bare `python -m pytest` in a
+        # case's oracle resolved to uv's managed interpreter at grading time,
+        # which has no pytest, and fifteen cases were scored as failed repairs
+        # on the strength of "No module named pytest".
+        #
+        # pytest's own exit codes carry the distinction: 2 interrupted,
+        # 3 internal error, 4 usage error, 5 nothing collected. None of those
+        # is a verdict on the candidate. Neither is an interpreter that could
+        # not import pytest in the first place.
+        cannot_run = (
+            "No module named pytest" in output
+            or "no module named pytest" in output.lower()
+            or code in (2, 3, 4, 5)
+        )
+        if cannot_run:
+            return HarnessResult(
+                status=HarnessStatus.UNAVAILABLE,
+                message=f"the oracle could not run (exit {code}); no verdict on the candidate",
+                evidence={
+                    "case_id": case_id,
+                    "test_file": test_file,
+                    "returncode": code,
+                    "tail": output[-800:],
+                },
+            )
+
         return HarnessResult(
             status=HarnessStatus.COMPLETED,
             resolved=code == 0,
