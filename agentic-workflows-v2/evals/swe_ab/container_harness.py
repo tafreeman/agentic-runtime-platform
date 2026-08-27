@@ -104,7 +104,20 @@ def container_evaluator(request: Any) -> dict[str, Any]:
 
     if not isinstance(payload, dict):
         raise RuntimeError(f"unexpected harness report shape for {instance_id}")
-    return payload
+
+    # The harness writes {instance_id: {resolved, tests_status, ...}}. The
+    # executor's default evaluator unwraps that itself, but a custom evaluator
+    # hands its return value straight to the result mapper, which looks for
+    # `resolved` at the top level -- so unwrap here, or every run reports
+    # "no 'resolved' field" on a report that plainly has one.
+    inner = payload.get(instance_id)
+    if isinstance(inner, dict):
+        return inner
+    if "resolved" in payload:
+        return payload
+    raise RuntimeError(
+        f"harness report for {instance_id} has no verdict; keys: {sorted(payload)[:8]}"
+    )
 
 
 def build_container_executor() -> Any:
