@@ -1,10 +1,12 @@
 # ARP SWE-fix A/B — two workflows, one rubric, free models
 
-> **Result (2026-08-27):** Arm A (direct) 48/50 = 96.0%; Arm B (review loop)
-> 45/50 = 90.0%. The gap is not statistically significant (McNemar p = 0.25,
-> and p = 1.00 once operational timeouts are excluded), but Arm B cost 3.5× the
-> wall clock — 37.0 min vs 10.7 min. Full write-up, caveats and the ceiling-effect
-> problem: [RESULTS-2026-08-27.md](RESULTS-2026-08-27.md).
+> **Result (2026-08-27, 132 cases across four repos):** Arm A (direct)
+> 125/132 = 94.7%; Arm B (review loop) 120/132 = 90.9%. Difference −3.8%,
+> 95% CI [−9.1%, +0.8%], McNemar p = 0.23 on 11 discordant pairs — not
+> significant. Arm B costs 3.0× the wall clock (93.1 min vs 31.4 min).
+> The 50-case run reached the same conclusion with 3 discordant pairs.
+> Full write-up: [RESULTS-2026-08-27-run2.md](RESULTS-2026-08-27-run2.md);
+> the earlier run: [RESULTS-2026-08-27.md](RESULTS-2026-08-27.md).
 
 Compares two ARP orchestrations on the same software-repair task set, graded by
 agentic-evalkit, using models that cost nothing (local Ollama, Ollama Cloud free
