@@ -16,16 +16,49 @@ endpoints are free — those three gaps are what the extra probing filled.
 | GPU | AMD Radeon 890M (Ryzen AI APU iGPU), 4 GB dedicated + shared |
 | NPU | Ryzen AI NPU present — Foundry registered `VitisAIExecutionProvider` |
 | NVIDIA GPU | **none** — NVIDIA is cloud-only here, as you said |
-| torch | **2.9.1+cpu** — `torch.version.hip` is `None`, `cuda.is_available()` False |
-| onnxruntime | 1.24.1, providers `TensorRT / CUDA / CPU` → effectively **CPU only** |
+| torch (PATH, Python 3.13) | 2.9.1+cpu — no ROCm |
+| torch (Python **3.12**) | **2.12.0+rocm7.14.0**, HIP 7.14, `is_available()` True |
+| GPU memory visible to torch | **72.7 GB** (unified with system RAM) |
 
-**There is no ROCm build of PyTorch installed.** The global environment has the
-plain CPU wheel, so nothing in a torch path touches the iGPU today, and
-installing `torch-rocm` would not change much on Windows for a 890M — ROCm's
-Windows support does not cover this part properly. The iGPU and NPU are
-reachable, but through **ONNX Runtime (VitisAI / MIGraphX / WebGPU EPs)** and
-**llama.cpp**, not through torch. That is what Lemonade and Foundry Local are
-for, and both are already running.
+**Correction to an earlier claim in this file: ROCm PyTorch *is* installed.** The
+first probe read the interpreter on PATH (Python 3.13, CPU wheel) and concluded
+there was no ROCm build. There is one, under Python 3.12, and it enumerates the
+890M with 72.7 GB of addressable unified memory.
+
+It does not currently execute, and the reason is specific:
+
+```
+torch.AcceleratorError: CUDA error: device kernel image is invalid   (hipErrorInvalidImage)
+```
+
+This is **not** an unsupported-GPU problem — `torch.cuda.get_arch_list()`
+includes `gfx1150`, which is exactly what the device reports. It is a
+version-skewed stack:
+
+| Package | Version | gfx1150 device-code files |
+|---|---|---|
+| `rocm-sdk-core` | 7.14.0 | 0 |
+| `rocm-sdk-libraries` | 7.14.0 | **0** |
+| `rocm-sdk-libraries-custom` | **7.2.0.dev0** | **191** |
+| `torch` | 2.12.0+rocm7.14.0 | — |
+
+Only the 7.2 *custom* package — the one AMD's Adrenalin installer adds for this
+iGPU — carries gfx1150 code objects. torch 2.12+rocm7.14 loads the 7.14 core and
+7.14 libraries, which have none, so every kernel launch fails. Setting
+`HSA_OVERRIDE_GFX_VERSION` to 11.0.0, 11.5.0 or 11.5.1 does not help, and would
+not: the code objects simply are not in the libraries being loaded.
+
+The fix is to use the consistent ROCm 7.2 set AMD prescribes (`rocm_sdk_core`,
+`rocm_sdk_devel`, `rocm_sdk_libraries` from `.rocm-rel-7.2_a`, plus
+`torch-2.9.1+rocm`, `torchvision-0.24`, `torchaudio-2.9`) **in a virtual
+environment** — which is what the Adrenalin dialog's "Create a Virtual
+Environment" button does. Mixing 7.2 and 7.14 in the global environment is what
+produced this state; installing into a venv keeps the working set separate from
+whatever the global environment needs.
+
+Until then the iGPU and NPU remain reachable through ONNX Runtime (VitisAI /
+MIGraphX / WebGPU) and llama.cpp — Lemonade and Foundry Local both use those and
+both work today.
 
 ## Serving paths, probed live
 
