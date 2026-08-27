@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any, Final
 
 from agentic_evalkit.benchmarks.swebench_docker import SweBenchDockerHarnessExecutor
-from agentic_evalkit.graders import CompositeGrader, HarnessGrader, WeightedGrader
+from agentic_evalkit.graders import HarnessGrader
 from agentic_evalkit.models import (
     EvalSample,
     ExecutionStatus,
@@ -150,24 +150,64 @@ class SwebenchSanityGrader:
         )
 
 
-def build_swebench_grader(*, timeout_seconds: float = 2400.0) -> CompositeGrader:
-    """Sanity gate 0.2, official harness 0.8, both hard-gating.
+class SwebenchGrader:
+    """Sanity gate, then the authoritative harness — and never a pass without it.
 
-    The harness reports UNAVAILABLE rather than a verdict when Docker or the
-    swebench package is missing, and ADR-0008 keeps that out of the failure
-    count -- a machine without Docker scores nothing, it does not score zero.
+    This does not use ``CompositeGrader``, and the reason is a bug this file
+    shipped with. ``CompositeGrader`` excludes ABSTAIN/ERROR/UNAVAILABLE from
+    its weighted mean, which is right for an advisory component and badly wrong
+    for an authoritative one: when the SWE-bench harness reported UNAVAILABLE
+    on all five floor-check instances, the composite scored every one of them
+    **pass 1.0** on the strength of the sanity check alone. A grader that
+    reports a benchmark pass for a benchmark it never ran is the exact failure
+    this project exists to prevent.
+
+    So the order is explicit here:
+
+    * sanity fails  -> FAIL (no container is spent on a non-answer)
+    * harness cannot run -> UNAVAILABLE, never PASS
+    * harness ran   -> PASS or FAIL on what the real tests said
     """
-    harness = HarnessGrader(
-        executor=SweBenchDockerHarnessExecutor(),
-        predictor=swebench_prediction,
-        benchmark=BENCHMARK,
-        name="swebench-harness@1",
-        timeout_seconds=timeout_seconds,
-    )
-    return CompositeGrader(
-        name="swebench-composite@1",
-        graders=(
-            WeightedGrader(SwebenchSanityGrader(), weight=0.2, hard_gate=True),
-            WeightedGrader(harness, weight=0.8, hard_gate=True),
-        ),
-    )
+
+    def __init__(self, *, executor: Any, name: str = "swebench-composite@1") -> None:
+        self._sanity = SwebenchSanityGrader()
+        self._harness = HarnessGrader(
+            executor=executor,
+            predictor=swebench_prediction,
+            benchmark=BENCHMARK,
+            name="swebench-harness@1",
+            timeout_seconds=2400.0,
+        )
+        self._name = name
+
+    async def grade(
+        self, sample: EvalSample, execution: NormalizedExecutionResult
+    ) -> GradeResult:
+        sanity = await self._sanity.grade(sample, execution)
+        if sanity.status is not GradeStatus.PASS:
+            return sanity.model_copy(update={"grader": self._name})
+
+        harness = await self._harness.grade(sample, execution)
+        if harness.status in (GradeStatus.UNAVAILABLE, GradeStatus.ERROR):
+            # No verdict is available. Say so; do not borrow the sanity pass.
+            return harness.model_copy(
+                update={
+                    "grader": self._name,
+                    "hard_gate": False,
+                    "evidence": {
+                        **dict(harness.evidence),
+                        "sanity": "passed, but proves nothing on its own",
+                    },
+                }
+            )
+        return harness.model_copy(update={"grader": self._name})
+
+
+def build_swebench_grader(*, executor: Any | None = None) -> SwebenchGrader:
+    """The grader for the SWE-bench arm.
+
+    A machine without a working harness scores *nothing* here, not zero, and
+    not one -- ADR-0008's distinction between an operational failure and a task
+    failure, applied to the one component that can actually decide.
+    """
+    return SwebenchGrader(executor=executor or SweBenchDockerHarnessExecutor())

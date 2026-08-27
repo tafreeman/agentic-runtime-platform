@@ -243,9 +243,10 @@ async def main() -> int:
     )
 
     if args.grader == "swebench":
+        from container_harness import build_container_executor
         from swebench_graders import build_swebench_grader
 
-        grader = build_swebench_grader()
+        grader = build_swebench_grader(executor=build_container_executor())
         grader_name = "swebench-composite@1"
         print("grader: official SWE-bench Docker harness")
     else:
