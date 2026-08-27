@@ -1,0 +1,12 @@
+# Machine-generated and reproducible. `tools/mine_cases.py` rebuilds the case
+# tree deterministically (fixed seed, pinned source SHA), so committing 100
+# ast.unparse-formatted copies of another repo's source would only pollute this
+# repo's lint surface for no reproducibility gain.
+dataset/cases/
+
+# Run outputs: reports, spilled artifacts, and the bridge's scratch cwd.
+reports/
+artifacts/
+sandbox/
+
+__pycache__/
