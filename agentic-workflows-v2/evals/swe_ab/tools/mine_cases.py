@@ -138,6 +138,10 @@ class RepoSpec:
     #: Where the case will be graded from. Mining may run in a throwaway
     #: worktree, but a case must name the durable repo it came from.
     canonical_path: Path | None = None
+    #: Seconds one covering test file may take before the candidate is
+    #: abandoned. A file that hangs is not a usable oracle at any length,
+    #: so this stays short: the cost of waiting is paid on every module.
+    test_timeout: int = 300
 
 
 def covering_test_file(repo: RepoSpec, module: Path) -> Path | None:
@@ -150,11 +154,21 @@ def covering_test_file(repo: RepoSpec, module: Path) -> Path | None:
     return matches[0] if matches else None
 
 
-def run_pytest(repo: RepoSpec, test_file: Path, timeout: int = 900) -> tuple[int, str]:
+def run_pytest(repo: RepoSpec, test_file: Path, timeout: int | None = None) -> tuple[int, str]:
     command = [*repo.test_command, test_file.relative_to(repo.path).as_posix()]
-    proc = subprocess.run(
-        command, cwd=repo.path, capture_output=True, text=True, timeout=timeout
-    )
+    try:
+        proc = subprocess.run(
+            command,
+            cwd=repo.path,
+            capture_output=True,
+            text=True,
+            timeout=timeout or repo.test_timeout,
+        )
+    except subprocess.TimeoutExpired:
+        # Report as a non-zero run with no parseable failures, which makes
+        # the caller skip this module rather than mine a case whose oracle
+        # cannot finish.
+        return 124, "TIMEOUT"
     return proc.returncode, (proc.stdout + proc.stderr)[-20000:]
 
 
@@ -329,6 +343,45 @@ REPOS = {
         test_command=["uv", "run", "pytest", "-x", "-q", "--no-cov"],
         skip=("benchmarks/swebench_docker",),
     ),
+    "ek": RepoSpec(
+        name="ek",
+        path=Path("C:/Users/tandf/source/executionkit"),
+        package_root="executionkit",
+        test_root="tests",
+        # EK's own interpreter, invoked with cwd set to the checkout being
+        # mined. sys.path[0] is that checkout, so the mutated copy shadows
+        # whatever is installed in site-packages. If that ever stopped being
+        # true the miner would simply find zero cases -- a safe failure, since
+        # an unmutated import can never make a green test go red.
+        test_command=[
+            "C:/Users/tandf/source/executionkit/.venv/Scripts/python.exe",
+            "-m", "pytest", "-x", "-q", "--no-cov", "-m", "not live",
+            "-p", "no:cacheprovider",
+        ],
+        skip=("_mock.py", "claude_sdk.py"),
+        test_timeout=150,
+    ),
+    "arp": RepoSpec(
+        name="arp",
+        path=Path("C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2"),
+        package_root="agentic_v2",
+        test_root="tests",
+        test_command=[
+            "C:/Users/tandf/source/agentic-runtime-platform/.venv/Scripts/python.exe",
+            "-m", "pytest", "-x", "-q", "--no-cov", "-p", "no:cacheprovider",
+        ],
+        # Anything that reaches a provider, a container, or the network is not
+        # a deterministic oracle, so it cannot host a case.
+        skip=("langchain/", "integrations/mcp", "server/", "memoryctl/"),
+        test_timeout=240,
+    ),
+    "memoryctl": RepoSpec(
+        name="memoryctl",
+        path=Path("C:/Users/tandf/source/repos/memoryctl"),
+        package_root="memoryctl",
+        test_root="tests",
+        test_command=["python", "-m", "pytest", "-x", "-q", "--no-cov"],
+    ),
 }
 
 
@@ -339,6 +392,11 @@ def main() -> int:
     parser.add_argument("--out", default=str(KIT_ROOT / "dataset" / "cases.jsonl"))
     parser.add_argument("--fresh", action="store_true", help="delete existing cases first")
     parser.add_argument("--path", default=None, help="mine from this checkout instead")
+    parser.add_argument(
+        "--append",
+        action="store_true",
+        help="add to the existing cases.jsonl rather than replacing it",
+    )
     args = parser.parse_args()
 
     if args.fresh and CASES_DIR.exists():
@@ -359,11 +417,8 @@ def main() -> int:
         )
     print("mining " + str(args.count) + " cases from " + repo.name, flush=True)
     rows = mine_mutations(repo, args.count)
-    out = Path(args.out)
-    with out.open("w", encoding="utf-8") as handle:
-        for row in rows:
-            handle.write(json.dumps(row) + "\n")
-    print("wrote " + str(len(rows)) + " cases -> " + str(out))
+    print("mined " + str(len(rows)) + " cases from " + repo.name)
+    print("now run: python tools/rebuild_index.py")
     return 0 if rows else 1
 
 

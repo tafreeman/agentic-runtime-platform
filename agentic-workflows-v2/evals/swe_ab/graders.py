@@ -80,15 +80,18 @@ def swe_prediction(
 class PytestHarnessExecutor:
     """Applies a candidate file to a scratch worktree and runs the case's tests.
 
-    The worktree is created once per executor and reused, with the target file
-    restored after every case, so a hundred gradings cost one checkout rather
-    than a hundred. Nothing is ever written into the real repository.
+    Cases come from several repositories, so the executor holds one worktree
+    per source repo, keyed by the ``source_repo`` its oracle names. Each has
+    its own lock: two cases from different repos can be graded at the same
+    time, two from the same repo cannot, because they would write the same
+    checkout. The target file is restored after every case, so a hundred
+    gradings cost one checkout per repo. Nothing is ever written into a real
+    repository.
     """
 
-    def __init__(self, *, worktree: Path, repo: Path) -> None:
-        self._worktree = worktree
-        self._repo = repo
-        self._lock = asyncio.Lock()
+    def __init__(self, *, worktrees: dict[str, Path]) -> None:
+        self._worktrees = dict(worktrees)
+        self._locks = {name: asyncio.Lock() for name in worktrees}
 
     async def execute(self, request: HarnessRequest) -> HarnessResult:
         case_id = str(request.prediction.get("case_id", request.sample_id))
@@ -108,11 +111,24 @@ class PytestHarnessExecutor:
                 message=f"oracle unreadable for {case_id}: {error}",
             )
 
-        target = self._worktree / oracle["target_file"]
+        source_repo = str(oracle.get("source_repo", ""))
+        worktree = self._worktrees.get(source_repo)
+        lock = self._locks.get(source_repo)
+        if worktree is None or lock is None:
+            return HarnessResult(
+                status=HarnessStatus.UNAVAILABLE,
+                message=(
+                    f"no grading worktree for source repo {source_repo!r}; "
+                    f"known: {sorted(self._worktrees)}"
+                ),
+                evidence={"case_id": case_id},
+            )
+
+        target = worktree / oracle["target_file"]
         test_file = oracle["test_file"]
         command = [*oracle["test_command"], test_file]
 
-        async with self._lock:
+        async with lock:
             if not target.is_file():
                 return HarnessResult(
                     status=HarnessStatus.UNAVAILABLE,
@@ -125,7 +141,7 @@ class PytestHarnessExecutor:
                 proc = await asyncio.to_thread(
                     subprocess.run,
                     command,
-                    cwd=self._worktree,
+                    cwd=worktree,
                     capture_output=True,
                     text=True,
                     timeout=request.timeout_seconds,
@@ -267,7 +283,7 @@ def prepare_worktree(repo: Path, worktree: Path) -> Path:
     return worktree
 
 
-def build_grader(*, worktree: Path, repo: Path, timeout_seconds: float = 600.0):
+def build_grader(*, worktrees: dict[str, Path], timeout_seconds: float = 600.0):
     """The composite: sanity gate 0.3, hidden-test harness 0.7, judge 0.0.
 
     Both components hard-gate, so either one failing fails the sample. The
@@ -276,7 +292,7 @@ def build_grader(*, worktree: Path, repo: Path, timeout_seconds: float = 600.0):
     there is nothing for it to contribute to a pass/fail decision.
     """
     harness = HarnessGrader(
-        executor=PytestHarnessExecutor(worktree=worktree, repo=repo),
+        executor=PytestHarnessExecutor(worktrees=worktrees),
         predictor=swe_prediction,
         benchmark=BENCHMARK,
         name="pytest-oracle@1",

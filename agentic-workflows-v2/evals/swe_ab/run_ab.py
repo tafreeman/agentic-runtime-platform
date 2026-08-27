@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import json
 import os
 import sys
 from pathlib import Path
@@ -50,13 +51,25 @@ if TYPE_CHECKING:
 
 CASES_JSONL = KIT_ROOT / "dataset" / "cases.jsonl"
 REPORTS_DIR = KIT_ROOT / "reports"
-EVK_REPO = Path("C:/Users/tandf/source/agentic-evalkit")
 ARP_PYTHON = Path("C:/Users/tandf/source/agentic-runtime-platform/.venv/Scripts/python.exe")
-GRADING_WORKTREE = Path(
+SCRATCH = Path(
     "C:/Users/tandf/AppData/Local/Temp/claude/"
-    "C--Users-tandf-source-agentic-evalkit/98683646-eaf6-4196-85d4-372846e7317f/"
-    "scratchpad/evk-mine"
+    "C--Users-tandf-source-agentic-evalkit/98683646-eaf6-4196-85d4-372846e7317f/scratchpad"
 )
+
+#: Grading checkout per source repo: (repository, worktree used for grading).
+#: A case is graded in a throwaway worktree of the repo it was mined from, never
+#: in the repo itself. The worktrees double as the mining checkouts -- same
+#: commit, already synced -- so an A/B run costs no extra checkout.
+REPO_WORKTREES: dict[str, tuple[Path, Path]] = {
+    "evk": (Path("C:/Users/tandf/source/agentic-evalkit"), SCRATCH / "evk-mine"),
+    "ek": (Path("C:/Users/tandf/source/executionkit"), SCRATCH / "ek-mine"),
+    "arp": (
+        Path("C:/Users/tandf/source/agentic-runtime-platform"),
+        SCRATCH / "arp-mine/agentic-workflows-v2",
+    ),
+    "memoryctl": (Path("C:/Users/tandf/source/repos/memoryctl"), SCRATCH / "mc-mine"),
+}
 
 ARMS = {
     "a": ("swe_fix_direct", "arm-a-direct"),
@@ -139,6 +152,37 @@ def build_child_env(workflow: str, model: str, timeout: float) -> dict[str, str]
     return env
 
 
+def prepare_grading_worktrees(cases_path: Path) -> dict[str, Path]:
+    """Create a grading worktree for each source repo the case set draws on.
+
+    Only the repos actually represented in the case file are checked out, so a
+    limited run never pays for a checkout it will not use.
+    """
+    repos: set[str] = set()
+    for line in cases_path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        row = json.loads(line)
+        repo = str((row.get("metadata") or {}).get("source_repo", ""))
+        if repo:
+            repos.add(repo)
+
+    prepared: dict[str, Path] = {}
+    for name in sorted(repos):
+        if name not in REPO_WORKTREES:
+            raise SystemExit(
+                f"case set references source repo {name!r} with no grading "
+                f"worktree configured; known: {sorted(REPO_WORKTREES)}"
+            )
+        repo, worktree = REPO_WORKTREES[name]
+        # The ARP worktree is nested one level down (the package lives in a
+        # subdirectory), so create the checkout at its parent.
+        checkout = worktree if name != "arp" else worktree.parent
+        prepare_worktree(repo, checkout)
+        prepared[name] = worktree
+    return prepared
+
+
 async def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--arm", choices=sorted(ARMS), required=True)
@@ -167,8 +211,9 @@ async def main() -> int:
         max_output_bytes=4 * 1024 * 1024,
     )
 
-    worktree = prepare_worktree(EVK_REPO, GRADING_WORKTREE)
-    grader = build_grader(worktree=worktree, repo=EVK_REPO)
+    worktrees = prepare_grading_worktrees(CASES_JSONL)
+    print(f"grading worktrees: { {k: str(v) for k, v in worktrees.items()} }")
+    grader = build_grader(worktrees=worktrees)
     runner = EvalRunner(
         catalog=catalog,
         adapters={ADAPTER_NAME: SweCaseAdapter()},
@@ -194,7 +239,8 @@ async def main() -> int:
         result = await runner.run(manifest)
     finally:
         if args.cleanup_worktree:
-            cleanup_worktree(EVK_REPO, worktree)
+            for name, worktree in worktrees.items():
+                cleanup_worktree(REPO_WORKTREES[name][0], worktree)
 
     report_path = REPORTS_DIR / f"{run_name}.json"
     JsonReporter().write(result, report_path)
