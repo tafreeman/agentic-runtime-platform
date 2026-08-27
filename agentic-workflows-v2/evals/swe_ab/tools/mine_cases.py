@@ -21,6 +21,7 @@ import json
 import random
 import shutil
 import subprocess
+import time
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -283,10 +284,15 @@ def mine_mutations(repo: RepoSpec, wanted: int, seed: int = 20260827) -> list[di
             continue
         # Baseline: the test file must be green before we break anything, or
         # a "failure" afterwards proves nothing.
+        baseline_started = time.monotonic()
         code, output = run_pytest(repo, test_file)
+        baseline_seconds = time.monotonic() - baseline_started
         if code != 0:
             print("  skip " + module.name + ": test file already red", flush=True)
             continue
+        # A mutation that hangs the suite is not a usable oracle at any
+        # length, so bound it by what this file just proved it needs.
+        mutation_timeout = max(30, min(repo.test_timeout, int(baseline_seconds * 10) + 20))
         for ordinal in rng.sample(range(sites), min(sites, 4)):
             if len(rows) >= wanted:
                 break
@@ -295,9 +301,21 @@ def mine_mutations(repo: RepoSpec, wanted: int, seed: int = 20260827) -> list[di
                 continue
             module.write_text(site.mutated_source, encoding="utf-8")
             try:
-                code, output = run_pytest(repo, test_file)
+                code, output = run_pytest(repo, test_file, timeout=mutation_timeout)
             finally:
                 module.write_text(original, encoding="utf-8")
+            if output == "TIMEOUT":
+                print(
+                    "  skip "
+                    + module.name
+                    + ":"
+                    + str(site.lineno)
+                    + " hung the suite (>"
+                    + str(mutation_timeout)
+                    + "s); not a usable oracle",
+                    flush=True,
+                )
+                continue
             failing = failing_test_ids(output)
             if code == 0 or not failing:
                 continue
