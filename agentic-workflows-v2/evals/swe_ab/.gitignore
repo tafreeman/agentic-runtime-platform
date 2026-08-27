@@ -3,6 +3,11 @@
 # ast.unparse-formatted copies of another repo's source would only pollute this
 # repo's lint surface for no reproducibility gain.
 dataset/cases/
+# Likewise the SWE-bench case tree: broken.py there is verbatim Django
+# source, and build_swebench_cases.py reproduces it from the prebuilt
+# instance images. Vendoring another project's source to save a rebuild is
+# a bad trade.
+dataset/swebench_cases/
 
 # Run outputs: reports, spilled artifacts, and the bridge's scratch cwd.
 reports/
