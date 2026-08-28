@@ -26,14 +26,18 @@ from agentic_v2.models.discovery_snapshot import discover_all_models
 def _stub_all_sources_empty(monkeypatch: pytest.MonkeyPatch):
     """Default every source to empty so each test only wires what it needs.
 
-    Also clears OLLAMA_API_KEY / OLLAMA_BASE_URL: discover_all_models's
-    Ollama handling reads both directly (mirroring build_ollama_model's and
-    cost_lane_for's own decisions), and an ambient key or non-loopback base
-    URL on whatever machine runs the suite would silently change which
-    branch a test actually exercises.
+    Also clears every configurable-host env var discover_all_models reads
+    directly (OLLAMA_API_KEY/OLLAMA_BASE_URL, LMSTUDIO_HOST,
+    LEMONADE_BASE_URL, DOCKER_MODEL_RUNNER_BASE_URL, FOUNDRY_LOCAL_BASE_URL):
+    an ambient key or non-loopback host on whatever machine runs the suite
+    would silently change which branch a test actually exercises.
     """
     monkeypatch.delenv("OLLAMA_API_KEY", raising=False)
     monkeypatch.delenv("OLLAMA_BASE_URL", raising=False)
+    monkeypatch.delenv("LMSTUDIO_HOST", raising=False)
+    monkeypatch.delenv("LEMONADE_BASE_URL", raising=False)
+    monkeypatch.delenv("DOCKER_MODEL_RUNNER_BASE_URL", raising=False)
+    monkeypatch.delenv("FOUNDRY_LOCAL_BASE_URL", raising=False)
     monkeypatch.setattr(cloud_discovery, "discover_cloud_models", lambda: [])
     monkeypatch.setattr(ollama_discovery, "discover_ollama_models", lambda: [])
     monkeypatch.setattr(
@@ -102,6 +106,80 @@ def test_local_lane_providers_are_all_local(
     assert by_id["foundry-local:qwen2.5-coder-7b"].cost_lane == "local"
     assert all(m.verified_by == "listing" for m in result)
     assert all(m.reachable is True for m in result)
+
+
+@pytest.mark.unit
+def test_lemonade_docker_model_runner_foundry_local_downgrade_for_remote_hosts(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """These providers are only "local" when actually pointed at this
+    machine -- an operator can configure any of them at a remote host, and
+    the reported lane must reflect that, not assume "local" from the
+    provider name alone (matches the Ollama fix applied to the same
+    facade)."""
+    monkeypatch.setenv("LEMONADE_BASE_URL", "http://lemonade-box.internal:13305")
+    monkeypatch.setenv(
+        "DOCKER_MODEL_RUNNER_BASE_URL", "http://dmr-box.internal:12434"
+    )
+    monkeypatch.setenv("FOUNDRY_LOCAL_BASE_URL", "http://foundry-box.internal:60160")
+    monkeypatch.setattr(
+        lemonade_discovery,
+        "discover_lemonade_models",
+        lambda: [lemonade_discovery.LemonadeModelInfo(id="lemonade:phi-4", name="phi-4")],
+    )
+    monkeypatch.setattr(
+        docker_model_runner_discovery,
+        "discover_docker_model_runner_models",
+        lambda: [
+            docker_model_runner_discovery.DockerModelRunnerInfo(
+                id="docker-model-runner:qwen3", name="qwen3"
+            )
+        ],
+    )
+    monkeypatch.setattr(
+        foundry_local_discovery,
+        "discover_foundry_local_models",
+        lambda: [
+            foundry_local_discovery.FoundryLocalModelInfo(
+                id="foundry-local:qwen2.5-coder-7b", name="qwen2.5-coder-7b", device="NPU"
+            )
+        ],
+    )
+
+    result = discover_all_models()
+
+    by_id = {m.id: m for m in result}
+    assert by_id["lemonade:phi-4"].cost_lane == "free"
+    assert by_id["lemonade:phi-4"].endpoint == "http://lemonade-box.internal:13305"
+    assert by_id["docker-model-runner:qwen3"].cost_lane == "free"
+    assert by_id["foundry-local:qwen2.5-coder-7b"].cost_lane == "free"
+
+
+@pytest.mark.unit
+def test_lmstudio_local_for_loopback_free_for_remote_host(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    lmstudio_info = local_discovery.LocalModelInfo(id="lmstudio:phi-4")
+
+    monkeypatch.setattr(
+        local_discovery,
+        "discover_lmstudio_catalog",
+        lambda: local_discovery.LmStudioCatalog(models=(lmstudio_info,), api="v1"),
+    )
+    monkeypatch.setattr(
+        local_discovery, "resolve_lmstudio_host", lambda: "http://127.0.0.1:1234"
+    )
+    result = discover_all_models()
+    assert result[0].cost_lane == "local"
+
+    monkeypatch.setattr(
+        local_discovery,
+        "resolve_lmstudio_host",
+        lambda: "http://lmstudio-box.internal:1234",
+    )
+    result = discover_all_models()
+    assert result[0].cost_lane == "free"
+    assert result[0].endpoint == "http://lmstudio-box.internal:1234"
 
 
 def _stub_ollama(

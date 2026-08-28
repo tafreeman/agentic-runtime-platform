@@ -12,17 +12,26 @@ returns one list of :class:`DiscoveredModel` covering all seven.
 
 Each record's ``cost_lane`` is curated, never guessed:
 
-- local/lmstudio/onnx/lemonade/docker-model-runner/foundry-local -- ``"local"``
-  (weights on this machine, no account, no charge). Ollama is more involved:
-  a model reroutes to ``"free"`` (Ollama Cloud) when it would actually be
-  invoked at ``CLOUD_HOST`` (mirroring ``build_ollama_model``'s own ADR-051
-  decision -- keyed *and* not found in the local listing; the raw
-  ``published :cloud/-cloud`` classification alone is not sufficient, since a
-  locally-listed entry can carry that suffix with no ``remote_host`` stamp
-  and still be served locally) or when ``OLLAMA_BASE_URL`` itself is not
-  loopback (mirroring :func:`agentic_v2.models.model_registry.cost_lane_for`'s
-  own downgrade -- every call already leaves this machine regardless of any
-  cloud classification).
+- onnx -- always ``"local"``: filesystem-scanned, no configurable network
+  endpoint to be wrong about.
+- lmstudio/lemonade/docker-model-runner/foundry-local -- ``"local"`` when
+  their configured host (``LMSTUDIO_HOST``/``LEMONADE_BASE_URL``/
+  ``DOCKER_MODEL_RUNNER_BASE_URL``/``FOUNDRY_LOCAL_BASE_URL``, each
+  defaulting to loopback) is loopback per
+  :func:`agentic_v2.models.model_registry.is_loopback_url`, else ``"free"``
+  -- these all mean "weights on this machine" only when actually pointed at
+  this machine; an operator can point any of them at a remote host.
+- ollama -- more involved still: a model reroutes to ``"free"`` (Ollama
+  Cloud) when it would actually be invoked at ``CLOUD_HOST`` (mirroring
+  ``build_ollama_model``'s own ADR-051 decision -- keyed *and* not found in
+  the local listing; the raw ``:cloud``/``-cloud`` suffix classification
+  alone is not sufficient, since a locally-listed entry can carry that
+  suffix with no ``remote_host`` stamp and still be served locally) or when
+  ``OLLAMA_BASE_URL`` itself is not loopback (same
+  :func:`~agentic_v2.models.model_registry.is_loopback_url` check, via
+  :func:`agentic_v2.models.model_registry.ollama_base_is_loopback`,
+  mirroring :func:`agentic_v2.models.model_registry.cost_lane_for`'s own
+  downgrade for the curated-registry path).
 - every cloud id (including nvidia) -- :func:`agentic_v2.models.model_registry.cost_lane_for`,
   which fails closed to ``"paid"`` for any id not curated in
   ``model_registry.yaml``. This is also where NVIDIA NIM's curated
@@ -206,16 +215,22 @@ def discover_all_models(*, verify: bool = False) -> list[DiscoveredModel]:
         discover_onnx_models,
         resolve_lmstudio_host,
     )
+    from .model_registry import is_loopback_url
 
     lmstudio_catalog = discover_lmstudio_catalog()
     lmstudio_endpoint = resolve_lmstudio_host() if lmstudio_catalog.models else None
+    lmstudio_lane: Literal["local", "free"] = (
+        "local"
+        if lmstudio_endpoint is None or is_loopback_url(lmstudio_endpoint)
+        else "free"
+    )
     for lmstudio_info in lmstudio_catalog.models:
         models.append(
             DiscoveredModel(
                 id=lmstudio_info.id,
                 provider="lmstudio",
                 endpoint=lmstudio_endpoint,
-                cost_lane="local",
+                cost_lane=lmstudio_lane,
                 reachable=True,
                 verified_by="listing",
                 latency_ms=None,
@@ -264,39 +279,51 @@ def discover_all_models(*, verify: bool = False) -> list[DiscoveredModel]:
         discover_lemonade_models,
     )
 
+    lemonade_endpoint = os.environ.get(LEMONADE_ENV, LEMONADE_DEFAULT)
+    lemonade_lane: Literal["local", "free"] = (
+        "local" if is_loopback_url(lemonade_endpoint) else "free"
+    )
     for lemonade_info in discover_lemonade_models():
         models.append(
             DiscoveredModel(
                 id=lemonade_info.id,
                 provider="lemonade",
-                endpoint=os.environ.get(LEMONADE_ENV, LEMONADE_DEFAULT),
-                cost_lane="local",
+                endpoint=lemonade_endpoint,
+                cost_lane=lemonade_lane,
                 reachable=True,
                 verified_by="listing",
                 latency_ms=None,
                 probed_at=probed_at,
             )
         )
+    dmr_endpoint = os.environ.get(DMR_ENV, DMR_DEFAULT)
+    dmr_lane: Literal["local", "free"] = (
+        "local" if is_loopback_url(dmr_endpoint) else "free"
+    )
     for dmr_info in discover_docker_model_runner_models():
         models.append(
             DiscoveredModel(
                 id=dmr_info.id,
                 provider="docker-model-runner",
-                endpoint=os.environ.get(DMR_ENV, DMR_DEFAULT),
-                cost_lane="local",
+                endpoint=dmr_endpoint,
+                cost_lane=dmr_lane,
                 reachable=True,
                 verified_by="listing",
                 latency_ms=None,
                 probed_at=probed_at,
             )
         )
+    foundry_endpoint = os.environ.get(FOUNDRY_ENV, FOUNDRY_DEFAULT)
+    foundry_lane: Literal["local", "free"] = (
+        "local" if is_loopback_url(foundry_endpoint) else "free"
+    )
     for foundry_info in discover_foundry_local_models():
         models.append(
             DiscoveredModel(
                 id=foundry_info.id,
                 provider="foundry-local",
-                endpoint=os.environ.get(FOUNDRY_ENV, FOUNDRY_DEFAULT),
-                cost_lane="local",
+                endpoint=foundry_endpoint,
+                cost_lane=foundry_lane,
                 reachable=True,
                 verified_by="listing",
                 latency_ms=None,

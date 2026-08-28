@@ -167,6 +167,24 @@ def test_ollama_base_is_loopback_false_for_a_remote_host(
     assert mr.ollama_base_is_loopback() is False
 
 
+@pytest.mark.parametrize(
+    ("url", "expected"),
+    [
+        ("http://localhost:1234", True),
+        ("http://127.0.0.1:12434", True),
+        ("http://[::1]:60160", True),
+        ("http://lmstudio-box.internal:1234", False),
+        ("http://192.168.1.50:13305", False),
+        ("https://ollama.com", False),
+    ],
+)
+def test_is_loopback_url(url: str, expected: bool):
+    """The provider-agnostic check every "is this genuinely local" decision
+    across the model layer shares (Ollama, LM Studio, Lemonade, Docker Model
+    Runner, Foundry Local -- ARP-IMPROVEMENTS F2 review)."""
+    assert mr.is_loopback_url(url) is expected
+
+
 def test_cost_lane_for_ollama_downgrades_to_free_for_a_remote_base_url_no_key(
     monkeypatch: pytest.MonkeyPatch,
 ):

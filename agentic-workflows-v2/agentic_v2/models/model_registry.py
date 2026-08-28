@@ -281,25 +281,35 @@ def provider_for(model_id: str) -> str:
 _LOOPBACK_HOSTS = frozenset({"localhost", "127.0.0.1", "::1"})
 
 
-def ollama_base_is_loopback() -> bool:
-    """Whether the configured ``OLLAMA_BASE_URL`` (or its default) is loopback.
+def is_loopback_url(url: str) -> bool:
+    """Whether ``url``'s host is loopback (``localhost``/``127.0.0.1``/``::1``).
 
-    A non-loopback ``OLLAMA_BASE_URL`` means every call to it already leaves
-    this machine over the network to whatever remote daemon the operator
-    configured -- that fails the ``"local"`` cost lane's own definition
-    (weights *on this machine*, no network) regardless of whether
-    ``OLLAMA_API_KEY`` / the ADR-051 cloud-reroute path is involved at all.
-    Public: also used by :mod:`agentic_v2.models.discovery_snapshot` so a
-    live-discovered (uncurated) ``ollama:`` id gets the same downgrade a
-    curated one gets here, not just the registry-backed candidate resolvers.
+    Shared by every "is this genuinely local" check across the model layer
+    (Ollama, LM Studio, Lemonade, Docker Model Runner, Foundry Local -- every
+    provider whose "local" classification rests on a configurable base URL,
+    not a fixed one). A non-loopback host means every call to it already
+    leaves this machine over the network to whatever remote endpoint the
+    operator configured -- that fails the ``"local"`` cost lane's own
+    definition (weights *on this machine*, no network) regardless of what
+    actually runs there.
     """
     from urllib.parse import urlparse
 
+    host = (urlparse(url).hostname or "").lower().strip("[]")
+    return host in _LOOPBACK_HOSTS
+
+
+def ollama_base_is_loopback() -> bool:
+    """Whether the configured ``OLLAMA_BASE_URL`` (or its default) is loopback.
+
+    Thin wrapper over :func:`is_loopback_url` for Ollama's specific env var
+    and default -- kept public because :func:`cost_lane_for`'s ADR-051
+    downgrade and :mod:`agentic_v2.models.discovery_snapshot` both call it
+    directly, and existing tests reference it by name.
+    """
     from .ollama_discovery import DEFAULT_LOCAL_HOST, ENV_BASE_URL
 
-    base = os.environ.get(ENV_BASE_URL, DEFAULT_LOCAL_HOST)
-    host = (urlparse(base).hostname or "").lower().strip("[]")
-    return host in _LOOPBACK_HOSTS
+    return is_loopback_url(os.environ.get(ENV_BASE_URL, DEFAULT_LOCAL_HOST))
 
 
 def cost_lane_for(model_id: str) -> CostLane:
