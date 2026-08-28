@@ -94,12 +94,15 @@ def test_provider_for_known_and_unknown():
 
 
 @pytest.fixture(autouse=True)
-def _no_ambient_ollama_key(monkeypatch: pytest.MonkeyPatch) -> None:
+def _no_ambient_ollama_env(monkeypatch: pytest.MonkeyPatch) -> None:
     """An ambient OLLAMA_API_KEY would make cost_lane_for query the local
-    daemon (ADR-051 downgrade, tested explicitly below) and could silently
-    turn a curated "local" id into "free" depending on what happens to be
-    pulled on whatever machine runs the suite. Keep these tests deterministic."""
+    daemon (ADR-051 downgrade, tested explicitly below), and an ambient
+    non-loopback OLLAMA_BASE_URL would itself downgrade every ollama: id
+    (remote-endpoint check, also tested explicitly below) -- either could
+    silently change these tests' expectations depending on what happens to
+    be configured on whatever machine runs the suite. Keep them deterministic."""
     monkeypatch.delenv("OLLAMA_API_KEY", raising=False)
+    monkeypatch.delenv("OLLAMA_BASE_URL", raising=False)
 
 
 def test_cost_lane_for_curated_local_and_paid():
@@ -141,6 +144,51 @@ def test_cost_lane_for_ollama_stays_local_without_a_key():
     """No OLLAMA_API_KEY means build_ollama_model never reroutes (ADR-051),
     so the curated value is trusted without a local-daemon lookup."""
     assert mr.cost_lane_for("ollama:qwen3-coder:30b") == "local"
+
+
+@pytest.mark.parametrize("host", ["localhost", "127.0.0.1", "[::1]"])
+def test_ollama_base_is_loopback_true_for_loopback_hosts(
+    monkeypatch: pytest.MonkeyPatch, host: str
+):
+    # A bare (unbracketed) IPv6 literal is not valid URL syntax -- [::1] is
+    # the only well-formed way to write it, so that is the only IPv6 case.
+    monkeypatch.setenv("OLLAMA_BASE_URL", f"http://{host}:11434")
+    assert mr._ollama_base_is_loopback() is True
+
+
+def test_ollama_base_is_loopback_defaults_true_when_unset():
+    assert mr._ollama_base_is_loopback() is True
+
+
+def test_ollama_base_is_loopback_false_for_a_remote_host(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://ollama-box.internal:11434")
+    assert mr._ollama_base_is_loopback() is False
+
+
+def test_cost_lane_for_ollama_downgrades_to_free_for_a_remote_base_url_no_key(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """A remote OLLAMA_BASE_URL means every call already leaves this machine
+    -- fails "local"'s own definition regardless of OLLAMA_API_KEY."""
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://ollama-box.internal:11434")
+    assert mr.cost_lane_for("ollama:qwen3-coder:30b") == "free"
+
+
+def test_cost_lane_for_ollama_downgrades_to_free_for_a_remote_base_url_even_keyed(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """The loopback check must win even when OLLAMA_API_KEY is set and the
+    model happens to be listed at that remote host -- is_served_locally()
+    only proves "listed at OLLAMA_BASE_URL", not "on this machine"."""
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://ollama-box.internal:11434")
+    monkeypatch.setenv("OLLAMA_API_KEY", "fake-key-for-test")
+    monkeypatch.setattr(
+        "agentic_v2.models.ollama_discovery.local_model_names",
+        lambda: frozenset({"qwen3-coder:30b"}),  # "found" at the remote host
+    )
+    assert mr.cost_lane_for("ollama:qwen3-coder:30b") == "free"
 
 
 def test_cost_lane_rank_ordering():

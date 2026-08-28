@@ -229,6 +229,31 @@ async def test_model_override_does_not_fall_back_on_failure() -> None:
     assert router.model_stats[override].failure_count == 1
 
 
+async def test_model_override_above_ceiling_never_reaches_the_backend(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """ARP-IMPROVEMENTS F1 follow-up: an explicit ``model=`` bypasses
+    ``router.get_model_for_tier`` entirely (the override contract the two
+    tests above pin), so it previously skipped that method's cost-lane
+    ceiling check too. Must now be rejected before the backend is ever
+    called."""
+    from agentic_v2.models.model_registry import CostLaneCeilingExceededError
+
+    monkeypatch.setenv("AGENTIC_MAX_COST_LANE", "free")
+    chain = ("openai:gpt-4o-mini", "anthropic:claude-3-5-haiku-20241022")
+    router = _router_with(chain, _TIER)
+    backend = _FakeBackend(
+        [{"content": "unreached", "tool_calls": None, "finish_reason": "stop"}]
+    )
+    provider = SmartRouterProvider(router, backend, _TIER)
+
+    override = "anthropic:claude-3-5-haiku-20241022"  # curated paid
+    with pytest.raises(CostLaneCeilingExceededError, match="free"):
+        await provider.complete(_MESSAGES, model=override)
+
+    assert backend.calls == []
+
+
 # ---------------------------------------------------------------------------
 # HTTP error translation -> EK error classes (RetryConfig-recognisable)
 # ---------------------------------------------------------------------------

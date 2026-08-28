@@ -121,6 +121,56 @@ def test_ollama_cloud_flag_maps_to_free_local_maps_to_local(
 
 
 @pytest.mark.unit
+def test_ollama_endpoint_is_local_for_proxied_cloud_model(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A cloud model proxied through a signed-in local daemon (remote_host
+    stamped on the local /api/tags listing) is still invoked at the local
+    endpoint -- the daemon does the proxying, build_ollama_model never talks
+    to CLOUD_HOST directly for it."""
+    monkeypatch.delenv("OLLAMA_BASE_URL", raising=False)
+    monkeypatch.setattr(
+        ollama_discovery,
+        "discover_ollama_models",
+        lambda: [
+            ollama_discovery.OllamaModelInfo(
+                id="ollama:deepseek-v4-flash:0731-cloud",
+                name="deepseek-v4-flash:0731-cloud",
+                cloud=True,
+                remote_host="ollama.com",
+            )
+        ],
+    )
+    result = discover_all_models()
+    assert result[0].endpoint == "http://localhost:11434"
+
+
+@pytest.mark.unit
+def test_ollama_endpoint_is_cloud_host_for_direct_cloud_sweep_model(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A model surfaced only by the direct https://ollama.com/api/tags sweep
+    (no local-proxy remote_host stamp) is invoked at CLOUD_HOST directly --
+    reporting the local endpoint for it would be wrong (ARP-IMPROVEMENTS F2
+    review)."""
+    monkeypatch.delenv("OLLAMA_BASE_URL", raising=False)
+    monkeypatch.setattr(
+        ollama_discovery,
+        "discover_ollama_models",
+        lambda: [
+            ollama_discovery.OllamaModelInfo(
+                id="ollama:gpt-oss:120b-cloud",
+                name="gpt-oss:120b-cloud",
+                cloud=True,
+                remote_host=None,
+            )
+        ],
+    )
+    result = discover_all_models()
+    assert result[0].endpoint == "https://ollama.com"
+
+
+@pytest.mark.unit
 def test_nim_curated_free_endpoint_is_free_uncurated_id_fails_closed_to_paid(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

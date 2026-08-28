@@ -149,16 +149,26 @@ def discover_all_models(*, verify: bool = False) -> list[DiscoveredModel]:
             )
         )
 
-    from .ollama_discovery import DEFAULT_LOCAL_HOST, discover_ollama_models
+    from .ollama_discovery import CLOUD_HOST, DEFAULT_LOCAL_HOST, discover_ollama_models
     from .ollama_discovery import ENV_BASE_URL as OLLAMA_ENV
 
     ollama_endpoint = os.environ.get(OLLAMA_ENV, DEFAULT_LOCAL_HOST)
     for ollama_info in discover_ollama_models():
+        # A model surfaced only by the direct https://ollama.com/api/tags
+        # sweep (no local-proxy remote_host stamp) is invoked at CLOUD_HOST
+        # directly (build_ollama_model); one proxied through a signed-in
+        # local daemon still goes through the configured local endpoint even
+        # though cloud=True (the daemon does the proxying).
+        endpoint = (
+            CLOUD_HOST
+            if ollama_info.cloud and ollama_info.remote_host is None
+            else ollama_endpoint
+        )
         models.append(
             DiscoveredModel(
                 id=ollama_info.id,
                 provider="ollama",
-                endpoint=ollama_endpoint,
+                endpoint=endpoint,
                 cost_lane="free" if ollama_info.cloud else "local",
                 reachable=True,
                 verified_by="listing",
