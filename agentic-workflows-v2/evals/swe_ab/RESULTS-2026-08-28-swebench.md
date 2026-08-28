@@ -1,0 +1,108 @@
+# SWE-fix A/B on SWE-bench Verified — 35 instances
+
+The third independent case set, and the hardest. Same question, same two ARP
+workflows, same free model; verification by the official SWE-bench harness
+running each instance's real FAIL_TO_PASS and PASS_TO_PASS suites.
+
+**Answer: unchanged across all three sets. The direct arm scores higher, the
+difference is not statistically significant, and the review loop costs ~6x per
+case here.**
+
+## Setup
+
+| | |
+|---|---|
+| Instances | 35 — django 19, sympy 6, sphinx 5, scikit-learn 5 |
+| Difficulty | 19 at "15 min - 1 hour", 16 at "<15 min fix" |
+| Retrieval | **oracle** — the model is told which file to fix |
+| Model | `ollama:deepseek-v4-flash:0731-cloud`, both arms, every tier |
+| Concurrency | **4 for both arms** (see the confound section) |
+| Verification | `swebench.harness.run_evaluation`, real tests, in-container |
+| Cost | zero; free endpoint, paid credentials removed from the child env |
+
+Because retrieval is oracle-provided, **these are not leaderboard numbers** and
+must never be quoted as a SWE-bench score. Full SWE-bench also requires finding
+the file, which is a large part of its difficulty.
+
+## Result
+
+| | Arm A (direct) | Arm B (review loop) |
+|---|---|---|
+| Resolved | **24/35 = 68.6%** [52.0-81.4] | 21/35 = 60.0% [43.6-74.4] |
+| Wall clock | **26.1 min** | 62.8 min |
+| Median per case | **23.0 s** | 136.6 s |
+
+Paired over 35 instances: both solved 19, **only A** 5, **only B** 2, neither 9.
+
+- Difference (B - A): **-8.6%**, 95% bootstrap CI **[-22.9%, +5.7%]**
+- McNemar exact **p = 0.4531** on 7 discordant pairs
+
+Not significant. The interval is wide because 35 paired instances with 7
+discordant pairs cannot be anything else.
+
+## Three sets, one answer
+
+| set | n | A | B | B - A | p | B's cost |
+|---|---|---|---|---|---|---|
+| mutations, 1 repo | 50 | 96.0% | 90.0% | -6.0% | 0.25 | 3.5x |
+| mutations, 4 repos | 132 | 94.7% | 90.9% | -3.8% | 0.23 | 3.0x |
+| **SWE-bench Verified** | 35 | 68.6% | 60.0% | -8.6% | 0.45 | **5.9x** |
+
+The SWE-bench set finally has room to discriminate — 68.6% rather than 95% —
+and the answer did not change. Arm A leads on every set, never significantly,
+and Arm B's cost multiple grows as files get larger, because it re-emits the
+whole file twice per instance (draft, then revise).
+
+## Two confounds, both mine, both fixed before these numbers
+
+**Arm B was discarding its own repairs.** In the first SWE-bench run, 6 of 35
+instances came back byte-identical to the original file after all five steps
+ran and diagnosed the bug correctly. `revise_repair` was handed both the draft
+and the untouched `source_code`, with the instruction "if the review raised no
+risks, return the draft unchanged" -- ambiguous about which input to echo, and
+the model echoed the original. Five steps of correct reasoning binned by one
+word. Fixed by removing `source_code` from that step: it cannot echo what it
+cannot see. Arm B went 18 -> 21 resolved, and unchanged-file returns went 6 -> 1.
+
+**Concurrency differed between arms.** Arm A first ran at concurrency 1 and Arm
+B at 4. Both were re-run at 4 before anything above was computed. The same
+mistake as patching an oracle mid-run on the mutation set: changing conditions
+between arms makes the pair incomparable, however good the reason for the change.
+
+## What the failures look like now
+
+| outcome | A | B |
+|---|---|---|
+| resolved | 24 | 21 |
+| harness ran, not resolved | 7 | 12 |
+| returned file unchanged | 1 | 1 |
+| other sanity reject | 3 | 1 |
+
+Arm B produces fewer malformed answers (1 vs 3 sanity rejects) but more
+confident wrong ones (12 vs 7 unresolved). That is a coherent picture of what
+the review loop does: it cleans up output quality and does not improve
+diagnosis.
+
+## Honest limits
+
+- **35 instances, 7 discordant pairs.** Detecting an 8.6-point difference needs
+  roughly 200 paired instances at 80% power. This set cannot resolve it, and no
+  amount of re-reading the point estimate changes that.
+- **One model, one attempt.** `attempts=1`; pass@1 hides per-case sampling noise.
+- **Oracle retrieval.** Not a leaderboard number.
+- **django is 54% of the set** and the most contaminated Python repo in any
+  training corpus. The per-repo rates (sympy 83%, sphinx 80%, django 68%,
+  sklearn 60% in the first run) do not obviously track contamination, but the
+  set is too small to say much.
+
+## Recommendation
+
+1. `swe_fix_direct` remains the default. Three sets, no significant loss, a
+   third to a sixth of the cost.
+2. The review loop's value proposition is now specific enough to test directly:
+   it improves *output discipline*, not *diagnosis*. If that is what you want,
+   a cheaper output-validation step would buy the same thing without four extra
+   model calls.
+3. To settle the accuracy question properly needs ~200 paired instances. At
+   these speeds (concurrency 4) that is roughly 5 hours per arm -- feasible, and
+   the only way the interval narrows enough to matter.

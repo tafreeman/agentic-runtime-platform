@@ -119,13 +119,20 @@ steps:
     agent: tier2_coder
     tools: []
     description: >-
-      Return the FINAL complete contents of the file, resolving every risk the
-      review raised. If it raised none, return the draft unchanged.
+      Start from DRAFT -- the already-repaired file -- and return its complete
+      contents, applying any fix the review asked for. If the review raised no
+      risks, return DRAFT exactly as given. DRAFT already contains the repair;
+      returning anything that still has the original defect discards it.
     depends_on: [regression_review]
+    # `source_code` is deliberately NOT an input here. When it was, this step
+    # echoed the original file instead of the draft on 6 of 35 SWE-bench
+    # instances -- five steps of correct diagnosis thrown away at the last one,
+    # because "return the draft unchanged" is ambiguous when the untouched
+    # original is sitting in the context too. The step cannot echo what it
+    # cannot see.
     inputs:
       draft: ${steps.draft_repair.outputs.patched_source}
       regression_risks: ${steps.regression_review.outputs.regression_risks}
-      source_code: ${inputs.source_code}
       file_path: ${inputs.code_file}
     outputs:
       patched_source: final_file_contents
