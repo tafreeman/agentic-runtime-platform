@@ -153,18 +153,18 @@ def test_ollama_base_is_loopback_true_for_loopback_hosts(
     # A bare (unbracketed) IPv6 literal is not valid URL syntax -- [::1] is
     # the only well-formed way to write it, so that is the only IPv6 case.
     monkeypatch.setenv("OLLAMA_BASE_URL", f"http://{host}:11434")
-    assert mr._ollama_base_is_loopback() is True
+    assert mr.ollama_base_is_loopback() is True
 
 
 def test_ollama_base_is_loopback_defaults_true_when_unset():
-    assert mr._ollama_base_is_loopback() is True
+    assert mr.ollama_base_is_loopback() is True
 
 
 def test_ollama_base_is_loopback_false_for_a_remote_host(
     monkeypatch: pytest.MonkeyPatch,
 ):
     monkeypatch.setenv("OLLAMA_BASE_URL", "http://ollama-box.internal:11434")
-    assert mr._ollama_base_is_loopback() is False
+    assert mr.ollama_base_is_loopback() is False
 
 
 def test_cost_lane_for_ollama_downgrades_to_free_for_a_remote_base_url_no_key(

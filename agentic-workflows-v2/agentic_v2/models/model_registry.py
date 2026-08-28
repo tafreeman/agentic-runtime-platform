@@ -281,7 +281,7 @@ def provider_for(model_id: str) -> str:
 _LOOPBACK_HOSTS = frozenset({"localhost", "127.0.0.1", "::1"})
 
 
-def _ollama_base_is_loopback() -> bool:
+def ollama_base_is_loopback() -> bool:
     """Whether the configured ``OLLAMA_BASE_URL`` (or its default) is loopback.
 
     A non-loopback ``OLLAMA_BASE_URL`` means every call to it already leaves
@@ -289,6 +289,9 @@ def _ollama_base_is_loopback() -> bool:
     configured -- that fails the ``"local"`` cost lane's own definition
     (weights *on this machine*, no network) regardless of whether
     ``OLLAMA_API_KEY`` / the ADR-051 cloud-reroute path is involved at all.
+    Public: also used by :mod:`agentic_v2.models.discovery_snapshot` so a
+    live-discovered (uncurated) ``ollama:`` id gets the same downgrade a
+    curated one gets here, not just the registry-backed candidate resolvers.
     """
     from urllib.parse import urlparse
 
@@ -314,7 +317,7 @@ def cost_lane_for(model_id: str) -> CostLane:
 
     - ``OLLAMA_BASE_URL`` is configured to a non-loopback host -- every call
       already leaves this machine, key or not (see
-      :func:`_ollama_base_is_loopback`).
+      :func:`ollama_base_is_loopback`).
     - ``OLLAMA_API_KEY`` is set and the model is not pulled on the local
       daemon: :func:`agentic_v2.langchain.model_builders.build_ollama_model`
       reroutes exactly that case to the account-bound ``ollama.com`` cloud
@@ -331,7 +334,7 @@ def cost_lane_for(model_id: str) -> CostLane:
         else entry.cost_lane
     )
     if lane == "local" and model_id.startswith("ollama:"):
-        if not _ollama_base_is_loopback():
+        if not ollama_base_is_loopback():
             return "free"
         if os.environ.get("OLLAMA_API_KEY"):
             from .ollama_discovery import is_served_locally
