@@ -347,6 +347,75 @@ class TestRunWithFallback:
                 on_error=lambda m, e: None,
             )
 
+    @pytest.mark.asyncio
+    async def test_explicit_model_bypasses_router_but_not_the_ceiling(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """ARP-IMPROVEMENTS F1 follow-up: an explicit ``model`` never goes
+        through ``router.get_model_for_tier`` (the override contract this
+        function preserves), so it previously skipped that method's
+        cost-lane ceiling check entirely. Must now be rejected up front."""
+        from agentic_v2.models.model_registry import CostLaneCeilingExceededError
+
+        monkeypatch.setenv("AGENTIC_MAX_COST_LANE", "free")
+        router = SmartModelRouter()
+        router.get_model_for_tier = MagicMock(
+            side_effect=AssertionError("router must not be consulted for an explicit model")
+        )
+
+        with pytest.raises(CostLaneCeilingExceededError, match="free"):
+            await run_with_fallback(
+                router,
+                tier=ModelTier.TIER_2,
+                model="anthropic:claude-haiku-4-5-20251001",  # curated paid
+                max_retries=1,
+                pre_attempt=lambda m: None,
+                attempt=lambda m: ...,  # type: ignore[arg-type]
+                on_error=lambda m, e: None,
+            )
+
+    @pytest.mark.asyncio
+    async def test_explicit_model_within_ceiling_proceeds(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("AGENTIC_MAX_COST_LANE", "free")
+        monkeypatch.delenv("OLLAMA_API_KEY", raising=False)
+        monkeypatch.delenv("OLLAMA_BASE_URL", raising=False)
+        router = SmartModelRouter()
+
+        async def attempt(m: str) -> str:
+            return f"ok-{m}"
+
+        result = await run_with_fallback(
+            router,
+            tier=ModelTier.TIER_2,
+            model="ollama:gemma4:31b",  # curated local
+            max_retries=1,
+            pre_attempt=lambda m: None,
+            attempt=attempt,
+            on_error=lambda m, e: None,
+        )
+        assert result == "ok-ollama:gemma4:31b"
+
+    @pytest.mark.asyncio
+    async def test_explicit_model_unset_ceiling_unaffected(self) -> None:
+        """Default (unset) ceiling -- unchanged behavior, no validation added."""
+        router = SmartModelRouter()
+
+        async def attempt(m: str) -> str:
+            return f"ok-{m}"
+
+        result = await run_with_fallback(
+            router,
+            tier=ModelTier.TIER_2,
+            model="anthropic:claude-haiku-4-5-20251001",
+            max_retries=1,
+            pre_attempt=lambda m: None,
+            attempt=attempt,
+            on_error=lambda m, e: None,
+        )
+        assert result == "ok-anthropic:claude-haiku-4-5-20251001"
+
 
 # ---------------------------------------------------------------------------
 # sanitization_dispatch

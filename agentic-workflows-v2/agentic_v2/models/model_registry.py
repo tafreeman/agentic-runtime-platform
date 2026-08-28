@@ -278,6 +278,27 @@ def provider_for(model_id: str) -> str:
     return provider_prefix(model_id)
 
 
+_LOOPBACK_HOSTS = frozenset({"localhost", "127.0.0.1", "::1"})
+
+
+def _ollama_base_is_loopback() -> bool:
+    """Whether the configured ``OLLAMA_BASE_URL`` (or its default) is loopback.
+
+    A non-loopback ``OLLAMA_BASE_URL`` means every call to it already leaves
+    this machine over the network to whatever remote daemon the operator
+    configured -- that fails the ``"local"`` cost lane's own definition
+    (weights *on this machine*, no network) regardless of whether
+    ``OLLAMA_API_KEY`` / the ADR-051 cloud-reroute path is involved at all.
+    """
+    from urllib.parse import urlparse
+
+    from .ollama_discovery import DEFAULT_LOCAL_HOST, ENV_BASE_URL
+
+    base = os.environ.get(ENV_BASE_URL, DEFAULT_LOCAL_HOST)
+    host = (urlparse(base).hostname or "").lower().strip("[]")
+    return host in _LOOPBACK_HOSTS
+
+
 def cost_lane_for(model_id: str) -> CostLane:
     """Return the cost lane for ``model_id``, failing closed to ``"paid"``.
 
@@ -289,14 +310,19 @@ def cost_lane_for(model_id: str) -> CostLane:
     filters against for ``AGENTIC_MAX_COST_LANE``.
 
     Curated ``"local"`` on an ``ollama:`` id is downgraded to ``"free"`` when
-    ``OLLAMA_API_KEY`` is set and the model is not pulled on the local
-    daemon: :func:`agentic_v2.langchain.model_builders.build_ollama_model`
-    reroutes exactly that case to the account-bound ``ollama.com`` cloud
-    endpoint (ADR-051), so a static ``"local"`` curation would otherwise be
-    wrong precisely when it matters most -- under an
-    ``AGENTIC_MAX_COST_LANE=local`` ceiling. Without a key, or for any
-    non-``ollama:`` provider, the curated value is returned as-is (no extra
-    lookup).
+    either is true:
+
+    - ``OLLAMA_BASE_URL`` is configured to a non-loopback host -- every call
+      already leaves this machine, key or not (see
+      :func:`_ollama_base_is_loopback`).
+    - ``OLLAMA_API_KEY`` is set and the model is not pulled on the local
+      daemon: :func:`agentic_v2.langchain.model_builders.build_ollama_model`
+      reroutes exactly that case to the account-bound ``ollama.com`` cloud
+      endpoint (ADR-051).
+
+    Both would otherwise make a static ``"local"`` curation wrong precisely
+    when it matters most -- under an ``AGENTIC_MAX_COST_LANE=local``
+    ceiling. Neither check runs for a non-``ollama:`` provider.
     """
     entry = load_registry().by_id().get(model_id)
     lane = (
@@ -304,13 +330,14 @@ def cost_lane_for(model_id: str) -> CostLane:
         if entry is None or entry.cost_lane is None
         else entry.cost_lane
     )
-    if lane == "local" and model_id.startswith("ollama:") and os.environ.get(
-        "OLLAMA_API_KEY"
-    ):
-        from .ollama_discovery import is_served_locally
-
-        if not is_served_locally(model_id.removeprefix("ollama:")):
+    if lane == "local" and model_id.startswith("ollama:"):
+        if not _ollama_base_is_loopback():
             return "free"
+        if os.environ.get("OLLAMA_API_KEY"):
+            from .ollama_discovery import is_served_locally
+
+            if not is_served_locally(model_id.removeprefix("ollama:")):
+                return "free"
     return lane
 
 
@@ -382,6 +409,29 @@ def apply_cost_lane_ceiling(
             "refusing to fall through to an unfiltered chain."
         )
     return within_ceiling
+
+
+def enforce_cost_lane_ceiling(model_id: str, *, ceiling: CostLane | None = None) -> None:
+    """Raise :class:`CostLaneCeilingExceededError` if ``model_id`` is above the ceiling.
+
+    For call sites where a single explicit model is used exactly as given,
+    never substituted -- e.g. ``fallback_selector.run_with_fallback``'s
+    ``model`` param and ``EKProvider.complete_chat``'s ``model`` kwarg both
+    mean "attempt exactly this model, no re-selection" (an override contract
+    those call sites deliberately preserve). :func:`apply_cost_lane_ceiling`
+    cannot help there -- it filters a *candidate list*, and an explicit
+    override is never resolved through one, so it silently bypassed the
+    ceiling entirely before this existed. A ``"paid"`` ceiling (unset,
+    default) is a no-op, matching every other ceiling call site.
+    """
+    resolved = ceiling if ceiling is not None else max_cost_lane_ceiling()
+    if resolved != "paid" and not is_within_cost_lane(model_id, resolved):
+        raise CostLaneCeilingExceededError(
+            f"AGENTIC_MAX_COST_LANE={resolved!r} refuses explicit model "
+            f"{model_id!r}: its cost lane ({cost_lane_for(model_id)!r}) is "
+            "above the ceiling and this call site does not substitute "
+            "models."
+        )
 
 
 def price_for(model_id: str) -> tuple[float | None, float | None]:
