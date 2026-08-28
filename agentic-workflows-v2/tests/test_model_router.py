@@ -322,6 +322,79 @@ class TestModelRouter:
         assert router1 is router2
 
 
+class TestModelRouterCostLaneCeiling:
+    """AGENTIC_MAX_COST_LANE enforcement in ModelRouter (ARP-IMPROVEMENTS F1).
+
+    The native engine's ModelRouter previously never consulted the cost-lane
+    ceiling at all -- only the LangChain adapter's
+    get_model_candidates_for_tier did -- so AGENTIC_MAX_COST_LANE=free could
+    still select a paid model when a workflow used the native adapter.
+    Registers real curated ids (anthropic:... is "paid", ollama:gemma4:31b
+    is "local" -- see model_registry.yaml) so cost_lane_for resolves
+    meaningfully without needing to patch the registry.
+    """
+
+    _PAID = "anthropic:claude-haiku-4-5-20251001"
+    _LOCAL = "ollama:gemma4:31b"
+
+    def test_get_model_for_tier_skips_above_ceiling(
+        self, monkeypatch: pytest.MonkeyPatch
+    ):
+        monkeypatch.setenv("AGENTIC_MAX_COST_LANE", "free")
+        router = ModelRouter()
+        router.register_chain(
+            ModelTier.TIER_2, FallbackChain((self._PAID, self._LOCAL), "test")
+        )
+        assert router.get_model_for_tier(ModelTier.TIER_2) == self._LOCAL
+
+    def test_get_model_for_tier_raises_when_ceiling_exhausts_the_chain(
+        self, monkeypatch: pytest.MonkeyPatch
+    ):
+        from agentic_v2.models.model_registry import CostLaneCeilingExceededError
+
+        monkeypatch.setenv("AGENTIC_MAX_COST_LANE", "free")
+        router = ModelRouter()
+        router.register_chain(ModelTier.TIER_2, FallbackChain((self._PAID,), "test"))
+        with pytest.raises(CostLaneCeilingExceededError, match="free"):
+            router.get_model_for_tier(ModelTier.TIER_2)
+
+    def test_get_model_for_tier_unset_ceiling_unaffected(self):
+        """Default (unset) ceiling -- unchanged behavior, paid models reachable."""
+        router = ModelRouter()
+        router.register_chain(
+            ModelTier.TIER_2, FallbackChain((self._PAID, self._LOCAL), "test")
+        )
+        assert router.get_model_for_tier(ModelTier.TIER_2) == self._PAID
+
+    def test_get_fallback_for_model_skips_above_ceiling(
+        self, monkeypatch: pytest.MonkeyPatch
+    ):
+        monkeypatch.setenv("AGENTIC_MAX_COST_LANE", "free")
+        router = ModelRouter()
+        router.register_chain(
+            ModelTier.TIER_2,
+            FallbackChain((self._LOCAL, self._PAID, "ollama:qwen3-coder:30b"), "test"),
+        )
+        # The paid model in between is skipped; the next local one is returned.
+        assert (
+            router.get_fallback_for_model(self._LOCAL, ModelTier.TIER_2)
+            == "ollama:qwen3-coder:30b"
+        )
+
+    def test_get_fallback_for_model_raises_when_ceiling_exhausts_the_chain(
+        self, monkeypatch: pytest.MonkeyPatch
+    ):
+        from agentic_v2.models.model_registry import CostLaneCeilingExceededError
+
+        monkeypatch.setenv("AGENTIC_MAX_COST_LANE", "free")
+        router = ModelRouter()
+        router.register_chain(
+            ModelTier.TIER_2, FallbackChain((self._LOCAL, self._PAID), "test")
+        )
+        with pytest.raises(CostLaneCeilingExceededError, match="free"):
+            router.get_fallback_for_model(self._LOCAL, ModelTier.TIER_2)
+
+
 # ============================================================================
 # SmartModelRouter Tests
 # ============================================================================
@@ -479,6 +552,66 @@ class TestSmartModelRouter:
         assert model3_entry is not None
         assert model3_entry[1] == 1.0  # 100% success rate
         assert chain_with_health[0][1] == 1.0  # 100% success rate
+
+
+class TestSmartModelRouterCostLaneCeiling:
+    """AGENTIC_MAX_COST_LANE enforcement in SmartModelRouter (ARP-IMPROVEMENTS F1).
+
+    _find_candidates_in_tier excludes above-ceiling models silently (same
+    treatment as its existing quarantine/availability/circuit/cooldown/
+    max_cost exclusions) rather than raising -- it is also used per-tier
+    during multi-tier cross-tier search, where an empty single-tier result
+    is expected and must not abort the sweep. get_model_for_tier's existing
+    NoProviderConfiguredError already covers "nothing anywhere," ceiling-
+    excluded or not.
+    """
+
+    _PAID = "anthropic:claude-haiku-4-5-20251001"
+    _LOCAL = "ollama:gemma4:31b"
+
+    def setup_method(self):
+        reset_smart_router()
+
+    def test_excludes_above_ceiling_candidates(self, monkeypatch: pytest.MonkeyPatch):
+        monkeypatch.setenv("AGENTIC_MAX_COST_LANE", "free")
+        router = SmartModelRouter()
+        router.register_chain(
+            ModelTier.TIER_2, FallbackChain((self._PAID, self._LOCAL), "test")
+        )
+        candidates = router._find_candidates_in_tier(ModelTier.TIER_2)
+        assert [m for m, _stats in candidates] == [self._LOCAL]
+
+    def test_unset_ceiling_unaffected(self):
+        router = SmartModelRouter()
+        router.register_chain(
+            ModelTier.TIER_2, FallbackChain((self._PAID, self._LOCAL), "test")
+        )
+        candidates = router._find_candidates_in_tier(ModelTier.TIER_2)
+        assert [m for m, _stats in candidates] == [self._PAID, self._LOCAL]
+
+    def test_get_model_for_tier_does_not_select_a_paid_model_under_free_ceiling(
+        self, monkeypatch: pytest.MonkeyPatch
+    ):
+        """End-to-end through the public entry point, not just the helper."""
+        monkeypatch.setenv("AGENTIC_MAX_COST_LANE", "free")
+        router = SmartModelRouter()
+        router.register_chain(
+            ModelTier.TIER_2, FallbackChain((self._PAID, self._LOCAL), "test")
+        )
+        assert router.get_model_for_tier(ModelTier.TIER_2) == self._LOCAL
+
+    def test_get_model_for_tier_single_tier_miss_returns_none_not_a_paid_model(
+        self, monkeypatch: pytest.MonkeyPatch
+    ):
+        """allow_cross_tier=False returns None on a miss (documented backward-
+        compat contract) -- the point here is it never returns the paid
+        candidate, not which exact "nothing found" signal is used."""
+        monkeypatch.setenv("AGENTIC_MAX_COST_LANE", "free")
+        router = SmartModelRouter()
+        router.register_chain(ModelTier.TIER_2, FallbackChain((self._PAID,), "test"))
+        assert (
+            router.get_model_for_tier(ModelTier.TIER_2, allow_cross_tier=False) is None
+        )
 
 
 # ============================================================================
