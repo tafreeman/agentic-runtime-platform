@@ -40,8 +40,18 @@ from pydantic import BaseModel, ConfigDict, ValidationError
 logger = logging.getLogger(__name__)
 
 ModelStatus = Literal["active", "deprecated", "quarantined"]
+CostLane = Literal["local", "free", "paid"]
 
 _TOKENS_PER_MTOK = 1_000_000
+
+# Fail-closed default: an uncurated model is routed as if it were the most
+# expensive lane, never silently treated as free (ARP-IMPROVEMENTS F1).
+_DEFAULT_COST_LANE: CostLane = "paid"
+
+# Ordinal cost ranking, cheapest first. Used both to enforce a ceiling (drop
+# any candidate ranked above it) and to detect a failover "lane crossing"
+# (attempted model's rank increases) worth a warning.
+_LANE_RANK: dict[CostLane, int] = {"local": 0, "free": 1, "paid": 2}
 
 # Default ultimate fallback if the registry is missing/empty (mirrors the
 # registry's special.tier_ultimate_fallback; must be a model actually kept
@@ -68,6 +78,7 @@ class RegisteredModel(BaseModel):
     tiers: tuple[int, ...] = ()
     capability: str = "balanced"
     status: ModelStatus = "active"
+    cost_lane: CostLane | None = None
     price_in: float | None = None
     price_out: float | None = None
     context_window: int | None = None
@@ -266,6 +277,30 @@ def provider_for(model_id: str) -> str:
     return provider_prefix(model_id)
 
 
+def cost_lane_for(model_id: str) -> CostLane:
+    """Return the curated cost lane for ``model_id``, failing closed to ``"paid"``.
+
+    A model absent from the registry, or present but with no curated
+    ``cost_lane``, is treated as ``"paid"`` -- never silently assumed free.
+    This is the single source of truth :func:`get_model_candidates_for_tier`
+    (``langchain/models.py``) filters against for ``AGENTIC_MAX_COST_LANE``.
+    """
+    entry = load_registry().by_id().get(model_id)
+    if entry is None or entry.cost_lane is None:
+        return _DEFAULT_COST_LANE
+    return entry.cost_lane
+
+
+def cost_lane_rank(lane: CostLane) -> int:
+    """Return the ordinal rank of ``lane`` (0=local, 1=free, 2=paid)."""
+    return _LANE_RANK[lane]
+
+
+def is_within_cost_lane(model_id: str, ceiling: CostLane) -> bool:
+    """Return ``True`` when ``model_id``'s cost lane is at or under ``ceiling``."""
+    return _LANE_RANK[cost_lane_for(model_id)] <= _LANE_RANK[ceiling]
+
+
 def price_for(model_id: str) -> tuple[float | None, float | None]:
     """Return ``(price_in, price_out)`` per Mtok for ``model_id``.
 
@@ -351,3 +386,12 @@ def clear_quarantine() -> None:
 
 class RegistryDriftError(RuntimeError):
     """Raised by drift detection in strict mode when a pinned id is retired."""
+
+
+class CostLaneCeilingExceededError(RuntimeError):
+    """Raised when an ``AGENTIC_MAX_COST_LANE`` ceiling filters every candidate.
+
+    Fail-closed (ARP-IMPROVEMENTS F1): a caller that asks for e.g. ``"free"``
+    and gets an empty candidate list must see this, never a silent empty list
+    or a silent fall-through to an unfiltered (potentially paid) chain.
+    """
