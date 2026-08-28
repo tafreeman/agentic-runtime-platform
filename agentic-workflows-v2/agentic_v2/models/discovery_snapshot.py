@@ -13,9 +13,16 @@ returns one list of :class:`DiscoveredModel` covering all seven.
 Each record's ``cost_lane`` is curated, never guessed:
 
 - local/lmstudio/onnx/lemonade/docker-model-runner/foundry-local -- ``"local"``
-  (weights on this machine, no account, no charge). Ollama models published
-  with the ``-cloud`` suffix or a proxied ``remote_host`` are ``"free"``
-  instead (Ollama Cloud -- account-bound, no charge).
+  (weights on this machine, no account, no charge). Ollama is more involved:
+  a model reroutes to ``"free"`` (Ollama Cloud) when it would actually be
+  invoked at ``CLOUD_HOST`` (mirroring ``build_ollama_model``'s own ADR-051
+  decision -- keyed *and* not found in the local listing; the raw
+  ``published :cloud/-cloud`` classification alone is not sufficient, since a
+  locally-listed entry can carry that suffix with no ``remote_host`` stamp
+  and still be served locally) or when ``OLLAMA_BASE_URL`` itself is not
+  loopback (mirroring :func:`agentic_v2.models.model_registry.cost_lane_for`'s
+  own downgrade -- every call already leaves this machine regardless of any
+  cloud classification).
 - every cloud id (including nvidia) -- :func:`agentic_v2.models.model_registry.cost_lane_for`,
   which fails closed to ``"paid"`` for any id not curated in
   ``model_registry.yaml``. This is also where NVIDIA NIM's curated
@@ -149,27 +156,44 @@ def discover_all_models(*, verify: bool = False) -> list[DiscoveredModel]:
             )
         )
 
-    from .ollama_discovery import CLOUD_HOST, DEFAULT_LOCAL_HOST, discover_ollama_models
+    from .model_registry import ollama_base_is_loopback
+    from .ollama_discovery import (
+        CLOUD_HOST,
+        DEFAULT_LOCAL_HOST,
+        ENV_API_KEY,
+        discover_ollama_models,
+        is_served_locally,
+    )
     from .ollama_discovery import ENV_BASE_URL as OLLAMA_ENV
 
     ollama_endpoint = os.environ.get(OLLAMA_ENV, DEFAULT_LOCAL_HOST)
+    ollama_keyed = bool(os.environ.get(ENV_API_KEY))
+    ollama_loopback = ollama_base_is_loopback()
     for ollama_info in discover_ollama_models():
-        # A model surfaced only by the direct https://ollama.com/api/tags
-        # sweep (no local-proxy remote_host stamp) is invoked at CLOUD_HOST
-        # directly (build_ollama_model); one proxied through a signed-in
-        # local daemon still goes through the configured local endpoint even
-        # though cloud=True (the daemon does the proxying).
-        endpoint = (
-            CLOUD_HOST
-            if ollama_info.cloud and ollama_info.remote_host is None
-            else ollama_endpoint
-        )
+        # Mirrors build_ollama_model's own reroute decision exactly
+        # (ADR-051): cloud=True alone does NOT mean "reached via CLOUD_HOST"
+        # -- _is_cloud() also classifies a LOCALLY-listed entry as cloud via
+        # a `:cloud`/`-cloud` name-suffix fallback when no remote_host stamp
+        # is present, and that entry is still served through the local
+        # endpoint (it came from the local /api/tags listing). Only a keyed
+        # request for a model NOT found there actually reroutes.
+        reroutes_to_cloud = ollama_keyed and not is_served_locally(ollama_info.name)
+        endpoint = CLOUD_HOST if reroutes_to_cloud else ollama_endpoint
+        # Mirrors cost_lane_for's downgrade: a non-loopback OLLAMA_BASE_URL
+        # means every call already leaves this machine regardless of the
+        # cloud/local classification above (a live-discovered id has no
+        # registry entry to route through cost_lane_for itself, so this
+        # reimplements its same two checks for consistency).
+        if reroutes_to_cloud or not ollama_loopback:
+            cost_lane: Literal["local", "free", "paid"] = "free"
+        else:
+            cost_lane = "free" if ollama_info.cloud else "local"
         models.append(
             DiscoveredModel(
                 id=ollama_info.id,
                 provider="ollama",
                 endpoint=endpoint,
-                cost_lane="free" if ollama_info.cloud else "local",
+                cost_lane=cost_lane,
                 reachable=True,
                 verified_by="listing",
                 latency_ms=None,

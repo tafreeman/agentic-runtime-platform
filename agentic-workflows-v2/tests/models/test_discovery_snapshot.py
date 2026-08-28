@@ -24,7 +24,16 @@ from agentic_v2.models.discovery_snapshot import discover_all_models
 
 @pytest.fixture(autouse=True)
 def _stub_all_sources_empty(monkeypatch: pytest.MonkeyPatch):
-    """Default every source to empty so each test only wires what it needs."""
+    """Default every source to empty so each test only wires what it needs.
+
+    Also clears OLLAMA_API_KEY / OLLAMA_BASE_URL: discover_all_models's
+    Ollama handling reads both directly (mirroring build_ollama_model's and
+    cost_lane_for's own decisions), and an ambient key or non-loopback base
+    URL on whatever machine runs the suite would silently change which
+    branch a test actually exercises.
+    """
+    monkeypatch.delenv("OLLAMA_API_KEY", raising=False)
+    monkeypatch.delenv("OLLAMA_BASE_URL", raising=False)
     monkeypatch.setattr(cloud_discovery, "discover_cloud_models", lambda: [])
     monkeypatch.setattr(ollama_discovery, "discover_ollama_models", lambda: [])
     monkeypatch.setattr(
@@ -95,14 +104,23 @@ def test_local_lane_providers_are_all_local(
     assert all(m.reachable is True for m in result)
 
 
+def _stub_ollama(
+    monkeypatch: pytest.MonkeyPatch, infos: list[ollama_discovery.OllamaModelInfo]
+) -> None:
+    monkeypatch.setattr(ollama_discovery, "discover_ollama_models", lambda: infos)
+
+
 @pytest.mark.unit
-def test_ollama_cloud_flag_maps_to_free_local_maps_to_local(
+def test_ollama_no_key_stays_local_regardless_of_cloud_classification(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(
-        ollama_discovery,
-        "discover_ollama_models",
-        lambda: [
+    """Without OLLAMA_API_KEY, build_ollama_model never reroutes (ADR-051) --
+    so even a cloud=True record (e.g. a locally-listed :cloud-suffixed name
+    with no remote_host stamp) stays at the local endpoint and "free" lane,
+    not "paid"/CLOUD_HOST."""
+    _stub_ollama(
+        monkeypatch,
+        [
             ollama_discovery.OllamaModelInfo(
                 id="ollama:gemma4:31b", name="gemma4:31b", cloud=False
             ),
@@ -110,6 +128,7 @@ def test_ollama_cloud_flag_maps_to_free_local_maps_to_local(
                 id="ollama:deepseek-v4-flash:0731-cloud",
                 name="deepseek-v4-flash:0731-cloud",
                 cloud=True,
+                remote_host=None,  # suffix-classified, not proxy-stamped
             ),
         ],
     )
@@ -117,47 +136,59 @@ def test_ollama_cloud_flag_maps_to_free_local_maps_to_local(
     result = discover_all_models()
     by_id = {m.id: m for m in result}
     assert by_id["ollama:gemma4:31b"].cost_lane == "local"
+    assert by_id["ollama:gemma4:31b"].endpoint == "http://localhost:11434"
     assert by_id["ollama:deepseek-v4-flash:0731-cloud"].cost_lane == "free"
+    assert by_id["ollama:deepseek-v4-flash:0731-cloud"].endpoint == (
+        "http://localhost:11434"
+    )
 
 
 @pytest.mark.unit
-def test_ollama_endpoint_is_local_for_proxied_cloud_model(
+def test_ollama_keyed_and_locally_listed_stays_local_despite_cloud_flag(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """A cloud model proxied through a signed-in local daemon (remote_host
-    stamped on the local /api/tags listing) is still invoked at the local
-    endpoint -- the daemon does the proxying, build_ollama_model never talks
-    to CLOUD_HOST directly for it."""
-    monkeypatch.delenv("OLLAMA_BASE_URL", raising=False)
+    """The bug this test guards: cloud=True does not by itself mean "reached
+    via CLOUD_HOST" -- _is_cloud() also classifies a LOCALLY-listed entry as
+    cloud via its :cloud/-cloud name suffix alone, with no remote_host stamp.
+    is_served_locally() (the same authority build_ollama_model itself
+    consults) is what actually decides the endpoint, not the cloud flag."""
+    monkeypatch.setenv("OLLAMA_API_KEY", "fake-key-for-test")
     monkeypatch.setattr(
         ollama_discovery,
-        "discover_ollama_models",
-        lambda: [
+        "local_model_names",
+        lambda: frozenset({"deepseek-v4-flash:0731-cloud"}),
+    )
+    _stub_ollama(
+        monkeypatch,
+        [
             ollama_discovery.OllamaModelInfo(
                 id="ollama:deepseek-v4-flash:0731-cloud",
                 name="deepseek-v4-flash:0731-cloud",
                 cloud=True,
-                remote_host="ollama.com",
+                remote_host=None,
             )
         ],
     )
+
     result = discover_all_models()
     assert result[0].endpoint == "http://localhost:11434"
+    assert result[0].cost_lane == "free"  # still free -- it IS a cloud model
 
 
 @pytest.mark.unit
-def test_ollama_endpoint_is_cloud_host_for_direct_cloud_sweep_model(
+def test_ollama_keyed_and_not_locally_listed_reroutes_to_cloud_host(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """A model surfaced only by the direct https://ollama.com/api/tags sweep
-    (no local-proxy remote_host stamp) is invoked at CLOUD_HOST directly --
-    reporting the local endpoint for it would be wrong (ARP-IMPROVEMENTS F2
-    review)."""
-    monkeypatch.delenv("OLLAMA_BASE_URL", raising=False)
+    """A model genuinely absent from the local listing, with a key set, is
+    the one case build_ollama_model actually reroutes -- endpoint must be
+    CLOUD_HOST, not the local/configured one."""
+    monkeypatch.setenv("OLLAMA_API_KEY", "fake-key-for-test")
     monkeypatch.setattr(
-        ollama_discovery,
-        "discover_ollama_models",
-        lambda: [
+        ollama_discovery, "local_model_names", lambda: frozenset()
+    )
+    _stub_ollama(
+        monkeypatch,
+        [
             ollama_discovery.OllamaModelInfo(
                 id="ollama:gpt-oss:120b-cloud",
                 name="gpt-oss:120b-cloud",
@@ -166,8 +197,32 @@ def test_ollama_endpoint_is_cloud_host_for_direct_cloud_sweep_model(
             )
         ],
     )
+
     result = discover_all_models()
     assert result[0].endpoint == "https://ollama.com"
+    assert result[0].cost_lane == "free"
+
+
+@pytest.mark.unit
+def test_ollama_remote_base_url_downgrades_lane_even_without_cloud_markers(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A non-loopback OLLAMA_BASE_URL means every call already leaves this
+    machine, regardless of key presence or the cloud classification --
+    matching cost_lane_for's own downgrade for the curated-registry path."""
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://ollama-box.internal:11434")
+    _stub_ollama(
+        monkeypatch,
+        [
+            ollama_discovery.OllamaModelInfo(
+                id="ollama:qwen3-coder:30b", name="qwen3-coder:30b", cloud=False
+            )
+        ],
+    )
+
+    result = discover_all_models()
+    assert result[0].cost_lane == "free"
+    assert result[0].endpoint == "http://ollama-box.internal:11434"
 
 
 @pytest.mark.unit
