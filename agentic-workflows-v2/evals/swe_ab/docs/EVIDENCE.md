@@ -1,5 +1,7 @@
 # Evidence log — ARP SWE-fix A/B
 
+[Kit](../README.md) · [Docs](README.md) — **findings**, append-only; the auditable record and the one running tally · lessons: [BEST-PRACTICES.md](BEST-PRACTICES.md)
+
 Every run, every score, every defect found and fixed. Written so a result can be
 audited without re-reading a transcript, and so no number here can be quoted
 without its caveats attached.
@@ -25,7 +27,7 @@ from the child environment.
 |---|---|---|---|---|---|---|
 | 2026-08-27 | 50 | **48/50 = 96.0%** | 45/50 = 90.0% | −6.0% | 0.25 | 3.5× |
 
-3 discordant pairs. Write-up: `../RESULTS-2026-08-27.md`.
+3 discordant pairs. Write-up: `results/2026-08-27-mutations-50.md`.
 
 ### 1.2 Mutation cases, four repositories
 
@@ -37,7 +39,7 @@ from the child environment.
 verified to reproduce before the run. Arm A's figure is the union of
 `arm-a-direct.json` (110/132, memoryctl oracle broken) with
 `arm-a-direct-memoryctl.json` (15/15 after the fix). Write-up:
-`../RESULTS-2026-08-27-run2.md`.
+`results/2026-08-27-mutations-132.md`.
 
 **Ceiling:** at ~95% for both arms this set cannot separate two competent
 orchestrations. That is why the campaign moved to SWE-bench.
@@ -53,7 +55,7 @@ orchestrations. That is why the campaign moved to SWE-bench.
 | wave 1 | 12 | 5/12 = 41.7% | **7/12 = 58.3%** | first wave Arm B wins |
 | **union** | **47** | **29/47 = 61.7%** | 28/47 = 59.6% | **B−A −2.1%, p = 1.0000** |
 
-Union discordance: 6 A-only, 5 B-only. Write-up: `../RESULTS-2026-08-28-swebench.md`.
+Union discordance: 6 A-only, 5 B-only. Write-up: `results/2026-08-28-swebench-35.md`.
 
 **The −8.6% at n=35 did not hold.** Twelve harder instances moved the point
 estimate 6.5 points and balanced the discordant pairs. Wave 1's instances are

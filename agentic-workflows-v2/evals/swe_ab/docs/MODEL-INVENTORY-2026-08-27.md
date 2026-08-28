@@ -1,5 +1,7 @@
 # Model inventory — 2026-08-27
 
+[Kit](../README.md) · [Docs](README.md) — **reference**, point-in-time snapshot; re-probe rather than trusting it · procedure: [MODEL-PROBE-GUIDE.md](MODEL-PROBE-GUIDE.md)
+
 A full probe of every serving path on this machine plus the NVIDIA cloud, taken
 so the A/B picks models on evidence rather than assumption.
 

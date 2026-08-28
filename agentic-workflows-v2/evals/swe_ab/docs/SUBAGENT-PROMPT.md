@@ -1,5 +1,7 @@
 # Sub-agent prompt — run the next waves
 
+[Kit](../README.md) · [Docs](README.md) — **operational**, paste-ready · the procedure it follows: [WAVE-RUNBOOK.md](WAVE-RUNBOOK.md)
+
 Paste the block below to a Sonnet sub-agent. It is self-contained: no context
 from the originating session is needed.
 

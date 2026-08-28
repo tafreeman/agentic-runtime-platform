@@ -1,5 +1,7 @@
 # Wave runbook — continuing the campaign
 
+[Kit](../README.md) · [Docs](README.md) — **operational** · prerequisite: [TEST-SETUP.md](TEST-SETUP.md) §1 · caveats: [EVIDENCE.md §3](EVIDENCE.md#3-standing-caveats-on-every-number-above)
+
 For an agent picking this up cold. Read `TEST-SETUP.md` §1 first and confirm
 preflight says `READY`.
 

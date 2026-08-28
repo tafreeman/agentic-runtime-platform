@@ -1,8 +1,10 @@
 # Model probe guide
 
+[Kit](../README.md) · [Docs](README.md) — **reference**, procedure (durable) · its output: [MODEL-INVENTORY-2026-08-27.md](MODEL-INVENTORY-2026-08-27.md)
+
 How to find every model this machine can reach, and how to tell which cost
 money, before spending anything on a run. Procedure, not a snapshot — the
-snapshot taken 2026-08-27 is `../MODEL-INVENTORY-2026-08-27.md`.
+snapshot taken 2026-08-27 is `MODEL-INVENTORY-2026-08-27.md`.
 
 **Rule this guide exists to enforce:** never assume a model is free, and never
 assume a serving path works because a process is running. Both were wrong on

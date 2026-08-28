@@ -1,28 +1,33 @@
 # ARP SWE-fix A/B — two workflows, one rubric, free models
 
-> **Current reading (2026-08-28, 47 paired SWE-bench instances):** Arm A
-> (direct) 61.7%, Arm B (review loop) 59.6%. Difference −2.1%, McNemar
-> **p = 1.00** — no detectable difference, and Arm B costs 3–6× per case.
-> An earlier −8.6% at n=35 did not survive harder cases.
-> **Oracle retrieval — not a SWE-bench leaderboard number.**
+Does ARP's multi-step review-loop workflow repair more defects than a single
+coder call, at equal model and equal input?
 
-## Documentation
+> **Reading as of 2026-08-28, 47 paired SWE-bench instances:** Arm A (direct)
+> 61.7%, Arm B (review loop) 59.6%. Difference −2.1%, McNemar **p = 1.00** — no
+> detectable difference, and Arm B costs 3–6× per case. An earlier −8.6% at
+> n = 35 did not survive harder cases.
+>
+> **Oracle retrieval — not a SWE-bench leaderboard number.** The live tally is
+> [docs/EVIDENCE.md §1.3](docs/EVIDENCE.md#13-swe-bench-verified-oracle-retrieval),
+> not this banner.
 
-| document | purpose |
+**Start here → [docs/README.md](docs/README.md)** — the documentation map, with
+a reading path for whichever of the four jobs you are here to do: run a wave,
+design an eval, choose models, or audit a number.
+
+| I want to… | go to |
 |---|---|
-| [docs/EVIDENCE.md](docs/EVIDENCE.md) | every run, score, and defect fixed — the auditable record |
-| [docs/TEST-SETUP.md](docs/TEST-SETUP.md) | requirements, preflight, isolation, how to resume |
-| [docs/WAVE-RUNBOOK.md](docs/WAVE-RUNBOOK.md) | procedure for continuing the campaign |
-| [docs/MODEL-PROBE-GUIDE.md](docs/MODEL-PROBE-GUIDE.md) | finding models, telling free from paid |
-| [docs/SUBAGENT-PROMPT.md](docs/SUBAGENT-PROMPT.md) | ready-to-paste prompt for an agent running the next waves |
-| [MODEL-INVENTORY-2026-08-27.md](MODEL-INVENTORY-2026-08-27.md) | machine snapshot: endpoints, GPU limits |
-| [RESULTS-2026-08-28-swebench.md](RESULTS-2026-08-28-swebench.md) | SWE-bench write-up |
-| [RESULTS-2026-08-27-run2.md](RESULTS-2026-08-27-run2.md) | 132-case mutation write-up |
-| [RESULTS-2026-08-27.md](RESULTS-2026-08-27.md) | 50-case mutation write-up |
+| Run the next wave | [docs/TEST-SETUP.md](docs/TEST-SETUP.md) → [docs/WAVE-RUNBOOK.md](docs/WAVE-RUNBOOK.md) |
+| Hand it to an agent | [docs/SUBAGENT-PROMPT.md](docs/SUBAGENT-PROMPT.md) |
+| Design a different eval | [docs/BEST-PRACTICES.md](docs/BEST-PRACTICES.md) |
+| Pick models / not spend money | [docs/MODEL-PROBE-GUIDE.md](docs/MODEL-PROBE-GUIDE.md) |
+| Audit a number | [docs/EVIDENCE.md](docs/EVIDENCE.md) → [docs/results/](docs/results/) |
+| Fix the platform, not the eval | [docs/ARP-IMPROVEMENTS-PROMPT.md](docs/ARP-IMPROVEMENTS-PROMPT.md) |
 
-Compares two ARP orchestrations on the same software-repair task set, graded by
-agentic-evalkit, using models that cost nothing (local Ollama, Ollama Cloud free
-tier, NVIDIA NIM free tier).
+---
+
+## The experiment
 
 | | Arm A | Arm B |
 |---|---|---|
@@ -34,9 +39,27 @@ tier, NVIDIA NIM free tier).
 | Model | pinned via `model_override` | **same id, same temperature, same seed** |
 
 Everything except orchestration depth is held constant, so a score delta is
-attributable to the review loop and nothing else. The question the run answers:
-**does the review loop buy more hidden-test passes than it costs in tokens and
-latency?**
+attributable to the review loop and nothing else. Models cost nothing — local
+Ollama, Ollama Cloud free tier, NVIDIA NIM free tier — and paid credentials are
+deleted from the child environment so no failover can reach them.
+
+### Three case sets, one answer
+
+| set | n | Arm A | Arm B | B − A | McNemar p | B's cost |
+|---|---|---|---|---|---|---|
+| [mutations, 1 repo](docs/results/2026-08-27-mutations-50.md) | 50 | 96.0% | 90.0% | −6.0% | 0.25 | 3.5× |
+| [mutations, 4 repos](docs/results/2026-08-27-mutations-132.md) | 132 | 94.7% | 90.9% | −3.8% | 0.23 | 3.0× |
+| [SWE-bench Verified](docs/results/2026-08-28-swebench-35.md) | 35 | 68.6% | 60.0% | −8.6% | 0.45 | 5.9× |
+| **SWE-bench union** | **47** | **61.7%** | 59.6% | −2.1% | **1.00** | — |
+
+Arm A leads on every set, never significantly. The mutation sets sat at ~95% for
+both arms — a ceiling that cannot separate two competent orchestrations, which
+is why the campaign moved to SWE-bench. Settling the question needs ~200 paired
+instances; the campaign is accumulating them in waves.
+
+**The open hypothesis:** the review loop may only help where the direct arm
+fails. Wave 1's harder instances went A 41.7% / B 58.3% — the one slice where
+Arm B led. Testing that needs a per-difficulty split at much larger n.
 
 ## Grading stack — deterministic first, judge last
 
@@ -46,7 +69,8 @@ workflow output {patch, root_cause, verification_report}
         ├── schema check ......... hard gate: the three fields exist and are strings
         ├── patch applies ........ hard gate: git apply --check at the pinned commit
         ├── tests untouched ...... hard gate: diff touches no tests/ or oracle path
-        ├── hidden tests ......... hard gate: HarnessGrader → pytest on the oracle suite
+        ├── hidden tests ......... hard gate: the real oracle suite (SWE-bench harness,
+        │                          in-container, or the case's covering pytest file)
         ├── public tests ......... hard gate: no regression against the pre-patch suite
         ├── diff budget .......... scored 0..1, not gating
         ├── AST safety scan ...... scored, not gating (no eval/exec/subprocess/network)
@@ -55,133 +79,129 @@ workflow output {patch, root_cause, verification_report}
 
 The judge sits at weight 0.0 on purpose. Under EvalKit's ADR-0007 / D-1 an
 uncalibrated judge cannot gate, and a judge on a free 8–30B model is emphatically
-uncalibrated. To promote it later: label ≥30 good and ≥30 bad judge cases, run
+uncalibrated. To promote it: label ≥30 good and ≥30 bad judge cases, run
 `agentic-evalkit calibrate`, and only if TNR ≥ 0.95 / TPR ≥ 0.85 / age ≤ 90d hold
-(Wilson lower bound, not the point estimate) does its weight move off zero.
+on the **Wilson lower bound** does its weight move off zero.
+
+On SWE-bench the composite is replaced outright by `SwebenchGrader`, which
+sequences explicitly: sanity failure → FAIL; harness cannot run → **UNAVAILABLE,
+never PASS**; harness ran → its verdict. That exists because
+`CompositeGrader` excludes UNAVAILABLE from its weighted mean and once reported
+**5/5 passed on a benchmark that never ran**
+([EVIDENCE §2.1](docs/EVIDENCE.md#21-a-grader-that-passed-a-benchmark-it-never-ran--critical)).
 
 Rubric: [`rubric.py`](rubric.py) — 8 atomic criteria, 6 decided by running code,
-2 by the judge. Validated against EvalKit's `Rubric` model (weights sum to 1.0,
-4 hard gates).
+2 by the judge, validated against EvalKit's `Rubric` model.
 
-Eval set: [`dataset/CASES.md`](dataset/CASES.md) — mined from real `fix(...)`
-commits in our own repos. Parent commit = broken repo, commit's tests = hidden
-oracle, no gold-patch string comparison anywhere.
+## Case sets
 
-## Model matrix (all free)
+**Mined mutations** — [`dataset/CASES.md`](dataset/CASES.md). 132 cases across
+four of our own repositories (evk 50, ek 37, arp 30, memoryctl 15), each a
+verified mutation that makes a named real test fail. Every one replays before a
+run. Ground truth is the hidden test suite; no gold-patch string comparison
+anywhere, so two different correct patches both score 1.0.
 
-Hold the system-under-test model constant across arms; use a **different family**
-for the judge, because a model scoring its own family's output is a known
-self-preference bias.
+**SWE-bench Verified** — 50 instance directories built so far, graded by the
+official harness running each instance's real FAIL_TO_PASS and PASS_TO_PASS
+suites inside a container. Retrieval is **oracle** — the model is told which file
+to fix — so these are not leaderboard numbers.
 
-| Role | Candidate | Lane | Free? |
-|---|---|---|---|
-| SUT (both arms) | `nvidia:deepseek-ai/deepseek-v4-flash-0731` | NIM cloud | free endpoint |
-| SUT alt | `nvidia:poolside/laguna-xs-2.1` | NIM cloud | free endpoint |
-| SUT local | `ollama:qwen3-coder:30b` or `ollama:qwen3.5:27b` | local Ollama | free |
-| SUT cloud alt | `ollama:kimi-k2.7-code`, `ollama:glm-5.3-flash` | Ollama Cloud | free tier |
-| Judge | `nvidia:openai/gpt-oss-120b` | NIM cloud | free endpoint |
-| Judge alt | `nvidia:nvidia/nemotron-3-super-120b-a12b` | NIM cloud | free endpoint |
+Case data is gitignored and rebuilt by `tools/mine_cases.py` and
+`tools/build_swebench_cases.py`; the directories are the source of truth and the
+JSONL index is derived from them.
 
-Pick **one lane per run** and pin it for both arms. Mixing a local SUT in Arm A
-with a cloud SUT in Arm B measures the models, not the workflows.
+## Reading the result — the gotcha, stated up front
 
-ARP's model registry (`agentic_v2/config/defaults/model_registry.yaml`) is
-curated by deliberate human edit under ADR-040 — ids not already listed there
-(`glm-5.3-flash`, `kimi-k2.7-code`, `gpt-oss`, `minimax-m3`, …) need an entry
-added before `model_override` will accept them. Draft entries:
-[`models.candidate.yaml`](models.candidate.yaml).
-
-Env: `OLLAMA_BASE_URL` / `OLLAMA_HOST` for local, `NVIDIA_API_KEY` for NIM cloud
-(or `NVIDIA_BASE_URL` for a self-hosted NIM). Both already wired in ARP's
-`langchain/model_builders.py`.
-
-## Reading the result — one gotcha, stated up front
-
-`agentic-evalkit compare arm_a.json arm_b.json` **will refuse this comparison**,
-and it is right to. `target_name` and `target_fingerprint` are non-waivable
-provenance fields (ADR-0015); two different workflows are two different systems,
-so `compare_runs` raises `IncompatibleRuns` rather than reporting a delta. That
-gate exists to stop exactly the mistake of comparing runs that aren't comparable.
+`agentic-evalkit compare arm_a.json arm_b.json` **refuses this comparison**, and
+it is right to. `target_name` and `target_fingerprint` are non-waivable
+provenance (ADR-0015); two different workflows are two different systems, so
+`compare_runs` raises `IncompatibleRuns` rather than reporting a delta.
 
 Do **not** work around it by giving both arms the same target name — that
 launders a real difference past the gate and is the specific failure mode this
-whole library exists to prevent.
+whole library exists to prevent. The honest read is a paired analysis over the
+shared `sample_id`s: per-case hidden-test outcome, McNemar exact on the
+discordant pairs, bootstrap CI on the paired difference, Wilson intervals on each
+arm. That is [`analyze.py`](analyze.py).
 
-The honest read is a paired analysis over the shared `sample_id`s, which is the
-same arithmetic `compare_runs` does internally minus the same-system assumption:
-per-case hidden-test outcome, McNemar on the discordant pairs, bootstrap CI on
-the paired difference. That lands in `analyze.py` (not yet written).
+**Power, before anyone quotes a number.** At 47 paired instances with 11
+discordant pairs the interval is ±14 points; resolving a difference this size
+needs ~200. The interval is the result, not the point estimate.
 
-Power, before anyone quotes a number: at 30 cases a paired A/B detects roughly a
-22-point swing at 80% power. A 5-point difference on 30 cases is noise. Report
-pass@1 and pass@3 side by side, split by `contamination_risk`, with cost and
-wall-clock per arm — a review loop that wins by 3 points and costs 4× the tokens
-lost.
-
-## How it actually runs
+## How it runs
 
 ```bash
-# 1. build the eval set (no models involved; ~12 min for 50 cases)
-python tools/mine_cases.py --repo evk --count 50 --fresh --path <scratch-worktree>
+cd C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab
 
-# 2. run an arm (from EvalKit's checkout, so uv resolves the right venv)
-uv run python run_ab.py --arm a --concurrency 3
-uv run python run_ab.py --arm b --concurrency 3
+# preflight — do not proceed unless this prints READY
+uv run python -c "import sys; sys.path.insert(0,'.'); \
+  from container_harness import container_preflight; print(container_preflight() or 'READY')"
 
-# 3. decide which scored higher
-uv run python analyze.py
+# one wave: ~16 paired instances, both arms, ~50 min, pinned settings
+uv run python tools/run_wave.py --wave N --size 16 --prune-images
+
+# union every wave so far — one --left/--right pair per report
+uv run python analyze.py --left reports/arm-a-direct-wave1.json \
+                         --right reports/arm-b-review-loop-wave1.json
 ```
 
-Process boundary: `run_ab.py` runs in **EvalKit's** venv and imports only
+**Never pass `--model`, `--concurrency` or `--timeout`.** They are pinned in
+`CAMPAIGN` inside `tools/run_wave.py` on purpose: two of this campaign's worst
+errors were mid-experiment changes. Waves union soundly only while every wave
+shares an arm, a model and a configuration — a wave needing different settings
+is a different experiment. Full procedure:
+[docs/WAVE-RUNBOOK.md](docs/WAVE-RUNBOOK.md).
+
+**Process boundary:** `run_ab.py` runs in **EvalKit's** venv and imports only
 `agentic_evalkit`; `bridge.py` runs in **ARP's** venv and imports only
 `agentic_v2`. They meet over EvalKit's subprocess JSONL protocol — one process
 per sample, one request line in, one response line out. Neither package ever
 imports the other, which is what the dependency contract requires.
 
-## Four things the first run surfaced
+## What the campaign surfaced about the platform
 
-**1. ARP fails over to paid providers.** When a step's response misses its
-declared output contract, `_invoke_with_failover` walks the tier chain — and on
-the first probe it reached Anthropic and returned a billing error. There is no
-"no failover" switch. The control used here is the child environment:
-`run_ab.py` deletes every paid credential (`ANTHROPIC_API_KEY`,
-`OPENAI_API_KEY`, `GEMINI_API_KEY`, `GITHUB_TOKEN`, `OPENROUTER_API_KEY`, …)
-before spawning the bridge, so those candidates cannot be called at all. Free
-by construction, not by promise.
+Four findings that changed how the eval had to be built. The first is the one
+that costs money; all four are worked up as a fix in
+[docs/ARP-IMPROVEMENTS-PROMPT.md](docs/ARP-IMPROVEMENTS-PROMPT.md).
 
-**2. The coder agent tried to write into EvalKit's source tree.** Given file
-tools, `tier2_coder` answered by calling `file_write` on
-`src/agentic_evalkit/stats/compare.py` — relative to the inherited working
-directory, i.e. the live repo. ARP's fail-closed approval governance denied it.
+**1. ARP fails over to paid providers, and nothing turns it off.** When a step's
+response misses its declared output contract, `_invoke_with_failover` walks the
+tier chain — and on the first probe it reached Anthropic and returned a billing
+error. `model_override` only *prepends*; the paid fallbacks still follow it. The
+control used here is the child environment: `run_ab.py` deletes every paid
+credential before spawning the bridge, so those candidates cannot be called at
+all. Free by construction, not by promise — and the wrong layer for the fix.
+
+**2. ARP discovers four of seven serving paths on this machine.** Lemonade
+(`:13305`), Docker Model Runner (`:12434`) and Foundry Local (`:60160`) are not
+probed at all, and no discovery path has any notion of which cloud endpoints are
+free — NIM's catalogue is visible but its free-endpoint list is not. Both gaps
+were filled by hand for this campaign.
+
+**3. The coder agent tried to write into a live source tree.** Given file tools,
+`tier2_coder` called `file_write` on a real checkout path, relative to the
+inherited working directory. ARP's fail-closed approval governance denied it.
 Two fixes, kept both: every step declares `tools: []`, and the bridge `chdir`s
-into a sandbox before running anything.
+into a sandbox first.
 
-**3. Ask for the file, not a diff.** The first contract asked for a unified
-diff. Models produce malformed diffs often enough that the run would have
-measured diff-formatting skill instead of repair skill. Both arms now return
-the complete corrected file and the harness computes the diff itself.
-
-**4. Inline the source.** Passing a path made the result depend on whether the
-agent had working file tools. The source now arrives inline, byte-identical to
-both arms.
+**4. Ask for the file, not a diff; inline the source.** The first contract asked
+for a unified diff, which would have measured diff-formatting skill rather than
+repair skill. And passing a file path made the result depend on whether the agent
+had working file tools. Both arms now receive the source inline, byte-identical,
+and return the complete corrected file.
 
 ## Status
 
-Built, and exercised end to end:
-- [x] `workflows/swe_fix_direct.yaml` (Arm A) — loads in ARP, 1 step
-- [x] `workflows/swe_fix_review_loop.yaml` (Arm B) — loads in ARP, 5 steps
-- [x] `rubric.py` — `swe_fix_v1`, validates against EvalKit's `Rubric`
-- [x] `tools/mine_cases.py` — **50 cases mined and verified**, every one a real
-      mutation that makes a named EvalKit test fail
-- [x] `bridge.py` — EvalKit subprocess protocol ↔ `WorkflowRunner.run(model_override=…)`
-- [x] `graders.py` — pytest oracle harness + deterministic sanity gate
-- [x] `run_ab.py` — smoke-tested 2/2 passed, full 50-case run executed
-- [x] `judge_free.py` — advisory rubric judge on `nemotron-3-ultra:cloud`,
-      smoke-tested; weight 0.0 and uncalibrated, so it gates nothing
-- [x] `analyze.py` — McNemar exact + paired bootstrap + Wilson intervals
+Built and exercised end to end: both workflows, the rubric, the mining and
+SWE-bench case builders, the ARP bridge, both grader stacks, the wave runner,
+the advisory judge, and `analyze.py` (McNemar exact + paired bootstrap + Wilson
+intervals).
 
-Not built (deliberately deferred):
-- [ ] calibration labelled set — needed before the judge's weight can leave 0.0
-- [ ] `BF` cases from real historical fix commits — only 6 qualify in EvalKit;
-      the set is currently 50/50 `MUT`
-- [ ] second and third source repos (EK, ARP) for case diversity
+Deliberately not built:
+
+- **Calibration labelled set** — needed before the judge's weight can leave 0.0.
+- **`attempts=3`** — would separate capability from sampling noise. It is a
+  campaign change and must not be made mid-campaign.
+- **Per-difficulty split** — the open hypothesis needs it, and it needs n ≈ 200.
+- **In-flight progress** — `run_ab.py` prints only at the end. Wiring
+  `EvalRunner.run(event_sink=…)` is the proper fix.

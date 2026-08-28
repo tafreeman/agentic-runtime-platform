@@ -1,5 +1,7 @@
 # Test setup
 
+[Kit](../README.md) · [Docs](README.md) — **operational**, tracks the campaign · next: [WAVE-RUNBOOK.md](WAVE-RUNBOOK.md)
+
 Everything required to run this A/B, and how to verify each piece before
 spending an hour discovering it was missing. Written so a fresh agent or a
 fresh session can pick the campaign up mid-flight.
