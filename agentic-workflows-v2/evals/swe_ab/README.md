@@ -93,6 +93,44 @@ never PASS**; harness ran → its verdict. That exists because
 Rubric: [`rubric.py`](rubric.py) — 8 atomic criteria, 6 decided by running code,
 2 by the judge, validated against EvalKit's `Rubric` model.
 
+## Models — one lane per run, pinned for both arms
+
+**What every result above actually ran on:** `ollama:deepseek-v4-flash:0731-cloud`
+for both arms and every tier, temperature 0, seed 20260827, `attempts=1`. Free
+Ollama Cloud tier, served through the local `:11434` endpoint.
+
+| Role | Candidate | Lane | Cost |
+|---|---|---|---|
+| **SUT, as run** | `ollama:deepseek-v4-flash:0731-cloud` | Ollama Cloud | free tier |
+| SUT alt, different family | `nvidia:nvidia/nemotron-3-nano-30b-a3b` | NIM cloud | free endpoint |
+| SUT local control | `foundry-local:qwen2.5-coder-7b` (NPU) | Foundry Local | local |
+| Judge, as run | `ollama:nemotron-3-ultra:cloud` | Ollama Cloud | free tier |
+
+Rules that make the comparison mean anything:
+
+- **Pick one lane per run and pin it for both arms.** A local SUT in Arm A and a
+  cloud SUT in Arm B measures the models, not the workflows.
+- **Judge from a different family than the SUT.** A model scoring its own
+  family's output is a known self-preference bias. It gates nothing regardless
+  (weight 0.0) until calibrated.
+- **Disable reasoning or raise the token budget** on any thinking model first.
+  Four NIM models return empty content with `done_reason: length` on a small
+  budget and look dead when they are not — set `"think": false` where supported.
+- **`model_override` does not confine a run to one model.** It only *prepends* to
+  the candidate list; ARP's fallback chain still follows and contains paid
+  providers. The only working control is deleting paid credentials from the child
+  environment, which `run_ab.py` does.
+- **A model id not already in ARP's registry cannot be used.**
+  `agentic_v2/config/defaults/model_registry.yaml` is curated by deliberate human
+  edit under ADR-040 — ids absent from it are rejected by `model_override`. Draft
+  entries: [`models.candidate.yaml`](models.candidate.yaml).
+
+Env: `OLLAMA_BASE_URL` / `OLLAMA_HOST` for local and Ollama Cloud,
+`NVIDIA_API_KEY` for NIM (or `NVIDIA_BASE_URL` for self-hosted). Both are already
+wired in ARP's `langchain/model_builders.py`. Full lane-by-lane detail, including
+which endpoints are free and how to tell:
+[docs/MODEL-PROBE-GUIDE.md](docs/MODEL-PROBE-GUIDE.md).
+
 ## Case sets
 
 **Mined mutations** — [`dataset/CASES.md`](dataset/CASES.md). 132 cases across
