@@ -93,6 +93,15 @@ def test_provider_for_known_and_unknown():
 # ---------------------------------------------------------------------------
 
 
+@pytest.fixture(autouse=True)
+def _no_ambient_ollama_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    """An ambient OLLAMA_API_KEY would make cost_lane_for query the local
+    daemon (ADR-051 downgrade, tested explicitly below) and could silently
+    turn a curated "local" id into "free" depending on what happens to be
+    pulled on whatever machine runs the suite. Keep these tests deterministic."""
+    monkeypatch.delenv("OLLAMA_API_KEY", raising=False)
+
+
 def test_cost_lane_for_curated_local_and_paid():
     assert mr.cost_lane_for("ollama:qwen3-coder:30b") == "local"
     assert mr.cost_lane_for("anthropic:claude-opus-4-6") == "paid"
@@ -100,6 +109,38 @@ def test_cost_lane_for_curated_local_and_paid():
 
 def test_cost_lane_for_unknown_id_fails_closed_to_paid():
     assert mr.cost_lane_for("some-future-provider:brand-new-model") == "paid"
+
+
+def test_cost_lane_for_ollama_downgrades_to_free_when_not_pulled_and_keyed(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """ADR-051: build_ollama_model reroutes to the account-bound ollama.com
+    cloud endpoint when OLLAMA_API_KEY is set and the model isn't pulled
+    locally -- a curated "local" id must reflect that, or a ceiling of
+    "local" would let a call it doesn't actually cover through."""
+    monkeypatch.setenv("OLLAMA_API_KEY", "fake-key-for-test")
+    monkeypatch.setattr(
+        "agentic_v2.models.ollama_discovery.local_model_names",
+        lambda: frozenset({"some-other-model:latest"}),
+    )
+    assert mr.cost_lane_for("ollama:qwen3-coder:30b") == "free"
+
+
+def test_cost_lane_for_ollama_stays_local_when_actually_pulled(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setenv("OLLAMA_API_KEY", "fake-key-for-test")
+    monkeypatch.setattr(
+        "agentic_v2.models.ollama_discovery.local_model_names",
+        lambda: frozenset({"qwen3-coder:30b"}),
+    )
+    assert mr.cost_lane_for("ollama:qwen3-coder:30b") == "local"
+
+
+def test_cost_lane_for_ollama_stays_local_without_a_key():
+    """No OLLAMA_API_KEY means build_ollama_model never reroutes (ADR-051),
+    so the curated value is trusted without a local-daemon lookup."""
+    assert mr.cost_lane_for("ollama:qwen3-coder:30b") == "local"
 
 
 def test_cost_lane_rank_ordering():

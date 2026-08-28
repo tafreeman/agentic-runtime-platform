@@ -1271,6 +1271,13 @@ class TestCostLaneCeilingIntegration:
     other tier-1 entry curated ``paid`` -- see model_registry.yaml.
     """
 
+    @pytest.fixture(autouse=True)
+    def _no_ambient_ollama_key(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """An ambient OLLAMA_API_KEY would make cost_lane_for downgrade
+        ollama:gemma4:31b to "free" instead of "local" unless the daemon
+        happens to have it pulled (ADR-051) -- irrelevant here, keep it out."""
+        monkeypatch.delenv("OLLAMA_API_KEY", raising=False)
+
     async def test_free_ceiling_never_constructs_a_paid_backend(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:

@@ -256,30 +256,18 @@ def _registry_strict_enabled() -> bool:
     )
 
 
-_VALID_COST_LANES = ("local", "free", "paid")
-
-
 def _max_cost_lane_ceiling() -> Literal["local", "free", "paid"]:
-    """Read ``AGENTIC_MAX_COST_LANE``, defaulting to ``"paid"`` (unchanged behavior).
+    """Read ``AGENTIC_MAX_COST_LANE`` (delegates to the shared implementation).
 
-    An unset or unrecognised value fails safe to ``"paid"`` -- the ceiling that
-    filters nothing, matching prior behavior for every deployment that has not
-    opted in. A logged warning distinguishes "unset" from "typo'd" without
-    raising at read time; the raise (when applicable) happens in
-    :func:`get_model_candidates_for_tier`, not here.
+    Thin re-export kept so existing call sites/tests importing this name
+    from ``langchain.models`` keep working; the canonical implementation --
+    shared with the native engine's ``ModelRouter`` / ``SmartModelRouter`` so
+    a ceiling set once applies regardless of engine -- lives in
+    :func:`agentic_v2.models.model_registry.max_cost_lane_ceiling`.
     """
-    raw = os.environ.get("AGENTIC_MAX_COST_LANE", "").strip().lower()
-    if not raw:
-        return "paid"
-    if raw in _VALID_COST_LANES:
-        return raw  # type: ignore[return-value]
-    logger.warning(
-        "AGENTIC_MAX_COST_LANE=%r not recognised; treating as 'paid' "
-        "(no filtering). Accepted: %s.",
-        raw,
-        _VALID_COST_LANES,
-    )
-    return "paid"
+    from ..models.model_registry import max_cost_lane_ceiling
+
+    return max_cost_lane_ceiling()
 
 
 def detect_registry_drift(
@@ -821,9 +809,8 @@ def get_model_candidates_for_tier(
 
     # Drop ids quarantined by drift detection (retired at provider; ADR-040).
     from ..models.model_registry import (
-        CostLaneCeilingExceededError,
+        apply_cost_lane_ceiling,
         is_quarantined,
-        is_within_cost_lane,
         provider_for,
     )
 
@@ -835,20 +822,11 @@ def get_model_candidates_for_tier(
     ]
     candidates = dedupe_keep_order(ordered_pinned + filtered_fallback)
 
-    ceiling = max_cost_lane if max_cost_lane is not None else _max_cost_lane_ceiling()
-    if ceiling != "paid":
-        # Filters pinned entries too -- an explicit model_override must not be
-        # able to bypass the ceiling it exists to enforce.
-        within_ceiling = [m for m in candidates if is_within_cost_lane(m, ceiling)]
-        if candidates and not within_ceiling:
-            raise CostLaneCeilingExceededError(
-                f"AGENTIC_MAX_COST_LANE={ceiling!r} filtered every candidate "
-                f"for tier {tier} ({len(candidates)} considered, 0 within the "
-                "ceiling); refusing to fall through to an unfiltered chain."
-            )
-        candidates = within_ceiling
-
-    return candidates
+    # Filters pinned entries too -- an explicit model_override must not be
+    # able to bypass the ceiling it exists to enforce.
+    return apply_cost_lane_ceiling(
+        candidates, ceiling=max_cost_lane, context=f"tier {tier}"
+    )
 
 
 # ---------------------------------------------------------------------------

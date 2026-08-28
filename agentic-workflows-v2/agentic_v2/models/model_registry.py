@@ -29,6 +29,7 @@ observed token usage into a dollar figure, or ``None`` when a price is unknown.
 from __future__ import annotations
 
 import logging
+import os
 from collections.abc import Iterable
 from functools import lru_cache
 from pathlib import Path
@@ -278,17 +279,39 @@ def provider_for(model_id: str) -> str:
 
 
 def cost_lane_for(model_id: str) -> CostLane:
-    """Return the curated cost lane for ``model_id``, failing closed to ``"paid"``.
+    """Return the cost lane for ``model_id``, failing closed to ``"paid"``.
 
     A model absent from the registry, or present but with no curated
     ``cost_lane``, is treated as ``"paid"`` -- never silently assumed free.
-    This is the single source of truth :func:`get_model_candidates_for_tier`
-    (``langchain/models.py``) filters against for ``AGENTIC_MAX_COST_LANE``.
+    This is the single source of truth every candidate resolver
+    (``langchain.models.get_model_candidates_for_tier``,
+    ``models.router.ModelRouter``, ``models.smart_router.SmartModelRouter``)
+    filters against for ``AGENTIC_MAX_COST_LANE``.
+
+    Curated ``"local"`` on an ``ollama:`` id is downgraded to ``"free"`` when
+    ``OLLAMA_API_KEY`` is set and the model is not pulled on the local
+    daemon: :func:`agentic_v2.langchain.model_builders.build_ollama_model`
+    reroutes exactly that case to the account-bound ``ollama.com`` cloud
+    endpoint (ADR-051), so a static ``"local"`` curation would otherwise be
+    wrong precisely when it matters most -- under an
+    ``AGENTIC_MAX_COST_LANE=local`` ceiling. Without a key, or for any
+    non-``ollama:`` provider, the curated value is returned as-is (no extra
+    lookup).
     """
     entry = load_registry().by_id().get(model_id)
-    if entry is None or entry.cost_lane is None:
-        return _DEFAULT_COST_LANE
-    return entry.cost_lane
+    lane = (
+        _DEFAULT_COST_LANE
+        if entry is None or entry.cost_lane is None
+        else entry.cost_lane
+    )
+    if lane == "local" and model_id.startswith("ollama:") and os.environ.get(
+        "OLLAMA_API_KEY"
+    ):
+        from .ollama_discovery import is_served_locally
+
+        if not is_served_locally(model_id.removeprefix("ollama:")):
+            return "free"
+    return lane
 
 
 def cost_lane_rank(lane: CostLane) -> int:
@@ -299,6 +322,66 @@ def cost_lane_rank(lane: CostLane) -> int:
 def is_within_cost_lane(model_id: str, ceiling: CostLane) -> bool:
     """Return ``True`` when ``model_id``'s cost lane is at or under ``ceiling``."""
     return _LANE_RANK[cost_lane_for(model_id)] <= _LANE_RANK[ceiling]
+
+
+_VALID_COST_LANES: tuple[CostLane, ...] = ("local", "free", "paid")
+
+
+def max_cost_lane_ceiling() -> CostLane:
+    """Read ``AGENTIC_MAX_COST_LANE``, defaulting/failing-safe to ``"paid"``.
+
+    ``"paid"`` is the ceiling that filters nothing -- unset or an
+    unrecognised value both fail safe to it (with a logged warning for the
+    latter), matching every deployment's behavior before this setting
+    existed. The single source of truth both engines' candidate resolvers
+    read (``langchain/models.get_model_candidates_for_tier``,
+    ``models/router.ModelRouter``, ``models/smart_router.SmartModelRouter``)
+    so a ceiling set once applies regardless of which engine a workflow uses.
+    """
+    raw = os.environ.get("AGENTIC_MAX_COST_LANE", "").strip().lower()
+    if not raw:
+        return "paid"
+    if raw in _VALID_COST_LANES:
+        return raw  # type: ignore[return-value]
+    logger.warning(
+        "AGENTIC_MAX_COST_LANE=%r not recognised; treating as 'paid' "
+        "(no filtering). Accepted: %s.",
+        raw,
+        _VALID_COST_LANES,
+    )
+    return "paid"
+
+
+def apply_cost_lane_ceiling(
+    candidates: Iterable[str],
+    *,
+    ceiling: CostLane | None = None,
+    context: str = "",
+) -> list[str]:
+    """Filter ``candidates`` to those at or under the cost-lane ceiling.
+
+    ``ceiling`` defaults to :func:`max_cost_lane_ceiling` (i.e.
+    ``AGENTIC_MAX_COST_LANE``). A ``"paid"`` ceiling is a no-op -- returns
+    ``candidates`` unchanged, matching unset/default behavior exactly, at
+    every call site. Raises :class:`CostLaneCeilingExceededError` (naming
+    the ceiling, the count considered, and ``context`` when given) rather
+    than silently returning an empty list when filtering would empty an
+    otherwise non-empty ``candidates`` -- never fall through to an
+    unfiltered chain (ARP-IMPROVEMENTS F1).
+    """
+    resolved = ceiling if ceiling is not None else max_cost_lane_ceiling()
+    ordered = list(candidates)
+    if resolved == "paid":
+        return ordered
+    within_ceiling = [m for m in ordered if is_within_cost_lane(m, resolved)]
+    if ordered and not within_ceiling:
+        where = f" for {context}" if context else ""
+        raise CostLaneCeilingExceededError(
+            f"AGENTIC_MAX_COST_LANE={resolved!r} filtered every candidate"
+            f"{where} ({len(ordered)} considered, 0 within the ceiling); "
+            "refusing to fall through to an unfiltered chain."
+        )
+    return within_ceiling
 
 
 def price_for(model_id: str) -> tuple[float | None, float | None]:

@@ -55,11 +55,12 @@ PROVIDER_ENV_KEYS: dict[str, list[str]] = {
     "onnx": [],  # always available (local onnxruntime-genai)
     "lmstudio": [],  # always available (local server)
     "local_api": [],  # always available (local server)
-    "lemonade": [],  # always available (local server, Ryzen AI hybrid NPU)
-    "docker-model-runner": [],  # always available (local server)
-    # NOT azure-foundry (Azure AI Foundry, paid, keyed) -- see
-    # models/foundry_local_discovery.py's naming-trap note.
-    "foundry-local": [],  # always available (local server, on-device ONNX)
+    # lemonade / docker-model-runner / foundry-local (ARP-IMPROVEMENTS F2) are
+    # deliberately NOT registered here: this map means "routable" -- get_chat_model()
+    # has no builder for those prefixes yet, so a discovered id would round-trip as
+    # "available" but fail to build. They stay discovery-only (models/lemonade_discovery.py,
+    # models/docker_model_runner_discovery.py, models/foundry_local_discovery.py) until
+    # execution backends exist. See PR #281 review discussion.
 }
 
 # ---------------------------------------------------------------------------

@@ -880,6 +880,7 @@ def _build_success_update(
             attempted_models,
             failure_message=str(error),
             failure_metadata={"contract_diagnostics": diagnostics},
+            lane_crossings=lane_crossings,
         )
 
     # Map outputs to context
