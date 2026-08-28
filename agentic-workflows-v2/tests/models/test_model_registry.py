@@ -89,6 +89,46 @@ def test_provider_for_known_and_unknown():
 
 
 # ---------------------------------------------------------------------------
+# Cost lane (ARP-IMPROVEMENTS F1)
+# ---------------------------------------------------------------------------
+
+
+def test_cost_lane_for_curated_local_and_paid():
+    assert mr.cost_lane_for("ollama:qwen3-coder:30b") == "local"
+    assert mr.cost_lane_for("anthropic:claude-opus-4-6") == "paid"
+
+
+def test_cost_lane_for_unknown_id_fails_closed_to_paid():
+    assert mr.cost_lane_for("some-future-provider:brand-new-model") == "paid"
+
+
+def test_cost_lane_rank_ordering():
+    assert mr.cost_lane_rank("local") < mr.cost_lane_rank("free") < mr.cost_lane_rank(
+        "paid"
+    )
+
+
+def test_is_within_cost_lane():
+    assert mr.is_within_cost_lane("ollama:qwen3-coder:30b", "local") is True
+    assert mr.is_within_cost_lane("ollama:qwen3-coder:30b", "paid") is True
+    assert mr.is_within_cost_lane("anthropic:claude-opus-4-6", "local") is False
+    assert mr.is_within_cost_lane("anthropic:claude-opus-4-6", "free") is False
+    assert mr.is_within_cost_lane("anthropic:claude-opus-4-6", "paid") is True
+    # unknown id fails closed: only within a "paid" ceiling
+    assert mr.is_within_cost_lane("unknown:model", "free") is False
+    assert mr.is_within_cost_lane("unknown:model", "paid") is True
+
+
+def test_production_registry_every_model_has_a_curated_cost_lane():
+    """Regression guard: every entry in model_registry.yaml declares cost_lane
+    explicitly. Not required by the schema (None fails closed to "paid"), but an
+    omission here is a curation gap worth catching, not silent paid-by-default."""
+    registry = mr.load_registry()
+    uncurated = sorted(m.id for m in registry.models if m.cost_lane is None)
+    assert not uncurated, f"models missing a curated cost_lane: {uncurated}"
+
+
+# ---------------------------------------------------------------------------
 # Pricing
 # ---------------------------------------------------------------------------
 
