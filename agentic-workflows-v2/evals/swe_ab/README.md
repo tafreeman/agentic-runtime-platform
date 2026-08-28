@@ -1,12 +1,24 @@
 # ARP SWE-fix A/B — two workflows, one rubric, free models
 
-> **Result (2026-08-27, 132 cases across four repos):** Arm A (direct)
-> 125/132 = 94.7%; Arm B (review loop) 120/132 = 90.9%. Difference −3.8%,
-> 95% CI [−9.1%, +0.8%], McNemar p = 0.23 on 11 discordant pairs — not
-> significant. Arm B costs 3.0× the wall clock (93.1 min vs 31.4 min).
-> The 50-case run reached the same conclusion with 3 discordant pairs.
-> Full write-up: [RESULTS-2026-08-27-run2.md](RESULTS-2026-08-27-run2.md);
-> the earlier run: [RESULTS-2026-08-27.md](RESULTS-2026-08-27.md).
+> **Current reading (2026-08-28, 47 paired SWE-bench instances):** Arm A
+> (direct) 61.7%, Arm B (review loop) 59.6%. Difference −2.1%, McNemar
+> **p = 1.00** — no detectable difference, and Arm B costs 3–6× per case.
+> An earlier −8.6% at n=35 did not survive harder cases.
+> **Oracle retrieval — not a SWE-bench leaderboard number.**
+
+## Documentation
+
+| document | purpose |
+|---|---|
+| [docs/EVIDENCE.md](docs/EVIDENCE.md) | every run, score, and defect fixed — the auditable record |
+| [docs/TEST-SETUP.md](docs/TEST-SETUP.md) | requirements, preflight, isolation, how to resume |
+| [docs/WAVE-RUNBOOK.md](docs/WAVE-RUNBOOK.md) | procedure for continuing the campaign |
+| [docs/MODEL-PROBE-GUIDE.md](docs/MODEL-PROBE-GUIDE.md) | finding models, telling free from paid |
+| [docs/SUBAGENT-PROMPT.md](docs/SUBAGENT-PROMPT.md) | ready-to-paste prompt for an agent running the next waves |
+| [MODEL-INVENTORY-2026-08-27.md](MODEL-INVENTORY-2026-08-27.md) | machine snapshot: endpoints, GPU limits |
+| [RESULTS-2026-08-28-swebench.md](RESULTS-2026-08-28-swebench.md) | SWE-bench write-up |
+| [RESULTS-2026-08-27-run2.md](RESULTS-2026-08-27-run2.md) | 132-case mutation write-up |
+| [RESULTS-2026-08-27.md](RESULTS-2026-08-27.md) | 50-case mutation write-up |
 
 Compares two ARP orchestrations on the same software-repair task set, graded by
 agentic-evalkit, using models that cost nothing (local Ollama, Ollama Cloud free

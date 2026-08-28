@@ -93,8 +93,21 @@ def main() -> int:
     print(f"pool: {len(pool)} instances matching the filter")
 
     CASES_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Never rebuild an instance that already has a case directory. Waves are
+    # supposed to extend the evidence, not repeat it, and offset arithmetic
+    # alone does not guarantee that: wave 1 at offset 0 draws exactly the
+    # instances the first hand-built set already used. Skipping what exists
+    # makes non-overlap a property of the data on disk rather than of
+    # bookkeeping nobody will maintain.
+    already = {d.name for d in CASES_DIR.iterdir() if d.is_dir()} if CASES_DIR.is_dir() else set()
+    if already:
+        print(f"skipping {len(already)} instances already built")
+
     rows: list[dict] = []
     for instance in pool.iloc[args.offset :].itertuples():
+        if instance.instance_id in already:
+            continue
         if len(rows) >= args.count:
             break
         targets = patched_files(instance.patch)

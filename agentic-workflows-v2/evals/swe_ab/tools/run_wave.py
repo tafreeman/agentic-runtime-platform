@@ -63,7 +63,14 @@ def run(args: list[str], *, timeout: int = 36000) -> int:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--wave", type=int, required=True)
-    parser.add_argument("--size", type=int, default=35, help="advisory; the mix decides")
+    parser.add_argument(
+        "--size",
+        type=int,
+        default=35,
+        help="target instances for this wave. The mix is scaled proportionally "
+        "rather than truncated, so a small wave samples the same population "
+        "as a large one and the two can still be unioned.",
+    )
     parser.add_argument(
         "--prune-images",
         action="store_true",
@@ -78,8 +85,19 @@ def main() -> int:
     # Each wave takes the next slice of every pool, so waves never overlap.
     offset = (wave - 1) * 8
 
+    # Scale the mix to the requested size, keeping every repo represented:
+    # a wave that dropped whole repos would sample a different population
+    # from its siblings and could not be unioned with them.
+    nominal = sum(count for _, _, count in WAVE_MIX)
+    scale = args.size / nominal
+    mix = [
+        (repo, difficulty, max(1, round(count * scale)))
+        for repo, difficulty, count in WAVE_MIX
+    ]
+    print(f"wave {wave}: targeting {args.size} -> {sum(c for _, _, c in mix)} cases", flush=True)
+
     parts: list[Path] = []
-    for index, (repo, difficulty, count) in enumerate(WAVE_MIX):
+    for index, (repo, difficulty, count) in enumerate(mix):
         part = KIT_ROOT / "dataset" / f"_wave{wave}_{index}.jsonl"
         code = run(
             [
