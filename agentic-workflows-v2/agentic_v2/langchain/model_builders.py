@@ -37,6 +37,18 @@ _GH_BASE_URL = "https://models.inference.ai.azure.com"
 # API key. A non-empty value is still required by the OpenAI client.
 _LOCAL_NIM_PLACEHOLDER_KEY = "not-needed-for-local-nim"
 
+# Env escape hatch for NIM's reasoning-disable request field.  Set to a falsey
+# value to stop sending it — only needed for a self-hosted NIM whose chat
+# template rejects unknown ``chat_template_kwargs`` (the cloud endpoint does
+# not; see ``build_nvidia_model``).
+_NVIDIA_DISABLE_THINKING_ENV = "NVIDIA_DISABLE_THINKING"
+_FALSEY_ENV_VALUES = frozenset({"0", "false", "no", "off"})
+
+# Cached NIM chat-model subclass, keyed on the ``ChatOpenAI`` base it was
+# derived from so every call returns the *same* class (mirroring
+# ``_PLACEHOLDER_CHAT_MODEL_CLS``) while a swapped base still rebuilds.
+_NIM_CHAT_MODEL_CLS: tuple[Any, Any] | None = None
+
 # Module-level flag so ``build_placeholder_model`` warns once per process
 # rather than once per agent step (MED-1 from Sprint B #5 review).
 _PLACEHOLDER_WARNED = False
@@ -199,6 +211,114 @@ def build_openai_model(model_name: str, temperature: float) -> Any:
     return ChatOpenAI(**kwargs)
 
 
+def _nvidia_thinking_disabled() -> bool:
+    """Whether to ask NIM to skip a reasoning model's chain-of-thought phase.
+
+    Defaults to ``True``: the field is inert on every NIM model that does not
+    understand it (see :func:`build_nvidia_model`), so opting *out* is the
+    exceptional case. ``NVIDIA_DISABLE_THINKING`` set to ``0``/``false``/
+    ``no``/``off`` restores the raw pass-through for a self-hosted NIM whose
+    chat template rejects the field.
+    """
+    raw = os.environ.get(_NVIDIA_DISABLE_THINKING_ENV)
+    if raw is None:
+        return True
+    return raw.strip().lower() not in _FALSEY_ENV_VALUES
+
+
+def _nim_extra_body() -> dict[str, Any]:
+    """Request extras that disable NIM's internal reasoning phase.
+
+    Returned fresh per call so the caller owns the dict rather than sharing
+    module-level mutable state with every other NIM model.
+    """
+    return {"chat_template_kwargs": {"thinking": False}}
+
+
+def _nim_reasoning_texts(response: Any) -> list[str]:
+    """Per-choice ``reasoning_content`` from a NIM chat-completions response.
+
+    ``response`` is either the raw dict or the ``openai`` SDK's typed
+    ``ChatCompletion``; the SDK keeps NIM's non-standard ``reasoning_content``
+    as a pydantic extra, so it survives ``model_dump()``.
+    """
+    if isinstance(response, dict):
+        payload = response
+    else:
+        dump = getattr(response, "model_dump", None)
+        if dump is None:
+            return []
+        payload = dump()
+    texts: list[str] = []
+    for choice in payload.get("choices") or []:
+        message = (choice or {}).get("message") or {}
+        texts.append(str(message.get("reasoning_content") or ""))
+    return texts
+
+
+def _get_nim_chat_model_cls(base: Any) -> Any:
+    """Build (once) the ``ChatOpenAI`` subclass used for NVIDIA NIM.
+
+    ``ChatOpenAI`` targets the official OpenAI specification and documents that
+    non-standard provider fields such as ``reasoning_content`` are **not**
+    extracted or preserved — verified against the pinned ``langchain-openai``
+    1.2.2, where a NIM reasoning turn arrives as ``content=''`` with nothing
+    else attached. Recovering the field needs the provider-specific subclass
+    that warning points at, so this stashes it in ``additional_kwargs`` where
+    :func:`agentic_v2.langchain.graph_wiring.extract_agent_response_text` can
+    fall back to it — the LangChain counterpart of ``OllamaBackend``'s
+    ``response.thinking`` fallback.
+
+    The class is cached against *base* so production gets one stable class and
+    a swapped base (a test double) still rebuilds.
+    """
+    global _NIM_CHAT_MODEL_CLS
+    if _NIM_CHAT_MODEL_CLS is not None and _NIM_CHAT_MODEL_CLS[0] is base:
+        return _NIM_CHAT_MODEL_CLS[1]
+
+    class ChatNvidiaNIM(base):  # type: ignore[misc, valid-type]
+        """``ChatOpenAI`` that preserves NIM's ``reasoning_content`` channel."""
+
+        def _create_chat_result(
+            self, response: Any, generation_info: dict[str, Any] | None = None
+        ) -> Any:
+            result = super()._create_chat_result(response, generation_info)
+            reasoning_texts = _nim_reasoning_texts(response)
+            for generation, reasoning in zip(
+                result.generations, reasoning_texts, strict=False
+            ):
+                if reasoning:
+                    extras = generation.message.additional_kwargs
+                    extras["reasoning_content"] = reasoning
+            return result
+
+        def _convert_chunk_to_generation_chunk(
+            self,
+            chunk: dict[str, Any],
+            default_chunk_class: type,
+            base_generation_info: dict[str, Any] | None,
+        ) -> Any:
+            generation = super()._convert_chunk_to_generation_chunk(
+                chunk, default_chunk_class, base_generation_info
+            )
+            if generation is None:
+                return None
+            nested = chunk.get("chunk") or {}
+            choices = chunk.get("choices") or nested.get("choices") or []
+            if choices:
+                delta = (choices[0] or {}).get("delta") or {}
+                reasoning = delta.get("reasoning_content")
+                if reasoning:
+                    # langchain-core merges str additional_kwargs by
+                    # concatenation, so per-token deltas accumulate.
+                    extras = generation.message.additional_kwargs
+                    extras["reasoning_content"] = reasoning
+            return generation
+
+    _NIM_CHAT_MODEL_CLS = (base, ChatNvidiaNIM)
+    return ChatNvidiaNIM
+
+
 def build_nvidia_model(model_name: str, temperature: float) -> Any:
     """Build a ChatOpenAI instance pointed at NVIDIA NIM.
 
@@ -207,6 +327,28 @@ def build_nvidia_model(model_name: str, temperature: float) -> Any:
     ``ChatOpenAI`` with a swapped ``base_url`` is the whole backend. The base
     URL is resolved by :func:`resolve_nvidia_base_url` — the same helper
     discovery uses — so a model surfaced by the probe is reachable here.
+
+    Two accommodations for NIM-hosted **reasoning** models, which run an
+    internal chain-of-thought phase before emitting any answer and so return
+    empty content whenever the token budget runs out first:
+
+    - ``extra_body={"chat_template_kwargs": {"thinking": False}}`` asks NIM to
+      skip that phase. Sent unconditionally, because it is inert where it is
+      not understood: probed live against the cloud endpoint on 2026-08-29,
+      **no** model answered differently *because of* the field and none
+      returned a 4xx for it. It flipped empty/chain-of-thought output into a
+      real answer on ``deepseek-ai/deepseek-v4-flash-0731``, the
+      ``nvidia/nemotron-3`` family, ``nvidia/nemotron-3.5-lightning-30b-a3b``
+      and ``moonshotai/kimi-k3``; it was silently ignored by
+      ``meta/muse-glimmer-30b`` and ``openai/gpt-oss-{20b,120b}`` (which gate
+      reasoning on ``reasoning_effort`` instead) and by the non-reasoning
+      ``nvidia/ising-calibration-1.5-31b``, whose output was byte-identical
+      either way. ``NVIDIA_DISABLE_THINKING=0`` turns it off for a self-hosted
+      NIM whose chat template is stricter.
+    - The returned class preserves NIM's ``reasoning_content`` (which stock
+      ``ChatOpenAI`` discards) so an empty answer still degrades to the
+      model's reasoning rather than to an empty string — see
+      :func:`_get_nim_chat_model_cls`.
 
     Parameters
     ----------
@@ -220,7 +362,7 @@ def build_nvidia_model(model_name: str, temperature: float) -> Any:
 
     Returns
     -------
-    A ``ChatOpenAI`` instance configured for the NIM endpoint.
+    A ``ChatOpenAI`` subclass instance configured for the NIM endpoint.
 
     Raises
     ------
@@ -252,13 +394,17 @@ def build_nvidia_model(model_name: str, temperature: float) -> Any:
         # Self-hosted NIM does not validate the key; send a non-empty placeholder.
         api_key = _LOCAL_NIM_PLACEHOLDER_KEY
 
+    kwargs: dict[str, Any] = {
+        "model": model_name,
+        "base_url": base_url,
+        "api_key": api_key,
+        "temperature": temperature,
+    }
+    if _nvidia_thinking_disabled():
+        kwargs["extra_body"] = _nim_extra_body()
+
     logger.debug("Using NVIDIA NIM: %s at %s", model_name, base_url)
-    return ChatOpenAI(
-        model=model_name,
-        base_url=base_url,
-        api_key=api_key,
-        temperature=temperature,
-    )
+    return _get_nim_chat_model_cls(ChatOpenAI)(**kwargs)
 
 
 def build_openrouter_model(model_name: str, temperature: float) -> Any:
