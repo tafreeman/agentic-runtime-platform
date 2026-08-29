@@ -84,9 +84,23 @@ ARMS = {
 ADAPTER_NAME = "arp-swe-cases@1"
 GRADER_NAME = "swe-fix-composite@1"
 
-#: Credentials removed from the child environment so no paid provider in ARP's
-#: fallback chain can be reached. Removing the key is the control; a config
-#: flag would only be a request.
+#: Credentials neutralised in the child environment so no paid provider in
+#: ARP's fallback chain can be reached. Blanking the key is the control; a
+#: config flag would only be a request.
+#:
+#: They are set to "" rather than deleted, and that distinction is the whole
+#: control. ``agentic_v2.models.secrets.EnvSecretProvider`` walks up from its
+#: own file looking for a ``.env`` and calls ``load_dotenv(override=False)``,
+#: so a *deleted* key is simply re-hydrated from ARP's own .env inside the
+#: child and the strip achieves nothing. ``load_dotenv`` skips a name already
+#: present in ``os.environ`` even when its value is empty, and
+#: ``_normalize_secret`` turns "" into None, so a blank survives and reads as
+#: absent. This is the same mechanism, for the same reason, as ADR-058's
+#: ``backends_claude.subscription_env``.
+#:
+#: This was not theoretical: with the keys merely deleted, 9 of the first 160
+#: graded samples reached gemini-2.5-flash on a campaign meant to spend
+#: nothing.
 PAID_CREDENTIALS = (
     "ANTHROPIC_API_KEY",
     "OPENAI_API_KEY",
@@ -99,6 +113,12 @@ PAID_CREDENTIALS = (
     "AZURE_OPENAI_API_KEY",
     "AZURE_FOUNDRY_API_KEY",
     "CLAUDE_CODE_OAUTH_TOKEN",
+    # NVIDIA NIM: the tier-1/2 fallback chains carry paid NIM models, so an
+    # Ollama failure could complete a billable call before bridge.py rejects
+    # the substituted sample. The rejection protects validity; it cannot
+    # refund the call.
+    "NVIDIA_API_KEY",
+    "NVIDIA_BASE_URL",
 )
 
 
@@ -155,7 +175,10 @@ class _LocalCatalogAdapter:
 
 
 def build_child_env(workflow: str, model: str, timeout: float) -> dict[str, str]:
-    env = {key: value for key, value in os.environ.items() if key not in PAID_CREDENTIALS}
+    # Blank, never delete -- see PAID_CREDENTIALS for why deleting is defeated
+    # by the child re-reading ARP's .env.
+    env = dict(os.environ)
+    env.update(dict.fromkeys(PAID_CREDENTIALS, ""))
     env["AB_WORKFLOW"] = workflow
     env["AB_MODEL"] = model
     env["AB_TIMEOUT"] = str(timeout)

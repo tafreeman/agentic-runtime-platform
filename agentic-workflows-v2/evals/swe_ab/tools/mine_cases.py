@@ -279,7 +279,29 @@ def emit_case(
     }
 
 
-def mine_mutations(repo: RepoSpec, wanted: int, seed: int = 20260827) -> list[dict]:
+def highest_case_index(repo_name: str) -> int:
+    """The largest ``<REPO>-MUT-NNN`` index already on disk for *repo_name*.
+
+    Case directories are the documented source of truth -- ``rebuild_index.py``
+    reconstructs the dataset from them -- so an id that is reissued destroys
+    the case it collides with, unrecoverably.
+    """
+    prefix = repo_name.upper() + "-MUT-"
+    highest = 0
+    if not CASES_DIR.is_dir():
+        return highest
+    for case_dir in CASES_DIR.iterdir():
+        if not case_dir.is_dir() or not case_dir.name.startswith(prefix):
+            continue
+        suffix = case_dir.name[len(prefix) :]
+        if suffix.isdigit():
+            highest = max(highest, int(suffix))
+    return highest
+
+
+def mine_mutations(
+    repo: RepoSpec, wanted: int, seed: int = 20260827, start_index: int = 0
+) -> list[dict]:
     rng = random.Random(seed)
     package = repo.path / repo.package_root
     modules = [
@@ -289,7 +311,7 @@ def mine_mutations(repo: RepoSpec, wanted: int, seed: int = 20260827) -> list[di
     ]
     rng.shuffle(modules)
     rows: list[dict] = []
-    index = 0
+    index = start_index
     for module in modules:
         if len(rows) >= wanted:
             break
@@ -459,8 +481,26 @@ def main() -> int:
             skip=repo.skip,
             canonical_path=REPOS[args.repo].path,
         )
+    # Case ids are allocated from 1 unless we are extending. Without this,
+    # every invocation reissued <REPO>-MUT-001.. and emit_case overwrote the
+    # existing directories in place -- destroying the mined cases that
+    # rebuild_index.py treats as the source of truth.
+    existing = highest_case_index(repo.name)
+    if existing and not args.append:
+        print(
+            f"{existing} case(s) already exist for {repo.name} "
+            f"({repo.name.upper()}-MUT-001..{existing:03d}). Mining now would "
+            f"reissue those ids and overwrite them. Pass --append to add "
+            f"alongside them, or --fresh to delete and re-mine deliberately.",
+            file=sys.stderr,
+        )
+        return 1
+    start_index = existing if args.append else 0
+    if start_index:
+        print(f"appending after {repo.name.upper()}-MUT-{start_index:03d}", flush=True)
+
     print("mining " + str(args.count) + " cases from " + repo.name, flush=True)
-    rows = mine_mutations(repo, args.count)
+    rows = mine_mutations(repo, args.count, start_index=start_index)
     print("mined " + str(len(rows)) + " cases from " + repo.name)
     print("now run: python tools/rebuild_index.py")
     return 0 if rows else 1
