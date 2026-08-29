@@ -299,9 +299,49 @@ def highest_case_index(repo_name: str) -> int:
     return highest
 
 
+def mined_mutation_sites(repo_name: str) -> set[tuple[str, int | None, str | None]]:
+    """``(target_file, mutation line, mutation kind)`` already mined from a repo.
+
+    Traversal here is deterministic -- a fixed seed, a sorted module list and
+    a seeded shuffle -- so re-running at the same revision re-selects exactly
+    the same mutation sites. Allocating fresh case ids was therefore not
+    enough on its own: ``--append`` would emit the *same* mutations under new
+    ids, and ``rebuild_index.py`` would present the duplicates as independent
+    cases, inflating the paired sample count and with it every significance
+    figure computed over it. These identities are what an append must skip.
+    """
+    seen: set[tuple[str, int | None, str | None]] = set()
+    if not CASES_DIR.is_dir():
+        return seen
+    for case_dir in CASES_DIR.iterdir():
+        oracle_path = case_dir / "oracle.json"
+        if not oracle_path.is_file():
+            continue
+        try:
+            oracle = json.loads(oracle_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if str(oracle.get("source_repo", "")) != repo_name:
+            continue
+        mutation = oracle.get("mutation") or {}
+        seen.add(
+            (
+                str(oracle.get("target_file", "")),
+                mutation.get("line"),
+                mutation.get("kind"),
+            )
+        )
+    return seen
+
+
 def mine_mutations(
-    repo: RepoSpec, wanted: int, seed: int = 20260827, start_index: int = 0
+    repo: RepoSpec,
+    wanted: int,
+    seed: int = 20260827,
+    start_index: int = 0,
+    already_mined: set[tuple[str, int | None, str | None]] | None = None,
 ) -> list[dict]:
+    already_mined = already_mined or set()
     rng = random.Random(seed)
     package = repo.path / repo.package_root
     modules = [
@@ -341,6 +381,15 @@ def mine_mutations(
                 break
             site = mutate(original, ordinal)
             if site is None:
+                continue
+            # Already mined at this revision: emitting it again would be the
+            # same case under a new id, not a new case.
+            identity = (
+                module.relative_to(repo.path).as_posix(),
+                site.lineno,
+                site.kind,
+            )
+            if identity in already_mined:
                 continue
             module.write_text(site.mutated_source, encoding="utf-8")
             try:
@@ -496,11 +545,18 @@ def main() -> int:
         )
         return 1
     start_index = existing if args.append else 0
+    already_mined = mined_mutation_sites(repo.name) if args.append else set()
     if start_index:
-        print(f"appending after {repo.name.upper()}-MUT-{start_index:03d}", flush=True)
+        print(
+            f"appending after {repo.name.upper()}-MUT-{start_index:03d}, "
+            f"skipping {len(already_mined)} mutation site(s) already mined",
+            flush=True,
+        )
 
     print("mining " + str(args.count) + " cases from " + repo.name, flush=True)
-    rows = mine_mutations(repo, args.count, start_index=start_index)
+    rows = mine_mutations(
+        repo, args.count, start_index=start_index, already_mined=already_mined
+    )
     print("mined " + str(len(rows)) + " cases from " + repo.name)
     print("now run: python tools/rebuild_index.py")
     return 0 if rows else 1

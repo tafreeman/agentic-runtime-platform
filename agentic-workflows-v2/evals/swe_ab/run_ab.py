@@ -208,14 +208,25 @@ def target_fingerprint(workflow: str, model: str) -> str:
     return f"{model}@{digest.hexdigest()[:12]}"
 
 
-def _digest_python_tree(root: Path) -> str:
-    """SHA-256 over every ``.py`` under *root*, path-ordered.
+def _digest_tree(root: Path) -> str:
+    """SHA-256 over every file under *root*, path-ordered.
+
+    Every file, not just ``*.py``. The runtime's behaviour is not carried by
+    its Python alone: ``langchain/agents.py`` reads ``prompts/{role}.md``
+    straight into an agent's system prompt, and workflow definitions live in
+    ``.yaml``. Editing ``reviewer.md`` changes what arm B produces while
+    leaving the model, the workflow and a Python-only digest untouched.
+    Hashing the whole tree also means the next runtime input to be added is
+    covered without anyone remembering to extend a list -- which is exactly
+    how the prompts came to be missed.
 
     Line endings are normalised so a CRLF checkout does not invent a
     difference, and ``__pycache__`` is skipped so a stale build does not.
     """
     digest = hashlib.sha256()
-    for path in sorted(p for p in root.rglob("*.py") if "__pycache__" not in p.parts):
+    for path in sorted(
+        p for p in root.rglob("*") if p.is_file() and "__pycache__" not in p.parts
+    ):
         digest.update(b"\0" + path.relative_to(root).as_posix().encode("utf-8") + b"\0")
         digest.update(path.read_bytes().replace(b"\r\n", b"\n"))
     return digest.hexdigest()[:12]
@@ -249,7 +260,7 @@ def runtime_fingerprint() -> str | None:
     # Mirror bridge.py: ARP_ROOT = KIT_ROOT.parent.parent, prepended to sys.path.
     bridge_root = KIT_ROOT.parent.parent / "agentic_v2"
     if bridge_root.is_dir():
-        return _digest_python_tree(bridge_root)
+        return _digest_tree(bridge_root)
 
     probe = subprocess.run(
         [
@@ -263,7 +274,7 @@ def runtime_fingerprint() -> str | None:
     if probe.returncode != 0:
         return None
     root = Path(probe.stdout.strip())
-    return _digest_python_tree(root) if root.is_dir() else None
+    return _digest_tree(root) if root.is_dir() else None
 
 
 def grader_fingerprint() -> str:

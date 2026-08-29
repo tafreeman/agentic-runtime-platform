@@ -114,23 +114,58 @@ def _fingerprint_model(value: Any) -> Any:
     return value.rsplit("@", 1)[0] if "@" in value else value
 
 
-def check_arms_comparable(left: dict[str, Any], right: dict[str, Any]) -> None:
+def check_arms_comparable(
+    left: list[dict[str, Any]],
+    right: list[dict[str, Any]],
+    *,
+    allow_runtime_drift: bool = False,
+) -> None:
     """Refuse a paired verdict over two arms that were not run alike.
 
-    *left* and *right* are the two arms' baseline reports.
+    *left* and *right* are **every** report contributing to each arm, not
+    just the baselines. Comparing baselines alone leaves a hole once
+    ``--allow-runtime-drift`` is in play: arm A at runtimes R0+R1 and arm B
+    at R0+R2 share a baseline, so the check passed while superseding outcomes
+    had been produced or graded by different implementations.
+
+    Under the drift flag a runtime or grader difference is reported rather
+    than refused -- the operator asked for that -- but every distinct
+    implementation that contributed is named, so the verdict is never
+    presented as the output of one system when it was not.
     """
-    differing = [
-        (field, left_value, right_value)
-        for field in CROSS_ARM_FIELDS
-        for left_value, right_value in [
-            ((left.get("manifest") or {}).get(field), (right.get("manifest") or {}).get(field))
-        ]
-        if left_value != right_value
-    ]
-    left_model = _fingerprint_model((left.get("manifest") or {}).get("target_fingerprint"))
-    right_model = _fingerprint_model((right.get("manifest") or {}).get("target_fingerprint"))
-    if left_model != right_model:
-        differing.append(("model (from target_fingerprint)", left_model, right_model))
+    def values(reports: list[dict[str, Any]], field: str) -> list[Any]:
+        return [(r.get("manifest") or {}).get(field) for r in reports]
+
+    differing: list[tuple[str, Any, Any]] = []
+    drifting: list[tuple[str, Any, Any]] = []
+    for field in CROSS_ARM_FIELDS:
+        left_values, right_values = values(left, field), values(right, field)
+        distinct = {json.dumps(v, sort_keys=True, default=str) for v in left_values + right_values}
+        if len(distinct) > 1:
+            entry = (field, sorted(set(map(str, left_values))), sorted(set(map(str, right_values))))
+            (drifting if field in RUNTIME_DRIFT_FIELDS else differing).append(entry)
+
+    left_models = {_fingerprint_model(v) for v in values(left, "target_fingerprint")}
+    right_models = {_fingerprint_model(v) for v in values(right, "target_fingerprint")}
+    if left_models != right_models:
+        differing.append(
+            ("model (from target_fingerprint)", sorted(map(str, left_models)), sorted(map(str, right_models)))
+        )
+
+    if drifting and allow_runtime_drift and not differing:
+        details = "\n".join(
+            f"    {field}: A={left_value}  B={right_value}"
+            for field, left_value, right_value in drifting
+        )
+        print(
+            f"WARNING: the two arms did not all run on one implementation, and "
+            f"--allow-runtime-drift was passed:\n{details}\n"
+            f"  The verdict below combines outcomes produced or graded by more "
+            f"than one build. Treat it as approximate.",
+            file=sys.stderr,
+        )
+        return
+    differing.extend(drifting)
     if not differing:
         return
     details = "\n".join(
@@ -367,8 +402,13 @@ def main() -> int:
         right = merge_outcomes(right_paths, allow_runtime_drift=args.allow_runtime_drift)
         # Each union above only proves an arm is internally consistent. The
         # paired verdict also needs the two arms to differ in exactly one
-        # thing, so check that before any statistic is computed.
-        check_arms_comparable(left_report, right_report)
+        # thing, so check that before any statistic is computed -- over every
+        # contributing report, not just the two baselines.
+        check_arms_comparable(
+            [load(p) for p in left_paths],
+            [load(p) for p in right_paths],
+            allow_runtime_drift=args.allow_runtime_drift,
+        )
     except IncompatibleUnion as error:
         print(f"\n{error}")
         return 1
