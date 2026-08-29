@@ -93,6 +93,15 @@ instead of warnings. `AGENTIC_STRICT_MODEL_VERIFY=1` enables strict local model
 hash verification. `AGENTIC_TRUSTED_MODEL_HASHES` may point to an operator
 override for trusted model hashes.
 
+`AGENTIC_MAX_COST_LANE=local|free|paid` caps the candidate models a tier may
+route to by curated `cost_lane` (see `model_registry.yaml`), filtering the
+candidate list rather than reordering it -- a pinned `model_override` is
+filtered too. Default `paid` (unset) filters nothing, matching prior
+behavior. If every candidate is filtered out, the request fails with
+`CostLaneCeilingExceededError` naming the ceiling rather than silently
+returning nothing or falling back to an unfiltered chain. See
+[ADR-059](adr/ADR-059-model-cost-lane-ceiling.md).
+
 ## RAG embeddings
 
 RAG embedding providers are configured in `EmbeddingConfig`, not by the chat
@@ -115,6 +124,7 @@ The configured model and dimensions must match the stored index. See
 | `AGENTIC_DEFAULT_ADAPTER` | `langchain` | Adapter the server validates and uses by default; set `native` to avoid the LangChain dependency |
 | `AGENTIC_NO_LLM` | `0` | Replace model calls with fixed placeholder responses |
 | `AGENTIC_TOKEN_BUDGET` | unset | Positive process-wide token cap on the shared native client; zero, negative, blank, or invalid values disable the cap |
+| `AGENTIC_MAX_COST_LANE` | `paid` | Filters model candidates to `local`/`free`/`paid` and below by curated `cost_lane`; unrecognised values fall back to `paid` (no filtering) with a logged warning |
 | `AGENTIC_EK_PROVIDER` | `1` | Use the ExecutionKit-backed provider path when the optional package is available; set `0` for the legacy path |
 | `AGENTIC_EXTERNAL_AGENTS_DIR` | unset | Directory containing additional agent definitions |
 | `SHELL` | `/bin/bash` | Shell executable used by shell-enabled paths |

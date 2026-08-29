@@ -684,9 +684,12 @@ def _invoke_with_failover(
 ) -> dict[str, Any]:
     """Invoke the agent across candidate models, returning the attempt outcome.
 
-    The returned dict always contains ``attempt_errors`` and
-    ``attempted_models``; on success it also contains ``agent_result``,
-    ``response_text`` and ``metadata``.
+    The returned dict always contains ``attempt_errors``, ``attempted_models``
+    and ``lane_crossings`` (a list of ``{from_model, from_lane, to_model,
+    to_lane}`` records -- one per failover step that moved into a strictly
+    more expensive :func:`agentic_v2.models.model_registry.cost_lane_for`,
+    also logged at WARNING; ARP-IMPROVEMENTS F1); on success it also contains
+    ``agent_result``, ``response_text`` and ``metadata``.
 
     When *response_ok* is provided, a response that fails the check is
     treated like a failed attempt and the next candidate model is tried —
@@ -698,10 +701,36 @@ def _invoke_with_failover(
     """
     attempt_errors: list[dict[str, Any]] = []
     attempted_models: list[str] = []
+    lane_crossings: list[dict[str, Any]] = []
+
+    from ..models.model_registry import cost_lane_for, cost_lane_rank
 
     last_index = len(model_candidates) - 1
+    previous_model_id: str | None = None
     for index, model_id in enumerate(model_candidates):
         attempted_models.append(model_id)
+        if previous_model_id is not None:
+            from_lane = cost_lane_for(previous_model_id)
+            to_lane = cost_lane_for(model_id)
+            if cost_lane_rank(to_lane) > cost_lane_rank(from_lane):
+                logger.warning(
+                    "Step %s failover crossed into a more expensive cost lane: "
+                    "%s (%s) -> %s (%s)",
+                    step.name,
+                    previous_model_id,
+                    from_lane,
+                    model_id,
+                    to_lane,
+                )
+                lane_crossings.append(
+                    {
+                        "from_model": previous_model_id,
+                        "from_lane": from_lane,
+                        "to_model": model_id,
+                        "to_lane": to_lane,
+                    }
+                )
+        previous_model_id = model_id
         try:
             agent = get_agent_for_model(model_id)
             agent_result = agent.invoke(
@@ -740,6 +769,7 @@ def _invoke_with_failover(
                 "metadata": metadata,
                 "attempt_errors": attempt_errors,
                 "attempted_models": attempted_models,
+                "lane_crossings": lane_crossings,
             }
         except Exception as e:
             retryable = is_retryable_model_error(e)
@@ -764,6 +794,7 @@ def _invoke_with_failover(
         "metadata": {},
         "attempt_errors": attempt_errors,
         "attempted_models": attempted_models,
+        "lane_crossings": lane_crossings,
     }
 
 
@@ -780,6 +811,7 @@ def _build_failure_update(
     *,
     failure_message: str | None = None,
     failure_metadata: dict[str, Any] | None = None,
+    lane_crossings: list[dict[str, Any]] | None = None,
 ) -> "_AwaitableStateUpdate":
     """Record a failed step (all model attempts exhausted) and emit traces."""
     err_text = failure_message or "All model attempts failed"
@@ -787,6 +819,8 @@ def _build_failure_update(
         last = attempt_errors[-1]
         err_text = f"{err_text} (last model={last.get('model')}: {last.get('error')})"
     end_time = datetime.now(UTC)
+    if lane_crossings:
+        failure_metadata = {**(failure_metadata or {}), "lane_crossings": lane_crossings}
     steps = record_step_result(
         state,
         step.name,
@@ -806,6 +840,7 @@ def _build_failure_update(
             "error": err_text,
             "attempted_models": attempted_models,
             "attempt_errors": attempt_errors,
+            **({"lane_crossings": lane_crossings} if lane_crossings else {}),
         },
     )
     return _AwaitableStateUpdate(
@@ -830,11 +865,14 @@ def _build_success_update(
     metadata: dict[str, Any],
     attempt_errors: list[dict[str, Any]],
     attempted_models: list[str],
+    lane_crossings: list[dict[str, Any]] | None = None,
 ) -> "_AwaitableStateUpdate":
     """Record a successful step, mapping outputs to context and emitting traces."""
     if attempt_errors:
         metadata["attempted_models"] = attempted_models
         metadata["attempt_errors"] = attempt_errors
+    if lane_crossings:
+        metadata["lane_crossings"] = lane_crossings
 
     step_outputs = parse_step_outputs(
         response_text,
@@ -876,6 +914,7 @@ def _build_success_update(
             attempted_models,
             failure_message=str(error),
             failure_metadata={"contract_diagnostics": diagnostics},
+            lane_crossings=lane_crossings,
         )
 
     # Map outputs to context
@@ -1041,6 +1080,7 @@ def _build_llm_node(
                     if contract_diagnostics and terminal_semantic
                     else None
                 ),
+                lane_crossings=outcome["lane_crossings"],
             )
 
         return _build_success_update(
@@ -1055,6 +1095,7 @@ def _build_llm_node(
             outcome["metadata"],
             outcome["attempt_errors"],
             outcome["attempted_models"],
+            lane_crossings=outcome["lane_crossings"],
         )
 
     return _llm_node

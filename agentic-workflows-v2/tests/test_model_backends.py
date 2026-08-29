@@ -136,6 +136,10 @@ class TestPrefixMap:
             "openai:",
             "nvidia:",
             "anthropic:",
+            # ADR-058: Claude via a subscription sign-in, distinct from
+            # "anthropic:" (API key) so the credential class is a property of
+            # the call rather than of ambient environment.
+            "claude:",
             "gemini:",
             "azure:",
             "azure-foundry:",

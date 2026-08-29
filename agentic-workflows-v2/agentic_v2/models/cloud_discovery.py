@@ -31,6 +31,13 @@ other than OpenRouter's public catalog, and any probe failure (network, auth,
 schema drift) degrades to "no models for this provider" rather than raising —
 callers keep the static catalog. The probe is bounded by an 8 s per-request
 timeout. API keys are sent as auth headers and are never logged.
+
+Cost lane (ARP-IMPROVEMENTS F1/F2): none of this module's listings expose
+free-vs-paid status -- that is a curated judgment, not a probeable fact (same
+split as ADR-040's tier/price curation). See
+:func:`agentic_v2.models.model_registry.cost_lane_for` and, for NVIDIA NIM
+specifically, the curated free-endpoint entries (``tiers: []``, deliberately
+not in any tier chain) in ``config/defaults/model_registry.yaml``.
 """
 
 from __future__ import annotations

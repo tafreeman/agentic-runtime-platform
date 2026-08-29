@@ -575,22 +575,6 @@ def build_notebooklm_model(model_name: str, temperature: float) -> Any:
     return build_gemini_model(resolved, temperature)
 
 
-def _ollama_served_locally(model_name: str) -> bool:
-    """True when the local daemon's ``/api/tags`` can serve ``model_name``.
-
-    Tag names are fully qualified (``qwen3-coder:30b``); a bare request name
-    also matches its ``:latest`` alias, mirroring the daemon's own resolution.
-    Matching is case-insensitive — the daemon resolves ``Gemma4:31b`` and
-    ``gemma4:31b`` to the same model, and locally pulled tags may carry mixed
-    case (``hf.co/...Qwen3.6-27B-GGUF:Q8_0``).
-    """
-    from ..models.ollama_discovery import local_model_names
-
-    names = {name.lower() for name in local_model_names()}
-    requested = model_name.lower()
-    return requested in names or f"{requested}:latest" in names
-
-
 def build_ollama_model(model_name: str, temperature: float) -> Any:
     """Build a ChatOllama instance for a local or ollama.com-hosted model.
 
@@ -630,12 +614,13 @@ def build_ollama_model(model_name: str, temperature: float) -> Any:
         DEFAULT_LOCAL_HOST,
         ENV_API_KEY,
         ENV_BASE_URL,
+        is_served_locally,
     )
 
     base_url = os.environ.get(ENV_BASE_URL, DEFAULT_LOCAL_HOST)
     client_kwargs: dict[str, Any] = {}
     api_key = os.environ.get(ENV_API_KEY)
-    if api_key and not _ollama_served_locally(model_name):
+    if api_key and not is_served_locally(model_name):
         base_url = CLOUD_HOST
         client_kwargs = {"headers": {"Authorization": f"Bearer {api_key}"}}
         logger.debug("Using Ollama cloud: %s at %s", model_name, base_url)

@@ -89,6 +89,153 @@ def test_provider_for_known_and_unknown():
 
 
 # ---------------------------------------------------------------------------
+# Cost lane (ARP-IMPROVEMENTS F1)
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(autouse=True)
+def _no_ambient_ollama_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    """An ambient OLLAMA_API_KEY would make cost_lane_for query the local
+    daemon (ADR-051 downgrade, tested explicitly below), and an ambient
+    non-loopback OLLAMA_BASE_URL would itself downgrade every ollama: id
+    (remote-endpoint check, also tested explicitly below) -- either could
+    silently change these tests' expectations depending on what happens to
+    be configured on whatever machine runs the suite. Keep them deterministic."""
+    monkeypatch.delenv("OLLAMA_API_KEY", raising=False)
+    monkeypatch.delenv("OLLAMA_BASE_URL", raising=False)
+
+
+def test_cost_lane_for_curated_local_and_paid():
+    assert mr.cost_lane_for("ollama:qwen3-coder:30b") == "local"
+    assert mr.cost_lane_for("anthropic:claude-opus-4-6") == "paid"
+
+
+def test_cost_lane_for_unknown_id_fails_closed_to_paid():
+    assert mr.cost_lane_for("some-future-provider:brand-new-model") == "paid"
+
+
+def test_cost_lane_for_ollama_downgrades_to_free_when_not_pulled_and_keyed(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """ADR-051: build_ollama_model reroutes to the account-bound ollama.com
+    cloud endpoint when OLLAMA_API_KEY is set and the model isn't pulled
+    locally -- a curated "local" id must reflect that, or a ceiling of
+    "local" would let a call it doesn't actually cover through."""
+    monkeypatch.setenv("OLLAMA_API_KEY", "fake-key-for-test")
+    monkeypatch.setattr(
+        "agentic_v2.models.ollama_discovery.local_model_names",
+        lambda: frozenset({"some-other-model:latest"}),
+    )
+    assert mr.cost_lane_for("ollama:qwen3-coder:30b") == "free"
+
+
+def test_cost_lane_for_ollama_stays_local_when_actually_pulled(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setenv("OLLAMA_API_KEY", "fake-key-for-test")
+    monkeypatch.setattr(
+        "agentic_v2.models.ollama_discovery.local_model_names",
+        lambda: frozenset({"qwen3-coder:30b"}),
+    )
+    assert mr.cost_lane_for("ollama:qwen3-coder:30b") == "local"
+
+
+def test_cost_lane_for_ollama_stays_local_without_a_key():
+    """No OLLAMA_API_KEY means build_ollama_model never reroutes (ADR-051),
+    so the curated value is trusted without a local-daemon lookup."""
+    assert mr.cost_lane_for("ollama:qwen3-coder:30b") == "local"
+
+
+@pytest.mark.parametrize("host", ["localhost", "127.0.0.1", "[::1]"])
+def test_ollama_base_is_loopback_true_for_loopback_hosts(
+    monkeypatch: pytest.MonkeyPatch, host: str
+):
+    # A bare (unbracketed) IPv6 literal is not valid URL syntax -- [::1] is
+    # the only well-formed way to write it, so that is the only IPv6 case.
+    monkeypatch.setenv("OLLAMA_BASE_URL", f"http://{host}:11434")
+    assert mr.ollama_base_is_loopback() is True
+
+
+def test_ollama_base_is_loopback_defaults_true_when_unset():
+    assert mr.ollama_base_is_loopback() is True
+
+
+def test_ollama_base_is_loopback_false_for_a_remote_host(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://ollama-box.internal:11434")
+    assert mr.ollama_base_is_loopback() is False
+
+
+@pytest.mark.parametrize(
+    ("url", "expected"),
+    [
+        ("http://localhost:1234", True),
+        ("http://127.0.0.1:12434", True),
+        ("http://[::1]:60160", True),
+        ("http://lmstudio-box.internal:1234", False),
+        ("http://192.168.1.50:13305", False),
+        ("https://ollama.com", False),
+    ],
+)
+def test_is_loopback_url(url: str, expected: bool):
+    """The provider-agnostic check every "is this genuinely local" decision
+    across the model layer shares (Ollama, LM Studio, Lemonade, Docker Model
+    Runner, Foundry Local -- ARP-IMPROVEMENTS F2 review)."""
+    assert mr.is_loopback_url(url) is expected
+
+
+def test_cost_lane_for_ollama_downgrades_to_free_for_a_remote_base_url_no_key(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """A remote OLLAMA_BASE_URL means every call already leaves this machine
+    -- fails "local"'s own definition regardless of OLLAMA_API_KEY."""
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://ollama-box.internal:11434")
+    assert mr.cost_lane_for("ollama:qwen3-coder:30b") == "free"
+
+
+def test_cost_lane_for_ollama_downgrades_to_free_for_a_remote_base_url_even_keyed(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """The loopback check must win even when OLLAMA_API_KEY is set and the
+    model happens to be listed at that remote host -- is_served_locally()
+    only proves "listed at OLLAMA_BASE_URL", not "on this machine"."""
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://ollama-box.internal:11434")
+    monkeypatch.setenv("OLLAMA_API_KEY", "fake-key-for-test")
+    monkeypatch.setattr(
+        "agentic_v2.models.ollama_discovery.local_model_names",
+        lambda: frozenset({"qwen3-coder:30b"}),  # "found" at the remote host
+    )
+    assert mr.cost_lane_for("ollama:qwen3-coder:30b") == "free"
+
+
+def test_cost_lane_rank_ordering():
+    assert mr.cost_lane_rank("local") < mr.cost_lane_rank("free") < mr.cost_lane_rank(
+        "paid"
+    )
+
+
+def test_is_within_cost_lane():
+    assert mr.is_within_cost_lane("ollama:qwen3-coder:30b", "local") is True
+    assert mr.is_within_cost_lane("ollama:qwen3-coder:30b", "paid") is True
+    assert mr.is_within_cost_lane("anthropic:claude-opus-4-6", "local") is False
+    assert mr.is_within_cost_lane("anthropic:claude-opus-4-6", "free") is False
+    assert mr.is_within_cost_lane("anthropic:claude-opus-4-6", "paid") is True
+    # unknown id fails closed: only within a "paid" ceiling
+    assert mr.is_within_cost_lane("unknown:model", "free") is False
+    assert mr.is_within_cost_lane("unknown:model", "paid") is True
+
+
+def test_production_registry_every_model_has_a_curated_cost_lane():
+    """Regression guard: every entry in model_registry.yaml declares cost_lane
+    explicitly. Not required by the schema (None fails closed to "paid"), but an
+    omission here is a curation gap worth catching, not silent paid-by-default."""
+    registry = mr.load_registry()
+    uncurated = sorted(m.id for m in registry.models if m.cost_lane is None)
+    assert not uncurated, f"models missing a curated cost_lane: {uncurated}"
+
+
+# ---------------------------------------------------------------------------
 # Pricing
 # ---------------------------------------------------------------------------
 
