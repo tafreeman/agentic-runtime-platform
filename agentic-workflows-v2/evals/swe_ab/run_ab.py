@@ -22,6 +22,7 @@ import asyncio
 import hashlib
 import json
 import os
+import subprocess
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -205,6 +206,68 @@ def target_fingerprint(workflow: str, model: str) -> str:
         digest.update(b"\0" + path.name.encode("utf-8") + b"\0")
         digest.update(path.read_bytes().replace(b"\r\n", b"\n"))
     return f"{model}@{digest.hexdigest()[:12]}"
+
+
+def _digest_python_tree(root: Path) -> str:
+    """SHA-256 over every ``.py`` under *root*, path-ordered.
+
+    Line endings are normalised so a CRLF checkout does not invent a
+    difference, and ``__pycache__`` is skipped so a stale build does not.
+    """
+    digest = hashlib.sha256()
+    for path in sorted(p for p in root.rglob("*.py") if "__pycache__" not in p.parts):
+        digest.update(b"\0" + path.relative_to(root).as_posix().encode("utf-8") + b"\0")
+        digest.update(path.read_bytes().replace(b"\r\n", b"\n"))
+    return digest.hexdigest()[:12]
+
+
+def runtime_fingerprint() -> str | None:
+    """Digest of the ARP runtime the bridge actually executes.
+
+    The workflow YAML says what the arm does; ``agentic_v2`` decides what that
+    produces. A runtime change is therefore a treatment change even when the
+    model and the workflow are untouched -- this PR is its own example, having
+    altered ``graph_wiring.extract_agent_response_text`` so a blank
+    reasoning-model turn now yields the model's reasoning instead of "".
+    Waves either side of that produce different answers under an otherwise
+    identical fingerprint.
+
+    The package is located by asking the ARP interpreter rather than assuming
+    a path relative to this kit: the bridge runs under ``ARP_PYTHON``, whose
+    venv may resolve ``agentic_v2`` to a different checkout than the one this
+    file happens to sit in.
+
+    Returns ``None`` if the runtime cannot be located, which is recorded as
+    "unknown" rather than silently treated as "unchanged".
+    """
+    probe = subprocess.run(
+        [
+            str(ARP_PYTHON),
+            "-c",
+            "import agentic_v2,pathlib;print(pathlib.Path(agentic_v2.__file__).parent)",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    if probe.returncode != 0:
+        return None
+    root = Path(probe.stdout.strip())
+    return _digest_python_tree(root) if root.is_dir() else None
+
+
+def grader_fingerprint() -> str:
+    """Digest of the modules that decide a sample's score.
+
+    A grader change makes new numbers incomparable with old ones just as
+    surely as a model change does, so it belongs in the union identity.
+    """
+    digest = hashlib.sha256()
+    for name in ("graders.py", "swebench_graders.py", "rubric.py", "container_harness.py"):
+        path = KIT_ROOT / name
+        if path.is_file():
+            digest.update(b"\0" + name.encode("utf-8") + b"\0")
+            digest.update(path.read_bytes().replace(b"\r\n", b"\n"))
+    return digest.hexdigest()[:12]
 
 
 def build_child_env(workflow: str, model: str, timeout: float) -> dict[str, str]:
@@ -399,6 +462,13 @@ async def main() -> int:
         # analyze.union_identity already compares this field.
         target_fingerprint=target_fingerprint(workflow, args.model),
         target_fingerprint_policy="model-id+sha256(workflow.yaml,bridge.py)[:12]",
+        # What produced the answers, and what scored them. Both change
+        # outcomes without touching the model or the workflow, so both are
+        # part of whether two runs are one system. "unknown" is recorded
+        # rather than omitted when the runtime cannot be located, so it can
+        # never be mistaken for "unchanged".
+        code_fingerprint=f"agentic_v2:{runtime_fingerprint() or 'unknown'}",
+        environment_fingerprint=f"graders:{grader_fingerprint()}",
         selection=DatasetSelection(limit=args.limit) if args.limit else DatasetSelection(),
         sampling=SamplingPolicy(attempts=args.attempts, temperature=0.0, seed=20260827),
         attempts=args.attempts,

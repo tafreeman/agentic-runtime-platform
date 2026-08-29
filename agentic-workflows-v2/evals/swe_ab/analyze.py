@@ -29,6 +29,7 @@ import json
 import math
 import random
 import statistics
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -64,7 +65,19 @@ UNION_IDENTITY_FIELDS = (
     "sampling",
     "concurrency",
     "timeout_seconds",
+    # What produced the answers and what scored them. A runtime or grader
+    # change alters outcomes without touching the model or the workflow.
+    "code_fingerprint",
+    "environment_fingerprint",
 )
+
+#: The subset above that ``--allow-runtime-drift`` downgrades to a warning.
+#: These identify the implementation rather than the experiment's design, and
+#: ARP is under active development, so an unrelated edit between two waves
+#: can differ here without changing what the arms did. The override is
+#: deliberate and loud; the default stays fail-closed, because a false
+#: refusal is visible and a false union is not.
+RUNTIME_DRIFT_FIELDS = ("code_fingerprint", "environment_fingerprint")
 
 
 def union_identity(report: dict[str, Any]) -> dict[str, Any]:
@@ -73,7 +86,9 @@ def union_identity(report: dict[str, Any]) -> dict[str, Any]:
     return {field: manifest.get(field) for field in UNION_IDENTITY_FIELDS}
 
 
-def merge_outcomes(paths: list[Path]) -> dict[str, dict[str, Any]]:
+def merge_outcomes(
+    paths: list[Path], *, allow_runtime_drift: bool = False
+) -> dict[str, dict[str, Any]]:
     """Union several reports for one arm, later paths winning on collision.
 
     A subset re-run supplements a full run rather than replacing it: when a
@@ -116,6 +131,18 @@ def merge_outcomes(paths: list[Path]) -> dict[str, dict[str, Any]]:
                 f"    {field}: {baseline[field]!r} != {identity[field]!r}"
                 for field in differing
             )
+            if allow_runtime_drift and set(differing) <= set(RUNTIME_DRIFT_FIELDS):
+                print(
+                    f"WARNING: unioning across a runtime/grader change because "
+                    f"--allow-runtime-drift was passed:\n"
+                    f"  {baseline_path}\n  {path}\n{details}\n"
+                    f"  The arms' design matches, but the code that ran or "
+                    f"scored them does not. Treat the combined numbers as "
+                    f"approximate.",
+                    file=sys.stderr,
+                )
+                merged.update(outcomes(report))
+                continue
             raise IncompatibleUnion(
                 f"refusing to union reports that describe different systems:\n"
                 f"  {baseline_path}\n  {path}\n"
@@ -249,6 +276,14 @@ def main() -> int:
     parser.add_argument(
         "--right", action="append", default=None, help="arm B report; repeatable"
     )
+    parser.add_argument(
+        "--allow-runtime-drift",
+        action="store_true",
+        help=(
+            "union reports whose ARP runtime or grader differs, warning loudly "
+            "instead of refusing. The arms' design must still match exactly."
+        ),
+    )
     args = parser.parse_args()
 
     left_paths = [Path(p) for p in (args.left or [str(REPORTS_DIR / "arm-a-direct.json")])]
@@ -263,7 +298,8 @@ def main() -> int:
     left_path, right_path = left_paths[0], right_paths[0]
     left_report, right_report = load(left_path), load(right_path)
     try:
-        left, right = merge_outcomes(left_paths), merge_outcomes(right_paths)
+        left = merge_outcomes(left_paths, allow_runtime_drift=args.allow_runtime_drift)
+        right = merge_outcomes(right_paths, allow_runtime_drift=args.allow_runtime_drift)
     except IncompatibleUnion as error:
         print(f"\n{error}")
         return 1
