@@ -108,8 +108,29 @@ def main() -> int:
             ],
             timeout=7200,
         )
+        # build_swebench_cases.py exits 0 as long as it produced *any* row, so
+        # a drained pool or unreadable images yield a short slice rather than a
+        # failure. Accepting that silently changes the wave's repo/difficulty
+        # mix, which is the one thing the campaign pins -- every wave has to
+        # sample the same population or the waves cannot be unioned.
+        built = 0
         if code == 0 and part.is_file():
+            built = sum(
+                1 for line in part.read_text(encoding="utf-8").splitlines() if line.strip()
+            )
             parts.append(part)
+        if built < count:
+            for stale in parts:
+                stale.unlink(missing_ok=True)
+            print(
+                f"wave {wave}: slice {repo} / {difficulty} yielded {built} of the "
+                f"{count} cases the mix calls for (builder exit {code}). Refusing to "
+                f"run the arms on a different population than waves 1..{wave - 1} "
+                f"drew from. Widen WAVE_MIX deliberately, or lower --size.",
+                file=sys.stderr,
+                flush=True,
+            )
+            return 1
 
     seen: set[str] = set()
     rows: list[str] = []

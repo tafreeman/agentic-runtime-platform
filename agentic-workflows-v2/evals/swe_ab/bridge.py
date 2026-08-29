@@ -116,6 +116,36 @@ async def _run(request: dict[str, Any]) -> dict[str, Any]:
         if isinstance(used, str) and used not in attempted:
             attempted.append(used)
 
+    # A model other than the one under test answered part of this sample.
+    # `AGENTIC_MODEL_TIER_*` pins the tier defaults, but the router still
+    # appends registry defaults and fallback providers *after* an override,
+    # so a step that errors or fails its contract silently continues on a
+    # different model. The arms are then not an equal-model comparison, and
+    # the delta stops meaning what the campaign says it means. This is an
+    # operational failure, not a wrong answer, so it must surface as an
+    # EvalKit error rather than be graded as a failed repair (ADR-0008).
+    substituted = [used for used in attempted if used != model]
+    if substituted:
+        _fail(
+            f"model fallback: requested {model!r} but "
+            f"{', '.join(repr(m) for m in substituted)} also answered; "
+            f"refusing to grade a sample the model under test did not produce",
+            code=4,
+        )
+
+    # WorkflowRunner.run() catches graph/model failures and returns a failed
+    # result rather than raising, so without this a failed run exits 0, EvalKit
+    # records it COMPLETED, and the sanity grader turns the empty or partial
+    # output into a *task* failure -- charging the arm for infrastructure.
+    overall_status = str(getattr(result, "overall_status", ""))
+    if "FAILED" in overall_status.upper():
+        errors = getattr(result, "errors", None) or []
+        detail = "; ".join(str(item) for item in errors)[:500] or "no error detail"
+        _fail(
+            f"workflow {workflow!r} finished {overall_status}: {detail}",
+            code=5,
+        )
+
     patched = _strip_code_fence(_coerce_text(final.get("patched_source")))
     return {
         "patched_source": patched,
@@ -124,7 +154,7 @@ async def _run(request: dict[str, Any]) -> dict[str, Any]:
         "workflow": workflow,
         "requested_model": model,
         "models_used": attempted,
-        "overall_status": str(getattr(result, "overall_status", "")),
+        "overall_status": overall_status,
         "step_count": len(steps),
         "elapsed_seconds": round(elapsed, 2),
     }

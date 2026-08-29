@@ -359,18 +359,35 @@ def main() -> int:
             "                         so this run measured infrastructure, not repair."
         )
 
+    # Over every report on each side, not just the first: the accuracy numbers
+    # above cover the whole union, so a cost line drawn from one wave would
+    # describe a different run than the statistics it sits under.
     print("\nCost")
-    for label, report in (("A", left_report), ("B", right_report)):
-        durations = [
-            ((sample.get("execution") or {}).get("output") or {}).get("elapsed_seconds")
-            for sample in report.get("samples", [])
-        ]
-        durations = [value for value in durations if isinstance(value, (int, float))]
-        window = ""
-        if report.get("started_at") and report.get("finished_at"):
-            start = datetime.fromisoformat(report["started_at"])
-            end = datetime.fromisoformat(report["finished_at"])
-            window = f"wall clock {(end - start).total_seconds() / 60:5.1f} min"
+    for label, paths in (("A", left_paths), ("B", right_paths)):
+        durations: list[float] = []
+        wall_minutes = 0.0
+        windows = 0
+        for path in paths:
+            report = load(path)
+            for sample in report.get("samples", []):
+                value = ((sample.get("execution") or {}).get("output") or {}).get(
+                    "elapsed_seconds"
+                )
+                if isinstance(value, (int, float)):
+                    durations.append(float(value))
+            if report.get("started_at") and report.get("finished_at"):
+                start = datetime.fromisoformat(report["started_at"])
+                end = datetime.fromisoformat(report["finished_at"])
+                wall_minutes += (end - start).total_seconds() / 60
+                windows += 1
+        # Summed, not spanned: waves ran at different times, so the elapsed
+        # range between the first start and the last finish would count the
+        # gaps between sessions as run time.
+        window = (
+            f"wall clock {wall_minutes:5.1f} min summed over {windows} run(s)"
+            if windows
+            else "no run window recorded"
+        )
         median = (
             f"median {sorted(durations)[len(durations) // 2]:5.1f} s/case "
             f"(n={len(durations)} kept inline)"
