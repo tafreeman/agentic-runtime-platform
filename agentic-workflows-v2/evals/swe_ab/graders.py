@@ -39,9 +39,7 @@ from agentic_evalkit.benchmarks.harness import (
     HarnessStatus,
 )
 from agentic_evalkit.graders import (
-    CompositeGrader,
     HarnessGrader,
-    WeightedGrader,
 )
 from agentic_evalkit.models import (
     EvalSample,
@@ -373,6 +371,54 @@ def prepare_worktree(repo: Path, worktree: Path, revision: str | None = None) ->
     return worktree
 
 
+class MutationGrader:
+    """Sanity gate, then the pytest oracle — and never a pass without it.
+
+    This deliberately does *not* use ``CompositeGrader``, for the reason
+    ``SwebenchGrader`` already documents: ``CompositeGrader`` excludes
+    ABSTAIN/ERROR/UNAVAILABLE from its weighted mean, which is right for an
+    advisory component and wrong for an authoritative one. With the pytest
+    oracle UNAVAILABLE -- an interpreter that cannot import pytest, an exit
+    code of 2..5, a timeout -- the composite scored the sample **PASS 1.0**
+    on the sanity check alone, reporting a benchmark pass for a benchmark it
+    never ran. That was fixed in the SWE-bench lane and left standing here;
+    both lanes now sequence explicitly:
+
+    * sanity fails       -> FAIL (the oracle is not worth running)
+    * harness cannot run -> UNAVAILABLE, never PASS
+    * harness ran        -> PASS or FAIL on what the tests said
+    """
+
+    def __init__(
+        self, *, harness: Any, name: str = "swe-fix-composite@1"
+    ) -> None:
+        self._sanity = SourceSanityGrader()
+        self._harness = harness
+        self._name = name
+
+    async def grade(
+        self, sample: EvalSample, execution: NormalizedExecutionResult
+    ) -> GradeResult:
+        sanity = await self._sanity.grade(sample, execution)
+        if sanity.status is not GradeStatus.PASS:
+            return sanity.model_copy(update={"grader": self._name})
+
+        harness = await self._harness.grade(sample, execution)
+        if harness.status in (GradeStatus.UNAVAILABLE, GradeStatus.ERROR):
+            # No verdict is available. Say so; do not borrow the sanity pass.
+            return harness.model_copy(
+                update={
+                    "grader": self._name,
+                    "hard_gate": False,
+                    "evidence": {
+                        **dict(harness.evidence),
+                        "sanity": "passed, but proves nothing on its own",
+                    },
+                }
+            )
+        return harness.model_copy(update={"grader": self._name})
+
+
 def build_grader(*, worktrees: dict[str, Path], timeout_seconds: float = 600.0):
     """The composite: sanity gate 0.3, hidden-test harness 0.7, judge 0.0.
 
@@ -381,19 +427,14 @@ def build_grader(*, worktrees: dict[str, Path], timeout_seconds: float = 600.0):
     could only enter at weight 0.0, and until a calibration artifact exists
     there is nothing for it to contribute to a pass/fail decision.
     """
-    harness = HarnessGrader(
-        executor=PytestHarnessExecutor(worktrees=worktrees),
-        predictor=swe_prediction,
-        benchmark=BENCHMARK,
-        name="pytest-oracle@1",
-        timeout_seconds=timeout_seconds,
-    )
-    return CompositeGrader(
-        name="swe-fix-composite@1",
-        graders=(
-            WeightedGrader(SourceSanityGrader(), weight=0.3, hard_gate=True),
-            WeightedGrader(harness, weight=0.7, hard_gate=True),
-        ),
+    return MutationGrader(
+        harness=HarnessGrader(
+            executor=PytestHarnessExecutor(worktrees=worktrees),
+            predictor=swe_prediction,
+            benchmark=BENCHMARK,
+            name="pytest-oracle@1",
+            timeout_seconds=timeout_seconds,
+        )
     )
 
 

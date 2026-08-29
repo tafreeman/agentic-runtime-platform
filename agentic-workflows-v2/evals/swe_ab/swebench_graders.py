@@ -42,11 +42,37 @@ def load_oracle(case_id: str) -> dict[str, Any]:
     return json.loads((CASES_DIR / case_id / "oracle.json").read_text(encoding="utf-8"))
 
 
+#: What git expects after a content line that has no terminating newline.
+#: difflib does not emit it, and git calls a patch missing it corrupt.
+_NO_NEWLINE_MARKER = "\\ No newline at end of file\n"
+
+
+def _terminate(line: str) -> str:
+    """A diff line, with git's no-newline marker when it needs one.
+
+    A model that returns otherwise-correct Python without a trailing newline
+    used to produce an unterminated final line such as ``+    return 2`` with
+    neither a newline nor a marker. ``git apply --check`` rejects that as a
+    corrupt patch, so the official harness scored a correct repair as failed
+    or unavailable purely on output formatting. Reproduced against a real
+    repo before this was added.
+    """
+    if line.endswith("\n"):
+        return line
+    return line + "\n" + _NO_NEWLINE_MARKER
+
+
 def build_patch(original: str, patched: str, path: str) -> str:
     """A git-style unified diff the official harness can apply.
 
     ``a/`` and ``b/`` prefixes and the ``diff --git`` header are required:
     the harness applies with git, which rejects a bare difflib header.
+
+    Content lines carry git's ``\\ No newline at end of file`` marker when
+    either side lacks a terminating newline. Marking is used rather than
+    normalising the text: appending a newline to *original* would stop the
+    patch's context matching the real file whenever that file genuinely has
+    none, trading one corrupt-patch failure for a subtler one.
     """
     if original == patched:
         return ""
@@ -57,7 +83,11 @@ def build_patch(original: str, patched: str, path: str) -> str:
         tofile=f"b/{path}",
         n=3,
     )
-    return f"diff --git a/{path} b/{path}\n" + "".join(body)
+    # Headers (---, +++, @@) always carry their own newline from difflib;
+    # only content lines can arrive unterminated, and only ever the last of
+    # a side. Terminating every line is safe and needs no special-casing.
+    lines = [_terminate(line) for line in body]
+    return f"diff --git a/{path} b/{path}\n" + "".join(lines)
 
 
 def swebench_prediction(
