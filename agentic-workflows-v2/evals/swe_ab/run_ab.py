@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import hashlib
 import json
 import os
 import sys
@@ -172,6 +173,38 @@ class _LocalCatalogAdapter:
         self, dataset: ResolvedDataset, *, offset: int = 0, limit: int | None = None
     ) -> AsyncIterator[SourceRecord]:
         return self._provider.iter_records(dataset, offset=offset, limit=limit)
+
+
+#: Files whose content defines the *treatment* an arm applies, beyond the
+#: model. A change to any of them makes a later run a different system.
+def _implementation_files(workflow: str) -> tuple[Path, ...]:
+    return (KIT_ROOT / "workflows" / f"{workflow}.yaml", KIT_ROOT / "bridge.py")
+
+
+def target_fingerprint(workflow: str, model: str) -> str:
+    """Identify the system under test: the model *and* what orchestrated it.
+
+    Recording only the model is not enough. The A/B's treatment is the
+    workflow, so an edit to a workflow YAML or to the bridge between waves
+    produces a different system under the same model -- and ``merge_outcomes``
+    would union the reports without noticing, because every identity field
+    matched.
+
+    That is a demonstrated hazard here, not a hypothetical one: commit
+    660ae983 ("fix the arm that discarded repairs") changed
+    ``swe_fix_review_loop.yaml`` *after* an earlier result had been observed.
+    Waves 1-7 all ran after it, so the current union is unaffected, but a
+    report from either side of that commit would have unioned silently.
+
+    Line endings are normalised before hashing so a CRLF checkout does not
+    invent a difference the content does not have.
+    """
+    digest = hashlib.sha256()
+    digest.update(model.encode("utf-8"))
+    for path in _implementation_files(workflow):
+        digest.update(b"\0" + path.name.encode("utf-8") + b"\0")
+        digest.update(path.read_bytes().replace(b"\r\n", b"\n"))
+    return f"{model}@{digest.hexdigest()[:12]}"
 
 
 def build_child_env(workflow: str, model: str, timeout: float) -> dict[str, str]:
@@ -364,8 +397,8 @@ async def main() -> int:
         # target_fingerprint and every sample's model_name were null, so
         # analyze.py could union two different models without noticing.
         # analyze.union_identity already compares this field.
-        target_fingerprint=args.model,
-        target_fingerprint_policy="requested-model-id",
+        target_fingerprint=target_fingerprint(workflow, args.model),
+        target_fingerprint_policy="model-id+sha256(workflow.yaml,bridge.py)[:12]",
         selection=DatasetSelection(limit=args.limit) if args.limit else DatasetSelection(),
         sampling=SamplingPolicy(attempts=args.attempts, temperature=0.0, seed=20260827),
         attempts=args.attempts,
