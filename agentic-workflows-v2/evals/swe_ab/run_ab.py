@@ -232,14 +232,25 @@ def runtime_fingerprint() -> str | None:
     Waves either side of that produce different answers under an otherwise
     identical fingerprint.
 
-    The package is located by asking the ARP interpreter rather than assuming
-    a path relative to this kit: the bridge runs under ``ARP_PYTHON``, whose
-    venv may resolve ``agentic_v2`` to a different checkout than the one this
-    file happens to sit in.
+    The package is located exactly the way ``bridge.py`` locates it, because
+    that is the tree that actually runs. The bridge does
+    ``sys.path.insert(0, ARP_ROOT)`` with ``ARP_ROOT`` two levels above the
+    kit, so it imports the checkout *this kit sits in* -- which is not
+    necessarily what ``ARP_PYTHON``'s venv would import. Asking the
+    interpreter instead looks more careful and is wrong whenever the two
+    differ, which is exactly the case worth fingerprinting: running the kit
+    from a git worktree, where the editable install still points at the main
+    checkout while the bridge executes the worktree's own tree.
 
-    Returns ``None`` if the runtime cannot be located, which is recorded as
-    "unknown" rather than silently treated as "unchanged".
+    The interpreter is asked only as a fallback, for a layout where the kit
+    is not inside an ARP checkout at all. ``None`` -- recorded as "unknown"
+    rather than silently treated as "unchanged" -- means neither worked.
     """
+    # Mirror bridge.py: ARP_ROOT = KIT_ROOT.parent.parent, prepended to sys.path.
+    bridge_root = KIT_ROOT.parent.parent / "agentic_v2"
+    if bridge_root.is_dir():
+        return _digest_python_tree(bridge_root)
+
     probe = subprocess.run(
         [
             str(ARP_PYTHON),

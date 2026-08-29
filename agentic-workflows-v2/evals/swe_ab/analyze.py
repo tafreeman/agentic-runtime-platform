@@ -79,6 +79,71 @@ UNION_IDENTITY_FIELDS = (
 #: refusal is visible and a false union is not.
 RUNTIME_DRIFT_FIELDS = ("code_fingerprint", "environment_fingerprint")
 
+#: Fields that must agree *between* the two arms. The union guard only ever
+#: compares reports within one arm, so without this two arms run at different
+#: models, sampling policies, concurrencies, runtimes or graders each pass
+#: their own check and a VERDICT is printed over them anyway.
+#:
+#: ``provenance_check`` cannot cover this: EvalKit refuses the comparison
+#: because the target names differ, and that refusal is deliberately printed
+#: and ignored -- two workflows *are* two targets, which is the experiment.
+#: The refusal therefore carries no information about anything else matching.
+#:
+#: Excluded on purpose: ``target_name`` is the treatment; ``timeout_seconds``
+#: legitimately differs (900 for arm A, 1200 for arm B in the pinned
+#: campaign); ``target_fingerprint`` embeds each arm's own workflow hash, so
+#: only its model prefix is comparable and that is checked separately.
+CROSS_ARM_FIELDS = (
+    "grader",
+    "adapter",
+    "sampling",
+    "concurrency",
+    "code_fingerprint",
+    "environment_fingerprint",
+)
+
+
+def _fingerprint_model(value: Any) -> Any:
+    """The model id out of a ``{model}@{implementation-hash}`` fingerprint.
+
+    Older reports carry ``None``; anything without the separator is returned
+    unchanged so a hand-set fingerprint still compares sensibly.
+    """
+    if not isinstance(value, str):
+        return value
+    return value.rsplit("@", 1)[0] if "@" in value else value
+
+
+def check_arms_comparable(left: dict[str, Any], right: dict[str, Any]) -> None:
+    """Refuse a paired verdict over two arms that were not run alike.
+
+    *left* and *right* are the two arms' baseline reports.
+    """
+    differing = [
+        (field, left_value, right_value)
+        for field in CROSS_ARM_FIELDS
+        for left_value, right_value in [
+            ((left.get("manifest") or {}).get(field), (right.get("manifest") or {}).get(field))
+        ]
+        if left_value != right_value
+    ]
+    left_model = _fingerprint_model((left.get("manifest") or {}).get("target_fingerprint"))
+    right_model = _fingerprint_model((right.get("manifest") or {}).get("target_fingerprint"))
+    if left_model != right_model:
+        differing.append(("model (from target_fingerprint)", left_model, right_model))
+    if not differing:
+        return
+    details = "\n".join(
+        f"    {field}: A={left_value!r}  B={right_value!r}"
+        for field, left_value, right_value in differing
+    )
+    raise IncompatibleUnion(
+        f"refusing to compare two arms that were not run alike:\n{details}\n"
+        f"  The A/B measures one difference -- the workflow. Anything else "
+        f"that differs is a second, uncontrolled difference, and the paired "
+        f"statistics below would attribute it to the workflow."
+    )
+
 
 def union_identity(report: dict[str, Any]) -> dict[str, Any]:
     """The manifest fields that decide whether two reports describe one system."""
@@ -300,6 +365,10 @@ def main() -> int:
     try:
         left = merge_outcomes(left_paths, allow_runtime_drift=args.allow_runtime_drift)
         right = merge_outcomes(right_paths, allow_runtime_drift=args.allow_runtime_drift)
+        # Each union above only proves an arm is internally consistent. The
+        # paired verdict also needs the two arms to differ in exactly one
+        # thing, so check that before any statistic is computed.
+        check_arms_comparable(left_report, right_report)
     except IncompatibleUnion as error:
         print(f"\n{error}")
         return 1
