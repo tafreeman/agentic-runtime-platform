@@ -2,8 +2,6 @@
 
 Covers:
 - ``agentic compare`` — run workflow through multiple adapters and compare.
-- ``agentic rag ingest`` — ingest files into RAG pipeline.
-- ``agentic rag search`` — search the RAG index.
 - ``agentic list adapters`` — list registered adapters via CLI.
 """
 
@@ -306,97 +304,6 @@ class TestCompareNativeAdapter:
 
         assert result.exit_code == 1
         assert "native" in result.stdout
-
-
-# ---------------------------------------------------------------------------
-# RAG CLI subcommands
-# ---------------------------------------------------------------------------
-
-
-class TestRagCLI:
-    """Tests for the ``agentic rag`` CLI subcommands."""
-
-    def test_rag_ingest_help(self):
-        """RAG ingest subcommand shows help."""
-        result = runner.invoke(app, ["rag", "ingest", "--help"])
-        assert result.exit_code == 0
-        assert "source" in result.stdout.lower()
-
-    def test_rag_search_help(self):
-        """RAG search subcommand shows help."""
-        result = runner.invoke(app, ["rag", "search", "--help"])
-        assert result.exit_code == 0
-        assert "query" in result.stdout.lower() or "top" in result.stdout.lower()
-
-    @patch("agentic_v2.cli.main._rag_ingest_impl")
-    def test_rag_ingest_reports_chunk_count(self, mock_ingest):
-        """RAG ingest reports the number of chunks ingested."""
-        mock_ingest.return_value = 5
-
-        with TemporaryDirectory() as tmpdir:
-            # Create a markdown file to ingest
-            md_path = Path(tmpdir) / "test.md"
-            md_path.write_text("# Test\n\nSome content for testing.")
-
-            result = runner.invoke(
-                app,
-                ["rag", "ingest", "--source", str(md_path)],
-            )
-            assert result.exit_code == 0
-            assert "5" in result.stdout
-            assert "chunk" in result.stdout.lower()
-
-    @patch("agentic_v2.cli.main._rag_search_impl")
-    def test_rag_search_returns_results(self, mock_search):
-        """RAG search returns and displays results."""
-        mock_search.return_value = [
-            {"content": "DAG executor uses Kahn's algorithm", "score": 0.95},
-            {"content": "Pipeline executor runs steps sequentially", "score": 0.82},
-        ]
-
-        result = runner.invoke(
-            app,
-            ["rag", "search", "how does the DAG executor work?"],
-        )
-        assert result.exit_code == 0
-        assert "Kahn" in result.stdout or "result" in result.stdout.lower()
-
-    @patch("agentic_v2.cli.main._rag_search_impl")
-    def test_rag_search_with_top_k(self, mock_search):
-        """RAG search respects --top-k parameter."""
-        mock_search.return_value = [
-            {"content": "Result 1", "score": 0.9},
-        ]
-
-        result = runner.invoke(
-            app,
-            ["rag", "search", "query", "--top-k", "3"],
-        )
-        assert result.exit_code == 0
-        # Verify top_k was passed through
-        mock_search.assert_called_once()
-        call_kwargs = mock_search.call_args
-        assert call_kwargs[0][1] == 3  # top_k positional arg
-
-    @patch("agentic_v2.cli.main._rag_search_impl")
-    def test_rag_search_no_results(self, mock_search):
-        """RAG search handles empty results gracefully."""
-        mock_search.return_value = []
-
-        result = runner.invoke(
-            app,
-            ["rag", "search", "nonexistent topic"],
-        )
-        assert result.exit_code == 0
-        assert "no result" in result.stdout.lower() or "0" in result.stdout
-
-    def test_rag_ingest_nonexistent_source(self):
-        """RAG ingest fails for nonexistent source path."""
-        result = runner.invoke(
-            app,
-            ["rag", "ingest", "--source", "/nonexistent/path/docs.md"],
-        )
-        assert result.exit_code == 1
 
 
 # ---------------------------------------------------------------------------

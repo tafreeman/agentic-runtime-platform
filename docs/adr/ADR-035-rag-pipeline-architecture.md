@@ -1,6 +1,7 @@
 # ADR-035: RAG Pipeline Architecture (LanceDB + Voyage 4 Hybrid Search)
 
-**Status:** Accepted
+**Status:** Superseded — the `agentic_v2/rag/` package this ADR describes was
+removed outright; see ADR-057.
 **Date:** 2026-06-17
 **Amended:** 2026-07-28 — reconciled with the as-built code. The original text
 described the pipeline as intended; several capabilities it described in the
@@ -8,6 +9,8 @@ present tense were never written. The sections below now state what exists and
 name what does not. The title is unchanged because `ADR-INDEX.md` and four other
 documents link this ADR by title.
 **Related:** [ADR-014](ADR-014-pydantic-wire-format.md) (wire-format contract discipline), [ADR-002](ADR-001-002-003-architecture-decisions.md) (SmartModelRouter), [ADR-019](ADR-019-dag-executor-top-level-timeout.md) (DAG timeout), [ADR-023](ADR-023-executionkit-runtime-contract-relationship.md) (ExecutionKit execution kernel)
+**Superseded by:** [ADR-057](ADR-057-remove-rag-package.md) — Remove the
+`agentic_v2.rag` Package (Superseded by groundkit)
 
 ---
 

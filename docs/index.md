@@ -142,7 +142,7 @@ These values are generated from the current source tree:
 
 <div class="stat-strip" markdown>
 <div class="stat-item">
-  <div class="stat-value">4,152</div>
+  <div class="stat-value">3,815</div>
   <div class="stat-label">Backend tests</div>
 </div>
 <div class="stat-item">
@@ -150,7 +150,7 @@ These values are generated from the current source tree:
   <div class="stat-label">Coverage gate, CI-enforced</div>
 </div>
 <div class="stat-item">
-  <div class="stat-value">52</div>
+  <div class="stat-value">53</div>
   <div class="stat-label">ADRs</div>
 </div>
 <div class="stat-item">
@@ -159,7 +159,7 @@ These values are generated from the current source tree:
 </div>
 </div>
 
-52 architecture decision records capture accepted, rejected, superseded, and
+53 architecture decision records capture accepted, rejected, superseded, and
 proposed choices. The [ADR index](adr/ADR-INDEX.md) is the source of truth for
 their status.
 

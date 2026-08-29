@@ -48,7 +48,7 @@ only five:
 | **032** | Extract Scoring/Judge Domain into `agentic_v2.scoring` (break the server "god package", fix dependency direction) | Accepted | [ADR-032](ADR-032-extract-scoring-package.md) |
 | **033** | Defensive Import-Time Project-Root Resolution in Scoring Eval-Config Loader | Accepted | [ADR-033](ADR-033-eval-config-project-root-resolution.md) |
 | **034** | Path-First File I/O Contracts for Multi-Step Workflows | Proposed | [ADR-034](ADR-034-path-first-workflow-io-contracts.md) |
-| **035** | RAG Pipeline Architecture (LanceDB + Voyage 4 Hybrid Search) | Accepted | [ADR-035](ADR-035-rag-pipeline-architecture.md) |
+| **035** | RAG Pipeline Architecture (LanceDB + Voyage 4 Hybrid Search) | Superseded → 057 | [ADR-035](ADR-035-rag-pipeline-architecture.md) |
 | **036** | `OllamaBackend` uses the official `ollama` client (contained SDK swap) | Accepted | [ADR-036](ADR-036-ollama-sdk-backend.md) |
 | **037** | Live Ollama model discovery via the raw REST API (`/api/tags`+`/api/ps`, cloud via `remote_host`) | Accepted | [ADR-037](ADR-037-live-ollama-model-discovery.md) |
 | **038** | Live discovery for LM Studio (native `/api/v1/models`, legacy fallbacks, multi-port) and ONNX (multi-root `genai_config.json`) local models | Accepted | [ADR-038](ADR-038-lmstudio-onnx-discovery.md) |
@@ -68,6 +68,7 @@ only five:
 | **054** | Evidence Ledger UI and immutable versioned model packs — warm-paper owned shadcn foundation, route splitting, Model Router consolidation, context-local pack routing, and recorded pack/model/provider provenance | Accepted | [ADR-054](ADR-054-evidence-ledger-ui-and-model-packs.md) |
 | **055** | File-size exception register — extends ADR-032's documented-exception precedent to the 12 other files over the 800-line guide (dated 2026-07-17 line counts + per-file cohesion rationale + split trigger), after the 2026-07-01 mechanical-split attempt (ARP-7, revert recorded in PR #145) caused regressions; `docs/CODING_STANDARDS.md` now points here instead of silently tolerating the gap | Accepted | [ADR-055](ADR-055-file-size-exception-register.md) |
 | **056** | Prompt-versioning registry — `PromptRecord`/`PromptRegistry` (LF-normalize then SHA-256, `{declared_version}@{short_hash}` fingerprint) backs `load_prompt` (back-compat), the engine's role-based persona lookup, and the judge's default `prompt_version` (was a hardcoded `"judge-v1"` literal that never changed); drift caught by a golden fingerprint test, not runtime warn/raise | Accepted | [ADR-056](ADR-056-prompt-versioning-registry.md) |
+| **057** | Remove the `agentic_v2.rag` package outright (17 modules, the `agentic rag` CLI group, 14 dedicated test files, the `[rag]` extra, `docs/rag/`, the non-blocking `rag-extra-tests` CI job) — zero non-test consumers, no deprecation shim; superseded by the standalone groundkit repo (groundkit ADR-0001, no cherry-pick back) | Accepted | [ADR-057](ADR-057-remove-rag-package.md) |
 | **058** | Claude subscription backend — `ClaudeSubscriptionBackend` behind a new `claude:` prefix, registered by *capability* (`claude-agent-sdk` importable) rather than by API key, so a subscription-only operator finally gets a Claude backend instead of an Ollama-only fallback; `subscription_env()` blanks `ANTHROPIC_API_KEY`/`ANTHROPIC_AUTH_TOKEN` in the CLI subprocess because `agentic_v2.models.secrets` puts them in `os.environ` and the child would otherwise silently bill the API account; also repairs `ClaudeSDKAgent`, which raised `AttributeError` on every run (`message.type` on dataclasses that have no `.type`) | Accepted | [ADR-058](ADR-058-claude-subscription-backend.md) |
 | **059** | Curated cost lane + fail-closed failover ceiling — `cost_lane` (`local`/`free`/`paid`) added to every registry entry; `AGENTIC_MAX_COST_LANE` filters (not reorders) `get_model_candidates_for_tier`'s full candidate list including a pinned `model_override`, raising `CostLaneCeilingExceededError` rather than falling through unfiltered when every candidate is filtered out; `_invoke_with_failover` logs + records a `lane_crossings` run event whenever failover moves into a strictly more expensive lane. Closes the gap the SWE-fix A/B campaign hit reaching Anthropic on a run meant to spend nothing | Accepted | [ADR-059](ADR-059-model-cost-lane-ceiling.md) |
 
@@ -118,7 +119,12 @@ Workflow I/O Domain:
   ADR-034 (Path-First I/O Contracts) ─── extends ADR-014 wire-format discipline to file artifact handoffs
 
 RAG / Retrieval Domain:
-  ADR-035 (RAG Pipeline Architecture) ─── builds on ADR-014 (Pydantic contracts) + ADR-002 (SmartModelRouter) + ADR-019 (DAG timeout); promoted from RAG-pipeline-blueprint.md
+  ADR-035 (RAG Pipeline Architecture) ──superseded-by──> ADR-057 (Remove agentic_v2.rag Package)
+    (originally built on ADR-014 (Pydantic contracts) + ADR-002 (SmartModelRouter) +
+     ADR-019 (DAG timeout); promoted from RAG-pipeline-blueprint.md)
+  ADR-057 (Remove agentic_v2.rag Package) ─── zero non-test consumers, no shim;
+    supersedes ADR-035; superseded-by relationship is one-way — RAG functionality
+    moves to the standalone groundkit repo (groundkit ADR-0001), not to a new ARP ADR
 
 Eval / Scoring Domain:
   ADR-032 (Extract Scoring Package) ─── standalone; removes server "god package" coupling
@@ -162,7 +168,7 @@ Eval / Scoring Domain:
 | 032 | Yes | 100% (`agentic_v2/scoring/` package live) | scoring unit tests | 2026-06-17 |
 | 033 | Yes | 100% (import-time root resolution in eval_config.py) | scoring eval-config tests | 2026-06-17 |
 | 034 | Proposed | 0% (pilot on fullstack_generation workflow pending) | — | 2026-06-17 |
-| 035 | Yes | 100% (`agentic_v2/rag/` thirteen modules live) | rag/ unit + retrieval tests | 2026-06-17 |
+| 035 | Superseded | `agentic_v2/rag/` removed 2026-08-10 (ADR-057); package no longer exists in the tree | rag/ tests removed with the package | 2026-08-10 |
 | 036 | Yes | 100% (`OllamaBackend` on `ollama.AsyncClient`; `ollama` promoted to core dep) | test_ollama_canonical.py (SDK-stubbed) | 2026-06-21 |
 | 037 | Yes | 100% (`models/ollama_discovery.py` raw probe; merged into `enumerate_known_models`; UI badges) | test_ollama_discovery.py, test_langchain_models_unit.py, ModelFinderPage.test.tsx | 2026-06-21 |
 | 038 | Yes | 100% (`models/local_discovery.py` LM Studio `/api/v1/models` + compatibility fallbacks and ONNX `genai_config.json`; merged into `enumerate_known_models`) | test_local_discovery.py, test_langchain_models_unit.py | 2026-07-14 |

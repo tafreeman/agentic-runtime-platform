@@ -1,0 +1,70 @@
+# Draft registry entries for the free-tier models this A/B needs.
+#
+# NOT applied. agentic_v2/config/defaults/model_registry.yaml is curated by
+# deliberate human edit under ADR-040 ("curated for JUDGMENTS a human owns:
+# tier membership, capability, price") — paste the entries you want into the
+# `models:` list there yourself, or say the word and I will.
+#
+# Ids are taken verbatim from the NVIDIA build catalog and the Ollama library
+# as of 2026-08-27. Two cautions:
+#   * NIM serves date-suffixed ids (deepseek-v4-flash-0731). The registry
+#     currently carries the unsuffixed `nvidia:deepseek-ai/deepseek-v4-flash`.
+#     Whichever string the endpoint actually answers to is the one that must
+#     be in the registry — verify with a single completion before a full run.
+#   * Ollama Cloud ids (`glm-5.3-flash`, `kimi-k2.7-code`) resolve through the
+#     same `ollama:` provider as local pulls, but bill/route differently. Pin
+#     one lane per run; do not mix local and cloud inside an arm.
+
+candidates:
+  # --- system under test: both arms, identical id, coding-capable ---------
+  - id: nvidia:deepseek-ai/deepseek-v4-flash-0731
+    provider: nvidia
+    tiers: [2, 3]
+    capability: balanced
+    status: active
+    price_in: 0.0
+    price_out: 0.0
+    context_window: 1000000
+    note: NIM free endpoint; 284B MoE / 13B active; coding + agentic.
+  - id: nvidia:poolside/laguna-xs-2.1
+    provider: nvidia
+    tiers: [2, 3]
+    capability: balanced
+    status: active
+    price_in: 0.0
+    price_out: 0.0
+    context_window: null
+    note: NIM free endpoint; 33B MoE built for long-horizon agentic coding.
+  - id: ollama:qwen3.5:27b
+    provider: ollama
+    tiers: [2, 3]
+    capability: local
+    status: active
+    price_in: 0.0
+    price_out: 0.0
+    context_window: null
+    note: Local lane. Fits a single workstation GPU; the fair local baseline.
+
+  # --- judge: MUST be a different family from the SUT ---------------------
+  - id: nvidia:openai/gpt-oss-120b
+    provider: nvidia
+    tiers: [3, 4]
+    capability: balanced
+    status: active
+    price_in: 0.0
+    price_out: 0.0
+    context_window: null
+    note: >-
+      Judge lane. Different family from every SUT candidate above, which is the
+      point — a model scoring its own family's output shows self-preference
+      bias. Advisory at weight 0.0 until a calibration artifact clears
+      TNR >= 0.95 / TPR >= 0.85 / age <= 90d on Wilson lower bounds.
+  - id: nvidia:nvidia/nemotron-3-super-120b-a12b
+    provider: nvidia
+    tiers: [3, 4]
+    capability: balanced
+    status: active
+    price_in: 0.0
+    price_out: 0.0
+    context_window: 1000000
+    note: Judge alternative if gpt-oss rate-limits.

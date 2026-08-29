@@ -1,5 +1,12 @@
 # Blueprint for the RAG retrieval pipeline
 
+> **Historical document.** The RAG package this blueprint describes
+> (`agentic_v2/rag/`) was removed from agentic-runtime-platform — see
+> [ADR-057](ADR-057-remove-rag-package.md) — and is superseded by the
+> standalone `groundkit` repo (private pre-release as of 2026-08-10).
+> Retained for research-provenance reference only; treat it as history, not
+> as current architecture.
+
 **LanceDB with Voyage 4 embeddings, hybrid search with cross-encoder reranking, and full Pydantic v2 typed contracts are the selected foundation for this pipeline.** The design is async-first, abstracts providers via LiteLLM, uses multi-stage retrieval (dense + BM25 → RRF fusion → reranking), and layers explicit resilience around every external call. The research below covers each implementation layer, from vector store selection to CI/CD regression testing, calibrated to the existing monorepo's LangChain/LangGraph engine, Pydantic contracts, YAML configuration style, and eval framework.
 
 ---

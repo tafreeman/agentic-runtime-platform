@@ -6,7 +6,6 @@ Tests every concrete implementation against its structural protocol via
 
 Covered protocols:
 - Core: AgentProtocol, ToolProtocol, MemoryStoreProtocol (MemoryStore alias)
-- RAG:  LoaderProtocol, ChunkerProtocol, EmbeddingProtocol, VectorStoreProtocol
 
 Each section has:
 1. Positive tests — concrete implementations satisfy the protocol.
@@ -15,76 +14,6 @@ Each section has:
 """
 
 from __future__ import annotations
-
-# ---------------------------------------------------------------------------
-# TestRAGProtocolConformance
-# ---------------------------------------------------------------------------
-
-
-class TestRAGProtocolConformance:
-    """Verify RAG protocol conformance for all concrete RAG implementations."""
-
-    # -- LoaderProtocol -------------------------------------------------------
-
-    def test_markdown_loader_satisfies_loader_protocol(self):
-        from agentic_v2.rag import MarkdownLoader
-        from agentic_v2.rag.protocols import LoaderProtocol
-
-        assert isinstance(MarkdownLoader(), LoaderProtocol)
-
-    def test_text_loader_satisfies_loader_protocol(self):
-        from agentic_v2.rag import TextLoader
-        from agentic_v2.rag.protocols import LoaderProtocol
-
-        assert isinstance(TextLoader(), LoaderProtocol)
-
-    # -- ChunkerProtocol -------------------------------------------------------
-
-    def test_recursive_chunker_satisfies_chunker_protocol(self):
-        from agentic_v2.rag import RecursiveChunker
-        from agentic_v2.rag.protocols import ChunkerProtocol
-
-        assert isinstance(RecursiveChunker(), ChunkerProtocol)
-
-    # -- EmbeddingProtocol ----------------------------------------------------
-
-    def test_in_memory_embedder_satisfies_embedding_protocol(self):
-        from agentic_v2.rag import InMemoryEmbedder
-        from agentic_v2.rag.protocols import EmbeddingProtocol
-
-        assert isinstance(InMemoryEmbedder(), EmbeddingProtocol)
-
-    def test_in_memory_embedder_custom_dims_satisfies_embedding_protocol(self):
-        """Dimensionality change must not break protocol conformance."""
-        from agentic_v2.rag import InMemoryEmbedder
-        from agentic_v2.rag.protocols import EmbeddingProtocol
-
-        assert isinstance(InMemoryEmbedder(dimensions=128), EmbeddingProtocol)
-
-    def test_fallback_embedder_satisfies_embedding_protocol(self):
-        from agentic_v2.rag import FallbackEmbedder, InMemoryEmbedder
-        from agentic_v2.rag.protocols import EmbeddingProtocol
-
-        primary = InMemoryEmbedder(dimensions=64)
-        fallback = FallbackEmbedder(providers=[primary])
-        assert isinstance(fallback, EmbeddingProtocol)
-
-    def test_fallback_embedder_multi_provider_satisfies_embedding_protocol(self):
-        """FallbackEmbedder with two providers must still satisfy the protocol."""
-        from agentic_v2.rag import FallbackEmbedder, InMemoryEmbedder
-        from agentic_v2.rag.protocols import EmbeddingProtocol
-
-        providers = [InMemoryEmbedder(dimensions=256), InMemoryEmbedder(dimensions=256)]
-        assert isinstance(FallbackEmbedder(providers=providers), EmbeddingProtocol)
-
-    # -- VectorStoreProtocol --------------------------------------------------
-
-    def test_in_memory_vector_store_satisfies_vectorstore_protocol(self):
-        from agentic_v2.rag import InMemoryVectorStore
-        from agentic_v2.rag.protocols import VectorStoreProtocol
-
-        assert isinstance(InMemoryVectorStore(), VectorStoreProtocol)
-
 
 # ---------------------------------------------------------------------------
 # TestAgentProtocolConformance
@@ -219,7 +148,7 @@ class TestToolProtocolConformance:
 
 
 class TestMemoryStoreConformance:
-    """Verify MemoryStoreProtocol conformance for InMemoryStore and RAGMemoryStore."""
+    """Verify MemoryStoreProtocol conformance for InMemoryStore."""
 
     def test_in_memory_store_satisfies_memory_store_protocol(self):
         from agentic_v2.core.memory import InMemoryStore, MemoryStoreProtocol
@@ -232,30 +161,6 @@ class TestMemoryStoreConformance:
         from agentic_v2.core.protocols import MemoryStore
 
         assert isinstance(InMemoryStore(), MemoryStore)
-
-    def test_rag_memory_store_satisfies_memory_store_protocol(self):
-        from agentic_v2.core.memory import MemoryStoreProtocol
-        from agentic_v2.rag import InMemoryEmbedder, InMemoryVectorStore
-        from agentic_v2.rag.memory import RAGMemoryStore
-
-        store = RAGMemoryStore(
-            embedder=InMemoryEmbedder(),
-            vectorstore=InMemoryVectorStore(),
-        )
-        assert isinstance(store, MemoryStoreProtocol)
-
-    def test_rag_memory_store_satisfies_memory_store_alias(self):
-        """RAGMemoryStore must also satisfy the backward-compat MemoryStore alias."""
-        from agentic_v2.core.protocols import MemoryStore
-        from agentic_v2.rag import InMemoryEmbedder, InMemoryVectorStore
-        from agentic_v2.rag.memory import RAGMemoryStore
-
-        store = RAGMemoryStore(
-            embedder=InMemoryEmbedder(dimensions=64),
-            vectorstore=InMemoryVectorStore(),
-            namespace="test",
-        )
-        assert isinstance(store, MemoryStore)
 
     def test_memory_store_missing_list_keys_fails(self):
         from agentic_v2.core.memory import MemoryStoreProtocol
@@ -296,127 +201,3 @@ class TestMemoryStoreConformance:
             # delete deliberately omitted
 
         assert not isinstance(_NoDelete(), MemoryStoreProtocol)
-
-
-# ---------------------------------------------------------------------------
-# TestNegativeCases
-# ---------------------------------------------------------------------------
-
-
-class TestNegativeCases:
-    """Near-miss classes that are one method/property short of a protocol.
-
-    One negative test per RAG protocol to confirm the protocol boundary
-    is enforced precisely.
-    """
-
-    def test_loader_missing_supported_extensions_fails(self):
-        """LoaderProtocol requires both `load` and `supported_extensions`."""
-        from agentic_v2.rag.protocols import LoaderProtocol
-
-        class _LoadOnly:
-            async def load(self, source: str, **kwargs):
-                return []
-
-            # supported_extensions deliberately omitted
-
-        assert not isinstance(_LoadOnly(), LoaderProtocol)
-
-    def test_loader_missing_load_fails(self):
-        """LoaderProtocol without `load` must not conform."""
-        from agentic_v2.rag.protocols import LoaderProtocol
-
-        class _ExtensionsOnly:
-            @property
-            def supported_extensions(self):
-                return [".md"]
-
-            # load deliberately omitted
-
-        assert not isinstance(_ExtensionsOnly(), LoaderProtocol)
-
-    def test_chunker_missing_chunk_fails(self):
-        """ChunkerProtocol requires the `chunk` method."""
-        from agentic_v2.rag.protocols import ChunkerProtocol
-
-        class _NotAChunker:
-            def split(self, document, config=None):
-                return []
-
-            # chunk deliberately omitted — wrong name
-
-        assert not isinstance(_NotAChunker(), ChunkerProtocol)
-
-    def test_embedding_missing_dimensions_fails(self):
-        """EmbeddingProtocol requires both `embed` and `dimensions`."""
-        from agentic_v2.rag.protocols import EmbeddingProtocol
-
-        class _EmbedOnly:
-            async def embed(self, texts):
-                return [[0.0] * 4 for _ in texts]
-
-            # dimensions property deliberately omitted
-
-        assert not isinstance(_EmbedOnly(), EmbeddingProtocol)
-
-    def test_embedding_missing_embed_fails(self):
-        """EmbeddingProtocol without `embed` must not conform."""
-        from agentic_v2.rag.protocols import EmbeddingProtocol
-
-        class _DimensionsOnly:
-            @property
-            def dimensions(self) -> int:
-                return 128
-
-            # embed deliberately omitted
-
-        assert not isinstance(_DimensionsOnly(), EmbeddingProtocol)
-
-    def test_vectorstore_missing_add_fails(self):
-        """VectorStoreProtocol requires `add`, `search`, and `delete`."""
-        from agentic_v2.rag.protocols import VectorStoreProtocol
-
-        class _NoAdd:
-            async def search(
-                self, query_embedding, top_k=5, metadata_filter=None, **kw
-            ):
-                return []
-
-            async def delete(self, document_id: str) -> bool:
-                return False
-
-            # add deliberately omitted
-
-        assert not isinstance(_NoAdd(), VectorStoreProtocol)
-
-    def test_vectorstore_missing_delete_fails(self):
-        """VectorStoreProtocol without `delete` must not conform."""
-        from agentic_v2.rag.protocols import VectorStoreProtocol
-
-        class _NoDelete:
-            async def add(self, chunks, embeddings):
-                pass
-
-            async def search(
-                self, query_embedding, top_k=5, metadata_filter=None, **kw
-            ):
-                return []
-
-            # delete deliberately omitted
-
-        assert not isinstance(_NoDelete(), VectorStoreProtocol)
-
-    def test_vectorstore_missing_search_fails(self):
-        """VectorStoreProtocol without `search` must not conform."""
-        from agentic_v2.rag.protocols import VectorStoreProtocol
-
-        class _NoSearch:
-            async def add(self, chunks, embeddings):
-                pass
-
-            async def delete(self, document_id: str) -> bool:
-                return False
-
-            # search deliberately omitted
-
-        assert not isinstance(_NoSearch(), VectorStoreProtocol)

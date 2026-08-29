@@ -286,6 +286,13 @@ def map_step_outputs_to_context(
 
 _DATA_URL_PATTERN = re.compile(r"^data:(?P<mime>[\w.+-]+/[\w.+-]+)?(;base64)?,")
 
+# ``additional_kwargs`` keys that carry a reasoning model's chain-of-thought,
+# in preference order, for when ``content`` comes back empty.
+# ``reasoning_content`` is the OpenAI-compatible extension NVIDIA NIM and
+# DeepSeek emit (surfaced by the NIM builder's ChatOpenAI subclass, which is
+# what preserves it); ``thinking`` is Ollama's channel name.
+_REASONING_FALLBACK_KEYS: tuple[str, ...] = ("reasoning_content", "thinking")
+
 
 def summarize_media_value(value: Any) -> Any:
     """Replace data-URL media payloads with a compact textual placeholder.
@@ -329,14 +336,41 @@ def build_task_description(step: StepConfig, resolved_inputs: dict[str, Any]) ->
     return task_description
 
 
+def _reasoning_fallback_text(message: AIMessage) -> str:
+    """Recover a blank-content message's chain-of-thought, if it carried one."""
+    extras = getattr(message, "additional_kwargs", None) or {}
+    for key in _REASONING_FALLBACK_KEYS:
+        candidate = coerce_message_content_to_text(extras.get(key))
+        if candidate.strip():
+            logger.warning(
+                "Model returned empty content; falling back to its '%s' channel "
+                "(the token budget was spent reasoning before any answer)",
+                key,
+            )
+            return candidate
+    return ""
+
+
 def extract_agent_response_text(agent_result: dict[str, Any]) -> str:
-    """Extract the final AIMessage text from an agent response payload."""
+    """Extract the final AIMessage text from an agent response payload.
+
+    A reasoning model can spend its whole token budget on an internal
+    chain-of-thought phase and return empty ``content``. Handing the step ""
+    there makes "the model never got to answer" indistinguishable from "the
+    model failed", so fall back to whatever reasoning channel the provider
+    exposed — the same degradation ``OllamaBackend`` applies via
+    ``response.thinking``.
+    """
     ai_messages = [
         m for m in agent_result.get("messages", []) if isinstance(m, AIMessage)
     ]
     if not ai_messages:
         return ""
-    return coerce_message_content_to_text(ai_messages[-1].content)
+    message = ai_messages[-1]
+    text = coerce_message_content_to_text(message.content)
+    if text.strip():
+        return text
+    return _reasoning_fallback_text(message) or text
 
 
 def _coerce_dict_content_to_text(content: dict[str, Any]) -> str:
