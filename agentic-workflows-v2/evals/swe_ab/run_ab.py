@@ -242,6 +242,11 @@ async def main() -> int:
         max_output_bytes=4 * 1024 * 1024,
     )
 
+    # Only the mutation grader builds worktrees; the SWE-bench harness grades
+    # in its own containers. Bind it empty either way so the cleanup in the
+    # `finally` below is a no-op rather than an UnboundLocalError that would
+    # discard a completed multi-hour run before its report is written.
+    worktrees: dict[str, Path] = {}
     if args.grader == "swebench":
         from container_harness import build_container_executor
         from swebench_graders import build_swebench_grader

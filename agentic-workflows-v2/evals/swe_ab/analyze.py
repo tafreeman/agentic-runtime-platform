@@ -47,6 +47,32 @@ def load(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+class IncompatibleUnion(ValueError):
+    """Reports asked to union describe different systems, not one system."""
+
+
+#: Manifest fields that must agree across every report in one arm's union.
+#: Each was verified constant within an arm across all seven campaign waves,
+#: so a mismatch is a mistake rather than normal variation. ``target_name``
+#: is the arm itself; ``timeout_seconds`` differs *between* arms (900 vs
+#: 1200) but never within one.
+UNION_IDENTITY_FIELDS = (
+    "target_name",
+    "grader",
+    "adapter",
+    "target_fingerprint",
+    "sampling",
+    "concurrency",
+    "timeout_seconds",
+)
+
+
+def union_identity(report: dict[str, Any]) -> dict[str, Any]:
+    """The manifest fields that decide whether two reports describe one system."""
+    manifest = report.get("manifest") or {}
+    return {field: manifest.get(field) for field in UNION_IDENTITY_FIELDS}
+
+
 def merge_outcomes(paths: list[Path]) -> dict[str, dict[str, Any]]:
     """Union several reports for one arm, later paths winning on collision.
 
@@ -56,10 +82,46 @@ def merge_outcomes(paths: list[Path]) -> dict[str, dict[str, Any]]:
     only sound because every run in the union shares an arm, a model, and a
     configuration -- it unions disjoint evidence about one system, it does not
     average two systems together.
+
+    That precondition is now enforced rather than merely stated: a report
+    whose identity fields disagree with the first raises
+    :class:`IncompatibleUnion` instead of silently overwriting colliding
+    sample ids and producing pass rates and significance statistics for a
+    system that never ran.
+
+    One half of the invariant is *not* checkable here: nothing in the report
+    records the model. ``target_fingerprint`` and every sample's
+    ``model_name`` are null across the whole campaign, so swapping the model
+    between waves would pass this gate. The pinned ``CAMPAIGN`` block in
+    ``tools/run_wave.py`` remains the only thing holding the model steady.
     """
     merged: dict[str, dict[str, Any]] = {}
+    baseline: dict[str, Any] | None = None
+    baseline_path: Path | None = None
     for path in paths:
-        merged.update(outcomes(load(path)))
+        report = load(path)
+        identity = union_identity(report)
+        if baseline is None:
+            baseline, baseline_path = identity, path
+        elif identity != baseline:
+            differing = sorted(
+                field
+                for field in UNION_IDENTITY_FIELDS
+                if identity[field] != baseline[field]
+            )
+            details = "\n".join(
+                f"    {field}: {baseline[field]!r} != {identity[field]!r}"
+                for field in differing
+            )
+            raise IncompatibleUnion(
+                f"refusing to union reports that describe different systems:\n"
+                f"  {baseline_path}\n  {path}\n"
+                f"  disagree on {', '.join(differing)}:\n{details}\n"
+                f"  A union is only sound across runs of one arm at one "
+                f"configuration; unioning these would overwrite colliding "
+                f"sample ids and report statistics for a system that never ran."
+            )
+        merged.update(outcomes(report))
     return merged
 
 
@@ -197,7 +259,11 @@ def main() -> int:
 
     left_path, right_path = left_paths[0], right_paths[0]
     left_report, right_report = load(left_path), load(right_path)
-    left, right = merge_outcomes(left_paths), merge_outcomes(right_paths)
+    try:
+        left, right = merge_outcomes(left_paths), merge_outcomes(right_paths)
+    except IncompatibleUnion as error:
+        print(f"\n{error}")
+        return 1
     if len(left_paths) > 1 or len(right_paths) > 1:
         print(
             f"\n(unioned {len(left_paths)} report(s) for A, "

@@ -129,7 +129,7 @@ def main() -> int:
         return 0 if rows else 1
 
     for arm, timeout in (("a", CAMPAIGN["timeout_a"]), ("b", CAMPAIGN["timeout_b"])):
-        run(
+        code = run(
             [
                 "uv", "run", "python", str(KIT_ROOT / "run_ab.py"),
                 "--arm", arm, "--cases", str(cases),
@@ -140,6 +140,18 @@ def main() -> int:
                 "--timeout", str(timeout),
             ]
         )
+        # A wave is a paired experiment: half of it is not a partial result,
+        # it is no result. Stop before the other arm runs, and before
+        # --prune-images deletes the images a retry would need, rather than
+        # exiting 0 over a missing or stale report.
+        if code != 0:
+            print(
+                f"wave {wave}: arm {arm} exited {code}; stopping before the "
+                f"remaining arm and before any image pruning",
+                file=sys.stderr,
+                flush=True,
+            )
+            return code
 
     if args.prune_images:
         ids = [json.loads(line)["sample_id"] for line in rows]
