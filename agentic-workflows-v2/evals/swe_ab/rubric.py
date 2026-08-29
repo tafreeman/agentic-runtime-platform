@@ -16,8 +16,22 @@ Two rules shape every criterion below, both inherited from EvalKit's design
    recorded as evidence and moves nothing.
 
 ``CRITERION_SOURCES`` names, for every criterion, which of the two decides
-it. Nothing in this file grades anything; ``graders.py`` binds the objective
-criteria to real checks and hands the rest to the judge.
+it. Nothing in this file grades anything.
+
+**What ships is not this rubric.** ``SWE_FIX_RUBRIC`` is the declared target
+and currently has no consumer. The graders that actually run compute a
+two-part composite -- ``SourceSanityGrader`` at 0.3 and the pytest/SWE-bench
+harness at 0.7 -- which is not this rubric's weighted sum, and which never
+evaluates ``diff_confined_to_target`` or ``no_unsafe_constructs`` at all.
+``within_budget`` is computed by the sanity grader but recorded only as
+evidence; it moves no score and gates nothing.
+
+Results are therefore stamped ``SCORED_RUBRIC_ID``, not ``RUBRIC_ID``, so a
+report never claims a rubric it did not apply. Wiring the missing criteria
+in would change every future score and make new runs incomparable with the
+runs already graded, which a live campaign cannot absorb silently -- that is
+a deliberate experiment change, not a code fix, and belongs to a new
+campaign rather than to this one.
 """
 
 from __future__ import annotations
@@ -27,6 +41,18 @@ from typing import Final
 from agentic_evalkit.graders import Rubric, RubricCriterion
 
 RUBRIC_ID: Final[str] = "swe_fix_v1"
+
+#: What the shipped composite actually computes. Stamped on every GradeResult
+#: in place of ``RUBRIC_ID`` so the label matches the computation.
+SCORED_RUBRIC_ID: Final[str] = "swe_fix_composite_v1"
+
+#: Criteria ``SWE_FIX_RUBRIC`` declares that no shipped grader evaluates.
+#: Adding one here without wiring a grader is how the label drifted from the
+#: computation in the first place.
+UNSCORED_CRITERIA: Final[tuple[str, ...]] = (
+    "diff_confined_to_target",
+    "no_unsafe_constructs",
+)
 
 #: Which mechanism settles each criterion. "objective" == decided by running
 #: code (patch application, pytest, an AST/diff scan). "judge" == decided by

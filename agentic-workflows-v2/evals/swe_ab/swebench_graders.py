@@ -29,6 +29,7 @@ from agentic_evalkit.models import (
     GradeStatus,
     NormalizedExecutionResult,
 )
+from rubric import SCORED_RUBRIC_ID
 
 KIT_ROOT = Path(__file__).resolve().parent
 CASES_DIR = KIT_ROOT / "dataset" / "swebench_cases"
@@ -145,7 +146,7 @@ class SwebenchSanityGrader:
             score=score,
             hard_gate=status is GradeStatus.FAIL,
             evidence=dict(evidence),
-            rubric_id="swe_fix_v1",
+            rubric_id=SCORED_RUBRIC_ID,
             created_at=now,
         )
 

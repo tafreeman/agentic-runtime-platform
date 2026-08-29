@@ -50,6 +50,7 @@ from agentic_evalkit.models import (
     GradeStatus,
     NormalizedExecutionResult,
 )
+from rubric import SCORED_RUBRIC_ID
 
 KIT_ROOT = Path(__file__).resolve().parent
 CASES_DIR = KIT_ROOT / "dataset" / "cases"
@@ -292,7 +293,7 @@ class SourceSanityGrader:
             score=score,
             hard_gate=hard_gate and status is GradeStatus.FAIL,
             evidence=dict(evidence),
-            rubric_id="swe_fix_v1",
+            rubric_id=SCORED_RUBRIC_ID,
             created_at=now,
         )
 
@@ -326,22 +327,32 @@ def prepare_worktree(repo: Path, worktree: Path, revision: str | None = None) ->
     whatever revision a previous run happened to leave behind.
     """
     if worktree.exists():
-        if revision is None:
-            return worktree
+        # Discard tracked edits before reuse, whatever the revision. The
+        # executor overwrites and restores only the *current* case's target
+        # file, so a process killed mid-case leaves that edit behind and it
+        # then rides along into every later case in the same worktree --
+        # changing imports or test behaviour and silently altering verdicts.
         current = worktree_revision(worktree)
-        if current == revision:
-            return worktree
-        reset = subprocess.run(
-            ["git", "-C", str(worktree), "checkout", "--detach", "--force", revision],
-            capture_output=True,
-            text=True,
-        )
-        if reset.returncode != 0:
-            raise RuntimeError(
-                f"grading worktree {worktree} sits on {current or 'an unknown commit'} "
-                f"but the cases were mined at {revision}, and it could not be reset: "
-                f"{reset.stderr.strip()}"
+        target = revision or current
+        if target:
+            reset = subprocess.run(
+                ["git", "-C", str(worktree), "checkout", "--detach", "--force", target],
+                capture_output=True,
+                text=True,
             )
+            if reset.returncode != 0:
+                if revision is not None and current != revision:
+                    raise RuntimeError(
+                        f"grading worktree {worktree} sits on "
+                        f"{current or 'an unknown commit'} but the cases were mined "
+                        f"at {revision}, and it could not be reset: "
+                        f"{reset.stderr.strip()}"
+                    )
+                raise RuntimeError(
+                    f"grading worktree {worktree} could not be reset to {target}, "
+                    f"so a stale edit from an interrupted run may still be present: "
+                    f"{reset.stderr.strip()}"
+                )
         return worktree
     worktree.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(
