@@ -29,6 +29,7 @@ dependencies = [
     "rich>=13.0,<16",
     "python-json-logger>=3.0,<5",
     "agentic-tools",
+    "pandas>=3.0.5",
 ]
 
 [tool.uv.sources]

@@ -45,13 +45,36 @@ CAMPAIGN = {
 
 #: Repos drawn from, and the difficulty mix, per wave. Kept proportional so
 #: every wave is a sample of the same population rather than a different one.
+#:
+#: Widened 2026-08-29 after wave 6 (EVIDENCE.md §2.14/§2.15): scikit-learn's
+#: 15-min-1-hour bucket hit real, permanent exhaustion (0 remaining) and
+#: sympy/sphinx/matplotlib were down to 3-4 instances each. scikit-learn is
+#: dropped outright; sympy/sphinx/matplotlib kept at reduced weight to drain
+#: naturally over the next wave or two rather than vanish abruptly. Five repos
+#: added (astropy, xarray, pytest, requests, pylint), sized to their measured
+#: remaining pool depth (EVIDENCE.md §2.15) -- pylint's pool is thin (4 total)
+#: and included as a one-shot bonus, not a repeating bucket. django's combined
+#: share drops from 40% to 27.5% of the nominal mix, which also reduces its
+#: dominance in a set already flagged `contamination_risk: high`. This is a
+#: deliberate, human-approved campaign change, not a wave change -- waves 1-6
+#: drew from the old mix, wave 7 on draws from this one; both stay unioned in
+#: EVIDENCE.md §1.3 since each paired instance is graded identically
+#: regardless of which mix drew it in, but the population composition is
+#: flagged at the point it changed.
 WAVE_MIX = [
-    ("django/django", "15 min - 1 hour", 8),
-    ("sympy/sympy", "15 min - 1 hour", 6),
-    ("sphinx-doc/sphinx", "<15 min fix", 5),
-    ("scikit-learn/scikit-learn", "15 min - 1 hour", 5),
-    ("django/django", "<15 min fix", 6),
-    ("matplotlib/matplotlib", "15 min - 1 hour", 5),
+    ("django/django", "15 min - 1 hour", 6),
+    ("django/django", "<15 min fix", 5),
+    ("sympy/sympy", "15 min - 1 hour", 2),
+    ("sphinx-doc/sphinx", "<15 min fix", 2),
+    ("matplotlib/matplotlib", "15 min - 1 hour", 2),
+    ("astropy/astropy", "15 min - 1 hour", 5),
+    ("astropy/astropy", "<15 min fix", 2),
+    ("pydata/xarray", "15 min - 1 hour", 5),
+    ("pydata/xarray", "<15 min fix", 2),
+    ("pytest-dev/pytest", "15 min - 1 hour", 3),
+    ("pytest-dev/pytest", "<15 min fix", 3),
+    ("psf/requests", "<15 min fix", 2),
+    ("pylint-dev/pylint", "<15 min fix", 1),
 ]
 
 
@@ -92,8 +115,12 @@ def main() -> int:
 
     wave = args.wave
     cases = KIT_ROOT / "dataset" / f"cases.swebench.wave{wave}.jsonl"
-    # Each wave takes the next slice of every pool, so waves never overlap.
-    offset = (wave - 1) * 8
+    # Always scan each pool from the start. Non-overlap comes from
+    # build_swebench_cases.py skipping instance ids that already have a case
+    # directory (EVIDENCE.md §2.10), not from this offset — a growing offset
+    # was found to permanently strand real, unbuilt instances in any pool
+    # smaller than the offset (EVIDENCE.md §2.13).
+    offset = 0
 
     # Scale the mix to the requested size, keeping every repo represented:
     # a wave that dropped whole repos would sample a different population

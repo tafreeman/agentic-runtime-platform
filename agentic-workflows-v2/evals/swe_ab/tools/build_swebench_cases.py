@@ -55,8 +55,18 @@ def patched_files(patch: str) -> list[str]:
 
 
 def docker(args: list[str], timeout: int = 1800) -> tuple[int, str]:
+    # Source files pulled from instance images are UTF-8; without an explicit
+    # encoding, Windows' default cp1252 raises UnicodeDecodeError on the first
+    # non-ASCII byte and takes down the whole bucket's build (EVIDENCE.md
+    # §2.12/§2.16). errors="replace" trades a mojibake character for never
+    # crashing on truly undecodable bytes.
     proc = subprocess.run(
-        ["docker", *args], capture_output=True, text=True, timeout=timeout
+        ["docker", *args],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=timeout,
     )
     return proc.returncode, proc.stdout + proc.stderr
 
