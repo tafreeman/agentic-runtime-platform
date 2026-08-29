@@ -301,18 +301,21 @@ def main() -> int:
     low, high = paired_bootstrap(deltas)
     p_value = mcnemar_exact(only_a, only_b)
 
-    print("\nDifference (B - A), paired")
+    # Operational context only. `passed` is False for error/unavailable/
+    # abstain, so an arm whose infrastructure flaked more often looks worse
+    # here for reasons that have nothing to do with repair quality. The
+    # experiment's verdict is decided on the verdict-only set below; this
+    # read stays visible so nothing is hidden, but it does not conclude.
+    print("\nDifference (B - A), all shared cases -- operational context, not the verdict")
     print(f"  observed ............. {observed:+.1%}")
     print(f"  95% bootstrap CI ..... [{low:+.1%}, {high:+.1%}]")
     print(f"  McNemar exact p ...... {p_value:.4f}  (discordant pairs: {only_a + only_b})")
-
     if p_value < 0.05 and observed != 0:
-        winner = "B (review loop)" if observed > 0 else "A (direct)"
-        print(f"  verdict .............. {winner} scores higher, p < 0.05")
-    else:
+        leader = "B (review loop)" if observed > 0 else "A (direct)"
         print(
-            "  verdict .............. no significant difference at this sample size.\n"
-            "                         The interval, not the point estimate, is the result."
+            f"  note ................. {leader} leads on this read, but it counts\n"
+            f"                         non-verdicts as unsolved. See the verdict-only\n"
+            f"                         section below for the experiment's conclusion."
         )
 
     # --- verdict-only read (ADR-0008) --------------------------------
@@ -326,11 +329,35 @@ def main() -> int:
         v_only_b = sum(1 for s in verdicted if right[s]["passed"] and not left[s]["passed"])
         va = sum(1 for s in verdicted if left[s]["passed"])
         vb = sum(1 for s in verdicted if right[s]["passed"])
+        v_deltas = [
+            int(right[s]["passed"]) - int(left[s]["passed"]) for s in verdicted
+        ]
+        v_observed = statistics.fmean(v_deltas)
+        v_p = mcnemar_exact(v_only_a, v_only_b)
         print(f"\nAccuracy on the {len(verdicted)} cases where both arms gave a verdict")
         print(f"  A solved ............. {va}/{len(verdicted)} = {va / len(verdicted):.1%}")
         print(f"  B solved ............. {vb}/{len(verdicted)} = {vb / len(verdicted):.1%}")
         print(f"  discordant ........... A-only {v_only_a}, B-only {v_only_b}")
-        print(f"  McNemar exact p ...... {mcnemar_exact(v_only_a, v_only_b):.4f}")
+        print(f"  McNemar exact p ...... {v_p:.4f}")
+        dropped = len(shared) - len(verdicted)
+        if dropped:
+            print(
+                f"  excluded ............. {dropped} case(s) where at least one arm\n"
+                f"                         returned no verdict (error/unavailable/abstain)"
+            )
+        if v_p < 0.05 and v_observed != 0:
+            winner = "B (review loop)" if v_observed > 0 else "A (direct)"
+            print(f"  VERDICT .............. {winner} scores higher, p < 0.05")
+        else:
+            print(
+                "  VERDICT .............. no significant difference at this sample size.\n"
+                "                         The interval, not the point estimate, is the result."
+            )
+    else:
+        print(
+            "\nVERDICT ................ none. No case had a verdict from both arms,\n"
+            "                         so this run measured infrastructure, not repair."
+        )
 
     print("\nCost")
     for label, report in (("A", left_report), ("B", right_report)):

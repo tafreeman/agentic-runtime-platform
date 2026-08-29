@@ -193,6 +193,20 @@ def symptom_excerpt(output: str, limit: int = 1800) -> str:
     return body[:limit]
 
 
+def head_revision(repo_path: Path) -> str | None:
+    """The commit *repo_path* is on, or None if it cannot be read.
+
+    None rather than a raise: a case is still worth mining from a checkout
+    that is not a git repo, it just cannot be pinned for grading later.
+    """
+    probe = subprocess.run(
+        ["git", "-C", str(repo_path), "rev-parse", "HEAD"],
+        capture_output=True,
+        text=True,
+    )
+    return probe.stdout.strip() if probe.returncode == 0 else None
+
+
 def emit_case(
     case_id: str,
     repo: RepoSpec,
@@ -216,6 +230,13 @@ def emit_case(
         "kind": kind,
         "source_repo": repo.name,
         "repo_path": (repo.canonical_path or repo.path).as_posix(),
+        # The commit this case was mined at. Grading has to happen against
+        # this revision: the candidate is a whole file copied from it, so a
+        # repo that has since moved can fail a correct repair (or pass one
+        # for unrelated reasons) purely because the surrounding modules and
+        # tests changed. Cases mined before this field existed carry None,
+        # and run_ab.py says so rather than pinning them silently.
+        "source_revision": head_revision(repo.path),
         "target_file": rel_module,
         "test_file": rel_test,
         "test_command": repo.test_command,

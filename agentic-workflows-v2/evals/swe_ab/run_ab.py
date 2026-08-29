@@ -44,7 +44,12 @@ from agentic_evalkit.models import (  # noqa: E402
 from agentic_evalkit.reporters.json import JsonReporter  # noqa: E402
 from agentic_evalkit.runner import EvalRunner  # noqa: E402
 from agentic_evalkit.targets.subprocess import SubprocessTarget  # noqa: E402
-from graders import build_grader, cleanup_worktree, prepare_worktree  # noqa: E402
+from graders import (  # noqa: E402
+    build_grader,
+    cleanup_worktree,
+    load_oracle,
+    prepare_worktree,
+)
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
@@ -162,34 +167,85 @@ def build_child_env(workflow: str, model: str, timeout: float) -> dict[str, str]
     return env
 
 
-def prepare_grading_worktrees(cases_path: Path) -> dict[str, Path]:
-    """Create a grading worktree for each source repo the case set draws on.
+def mined_revisions(cases_path: Path) -> dict[str, set[str | None]]:
+    """Per source repo, the revisions its cases were mined at.
 
-    Only the repos actually represented in the case file are checked out, so a
-    limited run never pays for a checkout it will not use.
+    A set rather than one value: a case file that mixes revisions for one
+    repo cannot be graded at a single checkout, and that has to be visible
+    rather than resolved by picking one arbitrarily.
     """
-    repos: set[str] = set()
+    revisions: dict[str, set[str | None]] = {}
     for line in cases_path.read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
         row = json.loads(line)
         repo = str((row.get("metadata") or {}).get("source_repo", ""))
-        if repo:
-            repos.add(repo)
+        if not repo:
+            continue
+        try:
+            oracle = load_oracle(str(row["sample_id"]))
+        except (OSError, KeyError):
+            revisions.setdefault(repo, set()).add(None)
+            continue
+        revisions.setdefault(repo, set()).add(oracle.get("source_revision"))
+    return revisions
 
-    prepared: dict[str, Path] = {}
-    for name in sorted(repos):
+
+def prepare_grading_worktrees(cases_path: Path) -> dict[str, tuple[Path, Path]]:
+    """Create a grading worktree for each source repo the case set draws on.
+
+    Only the repos actually represented in the case file are checked out, so a
+    limited run never pays for a checkout it will not use.
+
+    Each entry is ``(grading_path, checkout_root)``. The two differ for ARP,
+    whose package lives one level down: the grader needs the package
+    subdirectory, but the *registered* git worktree is its parent, and
+    cleanup has to be handed the registered path or ``git worktree remove``
+    rejects it and leaves the parent behind, broken, for every later run.
+
+    Worktrees are pinned to the revision the cases were mined at where the
+    oracle records one. Cases mined before ``source_revision`` existed record
+    nothing, so those fall back to the repo's current ``HEAD`` — announced,
+    because grading then depends on when it runs.
+    """
+    revisions = mined_revisions(cases_path)
+
+    prepared: dict[str, tuple[Path, Path]] = {}
+    for name in sorted(revisions):
         if name not in REPO_WORKTREES:
             raise SystemExit(
                 f"case set references source repo {name!r} with no grading "
                 f"worktree configured; known: {sorted(REPO_WORKTREES)}"
             )
+        seen = revisions[name]
+        pinned = {rev for rev in seen if rev}
+        if len(pinned) > 1:
+            raise SystemExit(
+                f"cases for source repo {name!r} were mined at "
+                f"{len(pinned)} different revisions ({', '.join(sorted(pinned))}); "
+                f"one checkout cannot grade them all. Split the run per revision."
+            )
+        revision = next(iter(pinned), None)
+        if revision is None:
+            print(
+                f"WARNING: cases for {name!r} record no source_revision, so "
+                f"grading uses the repo's current HEAD. If {name!r} has moved "
+                f"since these cases were mined, the outcome depends on when "
+                f"this run happens. Re-mine to pin them.",
+                file=sys.stderr,
+            )
+        elif None in seen:
+            raise SystemExit(
+                f"cases for source repo {name!r} mix pinned ({revision}) and "
+                f"unpinned oracles; one checkout cannot grade them all."
+            )
+
         repo, worktree = REPO_WORKTREES[name]
         # The ARP worktree is nested one level down (the package lives in a
         # subdirectory), so create the checkout at its parent.
         checkout = worktree if name != "arp" else worktree.parent
-        prepare_worktree(repo, checkout)
-        prepared[name] = worktree
+        prepare_worktree(repo, checkout, revision)
+        prepared[name] = (worktree, checkout)
     return prepared
 
 
@@ -246,7 +302,8 @@ async def main() -> int:
     # in its own containers. Bind it empty either way so the cleanup in the
     # `finally` below is a no-op rather than an UnboundLocalError that would
     # discard a completed multi-hour run before its report is written.
-    worktrees: dict[str, Path] = {}
+    # Values are (grading_path, checkout_root) -- see prepare_grading_worktrees.
+    worktrees: dict[str, tuple[Path, Path]] = {}
     if args.grader == "swebench":
         from container_harness import build_container_executor
         from swebench_graders import build_swebench_grader
@@ -256,8 +313,13 @@ async def main() -> int:
         print("grader: official SWE-bench Docker harness")
     else:
         worktrees = prepare_grading_worktrees(cases_path)
-        print(f"grading worktrees: { {k: str(v) for k, v in worktrees.items()} }")
-        grader = build_grader(worktrees=worktrees)
+        print(
+            f"grading worktrees: "
+            f"{ {k: str(grading) for k, (grading, _) in worktrees.items()} }"
+        )
+        grader = build_grader(
+            worktrees={k: grading for k, (grading, _) in worktrees.items()}
+        )
         grader_name = GRADER_NAME
     runner = EvalRunner(
         catalog=catalog,
@@ -284,8 +346,12 @@ async def main() -> int:
         result = await runner.run(manifest)
     finally:
         if args.cleanup_worktree:
-            for name, worktree in worktrees.items():
-                cleanup_worktree(REPO_WORKTREES[name][0], worktree)
+            # Remove the *registered* checkout root, not the grading
+            # subdirectory: `git worktree remove` rejects an unregistered
+            # child path, and the ignored failure used to leave the parent
+            # registered but deleted, breaking every later run.
+            for name, (_, checkout) in worktrees.items():
+                cleanup_worktree(REPO_WORKTREES[name][0], checkout)
 
     report_path = REPORTS_DIR / f"{report_name}.json"
     JsonReporter().write(result, report_path)

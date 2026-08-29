@@ -297,13 +297,64 @@ class SourceSanityGrader:
         )
 
 
-def prepare_worktree(repo: Path, worktree: Path) -> Path:
-    """Create (or reuse) a detached worktree of *repo* for grading."""
+def worktree_revision(worktree: Path) -> str | None:
+    """The commit a grading worktree currently sits on, or None if unreadable."""
+    probe = subprocess.run(
+        ["git", "-C", str(worktree), "rev-parse", "HEAD"],
+        capture_output=True,
+        text=True,
+    )
+    return probe.stdout.strip() if probe.returncode == 0 else None
+
+
+def prepare_worktree(repo: Path, worktree: Path, revision: str | None = None) -> Path:
+    """Create (or reuse) a detached worktree of *repo* at *revision* for grading.
+
+    *revision* is the commit the cases were mined from. Grading a candidate
+    against a different revision than the one its oracle was mined at can
+    reject a correct repair, or pass one for unrelated reasons, purely
+    because the surrounding modules and tests moved — so the outcome would
+    depend on *when* grading ran. Passing it explicitly pins that down.
+
+    ``None`` means the oracle recorded no revision, which is true of every
+    case mined before this was added. The fallback is the repo's current
+    ``HEAD``, i.e. the historical behaviour; the caller is expected to say so
+    out loud rather than let the drift stay invisible.
+
+    An existing worktree is reused only when it already sits on the requested
+    revision. Reuse used to be unconditional, which silently graded against
+    whatever revision a previous run happened to leave behind.
+    """
     if worktree.exists():
+        if revision is None:
+            return worktree
+        current = worktree_revision(worktree)
+        if current == revision:
+            return worktree
+        reset = subprocess.run(
+            ["git", "-C", str(worktree), "checkout", "--detach", "--force", revision],
+            capture_output=True,
+            text=True,
+        )
+        if reset.returncode != 0:
+            raise RuntimeError(
+                f"grading worktree {worktree} sits on {current or 'an unknown commit'} "
+                f"but the cases were mined at {revision}, and it could not be reset: "
+                f"{reset.stderr.strip()}"
+            )
         return worktree
     worktree.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(
-        ["git", "-C", str(repo), "worktree", "add", "--detach", str(worktree), "HEAD"],
+        [
+            "git",
+            "-C",
+            str(repo),
+            "worktree",
+            "add",
+            "--detach",
+            str(worktree),
+            revision or "HEAD",
+        ],
         check=True,
         capture_output=True,
         text=True,
