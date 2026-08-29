@@ -14,9 +14,14 @@ Each wave is ~16 instances, ~50 minutes, both arms, self-contained.
 
 | | |
 |---|---|
-| Banked | 47 paired instances |
-| Target | ~200 (≈10 more waves) |
-| Current reading | A 61.7%, B 59.6%, B−A −2.1%, **p = 1.00** |
+| Banked (closed segment, waves 1-7) | 115 paired instances |
+| Target | ~200 |
+| Current reading (closed segment) | A 55.7%, B 56.5%, B−A +0.9%, **p = 1.00** |
+
+**Wave 8 opens a new segment.** The harness (`run_ab.py`, `graders.py`,
+`rubric.py`, `swebench_graders.py`, `analyze.py`) changed underneath waves
+1-7 via a concurrent session's `PR #282`. See EVIDENCE.md's segment-boundary
+note above §1.3 — do not union wave 8+ results with the table above.
 
 ---
 
@@ -114,8 +119,8 @@ Stop and report rather than continuing if:
 
 ## What would make the result quotable
 
-- **~200 paired instances.** At 47 the interval is ±14 points; nothing smaller
-  resolves a 2-point difference.
+- **~200 paired instances.** At 59 the interval is ±11.9 points around a
+  dead-even point estimate; nothing smaller resolves a difference this size.
 - **A difficulty split.** Wave 1 hinted the review loop may only help where the
   direct arm fails (A 41.7% there, B 58.3%). Reporting the union rate alone
   would hide that. Once n is large enough, split by the `difficulty` field in

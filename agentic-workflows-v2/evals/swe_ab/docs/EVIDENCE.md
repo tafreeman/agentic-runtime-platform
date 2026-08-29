@@ -9,17 +9,38 @@ without its caveats attached.
 **Question under test:** does ARP's multi-step review-loop workflow repair more
 defects than a single coder call, at equal model and equal input?
 
-**Answer so far:** no detectable difference on 47 paired SWE-bench instances
+**Answer so far:** no detectable difference on 115 paired SWE-bench instances
 (McNemar p = 1.00), and the review loop costs 3–6× per case. An earlier apparent
 lead for the direct arm did not survive harder cases.
+
+**Segment boundary, 2026-08-29 — read before extending any number below.**
+Everything in §1.3 through wave 7, plus the hard-rated slice in §1.4 (135
+instances total: 115 unioned + 20 standalone), was graded against the harness
+as it existed before `PR #282` merged into `swe_ab_evals`'s upstream branch.
+That merge landed a concurrent session's independent rewrite of `run_ab.py`,
+`graders.py`, `rubric.py`, `swebench_graders.py`, `analyze.py`, `bridge.py`
+and `mine_cases.py` — none of it reviewed against this session's results
+before or after. The commit messages describe genuine correctness fixes
+("decide the A/B on verdicts, and pin grading to the mined revision," "never
+grade a sample the model under test did not produce," fingerprinting the
+runtime/orchestration/grader) — precisely the class of defect this campaign
+has caught twice before (§2.1, §2.3). Whether any of those fixes would have
+changed any of the 135 instances below has **not** been checked. **Do not
+union anything graded from wave 8 onward with the rows above** — new waves
+run on the post-merge harness; this is a new segment, not a continuation.
+Wave 8's cases were already built (§2.15/§2.16's `WAVE_MIX`/offset fixes,
+which survived the merge intact) but never graded under the old harness, so
+it cleanly opens the new segment rather than straddling the boundary.
 
 ---
 
 ## 1. Results, chronological
 
 All runs: `ollama:deepseek-v4-flash:0731-cloud` for both arms, temperature 0,
-seed 20260827, attempts 1. Cost zero — free endpoint, paid credentials removed
-from the child environment.
+seed 20260827, attempts 1. Zero marginal cost — a flat Ollama subscription
+already paid for, capped by usage rather than billed per call (30% used after
+a full week as of 2026-08-28), not a free-to-anyone endpoint. Paid credentials
+removed from the child environment regardless.
 
 ### 1.1 Mutation cases, one repository
 
@@ -53,31 +74,88 @@ orchestrations. That is why the campaign moved to SWE-bench.
 | set 1 — **invalid** | 35 | 25/35 | 18/35 | confounded, see §2.6 and §2.7 |
 | set 1 — matched | 35 | **24/35 = 68.6%** | 21/35 = 60.0% | B−A −8.6%, p = 0.45 |
 | wave 1 | 12 | 5/12 = 41.7% | **7/12 = 58.3%** | first wave Arm B wins |
-| **union** | **47** | **29/47 = 61.7%** | 28/47 = 59.6% | **B−A −2.1%, p = 1.0000** |
+| wave 2 | 12 | 6/12 = 50.0% | 7/12 = 58.3% | one django instance dropped from the target 16, see §2.12 |
+| wave 3 | 8 | 5/8 = 62.5% | 6/8 = 75.0% | hit the offset/small-pool bug, not real exhaustion — see §2.13 |
+| wave 4 | 12 | 6/12 = 50.0% | 6/12 = 50.0% | offset fix (§2.13) reached scikit-learn/matplotlib again; another django instance dropped, see §2.12 |
+| wave 5 | 12 | 7/12 = 58.3% | 4/12 = 33.3% | graded concurrently with wave 6, see §2.14 |
+| wave 6 | 7 | 3/7 = 42.9% | 4/7 = 57.1% | scikit-learn pool hit real, permanent exhaustion this wave — see §2.14 |
+| wave 7 | 17 | 8/17 = 47.1% | 10/17 = 58.8% | first wave on the widened `WAVE_MIX` (§2.15), first wave with the encoding fix (§2.16) — 17/17 built, zero drops |
+| **union — CLOSED at wave 7** | **115** | **64/115 = 55.7%** | 65/115 = 56.5% | **B−A +0.9%, p = 1.0000** |
 
-Union discordance: 6 A-only, 5 B-only. Write-up: `results/2026-08-28-swebench-35.md`.
+Union discordance: 14 A-only, 15 B-only. Write-up: `results/2026-08-28-swebench-35.md`.
+**This union is closed as of wave 7** — see the segment-boundary note above §1.
+Wave 8 onward belongs to a new segment on the post-`PR #282` harness and gets
+its own union table, not another row appended here.
 
 **The −8.6% at n=35 did not hold.** Twelve harder instances moved the point
 estimate 6.5 points and balanced the discordant pairs. Wave 1's instances are
 materially harder (Arm A 41.7% vs 68.6%) because the first set drew the
-lowest-offset, smallest-patch instances.
+lowest-offset, smallest-patch instances. Waves 2–7 have held close to dead
+even, drifting slightly positive at wave 7. At n=115 — past the halfway point
+to the ~200 target — the two arms remain statistically indistinguishable
+(95% CI on B−A: [−8.7%, +10.4%]).
 
 This raises a hypothesis the campaign has **not** settled: the review loop's
 value may be conditional on difficulty — nothing to add where the direct arm
 already succeeds, something to add where it does not. Testing it needs the
-per-difficulty split at a much larger n.
+per-difficulty split at a much larger n. **Caution:** "harder" in the wave 1
+sense above means *lower Arm A pass rate within the existing difficulty
+bands* (`<15 min fix` / `15 min - 1 hour`), not SWE-bench's own difficulty
+label. §1.4 tests the difficulty label directly, on a different slice, and
+should not be read as confirming or refuting the wave 1 pattern — they are
+measuring different things.
 
-### 1.4 Cost, measured
+### 1.4 Difficulty split: the hard-rated slice, 2026-08-29
+
+Every wave so far drew from `<15 min fix` and `15 min - 1 hour`. SWE-bench
+Verified's `1-4 hours`/`>4 hours` labels are a separate, much smaller pool:
+only 45 of the 500 instances are rated hard at all, and only 20 of those are
+single-file (the case format requires exactly one target file — oracle
+retrieval, per the standing caveat). **20 is the entire available population
+at this difficulty**, not a sample of a larger one; every hard, single-file
+instance in SWE-bench Verified is in this set. Patch length was uncapped to
+reach all 20 (median 57 lines, max 474) — the only wave/set in this campaign
+without the ≤40-line cap, because the hard pool barely exists under it (8
+instances).
+
+| set | n | Arm A | Arm B | B−A | McNemar p |
+|---|---|---|---|---|---|
+| hard-rated slice | 20 | 5/20 = 25.0% | 3/20 = 15.0% | −10.0%, 95% CI [−35.0%, +15.0%] | 0.7266 |
+
+8 discordant pairs (5 A-only, 3 B-only), 0 solved by both arms. Both arms
+score far below their difficulty-mixed rate (55.7%/56.5% at n=115) — 25%/15%
+on genuinely hard cases is a real signal that the difficulty label tracks
+something the model actually struggles with. The review-loop arm shows a
+nonsignificant *disadvantage* here (opposite direction from wave 1's hint),
+but n=20 with 8 discordant pairs cannot resolve a 10-point difference — this
+is directional at best, not a finding. **Cost scales sharply with
+difficulty:** median 448.9 s/case (Arm A) and 1010.2 s/case (Arm B), roughly
+20× and 7× the difficulty-mixed medians (23.0 s / 136.6 s) respectively —
+bigger files take longer to generate and Arm B's ratio compresses because
+both arms' floor rises with file size, not because the review step gets
+relatively cheaper.
+
+**This is the entire hard-rated population, so it cannot grow.** Any further
+depth on this hypothesis needs either the 25 hard multi-file instances
+(requires redesigning the case format to hand the model more than one
+file — a workflow-contract change, touching both the case builder and the
+workflows themselves, not just which instances get sampled) or accepting
+that "hard" stays an n=20, low-power probe in this campaign.
+
+### 1.5 Cost, measured
 
 | set | Arm A / case | Arm B / case | ratio |
 |---|---|---|---|
 | mutations (132) | 12.8 s | 37.6 s | 3.0× |
-| SWE-bench (35) | 23.0 s | 136.6 s | 5.9× |
+| SWE-bench, difficulty-mixed (35) | 23.0 s | 136.6 s | 5.9× |
+| SWE-bench, hard-rated (20) | 448.9 s | 1010.2 s | 2.2× |
 
 Arm B re-emits the whole file twice (draft, then revise), so the ratio grows
-with file size.
+with file size — except at the hard-rated extreme, where both arms' floor
+rises with file size and the ratio compresses rather than growing further
+(§1.4).
 
-### 1.5 Every report on disk
+### 1.6 Every report on disk
 
 | report | n | pass | fail | err | timeout |
 |---|---|---|---|---|---|
@@ -93,6 +171,8 @@ with file size.
 | `arm-b-review-loop-swebench-fixed.json` | 35 | 21 | 14 | 0 | 0 |
 | `arm-a-direct-wave1.json` | 12 | 5 | 7 | 0 | 0 |
 | `arm-b-review-loop-wave1.json` | 12 | 7 | 4 | 0 | 1 |
+| `arm-a-direct-hard-slice.json` | 20 | 5 | 15 | 0 | 0 |
+| `arm-b-review-loop-hard-slice.json` | 20 | 3 | 16 | 0 | 1 |
 
 The two marked *invalid* are retained deliberately: they are the evidence for
 the confounds in §2.6 and §2.7, and deleting them would erase the record of
@@ -215,13 +295,158 @@ Non-overlap is a property of the data on disk, not of offset bookkeeping.
 | Django source was committed into ARP | `dataset/swebench_cases/` gitignored; the builder reproduces it |
 | A 200-instance run would exhaust the disk | waves with `--prune-images` |
 
+### 2.12 A dependency that existed nowhere in the lockfile — MEDIUM, open
+
+Wave 2 built **0/16** cases on its first attempt: `build_swebench_cases.py`
+failed on every repo with `ModuleNotFoundError: No module named 'pandas'`
+(needed to read the SWE-bench Verified parquet). `pandas` was absent from
+every `pyproject.toml` and `uv.lock` in ARP — it had only ever existed as an
+untracked, manually-installed package in the shared `.venv`. That venv is used
+by many concurrent sessions; any of them running `uv sync` (or `uv run`,
+which syncs implicitly) reconciles the venv exactly to the lockfile and drops
+anything the lockfile does not know about.
+
+**Fix:** `uv add pandas` in `agentic-workflows-v2/pyproject.toml`, so `uv.lock`
+pins it and every future sync — on this machine or a fresh clone — keeps it.
+Confirmed to survive a subsequent `uv run` from `evals/swe_ab`.
+
+Retrying wave 2 then hit a second, unrelated bug: `docker()` in
+`build_swebench_cases.py` crashed with `TypeError: unsupported operand
+type(s) for +: 'NoneType' and 'str'` on one django instance — a
+`UnicodeDecodeError` in `subprocess.run` (no `encoding=` given, so Windows
+defaulted to `cp1252` and raised on the first non-ASCII byte in that
+instance's source) left `proc.stdout` `None`, and the `+` concatenation with
+`proc.stderr` then raised. Recurred in waves 3-7, always on whichever
+instance was first in a bucket's unbuilt ordering. Initially thought to just
+drop one instance per wave; §2.16 found the real effect is worse (the
+exception is unhandled, so it kills the *entire bucket's* allocation for that
+wave, not one instance) and fixed it.
+
+### 2.13 A shared offset outran small pools and looked like exhaustion — MEDIUM
+
+Wave 3 built only 8/16 target cases. The scikit-learn and matplotlib
+`15 min - 1 hour` buckets both returned **0** new instances, which read like
+"pool exhausted" — the `WAVE-RUNBOOK.md` stopping condition for a wave under
+~8 cases. It is not exhaustion.
+
+`run_wave.py` computes `offset = (wave - 1) * 8` and passes the **same**
+offset to every bucket in `WAVE_MIX` regardless of that bucket's size.
+`build_swebench_cases.py` then does `pool.iloc[args.offset :]` — slicing by
+position — **before** checking which instances already have a case directory.
+scikit-learn's and matplotlib's filtered pools (single-file patches, ≤40
+lines, matching difficulty) are only 13 rows each; wave 3's offset of 16 skips
+past the entire pool before the already-built check ever runs. Verified
+directly against the parquet: scikit-learn still has 4 unbuilt instances in
+that bucket, matplotlib has 9. They are not gone — they are unreachable by
+this offset scheme, and every later wave's larger offset makes it worse for
+any pool smaller than the offset (sphinx's 21-row pool hits the same wall at
+wave 4, sympy's 28-row pool at wave 5).
+
+The `already`-built directory check (§2.10) already makes non-overlap a
+property of the data on disk. `offset` was redundant for that guarantee and
+actively harmful here: it could permanently strand real, unbuilt instances in
+small pools.
+
+**Fix, approved as a tooling change rather than a campaign change:** `offset`
+in `tools/run_wave.py` is now pinned at `0` for every wave; the `already`-built
+check alone provides non-overlap, regardless of pool size. This changes which
+instances get *sampled* into future waves, not how any instance is graded —
+the model, workflow, oracle and grader are untouched, and every already-graded
+instance's result stands, so earlier waves stay unionable with later ones.
+
+### 2.14 Real pool exhaustion, and a validated build-ahead + concurrent-grading path
+
+**Real exhaustion, distinct from §2.13.** Wave 6 built only 7/16 target cases.
+Checked directly against the parquet after the wave: scikit-learn's
+`15 min - 1 hour` bucket is now genuinely at 0/13 remaining (fully built).
+sympy, sphinx and matplotlib are each down to 3-4 remaining in their buckets.
+Only django's two buckets still have real room (72 and 60 remaining). This is
+the actual `WAVE-RUNBOOK.md` stop condition, not the offset bug — continuing
+to draw waves as configured will increasingly skew toward django, which is
+already flagged `contamination_risk: high`. `WAVE_MIX` needs a human decision
+(widen to more repos, or accept a django-heavy tail) before wave 7.
+
+**Concurrent grading, trialled and safe.** To speed up the campaign,
+pre-built two waves sequentially with `run_wave.py --build-only` (avoids the
+instance-selection race in §2.13, since building stays one-at-a-time), then
+ran all 4 resulting grading jobs (wave 5 arm A/B, wave 6 arm A/B — 4 ×
+concurrency-4 = 16 theoretical concurrent instance slots) at once. Measured
+during the run: at most 2 instance-execution containers ever ran
+simultaneously, host CPU stayed near ~18%, and RAM had >20 GB free throughout.
+The real bottleneck is Ollama inference latency, not Docker/CPU — grading
+wall-clock is dominated by waiting on the model, so container bursts from
+different waves rarely overlap. All 4 jobs completed cleanly, no
+`unavailable` verdicts, no errors attributable to contention. **Concurrent
+grading across already-built waves is safe on this machine**; the risk was
+always in the build phase, not the grading phase, and building sequentially
+avoids it entirely.
+
+### 2.15 WAVE_MIX widened, 2026-08-29 — a deliberate campaign change
+
+§2.14 found real, permanent exhaustion (scikit-learn) and near-exhaustion
+(sympy, sphinx, matplotlib). Checked five candidate repos against the parquet
+(single-file patches, ≤40 lines, unbuilt) and pulled one real image per repo
+to measure size rather than guess:
+
+| repo | image size | usable pool |
+|---|---|---|
+| pydata/xarray | 7.57 GB | 15 (10 @ 15min-1hr, 5 @ <15min) |
+| astropy/astropy | 4.16 GB | 17 (12 @ 15min-1hr, 4 @ <15min, 1 @ 1-4hr) |
+| pylint-dev/pylint | 4.05 GB | 4 (1 @ 15min-1hr, 3 @ <15min) |
+| pytest-dev/pytest | 3.84 GB | 13 (5 @ 15min-1hr, 8 @ <15min) |
+| psf/requests | 3.81 GB | 8 (2 @ 15min-1hr, 6 @ <15min) |
+
+**Change, approved by the user after reviewing pool depth and disk cost:**
+`WAVE_MIX` in `tools/run_wave.py` drops scikit-learn (genuinely dry), keeps
+sympy/sphinx/matplotlib at reduced weight so they drain naturally rather than
+vanish abruptly, and adds astropy/xarray/pytest/requests/pylint sized to
+their measured remaining depth. django's combined share falls from 40% to
+27.5% of the nominal mix, which also reduces its dominance in a set already
+`contamination_risk: high`. Nothing about the model, workflow, oracle,
+grader, or concurrency changed — only which repos and difficulty buckets
+future waves draw instances from.
+
+**Why this stays unioned rather than starting a new campaign table:** the
+paired McNemar analysis treats each instance as an independent paired
+observation graded identically by both arms; it does not require the
+sampling population to stay fixed across the whole campaign (the union
+already blends "matched"/"invalid" sets, mutation cases, and multiple
+difficulty tiers). Waves 1-6 drew from the pre-2026-08-29 mix; wave 7 onward
+draws from this one. Both are unioned in §1.3 as before, with this entry as
+the record of exactly where and why the population composition changed.
+
+### 2.16 The encoding bug (§2.12) zeroed whole buckets, not one instance — fixed
+
+Building wave 7 with the new mix (§2.15) got **zero** django cases from
+either bucket — not one dropped instance, all of them. Root cause: the
+exception from §2.12 is unhandled in `build_swebench_cases.py`'s per-instance
+loop, so it kills the entire `subprocess.run` call for that repo/difficulty
+before it writes any output — not "skip this instance, try the next." Because
+`offset` is pinned at 0 (§2.13) and non-overlap depends on the `already`-built
+check, a broken instance sitting first in a bucket's unbuilt ordering blocks
+that whole bucket, on every wave, forever, since a bucket that always crashes
+before writing its part file never gets `already` credit for anything past
+the broken instance either.
+
+`django__django-11999` (15 min-1 hour) and `django__django-13023` (<15 min
+fix) hit this in every wave since the offset fix — wave 7 was the first time
+*both* django buckets zeroed simultaneously, because wave 6 had built past
+the previous first-in-line instances and landed on these two.
+
+**Fix, approved by the user:** `docker()` now passes `encoding="utf-8",
+errors="replace"` to `subprocess.run` instead of relying on the platform
+default (`cp1252` on Windows). Verified: rebuilding wave 7 after the fix
+built both previously-stranded instances successfully and reached the full
+17/17 target with zero drops — a pure decoding fix, no change to which files
+get selected or how they are graded.
+
 ---
 
 ## 3. Standing caveats on every number above
 
 1. **Oracle retrieval.** The model is told which file to fix. Full SWE-bench also
    requires finding it. **These are not leaderboard numbers.**
-2. **Underpowered.** 47 paired instances with 11 discordant pairs cannot resolve
+2. **Underpowered.** 115 paired instances with 29 discordant pairs cannot resolve
    a difference of this size; ~200 are needed at 80% power.
 3. **One model, one attempt.** `attempts=1`; pass@1 hides per-case sampling noise.
 4. **Contamination.** django is over half the SWE-bench set and the most
