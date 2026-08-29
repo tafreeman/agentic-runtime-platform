@@ -388,8 +388,12 @@ def main() -> int:
             if windows
             else "no run window recorded"
         )
+        # statistics.median, not the upper-middle element: at even n the two
+        # central observations have to be averaged, and n here is however many
+        # samples happened to keep their timing inline, so it changes wave to
+        # wave rather than being reliably odd.
         median = (
-            f"median {sorted(durations)[len(durations) // 2]:5.1f} s/case "
+            f"median {statistics.median(durations):5.1f} s/case "
             f"(n={len(durations)} kept inline)"
             if durations
             else "no inline timing (outputs spilled to artifacts)"
