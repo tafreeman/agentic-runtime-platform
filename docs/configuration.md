@@ -102,21 +102,6 @@ behavior. If every candidate is filtered out, the request fails with
 returning nothing or falling back to an unfiltered chain. See
 [ADR-059](adr/ADR-059-model-cost-lane-ceiling.md).
 
-## RAG embeddings
-
-RAG embedding providers are configured in `EmbeddingConfig`, not by the chat
-model tier settings.
-
-| `EmbeddingConfig.provider` | Credential or endpoint behavior |
-|---|---|
-| `openai` | Reads `OPENAI_API_KEY` |
-| `voyage` | Reads `VOYAGE_API_KEY` |
-| `local` | Uses a LiteLLM Ollama model string; no key is forwarded by the RAG module |
-| `litellm` | Passes the configured model string to LiteLLM, which resolves its normal environment settings |
-
-The configured model and dimensions must match the stored index. See
-[RAG pipeline](rag/index.md).
-
 ## Execution and model-call settings
 
 | Variable | Default | Meaning |
