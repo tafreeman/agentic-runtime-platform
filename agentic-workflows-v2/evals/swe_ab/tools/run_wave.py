@@ -78,6 +78,16 @@ def main() -> int:
         "without this a long campaign fills the disk.",
     )
     parser.add_argument("--build-only", action="store_true")
+    parser.add_argument(
+        "--rebuild-cases",
+        action="store_true",
+        help=(
+            "mine a new sample set even though this wave's case file exists. "
+            "Without it a rerun reuses the existing cases, so a retry after a "
+            "failed arm repeats the same experiment instead of silently "
+            "sampling different instances."
+        ),
+    )
     args = parser.parse_args()
 
     wave = args.wave
@@ -95,6 +105,27 @@ def main() -> int:
         for repo, difficulty, count in WAVE_MIX
     ]
     print(f"wave {wave}: targeting {args.size} -> {sum(c for _, _, c in mix)} cases", flush=True)
+
+    # A rerun after a failed arm has to rerun *this* wave, not mine a new one.
+    # build_swebench_cases.py skips instances whose case directory already
+    # exists, so rebuilding here selects later instances instead: the wave
+    # JSONL would be silently replaced with a different sample set, the images
+    # the failure path preserved would go unused, and the retry would not
+    # reproduce the experiment it was meant to repeat.
+    if cases.is_file() and not args.rebuild_cases:
+        existing_rows = [
+            line
+            for line in cases.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        print(
+            f"wave {wave}: reusing the existing {len(existing_rows)} cases in "
+            f"{cases.name} (pass --rebuild-cases to mine a new sample set)",
+            flush=True,
+        )
+        if args.build_only:
+            return 0 if existing_rows else 1
+        return run_arms(wave, cases, existing_rows, args)
 
     parts: list[Path] = []
     for index, (repo, difficulty, count) in enumerate(mix):
@@ -149,6 +180,15 @@ def main() -> int:
     if args.build_only or not rows:
         return 0 if rows else 1
 
+    return run_arms(wave, cases, rows, args)
+
+
+def run_arms(wave: int, cases: Path, rows: list[str], args: argparse.Namespace) -> int:
+    """Run both arms over *rows*, then prune images if asked.
+
+    Split out of main so a rerun can reuse an existing wave case file and
+    take exactly this path, rather than re-mining a different sample set.
+    """
     for arm, timeout in (("a", CAMPAIGN["timeout_a"]), ("b", CAMPAIGN["timeout_b"])):
         code = run(
             [

@@ -63,35 +63,60 @@ Arm B led. Testing that needs a per-difficulty split at much larger n.
 
 ## Grading stack — deterministic first, judge last
 
+What actually runs is two components in a fixed order, in **both** lanes —
+`MutationGrader` for the mined-mutation cases, `SwebenchGrader` for SWE-bench:
+
 ```
-workflow output {patch, root_cause, verification_report}
+workflow output {patched_source, root_cause, verification_report}
         │
-        ├── schema check ......... hard gate: the three fields exist and are strings
-        ├── patch applies ........ hard gate: git apply --check at the pinned commit
-        ├── tests untouched ...... hard gate: diff touches no tests/ or oracle path
-        ├── hidden tests ......... hard gate: the real oracle suite (SWE-bench harness,
-        │                          in-container, or the case's covering pytest file)
-        ├── public tests ......... hard gate: no regression against the pre-patch suite
-        ├── diff budget .......... scored 0..1, not gating
-        ├── AST safety scan ...... scored, not gating (no eval/exec/subprocess/network)
-        └── rubric-bound judge ... weight 0.0, ADVISORY — records a verdict, moves nothing
+        ├── 1. sanity ............ hard gate. Cheap pre-conditions that must hold
+        │                          before a test run means anything:
+        │                            · returned something non-empty
+        │                            · it parses as Python
+        │                            · it differs from the broken file
+        │                            · it is not a truncated fragment (≥50% of size)
+        │                            · it does not name the failing test (the
+        │                              "special-case the test" shortcut)
+        │      sanity fails  →  FAIL, and the oracle is never run
+        │
+        └── 2. oracle ............ authoritative. SWE-bench's official in-container
+                                   harness, or the case's covering pytest file.
+               cannot run    →  UNAVAILABLE, never PASS
+               ran           →  PASS / FAIL on what the tests said
 ```
+
+**Neither lane uses `CompositeGrader`, and that is deliberate.** It excludes
+UNAVAILABLE from its weighted mean, so an unrunnable oracle left the sanity
+component to score the sample alone — once reporting **5/5 passed on a
+benchmark that never ran**
+([EVIDENCE §2.1](docs/EVIDENCE.md#21-a-grader-that-passed-a-benchmark-it-never-ran--critical)).
+The SWE-bench lane was fixed first; the mutation lane carried the same bug
+until it was found to score an UNAVAILABLE oracle `PASS 1.0`.
+
+### What the grader does *not* score
+
+[`rubric.py`](rubric.py) declares `swe_fix_v1` — 8 atomic criteria, 6 objective
+and 2 judge — but **nothing consumes it**, and results are stamped
+`swe_fix_composite_v1` so a report never claims a rubric it did not apply.
+Specifically, against the declared rubric:
+
+| Declared criterion | Weight | Status in the shipped grader |
+|---|---|---|
+| `diff_confined_to_target` | 0.10 | **not evaluated** |
+| `no_unsafe_constructs` | 0.15 | **not evaluated** — there is no AST safety scan |
+| diff budget (`within_budget`) | — | computed, recorded as **evidence only**; moves no score, gates nothing |
+| `root_cause_identified` | 0.0 | judge, advisory |
+| `verification_names_tests` | 0.0 | judge, advisory |
+
+Wiring the missing criteria in would change every score and make new runs
+incomparable with those already graded, so it belongs to a new campaign
+rather than to this one. `rubric.UNSCORED_CRITERIA` names the gap in code.
 
 The judge sits at weight 0.0 on purpose. Under EvalKit's ADR-0007 / D-1 an
 uncalibrated judge cannot gate, and a judge on a free 8–30B model is emphatically
 uncalibrated. To promote it: label ≥30 good and ≥30 bad judge cases, run
 `agentic-evalkit calibrate`, and only if TNR ≥ 0.95 / TPR ≥ 0.85 / age ≤ 90d hold
 on the **Wilson lower bound** does its weight move off zero.
-
-On SWE-bench the composite is replaced outright by `SwebenchGrader`, which
-sequences explicitly: sanity failure → FAIL; harness cannot run → **UNAVAILABLE,
-never PASS**; harness ran → its verdict. That exists because
-`CompositeGrader` excludes UNAVAILABLE from its weighted mean and once reported
-**5/5 passed on a benchmark that never ran**
-([EVIDENCE §2.1](docs/EVIDENCE.md#21-a-grader-that-passed-a-benchmark-it-never-ran--critical)).
-
-Rubric: [`rubric.py`](rubric.py) — 8 atomic criteria, 6 decided by running code,
-2 by the judge, validated against EvalKit's `Rubric` model.
 
 ## Models — one lane per run, pinned for both arms
 

@@ -358,6 +358,14 @@ async def main() -> int:
         adapter=ADAPTER_NAME,
         grader=grader_name,
         target_name=f"arp-{workflow}",
+        # The model under test, recorded so a union can actually enforce
+        # "same arm, same model". --model is an exposed option, and until
+        # this was set nothing in the report identified the model at all:
+        # target_fingerprint and every sample's model_name were null, so
+        # analyze.py could union two different models without noticing.
+        # analyze.union_identity already compares this field.
+        target_fingerprint=args.model,
+        target_fingerprint_policy="requested-model-id",
         selection=DatasetSelection(limit=args.limit) if args.limit else DatasetSelection(),
         sampling=SamplingPolicy(attempts=args.attempts, temperature=0.0, seed=20260827),
         attempts=args.attempts,

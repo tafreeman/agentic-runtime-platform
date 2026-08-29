@@ -89,11 +89,14 @@ def merge_outcomes(paths: list[Path]) -> dict[str, dict[str, Any]]:
     sample ids and producing pass rates and significance statistics for a
     system that never ran.
 
-    One half of the invariant is *not* checkable here: nothing in the report
-    records the model. ``target_fingerprint`` and every sample's
-    ``model_name`` are null across the whole campaign, so swapping the model
-    between waves would pass this gate. The pinned ``CAMPAIGN`` block in
-    ``tools/run_wave.py`` remains the only thing holding the model steady.
+    The model is part of that identity via ``target_fingerprint``, which
+    ``run_ab.py`` now sets to the requested ``--model``. Reports written
+    before that carry ``None`` there, so a union of old reports still cannot
+    tell one model from another -- but a union that mixes a pre- and
+    post-change report *is* caught, because ``None`` and the model id differ.
+    Waves 1-7 of the current campaign are all pre-change and all ``None``;
+    for those the pinned ``CAMPAIGN`` block in ``tools/run_wave.py`` remains
+    the only thing that held the model steady.
     """
     merged: dict[str, dict[str, Any]] = {}
     baseline: dict[str, Any] | None = None
