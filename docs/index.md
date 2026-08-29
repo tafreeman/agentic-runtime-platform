@@ -127,7 +127,7 @@ These values are generated from the current source tree:
 
 <div class="stat-strip" markdown>
 <div class="stat-item">
-  <div class="stat-value">3,815</div>
+  <div class="stat-value">3,818</div>
   <div class="stat-label">Backend tests</div>
 </div>
 <div class="stat-item">
@@ -139,7 +139,7 @@ These values are generated from the current source tree:
   <div class="stat-label">ADRs</div>
 </div>
 <div class="stat-item">
-  <div class="stat-value">6</div>
+  <div class="stat-value">7</div>
   <div class="stat-label">Production workflows</div>
 </div>
 </div>
