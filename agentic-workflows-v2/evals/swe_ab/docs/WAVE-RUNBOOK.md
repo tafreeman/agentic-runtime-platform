@@ -16,11 +16,11 @@ Each wave is ~16 instances, ~50 minutes, both arms, self-contained.
 |---|---|
 | Banked (closed segment, waves 1-7) | 115 paired instances |
 | Banked (new segment, waves 8+9, fingerprint `22e3ed974042`) | 33 paired instances |
-| Banked (new segment, wave 10, fingerprint `20ace0a669f0`) | 18 paired instances |
+| Banked (new segment, waves 10+11, fingerprint `20ace0a669f0`) | 36 paired instances |
 | Target | ~200 per model-identity slice (not the closed segment) |
 | Current reading (closed segment) | A 55.7%, B 56.5%, B−A +0.9%, **p = 1.00** |
 | Current reading (wave 8+9) | A 51.5%, B 39.4%, B−A −12.1%, **p = 0.125** |
-| Current reading (wave 10) | A 66.7%, B 44.4% (n=18, one wave) |
+| Current reading (wave 10+11) | A 58.3%, B 38.9%, B−A −19.4%, **p = 0.0391 — first significant reading, n still small** |
 
 **Wave 8 opened a new segment; wave 10 opened a second one inside it.** The
 harness (`run_ab.py`, `graders.py`, `rubric.py`, `swebench_graders.py`,
