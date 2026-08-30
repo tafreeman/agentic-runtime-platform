@@ -184,26 +184,31 @@ Opens fresh per the segment-boundary note above §1 — not unioned with §1.3's
 115 or §1.4's 20. Same question, same pinned `CAMPAIGN` settings, a rewritten
 harness underneath.
 
+**Sub-segmented again as of wave 10** — `analyze.py` itself refused to union
+wave 8/9 with wave 10 (`target_fingerprint` differs:
+`...@22e3ed974042` vs `...@20ace0a669f0`). Ollama Cloud pushed a live update
+to `deepseek-v4-flash:0731-cloud`'s served weights between wave 9 and wave
+10 — same model *name*, different model. See §2.21: this is now three
+model-identity slices within "the new segment," not one.
+
 | run | n | Arm A | Arm B | note |
 |---|---|---|---|---|
-| wave 8 | 17 | 11/17 = 64.7% | 8/17 = 47.1% | first wave graded on the merged harness; cases were pre-built under the old `WAVE_MIX`/offset fixes (§2.13/§2.15) but never graded before the merge |
+| wave 8 | 17 | 11/17 = 64.7% | 8/17 = 47.1% | first wave graded on the merged harness; fingerprint `22e3ed974042` |
+| wave 9 | 16 | 6/16 = 37.5% | 5/16 = 31.25% | narrowed `WAVE_MIX` (§2.17); fingerprint `22e3ed974042`, unions with wave 8 |
+| **wave 8+9 union** | **33** | **17/33 = 51.5%** | **13/33 = 39.4%** | B−A −12.1%, 95% CI [−24.2%, −3.0%], McNemar p = 0.1250, 4 discordant |
+| wave 10 | 18 | 12/18 = 66.7% | 8/18 = 44.4% | fingerprint `20ace0a669f0` — **does not union with wave 8/9**, zero errors/timeouts either arm |
 
-Paired outcomes (17 shared cases): 8 both solved, 3 A-only, 0 B-only, 6
-neither. B−A −17.6%, 95% bootstrap CI [−35.3%, +0.0%], McNemar exact p =
-0.2500 (3 discordant pairs). Restricted to the 12 cases where both arms
-reached a verdict: A 9/12 = 75.0%, B 8/12 = 66.7%, p = 1.0000. 5 cases
-excluded for no verdict on at least one arm — operational, not folded into
-the task-failure count (ADR-0008): arm A 2 errors, arm B 3 errors + 1
-timeout. Verified against the runbook's sanity checks before recording: no
-repo/slice at 0%, harness ran (`harness_status` mostly `completed`, not a
-sanity check silently carrying an `UNAVAILABLE` score).
+Wave 8+9 paired: 13 both solved, 4 A-only, 0 B-only, 16 neither. Restricted
+to the 18 cases where both arms reached a verdict: A 15/18 = 83.3%, B
+13/18 = 72.2%, p = 0.5000. 15 excluded for no verdict on at least one arm.
+Wave 10 alone had zero excluded cases — every sample reached a real
+pass/fail verdict in both arms, the cleanest wave this segment has produced
+(consistent with §2.18's fix landing before it ran).
 
-Cost: arm A median 16.2 s/case, arm B median 161.9 s/case (small kept-inline
-samples, n=3 and n=2 — not yet enough to trust as a ratio).
-
-**n=17 is one wave, not a result.** Too small to compare against the closed
-segment's 55.7%/56.5% even directionally; this starts its own accumulation
-toward ~200 under WAVE-RUNBOOK.md's rules.
+**No single slice is n=200, or close.** Wave 8+9 (33) and wave 10 (18) are
+each their own accumulation now, and neither compares to the closed
+segment's 55.7%/56.5% even directionally — different harness, and now
+different underlying model weights too.
 
 ---
 
@@ -632,6 +637,29 @@ new-segment progress (the in-flight reuse batch from §2.19 was stopped at
 70/135 arm A, human-directed) in favor of every new-segment wave drawing
 strictly never-before-graded instances, matching the campaign's existing
 non-overlap guarantee (§2.10) rather than an exception to it.
+
+### 2.21 A live model update mid-segment — Ollama Cloud changed what `deepseek-v4-flash:0731-cloud` serves
+
+`analyze.py` refused to union wave 8/9 with wave 10 on `target_fingerprint`:
+`ollama:deepseek-v4-flash:0731-cloud@22e3ed974042` (waves 8-9) versus
+`...@20ace0a669f0` (wave 10). Same model name, same tag, different served
+weights — Ollama Cloud pushed an update to the `:0731-cloud` tag sometime
+between the two runs, something no wave in this campaign controls or is
+notified of. This is the same class of hazard as §2.6/§2.7 (grading rules
+changed mid-run; arms run at different concurrency) but from a source
+entirely outside this codebase: the *pin* was correct (`CAMPAIGN["model"]`
+never changed), the thing pinned to changed underneath it.
+
+No fix applies here beyond what already exists: the merged harness's
+fingerprinting (`PR #282`) caught it automatically, and `analyze.py`
+correctly refused to silently blend two systems into one union. The
+practical consequence is the new segment is now three model-identity
+slices rather than one (wave 8+9, wave 10, and whatever wave 11 turns out
+to fingerprint as) — recorded in §1.7, not something to try to undo by
+re-running earlier waves against the new weights, which would just as
+easily drift again by the time it finished.
+
+## 3. Standing caveats on every number above
 
 1. **Oracle retrieval.** The model is told which file to fix. Full SWE-bench also
    requires finding it. **These are not leaderboard numbers.**

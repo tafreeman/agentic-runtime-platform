@@ -181,16 +181,33 @@ is **not yet done**.
 
 ---
 
-## 7. Campaign state, 2026-08-29
+## 7. Campaign state, 2026-08-30
 
 | | |
 |---|---|
 | Banked (closed segment, waves 1-7) | **115 paired SWE-bench instances** — A 55.7%, B 56.5%, p = 1.00 |
-| Banked (new segment, wave 8) | **17 paired SWE-bench instances** — A 64.7%, B 47.1%, p = 0.25 (one wave, not yet a result; EVIDENCE.md §1.7) |
-| Built | 152 SWE-bench case directories (135 closed segment + 17 wave 8), 132 mutation cases |
-| Waves run | closed segment: wave 1 (12), wave 2 (12), wave 3 (8), wave 4 (12), wave 5 (12), wave 6 (7), wave 7 (17) plus the 35-instance hand-built set and the 20-instance hard-rated slice. New segment: wave 8 (17), graded on the harness merged via `PR #282`. |
-| Target | ~200 paired instances in the new segment (wave 8 onward) |
-| Next | `run_wave.py --wave 9 --size 16` — continues the new segment on the merged harness (see EVIDENCE.md's segment-boundary note above §1.3 and §1.7). |
+| Banked (new segment, wave 8+9, fingerprint `22e3ed974042`) | **33 paired instances** — A 51.5%, B 39.4%, p = 0.125 |
+| Banked (new segment, wave 10, fingerprint `20ace0a669f0`) | **18 paired instances** — A 66.7%, B 44.4% (one wave; EVIDENCE.md §1.7) |
+| Banked (NIM track, separate provider) | 16 instances so far, arm A done (8/16=50%), arm B in progress; own union table, never merged with Ollama segments |
+| Built | ~270 SWE-bench case directories, 132 mutation cases |
+| Waves run | closed segment: wave 1 (12), wave 2 (12), wave 3 (8), wave 4 (12), wave 5 (12), wave 6 (7), wave 7 (17) plus the 35-instance hand-built set and the 20-instance hard-rated slice. New segment: wave 8 (17), wave 9 (16), wave 10 (18), graded on the harness merged via `PR #282`. Plus a standalone 16-instance NIM batch (`cases.swebench.nim1.jsonl`). |
+| Target | ~200 paired instances per model-identity slice (wave 8+9, wave 10, and whichever future waves match one or the other) |
+| Next | `run_wave.py --wave 11 --size 16 --rebuild-cases` — always pass `--rebuild-cases` for a fresh, never-before-graded set (this campaign stopped reusing the closed segment's instances, 2026-08-30). **Check the resulting report's `manifest.target_fingerprint`** before unioning it with wave 8+9 or wave 10 — Ollama can update the served model underneath the same tag name (EVIDENCE.md §2.21). |
+
+**Model drift mid-segment, 2026-08-30 (EVIDENCE.md §2.21).** Between wave 9
+and wave 10, Ollama Cloud pushed a live update to
+`deepseek-v4-flash:0731-cloud`'s served weights — same tag, different model.
+`analyze.py`'s `target_fingerprint` check caught it and refused to union
+them. The "new segment" is now three model-identity slices, not one: never
+assume same model name means same model without checking the fingerprint.
+
+**Stopped reusing the closed segment's instances, 2026-08-30.** A batch
+reusing all 135 closed-segment instances under the new harness ran for
+~70 minutes (70/135 arm A) before being stopped, human-directed, in favor of
+every new-segment wave drawing strictly fresh, never-before-graded
+instances — consistent with this campaign's existing non-overlap guarantee
+(§6 above) rather than an exception to it. Always pass `--rebuild-cases` to
+`run_wave.py` going forward.
 
 **Harness updated 2026-08-29 — `PR #282` merged into `origin/swe_ab_evals`.**
 A concurrent session independently rewrote `run_ab.py`, `graders.py`,

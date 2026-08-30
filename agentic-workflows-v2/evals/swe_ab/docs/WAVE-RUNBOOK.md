@@ -15,16 +15,23 @@ Each wave is ~16 instances, ~50 minutes, both arms, self-contained.
 | | |
 |---|---|
 | Banked (closed segment, waves 1-7) | 115 paired instances |
-| Banked (new segment, wave 8) | 17 paired instances |
-| Target | ~200 (new segment, not resuming the closed one) |
+| Banked (new segment, waves 8+9, fingerprint `22e3ed974042`) | 33 paired instances |
+| Banked (new segment, wave 10, fingerprint `20ace0a669f0`) | 18 paired instances |
+| Target | ~200 per model-identity slice (not the closed segment) |
 | Current reading (closed segment) | A 55.7%, B 56.5%, B−A +0.9%, **p = 1.00** |
-| Current reading (new segment) | A 64.7%, B 47.1%, B−A −17.6%, **p = 0.25** (n=17 — one wave, not a result) |
+| Current reading (wave 8+9) | A 51.5%, B 39.4%, B−A −12.1%, **p = 0.125** |
+| Current reading (wave 10) | A 66.7%, B 44.4% (n=18, one wave) |
 
-**Wave 8 opened a new segment.** The harness (`run_ab.py`, `graders.py`,
-`rubric.py`, `swebench_graders.py`, `analyze.py`) changed underneath waves
-1-7 via a concurrent session's `PR #282`. See EVIDENCE.md §1.7 and its
-segment-boundary note above §1.3 — do not union wave 8+ results with the
-115-instance table above. Wave 9 continues the new segment.
+**Wave 8 opened a new segment; wave 10 opened a second one inside it.** The
+harness (`run_ab.py`, `graders.py`, `rubric.py`, `swebench_graders.py`,
+`analyze.py`) changed underneath waves 1-7 via a concurrent session's
+`PR #282` — that's the wave-8 boundary. Between wave 9 and wave 10, Ollama
+Cloud pushed a live update to `deepseek-v4-flash:0731-cloud`'s served
+weights (EVIDENCE.md §2.21) — `analyze.py` itself refuses to union runs
+with different `target_fingerprint`s, so wave 10 is now its own slice.
+**Before unioning any new wave, check its `manifest.target_fingerprint`
+against the slice you're adding it to** (`grep target_fingerprint` on the
+report JSON) rather than assuming same-model-name means same model.
 
 ---
 
