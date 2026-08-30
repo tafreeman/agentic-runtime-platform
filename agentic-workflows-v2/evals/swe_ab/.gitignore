@@ -9,8 +9,10 @@ dataset/cases/
 # a bad trade.
 dataset/swebench_cases/
 
-# Run outputs: reports, spilled artifacts, and the bridge's scratch cwd.
-reports/
+# Run outputs: spilled artifacts and the bridge's scratch cwd. reports/ is
+# deliberately NOT here -- it's the actual per-sample evidence this campaign
+# is built to produce, and at ~250 KB/wave it costs nothing to keep durable
+# in git rather than living only on whichever machine last ran a wave.
 artifacts/
 sandbox/
 
