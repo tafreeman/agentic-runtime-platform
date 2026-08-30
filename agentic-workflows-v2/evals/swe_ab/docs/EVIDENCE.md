@@ -287,6 +287,61 @@ arm B 47.6 min, for 16 cases each.
 every other slice above: this needs its own accumulation toward a
 comparable n before the tie (or any future gap) means anything.
 
+**204-instance backfill, arm A only, stopped 2026-08-30 — NIM's free
+endpoint was severely degraded, not just slow.** Reused 204 previously-mined
+instances from Run 1/2/3 (§2.19's backfill rationale — stateless grading,
+no memory between runs). Arm A took over 8 hours and returned:
+
+| run | n | Arm A | note |
+|---|---|---|---|
+| nim-backfill (arm A only) | 204 | 26/204 = 12.7% real passes | **103/204 = 50.5% timed out** — not a capability reading |
+
+Only 79/204 (38.7%) reached a real verdict (26 passed, 53 failed); the
+other 125 were operational failures (103 timeouts, 22 errors), never
+folded into the task-failure count (ADR-0008) but dominating the sample
+regardless. Verified this was real, ongoing work and not a hung process
+before waiting it out: `py-spy dump --locals` on the live PID showed an
+active `docker run` call mid-harness-evaluation; Docker's event log (short
+retention window, but real-time) showed containers for different
+instances cycling through create/start/kill/destroy; `vmmemWSL` was
+holding 34.8 GB. All three independent signals agreed it was genuinely
+working, just against a badly overloaded free endpoint. **Arm B stopped
+before starting** (human-directed) rather than spend several more hours
+for equally unreliable data — this arm-A-only result is kept on disk as
+the evidence for why (rule 3, never delete a report), not unioned with
+anything and not treated as a capability reading of the model.
+
+### 1.9 OpenRouter free-tier track — minimax-m3
+
+`openrouter:minimax/minimax-m3:free`, chosen after checking OpenRouter's
+own benchmarks API (`/v1/benchmarks?task_type=coding`): highest real
+coding/agentic score (58.6 / 36.1) among models actually reachable at the
+time — `z-ai/glm-5.2:free` scored higher (68.8 / 45.7) but was persistently
+rate-limited on OpenRouter's shared free pool (verified: 4 retries with
+backoff, all 429), and `thinkingmachines/inkling[-small]:free` returned 403
+("only available on agentic harnesses"), not usable via plain chat
+completion. Same 204-instance backfill pool as the NIM attempt above.
+
+| run | n | Arm A | Arm B | note |
+|---|---|---|---|---|
+| minimax1 | 204 | 59/204 = 28.9% | 50/204 = 24.5% | clean run, 5 and 8 non-verdicts respectively |
+
+Paired: 26 both solved, 33 A-only, 24 B-only, 121 neither. B−A −4.4%, 95%
+bootstrap CI [−11.8%, +2.9%], McNemar exact p = 0.2892 (57 discordant
+pairs). Restricted to the 192 cases where both arms reached a verdict: A
+57/192 = 29.7%, B 50/192 = 26.0%, p = 0.4188 — no significant difference.
+Operational health: arm A `{completed: 201, timeout: 1, error: 2}`, arm B
+`{completed: 197, error: 7}` — clean by this campaign's standards, unlike
+the NIM attempt above.
+
+**Notably weaker than the SUT model despite a similar benchmark score.**
+minimax-m3's coding index (58.6) isn't far below deepseek-v4-flash's
+(69.1), but its actual pass rate here (29.7% verdict-only) is well below
+every Ollama-segment reading for the SUT model (51.5%–58.3% depending on
+slice). A real gap between a general coding/agentic benchmark and this
+specific harness's oracle-retrieval task, not a data-quality problem —
+this run was clean.
+
 ---
 
 ## 2. Defects found and fixed
