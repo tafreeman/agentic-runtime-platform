@@ -196,17 +196,38 @@ model-identity slices within "the new segment," not one.
 | wave 8 | 17 | 11/17 = 64.7% | 8/17 = 47.1% | first wave graded on the merged harness; fingerprint `22e3ed974042` |
 | wave 9 | 16 | 6/16 = 37.5% | 5/16 = 31.25% | narrowed `WAVE_MIX` (§2.17); fingerprint `22e3ed974042`, unions with wave 8 |
 | **wave 8+9 union** | **33** | **17/33 = 51.5%** | **13/33 = 39.4%** | B−A −12.1%, 95% CI [−24.2%, −3.0%], McNemar p = 0.1250, 4 discordant |
-| wave 10 | 18 | 12/18 = 66.7% | 8/18 = 44.4% | fingerprint `20ace0a669f0` — **does not union with wave 8/9**, zero errors/timeouts either arm |
+| wave 10 | 18 | 12/18 = 66.7% | 8/18 = 44.4% | fingerprint `20ace0a669f0` — **does not union with wave 8/9** |
+| wave 11 | 18 | 9/18 = 50.0% | 6/18 = 33.3% | django-consolidated `WAVE_MIX` (§2.20); same fingerprint as wave 10, unions with it |
+| **wave 10+11 union** | **36** | **21/36 = 58.3%** | **14/36 = 38.9%** | **B−A −19.4%, 95% CI [−33.3%, −5.6%], McNemar p = 0.0391 — significant at n=36** |
 
 Wave 8+9 paired: 13 both solved, 4 A-only, 0 B-only, 16 neither. Restricted
 to the 18 cases where both arms reached a verdict: A 15/18 = 83.3%, B
 13/18 = 72.2%, p = 0.5000. 15 excluded for no verdict on at least one arm.
-Wave 10 alone had zero excluded cases — every sample reached a real
-pass/fail verdict in both arms, the cleanest wave this segment has produced
-(consistent with §2.18's fix landing before it ran).
 
-**No single slice is n=200, or close.** Wave 8+9 (33) and wave 10 (18) are
-each their own accumulation now, and neither compares to the closed
+**Wave 10+11 is the first statistically significant reading in this
+campaign.** Paired: 13 both solved, 8 A-only, 1 B-only, 14 neither — 9
+discordant pairs, McNemar p = 0.0391. Zero excluded cases in either wave
+(36/36 real verdicts both arms — the cleanest reading this segment has
+produced, consistent with §2.18's fallback-exclusivity fix landing before
+either wave ran). Verified before recording: arm A's fingerprint matches
+itself across wave 10 and 11 (`20ace0a669f0`), and arm B's matches itself
+across both too (`ddf23322d15f`, deliberately different from A's —
+different workflow, not a data problem; EvalKit's own comparability gate
+flags exactly this every time and is not the check that governs whether a
+union is valid, which is same-arm-across-waves fingerprint agreement).
+
+**Read this cautiously despite crossing p < 0.05:** n=36 with 9 discordant
+pairs is still a small sample by this campaign's own stated bar (~200
+needed for real power, §3 below); a single further wave could move the
+point estimate substantially, the way wave 1's early lead for the direct
+arm didn't survive more instances (§1.3). It is nonetheless the first slice
+in this campaign, closed or new, where the review loop's disadvantage is
+distinguishable from noise rather than just directionally suggestive —
+worth tracking closely as wave 10+11's own accumulation continues, not yet
+worth calling a finding on its own.
+
+**No single slice is n=200, or close.** Wave 8+9 (33) and wave 10+11 (36)
+are each their own accumulation now, and neither compares to the closed
 segment's 55.7%/56.5% even directionally — different harness, and now
 different underlying model weights too.
 

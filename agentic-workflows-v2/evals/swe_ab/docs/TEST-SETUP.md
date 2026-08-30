@@ -187,10 +187,10 @@ is **not yet done**.
 |---|---|
 | Banked (closed segment, waves 1-7) | **115 paired SWE-bench instances** — A 55.7%, B 56.5%, p = 1.00 |
 | Banked (new segment, wave 8+9, fingerprint `22e3ed974042`) | **33 paired instances** — A 51.5%, B 39.4%, p = 0.125 |
-| Banked (new segment, wave 10, fingerprint `20ace0a669f0`) | **18 paired instances** — A 66.7%, B 44.4% (one wave; EVIDENCE.md §1.7) |
-| Banked (NIM track, separate provider) | 16 instances so far, arm A done (8/16=50%), arm B in progress; own union table, never merged with Ollama segments |
-| Built | ~270 SWE-bench case directories, 132 mutation cases |
-| Waves run | closed segment: wave 1 (12), wave 2 (12), wave 3 (8), wave 4 (12), wave 5 (12), wave 6 (7), wave 7 (17) plus the 35-instance hand-built set and the 20-instance hard-rated slice. New segment: wave 8 (17), wave 9 (16), wave 10 (18), graded on the harness merged via `PR #282`. Plus a standalone 16-instance NIM batch (`cases.swebench.nim1.jsonl`). |
+| Banked (new segment, wave 10+11, fingerprint `20ace0a669f0`) | **36 paired instances** — A 58.3%, B 38.9%, **p = 0.0391** — first significant reading in the campaign, still a small n (EVIDENCE.md §1.7) |
+| Banked (NIM track, separate provider) | 16 paired instances — A 50.0%, B 50.0%, p = 1.00, exactly tied (EVIDENCE.md §1.8) |
+| Built | ~290 SWE-bench case directories, 132 mutation cases |
+| Waves run | closed segment: wave 1 (12), wave 2 (12), wave 3 (8), wave 4 (12), wave 5 (12), wave 6 (7), wave 7 (17) plus the 35-instance hand-built set and the 20-instance hard-rated slice. New segment: wave 8 (17), wave 9 (16), wave 10 (18), wave 11 (18), graded on the harness merged via `PR #282`. Plus a standalone 16-instance NIM batch (`cases.swebench.nim1.jsonl`). |
 | Target | ~200 paired instances per model-identity slice (wave 8+9, wave 10, and whichever future waves match one or the other) |
 | Next | `run_wave.py --wave 11 --size 16 --rebuild-cases` — always pass `--rebuild-cases` for a fresh, never-before-graded set (this campaign stopped reusing the closed segment's instances, 2026-08-30). **Check the resulting report's `manifest.target_fingerprint`** before unioning it with wave 8+9 or wave 10 — Ollama can update the served model underneath the same tag name (EVIDENCE.md §2.21). |
 
