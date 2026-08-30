@@ -1,0 +1,1372 @@
+{
+  "finished_at": "2026-08-28T17:32:50.627727+00:00",
+  "generated_at": "2026-08-28T17:32:50.628405+00:00",
+  "manifest": {
+    "adapter": "arp-swe-cases@1",
+    "artifact_policy": {},
+    "attempts": 1,
+    "baseline_compatibility_rules": {},
+    "code_fingerprint": null,
+    "concurrency": 4,
+    "contamination": null,
+    "dataset_ref": {
+      "allow_remote_code": false,
+      "config": null,
+      "data_files": [],
+      "dataset_id": "C:\\Users\\tandf\\source\\agentic-runtime-platform\\agentic-workflows-v2\\evals\\swe_ab\\dataset\\cases.swebench.wave3.jsonl",
+      "field_mapping": {},
+      "provider": "local",
+      "revision": null,
+      "schema_version": "1",
+      "selection": null,
+      "split": null
+    },
+    "environment_fingerprint": null,
+    "grader": "swebench-composite@1",
+    "redaction_policy": {},
+    "revision_policy": null,
+    "run_name": "arm-b-review-loop",
+    "sampling": {
+      "attempts": 1,
+      "schema_version": "1",
+      "seed": 20260827,
+      "temperature": 0.0
+    },
+    "schema_version": "1",
+    "selection": {
+      "filter": null,
+      "limit": null,
+      "offset": 0,
+      "schema_version": "1"
+    },
+    "target_fingerprint": null,
+    "target_fingerprint_policy": null,
+    "target_name": "arp-swe_fix_review_loop",
+    "timeout_seconds": 1200.0
+  },
+  "provenance": {
+    "adapter": "arp-swe-cases@1",
+    "code_fingerprint": null,
+    "config": null,
+    "dataset_id": "C:\\Users\\tandf\\source\\agentic-runtime-platform\\agentic-workflows-v2\\evals\\swe_ab\\dataset\\cases.swebench.wave3.jsonl",
+    "dataset_revision": "sha256:9b96fc720db18414ac2eaf127ac0d434a88a4a13092915ee4a010f010ade3896",
+    "environment_fingerprint": null,
+    "grader": "swebench-composite@1",
+    "split": null,
+    "target_name": "arp-swe_fix_review_loop"
+  },
+  "resolved_dataset": {
+    "cache_manifest_digest": null,
+    "card_metadata": {},
+    "checksums": {},
+    "citation": null,
+    "config": null,
+    "contamination": null,
+    "dataset_id": "C:\\Users\\tandf\\source\\agentic-runtime-platform\\agentic-workflows-v2\\evals\\swe_ab\\dataset\\cases.swebench.wave3.jsonl",
+    "gated": false,
+    "license": null,
+    "provider_response_digests": {},
+    "retrieved_at": null,
+    "revision": "sha256:9b96fc720db18414ac2eaf127ac0d434a88a4a13092915ee4a010f010ade3896",
+    "row_count": 8,
+    "schema_metadata": {},
+    "schema_version": "1",
+    "selected_files": [
+      "C:\\Users\\tandf\\source\\agentic-runtime-platform\\agentic-workflows-v2\\evals\\swe_ab\\dataset\\cases.swebench.wave3.jsonl"
+    ],
+    "split": null
+  },
+  "run_id": "c1fe3b89acff4d6787f0100ee1946258",
+  "samples": [
+    {
+      "execution": {
+        "artifacts": {
+          "output_ref": "sha256:981f8fc7fe9b2fc785e4a4d96e90c2455b4c8a444669e99d039354f2730376bf"
+        },
+        "attempt": 1,
+        "cost_usd": null,
+        "environment_metadata": {},
+        "error": null,
+        "finished_at": "2026-08-28T17:18:35.095466Z",
+        "input_tokens": null,
+        "latency_ms": null,
+        "model_name": null,
+        "output": null,
+        "output_tokens": null,
+        "sample_id": "sympy__sympy-20801",
+        "schema_version": "1",
+        "started_at": "2026-08-28T17:10:57.468232Z",
+        "status": "completed",
+        "structured_output": null,
+        "target_fingerprint": "subprocess:python.exe:1:7a123ee172d3e4f7",
+        "tool_calls": [],
+        "trace_refs": []
+      },
+      "grade": {
+        "artifact_refs": [],
+        "created_at": "2026-08-28T17:18:35.150249Z",
+        "evidence": {
+          "harness_evidence": {
+            "patch_exists": true,
+            "patch_is_None": false,
+            "patch_successfully_applied": true,
+            "tests_status": {
+              "FAIL_TO_FAIL": {
+                "failure": [],
+                "success": []
+              },
+              "FAIL_TO_PASS": {
+                "failure": [],
+                "success": [
+                  "test_zero_not_false"
+                ]
+              },
+              "PASS_TO_FAIL": {
+                "failure": [],
+                "success": []
+              },
+              "PASS_TO_PASS": {
+                "failure": [],
+                "success": [
+                  "test_seterr",
+                  "test_mod",
+                  "test_divmod",
+                  "test_igcd",
+                  "test_igcd_lehmer",
+                  "test_igcd2",
+                  "test_ilcm",
+                  "test_igcdex",
+                  "test_Integer_new",
+                  "test_Rational_new",
+                  "test_Number_new",
+                  "test_Number_cmp",
+                  "test_Rational_cmp",
+                  "test_Float",
+                  "test_float_mpf",
+                  "test_Float_RealElement",
+                  "test_Float_default_to_highprec_from_str",
+                  "test_Float_eval",
+                  "test_Float_issue_2107",
+                  "test_issue_14289",
+                  "test_Float_from_tuple",
+                  "test_Infinity",
+                  "test_Infinity_2",
+                  "test_Mul_Infinity_Zero",
+                  "test_Div_By_Zero",
+                  "test_Infinity_inequations",
+                  "test_NaN",
+                  "test_special_numbers",
+                  "test_powers",
+                  "test_integer_nthroot_overflow",
+                  "test_integer_log",
+                  "test_isqrt",
+                  "test_powers_Integer",
+                  "test_powers_Rational",
+                  "test_powers_Float",
+                  "test_abs1",
+                  "test_accept_int",
+                  "test_dont_accept_str",
+                  "test_int",
+                  "test_real_bug",
+                  "test_bug_sqrt",
+                  "test_pi_Pi",
+                  "test_no_len",
+                  "test_issue_3321",
+                  "test_issue_3692",
+                  "test_issue_3423",
+                  "test_issue_3449",
+                  "test_issue_13890",
+                  "test_Integer_factors",
+                  "test_Rational_factors",
+                  "test_issue_4107",
+                  "test_IntegerInteger",
+                  "test_Rational_gcd_lcm_cofactors",
+                  "test_Float_gcd_lcm_cofactors",
+                  "test_issue_4611",
+                  "test_conversion_to_mpmath",
+                  "test_relational",
+                  "test_Integer_as_index",
+                  "test_Rational_int",
+                  "test_zoo",
+                  "test_issue_4122",
+                  "test_GoldenRatio_expand",
+                  "test_TribonacciConstant_expand",
+                  "test_as_content_primitive",
+                  "test_hashing_sympy_integers",
+                  "test_rounding_issue_4172",
+                  "test_Catalan_EulerGamma_prec",
+                  "test_Catalan_rewrite",
+                  "test_bool_eq",
+                  "test_Float_eq",
+                  "test_int_NumberSymbols",
+                  "test_issue_6640",
+                  "test_issue_6349",
+                  "test_mpf_norm",
+                  "test_latex",
+                  "test_issue_7742",
+                  "test_simplify_AlgebraicNumber",
+                  "test_Float_idempotence",
+                  "test_comp1",
+                  "test_issue_9491",
+                  "test_issue_10063",
+                  "test_issue_10020",
+                  "test_invert_numbers",
+                  "test_mod_inverse",
+                  "test_golden_ratio_rewrite_as_sqrt",
+                  "test_tribonacci_constant_rewrite_as_sqrt",
+                  "test_comparisons_with_unknown_type",
+                  "test_NumberSymbol_comparison",
+                  "test_Integer_precision",
+                  "test_Integer_ceiling_floor",
+                  "test_ComplexInfinity",
+                  "test_Infinity_floor_ceiling_power",
+                  "test_One_power",
+                  "test_NegativeInfinity",
+                  "test_issue_6133",
+                  "test_abc"
+                ]
+              }
+            }
+          },
+          "harness_message": "instance 'sympy__sympy-20801' resolved by the official harness",
+          "harness_status": "completed"
+        },
+        "grader": "swebench-composite@1",
+        "grader_type": "harness",
+        "hard_gate": true,
+        "judge_calibration_ref": null,
+        "oracle_provenance": {},
+        "rubric_id": null,
+        "sample_id": "sympy__sympy-20801",
+        "schema_version": "1",
+        "score": 1.0,
+        "status": "pass"
+      },
+      "sample": {
+        "adapter": "arp-swe-cases@1",
+        "allowed_execution_policy": {},
+        "expected_artifacts": {},
+        "grader": {
+          "grader_type": "composite",
+          "hard_gate": true,
+          "name": "swebench-composite@1",
+          "parameters": {},
+          "schema_version": "1"
+        },
+        "input": {
+          "bug_report": "S(0.0) == S.false returns True\nThis issue is related to those listed in #20033. \r\n\r\nAs shown by @sayandip18, comparing `S.false` to `S(0.0)` returns 2 different results depending on the order in which they are compared:\r\n\r\n```pycon\r\n>>> from sympy import *\r\n>>> S(0.0) == S.false\r\nTrue\r\n>>> S.false == S(0.0)\r\nFalse\r\n```\r\nBased on the results of comparison to `S(0)`:\r\n\r\n```pycon\r\n>>> S(0) == S.false\r\nFalse\r\n>>> S.false == S(0)\r\nFalse\r\n```\r\nI assume we would want `S(0.0) == S.false` to return True as well?\n",
+          "case_dir": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/swebench_cases/sympy__sympy-20801",
+          "code_file": "sympy/core/numbers.py",
+          "failing_test": "test_zero_not_false",
+          "repo_path": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/swebench_cases/sympy__sympy-20801"
+        },
+        "metadata": {
+          "contamination_risk": "high",
+          "difficulty": "15 min - 1 hour",
+          "instance_id": "sympy__sympy-20801",
+          "kind": "SWEBENCH",
+          "max_changed_lines": "120",
+          "retrieval": "oracle",
+          "source_repo": "swebench"
+        },
+        "reference": null,
+        "sample_id": "sympy__sympy-20801",
+        "schema_version": "1",
+        "source_digest": "sha256:05ee66e6464b165ad3e41d831616408b1727aeb419a2542f2b7a7f28fb53383e",
+        "source_row_id": "0",
+        "tags": []
+      },
+      "schema_version": "1"
+    },
+    {
+      "execution": {
+        "artifacts": {
+          "output_ref": "sha256:2ddae30b3abaeb9fc6d539a0e2878dd8ee0d2e4f71f7cb8b347740f16de7e2e9"
+        },
+        "attempt": 1,
+        "cost_usd": null,
+        "environment_metadata": {},
+        "error": null,
+        "finished_at": "2026-08-28T17:13:22.978600Z",
+        "input_tokens": null,
+        "latency_ms": null,
+        "model_name": null,
+        "output": null,
+        "output_tokens": null,
+        "sample_id": "sympy__sympy-21379",
+        "schema_version": "1",
+        "started_at": "2026-08-28T17:10:57.483788Z",
+        "status": "completed",
+        "structured_output": null,
+        "target_fingerprint": "subprocess:python.exe:1:7a123ee172d3e4f7",
+        "tool_calls": [],
+        "trace_refs": []
+      },
+      "grade": {
+        "artifact_refs": [],
+        "created_at": "2026-08-28T17:13:22.983944Z",
+        "evidence": {
+          "harness_evidence": {
+            "patch_exists": true,
+            "patch_is_None": false,
+            "patch_successfully_applied": true,
+            "tests_status": {
+              "FAIL_TO_FAIL": {
+                "failure": [],
+                "success": []
+              },
+              "FAIL_TO_PASS": {
+                "failure": [],
+                "success": [
+                  "test_Mod"
+                ]
+              },
+              "PASS_TO_FAIL": {
+                "failure": [],
+                "success": []
+              },
+              "PASS_TO_PASS": {
+                "failure": [],
+                "success": [
+                  "test_bug1",
+                  "test_Symbol",
+                  "test_arit0",
+                  "test_div",
+                  "test_pow",
+                  "test_pow2",
+                  "test_pow3",
+                  "test_mod_pow",
+                  "test_pow_E",
+                  "test_pow_issue_3516",
+                  "test_pow_im",
+                  "test_real_mul",
+                  "test_ncmul",
+                  "test_mul_add_identity",
+                  "test_ncpow",
+                  "test_powerbug",
+                  "test_Mul_doesnt_expand_exp",
+                  "test_Mul_is_integer",
+                  "test_Add_Mul_is_integer",
+                  "test_Add_Mul_is_finite",
+                  "test_Mul_is_even_odd",
+                  "test_evenness_in_ternary_integer_product_with_even",
+                  "test_oddness_in_ternary_integer_product_with_even",
+                  "test_Mul_is_rational",
+                  "test_Add_is_rational",
+                  "test_Add_is_even_odd",
+                  "test_Mul_is_negative_positive",
+                  "test_Mul_is_negative_positive_2",
+                  "test_Mul_is_nonpositive_nonnegative",
+                  "test_Add_is_negative_positive",
+                  "test_Add_is_nonpositive_nonnegative",
+                  "test_Pow_is_integer",
+                  "test_Pow_is_real",
+                  "test_real_Pow",
+                  "test_Pow_is_finite",
+                  "test_Pow_is_even_odd",
+                  "test_Pow_is_negative_positive",
+                  "test_Pow_is_zero",
+                  "test_Pow_is_nonpositive_nonnegative",
+                  "test_Mul_is_imaginary_real",
+                  "test_Mul_hermitian_antihermitian",
+                  "test_Add_is_comparable",
+                  "test_Mul_is_comparable",
+                  "test_Pow_is_comparable",
+                  "test_Add_is_positive_2",
+                  "test_Add_is_irrational",
+                  "test_Mul_is_irrational",
+                  "test_issue_3531",
+                  "test_issue_3531b",
+                  "test_bug3",
+                  "test_suppressed_evaluation",
+                  "test_AssocOp_doit",
+                  "test_Add_Mul_Expr_args",
+                  "test_Add_as_coeff_mul",
+                  "test_Pow_as_coeff_mul_doesnt_expand",
+                  "test_issue_3514_18626",
+                  "test_make_args",
+                  "test_issue_5126",
+                  "test_Rational_as_content_primitive",
+                  "test_Add_as_content_primitive",
+                  "test_Mul_as_content_primitive",
+                  "test_Pow_as_content_primitive",
+                  "test_issue_5460",
+                  "test_product_irrational",
+                  "test_issue_5919",
+                  "test_Mod_Pow",
+                  "test_Mod_is_integer",
+                  "test_Mod_is_nonposneg",
+                  "test_issue_6001",
+                  "test_polar",
+                  "test_issue_6040",
+                  "test_issue_6082",
+                  "test_issue_6077",
+                  "test_mul_flatten_oo",
+                  "test_add_flatten",
+                  "test_issue_5160_6087_6089_6090",
+                  "test_float_int_round",
+                  "test_issue_6611a",
+                  "test_denest_add_mul",
+                  "test_mul_coeff",
+                  "test_mul_zero_detection",
+                  "test_Mul_with_zero_infinite",
+                  "test_Mul_does_not_cancel_infinities",
+                  "test_Mul_does_not_distribute_infinity",
+                  "test_issue_8247_8354",
+                  "test_Add_is_zero",
+                  "test_issue_14392",
+                  "test_divmod",
+                  "test__neg__",
+                  "test_issue_18507",
+                  "test_issue_17130"
+                ]
+              }
+            }
+          },
+          "harness_message": "instance 'sympy__sympy-21379' resolved by the official harness",
+          "harness_status": "completed"
+        },
+        "grader": "swebench-composite@1",
+        "grader_type": "harness",
+        "hard_gate": true,
+        "judge_calibration_ref": null,
+        "oracle_provenance": {},
+        "rubric_id": null,
+        "sample_id": "sympy__sympy-21379",
+        "schema_version": "1",
+        "score": 1.0,
+        "status": "pass"
+      },
+      "sample": {
+        "adapter": "arp-swe-cases@1",
+        "allowed_execution_policy": {},
+        "expected_artifacts": {},
+        "grader": {
+          "grader_type": "composite",
+          "hard_gate": true,
+          "name": "swebench-composite@1",
+          "parameters": {},
+          "schema_version": "1"
+        },
+        "input": {
+          "bug_report": "Unexpected `PolynomialError` when using simple `subs()` for particular expressions\nI am seeing weird behavior with `subs` for particular expressions with hyperbolic sinusoids with piecewise arguments. When applying `subs`, I obtain an unexpected `PolynomialError`. For context, I was umbrella-applying a casting from int to float of all int atoms for a bunch of random expressions before using a tensorflow lambdify to avoid potential tensorflow type errors. You can pretend the expression below has a `+ 1` at the end, but below is the MWE that I could produce.\r\n\r\nSee the expression below, and the conditions in which the exception arises.\r\n\r\nSympy version: 1.8.dev\r\n\r\n```python\r\nfrom sympy import *\r\nfrom sympy.core.cache import clear_cache\r\n\r\nx, y, z = symbols('x y z')\r\n\r\nclear_cache()\r\nexpr = exp(sinh(Piecewise((x, y > x), (y, True)) / z))\r\n# This works fine\r\nexpr.subs({1: 1.0})\r\n\r\nclear_cache()\r\nx, y, z = symbols('x y z', real=True)\r\nexpr = exp(sinh(Piecewise((x, y > x), (y, True)) / z))\r\n# This fails with \"PolynomialError: Piecewise generators do not make sense\"\r\nexpr.subs({1: 1.0})  # error\r\n# Now run it again (isympy...) w/o clearing cache and everything works as expected without error\r\nexpr.subs({1: 1.0})\r\n```\r\n\r\nI am not really sure where the issue is, but I think it has something to do with the order of assumptions in this specific type of expression. Here is what I found-\r\n\r\n- The error only (AFAIK) happens with `cosh` or `tanh` in place of `sinh`, otherwise it succeeds\r\n- The error goes away if removing the division by `z`\r\n- The error goes away if removing `exp` (but stays for most unary functions, `sin`, `log`, etc.)\r\n- The error only happens with real symbols for `x` and `y` (`z` does not have to be real)\r\n\r\nNot too sure how to debug this one.\n",
+          "case_dir": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/swebench_cases/sympy__sympy-21379",
+          "code_file": "sympy/core/mod.py",
+          "failing_test": "test_Mod",
+          "repo_path": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/swebench_cases/sympy__sympy-21379"
+        },
+        "metadata": {
+          "contamination_risk": "high",
+          "difficulty": "15 min - 1 hour",
+          "instance_id": "sympy__sympy-21379",
+          "kind": "SWEBENCH",
+          "max_changed_lines": "120",
+          "retrieval": "oracle",
+          "source_repo": "swebench"
+        },
+        "reference": null,
+        "sample_id": "sympy__sympy-21379",
+        "schema_version": "1",
+        "source_digest": "sha256:ee27902ded557841d95473a25be4ae4335964a36d029565b8735aa3825787ecc",
+        "source_row_id": "1",
+        "tags": []
+      },
+      "schema_version": "1"
+    },
+    {
+      "execution": {
+        "artifacts": {
+          "output_ref": "sha256:c98d8d0f07d2ffdaf4603c89dc9beff381d959028ac403b49abd14f513128422"
+        },
+        "attempt": 1,
+        "cost_usd": null,
+        "environment_metadata": {},
+        "error": null,
+        "finished_at": "2026-08-28T17:16:41.950649Z",
+        "input_tokens": null,
+        "latency_ms": null,
+        "model_name": null,
+        "output": null,
+        "output_tokens": null,
+        "sample_id": "sympy__sympy-21612",
+        "schema_version": "1",
+        "started_at": "2026-08-28T17:10:57.487546Z",
+        "status": "completed",
+        "structured_output": null,
+        "target_fingerprint": "subprocess:python.exe:1:7a123ee172d3e4f7",
+        "tool_calls": [],
+        "trace_refs": []
+      },
+      "grade": {
+        "artifact_refs": [],
+        "created_at": "2026-08-28T17:16:41.979628Z",
+        "evidence": {
+          "harness_evidence": {
+            "patch_exists": true,
+            "patch_is_None": false,
+            "patch_successfully_applied": true,
+            "tests_status": {
+              "FAIL_TO_FAIL": {
+                "failure": [],
+                "success": []
+              },
+              "FAIL_TO_PASS": {
+                "failure": [],
+                "success": [
+                  "test_Mul"
+                ]
+              },
+              "PASS_TO_FAIL": {
+                "failure": [],
+                "success": []
+              },
+              "PASS_TO_PASS": {
+                "failure": [
+                  "test_sqrt",
+                  "test_issue_21119_21460"
+                ],
+                "success": [
+                  "test_printmethod",
+                  "test_Abs",
+                  "test_Add",
+                  "test_Catalan",
+                  "test_ComplexInfinity",
+                  "test_Derivative",
+                  "test_dict",
+                  "test_Dict",
+                  "test_Dummy",
+                  "test_EulerGamma",
+                  "test_Exp",
+                  "test_factorial",
+                  "test_Function",
+                  "test_Geometry",
+                  "test_GoldenRatio",
+                  "test_TribonacciConstant",
+                  "test_ImaginaryUnit",
+                  "test_Infinity",
+                  "test_Integer",
+                  "test_Integral",
+                  "test_Interval",
+                  "test_AccumBounds",
+                  "test_Lambda",
+                  "test_Limit",
+                  "test_list",
+                  "test_Matrix_str",
+                  "test_NaN",
+                  "test_NegativeInfinity",
+                  "test_Order",
+                  "test_Permutation_Cycle",
+                  "test_Pi",
+                  "test_Poly",
+                  "test_PolyRing",
+                  "test_FracField",
+                  "test_PolyElement",
+                  "test_FracElement",
+                  "test_GaussianInteger",
+                  "test_GaussianRational",
+                  "test_Pow",
+                  "test_Rational",
+                  "test_Float",
+                  "test_Relational",
+                  "test_AppliedBinaryRelation",
+                  "test_CRootOf",
+                  "test_RootSum",
+                  "test_GroebnerBasis",
+                  "test_set",
+                  "test_SparseMatrix",
+                  "test_Sum",
+                  "test_Symbol",
+                  "test_tuple",
+                  "test_Series_str",
+                  "test_TransferFunction_str",
+                  "test_Parallel_str",
+                  "test_Feedback_str",
+                  "test_Quaternion_str_printer",
+                  "test_Quantity_str",
+                  "test_wild_str",
+                  "test_wild_matchpy",
+                  "test_zeta",
+                  "test_issue_3101",
+                  "test_issue_3103",
+                  "test_issue_4021",
+                  "test_sstrrepr",
+                  "test_infinity",
+                  "test_full_prec",
+                  "test_noncommutative",
+                  "test_empty_printer",
+                  "test_settings",
+                  "test_RandomDomain",
+                  "test_FiniteSet",
+                  "test_UniversalSet",
+                  "test_PrettyPoly",
+                  "test_categories",
+                  "test_Tr",
+                  "test_issue_6387",
+                  "test_MatMul_MatAdd",
+                  "test_MatrixSlice",
+                  "test_true_false",
+                  "test_Equivalent",
+                  "test_Xor",
+                  "test_Complement",
+                  "test_SymmetricDifference",
+                  "test_UnevaluatedExpr",
+                  "test_MatrixElement_printing",
+                  "test_MatrixSymbol_printing",
+                  "test_MatrixExpressions",
+                  "test_Subs_printing",
+                  "test_issue_15716",
+                  "test_str_special_matrices",
+                  "test_issue_14567",
+                  "test_Str",
+                  "test_diffgeom",
+                  "test_NDimArray",
+                  "test_Predicate",
+                  "test_AppliedPredicate"
+                ]
+              }
+            }
+          },
+          "harness_message": "instance 'sympy__sympy-21612' not resolved by the official harness",
+          "harness_status": "completed"
+        },
+        "grader": "swebench-composite@1",
+        "grader_type": "harness",
+        "hard_gate": true,
+        "judge_calibration_ref": null,
+        "oracle_provenance": {},
+        "rubric_id": null,
+        "sample_id": "sympy__sympy-21612",
+        "schema_version": "1",
+        "score": 0.0,
+        "status": "fail"
+      },
+      "sample": {
+        "adapter": "arp-swe-cases@1",
+        "allowed_execution_policy": {},
+        "expected_artifacts": {},
+        "grader": {
+          "grader_type": "composite",
+          "hard_gate": true,
+          "name": "swebench-composite@1",
+          "parameters": {},
+          "schema_version": "1"
+        },
+        "input": {
+          "bug_report": "Latex parsing of fractions yields wrong expression due to missing brackets\nProblematic latex expression: `\"\\\\frac{\\\\frac{a^3+b}{c}}{\\\\frac{1}{c^2}}\"`\r\n\r\nis parsed to: `((a**3 + b)/c)/1/(c**2)`.\r\n\r\nExpected is: `((a**3 + b)/c)/(1/(c**2))`. \r\n\r\nThe missing brackets in the denominator result in a wrong expression.\r\n\r\n## Tested on\r\n\r\n- 1.8\r\n- 1.6.2\r\n\r\n## Reproduce:\r\n\r\n```\r\nroot@d31ef1c26093:/# python3\r\nPython 3.6.9 (default, Jan 26 2021, 15:33:00)\r\n[GCC 8.4.0] on linux\r\nType \"help\", \"copyright\", \"credits\" or \"license\" for more information.\r\n>>> from sympy.parsing.latex import parse_latex\r\n>>> parse_latex(\"\\\\frac{\\\\frac{a^3+b}{c}}{\\\\frac{1}{c^2}}\")\r\n((a**3 + b)/c)/1/(c**2)\r\n\r\n\n",
+          "case_dir": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/swebench_cases/sympy__sympy-21612",
+          "code_file": "sympy/printing/str.py",
+          "failing_test": "test_Mul",
+          "repo_path": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/swebench_cases/sympy__sympy-21612"
+        },
+        "metadata": {
+          "contamination_risk": "high",
+          "difficulty": "15 min - 1 hour",
+          "instance_id": "sympy__sympy-21612",
+          "kind": "SWEBENCH",
+          "max_changed_lines": "120",
+          "retrieval": "oracle",
+          "source_repo": "swebench"
+        },
+        "reference": null,
+        "sample_id": "sympy__sympy-21612",
+        "schema_version": "1",
+        "source_digest": "sha256:4c9628adb877f1369ab7e5196666f69fc3f3734c42679d2d3cb0c9db8772ad24",
+        "source_row_id": "2",
+        "tags": []
+      },
+      "schema_version": "1"
+    },
+    {
+      "execution": {
+        "artifacts": {
+          "output_ref": "sha256:952c42955fa1da73faacf9575e3d9dd6b9c3d22ea1588deb702ea0430742690d"
+        },
+        "attempt": 1,
+        "cost_usd": null,
+        "environment_metadata": {},
+        "error": null,
+        "finished_at": "2026-08-28T17:14:10.169122Z",
+        "input_tokens": null,
+        "latency_ms": null,
+        "model_name": null,
+        "output": null,
+        "output_tokens": null,
+        "sample_id": "sphinx-doc__sphinx-9320",
+        "schema_version": "1",
+        "started_at": "2026-08-28T17:10:57.489545Z",
+        "status": "completed",
+        "structured_output": null,
+        "target_fingerprint": "subprocess:python.exe:1:7a123ee172d3e4f7",
+        "tool_calls": [],
+        "trace_refs": []
+      },
+      "grade": {
+        "artifact_refs": [],
+        "created_at": "2026-08-28T17:14:10.180162Z",
+        "evidence": {
+          "harness_evidence": {
+            "patch_exists": true,
+            "patch_is_None": false,
+            "patch_successfully_applied": true,
+            "tests_status": {
+              "FAIL_TO_FAIL": {
+                "failure": [],
+                "success": []
+              },
+              "FAIL_TO_PASS": {
+                "failure": [],
+                "success": [
+                  "tests/test_quickstart.py::test_exits_when_existing_confpy"
+                ]
+              },
+              "PASS_TO_FAIL": {
+                "failure": [],
+                "success": []
+              },
+              "PASS_TO_PASS": {
+                "failure": [],
+                "success": [
+                  "tests/test_quickstart.py::test_do_prompt",
+                  "tests/test_quickstart.py::test_do_prompt_inputstrip",
+                  "tests/test_quickstart.py::test_do_prompt_with_nonascii",
+                  "tests/test_quickstart.py::test_quickstart_defaults",
+                  "tests/test_quickstart.py::test_quickstart_all_answers",
+                  "tests/test_quickstart.py::test_generated_files_eol",
+                  "tests/test_quickstart.py::test_quickstart_and_build",
+                  "tests/test_quickstart.py::test_default_filename",
+                  "tests/test_quickstart.py::test_extensions"
+                ]
+              }
+            }
+          },
+          "harness_message": "instance 'sphinx-doc__sphinx-9320' resolved by the official harness",
+          "harness_status": "completed"
+        },
+        "grader": "swebench-composite@1",
+        "grader_type": "harness",
+        "hard_gate": true,
+        "judge_calibration_ref": null,
+        "oracle_provenance": {},
+        "rubric_id": null,
+        "sample_id": "sphinx-doc__sphinx-9320",
+        "schema_version": "1",
+        "score": 1.0,
+        "status": "pass"
+      },
+      "sample": {
+        "adapter": "arp-swe-cases@1",
+        "allowed_execution_policy": {},
+        "expected_artifacts": {},
+        "grader": {
+          "grader_type": "composite",
+          "hard_gate": true,
+          "name": "swebench-composite@1",
+          "parameters": {},
+          "schema_version": "1"
+        },
+        "input": {
+          "bug_report": "`sphinx-quickstart` with existing conf.py doesn't exit easily\n**Describe the bug**\r\nI've attached a screenshot in the screenshots section which I think explains the bug better.\r\n\r\n- I'm running `sphinx-quickstart` in a folder with a conf.py already existing. \r\n- It says *\"Please enter a new root path name (or just Enter to exit)\"*. \r\n- However, upon pressing 'Enter' it returns an error message *\"Please enter a valid path name\"*. \r\n\r\n\r\n**To Reproduce**\r\nSteps to reproduce the behavior:\r\n```\r\n$ sphinx-quickstart\r\n$ sphinx-quickstart\r\n```\r\n\r\n**Expected behavior**\r\nAfter pressing Enter, sphinx-quickstart exits. \r\n\r\n**Your project**\r\nn/a\r\n\r\n**Screenshots**\r\n\r\n![sphinx-enter-exit](https://user-images.githubusercontent.com/30437511/121676712-4bf54f00-caf8-11eb-992b-636e56999d54.png)\r\nI press Enter for the first prompt.\r\n\r\n\r\n**Environment info**\r\n- OS: Ubuntu 20.04\r\n- Python version: Python 3.8.5\r\n- Sphinx version: sphinx-build 3.2.1 \r\n- Sphinx extensions:  none\r\n- Extra tools: none\r\n\r\n**Additional context**\r\nI had a quick search but couldn't find any similar existing issues. Sorry if this is a duplicate.\r\n\n",
+          "case_dir": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/swebench_cases/sphinx-doc__sphinx-9320",
+          "code_file": "sphinx/cmd/quickstart.py",
+          "failing_test": "tests/test_quickstart.py::test_exits_when_existing_confpy",
+          "repo_path": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/swebench_cases/sphinx-doc__sphinx-9320"
+        },
+        "metadata": {
+          "contamination_risk": "high",
+          "difficulty": "<15 min fix",
+          "instance_id": "sphinx-doc__sphinx-9320",
+          "kind": "SWEBENCH",
+          "max_changed_lines": "120",
+          "retrieval": "oracle",
+          "source_repo": "swebench"
+        },
+        "reference": null,
+        "sample_id": "sphinx-doc__sphinx-9320",
+        "schema_version": "1",
+        "source_digest": "sha256:e0983d6b9057e029e75fada15119f8f13ddf0f3a8b96aa4d296ac12c16b5534e",
+        "source_row_id": "3",
+        "tags": []
+      },
+      "schema_version": "1"
+    },
+    {
+      "execution": {
+        "artifacts": {
+          "output_ref": "sha256:da38ccd153b3c6ed3948b117510aa45f5499f4e65232f3e35bb2df37aed0a442"
+        },
+        "attempt": 1,
+        "cost_usd": null,
+        "environment_metadata": {},
+        "error": null,
+        "finished_at": "2026-08-28T17:15:28.704942Z",
+        "input_tokens": null,
+        "latency_ms": null,
+        "model_name": null,
+        "output": null,
+        "output_tokens": null,
+        "sample_id": "sphinx-doc__sphinx-9367",
+        "schema_version": "1",
+        "started_at": "2026-08-28T17:14:28.401373Z",
+        "status": "completed",
+        "structured_output": null,
+        "target_fingerprint": "subprocess:python.exe:1:7a123ee172d3e4f7",
+        "tool_calls": [],
+        "trace_refs": []
+      },
+      "grade": {
+        "artifact_refs": [],
+        "created_at": "2026-08-28T17:15:28.709074Z",
+        "evidence": {
+          "harness_evidence": {
+            "patch_exists": true,
+            "patch_is_None": false,
+            "patch_successfully_applied": true,
+            "tests_status": {
+              "FAIL_TO_FAIL": {
+                "failure": [],
+                "success": []
+              },
+              "FAIL_TO_PASS": {
+                "failure": [],
+                "success": [
+                  "tests/test_pycode_ast.py::test_unparse[(1,)-(1,)]"
+                ]
+              },
+              "PASS_TO_FAIL": {
+                "failure": [],
+                "success": []
+              },
+              "PASS_TO_PASS": {
+                "failure": [],
+                "success": [
+                  "tests/test_pycode_ast.py::test_unparse[a",
+                  "tests/test_pycode_ast.py::test_unparse[os.path-os.path]",
+                  "tests/test_pycode_ast.py::test_unparse[1",
+                  "tests/test_pycode_ast.py::test_unparse[b'bytes'-b'bytes']",
+                  "tests/test_pycode_ast.py::test_unparse[object()-object()]",
+                  "tests/test_pycode_ast.py::test_unparse[1234-1234_0]",
+                  "tests/test_pycode_ast.py::test_unparse[{'key1':",
+                  "tests/test_pycode_ast.py::test_unparse[...-...]",
+                  "tests/test_pycode_ast.py::test_unparse[Tuple[int,",
+                  "tests/test_pycode_ast.py::test_unparse[~",
+                  "tests/test_pycode_ast.py::test_unparse[lambda",
+                  "tests/test_pycode_ast.py::test_unparse[[1,",
+                  "tests/test_pycode_ast.py::test_unparse[sys-sys]",
+                  "tests/test_pycode_ast.py::test_unparse[1234-1234_1]",
+                  "tests/test_pycode_ast.py::test_unparse[not",
+                  "tests/test_pycode_ast.py::test_unparse[{1,",
+                  "tests/test_pycode_ast.py::test_unparse['str'-'str']",
+                  "tests/test_pycode_ast.py::test_unparse[+",
+                  "tests/test_pycode_ast.py::test_unparse[-",
+                  "tests/test_pycode_ast.py::test_unparse[(1,",
+                  "tests/test_pycode_ast.py::test_unparse[()-()]",
+                  "tests/test_pycode_ast.py::test_unparse_None",
+                  "tests/test_pycode_ast.py::test_unparse_py38[lambda",
+                  "tests/test_pycode_ast.py::test_unparse_py38[0x1234-0x1234]",
+                  "tests/test_pycode_ast.py::test_unparse_py38[1_000_000-1_000_000]"
+                ]
+              }
+            }
+          },
+          "harness_message": "instance 'sphinx-doc__sphinx-9367' resolved by the official harness",
+          "harness_status": "completed"
+        },
+        "grader": "swebench-composite@1",
+        "grader_type": "harness",
+        "hard_gate": true,
+        "judge_calibration_ref": null,
+        "oracle_provenance": {},
+        "rubric_id": null,
+        "sample_id": "sphinx-doc__sphinx-9367",
+        "schema_version": "1",
+        "score": 1.0,
+        "status": "pass"
+      },
+      "sample": {
+        "adapter": "arp-swe-cases@1",
+        "allowed_execution_policy": {},
+        "expected_artifacts": {},
+        "grader": {
+          "grader_type": "composite",
+          "hard_gate": true,
+          "name": "swebench-composite@1",
+          "parameters": {},
+          "schema_version": "1"
+        },
+        "input": {
+          "bug_report": "1-element tuple rendered incorrectly\n**Describe the bug**\r\nThis is a followup to #7964 which has been addressed in #8265.\r\n\r\nHowever the special case of a 1-element tuple is still not handled correctly.\r\n\r\n`(1,)` is rendered as `(1)`, but should keep the trailing comma.\r\n\r\n**To Reproduce**\r\nAdd a testcase\r\n```\r\n    (\"(1,)\", \"(1,)\"),                           # Tuple (single element)\r\n```\r\nat https://github.com/sphinx-doc/sphinx/blob/e0b1e1002b500acc63dfd0806f8095dd6b27037b/tests/test_pycode_ast.py#L57\r\n\r\n\n",
+          "case_dir": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/swebench_cases/sphinx-doc__sphinx-9367",
+          "code_file": "sphinx/pycode/ast.py",
+          "failing_test": "tests/test_pycode_ast.py::test_unparse[(1,)-(1,)]",
+          "repo_path": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/swebench_cases/sphinx-doc__sphinx-9367"
+        },
+        "metadata": {
+          "contamination_risk": "high",
+          "difficulty": "<15 min fix",
+          "instance_id": "sphinx-doc__sphinx-9367",
+          "kind": "SWEBENCH",
+          "max_changed_lines": "120",
+          "retrieval": "oracle",
+          "source_repo": "swebench"
+        },
+        "reference": null,
+        "sample_id": "sphinx-doc__sphinx-9367",
+        "schema_version": "1",
+        "source_digest": "sha256:398f6cc60c8a557e217c3fba3c3f639ee8faef6c3ebe4d7f00ef9a88dbdffa06",
+        "source_row_id": "4",
+        "tags": []
+      },
+      "schema_version": "1"
+    },
+    {
+      "execution": {
+        "artifacts": {},
+        "attempt": 1,
+        "cost_usd": null,
+        "environment_metadata": {},
+        "error": null,
+        "finished_at": "2026-08-28T17:32:50.608918Z",
+        "input_tokens": null,
+        "latency_ms": null,
+        "model_name": null,
+        "output": {
+          "elapsed_seconds": 1063.48,
+          "models_used": [
+            "ollama:deepseek-v4-flash:0731-cloud",
+            "gemini:gemini-2.5-flash"
+          ],
+          "overall_status": "StepStatus.FAILED",
+          "patched_source": "",
+          "requested_model": "ollama:deepseek-v4-flash:0731-cloud",
+          "root_cause": "The `_check_ordering` method fails to treat `pk` as a valid alias for the primary key when it appears in a related field path (e.g., `option__pk`). The code attempts to look up `pk` as a field name on the related model, which raises `FieldDoesNotExist`, and then incorrectly checks `fld.get_transform('pk')` on the previous relation field, which returns `None`, leading to a spurious `models.E015` error. The exact line responsible is: `if fld is None or fld.get_transform(part) is None:`",
+          "step_count": 5,
+          "verification_report": "After applying the fix to `_check_ordering` to treat `pk` as a valid alias for the primary key in related field paths, the following tests should now pass:\n\n- `test_ordering_pointing_multiple_times_to_model_fields` (invalid_models_tests.test_models.OtherModelTests)\n- Any other tests that previously failed due to the same root cause, such as tests that use `pk` in ordering across related fields.\n\nRegression watch:\n- Ensure that existing tests for ordering validation still pass, especially those that check for invalid field names in ordering. The fix should not break the detection of genuinely invalid field names.\n- Watch for tests that rely on the previous behavior of raising `FieldDoesNotExist` for `pk` in related paths; they should be updated if they expected an error.\n- Run the full Django test suite for model validation to ensure no other tests are affected.\n\nAdditionally, run the specific test module `invalid_models_tests.test_models` to confirm all tests pass.",
+          "workflow": "swe_fix_review_loop"
+        },
+        "output_tokens": null,
+        "sample_id": "django__django-11820",
+        "schema_version": "1",
+        "started_at": "2026-08-28T17:15:03.981983Z",
+        "status": "completed",
+        "structured_output": null,
+        "target_fingerprint": "subprocess:python.exe:1:7a123ee172d3e4f7",
+        "tool_calls": [],
+        "trace_refs": []
+      },
+      "grade": {
+        "artifact_refs": [],
+        "created_at": "2026-08-28T17:32:50.609922Z",
+        "evidence": {
+          "changed_lines": "1903",
+          "differs_from_base": "True",
+          "not_truncated": "False",
+          "parses": "True",
+          "patch_bytes": "80248",
+          "returned_non_empty": "False"
+        },
+        "grader": "swebench-composite@1",
+        "grader_type": "deterministic",
+        "hard_gate": true,
+        "judge_calibration_ref": null,
+        "oracle_provenance": {},
+        "rubric_id": "swe_fix_v1",
+        "sample_id": "django__django-11820",
+        "schema_version": "1",
+        "score": 0.5,
+        "status": "fail"
+      },
+      "sample": {
+        "adapter": "arp-swe-cases@1",
+        "allowed_execution_policy": {},
+        "expected_artifacts": {},
+        "grader": {
+          "grader_type": "composite",
+          "hard_gate": true,
+          "name": "swebench-composite@1",
+          "parameters": {},
+          "schema_version": "1"
+        },
+        "input": {
+          "bug_report": "models.E015 is raised when Meta.ordering contains \"pk\" of a related field.\nDescription\n\t\nmodels.E015 is raised when Meta.ordering contains __pk of a related field, e.g.:\ntest_app.SomeModel: (models.E015) 'ordering' refers to the nonexistent field, related field, or lookup 'option__pk'.\nRegression in 440505cb2cadbe1a5b9fba246bcde6c04f51d07e.\n",
+          "case_dir": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/swebench_cases/django__django-11820",
+          "code_file": "django/db/models/base.py",
+          "failing_test": "test_ordering_pointing_multiple_times_to_model_fields (invalid_models_tests.test_models.OtherModelTests)",
+          "repo_path": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/swebench_cases/django__django-11820"
+        },
+        "metadata": {
+          "contamination_risk": "high",
+          "difficulty": "<15 min fix",
+          "instance_id": "django__django-11820",
+          "kind": "SWEBENCH",
+          "max_changed_lines": "120",
+          "retrieval": "oracle",
+          "source_repo": "swebench"
+        },
+        "reference": null,
+        "sample_id": "django__django-11820",
+        "schema_version": "1",
+        "source_digest": "sha256:fad13c2a8a233f15d6039cb75dc91740319dce8ba1f9a625b2284c6068116b74",
+        "source_row_id": "5",
+        "tags": []
+      },
+      "schema_version": "1"
+    },
+    {
+      "execution": {
+        "artifacts": {
+          "output_ref": "sha256:7c2ec2d88cec50c414dd442ef9b2fffcfbab2fce147dce8658bb98f9748767a8"
+        },
+        "attempt": 1,
+        "cost_usd": null,
+        "environment_metadata": {},
+        "error": null,
+        "finished_at": "2026-08-28T17:24:56.031388Z",
+        "input_tokens": null,
+        "latency_ms": null,
+        "model_name": null,
+        "output": null,
+        "output_tokens": null,
+        "sample_id": "django__django-11880",
+        "schema_version": "1",
+        "started_at": "2026-08-28T17:16:19.248636Z",
+        "status": "completed",
+        "structured_output": null,
+        "target_fingerprint": "subprocess:python.exe:1:7a123ee172d3e4f7",
+        "tool_calls": [],
+        "trace_refs": []
+      },
+      "grade": {
+        "artifact_refs": [],
+        "created_at": "2026-08-28T17:24:56.049608Z",
+        "evidence": {
+          "harness_evidence": {
+            "patch_exists": true,
+            "patch_is_None": false,
+            "patch_successfully_applied": true,
+            "tests_status": {
+              "FAIL_TO_FAIL": {
+                "failure": [],
+                "success": []
+              },
+              "FAIL_TO_PASS": {
+                "failure": [],
+                "success": [
+                  "test_field_deep_copy_error_messages (forms_tests.tests.test_forms.FormsTestCase)"
+                ]
+              },
+              "PASS_TO_FAIL": {
+                "failure": [],
+                "success": []
+              },
+              "PASS_TO_PASS": {
+                "failure": [],
+                "success": [
+                  "test_attribute_class (forms_tests.tests.test_forms.RendererTests)",
+                  "test_attribute_instance (forms_tests.tests.test_forms.RendererTests)",
+                  "test_attribute_override (forms_tests.tests.test_forms.RendererTests)",
+                  "test_default (forms_tests.tests.test_forms.RendererTests)",
+                  "test_kwarg_class (forms_tests.tests.test_forms.RendererTests)",
+                  "test_kwarg_instance (forms_tests.tests.test_forms.RendererTests)",
+                  "test_accessing_clean (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_auto_id (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_auto_id_false (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_auto_id_on_form_and_field (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_auto_id_true (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_baseform_repr (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_baseform_repr_dont_trigger_validation (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_basic_processing_in_view (forms_tests.tests.test_forms.FormsTestCase)",
+                  "BoundField without any choices (subwidgets) evaluates to True.",
+                  "test_boundfield_empty_label (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_boundfield_id_for_label (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_boundfield_id_for_label_override_by_attrs (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_boundfield_initial_called_once (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_boundfield_invalid_index (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_boundfield_label_tag (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_boundfield_label_tag_custom_widget_id_for_label (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_boundfield_label_tag_no_id (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_boundfield_slice (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_boundfield_value_disabled_callable_initial (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_boundfield_values (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_callable_initial_data (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_changed_data (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_changing_cleaned_data_in_clean (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_changing_cleaned_data_nothing_returned (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_checkbox_auto_id (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_class_prefix (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_cleaned_data_only_fields (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_custom_boundfield (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_custom_empty_values (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_datetime_changed_data_callable_with_microseconds (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_datetime_clean_initial_callable_disabled (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_dynamic_construction (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_dynamic_initial_data (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_empty_data_files_multi_value_dict (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_empty_dict (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_empty_permitted (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_empty_permitted_and_use_required_attribute (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_empty_querydict_args (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_error_dict (forms_tests.tests.test_forms.FormsTestCase)",
+                  "#21962 - adding html escape flag to ErrorDict",
+                  "test_error_escaping (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_error_html_required_html_classes (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_error_list (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_error_list_class_has_one_class_specified (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_error_list_class_not_specified (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_error_list_with_hidden_field_errors_has_correct_class (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_error_list_with_non_field_errors_has_correct_class (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_errorlist_override (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_escaping (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_explicit_field_order (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_extracting_hidden_and_visible (forms_tests.tests.test_forms.FormsTestCase)",
+                  "#5749 - `field_name` may be used as a key in _html_output().",
+                  "test_field_name_with_hidden_input (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_field_name_with_hidden_input_and_non_matching_row_ender (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_field_named_data (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_field_order (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_field_with_css_class (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_field_without_css_classes (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_filefield_initial_callable (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_form (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_form_html_attributes (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_form_with_disabled_fields (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_form_with_iterable_boundfield (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_form_with_iterable_boundfield_id (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_form_with_noniterable_boundfield (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_forms_with_choices (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_forms_with_file_fields (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_forms_with_multiple_choice (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_forms_with_null_boolean (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_forms_with_prefixes (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_forms_with_radio (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_get_initial_for_field (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_has_error (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_help_text (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_hidden_data (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_hidden_initial_gets_id (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_hidden_widget (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_html_safe (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_id_on_field (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_initial_data (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_initial_datetime_values (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_iterable_boundfield_select (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_label_has_required_css_class (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_label_split_datetime_not_displayed (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_label_suffix (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_label_tag_override (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_multipart_encoded_form (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_multiple_choice_checkbox (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_multiple_choice_list_data (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_multiple_hidden (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_multivalue_deep_copy (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_multivalue_field_validation (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_multivalue_initial_data (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_multivalue_optional_subfields (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_only_hidden_fields (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_optional_data (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_specifying_labels (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_subclassing_forms (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_templates_with_forms (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_unbound_form (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_unicode_values (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_update_error_dict (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_use_required_attribute_false (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_use_required_attribute_true (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_validating_multiple_fields (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_validators_independence (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_various_boolean_values (forms_tests.tests.test_forms.FormsTestCase)",
+                  "test_widget_output (forms_tests.tests.test_forms.FormsTestCase)"
+                ]
+              }
+            }
+          },
+          "harness_message": "instance 'django__django-11880' resolved by the official harness",
+          "harness_status": "completed"
+        },
+        "grader": "swebench-composite@1",
+        "grader_type": "harness",
+        "hard_gate": true,
+        "judge_calibration_ref": null,
+        "oracle_provenance": {},
+        "rubric_id": null,
+        "sample_id": "django__django-11880",
+        "schema_version": "1",
+        "score": 1.0,
+        "status": "pass"
+      },
+      "sample": {
+        "adapter": "arp-swe-cases@1",
+        "allowed_execution_policy": {},
+        "expected_artifacts": {},
+        "grader": {
+          "grader_type": "composite",
+          "hard_gate": true,
+          "name": "swebench-composite@1",
+          "parameters": {},
+          "schema_version": "1"
+        },
+        "input": {
+          "bug_report": "Form Field’s __deepcopy__ does not (deep)copy the error messages.\nDescription\n\t\nThe __deepcopy__ method defined for the formfields (​https://github.com/django/django/blob/146086f219d01dbb1cd8c089b5a5667e396e1cc4/django/forms/fields.py#L200) performs a shallow copy of self and does not include additional treatment for the error_messages dictionary. As a result, all copies of the same field share the same dictionary and any modification of either the dictionary or the error message itself for one formfield is immediately reflected on all other formfiels.\nThis is relevant for Forms and ModelForms that modify the error messages of their fields dynamically: while each instance of the specific form (e.g., ProfileForm) is expected to have a set of fields “sealed” away from other instances of the same ProfileForm (​https://github.com/django/django/blob/146086f219d01dbb1cd8c089b5a5667e396e1cc4/django/forms/forms.py#L95), in fact all these instances share the same error messages, resulting in incorrectly raised errors.\nConfirmed for versions of Django going back to 1.11.\n",
+          "case_dir": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/swebench_cases/django__django-11880",
+          "code_file": "django/forms/fields.py",
+          "failing_test": "test_field_deep_copy_error_messages (forms_tests.tests.test_forms.FormsTestCase)",
+          "repo_path": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/swebench_cases/django__django-11880"
+        },
+        "metadata": {
+          "contamination_risk": "high",
+          "difficulty": "<15 min fix",
+          "instance_id": "django__django-11880",
+          "kind": "SWEBENCH",
+          "max_changed_lines": "120",
+          "retrieval": "oracle",
+          "source_repo": "swebench"
+        },
+        "reference": null,
+        "sample_id": "django__django-11880",
+        "schema_version": "1",
+        "source_digest": "sha256:24e4c096198cf4b0f0aebffcc0fe84470071d4ba22cb3fe577291cc8b6564478",
+        "source_row_id": "6",
+        "tags": []
+      },
+      "schema_version": "1"
+    },
+    {
+      "execution": {
+        "artifacts": {
+          "output_ref": "sha256:323142040f1e4454f85e15a08f6fafb4ac9cba788eacb0674bcabafafbbc9957"
+        },
+        "attempt": 1,
+        "cost_usd": null,
+        "environment_metadata": {},
+        "error": null,
+        "finished_at": "2026-08-28T17:20:29.295078Z",
+        "input_tokens": null,
+        "latency_ms": null,
+        "model_name": null,
+        "output": null,
+        "output_tokens": null,
+        "sample_id": "django__django-11951",
+        "schema_version": "1",
+        "started_at": "2026-08-28T17:17:35.102531Z",
+        "status": "completed",
+        "structured_output": null,
+        "target_fingerprint": "subprocess:python.exe:1:7a123ee172d3e4f7",
+        "tool_calls": [],
+        "trace_refs": []
+      },
+      "grade": {
+        "artifact_refs": [],
+        "created_at": "2026-08-28T17:20:29.321417Z",
+        "evidence": {
+          "harness_evidence": {
+            "patch_exists": true,
+            "patch_is_None": false,
+            "patch_successfully_applied": true,
+            "tests_status": {
+              "FAIL_TO_FAIL": {
+                "failure": [],
+                "success": []
+              },
+              "FAIL_TO_PASS": {
+                "failure": [],
+                "success": [
+                  "test_explicit_batch_size_respects_max_batch_size (bulk_create.tests.BulkCreateTests)"
+                ]
+              },
+              "PASS_TO_FAIL": {
+                "failure": [],
+                "success": []
+              },
+              "PASS_TO_PASS": {
+                "failure": [],
+                "success": [
+                  "test_batch_same_vals (bulk_create.tests.BulkCreateTests)",
+                  "test_bulk_insert_expressions (bulk_create.tests.BulkCreateTests)",
+                  "test_bulk_insert_nullable_fields (bulk_create.tests.BulkCreateTests)",
+                  "test_efficiency (bulk_create.tests.BulkCreateTests)",
+                  "test_empty_model (bulk_create.tests.BulkCreateTests)",
+                  "test_explicit_batch_size (bulk_create.tests.BulkCreateTests)",
+                  "test_explicit_batch_size_efficiency (bulk_create.tests.BulkCreateTests)",
+                  "test_ignore_conflicts_ignore (bulk_create.tests.BulkCreateTests)",
+                  "test_large_batch (bulk_create.tests.BulkCreateTests)",
+                  "test_large_batch_efficiency (bulk_create.tests.BulkCreateTests)",
+                  "test_large_batch_mixed (bulk_create.tests.BulkCreateTests)",
+                  "test_large_batch_mixed_efficiency (bulk_create.tests.BulkCreateTests)",
+                  "test_large_single_field_batch (bulk_create.tests.BulkCreateTests)",
+                  "test_long_and_short_text (bulk_create.tests.BulkCreateTests)",
+                  "test_long_non_ascii_text (bulk_create.tests.BulkCreateTests)",
+                  "test_multi_table_inheritance_unsupported (bulk_create.tests.BulkCreateTests)",
+                  "test_non_auto_increment_pk (bulk_create.tests.BulkCreateTests)",
+                  "test_non_auto_increment_pk_efficiency (bulk_create.tests.BulkCreateTests)",
+                  "test_proxy_inheritance_supported (bulk_create.tests.BulkCreateTests)",
+                  "test_set_state_with_pk_specified (bulk_create.tests.BulkCreateTests)",
+                  "test_simple (bulk_create.tests.BulkCreateTests)"
+                ]
+              }
+            }
+          },
+          "harness_message": "instance 'django__django-11951' resolved by the official harness",
+          "harness_status": "completed"
+        },
+        "grader": "swebench-composite@1",
+        "grader_type": "harness",
+        "hard_gate": true,
+        "judge_calibration_ref": null,
+        "oracle_provenance": {},
+        "rubric_id": null,
+        "sample_id": "django__django-11951",
+        "schema_version": "1",
+        "score": 1.0,
+        "status": "pass"
+      },
+      "sample": {
+        "adapter": "arp-swe-cases@1",
+        "allowed_execution_policy": {},
+        "expected_artifacts": {},
+        "grader": {
+          "grader_type": "composite",
+          "hard_gate": true,
+          "name": "swebench-composite@1",
+          "parameters": {},
+          "schema_version": "1"
+        },
+        "input": {
+          "bug_report": "bulk_create batch_size param overrides the compatible batch size calculation\nDescription\n\t \n\t\t(last modified by Ahmet Kucuk)\n\t \nAt this line: ​https://github.com/django/django/blob/stable/2.2.x/django/db/models/query.py#L1197\nbatch_size param overrides compatible batch size calculation. This looks like a bug as bulk_update properly picks the minimum of two:\n​https://github.com/django/django/blob/stable/2.2.x/django/db/models/query.py#L504\nI suggest using similar\n batch_size = min(batch_size, max_batch_size) if batch_size else max_batch_size\nlogic in bulk_create as well. I am happy to open a PR for it.\n",
+          "case_dir": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/swebench_cases/django__django-11951",
+          "code_file": "django/db/models/query.py",
+          "failing_test": "test_explicit_batch_size_respects_max_batch_size (bulk_create.tests.BulkCreateTests)",
+          "repo_path": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/swebench_cases/django__django-11951"
+        },
+        "metadata": {
+          "contamination_risk": "high",
+          "difficulty": "<15 min fix",
+          "instance_id": "django__django-11951",
+          "kind": "SWEBENCH",
+          "max_changed_lines": "120",
+          "retrieval": "oracle",
+          "source_repo": "swebench"
+        },
+        "reference": null,
+        "sample_id": "django__django-11951",
+        "schema_version": "1",
+        "source_digest": "sha256:5ddbaef14868e5440b39acdca8360fc362fea9aa2632427ff9a16e1dc98c4875",
+        "source_row_id": "7",
+        "tags": []
+      },
+      "schema_version": "1"
+    }
+  ],
+  "schema_version": "1",
+  "started_at": "2026-08-28T17:10:57.468232+00:00",
+  "summary": {
+    "abstained": 0,
+    "cancelled": 0,
+    "errors": 0,
+    "failed": 2,
+    "partial": 0,
+    "passed": 6,
+    "schema_version": "1",
+    "timeouts": 0,
+    "total": 8,
+    "unavailable": 0
+  }
+}

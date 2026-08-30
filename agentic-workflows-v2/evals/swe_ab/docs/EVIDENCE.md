@@ -210,6 +210,31 @@ each their own accumulation now, and neither compares to the closed
 segment's 55.7%/56.5% even directionally — different harness, and now
 different underlying model weights too.
 
+### 1.8 NVIDIA NIM track — a separate provider, own segment (§2.19)
+
+`nvidia:deepseek-ai/deepseek-v4-flash-0731`, free NIM endpoint, same two
+workflows, its own quota entirely (relieves the Ollama weekly cap — see
+§2.19 for why this exists). 16 fresh instances (`cases.swebench.nim1.jsonl`,
+django only — mined quickly from the repo with the deepest remaining pool
+rather than following `WAVE_MIX`, since this is a one-off probe wave, not
+yet a repeating one).
+
+| run | n | Arm A | Arm B | note |
+|---|---|---|---|---|
+| nim1 | 16 | 8/16 = 50.0% | 8/16 = 50.0% | first NIM-track wave |
+
+Paired: 7 both solved, 1 A-only, 1 B-only, 7 neither. B−A +0.0%, 95%
+bootstrap CI [−18.8%, +18.8%], McNemar exact p = 1.0000 (2 discordant
+pairs). Restricted to the 13 cases where both arms reached a verdict: A
+8/13 = 61.5%, B 8/13 = 61.5%, identical. 3 excluded for no verdict on at
+least one arm — arm A 2 timeouts, arm B 3 errors, zero of either kind
+crossing arms (operational, ADR-0008). Cost: arm A wall clock 29.7 min,
+arm B 47.6 min, for 16 cases each.
+
+**n=16, one wave, exactly tied — noise, not a finding.** Same caution as
+every other slice above: this needs its own accumulation toward a
+comparable n before the tie (or any future gap) means anything.
+
 ---
 
 ## 2. Defects found and fixed
