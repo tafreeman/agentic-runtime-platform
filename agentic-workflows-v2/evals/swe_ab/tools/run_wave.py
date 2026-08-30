@@ -80,19 +80,20 @@ CAMPAIGN = {
 #: 8 (EVIDENCE.md's segment-boundary note) -- wave 8 alone used the pre-change
 #: mix, wave 9 on uses this one; not comparable to anything in the closed
 #: wave-1-7 segment either way.
-#: Narrowed again wave 10: astropy's `<15 min fix` bucket (pool of 4) also
-#: hit 0 remaining. Its weight (2) folds into django's `15 min - 1 hour`,
-#: the single deepest remaining bucket (100+), rather than starting another
-#: multi-repo depth survey for two instances' worth of weight.
+#: Narrowed a third time wave 10: astropy's `15 min - 1 hour` bucket (pool
+#: of 12) also hit 0 remaining -- every specialty bucket has now drained to
+#: single digits (xarray 3, pytest 5, requests 2 remaining, measured) except
+#: django (75 remaining across both buckets). Rather than keep re-narrowing
+#: every wave or two as each thin bucket empties in turn, this consolidates
+#: hard on django and keeps the rest at token weight=1-2 -- a "drain
+#: naturally, drop silently once empty" bonus, not buckets sized to recur.
+#: astropy is dropped outright (0 remaining, no bonus possible).
 WAVE_MIX = [
-    ("django/django", "15 min - 1 hour", 12),
-    ("django/django", "<15 min fix", 8),
-    ("astropy/astropy", "15 min - 1 hour", 5),
-    ("pydata/xarray", "15 min - 1 hour", 5),
-    ("pydata/xarray", "<15 min fix", 2),
-    ("pytest-dev/pytest", "15 min - 1 hour", 3),
-    ("pytest-dev/pytest", "<15 min fix", 3),
-    ("psf/requests", "<15 min fix", 2),
+    ("django/django", "15 min - 1 hour", 24),
+    ("django/django", "<15 min fix", 12),
+    ("pydata/xarray", "15 min - 1 hour", 1),
+    ("pytest-dev/pytest", "<15 min fix", 2),
+    ("psf/requests", "<15 min fix", 1),
 ]
 
 

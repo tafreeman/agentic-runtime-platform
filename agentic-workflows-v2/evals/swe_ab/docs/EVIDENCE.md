@@ -614,9 +614,24 @@ same as a model change would be. NIM-graded instances get their own case
 files, their own report suffix, and their own union table -- never merged
 into either the closed (waves 1-7) or the new (wave 8+) Ollama segments.
 
----
+### 2.20 WAVE_MIX consolidated on django, wave 10 -- every specialty bucket down to single digits
 
-## 3. Standing caveats on every number above
+Wave 10 hit two more real exhaustions in a row (astropy's `15 min - 1 hour`
+bucket, pool of 12, then 0 remaining) on top of §2.17/§2.19's fixes.
+Re-measuring every remaining bucket found the pattern had generalized:
+xarray (3), pytest (5) and requests (2) remaining, astropy (0) -- every
+non-django repo has drained to single digits after ten waves against a
+fixed population, while django alone still has 75 remaining across both
+buckets. Repeatedly narrowing one bucket at a time as each empties in turn
+was costing a wave each time. **Change:** consolidates hard on django
+(36 of 40 nominal weight) and keeps xarray/pytest/requests at token
+weight 1-2 each -- a "drain naturally, drop silently once empty" bonus
+rather than buckets sized to recur. Also chose, alongside this campaign
+work, to stop reusing the closed segment's 135 already-graded instances for
+new-segment progress (the in-flight reuse batch from §2.19 was stopped at
+70/135 arm A, human-directed) in favor of every new-segment wave drawing
+strictly never-before-graded instances, matching the campaign's existing
+non-overlap guarantee (§2.10) rather than an exception to it.
 
 1. **Oracle retrieval.** The model is told which file to fix. Full SWE-bench also
    requires finding it. **These are not leaderboard numbers.**
