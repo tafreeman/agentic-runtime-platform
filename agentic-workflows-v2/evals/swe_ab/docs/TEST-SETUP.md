@@ -186,10 +186,11 @@ is **not yet done**.
 | | |
 |---|---|
 | Banked (closed segment, waves 1-7) | **115 paired SWE-bench instances** — A 55.7%, B 56.5%, p = 1.00 |
-| Built | 135 SWE-bench case directories, 132 mutation cases |
-| Waves run | wave 1 (12), wave 2 (12), wave 3 (8), wave 4 (12), wave 5 (12), wave 6 (7), wave 7 (17) plus the 35-instance hand-built set |
-| Target | ~200 paired instances |
-| Next | `run_wave.py --wave 8 --size 16` — **opens a new segment**, graded on the harness merged via `PR #282` (see EVIDENCE.md's segment-boundary note above §1.3). Wave 8's cases are already built and will be reused, not re-mined. |
+| Banked (new segment, wave 8) | **17 paired SWE-bench instances** — A 64.7%, B 47.1%, p = 0.25 (one wave, not yet a result; EVIDENCE.md §1.7) |
+| Built | 152 SWE-bench case directories (135 closed segment + 17 wave 8), 132 mutation cases |
+| Waves run | closed segment: wave 1 (12), wave 2 (12), wave 3 (8), wave 4 (12), wave 5 (12), wave 6 (7), wave 7 (17) plus the 35-instance hand-built set and the 20-instance hard-rated slice. New segment: wave 8 (17), graded on the harness merged via `PR #282`. |
+| Target | ~200 paired instances in the new segment (wave 8 onward) |
+| Next | `run_wave.py --wave 9 --size 16` — continues the new segment on the merged harness (see EVIDENCE.md's segment-boundary note above §1.3 and §1.7). |
 
 **Harness updated 2026-08-29 — `PR #282` merged into `origin/swe_ab_evals`.**
 A concurrent session independently rewrote `run_ab.py`, `graders.py`,

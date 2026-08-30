@@ -178,6 +178,33 @@ The two marked *invalid* are retained deliberately: they are the evidence for
 the confounds in §2.6 and §2.7, and deleting them would erase the record of
 why the matched pair had to be re-run.
 
+### 1.7 SWE-bench Verified, new segment (post-`PR #282` harness)
+
+Opens fresh per the segment-boundary note above §1 — not unioned with §1.3's
+115 or §1.4's 20. Same question, same pinned `CAMPAIGN` settings, a rewritten
+harness underneath.
+
+| run | n | Arm A | Arm B | note |
+|---|---|---|---|---|
+| wave 8 | 17 | 11/17 = 64.7% | 8/17 = 47.1% | first wave graded on the merged harness; cases were pre-built under the old `WAVE_MIX`/offset fixes (§2.13/§2.15) but never graded before the merge |
+
+Paired outcomes (17 shared cases): 8 both solved, 3 A-only, 0 B-only, 6
+neither. B−A −17.6%, 95% bootstrap CI [−35.3%, +0.0%], McNemar exact p =
+0.2500 (3 discordant pairs). Restricted to the 12 cases where both arms
+reached a verdict: A 9/12 = 75.0%, B 8/12 = 66.7%, p = 1.0000. 5 cases
+excluded for no verdict on at least one arm — operational, not folded into
+the task-failure count (ADR-0008): arm A 2 errors, arm B 3 errors + 1
+timeout. Verified against the runbook's sanity checks before recording: no
+repo/slice at 0%, harness ran (`harness_status` mostly `completed`, not a
+sanity check silently carrying an `UNAVAILABLE` score).
+
+Cost: arm A median 16.2 s/case, arm B median 161.9 s/case (small kept-inline
+samples, n=3 and n=2 — not yet enough to trust as a ratio).
+
+**n=17 is one wave, not a result.** Too small to compare against the closed
+segment's 55.7%/56.5% even directionally; this starts its own accumulation
+toward ~200 under WAVE-RUNBOOK.md's rules.
+
 ---
 
 ## 2. Defects found and fixed
