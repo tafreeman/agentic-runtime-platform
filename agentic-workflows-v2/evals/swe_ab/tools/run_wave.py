@@ -80,11 +80,14 @@ CAMPAIGN = {
 #: 8 (EVIDENCE.md's segment-boundary note) -- wave 8 alone used the pre-change
 #: mix, wave 9 on uses this one; not comparable to anything in the closed
 #: wave-1-7 segment either way.
+#: Narrowed again wave 10: astropy's `<15 min fix` bucket (pool of 4) also
+#: hit 0 remaining. Its weight (2) folds into django's `15 min - 1 hour`,
+#: the single deepest remaining bucket (100+), rather than starting another
+#: multi-repo depth survey for two instances' worth of weight.
 WAVE_MIX = [
-    ("django/django", "15 min - 1 hour", 10),
+    ("django/django", "15 min - 1 hour", 12),
     ("django/django", "<15 min fix", 8),
     ("astropy/astropy", "15 min - 1 hour", 5),
-    ("astropy/astropy", "<15 min fix", 2),
     ("pydata/xarray", "15 min - 1 hour", 5),
     ("pydata/xarray", "<15 min fix", 2),
     ("pytest-dev/pytest", "15 min - 1 hour", 3),
