@@ -191,6 +191,37 @@ to `deepseek-v4-flash:0731-cloud`'s served weights between wave 9 and wave
 10 — same model *name*, different model. See §2.21: this is now three
 model-identity slices within "the new segment," not one.
 
+**Naming, 2026-08-30 — "Run" replaces "wave N" as the unit that matters.**
+The campaign's wave counter is a shared file-naming sequence across every
+model-identity slice; it says nothing about which slice a wave belongs to,
+and calling something "wave 11" implied 11 waves of continuity that never
+existed for this specific model. From here: **Run 1** = the closed segment
+(waves 1-7 + hand-built + hard-slice, pre-`PR #282` harness, 135 instances).
+**Run 2** = fingerprint `22e3ed974042` (waves 8-9, 33 instances). **Run 3** =
+fingerprint `20ace0a669f0` (waves 10-11 plus the backfill below), current
+and active. Wave numbers keep incrementing for file-naming/non-overlap
+purposes (`run_wave.py`'s mechanism), but every reading is reported by Run,
+not by wave range, from here on.
+
+**Run 3 backfilled toward ~200, 2026-08-30 — reusing Run 1 and Run 2's
+already-mined instances.** These are stateless grading calls with no
+fine-tuning or memory between runs (human-confirmed): an instance graded
+under Run 1 or Run 2 carries zero information into a Run 3 call on the same
+instance, so re-grading it under Run 3's current model is independent,
+valid evidence for Run 3 — not contamination, not a repeat. `cases.swebench.run3-backfill.jsonl`
+merges Run 1's 135 (`full.jsonl` + waves 1-7 + hard-slice) with Run 2's 33
+(waves 8-9) into 168 unique instances, deliberately excluding only Run 3's
+own wave 10/11 (36 instances, already graded under this exact model — no
+reason to repeat them). This needed zero new mining: every instance's case
+directory (repo checkout, patch) already existed on disk from when it was
+originally built, so this is pure grading time, no docker pulls. Graded
+directly via `run_ab.py` (bypassing `run_wave.py`'s mining path entirely,
+same mechanism as the abandoned §2.19 reuse batch — the difference this
+time is explicit direction to do exactly this). Once graded: Run 3 =
+36 (wave 10-11) + up to 168 (backfill) = up to 204, comfortably past the
+~200 target, contingent on the backfill batch's own fingerprint matching
+wave 10/11's (checked before unioning, same discipline as §2.21).
+
 | run | n | Arm A | Arm B | note |
 |---|---|---|---|---|
 | wave 8 | 17 | 11/17 = 64.7% | 8/17 = 47.1% | first wave graded on the merged harness; fingerprint `22e3ed974042` |
