@@ -1,6 +1,6 @@
 ---
 title: Agentic Runtime Platform
-description: Documentation for the workflow runtime, server, UI, evaluation package, and RAG components.
+description: Documentation for the workflow runtime, server, UI, and evaluation package.
 hide:
   - toc
 ---
@@ -13,9 +13,9 @@ the runtime schedules ready steps, runs independent work concurrently, and
 prevents downstream steps from using failed or missing outputs.
 
 The repository includes a Python runtime and CLI, a FastAPI server, a React
-dashboard, an evaluation package, shared model utilities, and a RAG library.
-It supports local development without provider credentials and real provider
-calls when credentials are configured.
+dashboard, an evaluation package, and shared model utilities. It supports
+local development without provider credentials and real provider calls when
+credentials are configured.
 
 [Run the quick start](getting-started/quickstart.md){ .md-button .md-button--primary }
 [Read the architecture](ARCHITECTURE.md){ .md-button }
@@ -68,7 +68,6 @@ verify response quality or structured model output.
 | Integrate with the API | [Runtime API contracts](api-contracts-runtime.md) |
 | Configure providers and security | [Configuration](configuration.md) |
 | Evaluate workflow output | [Evaluation architecture](architecture-eval.md) |
-| Build an ingest-and-search flow | [RAG pipeline](rag/index.md) |
 | Deploy or troubleshoot the service | [Operations](operations/index.md) |
 
 ## How a run works
@@ -121,20 +120,6 @@ must connect an approval provider before those calls can succeed.
 - Batch and streaming runners
 - Optional LLM-as-judge scoring
 - JSON, Markdown, and HTML reports
-
-### RAG
-
-- Markdown and text loading
-- Recursive chunking
-- Deterministic and provider-backed embeddings
-- In-memory and LanceDB vector stores
-- BM25 and reciprocal-rank fusion
-- Optional reranking and bounded context assembly
-
-The Python components support these paths. The current `agentic rag` CLI is a
-development surface: it uses process-local deterministic vectors and does not
-preserve an index between separate commands. See the
-[RAG documentation](rag/index.md) for the supported Python flow.
 
 ## Repository numbers
 
