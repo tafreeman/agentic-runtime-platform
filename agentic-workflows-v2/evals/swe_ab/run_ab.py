@@ -300,6 +300,7 @@ def grader_fingerprint() -> str:
 #: tried in the same run -- this can't open a path to a different provider.
 _OWN_CREDENTIALS_BY_PREFIX = {
     "nvidia": ("NVIDIA_API_KEY", "NVIDIA_BASE_URL"),
+    "openrouter": ("OPENROUTER_API_KEY",),
 }
 
 
