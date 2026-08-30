@@ -8,6 +8,7 @@ docs/adr/ADR-008-testing-approach-overhaul.md)
 """
 
 import json
+import logging
 import os
 from datetime import datetime
 
@@ -1257,6 +1258,142 @@ class TestGraphResponseParsing:
             "gh:openai/gpt-4o-mini",
         ]
         assert updated["metadata"]["attempt_errors"][0]["retryable"] is True
+
+
+class TestCostLaneCeilingIntegration:
+    """AGENTIC_MAX_COST_LANE end-to-end through a real step node (ARP-IMPROVEMENTS F1).
+
+    Deliberately does NOT fake ``get_model_candidates_for_tier`` (unlike the
+    failover tests above) -- the real function must do the filtering, so this
+    proves no paid backend is ever *constructed* under the ceiling, not merely
+    that no charge was observed. Relies on the production registry's tier-1
+    chain ending in a curated ``local`` id (``ollama:gemma4:31b``) with every
+    other tier-1 entry curated ``paid`` -- see model_registry.yaml.
+    """
+
+    @pytest.fixture(autouse=True)
+    def _no_ambient_ollama_key(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """An ambient OLLAMA_API_KEY would make cost_lane_for downgrade
+        ollama:gemma4:31b to "free" instead of "local" unless the daemon
+        happens to have it pulled (ADR-051) -- irrelevant here, keep it out."""
+        monkeypatch.delenv("OLLAMA_API_KEY", raising=False)
+
+    async def test_free_ceiling_never_constructs_a_paid_backend(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from langchain_core.messages import AIMessage
+
+        from agentic_v2.langchain import graph as graph_module
+        from agentic_v2.models.model_registry import cost_lane_for
+
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+        monkeypatch.setenv("AGENTIC_MAX_COST_LANE", "free")
+
+        created_models: list[str] = []
+
+        class _PassingAgent:
+            def invoke(self, payload):
+                return {"messages": [AIMessage(content='{"report":"ok"}')]}
+
+        def _fake_create_agent(
+            agent_name,
+            *,
+            tool_names=None,
+            prompt_file=None,
+            model_override=None,
+        ):
+            created_models.append(model_override or "")
+            return _PassingAgent()
+
+        monkeypatch.setattr(graph_module, "create_agent", _fake_create_agent)
+
+        step = StepConfig(
+            name="review_code",
+            agent="tier1_reviewer",
+            description="test cost lane ceiling",
+            outputs={"report": "report_ctx"},
+        )
+        wf = WorkflowConfig(name="wf_cost_lane", steps=[step])
+        node = graph_module._make_step_node(step, wf)
+
+        state = initial_state(workflow_inputs={})
+        state["context"]["inputs"] = {}
+        updated = await node(state)
+
+        assert created_models, "expected at least one candidate to be tried"
+        assert all(cost_lane_for(m) != "paid" for m in created_models), (
+            "a paid-lane backend was constructed under "
+            f"AGENTIC_MAX_COST_LANE=free: {created_models}"
+        )
+        assert updated["steps"]["review_code"]["status"] == "success"
+
+    async def test_lane_crossing_is_logged_and_recorded_in_metadata(
+        self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """The default (unset) ceiling still permits reaching a paid model on
+        failover -- but the crossing must be a visible WARNING plus a run
+        event in step metadata, not silent (ARP-IMPROVEMENTS F1)."""
+        from langchain_core.messages import AIMessage
+
+        from agentic_v2.langchain import graph as graph_module
+
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+        monkeypatch.delenv("AGENTIC_MAX_COST_LANE", raising=False)
+
+        class _FailingAgent:
+            def invoke(self, payload):
+                raise Exception("429 Too Many Requests")
+
+        class _PassingAgent:
+            def invoke(self, payload):
+                return {"messages": [AIMessage(content='{"report":"ok"}')]}
+
+        def _fake_get_candidates(*args, **kwargs):
+            # curated local, then curated paid -- a genuine lane crossing
+            return ["ollama:gemma4:31b", "anthropic:claude-haiku-4-5-20251001"]
+
+        def _fake_create_agent(
+            agent_name,
+            *,
+            tool_names=None,
+            prompt_file=None,
+            model_override=None,
+        ):
+            if model_override == "ollama:gemma4:31b":
+                return _FailingAgent()
+            return _PassingAgent()
+
+        monkeypatch.setattr(
+            graph_module, "get_model_candidates_for_tier", _fake_get_candidates
+        )
+        monkeypatch.setattr(graph_module, "create_agent", _fake_create_agent)
+
+        step = StepConfig(
+            name="review_code",
+            agent="tier1_reviewer",
+            description="test lane crossing",
+            outputs={"report": "report_ctx"},
+        )
+        wf = WorkflowConfig(name="wf_lane_crossing", steps=[step])
+        node = graph_module._make_step_node(step, wf)
+
+        state = initial_state(workflow_inputs={})
+        state["context"]["inputs"] = {}
+        with caplog.at_level(logging.WARNING):
+            updated = await node(state)
+
+        assert updated["steps"]["review_code"]["status"] == "success"
+        assert updated["metadata"]["lane_crossings"] == [
+            {
+                "from_model": "ollama:gemma4:31b",
+                "from_lane": "local",
+                "to_model": "anthropic:claude-haiku-4-5-20251001",
+                "to_lane": "paid",
+            }
+        ]
+        assert any(
+            "more expensive cost lane" in r.message for r in caplog.records
+        )
 
 
 class TestUnparsedOutputFailover:

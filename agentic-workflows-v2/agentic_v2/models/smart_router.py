@@ -14,7 +14,7 @@ from typing import Any, Awaitable, Callable
 
 from filelock import FileLock
 
-from .model_registry import is_quarantined
+from .model_registry import is_quarantined, is_within_cost_lane, max_cost_lane_ceiling
 from .model_stats import CircuitState, ModelStats
 from .rate_limit_tracker import RateLimitTracker, _extract_provider
 from .redis_state import _COUNTER_FIELDS, RedisCircuitBreakerStore
@@ -433,14 +433,28 @@ class SmartModelRouter(ModelRouter):
         tier: ModelTier,
         max_cost: float | None = None,
     ) -> list[tuple[str, ModelStats]]:
-        """Find all healthy candidate models in a single tier."""
+        """Find all healthy candidate models in a single tier.
+
+        Excludes models above ``AGENTIC_MAX_COST_LANE`` the same way it
+        already excludes quarantined/unavailable/circuit-open/cooldown/
+        over-``max_cost`` ones -- silently, for this single tier only
+        (ARP-IMPROVEMENTS F1). Deliberately does not raise here: this helper
+        is also called per-tier during :meth:`_cross_tier_search`'s
+        multi-tier sweep, where an empty result for one tier is expected and
+        must not abort the sweep. ``get_model_for_tier`` already raises
+        ``NoProviderConfiguredError`` once every tier -- ceiling-excluded or
+        not -- is exhausted.
+        """
         chain = self.get_chain(tier)
         candidates: list[tuple[str, ModelStats]] = []
+        ceiling = max_cost_lane_ceiling()
 
         for model in chain:
             if is_quarantined(model):
                 continue  # retired at provider (ADR-040 drift detection)
             if not self.is_model_available(model):
+                continue
+            if ceiling != "paid" and not is_within_cost_lane(model, ceiling):
                 continue
             stats = self._get_stats(model)
             if not stats.check_circuit():

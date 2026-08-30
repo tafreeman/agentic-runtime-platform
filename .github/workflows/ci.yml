@@ -216,6 +216,50 @@ jobs:
           files: coverage-whole-repo.xml
           fail_ci_if_error: false
 
+  claude-subscription-tests:
+    # The subscription-authenticated Claude surfaces (agentic_v2/models/
+    # backends_claude.py and the ClaudeSDKAgent wrapper) are gated on the
+    # optional `claude` extra, which no other job installs -- every other job
+    # installs dev,server,mcp,langchain,tracing. Their tests therefore
+    # importorskip themselves everywhere else, exactly the blind spot that let
+    # an ADR-047 regression through on the EK side. This job installs the extra
+    # so the suite actually runs.
+    #
+    # The last two files are pre-existing and were already skipping in every
+    # job for the same reason -- `tests/integrations/mcp/` is a package whose
+    # parent is not, so pytest puts `tests/integrations/` on sys.path and
+    # `import mcp` then resolves to that directory instead of the installed
+    # distribution, which makes `import claude_agent_sdk` fail. Running the
+    # files alone avoids collecting that directory at all, so 15 tests that
+    # have never actually executed in CI now do.
+    #
+    # No CLI, sign-in, or network needed: the tests monkeypatch `query` and
+    # replay the SDK's own message dataclasses.
+    name: Claude subscription backend tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install packages (with the claude extra)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "." -c ci-constraints.txt
+          pip install -e "agentic-workflows-v2/[dev,server,mcp,langchain,tracing,claude]" -c ci-constraints.txt
+      - name: Verify claude-agent-sdk is importable
+        # Guard against the silent-skip failure mode this job exists to close:
+        # if the claude extra ever fails to resolve, fail loudly here rather
+        # than let the tests below quietly skip and report green.
+        run: |
+          python -c "import claude_agent_sdk; print('claude-agent-sdk', getattr(claude_agent_sdk, '__version__', '?'))"
+      - name: Run the claude-gated suite
+        run: |
+          set -euo pipefail
+          cd agentic-workflows-v2
+          python -m pytest             tests/models/test_backends_claude.py             tests/test_claude_sdk_agent.py             tests/test_sdk_task_orchestrator_example.py             tests/test_implementations_sanitization.py             -q --timeout=120 -rs
+
   ek-delegation-tests:
     # The EK bridge suite (tests/engine/test_step_ek_*, tests/models/test_ek_*)
     # module-skips itself when `executionkit` is not importable, and no other
