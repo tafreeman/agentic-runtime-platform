@@ -15,13 +15,16 @@ Each wave is ~16 instances, ~50 minutes, both arms, self-contained.
 | | |
 |---|---|
 | Banked (closed segment, waves 1-7) | 115 paired instances |
-| Target | ~200 |
+| Banked (new segment, wave 8) | 17 paired instances |
+| Target | ~200 (new segment, not resuming the closed one) |
 | Current reading (closed segment) | A 55.7%, B 56.5%, B−A +0.9%, **p = 1.00** |
+| Current reading (new segment) | A 64.7%, B 47.1%, B−A −17.6%, **p = 0.25** (n=17 — one wave, not a result) |
 
-**Wave 8 opens a new segment.** The harness (`run_ab.py`, `graders.py`,
+**Wave 8 opened a new segment.** The harness (`run_ab.py`, `graders.py`,
 `rubric.py`, `swebench_graders.py`, `analyze.py`) changed underneath waves
-1-7 via a concurrent session's `PR #282`. See EVIDENCE.md's segment-boundary
-note above §1.3 — do not union wave 8+ results with the table above.
+1-7 via a concurrent session's `PR #282`. See EVIDENCE.md §1.7 and its
+segment-boundary note above §1.3 — do not union wave 8+ results with the
+115-instance table above. Wave 9 continues the new segment.
 
 ---
 
@@ -43,20 +46,20 @@ Takes ~50 min. Produces `reports/arm-a-direct-wave<N>.json` and
 
 ## After each wave
 
-Union everything and record the reading:
+Union everything **in the new segment only** (wave 8 onward — never mix in
+the closed segment's `swebench-c4`/`swebench-fixed`/wave1-7 reports, see the
+segment-boundary note above):
 
 ```bash
 uv run python analyze.py \
-  --left  reports/arm-a-direct-swebench-c4.json \
-  --left  reports/arm-a-direct-wave1.json \
+  --left  reports/arm-a-direct-wave8.json \
   --left  reports/arm-a-direct-wave<N>.json \
-  --right reports/arm-b-review-loop-swebench-fixed.json \
-  --right reports/arm-b-review-loop-wave1.json \
+  --right reports/arm-b-review-loop-wave8.json \
   --right reports/arm-b-review-loop-wave<N>.json
 ```
 
 Add one `--left`/`--right` pair per wave. Append the result to the table in
-`EVIDENCE.md` §1.3: n, both arms' rates, B−A, CI, McNemar p, discordant pairs.
+`EVIDENCE.md` §1.7: n, both arms' rates, B−A, CI, McNemar p, discordant pairs.
 
 ---
 
