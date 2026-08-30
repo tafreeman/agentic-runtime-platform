@@ -80,7 +80,42 @@ def _strip_code_fence(text: str) -> str:
     return "\n".join(body) + "\n"
 
 
+def _pin_model_candidates_exclusively() -> None:
+    """Make every tier resolve to exactly the pinned model -- no fallback.
+
+    ``AGENTIC_MODEL_TIER_*`` (set for every tier in run_ab.py's child env) only
+    reorders ``get_model_candidates_for_tier``'s candidate list: the registry's
+    tier default and fallback chain are still appended after the pin, so a step
+    whose call fails its output contract silently continues on a different
+    model. bridge.py's own substitution check below catches that after the
+    fact and refuses to grade the sample -- but by then the fallback model has
+    already run, at whatever it costs. For a paid-API fallback that is billing;
+    for the Claude Code CLI backend it is the operator's own subscription quota,
+    which ``PAID_CREDENTIALS`` cannot touch since that backend is built to
+    authenticate with no key present at all (backends_claude.subscription_env).
+    A cost-lane ceiling can't fix this either: deepseek-v4-flash:0731-cloud
+    is not curated in the registry and so resolves to "paid" by the fail-closed
+    default, same as everything this is meant to exclude.
+
+    Patched at ``agentic_v2.langchain.models`` before any other module does
+    ``from .models import get_model_candidates_for_tier`` and binds its own
+    reference -- graph_wiring.py and graph.py both do exactly that, so the
+    patch has to land first or those callers keep the original.
+    """
+    from agentic_v2.langchain import models as _models
+
+    def _exclusive(tier: int, model_override: str | None = None, **_kwargs: Any) -> list[str]:
+        if model_override:
+            return [_models.resolve_model_override(model_override)]
+        return _models._real_get_model_candidates_for_tier(tier, model_override, **_kwargs)
+
+    if not hasattr(_models, "_real_get_model_candidates_for_tier"):
+        _models._real_get_model_candidates_for_tier = _models.get_model_candidates_for_tier
+    _models.get_model_candidates_for_tier = _exclusive
+
+
 async def _run(request: dict[str, Any]) -> dict[str, Any]:
+    _pin_model_candidates_exclusively()
     from agentic_v2.langchain.runner import WorkflowRunner
 
     workflow = os.environ.get("AB_WORKFLOW", "swe_fix_direct")

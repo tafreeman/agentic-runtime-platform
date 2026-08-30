@@ -516,6 +516,104 @@ django × 2 buckets, 1 sympy, 1 sphinx) before it failed at matplotlib —
 not the built case directories, so these are not wasted: the `already`-built
 check (§2.10) means a future wave picks them up rather than re-building them.
 
+### 2.18 A failed Ollama call could silently spend the operator's own Claude subscription — HIGH
+
+Wave 9's arm B logged a 56% error rate (9/16) against wave 8's 23.5% (4/17,
+run without concurrent load) — the two ran partly overlapping, and 7 of
+wave 9's 9 errors carried the same stderr pattern: `Step ... response from
+ollama:deepseek-v4-flash:0731-cloud failed declared output requirements;
+failing over (1/N candidates tried)` followed by `model fallback: requested
+'ollama:...' but 'anthropic:claude-sonnet-4-6-20260219' also answered;
+refusing to grade a sample the model under test did not produce`.
+
+`bridge.py`'s model-substitution check (the second message above) is working
+exactly as designed: it inspects each executed step's real metadata and
+refuses to grade any sample where a model other than the one under test
+answered, converting it to a clean `target_failure` rather than a false
+verdict. The *score* was never at risk. But tracing where the fallback
+actually landed found the subprocess call had already completed by the time
+that check fires. `anthropic:claude-sonnet-4-6-20260219` isn't reached
+through a pay-per-call API key -- `agentic_v2/models/backends_claude.py`
+documents this backend as authenticating via the Claude Code CLI's own
+**subscription login**, specifically so it keeps answering with no API key
+present (`_SIGN_IN_HINT`: "this backend authenticates with a Claude
+subscription, not an API key"). `PAID_CREDENTIALS` in `run_ab.py` blanks
+`ANTHROPIC_API_KEY` and `CLAUDE_CODE_OAUTH_TOKEN` in the child env, but
+neither governs this backend's real credential path, so blanking them does
+nothing to stop it. Every Ollama validation failure that falls through to
+this candidate spends a live chunk of the operator's own Claude subscription
+quota -- the same account running this campaign's sessions -- confirmed via
+the Console's own dashboards: 0% used on every API-key-billed quota over
+24h (so no pay-per-call billing occurred), but the Claude Code Max-plan
+session/weekly usage páges showed real, non-trivial usage against the exact
+window this campaign was running in.
+
+Root cause: `AGENTIC_MODEL_TIER_{tier}` (already set for every tier in
+`build_child_env`, specifically to prevent substitution) only *reorders*
+`get_model_candidates_for_tier`'s output -- the function unconditionally
+appends the registry's tier default and fallback chain after the pin
+(`agentic_v2/langchain/models.py:796-800`), so a step whose call fails its
+output contract falls through to them regardless. A cost-lane ceiling
+(`AGENTIC_MAX_COST_LANE=free`) was tried and rejected first: measured
+directly, `ollama:deepseek-v4-flash:0731-cloud` is not curated in the
+registry at all and so resolves to `"paid"` under `model_registry.py`'s
+fail-closed default -- the same lane as everything the ceiling was meant to
+exclude, so it would have filtered out the model under test along with the
+real fallback.
+
+**Fix:** `bridge.py` now monkeypatches
+`agentic_v2.langchain.models.get_model_candidates_for_tier` to return
+*exactly* `[resolved_model_override]` when an override is given, no
+registry default or fallback chain appended, before importing
+`WorkflowRunner` -- ahead of `graph_wiring.py`/`graph.py` doing their own
+`from .models import get_model_candidates_for_tier` and binding a stale
+reference. Verified in a fresh subprocess: both modules' bound names resolve
+to the patched function, and candidate resolution for any tier returns only
+the pinned model. Because `bridge.py` is a fresh subprocess per sample
+(EvalKit's subprocess protocol), this took effect for every sample not yet
+started in an already-running wave, no restart needed.
+
+### 2.19 A parallel NVIDIA NIM track, to relieve the Ollama weekly cap
+
+The Ollama Cloud account's weekly usage reached 71.3% with a 20-hour reset
+window remaining, and `deepseek-v4-flash:0731` alone logged 2557 requests
+this week (dashboard-confirmed) -- the dominant consumer, but not the only
+active one on the account (~40 unrelated python/ollama processes observed
+running independent of this campaign). A single already-in-flight batch
+(the §2.17-adjacent reuse-135 grading run) was independently estimated at
+~10-11 hours at its observed pace, comparable to the reset window itself.
+
+NIM was investigated earlier in this campaign as a **candidate second
+lane**, not a substitute: equivalence-tested with proper token/timeout
+budgets and found byte-identical to Ollama's output on the one case tested,
+and `nvidia:deepseek-ai/deepseek-v4-flash-0731` is confirmed free
+(`price_in`/`price_out`: 0.0) in `evals/swe_ab/models.candidate.yaml`'s
+draft registry entry -- prepared but never applied (`ADR-040` reserves
+`model_registry.yaml` for deliberate human curation). Re-verified live before
+use: the raw NIM endpoint answers `deepseek-ai/deepseek-v4-flash-0731`
+correctly, and `chat_template_kwargs: {"thinking": false}` suppresses
+reasoning tokens (58 → 2 completion tokens on the same prompt) -- confirming
+`model_builders.py`'s `NVIDIA_DISABLE_THINKING` fix (landed via `PR #282`)
+works end to end.
+
+`NVIDIA_API_KEY` lives in `.env` (workspace root and/or ARP's own), not the
+shell -- `source`d inline per invocation rather than exported persistently,
+since the Bash tool's shell state doesn't survive between commands anyway.
+One more gap found before use: `PAID_CREDENTIALS` blanks `NVIDIA_API_KEY`
+unconditionally, written under the assumption NVIDIA only ever appears as an
+*unwanted* fallback (§2.18's `AGENTIC_API_KEY` comment), never as the model
+under test. **Fix:** `build_child_env` now exempts a provider's own
+credential vars (`_OWN_CREDENTIALS_BY_PREFIX`) from blanking when that
+provider is the pinned model -- safe only in combination with §2.18's fix,
+since that guarantees no *other* model can ever be reached in the same run
+regardless.
+
+This is a genuinely separate segment: switching provider is a configuration
+change under this campaign's own pinning rules (`WAVE-RUNBOOK.md` rule 1),
+same as a model change would be. NIM-graded instances get their own case
+files, their own report suffix, and their own union table -- never merged
+into either the closed (waves 1-7) or the new (wave 8+) Ollama segments.
+
 ---
 
 ## 3. Standing caveats on every number above
