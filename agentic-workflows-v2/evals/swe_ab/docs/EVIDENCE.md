@@ -467,6 +467,55 @@ built both previously-stranded instances successfully and reached the full
 17/17 target with zero drops — a pure decoding fix, no change to which files
 get selected or how they are graded.
 
+### 2.17 WAVE_MIX narrowed again, 2026-08-29, wave 9 — sympy/sphinx/matplotlib/pylint dropped, django re-inflated
+
+Wave 9 (the new segment opened at wave 8, §1.7) refused to run: `matplotlib`'s
+`15 min - 1 hour` bucket yielded 0 of 1 cases. Measuring every `WAVE_MIX`
+bucket against the real filter (single-file, ≤40-line patch, minus what's
+already built) found it was not a one-bucket problem:
+
+| repo / difficulty | pool | remaining |
+|---|---|---|
+| sympy/sympy 15min-1hr | 28 | **0 — exhausted** |
+| sphinx-doc/sphinx <15min | 21 | **0 — exhausted** |
+| matplotlib/matplotlib 15min-1hr | 13 | **0 — exhausted** |
+| pylint-dev/pylint <15min | 3 | **0 — exhausted** |
+| astropy/astropy <15min | 4 | 1 (thin) |
+| pydata/xarray 15min-1hr | 10 | 4 (thin vs. weight 5) |
+| pytest-dev/pytest 15min-1hr | 5 | 2 (thin vs. weight 3) |
+| django/django (both buckets) | 173 | 120 |
+
+Before dropping the four exhausted buckets, raising the patch-line cap was
+measured as an alternative (up to 250 lines): sphinx-doc and pylint-dev stay
+at exactly 0 regardless of cap — no single-file patch of any size remains
+unbuilt for either — and sympy/matplotlib only recover +9/+3 respectively.
+Not enough to justify changing what the patch-size cap tests, so the option
+was declined.
+
+**Change, approved by the user:** `WAVE_MIX` drops sympy, sphinx-doc,
+matplotlib and pylint-dev outright (all confirmed permanently exhausted at
+any patch size for their assigned difficulty bucket) and folds their combined
+weight (7) into django, proportional to its existing 6:5 split (10:8).
+django's share of the nominal mix rises to 45% — above the 40% it was
+reduced from before wave 7 (§2.15), and knowingly so: the alternative
+buckets are themselves mostly thin (see table above), and adding new repos
+was considered and explicitly declined in favor of the simpler fix. Nothing
+about the model, workflow, oracle, grader, or concurrency changed.
+
+**Why this doesn't touch the closed segment or wave 8:** this is entirely
+inside the segment opened at wave 8 (EVIDENCE.md's segment-boundary note
+above §1). Wave 8 alone drew from the pre-2026-08-29 (wave 7) mix; wave 9
+onward draws from this one. Both stay unioned in §1.7 the same way §2.15's
+change stayed unioned within the closed segment's §1.3 — the paired McNemar
+analysis doesn't require a fixed sampling population, only that each
+instance is graded identically by both arms.
+
+Six real case directories were left on disk from wave 9's aborted attempt (2
+django × 2 buckets, 1 sympy, 1 sphinx) before it failed at matplotlib —
+`run_wave.py` only deletes the temporary per-bucket JSONL slices on failure,
+not the built case directories, so these are not wasted: the `already`-built
+check (§2.10) means a future wave picks them up rather than re-building them.
+
 ---
 
 ## 3. Standing caveats on every number above

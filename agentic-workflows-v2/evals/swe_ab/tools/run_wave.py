@@ -61,12 +61,28 @@ CAMPAIGN = {
 #: EVIDENCE.md §1.3 since each paired instance is graded identically
 #: regardless of which mix drew it in, but the population composition is
 #: flagged at the point it changed.
+#:
+#: Narrowed again 2026-08-29, wave 9, in the new post-PR#282 segment
+#: (EVIDENCE.md §1.7/§2.1x): sympy, sphinx-doc, matplotlib and pylint-dev all
+#: hit real, permanent exhaustion at the 40-line patch cap (0 remaining each);
+#: raising the cap to 250 lines was measured and rejected -- sphinx-doc and
+#: pylint-dev stay at 0 regardless (no single-file patch of any size remains
+#: unbuilt), and sympy/matplotlib only recover a handful (+9/+3), not enough
+#: to justify changing what the patch-size cap tests. All four dropped
+#: outright; their combined weight (7) folds into django, proportional to its
+#: existing 6:5 split (django's remaining pool is 120+, deepest of any repo by
+#: far). This re-inflates django's share of the nominal mix to 45% -- back
+#: above the 40% it was reduced from before wave 7, and knowingly so
+#: (human-approved 2026-08-29): the alternative buckets are themselves mostly
+#: thin (astropy `<15 min fix` down to 1, xarray/pytest `15 min - 1 hour` down
+#: to 4/2 against weights of 5/3) and adding new repos was explicitly declined
+#: in favor of the simpler fix. This is within the new segment opened at wave
+#: 8 (EVIDENCE.md's segment-boundary note) -- wave 8 alone used the pre-change
+#: mix, wave 9 on uses this one; not comparable to anything in the closed
+#: wave-1-7 segment either way.
 WAVE_MIX = [
-    ("django/django", "15 min - 1 hour", 6),
-    ("django/django", "<15 min fix", 5),
-    ("sympy/sympy", "15 min - 1 hour", 2),
-    ("sphinx-doc/sphinx", "<15 min fix", 2),
-    ("matplotlib/matplotlib", "15 min - 1 hour", 2),
+    ("django/django", "15 min - 1 hour", 10),
+    ("django/django", "<15 min fix", 8),
     ("astropy/astropy", "15 min - 1 hour", 5),
     ("astropy/astropy", "<15 min fix", 2),
     ("pydata/xarray", "15 min - 1 hour", 5),
@@ -74,7 +90,6 @@ WAVE_MIX = [
     ("pytest-dev/pytest", "15 min - 1 hour", 3),
     ("pytest-dev/pytest", "<15 min fix", 3),
     ("psf/requests", "<15 min fix", 2),
-    ("pylint-dev/pylint", "<15 min fix", 1),
 ]
 
 
