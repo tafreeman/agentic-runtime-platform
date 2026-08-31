@@ -168,3 +168,102 @@ async def load_lmstudio(request: LmStudioLoadRequest) -> LmStudioLoadResponse:
             else None
         ),
     )
+
+
+#: Providers that :func:`discover_all_models` can enumerate but that
+#: ``get_chat_model()`` has no execution builder for, so a discovered id
+#: cannot actually be run yet. They are surfaced with this flag rather than
+#: hidden: leaving them out entirely is what made them invisible, but
+#: listing them as selectable would trade one wrong answer for another.
+#: Kept in sync with the deliberate omission in
+#: ``agentic_v2.langchain.model_utils.PROVIDER_ENV_KEYS``.
+DISCOVERY_ONLY_PROVIDERS: frozenset[str] = frozenset(
+    {"lemonade", "docker-model-runner", "foundry-local"}
+)
+
+
+@router.get(
+    "/models/discovery-snapshot",
+    responses={500: {"description": "Internal Server Error"}},
+)
+async def models_discovery_snapshot() -> dict[str, Any]:
+    """Every model ARP can see, across every serving path, in one response.
+
+    ``/models/probe`` answers a narrower question -- which tier defaults are
+    live -- and reaches only the cloud, Ollama, LM Studio and ONNX paths. The
+    Lemonade, Docker Model Runner and Foundry Local backends have discovery
+    implementations and tests but no HTTP caller, so models served by them
+    were invisible to every client. This exposes
+    :func:`agentic_v2.models.discovery_snapshot.discover_all_models`, which
+    already aggregates all eight provider families in one uniform shape.
+
+    Listing-only: ``verify=True`` is unimplemented upstream (ARP-IMPROVEMENTS
+    F3), so ``reachable`` means "this provider's listing included it", not
+    "a completion call succeeded".
+    """
+    from ...models.discovery_snapshot import discover_all_models
+
+    try:
+        models = await asyncio.to_thread(discover_all_models)
+    except Exception as exc:  # pragma: no cover - defensive, facade is best-effort
+        logger.exception("Discovery snapshot failed")
+        raise HTTPException(
+            status_code=500, detail=f"discovery snapshot failed: {exc}"
+        ) from exc
+
+    payload = []
+    seen: set[str] = set()
+    by_provider: dict[str, int] = {}
+    for model in models:
+        record = model.to_dict()
+        record["runnable"] = model.provider not in DISCOVERY_ONLY_PROVIDERS
+        record["source"] = "discovered"
+        payload.append(record)
+        seen.add(model.id)
+        by_provider[model.provider] = by_provider.get(model.provider, 0) + 1
+
+    # Union in the curated registry. Discovery lists what a provider is
+    # serving right now; the registry declares what ARP is configured to use,
+    # and the two are not nested. A curated id whose provider listing no
+    # longer returns it (ADR-040 calls these quarantined) exists only here,
+    # and GitHub Models is declared but not enumerated by cloud discovery at
+    # all -- so a snapshot built from discovery alone silently drops both.
+    from ...models import model_registry
+
+    try:
+        for model_id in sorted(model_registry.all_ids()):
+            if model_id in seen:
+                continue
+            provider = model_registry.provider_for(model_id)
+            payload.append(
+                {
+                    "id": model_id,
+                    "provider": provider,
+                    "endpoint": None,
+                    "cost_lane": model_registry.cost_lane_for(model_id),
+                    "reachable": False,
+                    "verified_by": "registry",
+                    "latency_ms": None,
+                    "probed_at": None,
+                    "runnable": provider not in DISCOVERY_ONLY_PROVIDERS,
+                    # Curated, but this run's provider listing did not include
+                    # it -- either the provider is unkeyed or the id is
+                    # quarantined. Listed, flagged, not silently dropped.
+                    "source": "registry-only",
+                }
+            )
+            seen.add(model_id)
+            by_provider[provider] = by_provider.get(provider, 0) + 1
+    except Exception:  # pragma: no cover - registry is optional at runtime
+        logger.exception("Curated registry unavailable for the snapshot")
+
+    return {
+        "total": len(payload),
+        "by_provider": dict(sorted(by_provider.items(), key=lambda kv: -kv[1])),
+        "discovery_only_providers": sorted(DISCOVERY_ONLY_PROVIDERS),
+        "sources": {
+            "discovered": sum(1 for m in payload if m["source"] == "discovered"),
+            "registry_only": sum(1 for m in payload if m["source"] == "registry-only"),
+        },
+        "models": payload,
+    }

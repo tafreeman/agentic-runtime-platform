@@ -11,6 +11,7 @@ explains every definition in more detail.
 
 | Workflow | Purpose | Inputs |
 | --- | --- | --- |
+| `app_improvement_review` | Analyze an existing app through six independent lenses, challenge the evidence, score it, and build a prioritized improvement or redesign roadmap | `app_path`, `app_context`, `improvement_goal`, `change_appetite`, `score_weights` |
 | `bug_resolution` | Move from a bug report through diagnosis, a proposed fix, regression checks, and a report | `bug_report`, `code_file`, `resolution_depth` |
 | `code_review` | Run several reviews of one file and combine the results | `code_file`, `review_depth` |
 | `conditional_branching` | Select quick, thorough, security, and deployment checks with `when:` conditions | `feature_spec`, `review_depth`, `target_env` |

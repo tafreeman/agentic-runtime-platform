@@ -206,6 +206,70 @@ def _fetch_via_dataset_viewer(
         return [entry["row"] for entry in body.get("rows", [])]
 
 
+def _fetch_via_local_cache(
+    dataset_id: str,
+    config: str | None,
+    split: str,
+    offset: int,
+    limit: int,
+) -> list[dict[str, Any]]:
+    """Read rows from an already-downloaded HuggingFace snapshot. No network.
+
+    Tried before the network tiers because a machine that has already pulled a
+    dataset should never need connectivity to page through it, and because the
+    network tiers cannot be relied on: the Dataset Viewer needs the API to be
+    up, and :func:`_fetch_via_huggingface_hub` asks for one hardcoded filename
+    (``{config}/{split}/0000.parquet``) that most repos do not use. The real
+    layout is whatever the repo ships -- ``openai_humaneval`` stores
+    ``openai_humaneval/test-00000-of-00001.parquet`` -- so this discovers the
+    parquet files instead of guessing at one.
+
+    Shards are read in name order and only until *limit* rows have been
+    collected, so paging the head of a large dataset does not read all of it.
+    """
+    from pathlib import Path as _Path
+
+    import pyarrow.parquet as pq
+    from huggingface_hub import snapshot_download
+
+    snapshot = _Path(
+        snapshot_download(
+            repo_id=dataset_id, repo_type="dataset", local_files_only=True
+        )
+    )
+    shards = sorted(snapshot.rglob("*.parquet"))
+    if not shards:
+        raise FileNotFoundError(f"no parquet in cached snapshot for {dataset_id}")
+
+    # A repo usually ships one file per split (``test-00000-of-00001.parquet``)
+    # and sometimes nests them under the config. Match on both, and only fall
+    # back to every shard when nothing names the split -- returning the wrong
+    # split silently would be worse than reading a little extra.
+    selected = [
+        p for p in shards if split in p.name or split in p.parent.name.split("-")
+    ]
+    if config:
+        scoped = [p for p in selected if config in p.parts]
+        selected = scoped or selected
+    if not selected:
+        selected = shards
+
+    rows: list[dict[str, Any]] = []
+    remaining_offset = max(offset, 0)
+    for shard in selected:
+        table = pq.read_table(shard)
+        if remaining_offset >= table.num_rows:
+            remaining_offset -= table.num_rows
+            continue
+        available = table.num_rows - remaining_offset
+        take = available if limit <= 0 else min(limit - len(rows), available)
+        rows.extend(table.slice(remaining_offset, take).to_pylist())
+        remaining_offset = 0
+        if limit > 0 and len(rows) >= limit:
+            break
+    return rows
+
+
 def _fetch_via_huggingface_hub(
     dataset_id: str,
     config: str | None,
@@ -273,6 +337,8 @@ def _load_from_huggingface(
     """Load tasks from HuggingFace.
 
     Strategy (in order):
+    0. Local HuggingFace cache — no network, no extra deps. First because a
+       dataset already on disk should never need connectivity to read.
     1. Dataset Viewer REST API — no extra deps, works for any public dataset.
     2. huggingface_hub + pyarrow — already declared as a project dependency.
     3. datasets library — heavy optional dep, used only if already installed.
@@ -286,30 +352,44 @@ def _load_from_huggingface(
 
     rows: list[dict[str, Any]] = []
 
-    # --- tier 1: Dataset Viewer REST API (zero extra deps) ---
+    # --- tier 0: already-downloaded snapshot (offline) ---
     try:
-        rows = _fetch_via_dataset_viewer(
+        rows = _fetch_via_local_cache(
             benchmark.source_url, hf_config, split, offset, want
         )
-        logger.debug("Dataset Viewer returned %d rows", len(rows))
-    except Exception as exc_viewer:
+        logger.debug("Local HF cache returned %d rows", len(rows))
+    except Exception as exc_cache:
         logger.debug(
-            "Dataset Viewer unavailable (%s), trying huggingface_hub", exc_viewer
+            "No usable local cache for %s (%s), trying the network",
+            benchmark.source_url,
+            exc_cache,
         )
 
-        # --- tier 2: huggingface_hub (already in project deps) ---
+    # --- tier 1: Dataset Viewer REST API (zero extra deps) ---
+    if not rows:
         try:
-            rows = _fetch_via_huggingface_hub(
+            rows = _fetch_via_dataset_viewer(
                 benchmark.source_url, hf_config, split, offset, want
             )
-            logger.debug("huggingface_hub returned %d rows", len(rows))
-        except Exception as exc_hub:
+            logger.debug("Dataset Viewer returned %d rows", len(rows))
+        except Exception as exc_viewer:
             logger.debug(
-                "huggingface_hub failed (%s), falling back to datasets", exc_hub
+                "Dataset Viewer unavailable (%s), trying huggingface_hub", exc_viewer
             )
-            rows = _load_from_huggingface_datasets_lib(benchmark, limit, offset)
-            if not rows:
-                return []
+
+            # --- tier 2: huggingface_hub (already in project deps) ---
+            try:
+                rows = _fetch_via_huggingface_hub(
+                    benchmark.source_url, hf_config, split, offset, want
+                )
+                logger.debug("huggingface_hub returned %d rows", len(rows))
+            except Exception as exc_hub:
+                logger.debug(
+                    "huggingface_hub failed (%s), falling back to datasets", exc_hub
+                )
+                rows = _load_from_huggingface_datasets_lib(benchmark, limit, offset)
+                if not rows:
+                    return []
 
     tasks: list[BenchmarkTask] = []
     for idx, item in enumerate(rows):
@@ -541,13 +621,26 @@ def _load_cached_tasks(
     if not cached_data:
         return None
 
-    logger.info("    Loaded from cache")
     tasks = [BenchmarkTask(**t) for t in cached_data]
-    # Apply limit/offset to cached data
-    tasks = tasks[offset:]
-    if limit:
-        tasks = tasks[:limit]
-    return tasks
+
+    # The cache holds a prefix starting at row 0 (see ``load_benchmark``, which
+    # only writes when offset == 0), so it can only answer a request whose
+    # whole range it covers. Slicing a short prefix by a larger offset used to
+    # return [] -- which the server reports as "cache missing and the network
+    # fetch failed", so paging past the first cached page looked like an
+    # outage. Treat a range the cache cannot cover as a miss and refetch.
+    end = offset + limit if limit else len(tasks)
+    if offset >= len(tasks) or end > len(tasks):
+        logger.debug(
+            "Cache holds %d rows, cannot serve offset=%d limit=%s; refetching",
+            len(tasks),
+            offset,
+            limit,
+        )
+        return None
+
+    logger.info("    Loaded from cache")
+    return tasks[offset:end]
 
 
 def _load_tasks_from_source(
@@ -607,8 +700,11 @@ def load_benchmark(
     # Load from source
     tasks = _load_tasks_from_source(benchmark, limit, offset)
 
-    # Cache results
-    if use_cache and tasks:
+    # Cache results. Only a page that starts at row 0, because the cache is
+    # keyed on benchmark_id alone and is read back as a prefix: writing a page
+    # fetched at offset=N would file row N as row 0, and a later offset=0 read
+    # would silently return the wrong rows.
+    if use_cache and tasks and offset == 0:
         save_to_cache([t.to_dict() for t in tasks], benchmark_id)
         logger.info("    Cached %d tasks", len(tasks))
 

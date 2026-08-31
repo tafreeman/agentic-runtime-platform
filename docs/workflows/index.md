@@ -18,6 +18,7 @@ reference.
 
 | Workflow | Pattern | Steps | Agents | Typical use case |
 |----------|---------|------:|-------:|------------------|
+| [`app_improvement_review`](#app_improvement_review) | Evidence-based fan-out / challenge / decision | 11 | 10 | Score an existing app and compare incremental improvement with clean-sheet alternatives |
 | [`code_review`](#code_review) | Fan-out / fan-in | 5 | 5 | Multi-perspective review of a single file with synthesis |
 | [`bug_resolution`](#bug_resolution) | Sequential with verification | 5 | 4 | Triage → root-cause → fix → regression check → write-up |
 | [`fullstack_generation`](#fullstack_generation) | Parallel sub-DAG with rework | 8 | 6 | Generate API + frontend + tests in parallel, then review and rework |
@@ -29,6 +30,47 @@ reference.
 
 **Steps** counts entries under `steps:`. **Agents** counts unique `agent:`
 values. **Pattern** names the main control-flow shape.
+
+## `app_improvement_review`
+
+Builds a shared, evidence-cited inventory of an existing application, then
+runs six independent reviews in parallel: architecture, product/UX,
+reliability/security, delivery/maintainability, performance/cost, and a
+clean-sheet rethink. A challenge step removes unsupported claims and preserves
+disagreements before the workflow calculates a weighted current-state score,
+ranks changes, and produces a phased roadmap with success metrics and kill
+criteria. Repository inspection is restricted to read-only tools.
+
+- **Pattern:** Evidence baseline → six-way fan-out → challenge → score → roadmap
+- **Steps:** `inventory_app` → (`architecture_lens` ‖ `product_ux_lens` ‖
+  `reliability_security_lens` ‖ `delivery_maintainability_lens` ‖
+  `performance_cost_lens` ‖ `reinvention_lens`) → `challenge_analysis` →
+  `score_and_prioritize` → `build_roadmap` → `assemble_report`
+- **Agents:** 10 agent roles across tiers 2 and 3
+- **Inputs:** `app_path`, plus optional context, goal, change appetite, and score weights
+- **Outputs:** current state, scorecard, recommended direction, ranked changes,
+  roadmap, rethink options, evidence gaps, and a complete decision report
+- **Rubric:** `app_improvement_review_v1`
+- **Use it for:** deciding whether to improve, restructure, or rethink an
+  existing application before implementation begins
+
+Run it against the current directory with an input file:
+
+```json
+{
+  "app_path": ".",
+  "app_context": "Internal app used by support engineers",
+  "improvement_goal": "Reduce time-to-resolution without weakening controls",
+  "change_appetite": "balanced"
+}
+```
+
+```powershell
+agentic validate app_improvement_review
+agentic run app_improvement_review --input .\app-review-input.json --output .\app-review-result.json
+```
+
+[View YAML →](https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/agentic_v2/workflows/definitions/app_improvement_review.yaml){ .md-button }
 
 ## `code_review`
 
