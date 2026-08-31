@@ -78,7 +78,7 @@ colorama==0.4.6 ; sys_platform == 'win32'
     #   pytest
     #   tqdm
     #   uvicorn
-coverage==7.13.5
+coverage==7.15.4
     # via pytest-cov
 cryptography==49.0.0
     # via
@@ -98,7 +98,7 @@ docstring-parser==0.18.0
     # via anthropic
 executionkit==0.3.0
     # via agentic-workflows-v2
-fakeredis==2.35.1
+fakeredis==2.37.1
     # via agentic-workflows-v2
 fastapi==0.136.0
     # via agentic-workflows-v2
@@ -254,7 +254,7 @@ multidict==6.7.1
     # via
     #   aiohttp
     #   yarl
-mypy==2.1.0
+mypy==2.3.1
     # via
     #   agentic-v2-eval
     #   agentic-workflows-v2
@@ -332,7 +332,7 @@ pluggy==1.6.0
     # via
     #   pytest
     #   pytest-cov
-pre-commit==4.5.1
+pre-commit==4.6.2
 prometheus-client==0.25.0
     # via
     #   agentic-workflows-v2
@@ -396,7 +396,7 @@ pyjwt==2.13.0
     #   agentic-workflows-v2
     #   mcp
     #   redis
-pytest==9.0.3
+pytest==9.1.1
     # via
     #   agentic-tools
     #   agentic-v2-eval
@@ -472,7 +472,7 @@ rpds-py==0.30.0
     # via
     #   jsonschema
     #   referencing
-ruff==0.15.17
+ruff==0.16.5
     # via
     #   agentic-v2-eval
     #   agentic-workflows-v2
@@ -517,7 +517,7 @@ typer==0.24.1
     #   agentic-evalkit
     #   agentic-workflows-v2
     #   huggingface-hub
-types-pyyaml==6.0.12.20260408
+types-pyyaml==6.0.12.20260815
     # via agentic-v2-eval
 typing-extensions==4.15.0
     # via
