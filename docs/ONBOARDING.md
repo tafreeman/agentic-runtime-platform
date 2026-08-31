@@ -10,7 +10,7 @@ Last verified: 2026-07-28.
 | Path | Purpose |
 |---|---|
 | repository root and `tools/` | Shared `agentic-tools` Python package |
-| `agentic-workflows-v2/` | Workflow runtime, CLI, FastAPI server, and RAG components |
+| `agentic-workflows-v2/` | Workflow runtime, CLI, and FastAPI server |
 | `agentic-workflows-v2/ui/` | React dashboard |
 | `agentic-v2-eval/` | Rubrics, evaluators, runners, and reports |
 | `tests/e2e/` | Checks that cross package boundaries |
@@ -177,7 +177,7 @@ Invoke-RestMethod http://127.0.0.1:8010/api/models/probe
 Model availability can change between environments. Treat a successful
 deterministic run as a runtime smoke test, not proof that live inference works.
 Use [Configuration](configuration.md) for provider names, model overrides,
-authentication, tracing, persistence, and RAG settings.
+authentication, tracing, and persistence.
 
 ## 6. Run an evaluation
 
@@ -263,7 +263,6 @@ statistics. The published site is also built with MkDocs in CI.
 | The dashboard has network errors | Confirm the backend is listening on `8010` |
 | A model-backed step fails | Check its provider variable and use the dashboard Models page or `/api/models/probe` |
 | Native works but LangGraph fails | Inspect workflow capabilities and adapter support |
-| RAG search returns nothing in a second shell | The current RAG CLI index is process-local; see [Known limitations](KNOWN_LIMITATIONS.md) |
 
 For security reports, follow the
 [security policy](https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/SECURITY.md).

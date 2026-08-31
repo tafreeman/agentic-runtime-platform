@@ -35,7 +35,7 @@ needed to accept work.
 - Treat model and evaluator output as untrusted data at system boundaries.
 
 See [troubleshooting](troubleshooting.md) for startup, API, model, workflow,
-RAG, and UI diagnostics.
+and UI diagnostics.
 
 ## Related references
 

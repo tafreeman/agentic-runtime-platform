@@ -10,7 +10,7 @@ Last verified: 2026-07-28.
 | Area | Path | Owns |
 |---|---|---|
 | Shared Python code | repository root and `tools/` | Provider clients, benchmark utilities, and shared helpers |
-| Runtime | `agentic-workflows-v2/` | Workflow loading, execution, agents, model routing, RAG, CLI, and server |
+| Runtime | `agentic-workflows-v2/` | Workflow loading, execution, agents, model routing, CLI, and server |
 | Dashboard | `agentic-workflows-v2/ui/` | Browser UI for workflows, models, runs, and evaluations |
 | Evaluation package | `agentic-v2-eval/` | Offline rubrics, evaluators, runners, metrics, and reports |
 
@@ -39,7 +39,6 @@ flowchart LR
     NATIVE --> AGENT["Agents and tools"]
     GRAPH --> AGENT
     AGENT --> ROUTER["Model router"]
-    AGENT --> RAG["RAG components"]
     ROUTER --> PROVIDER["Model providers"]
     NATIVE --> RESULT["Typed run result"]
     GRAPH --> RESULT
@@ -138,21 +137,6 @@ secret values.
 See [Runtime architecture](architecture-runtime.md) and
 [Configuration](configuration.md#model-providers).
 
-## RAG boundary
-
-`agentic_v2/rag/` provides document models, loaders, character-based chunking,
-embedding adapters, vector stores, BM25 search, reciprocal-rank fusion,
-optional reranking, and token-budget context assembly.
-
-The Python factory can construct provider-backed embeddings and a durable
-LanceDB store when the required extra is installed. `InMemoryEmbedder` and
-`InMemoryVectorStore` are test and demonstration components.
-
-The current `agentic rag` CLI does not persist an index between commands and
-does not yet use the new factory. Do not treat its ingest command as a durable
-indexing service. See [RAG](rag/index.md) and
-[Known limitations](KNOWN_LIMITATIONS.md).
-
 ## Persistence and shared state
 
 Different data has different storage:
@@ -165,7 +149,6 @@ Different data has different storage:
 | Model-router circuit state | Process-local | Redis |
 | Authentication lockouts | Process-local | No shared backend |
 | UI provider and tier settings | `~/.agentic/ui-settings.json` | No remote settings backend |
-| `RAGMemoryStore` key map | Process-local | No durable key map |
 
 Do not assume that configuring Redis makes every type of state shared. See
 [Configuration](configuration.md#redis-and-replay-storage) for the settings

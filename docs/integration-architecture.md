@@ -250,7 +250,6 @@ Background Execution (server/execution.py)
     │       ├── Agent resolution (engine/agent_resolver.py)
     │       ├── Context assembly (engine/context.py)
     │       ├── Prompt assembly (engine/prompt_assembly.py)
-    │       │     └── Optional RAG retrieval (rag/retrieval.py → rag/context_assembly.py)
     │       ├── LLM call (models/smart_router.py → tools/llm/llm_client.py)
     │       ├── Tool execution (engine/tool_execution.py → tools/builtin/*.py)
     │       ├── Output verification (engine/verification.py)
@@ -288,9 +287,6 @@ When `AGENTIC_TRACING=1`, the runtime instruments the following spans:
 | `workflow.execute` | `server/execution.py` | Full workflow execution |
 | `step.execute` | `engine/step.py` | Individual DAG step |
 | `llm.call` | `models/client.py` | LLM API call (model, tokens, latency) |
-| `rag.ingest` | `rag/tracing.py` | Document ingestion pipeline |
-| `rag.retrieve` | `rag/tracing.py` | Retrieval + reranking |
-| `rag.assemble` | `rag/tracing.py` | Context assembly |
 | `tool.execute` | `engine/tool_execution.py` | Built-in tool invocation |
 
 Spans are exported via OTLP to `OTEL_EXPORTER_OTLP_ENDPOINT` (default: `http://localhost:4317`). The `otel/` directory contains a Docker Compose configuration for running a local OpenTelemetry Collector.
