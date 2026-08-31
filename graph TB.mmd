@@ -1,0 +1,50 @@
+graph TB
+    subgraph Clients["Clients"]
+        CLI["agentic CLI<br/><i>Typer</i>"]
+        UI["React 19 Dashboard<br/><i>Vite 8 · @xyflow/react</i>"]
+        EXT["External callers<br/><i>REST · WS · SSE</i>"]
+    end
+
+    subgraph Runtime["agentic-workflows-v2/"]
+        API["FastAPI Server<br/><i>REST · WebSocket · SSE · 500-event replay</i>"]
+        ADR["AdapterRegistry<br/><i>singleton</i>"]
+        NATIVE["Native DAG Engine<br/><i>Kahn's algorithm · asyncio.wait FIRST_COMPLETED</i>"]
+        LG["LangGraph Engine<br/><i>StateGraph · checkpointing</i>"]
+        ROUTER["SmartModelRouter<br/><i>tier routing · circuit breakers · stats persistence</i>"]
+        RAG["RAG Pipeline<br/><i>chunk · embed · index · retrieve · assemble</i>"]
+        AGENTS["Agents<br/><i>Base + Coder + Reviewer + Architect + Orchestrator</i>"]
+    end
+
+    subgraph Eval["agentic-v2-eval/"]
+        RUNNERS["Batch · Streaming · AsyncStreaming Runners"]
+        SCORER["Scorer<br/><i>rubric-based</i>"]
+        REPORTER["Reporters<br/><i>json · markdown · html</i>"]
+    end
+
+    subgraph Shared["tools/ (agentic-tools)"]
+        LLM["LLMClient<br/><i>eight providers · nine routing backends</i>"]
+        BENCH["Benchmarks"]
+        CACHE["Response cache"]
+    end
+
+    CLI --> ADR
+    UI -->|REST · WS| API
+    EXT -->|REST · WS · SSE| API
+    API --> ADR
+    ADR --> NATIVE
+    ADR --> LG
+    NATIVE --> AGENTS
+    LG --> AGENTS
+    AGENTS --> ROUTER
+    AGENTS --> RAG
+    ROUTER -->|provider calls| LLM
+    API -.->|run JSON artifacts| RUNNERS
+    RUNNERS --> SCORER
+    SCORER --> REPORTER
+
+    classDef rt fill:#4a90d9,stroke:#2c5f8a,color:#fff
+    classDef ev fill:#00b894,stroke:#008060,color:#fff
+    classDef sh fill:#fdcb6e,stroke:#c8a034,color:#333
+    class API,ADR,NATIVE,LG,ROUTER,RAG,AGENTS rt
+    class SCORER,RUNNERS,REPORTER ev
+    class LLM,BENCH,CACHE sh
