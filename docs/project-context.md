@@ -21,7 +21,7 @@ Updated: 2026-07-28.
 | ID | Path | Responsibility |
 |---|---|---|
 | `tools` | repository root and `tools/` | Shared provider, benchmark, cache, and error utilities; installs as `agentic-tools` |
-| `runtime` | `agentic-workflows-v2/` | Workflow runtime, CLI, server, agents, model routing, tools, and RAG |
+| `runtime` | `agentic-workflows-v2/` | Workflow runtime, CLI, server, agents, model routing, and tools |
 | `ui` | `agentic-workflows-v2/ui/` | Browser dashboard |
 | `eval` | `agentic-v2-eval/` | Offline rubrics, evaluators, runners, metrics, and reports |
 
@@ -58,7 +58,6 @@ agentic-workflows-v2/agentic_v2/
 |-- langchain/         LangGraph compilation and execution
 |-- models/            model routing, health, and provider state
 |-- prompts/           persona prompt assets
-|-- rag/               loading, chunking, embeddings, stores, and retrieval
 |-- scoring/           runtime run scoring and judge logic
 |-- security/          request and egress controls
 |-- server/            FastAPI, routes, streaming, replay, and persistence
@@ -90,7 +89,6 @@ agentic list
 agentic validate
 agentic serve
 agentic version
-agentic rag
 agentic devex
 ```
 
@@ -101,10 +99,6 @@ routes.
 The default `run` adapter is `langchain`. `agentic serve` defaults to port
 `8000`; the combined development environment uses backend port `8010` and UI
 port `5173`.
-
-The current RAG CLI creates an in-process hash index and does not persist data
-between commands. The Python RAG factory is the path for provider-backed
-embeddings and LanceDB.
 
 ## Configuration
 
@@ -161,7 +155,6 @@ prove provider behavior.
 | What are the package boundaries? | `docs/ARCHITECTURE.md` |
 | What does the server expose? | `docs/api-contracts-runtime.md` |
 | Which settings are current? | `docs/configuration.md` |
-| How does RAG behave? | `docs/rag/index.md` |
 | What is not supported? | `docs/KNOWN_LIMITATIONS.md` |
 | Which decisions were accepted? | `docs/adr/ADR-INDEX.md` |
 | What should a contributor run? | `CONTRIBUTING.md` |

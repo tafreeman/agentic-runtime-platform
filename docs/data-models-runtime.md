@@ -14,7 +14,6 @@ Use the generated OpenAPI document for the complete HTTP schema.
 | Chat request and stream events | `agentic_v2/contracts/chat.py` | Chat API and UI |
 | Sanitization results | `agentic_v2/contracts/sanitization.py` | Security middleware |
 | HTTP request and response models | `agentic_v2/server/models.py` | FastAPI routes and UI |
-| RAG contracts | `agentic_v2/rag/models.py` | Retrieval pipeline |
 
 Paths in this table are relative to `agentic-workflows-v2/`.
 
