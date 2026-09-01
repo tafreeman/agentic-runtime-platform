@@ -791,6 +791,48 @@ to fingerprint as) — recorded in §1.7, not something to try to undo by
 re-running earlier waves against the new weights, which would just as
 easily drift again by the time it finished.
 
+### 2.22 GLM-5.3 and GLM-5.3-flash on Ollama Cloud — not viable at this campaign's scale
+
+Tried as a fourth track (Ollama-served, same as the SUT model) after the
+OpenRouter benchmarks API showed GLM-5.3 as the highest-scoring free-tier
+coding model available (74.8 coding / 59.1 agentic). Three attempts, three
+different failure modes, zero usable data:
+
+1. **`ollama:glm-5.3`** (bare tag) — `model 'glm-5.3' not found (404)`.
+   Ollama's cloud models need an exact tag; found via `ollama.com/library/
+   glm-5.3/tags`: `glm-5.3:cloud`.
+2. **`glm-5.3:cloud` at concurrency 4** — 122/204 `target_failure` (`timed
+   out waiting for a concurrent request slot, 429`) plus 21 timeouts on arm
+   A; arm B 204/204 errors (3x the calls per sample at the same
+   concurrency compounded it further). Ollama caps concurrent slots per
+   model, and GLM-5.3's cap is far below `deepseek-v4-flash:0731-cloud`'s,
+   which took concurrency 4 all campaign without this class of failure.
+3. **`glm-5.3:cloud` at concurrency 1** — 204/204 errors on the very first
+   batch: `you (aifoundryaf) have reached your session usage limit (429)`.
+   Confirmed via `ollama.com/pricing`: usage is metered in **tokens**, not
+   requests, at each model's own rate — GLM-5.3 costs **~3.2-3.3x**
+   `deepseek-v4-flash`'s per-token rate ($1.40/$4.40 vs $0.44/$1.32 per
+   million input/output tokens), so the same call volume burns session
+   quota far faster.
+
+**Switched to `glm-5.3-flash:cloud`** on the same pricing table: cheaper
+than the SUT model itself ($0.15/$0.50 vs $0.44/$1.32, ~0.34-0.38x) while
+still scoring 71.5 coding / 58.2 agentic — barely behind GLM-5.3 proper.
+Ran ~23 hours at concurrency 4 without erroring, but the account's own
+cloud-usage dashboard showed only **39 requests** logged for
+`glm-5.3-flash` in that entire window (`ollama.com` → Cloud usage →
+"Models used this week") — roughly one request per 35 minutes, with
+session usage sitting at a mere 21.8% (not quota-exhausted). Confirmed via
+process inspection this wasn't a hung process (fresh `bridge.py`
+subprocesses were spawning every few minutes, staying alive with non-zero
+CPU) — the requests that did go out were each taking an extremely long
+time to be served, consistent with server-side pacing/throttling on this
+specific model rather than a client-side failure. **Stopped, arm A never
+completed.** Neither GLM-5.3 nor GLM-5.3-flash produced usable data;
+whether this throttling is specific to this account, this model, or
+Ollama Cloud generally is unknown — not investigated further given the
+time already sunk.
+
 ## 3. Standing caveats on every number above
 
 1. **Oracle retrieval.** The model is told which file to fix. Full SWE-bench also
