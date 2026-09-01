@@ -13,6 +13,7 @@ Supported providers
 - OpenAI            — ``build_openai_model``
 - NVIDIA NIM        — ``build_nvidia_model``
 - OpenRouter        — ``build_openrouter_model``
+- DigitalOcean      — ``build_digitalocean_model``
 - Anthropic         — ``build_anthropic_model``
 - Gemini            — ``build_gemini_model``
 - NotebookLM alias  — ``build_notebooklm_model`` (routes to Gemini)
@@ -465,6 +466,53 @@ def build_openrouter_model(model_name: str, temperature: float) -> Any:
         api_key=api_key,
         temperature=temperature,
         default_headers={"X-Title": "agentic-runtime-platform"},
+    )
+
+
+def build_digitalocean_model(model_name: str, temperature: float) -> Any:
+    """Build a ChatOpenAI instance pointed at DigitalOcean's Serverless Inference.
+
+    Same shape as :func:`build_openrouter_model`: DigitalOcean fronts its
+    model catalog (DeepSeek, GLM, Kimi, Qwen, Nemotron, plus OpenAI/Anthropic
+    passthroughs) behind one OpenAI-compatible ``/v1`` surface, so a
+    ``ChatOpenAI`` with a swapped ``base_url`` is the whole backend.
+
+    Parameters
+    ----------
+    model_name:
+        Bare model id after the ``digitalocean:`` prefix, e.g.
+        ``deepseek-v4-flash-0731`` or ``glm-5.3`` -- verbatim as returned by
+        ``GET https://inference.do-ai.run/v1/models``, no publisher segment.
+    temperature:
+        Sampling temperature.
+
+    Raises
+    ------
+    ImportError
+        If ``langchain-openai`` is not installed.
+    ValueError
+        If ``DIGITALOCEAN_TOKEN`` is not set.
+    """
+    try:
+        from langchain_openai import ChatOpenAI
+    except ImportError as exc:
+        raise ImportError(
+            "langchain-openai is required for DigitalOcean models. "
+            "Install with: pip install langchain-openai"
+        ) from exc
+
+    api_key = os.environ.get("DIGITALOCEAN_TOKEN")
+    if not api_key:
+        raise ValueError(
+            "DIGITALOCEAN_TOKEN environment variable is required for DigitalOcean models."
+        )
+
+    logger.debug("Using DigitalOcean Inference: %s", model_name)
+    return ChatOpenAI(
+        model=model_name,
+        base_url="https://inference.do-ai.run/v1",
+        api_key=api_key,
+        temperature=temperature,
     )
 
 
