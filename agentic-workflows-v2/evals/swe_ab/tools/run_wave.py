@@ -88,18 +88,58 @@ CAMPAIGN = {
 #: hard on django and keeps the rest at token weight=1-2 -- a "drain
 #: naturally, drop silently once empty" bonus, not buckets sized to recur.
 #: astropy is dropped outright (0 remaining, no bonus possible).
+#:
+#: 2026-09-02, on landing to main: the fourth field makes that bonus policy
+#: real in code. Until now every slice, bonus or not, hit the ``built <
+#: count`` abort below when its pool ran dry -- and psf/requests is dry
+#: (2 remaining measured at wave 10, one taken by each of waves 10 and 11).
+#: A ``core`` slice that comes up short still aborts the wave, because that is
+#: the population pin; a ``bonus`` slice that comes up short, or empty, is
+#: reported and dropped from the wave as the note above always intended.
+CORE = "core"
+BONUS = "bonus"
 WAVE_MIX = [
-    ("django/django", "15 min - 1 hour", 24),
-    ("django/django", "<15 min fix", 12),
-    ("pydata/xarray", "15 min - 1 hour", 1),
-    ("pytest-dev/pytest", "<15 min fix", 2),
-    ("psf/requests", "<15 min fix", 1),
+    ("django/django", "15 min - 1 hour", 24, CORE),
+    ("django/django", "<15 min fix", 12, CORE),
+    ("pydata/xarray", "15 min - 1 hour", 1, BONUS),
+    ("pytest-dev/pytest", "<15 min fix", 2, BONUS),
+    ("psf/requests", "<15 min fix", 1, BONUS),
 ]
 
 
 def run(args: list[str], *, timeout: int = 36000) -> int:
     print("+", " ".join(args[:6]), "...", flush=True)
     return subprocess.run(args, timeout=timeout).returncode
+
+
+def existing_wave_reports(kit_root: Path, wave: int) -> list[Path]:
+    """Reports already graded for *wave* -- evidence a rebuild would overwrite."""
+    reports = kit_root / "reports"
+    if not reports.is_dir():
+        return []
+    return sorted(p for p in reports.glob(f"arm-*-wave{wave}.json") if p.is_file())
+
+
+def scale_mix(
+    mix: list[tuple[str, str, int, str]], size: int
+) -> list[tuple[str, str, int, str]]:
+    """Scale *mix* to *size* proportionally, keeping every slice represented.
+
+    A wave that dropped whole repos would sample a different population from
+    its siblings and could not be unioned with them, so every slice keeps at
+    least one target row.
+    """
+    nominal = sum(count for _, _, count, _ in mix)
+    scale = size / nominal
+    return [
+        (repo, difficulty, max(1, round(count * scale)), kind)
+        for repo, difficulty, count, kind in mix
+    ]
+
+
+def shortfall_is_fatal(kind: str) -> bool:
+    """Only a core slice that comes up short changes the pinned population."""
+    return kind == CORE
 
 
 def main() -> int:
@@ -134,23 +174,37 @@ def main() -> int:
 
     wave = args.wave
     cases = KIT_ROOT / "dataset" / f"cases.swebench.wave{wave}.jsonl"
+
+    # A graded wave is evidence. Re-mining its cases would replace the tracked
+    # manifest and then run_ab.py would write new results over the same
+    # reports/*-wave{N}.json paths, silently destroying the provenance of what
+    # was landed (WAVE-RUNBOOK rule 3). The next experiment gets the next number.
+    graded = existing_wave_reports(KIT_ROOT, wave)
+    if args.rebuild_cases and graded:
+        print(
+            f"wave {wave}: refusing --rebuild-cases: "
+            f"{', '.join(p.name for p in graded)} already hold this wave's graded "
+            f"evidence and run_ab.py would overwrite them (WAVE-RUNBOOK rule 3). "
+            f"Use the next unused wave number instead.",
+            file=sys.stderr,
+            flush=True,
+        )
+        return 1
+
     # Always scan each pool from the start. Non-overlap comes from
     # build_swebench_cases.py skipping instance ids that already have a case
-    # directory (EVIDENCE.md §2.10), not from this offset — a growing offset
-    # was found to permanently strand real, unbuilt instances in any pool
-    # smaller than the offset (EVIDENCE.md §2.13).
+    # directory (EVIDENCE.md §2.10) or that any tracked wave manifest or report
+    # has already drawn (tools/drawn_instances.py -- so a fresh checkout without
+    # the gitignored case trees cannot re-draw graded instances), not from this
+    # offset — a growing offset was found to permanently strand real, unbuilt
+    # instances in any pool smaller than the offset (EVIDENCE.md §2.13).
     offset = 0
 
-    # Scale the mix to the requested size, keeping every repo represented:
-    # a wave that dropped whole repos would sample a different population
-    # from its siblings and could not be unioned with them.
-    nominal = sum(count for _, _, count in WAVE_MIX)
-    scale = args.size / nominal
-    mix = [
-        (repo, difficulty, max(1, round(count * scale)))
-        for repo, difficulty, count in WAVE_MIX
-    ]
-    print(f"wave {wave}: targeting {args.size} -> {sum(c for _, _, c in mix)} cases", flush=True)
+    mix = scale_mix(WAVE_MIX, args.size)
+    print(
+        f"wave {wave}: targeting {args.size} -> {sum(c for _, _, c, _ in mix)} cases",
+        flush=True,
+    )
 
     # A rerun after a failed arm has to rerun *this* wave, not mine a new one.
     # build_swebench_cases.py skips instances whose case directory already
@@ -174,7 +228,7 @@ def main() -> int:
         return run_arms(wave, cases, existing_rows, args)
 
     parts: list[Path] = []
-    for index, (repo, difficulty, count) in enumerate(mix):
+    for index, (repo, difficulty, count, kind) in enumerate(mix):
         part = KIT_ROOT / "dataset" / f"_wave{wave}_{index}.jsonl"
         code = run(
             [
@@ -196,6 +250,18 @@ def main() -> int:
                 1 for line in part.read_text(encoding="utf-8").splitlines() if line.strip()
             )
             parts.append(part)
+        else:
+            part.unlink(missing_ok=True)
+        if built < count and not shortfall_is_fatal(kind):
+            # A bonus slice drains naturally and drops silently once empty;
+            # its rows were never part of the population pin (WAVE_MIX note).
+            print(
+                f"wave {wave}: bonus slice {repo} / {difficulty} yielded {built} of "
+                f"{count} (builder exit {code}); its pool is draining, dropping the "
+                f"shortfall from this wave as WAVE_MIX intends",
+                flush=True,
+            )
+            continue
         if built < count:
             for stale in parts:
                 stale.unlink(missing_ok=True)
