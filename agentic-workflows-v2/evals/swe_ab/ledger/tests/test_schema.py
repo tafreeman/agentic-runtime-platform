@@ -506,6 +506,35 @@ def test_full_valid_insert_path_across_every_table(
 
 
 # ---------------------------------------------------------------------
+# trial identity: trial_id is the primary key; idx_trial_active_cell
+# enforces at most one non-superseded trial per design cell.
+# ---------------------------------------------------------------------
+
+
+def test_trial_same_cell_new_trial_id_without_supersedes_raises(
+    ledger_conn: sqlite3.Connection,
+) -> None:
+    insert_base_chain(ledger_conn)
+    _insert(ledger_conn, "trial", make_trial(trial_id="trl_first").to_row())
+    with pytest.raises(sqlite3.IntegrityError):
+        _insert(ledger_conn, "trial", make_trial(trial_id="trl_second").to_row())
+
+
+def test_trial_correction_via_supersedes_succeeds(
+    ledger_conn: sqlite3.Connection,
+) -> None:
+    insert_base_chain(ledger_conn)
+    _insert(ledger_conn, "trial", make_trial(trial_id="trl_original").to_row())
+    _insert(
+        ledger_conn,
+        "trial",
+        make_trial(trial_id="trl_correction", supersedes="trl_original").to_row(),
+    )
+    count = ledger_conn.execute("SELECT COUNT(*) FROM trial").fetchone()[0]
+    assert count == 2
+
+
+# ---------------------------------------------------------------------
 # Append-only triggers
 # ---------------------------------------------------------------------
 

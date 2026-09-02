@@ -287,7 +287,7 @@ _PK_COLUMNS: dict[str, tuple[str, ...]] = {
     "wave": ("wave_id",),
     "wave_task": ("wave_id", "task_id"),
     "plan_cell": ("wave_id", "arm_id", "task_id", "run_idx"),
-    "trial": ("wave_id", "arm_id", "task_id", "run_idx"),
+    "trial": ("trial_id",),
     "step_usage": ("trial_id", "step_idx"),
     "spend": ("spend_id",),
     "grade": ("grade_id",),

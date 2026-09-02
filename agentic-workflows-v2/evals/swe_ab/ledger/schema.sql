@@ -221,7 +221,7 @@ CREATE TABLE trial (
     arm_id TEXT NOT NULL,
     task_id TEXT NOT NULL,
     run_idx INTEGER NOT NULL,
-    trial_id TEXT NOT NULL UNIQUE,
+    trial_id TEXT PRIMARY KEY,
     batch_id TEXT NOT NULL,
     substrate_id TEXT NOT NULL REFERENCES substrate (substrate_id),
     arm_config_id TEXT NOT NULL REFERENCES arm_config (arm_config_id),
@@ -242,7 +242,6 @@ CREATE TABLE trial (
     transcript_blob TEXT REFERENCES blob (digest),
     answer_blob TEXT REFERENCES blob (digest),
     supersedes TEXT REFERENCES trial (trial_id),
-    PRIMARY KEY (wave_id, arm_id, task_id, run_idx),
     FOREIGN KEY (wave_id) REFERENCES wave (wave_id),
     FOREIGN KEY (arm_id) REFERENCES arm (arm_id),
     FOREIGN KEY (task_id) REFERENCES task (task_id),
@@ -380,6 +379,14 @@ END;
 
 CREATE INDEX idx_trial_wave_arm ON trial (wave_id, arm_id);
 CREATE INDEX idx_trial_task ON trial (task_id);
+
+-- Only one *active* (non-superseded) trial may occupy a given design cell;
+-- a correction inserts a new trial_id with supersedes pointing at the row
+-- it replaces, which is exempt from this constraint (WHERE supersedes IS
+-- NULL) so the correction chain itself never collides.
+CREATE UNIQUE INDEX idx_trial_active_cell
+    ON trial (wave_id, arm_id, task_id, run_idx)
+    WHERE supersedes IS NULL;
 CREATE INDEX idx_grade_trial ON grade (trial_id);
 CREATE INDEX idx_step_usage_trial ON step_usage (trial_id);
 CREATE INDEX idx_spend_trial ON spend (trial_id);
