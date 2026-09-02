@@ -30,6 +30,7 @@ import sys
 from pathlib import Path
 
 import pandas as pd
+from drawn_instances import previously_drawn_instance_ids
 
 KIT_ROOT = Path(__file__).resolve().parent.parent
 CASES_DIR = KIT_ROOT / "dataset" / "swebench_cases"
@@ -55,8 +56,18 @@ def patched_files(patch: str) -> list[str]:
 
 
 def docker(args: list[str], timeout: int = 1800) -> tuple[int, str]:
+    # Source files pulled from instance images are UTF-8; without an explicit
+    # encoding, Windows' default cp1252 raises UnicodeDecodeError on the first
+    # non-ASCII byte and takes down the whole bucket's build (EVIDENCE.md
+    # §2.12/§2.16). errors="replace" trades a mojibake character for never
+    # crashing on truly undecodable bytes.
     proc = subprocess.run(
-        ["docker", *args], capture_output=True, text=True, timeout=timeout
+        ["docker", *args],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=timeout,
     )
     return proc.returncode, proc.stdout + proc.stderr
 
@@ -103,6 +114,16 @@ def main() -> int:
     already = {d.name for d in CASES_DIR.iterdir() if d.is_dir()} if CASES_DIR.is_dir() else set()
     if already:
         print(f"skipping {len(already)} instances already built")
+    # The case tree is gitignored, so it alone cannot protect a fresh checkout
+    # (or one whose cache was cleared) from re-drawing instances earlier waves
+    # already graded. The tracked manifests and reports carry the same ids.
+    drawn = previously_drawn_instance_ids(KIT_ROOT)
+    if drawn - already:
+        print(
+            f"skipping {len(drawn - already)} more instances already drawn by a "
+            "tracked wave manifest or report"
+        )
+    already |= drawn
 
     rows: list[dict] = []
     for instance in pool.iloc[args.offset :].itertuples():

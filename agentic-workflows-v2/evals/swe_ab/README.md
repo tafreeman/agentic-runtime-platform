@@ -201,7 +201,7 @@ uv run python -c "import sys; sys.path.insert(0,'.'); \
   from container_harness import container_preflight; print(container_preflight() or 'READY')"
 
 # one wave: ~16 paired instances, both arms, ~50 min, pinned settings
-uv run python tools/run_wave.py --wave N --size 16 --prune-images
+uv run --extra swe-ab python tools/run_wave.py --wave N --size 16 --prune-images
 
 # union every wave so far — one --left/--right pair per report
 uv run python analyze.py --left reports/arm-a-direct-wave1.json \

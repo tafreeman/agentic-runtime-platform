@@ -6,6 +6,12 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### SWE-bench A/B campaign evidence lands on main; `swe-ab` extra (2026-09-02)
+
+- **`evals/swe_ab/reports/` is now tracked** (42 reports, ~9 MB): the per-sample verdicts are the evidence the campaign exists to produce, and they previously lived only on whichever machine last ran a wave. `artifacts/`, `sandbox/` and the case trees stay ignored. `docs/EVIDENCE.md` §1.6 is regenerated from the corpus and carries the trust caveats per slice; nothing is deleted (WAVE-RUNBOOK rule 3).
+- **New `swe-ab` extra carries `pandas`**, which only `evals/swe_ab/tools/build_swebench_cases.py` imports (to read the SWE-bench Verified parquet). It was briefly a core runtime dependency on the campaign branch; it is not one on `main`. The kit's runbook commands pass `--extra swe-ab` because a plain exact `uv sync` drops extras it was not asked for (EVIDENCE.md §2.12).
+- Campaign harness fixes since the PR #282 squash: WAVE_MIX rebalanced onto the buckets with remaining pool depth, a failed Ollama call can no longer silently fall through to the operator's paid Claude subscription, and a provider under test keeps its own credential while every other paid credential is blanked (`NVIDIA_API_KEY`, `OPENROUTER_API_KEY`, `DIGITALOCEAN_TOKEN`).
+
 ### DigitalOcean Serverless Inference joins as a LangChain-path provider (2026-09-01)
 
 - **New `digitalocean:` prefix and `build_digitalocean_model`.** A `ChatOpenAI` base-URL swap to `https://inference.do-ai.run/v1`, the same shape as the OpenRouter builder: DigitalOcean fronts DeepSeek, GLM, Kimi, Qwen and Nemotron behind one OpenAI-compatible surface. Ids are the bare catalog id (`digitalocean:deepseek-v4-flash-0731`), gated on `DIGITALOCEAN_TOKEN` (`PROVIDER_ENV_KEYS`, `.env.example`). Verified end-to-end against `deepseek-v4-flash-0731`.

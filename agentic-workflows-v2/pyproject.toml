@@ -51,6 +51,12 @@ ek = ["executionkit>=0.3.0,<0.4.0"]
 eval = [
     "agentic-evalkit>=0.3.0,<0.4.0",
 ]
+# SWE-bench A/B evaluation kit (evals/swe_ab): build_swebench_cases.py reads the
+# SWE-bench Verified parquet with pandas. Kept out of the runtime dependency set
+# on purpose; the kit's runbook passes `--extra swe-ab` to every `uv run` that
+# builds cases, because a plain exact `uv sync` drops extras it was not asked for
+# (EVIDENCE.md §2.12).
+swe-ab = ["pandas>=3.0.5,<4"]
 dev = [
     "pytest>=7.0",
     "pytest-asyncio>=0.21",

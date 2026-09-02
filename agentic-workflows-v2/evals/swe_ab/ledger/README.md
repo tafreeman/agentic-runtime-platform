@@ -136,12 +136,21 @@ uv run python migrate_reports.py   # writes ledger/campaign.db, ledger/blobs/,
 uv run python diff_verdicts.py     # McNemar p / paired-bootstrap CI, ledger vs analyze.py
 ```
 
-Both scripts are exercised in `ledger/tests/test_migrate_reports.py` against
-synthetic fixtures only — no `reports/*.json` are committed on this branch
-yet, so there is nothing real for `migrate_reports.py` to migrate until that
-data lands (tracked separately; the report corpus that existed on the
-branch this was extracted from needs its own trustworthiness review before
-it is reintroduced — see the branch's PR description). `CAMPAIGNS` in
-`migrate_reports.py` documents the intended campaign/wave/arm grouping for
-that corpus (37 of 42 files, 5 excluded with reasons) for whenever it
-returns.
+37 of the 42 files under `reports/` are migrated as of the last run
+(2026-09-02; 5 excluded, each with a reason recorded in
+`migrate_reports.EXCLUDED_REPORTS`) into 1,703 trials and 1,130 grades across
+21 waves in 8 campaigns. `diff_verdicts.py` compares all 15 two-arm waves that
+have an instance both arms verdicted on; all 15 agree with `analyze.py` exactly
+on the discordant counts and McNemar's p, and within tolerance on the bootstrap
+CI (order-sensitive by construction — see `diff_verdicts.py`'s module
+docstring). `pending_blobs.jsonl` is 0 rows on this corpus: every one of the
+813 spilled `answer_blob` references resolves against `artifacts/` on the
+machine that ran the campaign, but the mechanism (and its `blob` tombstone
+fallback for a digest that does not) is exercised in
+`ledger/tests/test_migrate_reports.py` regardless.
+
+Regenerating the export needs that machine's gitignored `artifacts/` and
+`dataset/swebench_cases/` trees alongside the tracked `reports/`: without the
+case trees the migration stops at the first instance whose `oracle.json` is
+missing rather than inventing a Task row, and without `artifacts/` every
+spilled answer becomes a `blob` tombstone plus a `pending_blobs.jsonl` row.
