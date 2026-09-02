@@ -415,6 +415,9 @@ def save_workflow_document(
 
 
 def _parse_file(path: Path) -> WorkflowConfig:
+    # Private: every caller reaches here through get_workflow_path, which
+    # confines the path to the definitions dir via _resolve_workflow_path →
+    # ensure_within_base. Do not call this with an unvalidated path.
     with open(path, encoding="utf-8") as f:
         data = yaml.safe_load(f)
     if not isinstance(data, dict):

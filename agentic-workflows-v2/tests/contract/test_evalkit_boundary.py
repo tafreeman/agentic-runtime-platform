@@ -16,9 +16,13 @@ from __future__ import annotations
 
 import ast
 import importlib.util
+import tomllib
 from pathlib import Path
 
 import pytest
+from packaging.requirements import Requirement
+from packaging.utils import canonicalize_name
+from packaging.version import Version
 
 agentic_evalkit = pytest.importorskip(
     "agentic_evalkit",
@@ -76,6 +80,30 @@ def test_evalkit_is_installed_not_vendored() -> None:
     )
 
 
-def test_evalkit_version_is_pinned_series() -> None:
-    """The dependency is pinned to the 0.1.x series (see the ``eval`` extra)."""
-    assert agentic_evalkit.__version__.startswith("0.1."), agentic_evalkit.__version__
+def test_evalkit_version_satisfies_the_declared_pin() -> None:
+    """The installed evalkit must satisfy the ``eval`` extra's own declared pin.
+
+    Derived from ``pyproject.toml`` rather than hardcoded. This assertion used to
+    read ``startswith("0.1.")``; when the pin moved to ``>=0.3.0,<0.4.0`` the
+    literal silently became wrong, and nothing caught it because no CI job
+    installed the ``eval`` extra. Reading the pin means the two can no longer
+    disagree.
+    """
+    pyproject = Path(__file__).resolve().parents[2] / "pyproject.toml"
+    declared = tomllib.loads(pyproject.read_text(encoding="utf-8"))["project"][
+        "optional-dependencies"
+    ]["eval"]
+
+    requirements = [
+        requirement
+        for requirement in (Requirement(entry) for entry in declared)
+        if canonicalize_name(requirement.name) == "agentic-evalkit"
+    ]
+    assert requirements, "the `eval` extra no longer declares agentic-evalkit"
+
+    installed = Version(agentic_evalkit.__version__)
+    for requirement in requirements:
+        assert installed in requirement.specifier, (
+            f"installed agentic-evalkit {installed} does not satisfy the pin "
+            f"'{requirement}' declared in {pyproject}"
+        )

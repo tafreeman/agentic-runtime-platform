@@ -8,6 +8,23 @@
 package), ADR-033 (eval-config root resolution), ADR-023 (ExecutionKit
 external-package precedent)
 
+> **Update 2026-08-09.** Two premises in this ADR have since changed. The
+> original text is left as written, for the record.
+>
+> `agentic-evalkit` now has a public remote and is published to PyPI, so the
+> install-mechanism ladder below reached **rung 3 (version-range pin) directly**
+> — the git-pin rung was skipped. The extra pins `>=0.3.0,<0.4.0`.
+>
+> CI *does* now install it. The `evalkit-bridge-tests` job in `ci.yml` installs
+> the `eval` extra, asserts `agentic_evalkit` genuinely imports, and runs
+> `tests/test_evalkit_bridge.py` and `tests/contract/test_evalkit_boundary.py`.
+> So "no public git remote today" and "CI for `agentic-workflows-v2` does not
+> install `agentic-evalkit`" are both obsolete.
+>
+> Everything else stands, and still matters: the guarded import, the
+> `RuntimeError`-rather-than-ImportError contract, and the one-way boundary are
+> unchanged requirements.
+
 ## Context
 
 `agentic-v2-eval` is ARP's in-tree evaluation package: rubric-YAML scoring

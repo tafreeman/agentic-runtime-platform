@@ -10,7 +10,22 @@ version: 2
 # and docker patch/minor PRs self-merge once the required checks pass. pip is
 # deliberately NOT auto-merged — Dependabot does not regenerate uv.lock, so a pip
 # PR must have its lock + ci-constraints.txt re-synced before merge (one grouped
-# PR per directory, merged by hand after `just relock` (re-locks + regenerates ci-constraints.txt).
+# PR per directory, merged by hand — or via .github/workflows/dependabot-relock.yml
+# (workflow_dispatch) — after `uv lock` + re-export. Note that workflow uses
+# plain `uv lock`, not `just relock`'s `uv lock --upgrade`: see the comment on
+# its relock step for why (`--upgrade` turned a 3-package PR into 100).
+#
+# pip-root is split by NAME PATTERN into pip-root-llm / pip-root-tooling /
+# pip-root-rest. A dependency-type split was tried first and did not work: of
+# the root directory's 84-plus tracked packages, only ~9 are dev tools and the
+# bulk are transitive pins in ci-constraints.txt, which Dependabot classifies
+# as production — so `dependency-type: production` re-bundled all 84 into one
+# PR (#267, identical in size to the #261 it replaced). Runtime deps
+# (anthropic, openai, langchain-core, pydantic, ...) carry real behavior risk
+# and get their own PR; dev-tooling (pytest, ruff, mypy, black, pre-commit,
+# ...) is lower-risk and reviewable at a glance separately. pip-runtime and
+# pip-eval stay single groups — each is already small (3 and a handful of
+# updates respectively).
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -43,7 +58,33 @@ updates:
       - "python"
     open-pull-requests-limit: 10
     groups:
-      pip-root:
+      # Order matters: Dependabot assigns each dependency to the FIRST group
+      # whose patterns match, so the catch-all must stay last.
+      pip-root-llm:
+        patterns:
+          - "anthropic*"
+          - "openai*"
+          - "langchain*"
+          - "langgraph*"
+          - "claude-agent-sdk*"
+          - "google-genai*"
+          - "mcp*"
+          - "tiktoken*"
+      pip-root-tooling:
+        patterns:
+          - "pytest*"
+          - "ruff*"
+          - "mypy*"
+          - "black*"
+          - "pre-commit*"
+          - "coverage*"
+          - "bandit*"
+          - "isort*"
+          - "docformatter*"
+          - "detect-secrets*"
+          - "fakeredis*"
+          - "types-*"
+      pip-root-rest:
         patterns:
           - "*"
     ignore:

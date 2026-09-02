@@ -1,0 +1,7 @@
+# Runs the official SWE-bench harness on Linux, talking to the host's Docker
+# daemon through a mounted socket, so the harness spawns its instance
+# containers as siblings. Windows cannot import swebench at all (it needs the
+# Unix-only `resource` module), and this avoids changing anything on the host.
+FROM python:3.12-slim
+RUN pip install --no-cache-dir "swebench>=4.1,<5" docker
+WORKDIR /work

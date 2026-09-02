@@ -27,6 +27,7 @@ from tools.llm.probe_config import (
     PREFIX_LOCAL_API,
     PREFIX_OLLAMA,
     PREFIX_OPENAI,
+    PREFIX_OPENROUTER,
     PREFIX_WINDOWS_AI,
     ProbeResult,
 )
@@ -39,6 +40,7 @@ from tools.llm.probe_providers_cloud import (
     probe_gemini,
     probe_github,
     probe_openai,
+    probe_openrouter,
 )
 from tools.llm.probe_providers_local import (
     probe_ai_toolkit,
@@ -72,6 +74,7 @@ _PROVIDER_PREFIXES: tuple[tuple[tuple[str, ...], str], ...] = (
     ((PREFIX_CLAUDE,), "claude"),
     ((PREFIX_LMSTUDIO, PREFIX_LMSTUDIO_ALT), "lmstudio"),
     ((PREFIX_LOCAL_API,), "local_api"),
+    ((PREFIX_OPENROUTER,), "openrouter"),
 )
 
 
@@ -124,6 +127,8 @@ def probe_model(model: str, log: LogFn = None) -> ProbeResult:
         return probe_lmstudio(model, log)
     elif provider == "local_api":
         return probe_local_api(model, log)
+    elif provider == "openrouter":
+        return probe_openrouter(model, log)
     else:
         # Unknown provider -- not usable without a probe method
         return ProbeResult(

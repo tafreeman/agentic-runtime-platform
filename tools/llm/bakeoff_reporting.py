@@ -8,6 +8,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from tools.llm._redact import redact_inventory
+
 logger = logging.getLogger(__name__)
 
 
@@ -42,7 +44,9 @@ def _write_reports(
 
     json_path = out_dir / f"model_bakeoff_{ts}.json"
     md_path = out_dir / f"model_bakeoff_{ts}.md"
-    json_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    json_path.write_text(
+        json.dumps(redact_inventory(payload), indent=2), encoding="utf-8"
+    )
 
     lines: list[str] = []
     lines.append("# Model Bakeoff Report")

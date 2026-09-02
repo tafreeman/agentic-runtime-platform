@@ -40,7 +40,6 @@ long-running or multi-tenant environment.
 | Tool controls | Explicit tool allowlists and approval checks for high-impact tools; approval-required calls fail closed when no approval provider is registered |
 | Server and UI | FastAPI endpoints, SSE and WebSocket run events, a React dashboard, workflow editing, run history, model settings, and evaluation views |
 | Evaluation | YAML rubrics, objective metrics, batch and streaming runners, LLM-as-judge support, and report generation |
-| RAG library | Loading, chunking, embeddings, in-memory or LanceDB storage, BM25, hybrid retrieval, reranking, and context assembly |
 | Integrations | OpenTelemetry, Prometheus, Redis-backed shared state, and an MCP client |
 
 ## Quick start
@@ -182,7 +181,8 @@ superseded; the adapter remains part of the current architecture. See
 ## Model providers
 
 The runtime supports OpenAI, Anthropic, Gemini, Azure OpenAI, Azure AI Foundry,
-NVIDIA NIM, OpenRouter, Ollama, and compatible local endpoints. Provider
+NVIDIA NIM, OpenRouter, DigitalOcean Serverless Inference, Ollama, and
+compatible local endpoints. Provider
 packages and credentials depend on the selected execution path.
 
 Copy the environment template before using a real provider:
@@ -201,19 +201,12 @@ Set only the credentials you need. Do not commit `.env`. The
 [configuration reference](docs/configuration.md) lists the supported variables
 and explains which settings are read at startup or per request.
 
-RAG embedding providers are configured separately from chat providers. The
-Python RAG factory can create LiteLLM-backed OpenAI, Voyage, Ollama, or
-fully-qualified LiteLLM embedders. The current `agentic rag` CLI still uses a
-process-local deterministic embedder and does not persist an index between
-separate commands. See [RAG pipeline](docs/rag/index.md) before relying on that
-CLI.
-
 ## Repository layout
 
 ```text
 agentic-runtime-platform/
 ├── agentic-workflows-v2/
-│   ├── agentic_v2/           # Runtime, CLI, server, providers, RAG, and MCP
+│   ├── agentic_v2/           # Runtime, CLI, server, providers, and MCP
 │   ├── tests/                # Python tests
 │   └── ui/                   # React and Vite dashboard
 ├── agentic-v2-eval/          # Rubric and evaluation package
@@ -241,7 +234,6 @@ cross-package import.
 | Integrate with HTTP or WebSocket | [API contracts](docs/api-contracts-runtime.md) |
 | Configure providers and security | [Configuration](docs/configuration.md) |
 | Run or extend the UI | [UI architecture](docs/architecture-ui.md) |
-| Build a RAG pipeline | [RAG pipeline](docs/rag/index.md) |
 | Evaluate outputs | [Evaluation overview](docs/architecture-eval.md) |
 | Deploy and operate the service | [Operations](docs/operations/index.md) |
 | Check known gaps | [Known limitations](docs/KNOWN_LIMITATIONS.md) |

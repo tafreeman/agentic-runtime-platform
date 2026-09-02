@@ -32,7 +32,6 @@ or a live Claude tool-choice run.
 | File | What it shows | Provider call |
 |---|---|---|
 | [01_hello_workflow.py](01_hello_workflow.py) | Build and execute a three-step pipeline | No |
-| [02_rag_pipeline.py](02_rag_pipeline.py) | Chunk, index, retrieve, and assemble document context | No |
 | [03_custom_agent.py](03_custom_agent.py) | Implement a typed `BaseAgent` with lifecycle events | No; uses a mock call |
 | [04_model_routing.py](04_model_routing.py) | Configure fallback chains, scoped overrides, and provider health | No |
 | [05_evaluation.py](05_evaluation.py) | Score results with inline and bundled rubrics | No |
@@ -41,16 +40,10 @@ or a live Claude tool-choice run.
 | [forced_tool_choice.py](forced_tool_choice.py) | Compare forced, required, and automatic tool selection | Only with `--live` |
 | [sdk_task_orchestrator.py](sdk_task_orchestrator.py) | Delegate tasks through the Claude Agent SDK `Task` tool | Yes |
 
-The RAG example uses `InMemoryEmbedder`, a deterministic hash embedder intended
-for tests and demonstrations. It does not measure semantic similarity and
-should not be used to judge retrieval quality. See the [RAG guide](../docs/rag/index.md)
-for real embedding providers and durable vector stores.
-
 ## Run the local examples
 
 ```text
 python examples/01_hello_workflow.py
-python examples/02_rag_pipeline.py
 python examples/03_custom_agent.py
 python examples/04_model_routing.py
 python examples/05_evaluation.py
@@ -93,7 +86,6 @@ required key or SDK is unavailable.
 | Package | APIs demonstrated |
 |---|---|
 | `agentic_v2.engine` | Pipelines, DAGs, step definitions, and execution context |
-| `agentic_v2.rag` | Documents, chunking, retrieval, and context assembly |
 | `agentic_v2.agents` | Base agent, configuration, events, and state |
 | `agentic_v2.models` | Tier routing, fallback chains, and health tracking |
 | `agentic_v2.adapters` | Engine discovery |

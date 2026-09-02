@@ -24,6 +24,7 @@ no live keys, no network.
 
 from __future__ import annotations
 
+import inspect
 from typing import Any
 
 import pytest
@@ -58,6 +59,24 @@ except ImportError:  # pragma: no cover — guarded for isolated environments
         allow_module_level=True,
     )
 
+# Imported OUTSIDE the skip boundary above, deliberately. `_TrackedProvider` is a
+# private, unexported ExecutionKit symbol that
+# `agentic_v2.engine.ek_step_delegation` imports at module scope, and this suite
+# exists to catch its removal. Inside that block a rename would raise ImportError,
+# be swallowed by the module-level skip, and report green for precisely the break
+# it is meant to detect — while ARP would fail at import time in production. The
+# `ek-delegation-tests` job's own guard only checks `import executionkit`, so it
+# would not catch it either.
+try:
+    from executionkit.patterns.base import _TrackedProvider
+except ImportError as exc:  # pragma: no cover
+    raise AssertionError(
+        "executionkit is importable but no longer exposes "
+        "executionkit.patterns.base._TrackedProvider, which "
+        "agentic_v2.engine.ek_step_delegation imports. Failing loudly rather "
+        "than skipping: this is the consumer break the suite exists to detect."
+    ) from exc
+
 
 @pytest.fixture(autouse=True, scope="module")
 def _force_no_llm_env() -> Any:
@@ -79,6 +98,34 @@ def _force_no_llm_env() -> Any:
     finally:
         mp.undo()
         get_settings.cache_clear()
+
+
+# ── Consumer contract: EK _TrackedProvider ────────────────────────────
+# ARP imports ``executionkit.patterns.base._TrackedProvider`` — a private,
+# unexported symbol.  EK could rename it without semver signal, breaking ARP
+# at import time.  This test asserts the symbol exists and has the interface
+# we depend on, so a rename is caught the next time this suite runs (the
+# ``ek-delegation-tests`` CI job).
+
+
+def test_ek_tracked_provider_interface() -> None:
+    """Assert that ``_TrackedProvider`` has the interface ARP depends on."""
+    # Existence: the import at module level already validates this.
+    assert _TrackedProvider is not None
+
+    # Constructor signature: (provider, tracker, metadata, budget, retry, context)
+    sig = inspect.signature(_TrackedProvider.__init__)
+    params = list(sig.parameters.keys())
+    for expected in ("provider", "tracker", "metadata", "budget", "retry", "context"):
+        assert expected in params, (
+            f"_TrackedProvider.__init__ missing expected parameter {expected!r}; "
+            f"got {params}"
+        )
+
+    # Must have a ``complete`` method (the async method we call)
+    assert hasattr(_TrackedProvider, "complete"), (
+        "_TrackedProvider is missing the ``complete`` method"
+    )
 
 
 _TIER = ModelTier.TIER_2

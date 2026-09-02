@@ -63,6 +63,7 @@ selected adapter, installed extras, endpoint access, and configured model IDs.
 | GitHub Models | `GITHUB_TOKEN` or `GH_TOKEN` |
 | NVIDIA NIM | `NVIDIA_API_KEY`; optional `NVIDIA_BASE_URL` for self-hosted NIM |
 | OpenRouter | `OPENROUTER_API_KEY`; optional `OPENROUTER_BASE_URL` |
+| DigitalOcean Serverless Inference | `DIGITALOCEAN_TOKEN` (LangChain path only; ids are `digitalocean:<catalog id>`) |
 | Azure OpenAI | `AZURE_OPENAI_API_KEY` and `AZURE_OPENAI_ENDPOINT`, or indexed pairs such as `_0`, `_1`, and matching deployment values |
 | Azure AI Foundry | `AZURE_FOUNDRY_API_KEY` and the endpoint selected by the Foundry adapter |
 | Ollama runtime | `OLLAMA_BASE_URL`, default `http://localhost:11434`; optional `OLLAMA_API_KEY` |
@@ -93,20 +94,14 @@ instead of warnings. `AGENTIC_STRICT_MODEL_VERIFY=1` enables strict local model
 hash verification. `AGENTIC_TRUSTED_MODEL_HASHES` may point to an operator
 override for trusted model hashes.
 
-## RAG embeddings
-
-RAG embedding providers are configured in `EmbeddingConfig`, not by the chat
-model tier settings.
-
-| `EmbeddingConfig.provider` | Credential or endpoint behavior |
-|---|---|
-| `openai` | Reads `OPENAI_API_KEY` |
-| `voyage` | Reads `VOYAGE_API_KEY` |
-| `local` | Uses a LiteLLM Ollama model string; no key is forwarded by the RAG module |
-| `litellm` | Passes the configured model string to LiteLLM, which resolves its normal environment settings |
-
-The configured model and dimensions must match the stored index. See
-[RAG pipeline](rag/index.md).
+`AGENTIC_MAX_COST_LANE=local|free|paid` caps the candidate models a tier may
+route to by curated `cost_lane` (see `model_registry.yaml`), filtering the
+candidate list rather than reordering it -- a pinned `model_override` is
+filtered too. Default `paid` (unset) filters nothing, matching prior
+behavior. If every candidate is filtered out, the request fails with
+`CostLaneCeilingExceededError` naming the ceiling rather than silently
+returning nothing or falling back to an unfiltered chain. See
+[ADR-059](adr/ADR-059-model-cost-lane-ceiling.md).
 
 ## Execution and model-call settings
 
@@ -115,6 +110,7 @@ The configured model and dimensions must match the stored index. See
 | `AGENTIC_DEFAULT_ADAPTER` | `langchain` | Adapter the server validates and uses by default; set `native` to avoid the LangChain dependency |
 | `AGENTIC_NO_LLM` | `0` | Replace model calls with fixed placeholder responses |
 | `AGENTIC_TOKEN_BUDGET` | unset | Positive process-wide token cap on the shared native client; zero, negative, blank, or invalid values disable the cap |
+| `AGENTIC_MAX_COST_LANE` | `paid` | Filters model candidates to `local`/`free`/`paid` and below by curated `cost_lane`; unrecognised values fall back to `paid` (no filtering) with a logged warning |
 | `AGENTIC_EK_PROVIDER` | `1` | Use the ExecutionKit-backed provider path when the optional package is available; set `0` for the legacy path |
 | `AGENTIC_EXTERNAL_AGENTS_DIR` | unset | Directory containing additional agent definitions |
 | `SHELL` | `/bin/bash` | Shell executable used by shell-enabled paths |

@@ -5,8 +5,6 @@ Commands:
 - agentic compare <workflow> --input <file>   - Compare adapters side by side
 - agentic list workflows|agents|tools         - List available components
 - agentic validate <workflow>                 - Validate a workflow definition
-- agentic rag ingest --source <path>          - Ingest documents into RAG
-- agentic rag search <query>                  - Search the RAG index
 - agentic serve                               - Start the dashboard server
 """
 
@@ -49,12 +47,9 @@ from .display import (
 )
 from .helpers import (
     _normalize_result,
-    _rag_ingest_impl,  # noqa: F401 — patched by tests via agentic_v2.cli.main._rag_ingest_impl
-    _rag_search_impl,  # noqa: F401 — patched by tests via agentic_v2.cli.main._rag_search_impl
     _run_adapter,
     _run_via_adapter,
 )
-from .rag_commands import rag_group
 
 logger = logging.getLogger(__name__)
 
@@ -86,9 +81,6 @@ _runner = None  # lazily initialized by _get_runner()
 
 # Register shutdown hook for tracing cleanup
 atexit.register(shutdown_tracing)
-
-# Register RAG subcommand group
-app.add_typer(rag_group, name="rag")
 
 # Register DevEx subcommand group
 app.add_typer(devex_app, name="devex")

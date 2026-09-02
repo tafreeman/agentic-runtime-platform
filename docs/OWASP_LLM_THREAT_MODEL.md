@@ -17,28 +17,26 @@ The review covers:
 - HTTP and WebSocket clients sending workflow inputs;
 - the FastAPI server and workflow engine;
 - cloud and local model providers;
-- retrieved documents and vector stores;
 - agents passing content to other agents;
 - built-in file, Git, shell, HTTP, and MCP tools;
 - run, audit, trace, dataset, and evaluation storage; and
 - the React dashboard.
 
 The main boundaries are client-to-server, server-to-model provider,
-retrieval-to-model context, model-to-tool, tenant-to-storage, and
-process-to-external service.
+model-to-tool, tenant-to-storage, and process-to-external service.
 
 ## Current control map
 
 | OWASP risk | Current controls | Important residual risk |
 | --- | --- | --- |
-| LLM01 Prompt Injection | Request and model-loop sanitizers detect common instruction overrides, prompt extraction, delimiter escapes, and unsafe Unicode. RAG context is framed and sanitized before use. | Pattern matching cannot identify every direct or indirect injection. Sanitization is a risk reduction layer, not proof that content is safe. |
+| LLM01 Prompt Injection | Request and model-loop sanitizers detect common instruction overrides, prompt extraction, delimiter escapes, and unsafe Unicode. | Pattern matching cannot identify every direct or indirect injection. Sanitization is a risk reduction layer, not proof that content is safe. |
 | LLM02 Sensitive Information Disclosure | Input secret and PII detection, output secret redaction, secret-provider support, tenant-scoped storage paths, and opt-in sensitive tracing controls. | PII patterns are limited, redaction is best effort, and client-supplied tenant headers are not an authorization boundary. |
 | LLM03 Supply Chain | Locked Python and npm dependencies, Dependabot, dependency-audit workflows, secret scanning, and SBOM generation. A local-model weight verifier exists. | Weight verification is not called by every local inference path. Third-party model, provider, MCP, action, and package provenance still needs deployment review. |
-| LLM04 Data and Model Poisoning | Dataset schemas, retrieval content sanitization, content-hash deduplication, evaluation datasets, and reviewable workflow configuration. | The runtime does not establish the provenance or truth of supplied datasets, retrieved documents, remote models, or provider output. |
+| LLM04 Data and Model Poisoning | Dataset schemas, content-hash deduplication, evaluation datasets, and reviewable workflow configuration. | The runtime does not establish the provenance or truth of supplied datasets, remote models, or provider output. |
 | LLM05 Improper Output Handling | Pydantic API contracts, validated structured outputs in selected paths, response sanitization, restricted workflow expressions, SSRF checks, and tool argument validation. | Many agent results remain free text. Each downstream consumer must treat model output as untrusted data. |
 | LLM06 Excessive Agency | Per-step tool allowlists, approval gates, file sandbox roots, shell command allowlists, Git subcommand restrictions, HTTP egress checks, timeouts, and bounded agent iterations. | An allowed interpreter, Git command, or HTTP destination may still have broad effects. Approval requires a registered provider, and the dashboard does not yet provide a complete pause-and-resume approval flow. |
 | LLM07 System Prompt Leakage | Direct extraction patterns are detected and repository prompts contain no intended secrets. | Prompt text cannot be assumed confidential. Never put credentials or access decisions in a system prompt. |
-| LLM08 Vector and Embedding Weaknesses | Retrieved text is sanitized, framed as untrusted context, deduplicated, and limited by a context budget. Tenant identifiers are carried into storage paths and metadata. | The CLI's default hash embedder is a deterministic test-oriented implementation, not semantic retrieval. Persistent store integrity and document authorization remain deployment responsibilities. |
+| LLM08 Vector and Embedding Weaknesses | Not applicable — the runtime does not ship a retrieval, embedding, or vector-store component. | A deployment that adds retrieval-augmented generation through an external service must implement its own embedding, vector-store, and document-authorization controls. |
 | LLM09 Misinformation | Rubric-based evaluation, dataset gates, multi-step review workflows, and explicit result artifacts make outputs inspectable. | There is no universal real-time factuality or citation verifier. LLM-as-judge results can also be wrong or biased. |
 | LLM10 Unbounded Consumption | Per-IP HTTP rate limiting, failed-authentication throttling, model-provider limits, circuit breakers, concurrency bulkheads, retry limits, token budgets, timeouts, and bounded agent loops. | Application counters are process-local. Multi-replica deployments need gateway limits and shared budget or quota enforcement. |
 
@@ -129,7 +127,7 @@ Exercise the deployed system, not only the source:
 - shell metacharacters and non-allowlisted executables are rejected;
 - private, loopback, metadata, redirect, and DNS-rebinding HTTP targets fail;
 - retrieved and tool-returned injection payloads cannot trigger actions;
-- one tenant cannot read another tenant's runs, datasets, retrieval data, or audit events;
+- one tenant cannot read another tenant's runs, datasets, or audit events;
 - model responses containing test secrets are redacted in every supported adapter path;
 - token, iteration, timeout, and provider-failure limits stop work cleanly; and
 - audit records and traces contain the required fields without disallowed content.
@@ -144,5 +142,4 @@ control exists in source.
 - [Supply-chain security](SUPPLY_CHAIN.md)
 - [AI risk management](AI_RISK_MANAGEMENT.md)
 - [Known limitations](KNOWN_LIMITATIONS.md)
-- [RAG](rag/index.md)
 - [MCP integration](../agentic-workflows-v2/agentic_v2/integrations/mcp/README.md)

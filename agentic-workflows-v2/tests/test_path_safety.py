@@ -99,3 +99,36 @@ class TestEnsureWithinBase:
         with pytest.raises(ValueError) as exc_info:
             ensure_within_base(bad_path, tmp_path)
         assert "secret" in str(exc_info.value)
+
+
+class TestPathInputValidation:
+    """Inputs rejected before any resolution is attempted."""
+
+    @pytest.mark.parametrize("bad", ["", "   ", "\t"])
+    def test_empty_or_blank_path_rejected(self, bad: str, tmp_path: Path) -> None:
+        """An empty or whitespace-only path is not a path."""
+        with pytest.raises(ValueError, match="must not be empty"):
+            ensure_within_base(bad, tmp_path)
+        with pytest.raises(ValueError, match="must not be empty"):
+            is_within_base(bad, tmp_path)
+
+    def test_null_byte_rejected(self, tmp_path: Path) -> None:
+        """A null byte would truncate the path inside the C layer."""
+        with pytest.raises(ValueError, match="null bytes"):
+            ensure_within_base(str(tmp_path / "file\0.txt"), tmp_path)
+
+    def test_leading_whitespace_is_preserved(self, tmp_path: Path) -> None:
+        """Whitespace can be legal in a filename — validation must not strip it.
+
+        Only a *leading* space is asserted: Windows silently drops trailing
+        spaces when creating a file, so a trailing-space assertion would be
+        testing the filesystem rather than this module.
+        """
+        spaced = tmp_path / " padded.txt"
+        try:
+            spaced.touch()
+        except OSError:
+            pytest.skip("Filesystem rejects leading whitespace in names")
+
+        result = ensure_within_base(spaced, tmp_path)
+        assert result.name.startswith(" ")

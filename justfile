@@ -23,7 +23,7 @@ setup: venv
 # Regenerate ci-constraints.txt from uv.lock. Run after changing dependencies
 # or uv.lock; the `lockfile-constraints` CI job fails if it is out of date.
 update-constraints:
-    uv export --locked --no-hashes --no-emit-workspace --no-emit-package agentic-evalkit --all-packages --all-extras -o ci-constraints.txt
+    uv export --locked --no-hashes --no-emit-workspace --all-packages --all-extras -o ci-constraints.txt
 
 # Reconcile a grouped Dependabot pip PR. Dependabot bumps pyproject/ci-constraints.txt
 # but NOT uv.lock, so the lock must be re-resolved by hand: this upgrades uv.lock to
@@ -31,7 +31,7 @@ update-constraints:
 # lockfile-constraints CI job passes. Review the diff, then commit + push to the PR.
 relock:
     uv lock --upgrade
-    uv export --locked --no-hashes --no-emit-workspace --no-emit-package agentic-evalkit --all-packages --all-extras -o ci-constraints.txt
+    uv export --locked --no-hashes --no-emit-workspace --all-packages --all-extras -o ci-constraints.txt
 
 test: _require-venv
     & "{{venv_python}}" -m pytest agentic-workflows-v2/tests -v

@@ -11,7 +11,7 @@ This monorepo contains three Python packages and one frontend:
 
 | Path | Ownership |
 |---|---|
-| `agentic-workflows-v2/` | Runtime, CLI, FastAPI server, RAG, integrations, and UI |
+| `agentic-workflows-v2/` | Runtime, CLI, FastAPI server, integrations, and UI |
 | `agentic-v2-eval/` | Evaluation models, rubrics, runners, and reporters |
 | `tools/` | Shared provider and benchmark utilities packaged as `agentic-tools` |
 | `tests/e2e/` | Cross-package behavior |
@@ -252,7 +252,7 @@ Use Conventional Commits:
 ```text
 feat(ui): add run filter
 fix(server): validate adapter override
-docs(rag): correct CLI persistence limits
+docs(engine): correct step-timeout defaults
 test(engine): cover timeout cancellation
 ```
 

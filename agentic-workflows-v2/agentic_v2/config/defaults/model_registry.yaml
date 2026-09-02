@@ -13,6 +13,27 @@
 # price_in / price_out are USD per 1,000,000 tokens (per-Mtok); null = unknown
 # (spend is reported as None for that model, never guessed). Populating real
 # numbers is a follow-up; provider /models endpoints do not expose pricing.
+#
+# cost_lane is one of local (weights on this machine, no account/network/charge),
+# free (no charge, a credential may still be required, rate limits often
+# undocumented), or paid (metered). It is curated the same way price is -- a
+# provider's /models listing does not expose it (ADR-040 "curated for
+# judgments"). AGENTIC_MAX_COST_LANE filters get_model_candidates_for_tier
+# against it (langchain/models.py); an entry with no cost_lane, or an id not in
+# this file at all, is treated as paid -- fail closed, never guessed free.
+#
+# gh: (GitHub Models) is curated paid despite having a nominally free tier: the
+# SWE-fix A/B campaign (agentic-workflows-v2/evals/swe_ab/) treated GITHUB_TOKEN
+# as a must-not-reach credential alongside the metered providers because its
+# rate limits and billing tie-in are undocumented for this deployment -- revisit
+# if that is confirmed otherwise.
+#
+# The three nvidia: ids below are NOT confirmed against NVIDIA's curated
+# free-endpoint list (build.nvidia.com "Free Endpoint" label; 14 ids captured
+# in evals/swe_ab/docs/MODEL-INVENTORY-2026-08-27.md) -- their dateless ids
+# don't string-match that list's dated ids (e.g. deepseek-v4-flash vs
+# deepseek-v4-flash-0731), so they are curated paid until a human confirms the
+# alias resolves to the same free-tier billing.
 version: 1
 
 models:
@@ -22,6 +43,7 @@ models:
     tiers: [1]
     capability: fast
     status: active
+    cost_lane: paid
     price_in: null
     price_out: null
     context_window: null
@@ -30,6 +52,7 @@ models:
     tiers: [1]
     capability: fast
     status: active
+    cost_lane: paid
     price_in: null
     price_out: null
     context_window: null
@@ -42,6 +65,7 @@ models:
     tiers: [1]
     capability: fast
     status: active
+    cost_lane: paid
     price_in: null
     price_out: null
     context_window: null
@@ -50,6 +74,7 @@ models:
     tiers: [1]
     capability: fast
     status: active
+    cost_lane: paid
     price_in: null
     price_out: null
     context_window: null
@@ -58,6 +83,7 @@ models:
     tiers: [1]
     capability: local
     status: active
+    cost_lane: local
     price_in: 0.0
     price_out: 0.0
     context_window: null
@@ -68,6 +94,7 @@ models:
     tiers: [2, 3]
     capability: balanced
     status: active
+    cost_lane: paid
     price_in: null
     price_out: null
     context_window: null
@@ -76,6 +103,7 @@ models:
     tiers: [2, 3, 4, 5]
     capability: balanced
     status: active
+    cost_lane: paid
     price_in: null
     price_out: null
     context_window: null
@@ -84,6 +112,7 @@ models:
     tiers: [2, 3]
     capability: balanced
     status: active
+    cost_lane: paid
     price_in: null
     price_out: null
     context_window: null
@@ -94,6 +123,7 @@ models:
     tiers: [2, 3, 4]
     capability: balanced
     status: active
+    cost_lane: paid
     price_in: null
     price_out: null
     context_window: null
@@ -102,6 +132,7 @@ models:
     tiers: [2, 3, 4, 5]
     capability: local
     status: active
+    cost_lane: local
     price_in: 0.0
     price_out: 0.0
     context_window: null
@@ -112,6 +143,7 @@ models:
     tiers: [4, 5]
     capability: reasoning
     status: active
+    cost_lane: paid
     price_in: null
     price_out: null
     context_window: null
@@ -120,6 +152,7 @@ models:
     tiers: [4, 5]
     capability: reasoning
     status: active
+    cost_lane: paid
     price_in: null
     price_out: null
     context_window: null
@@ -128,8 +161,135 @@ models:
     tiers: [5]
     capability: reasoning
     status: active
+    cost_lane: paid
     price_in: null
     price_out: null
+    context_window: null
+
+  # --- NVIDIA NIM curated free-endpoint reference (ARP-IMPROVEMENTS F2) ---
+  # tiers: [] deliberately -- these are NOT in any tier chain (ADR-040: a
+  # curated cost_lane is not the same decision as promoting a model into
+  # routing; that stays a separate, deliberate edit to the `tiers:` chains
+  # below). This is the curated authority discover_all_models() looks up for
+  # any live-discovered nvidia: id, because NIM's /models listing carries no
+  # free-vs-paid field -- the authority is a "Free Endpoint" label on the
+  # model card at https://build.nvidia.com, which is not machine-readable.
+  # Captured live 2026-08-27 (all 14 confirmed reachable that day); see
+  # agentic-workflows-v2/evals/swe_ab/docs/MODEL-INVENTORY-2026-08-27.md for
+  # per-model probe evidence. Re-verify before trusting an old date -- NVIDIA
+  # can move a model between tiers without notice, same as the retired-id
+  # drift ADR-040 already guards the tier chains against.
+  - id: nvidia:minimaxai/minimax-m3
+    provider: nvidia
+    tiers: []
+    status: active
+    cost_lane: free
+    price_in: 0.0
+    price_out: 0.0
+    context_window: null
+  - id: nvidia:nvidia/nemotron-3-super-120b-a12b
+    provider: nvidia
+    tiers: []
+    status: active
+    cost_lane: free
+    price_in: 0.0
+    price_out: 0.0
+    context_window: null
+  - id: nvidia:nvidia/nemotron-3-nano-30b-a3b
+    provider: nvidia
+    tiers: []
+    status: active
+    cost_lane: free
+    price_in: 0.0
+    price_out: 0.0
+    context_window: null
+  - id: nvidia:nvidia/nemotron-3-ultra-550b-a55b
+    provider: nvidia
+    tiers: []
+    status: active
+    cost_lane: free
+    price_in: 0.0
+    price_out: 0.0
+    context_window: null
+  - id: nvidia:deepseek-ai/deepseek-v4-flash-0731
+    provider: nvidia
+    tiers: []
+    status: active
+    cost_lane: free
+    price_in: 0.0
+    price_out: 0.0
+    context_window: null
+  - id: nvidia:meta/muse-glimmer-30b
+    provider: nvidia
+    tiers: []
+    status: active
+    cost_lane: free
+    price_in: 0.0
+    price_out: 0.0
+    context_window: null
+  - id: nvidia:stepfun-ai/step-3.7-flash
+    provider: nvidia
+    tiers: []
+    status: active
+    cost_lane: free
+    price_in: 0.0
+    price_out: 0.0
+    context_window: null
+  - id: nvidia:openai/gpt-oss-20b
+    provider: nvidia
+    tiers: []
+    status: active
+    cost_lane: free
+    price_in: 0.0
+    price_out: 0.0
+    context_window: null
+  - id: nvidia:deepseek-ai/deepseek-v4-pro-0813
+    provider: nvidia
+    tiers: []
+    status: active
+    cost_lane: free
+    price_in: 0.0
+    price_out: 0.0
+    context_window: null
+  - id: nvidia:nvidia/nemotron-3.5-lightning-30b-a3b
+    provider: nvidia
+    tiers: []
+    status: active
+    cost_lane: free
+    price_in: 0.0
+    price_out: 0.0
+    context_window: null
+  - id: nvidia:openai/gpt-oss-120b
+    provider: nvidia
+    tiers: []
+    status: active
+    cost_lane: free
+    price_in: 0.0
+    price_out: 0.0
+    context_window: null
+  - id: nvidia:google/gemma-4-31b-it
+    provider: nvidia
+    tiers: []
+    status: active
+    cost_lane: free
+    price_in: 0.0
+    price_out: 0.0
+    context_window: null
+  - id: nvidia:mistralai/mistral-nemotron
+    provider: nvidia
+    tiers: []
+    status: active
+    cost_lane: free
+    price_in: 0.0
+    price_out: 0.0
+    context_window: null
+  - id: nvidia:poolside/laguna-xs-2.1
+    provider: nvidia
+    tiers: []
+    status: active
+    cost_lane: free
+    price_in: 0.0
+    price_out: 0.0
     context_window: null
 
 # Ordered fallback chains per tier. Reconciled from the previously divergent

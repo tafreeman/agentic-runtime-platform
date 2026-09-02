@@ -117,8 +117,8 @@ limits and can summarize older content.
 
 - Implementation: `agentic_v2/agents/memory.py`
 
-This is per-agent conversation state. It is separate from the RAG document
-store and from persisted workflow checkpoints.
+This is per-agent conversation state. It is separate from persisted workflow
+checkpoints.
 
 ## Models and reliability
 
@@ -144,30 +144,6 @@ The engine provides majority voting and repeated-sample consistency helpers.
 
 Agreement can reduce isolated variation, but several models can agree on the
 same error. Keep evidence-based checks outside the vote.
-
-## Retrieval
-
-### Hybrid retrieval
-
-`HybridRetriever` combines keyword and vector rankings with reciprocal rank
-fusion.
-
-- Keyword index and fusion: `agentic_v2/rag/retrieval.py`
-- Context assembly: `agentic_v2/rag/context_assembly.py`
-
-The standalone `agentic rag` command does not use the complete production RAG
-stack. See [RAG](rag/index.md) for the active CLI limitations.
-
-### Retrieved-content boundaries
-
-`frame_content()` marks retrieved text as data and
-`TokenBudgetAssembler` limits the amount of content added to a prompt.
-
-- Implementation: `agentic_v2/rag/context_assembly.py`
-
-Framing reduces ambiguity between instructions and retrieved text. It is one
-control, not a complete prompt-injection defense. Source trust, tool
-permissions, output validation, and human review still matter.
 
 ## Evaluation and review
 

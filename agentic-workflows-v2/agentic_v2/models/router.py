@@ -22,7 +22,12 @@ from dataclasses import dataclass, field
 from enum import IntEnum
 from typing import Callable, Sequence
 
-from .model_registry import is_quarantined
+from .model_registry import (
+    CostLaneCeilingExceededError,
+    is_quarantined,
+    is_within_cost_lane,
+    max_cost_lane_ceiling,
+)
 
 
 class ModelTier(IntEnum):
@@ -222,24 +227,43 @@ class ModelRouter:
         self._available_models.discard(model)
 
     def get_model_for_tier(self, tier: ModelTier) -> str | None:
-        """Get first available model for a tier.
+        """Get first available model for a tier, within the cost-lane ceiling.
 
         Args:
             tier: Model tier
 
         Returns:
             Model identifier or None if none available
+
+        Raises:
+            CostLaneCeilingExceededError: if ``AGENTIC_MAX_COST_LANE`` is set
+                and every otherwise-available candidate is above it
+                (ARP-IMPROVEMENTS F1) -- never silently falls through to a
+                model above the ceiling.
         """
         chain = self.get_chain(tier)
+        ceiling = max_cost_lane_ceiling()
+        ceiling_excluded: list[str] = []
         for model in chain:
             if is_quarantined(model):
                 continue  # retired at provider (ADR-040 drift detection)
-            if self.is_model_available(model):
-                return model
+            if not self.is_model_available(model):
+                continue
+            if ceiling != "paid" and not is_within_cost_lane(model, ceiling):
+                ceiling_excluded.append(model)
+                continue
+            return model
+        if ceiling_excluded:
+            raise CostLaneCeilingExceededError(
+                f"AGENTIC_MAX_COST_LANE={ceiling!r} filtered every otherwise-"
+                f"available candidate for tier {tier.name} "
+                f"({len(ceiling_excluded)} considered, 0 within the ceiling); "
+                "refusing to fall through to an unfiltered chain."
+            )
         return None
 
     def get_fallback_for_model(self, model: str, tier: ModelTier) -> str | None:
-        """Get next model in chain after the given one.
+        """Get next model in chain after the given one, within the cost-lane ceiling.
 
         Args:
             model: Current model
@@ -247,14 +271,29 @@ class ModelRouter:
 
         Returns:
             Next available model or None
+
+        Raises:
+            CostLaneCeilingExceededError: see :meth:`get_model_for_tier`.
         """
         chain = self.get_chain(tier)
+        ceiling = max_cost_lane_ceiling()
         found_current = False
+        ceiling_excluded: list[str] = []
         for m in chain:
             if found_current and not is_quarantined(m) and self.is_model_available(m):
-                return m
+                if ceiling != "paid" and not is_within_cost_lane(m, ceiling):
+                    ceiling_excluded.append(m)
+                else:
+                    return m
             if m == model:
                 found_current = True
+        if ceiling_excluded:
+            raise CostLaneCeilingExceededError(
+                f"AGENTIC_MAX_COST_LANE={ceiling!r} filtered every otherwise-"
+                f"available fallback candidate for tier {tier.name} "
+                f"({len(ceiling_excluded)} considered, 0 within the ceiling); "
+                "refusing to fall through to an unfiltered chain."
+            )
         return None
 
     async def discover_models_async(self, models: Sequence[str]) -> dict[str, bool]:

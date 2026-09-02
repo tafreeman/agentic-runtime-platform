@@ -128,7 +128,6 @@ nav:
   - Deep dives:
       - Server & API: deep-dive-server.md
       - Agents: deep-dive-agents.md
-      - RAG pipeline: rag/index.md
       - Evaluation engine: deep-dive-agentic-v2-eval.md
   - API reference:
       - CLI commands: cli-reference.md

@@ -116,9 +116,6 @@ agentic serve --port 8010 --no-open
 The `run` and `compare` input is a JSON file path. Use
 [CLI reference](cli-reference.md) for flags, defaults, and exit behavior.
 
-The RAG CLI is only a component demonstration: ingest and search use separate
-in-process indexes. Use the Python RAG API for persistent applications.
-
 ## Choose the right test
 
 Run the smallest relevant suite while editing:

@@ -70,6 +70,15 @@ async def run_with_fallback(
     tried: list[str] = []
     last_error: Exception | None = None
 
+    if model is not None:
+        # An explicit model bypasses router.get_model_for_tier entirely --
+        # and with it, that method's cost-lane ceiling check -- so it must
+        # be validated here instead (ARP-IMPROVEMENTS F1). Checked once, not
+        # per retry: `model` never changes across the loop.
+        from .model_registry import enforce_cost_lane_ceiling
+
+        enforce_cost_lane_ceiling(model)
+
     for _ in range(max_retries):
         selected_model: str | None = model or router.get_model_for_tier(tier)
         if selected_model is None or selected_model in tried:
