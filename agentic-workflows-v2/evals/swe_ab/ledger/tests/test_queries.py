@@ -621,6 +621,41 @@ def test_arm_pass_rates_excludes_operational_failures_from_verdict_rate_but_not_
     assert a.operational_failures[0].count == 1
 
 
+def test_arm_pass_rates_excludes_ok_trials_the_grader_could_not_score(
+    ledger_conn: sqlite3.Connection,
+) -> None:
+    # 1 clean pass, 1 trial that ran fine but the grader errored on
+    # (op_status='ok', grade.outcome=NULL). n_verdicts must count only the
+    # pass -- an ungraded-but-ok trial is not a verdict any more than a
+    # timeout is, and n_trials must still count both.
+    seeded = seed_wave(
+        ledger_conn,
+        n_tasks=2,
+        arm_keys=("arm_a",),
+        cells={("arm_a", 1, 1): "pass"},
+    )
+    _insert_ok_no_verdict_trial(
+        ledger_conn,
+        wave_id=seeded.wave_id,
+        arm_id=seeded.arm_ids["arm_a"],
+        task_id=seeded.task_ids[2],
+        run_idx=1,
+        trial_id=f"{seeded.wave_id}_trl_ok_no_verdict",
+        substrate_id=seeded.substrate_id,
+    )
+
+    rates = arm_pass_rates(ledger_conn, seeded.wave_id)
+    assert len(rates) == 1
+    a = rates[0]
+    assert a.n_trials == 2
+    assert a.n_verdicts == 1
+    assert a.n_pass == 1
+    assert a.pass_rate_verdicts.point == pytest.approx(1.0)
+    # No trial op_status here is anything but 'ok', so the operational-
+    # failure tally stays empty even though a verdict is still missing.
+    assert a.n_operational_failures == 0
+
+
 def test_arm_pass_rates_breaks_down_multiple_op_statuses(
     ledger_conn: sqlite3.Connection,
 ) -> None:
@@ -752,6 +787,97 @@ def test_paired_outcomes_excludes_missing_trials_as_no_trial(
     )
 
 
+def _insert_ok_no_verdict_trial(
+    conn: sqlite3.Connection,
+    *,
+    wave_id: str,
+    arm_id: str,
+    task_id: str,
+    run_idx: int,
+    trial_id: str,
+    substrate_id: str,
+) -> None:
+    """A trial that ran cleanly (`op_status='ok'`) but whose grader gave no
+    pass/fail verdict (`status='error'`, `outcome=NULL`) -- the case
+    `make_grade` cannot express, since it always sets `outcome = status`.
+    Not an operational failure (the schema would refuse a grade row on one
+    of those); a real gap `_instance_statuses` and its consumers must
+    treat as "no verdict", not as "ok, therefore comparable".
+    """
+    arm_config_id = conn.execute(
+        "SELECT arm_config_id FROM arm WHERE arm_id = ?", (arm_id,)
+    ).fetchone()["arm_config_id"]
+    _insert(
+        conn,
+        "trial",
+        make_trial(
+            wave_id=wave_id,
+            arm_id=arm_id,
+            task_id=task_id,
+            run_idx=run_idx,
+            trial_id=trial_id,
+            substrate_id=substrate_id,
+            arm_config_id=arm_config_id,
+            op_status="ok",
+            tokens_in=100,
+            tokens_out=200,
+            wall_seconds=10.0,
+        ).to_row(),
+    )
+    _insert(
+        conn,
+        "grade",
+        Grade(
+            grade_id=f"{trial_id}_gde",
+            trial_id=trial_id,
+            grader_id="grd_test",
+            status="error",
+            outcome=None,
+            score=None,
+            evidence_blob=None,
+            oracle_provenance=None,
+            graded_at="2026-01-01T00:01:30Z",
+            supersedes=None,
+        ).to_row(),
+    )
+
+
+def test_paired_outcomes_excludes_ok_trials_the_grader_could_not_score(
+    ledger_conn: sqlite3.Connection,
+) -> None:
+    # arm_a's task 2 ran fine but the grader errored on it (outcome=NULL);
+    # that must be excluded from the 2x2, not scored as "arm_a failed".
+    seeded = seed_wave(
+        ledger_conn,
+        n_tasks=2,
+        arm_keys=("arm_a", "arm_b"),
+        cells={
+            ("arm_a", 1, 1): "pass",
+            ("arm_b", 1, 1): "fail",
+            ("arm_b", 2, 1): "pass",
+        },
+    )
+    _insert_ok_no_verdict_trial(
+        ledger_conn,
+        wave_id=seeded.wave_id,
+        arm_id=seeded.arm_ids["arm_a"],
+        task_id=seeded.task_ids[2],
+        run_idx=1,
+        trial_id=f"{seeded.wave_id}_trl_ok_no_verdict",
+        substrate_id=seeded.substrate_id,
+    )
+
+    result = paired_outcomes(
+        ledger_conn, seeded.wave_id, seeded.arm_ids["arm_a"], seeded.arm_ids["arm_b"]
+    )
+    assert result.n_compared == 1  # only task 1
+    assert result.n_excluded == 1  # task 2
+    assert result.excluded_reasons == (
+        ExclusionReason(arm_a_status="ok_no_verdict", arm_b_status="verdict", count=1),
+    )
+    assert result.only_a == 1  # task 1: arm_a passes, arm_b fails
+
+
 def test_paired_outcomes_mcnemar_p_matches_stats_module(
     ledger_conn: sqlite3.Connection,
 ) -> None:
@@ -807,6 +933,50 @@ def test_omnibus_restricts_to_instances_all_arms_verdicted(
     assert result.n_instances == 2  # tasks 1, 2 only
     assert isinstance(result.q.p_value, float)
     assert len(result.pairwise) == 3  # C(3,2)
+
+
+def test_omnibus_excludes_instances_where_an_arm_ran_ok_but_got_no_verdict(
+    ledger_conn: sqlite3.Connection,
+) -> None:
+    # Same shape as test_omnibus_restricts_to_instances_all_arms_verdicted,
+    # but arm_c's task-3 gap is a grader error on an otherwise-ok trial
+    # rather than an operational failure -- `complete_instances` must
+    # exclude it exactly the same way.
+    seeded = seed_wave(
+        ledger_conn,
+        n_tasks=3,
+        arm_keys=("arm_a", "arm_b", "arm_c"),
+        cells={
+            ("arm_a", 1, 1): "pass",
+            ("arm_a", 2, 1): "pass",
+            ("arm_b", 1, 1): "pass",
+            ("arm_b", 2, 1): "fail",
+            ("arm_c", 1, 1): "fail",
+            ("arm_c", 2, 1): "pass",
+        },
+    )
+    for arm_key in ("arm_a", "arm_b"):
+        _insert_ok_no_verdict_trial(
+            ledger_conn,
+            wave_id=seeded.wave_id,
+            arm_id=seeded.arm_ids[arm_key],
+            task_id=seeded.task_ids[3],
+            run_idx=1,
+            trial_id=f"{seeded.wave_id}_trl_{arm_key}_ok_no_verdict",
+            substrate_id=seeded.substrate_id,
+        )
+    _insert_ok_no_verdict_trial(
+        ledger_conn,
+        wave_id=seeded.wave_id,
+        arm_id=seeded.arm_ids["arm_c"],
+        task_id=seeded.task_ids[3],
+        run_idx=1,
+        trial_id=f"{seeded.wave_id}_trl_arm_c_ok_no_verdict",
+        substrate_id=seeded.substrate_id,
+    )
+
+    result = omnibus(ledger_conn, seeded.wave_id)
+    assert result.n_instances == 2  # tasks 1, 2 only; task 3 excluded
 
 
 def test_omnibus_holm_adjusted_pvalues_are_never_below_raw(
