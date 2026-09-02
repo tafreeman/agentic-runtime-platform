@@ -116,7 +116,32 @@ config override to check them too.
 ## What is tracked
 
 The database itself is not committed. `store.export_jsonl` writes one
-deterministically ordered `.jsonl` per table, and that export is what belongs in
-git — it diffs, and `import_jsonl` rebuilds the database from it. Blobs stay on
-disk under their digest; rows carry a `retention` of `durable` or `prunable` so
-transcripts can be deleted without losing the numbers that go with them.
+deterministically ordered `.jsonl` per table under `ledger/export/`, and that
+export is what belongs in git — it diffs, and `import_jsonl` rebuilds the
+database from it. Blobs stay on disk under their digest; rows carry a
+`retention` of `durable` or `prunable` so transcripts can be deleted without
+losing the numbers that go with them.
+
+## Cutover
+
+`../migrate_reports.py` and `../diff_verdicts.py` (one level up, alongside
+`analyze.py` and `run_ab.py` — they read `reports/`, `dataset/` and
+`workflows/`, none of which this package touches) load the campaign's report
+files into the rows above and check the result against `analyze.py`'s own
+arithmetic:
+
+```bash
+uv run python migrate_reports.py   # writes ledger/campaign.db, ledger/blobs/,
+                                    # ledger/export/, ledger/export/pending_blobs.jsonl
+uv run python diff_verdicts.py     # McNemar p / paired-bootstrap CI, ledger vs analyze.py
+```
+
+Both scripts are exercised in `ledger/tests/test_migrate_reports.py` against
+synthetic fixtures only — no `reports/*.json` are committed on this branch
+yet, so there is nothing real for `migrate_reports.py` to migrate until that
+data lands (tracked separately; the report corpus that existed on the
+branch this was extracted from needs its own trustworthiness review before
+it is reintroduced — see the branch's PR description). `CAMPAIGNS` in
+`migrate_reports.py` documents the intended campaign/wave/arm grouping for
+that corpus (37 of 42 files, 5 excluded with reasons) for whenever it
+returns.
