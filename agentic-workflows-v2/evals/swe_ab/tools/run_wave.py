@@ -120,6 +120,60 @@ def existing_wave_reports(kit_root: Path, wave: int) -> list[Path]:
     return sorted(p for p in reports.glob(f"arm-*-wave{wave}.json") if p.is_file())
 
 
+#: Report basenames run_ab.py writes per arm (its ``ARMS`` table), before the
+#: ``-wave{N}`` suffix. Mirrored here rather than imported so this runner does
+#: not pull in run_ab.py's EvalKit imports just to name a file.
+ARM_REPORT_NAMES = {"a": "arm-a-direct", "b": "arm-b-review-loop"}
+
+
+def arm_report_path(kit_root: Path, wave: int, arm: str) -> Path:
+    return kit_root / "reports" / f"{ARM_REPORT_NAMES[arm]}-wave{wave}.json"
+
+
+def report_is_complete(path: Path, rows: list[str]) -> bool:
+    """True when *path* is a parseable report covering every sample in *rows*.
+
+    run_ab.py writes its report once, after every sample finished, so a
+    report that parses and holds exactly the manifest's sample ids is that
+    arm's graded result. Anything else -- unreadable, or a different sample
+    set -- is not something a retry may silently replace.
+    """
+    try:
+        report = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    expected = {json.loads(line)["sample_id"] for line in rows}
+    graded = {
+        ((sample.get("sample") or {}).get("sample_id"))
+        for sample in report.get("samples") or []
+    }
+    return bool(expected) and graded == expected
+
+
+def plan_arms(
+    kit_root: Path, wave: int, rows: list[str]
+) -> tuple[list[str], list[Path], list[Path]]:
+    """Decide which arms a rerun of *wave* may run without overwriting evidence.
+
+    Returns ``(to_run, preserved, blocking)``: arms with no report yet, the
+    complete reports a rerun keeps untouched, and reports that exist but do
+    not cover the manifest -- those block the rerun rather than being
+    replaced, because run_ab.py would write over them (WAVE-RUNBOOK rule 3).
+    """
+    to_run: list[str] = []
+    preserved: list[Path] = []
+    blocking: list[Path] = []
+    for arm in ("a", "b"):
+        path = arm_report_path(kit_root, wave, arm)
+        if not path.is_file():
+            to_run.append(arm)
+        elif report_is_complete(path, rows):
+            preserved.append(path)
+        else:
+            blocking.append(path)
+    return to_run, preserved, blocking
+
+
 def scale_mix(
     mix: list[tuple[str, str, int, str]], size: int
 ) -> list[tuple[str, str, int, str]]:
@@ -167,7 +221,9 @@ def main() -> int:
             "mine a new sample set even though this wave's case file exists. "
             "Without it a rerun reuses the existing cases, so a retry after a "
             "failed arm repeats the same experiment instead of silently "
-            "sampling different instances."
+            "sampling different instances. Refused once any report exists for "
+            "this wave: run_ab.py writes to the same report paths and would "
+            "overwrite graded evidence."
         ),
     )
     args = parser.parse_args()
@@ -186,6 +242,16 @@ def main() -> int:
             f"{', '.join(p.name for p in graded)} already hold this wave's graded "
             f"evidence and run_ab.py would overwrite them (WAVE-RUNBOOK rule 3). "
             f"Use the next unused wave number instead.",
+            file=sys.stderr,
+            flush=True,
+        )
+        return 1
+    if graded and not cases.is_file():
+        # Mining a fresh sample set here would then write over these reports.
+        print(
+            f"wave {wave}: refusing to mine cases: {', '.join(p.name for p in graded)} "
+            f"exist but {cases.name} is missing. Restore the manifest to retry the "
+            f"wave, or use the next unused wave number.",
             file=sys.stderr,
             flush=True,
         )
@@ -225,17 +291,54 @@ def main() -> int:
         )
         if args.build_only:
             return 0 if existing_rows else 1
-        return run_arms(wave, cases, existing_rows, args)
+        # A retry runs only what is missing. run_ab.py writes each arm's report
+        # to the same deterministic path, so re-running an arm that already
+        # has a complete report would overwrite graded evidence.
+        to_run, preserved, blocking = plan_arms(KIT_ROOT, wave, existing_rows)
+        for path in preserved:
+            print(
+                f"wave {wave}: keeping {path.name}, already complete for these cases",
+                flush=True,
+            )
+        if blocking:
+            print(
+                f"wave {wave}: refusing to rerun: {', '.join(p.name for p in blocking)} "
+                f"exist but do not cover {cases.name}'s sample set. A rerun would "
+                f"overwrite them; move them aside by hand (never delete a report, "
+                f"WAVE-RUNBOOK rule 3) or use the next unused wave number.",
+                file=sys.stderr,
+                flush=True,
+            )
+            return 1
+        if not to_run:
+            print(
+                f"wave {wave}: both arms are already graded for these cases; nothing "
+                f"to run. Use the next unused wave number for a new experiment.",
+                file=sys.stderr,
+                flush=True,
+            )
+            return 1
+        return run_arms(wave, cases, existing_rows, args, arms=tuple(to_run))
 
     parts: list[Path] = []
     for index, (repo, difficulty, count, kind) in enumerate(mix):
         part = KIT_ROOT / "dataset" / f"_wave{wave}_{index}.jsonl"
         code = run(
             [
-                sys.executable, str(KIT_ROOT / "tools" / "build_swebench_cases.py"),
-                "--repo", repo, "--difficulty", difficulty,
-                "--count", str(count), "--offset", str(offset),
-                "--max-patch-lines", "40", "--out", str(part),
+                sys.executable,
+                str(KIT_ROOT / "tools" / "build_swebench_cases.py"),
+                "--repo",
+                repo,
+                "--difficulty",
+                difficulty,
+                "--count",
+                str(count),
+                "--offset",
+                str(offset),
+                "--max-patch-lines",
+                "40",
+                "--out",
+                str(part),
             ],
             timeout=7200,
         )
@@ -247,7 +350,9 @@ def main() -> int:
         built = 0
         if code == 0 and part.is_file():
             built = sum(
-                1 for line in part.read_text(encoding="utf-8").splitlines() if line.strip()
+                1
+                for line in part.read_text(encoding="utf-8").splitlines()
+                if line.strip()
             )
             parts.append(part)
         else:
@@ -295,22 +400,40 @@ def main() -> int:
     return run_arms(wave, cases, rows, args)
 
 
-def run_arms(wave: int, cases: Path, rows: list[str], args: argparse.Namespace) -> int:
-    """Run both arms over *rows*, then prune images if asked.
+def run_arms(
+    wave: int,
+    cases: Path,
+    rows: list[str],
+    args: argparse.Namespace,
+    arms: tuple[str, ...] = ("a", "b"),
+) -> int:
+    """Run *arms* over *rows*, then prune images if asked.
 
     Split out of main so a rerun can reuse an existing wave case file and
     take exactly this path, rather than re-mining a different sample set.
+    A rerun passes only the arms that still lack a complete report.
     """
-    for arm, timeout in (("a", CAMPAIGN["timeout_a"]), ("b", CAMPAIGN["timeout_b"])):
+    timeouts = {"a": CAMPAIGN["timeout_a"], "b": CAMPAIGN["timeout_b"]}
+    for arm, timeout in ((arm, timeouts[arm]) for arm in arms):
         code = run(
             [
-                "uv", "run", "python", str(KIT_ROOT / "run_ab.py"),
-                "--arm", arm, "--cases", str(cases),
-                "--grader", CAMPAIGN["grader"],
-                "--model", CAMPAIGN["model"],
+                "uv",
+                "run",
+                "python",
+                str(KIT_ROOT / "run_ab.py"),
+                "--arm",
+                arm,
+                "--cases",
+                str(cases),
+                "--grader",
+                CAMPAIGN["grader"],
+                "--model",
+                CAMPAIGN["model"],
                 f"--suffix=-wave{wave}",
-                "--concurrency", str(CAMPAIGN["concurrency"]),
-                "--timeout", str(timeout),
+                "--concurrency",
+                str(CAMPAIGN["concurrency"]),
+                "--timeout",
+                str(timeout),
             ]
         )
         # A wave is a paired experiment: half of it is not a partial result,

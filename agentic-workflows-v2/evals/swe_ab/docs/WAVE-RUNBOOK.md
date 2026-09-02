@@ -44,6 +44,14 @@ cd C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe
 uv run --extra swe-ab python tools/run_wave.py --wave <N> --size 16 --prune-images
 ```
 
+**Retrying a wave** (`--wave <N>` again, without `--rebuild-cases`) keeps any
+arm report that is already complete for that manifest and runs only the
+missing arm; a wave whose two reports are both complete is refused, and so
+is `--rebuild-cases` once any report exists — `run_ab.py` writes to the same
+`reports/arm-*-wave<N>.json` paths, so either would overwrite graded
+evidence (rule 3). A report that exists but does not cover the manifest is
+refused too: move it aside by hand rather than let a retry replace it.
+
 `<N>` = highest existing `dataset/cases.swebench.wave*.jsonl` number, plus 1.
 The number is for naming only — overlap prevention comes from the builder
 skipping instances that already have a case directory.

@@ -149,3 +149,116 @@ class TestMix:
 
         assert kinds <= {run_wave.CORE, run_wave.BONUS}
         assert run_wave.CORE in kinds
+
+
+def _rows(ids: list[str]) -> list[str]:
+    return [json.dumps({"sample_id": i, "input": {}}) for i in ids]
+
+
+class TestRerunPreservesGradedArms:
+    """A plain rerun keeps complete reports and runs only the missing arm."""
+
+    def test_report_is_complete_only_for_the_manifest_sample_set(
+        self, tmp_path: Path
+    ) -> None:
+        rows = _rows(["django__django-1", "django__django-2"])
+        full = tmp_path / "full.json"
+        _write_report(full, ["django__django-1", "django__django-2"])
+        partial = tmp_path / "partial.json"
+        _write_report(partial, ["django__django-1"])
+        other = tmp_path / "other.json"
+        _write_report(other, ["django__django-1", "django__django-9"])
+        broken = tmp_path / "broken.json"
+        broken.write_text("{not json", encoding="utf-8")
+
+        assert run_wave.report_is_complete(full, rows) is True
+        assert run_wave.report_is_complete(partial, rows) is False
+        assert run_wave.report_is_complete(other, rows) is False
+        assert run_wave.report_is_complete(broken, rows) is False
+        assert run_wave.report_is_complete(tmp_path / "absent.json", rows) is False
+
+    def test_plan_runs_only_missing_arms(self, tmp_path: Path) -> None:
+        (tmp_path / "reports").mkdir()
+        rows = _rows(["django__django-1"])
+
+        assert run_wave.plan_arms(tmp_path, 7, rows) == (["a", "b"], [], [])
+
+        _write_report(run_wave.arm_report_path(tmp_path, 7, "a"), ["django__django-1"])
+        to_run, preserved, blocking = run_wave.plan_arms(tmp_path, 7, rows)
+        assert to_run == ["b"]
+        assert [p.name for p in preserved] == ["arm-a-direct-wave7.json"]
+        assert blocking == []
+
+        _write_report(run_wave.arm_report_path(tmp_path, 7, "b"), ["django__django-1"])
+        assert run_wave.plan_arms(tmp_path, 7, rows)[0] == []
+
+    def test_plan_blocks_on_a_report_that_does_not_cover_the_manifest(
+        self, tmp_path: Path
+    ) -> None:
+        (tmp_path / "reports").mkdir()
+        rows = _rows(["django__django-1", "django__django-2"])
+        _write_report(run_wave.arm_report_path(tmp_path, 7, "b"), ["django__django-1"])
+
+        to_run, preserved, blocking = run_wave.plan_arms(tmp_path, 7, rows)
+
+        assert to_run == ["a"]
+        assert preserved == []
+        assert [p.name for p in blocking] == ["arm-b-review-loop-wave7.json"]
+
+    def _kit_with_manifest(self, tmp_path: Path, wave: int, ids: list[str]) -> None:
+        (tmp_path / "dataset").mkdir()
+        (tmp_path / "reports").mkdir()
+        _write_manifest(tmp_path / "dataset" / f"cases.swebench.wave{wave}.jsonl", ids)
+
+    def test_main_reruns_only_the_arm_without_a_report(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        self._kit_with_manifest(tmp_path, 7, ["django__django-1"])
+        _write_report(run_wave.arm_report_path(tmp_path, 7, "a"), ["django__django-1"])
+        calls: list[list[str]] = []
+        monkeypatch.setattr(run_wave, "run", lambda argv, **_: calls.append(argv) or 0)
+        monkeypatch.setattr(run_wave, "KIT_ROOT", tmp_path)
+        monkeypatch.setattr(sys, "argv", ["run_wave.py", "--wave", "7", "--size", "16"])
+
+        assert run_wave.main() == 0
+
+        arms = [argv[argv.index("--arm") + 1] for argv in calls]
+        assert arms == ["b"]
+
+    def test_main_refuses_a_fully_graded_wave(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        self._kit_with_manifest(tmp_path, 7, ["django__django-1"])
+        for arm in ("a", "b"):
+            _write_report(
+                run_wave.arm_report_path(tmp_path, 7, arm), ["django__django-1"]
+            )
+        calls: list[list[str]] = []
+        monkeypatch.setattr(run_wave, "run", lambda argv, **_: calls.append(argv) or 0)
+        monkeypatch.setattr(run_wave, "KIT_ROOT", tmp_path)
+        monkeypatch.setattr(sys, "argv", ["run_wave.py", "--wave", "7", "--size", "16"])
+
+        assert run_wave.main() == 1
+        assert calls == []
+        assert "both arms are already graded" in capsys.readouterr().err
+
+    def test_main_refuses_mining_when_reports_exist_without_a_manifest(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        (tmp_path / "dataset").mkdir()
+        (tmp_path / "reports").mkdir()
+        _write_report(run_wave.arm_report_path(tmp_path, 7, "a"), ["django__django-1"])
+        calls: list[list[str]] = []
+        monkeypatch.setattr(run_wave, "run", lambda argv, **_: calls.append(argv) or 0)
+        monkeypatch.setattr(run_wave, "KIT_ROOT", tmp_path)
+        monkeypatch.setattr(sys, "argv", ["run_wave.py", "--wave", "7", "--size", "16"])
+
+        assert run_wave.main() == 1
+        assert calls == []
+        assert "refusing to mine cases" in capsys.readouterr().err
