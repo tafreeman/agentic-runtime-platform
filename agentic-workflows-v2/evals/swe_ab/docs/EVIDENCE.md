@@ -223,10 +223,15 @@ harness underneath.
 
 **Sub-segmented again as of wave 10** — `analyze.py` itself refused to union
 wave 8/9 with wave 10 (`target_fingerprint` differs:
-`...@22e3ed974042` vs `...@20ace0a669f0`). Ollama Cloud pushed a live update
-to `deepseek-v4-flash:0731-cloud`'s served weights between wave 9 and wave
-10 — same model *name*, different model. See §2.21: this is now three
-model-identity slices within "the new segment," not one.
+`...@22e3ed974042` vs `...@20ace0a669f0`). Recorded at the time as Ollama
+Cloud pushing a live update to `deepseek-v4-flash:0731-cloud`'s served
+weights. **Corrected 2026-09-02 (§2.21):** the fingerprint hashes the model
+*id* plus `workflows/<arm>.yaml` and `bridge.py`, and both values reproduce
+byte-for-byte from `bridge.py` before and after the §2.18 fix (`aff74062`,
+committed 19 minutes before wave 10 started; the YAMLs are identical across
+it). The boundary is a harness change, which rule 2 makes a slice boundary
+anyway, so the three slices stand — but they are harness slices, not
+model-identity slices, and whether the served model ever changed is unknown.
 
 **Naming, 2026-08-30 — "Run" replaces "wave N" as the unit that matters.**
 The campaign's wave counter is a shared file-naming sequence across every
@@ -814,7 +819,7 @@ new-segment progress (the in-flight reuse batch from §2.19 was stopped at
 strictly never-before-graded instances, matching the campaign's existing
 non-overlap guarantee (§2.10) rather than an exception to it.
 
-### 2.21 A live model update mid-segment — Ollama Cloud changed what `deepseek-v4-flash:0731-cloud` serves
+### 2.21 A fingerprint change mid-segment — recorded as a live Ollama model update, corrected 2026-09-02 to the §2.18 harness fix
 
 `analyze.py` refused to union wave 8/9 with wave 10 on `target_fingerprint`:
 `ollama:deepseek-v4-flash:0731-cloud@22e3ed974042` (waves 8-9) versus
@@ -834,6 +839,34 @@ slices rather than one (wave 8+9, wave 10, and whatever wave 11 turns out
 to fingerprint as) — recorded in §1.7, not something to try to undo by
 re-running earlier waves against the new weights, which would just as
 easily drift again by the time it finished.
+
+**Correction, 2026-09-02 (review finding on landing to `main`) — the
+fingerprint change was the harness, not the model.** `run_ab.py`'s
+`target_fingerprint()` hashes the model id plus `workflows/<arm>.yaml` and
+`bridge.py` (the policy string in every manifest:
+`model-id+sha256(workflow.yaml,bridge.py)[:12]`); it never sees the weights a
+cloud tag serves. Recomputing it from git: `bridge.py` at `2f74f03a` (the
+tree wave 9 ran on) gives `22e3ed974042` for arm A and `456965567edb` for
+arm B; `bridge.py` at `aff74062` (the §2.18 fix, committed 2026-08-30T04:25Z,
+19 minutes before wave 10's arm A started at 04:44Z) gives `20ace0a669f0`
+and `ddf23322d15f` — exactly the four values in the reports, with both
+workflow YAMLs byte-identical across that commit. The whole difference is
+the `_pin_model_candidates_exclusively()` monkeypatch §2.18 added. Nothing
+in this campaign shows Ollama Cloud updating `deepseek-v4-flash:0731-cloud`
+between the two waves; that claim was an inference from the mismatch alone
+and is withdrawn.
+
+What stands: `analyze.py` was right to refuse the union — a bridge change
+between waves is precisely the hazard `target_fingerprint()` exists to catch
+(rule 2), so Run 2 (waves 8-9) and Run 3 (waves 10-11 plus the backfill)
+remain separate slices. What changes: they are *harness* slices. A
+provider-side weight update inside either slice would go unnoticed, because
+nothing records the served model's identity (Ollama's `/api/show` digest and
+`modified_at` for the tag, or the equivalent per provider). Capturing that
+in the manifest is a harness change of its own and so opens a new slice; it
+is proposed, not made, as of this correction. Until it exists, "check the
+fingerprint before unioning" protects against harness and model-*id*
+changes only, and TEST-SETUP.md / WAVE-RUNBOOK.md now say so.
 
 ### 2.22 GLM-5.3 and GLM-5.3-flash on Ollama Cloud — not viable at this campaign's scale
 
@@ -891,6 +924,10 @@ time already sunk.
    — but not the distribution of human-written bugs.
 6. **The judge contributed nothing**, by design: weight 0.0 and uncalibrated
    throughout (ADR-0007 / D-1).
+7. **Served-model identity is unrecorded.** `target_fingerprint` covers the
+   model *id* and the local harness (`workflows/<arm>.yaml`, `bridge.py`),
+   not the weights a cloud tag serves; a provider-side update inside a slice
+   would go unnoticed (§2.21 correction).
 
 ---
 

@@ -44,10 +44,11 @@ Ollama's hosted cloud models, distinct from a locally-pulled model of the same b
   via `py-spy dump --pid <pid> --locals` that this wasn't a hung process (fresh `bridge.py`
   subprocesses were spawning every few minutes, non-zero CPU) — requests were genuinely being
   served, just paced extremely slowly server-side. Stopped; no usable data produced.
-- **A live model update happened mid-campaign.** Ollama pushed new served weights to
-  `deepseek-v4-flash:0731-cloud` between two waves — same tag, different `target_fingerprint`.
-  Caught by the harness's own fingerprint check, not by anything proactive. See the SWE-bench
-  campaign's own EVIDENCE.md §2.21 for the full incident.
+- **A fingerprint change mid-campaign was first read as a live model update.** It was the
+  campaign's own `bridge.py` changing between two waves (EVIDENCE.md §2.21, corrected
+  2026-09-02) — `target_fingerprint` hashes the harness and the model id, not the served
+  weights. Whether Ollama updates the weights behind a cloud tag is unverified and, so far,
+  unrecordable by the kit.
 
 **Verdict:** fine for the SUT model specifically (which is genuinely cheap and was never
 concurrent-slot-limited), unreliable for anything else tried — every other Ollama Cloud model

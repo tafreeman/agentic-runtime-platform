@@ -25,13 +25,15 @@ Each wave is ~16 instances, ~50 minutes, both arms, self-contained.
 **Wave 8 opened a new segment; wave 10 opened a second one inside it.** The
 harness (`run_ab.py`, `graders.py`, `rubric.py`, `swebench_graders.py`,
 `analyze.py`) changed underneath waves 1-7 via a concurrent session's
-`PR #282` — that's the wave-8 boundary. Between wave 9 and wave 10, Ollama
-Cloud pushed a live update to `deepseek-v4-flash:0731-cloud`'s served
-weights (EVIDENCE.md §2.21) — `analyze.py` itself refuses to union runs
-with different `target_fingerprint`s, so wave 10 is now its own slice.
-**Before unioning any new wave, check its `manifest.target_fingerprint`
-against the slice you're adding it to** (`grep target_fingerprint` on the
-report JSON) rather than assuming same-model-name means same model.
+`PR #282` — that's the wave-8 boundary. Between wave 9 and wave 10,
+`bridge.py` changed again (the §2.18 fix, `aff74062`) — `analyze.py` itself
+refuses to union runs with different `target_fingerprint`s, so wave 10 is
+its own slice. (This was first recorded as an Ollama served-weights update;
+EVIDENCE.md §2.21 corrects it.) **Before unioning any new wave, check its
+`manifest.target_fingerprint` against the slice you're adding it to**
+(`grep target_fingerprint` on the report JSON): it changes with the workflow
+YAML, `bridge.py` or the model id. It does not change when a provider
+updates the weights behind a tag — nothing in the kit records that yet.
 
 ---
 
