@@ -110,7 +110,7 @@ Pydantic models under `agentic_v2/contracts/`.
 A Python structural interface. A class satisfies a protocol by providing the
 required methods and properties; it does not need to inherit from the protocol.
 
-See `agentic_v2/core/protocols.py` and `agentic_v2/rag/protocols.py`.
+See `agentic_v2/core/protocols.py`.
 
 **Run record**
 
@@ -166,17 +166,16 @@ and metadata.
 **Embedding**
 
 A numeric vector produced from text for similarity search. Provider embeddings
-can support semantic search. `InMemoryEmbedder` is a deterministic hash test
-double and does not provide semantic embeddings.
+can support semantic search.
 
 **BM25**
 
-A keyword-ranking algorithm used by the repository's sparse index.
+A keyword-ranking algorithm used for sparse lexical search.
 
 **Hybrid retrieval**
 
-Combining vector search and BM25 results. `HybridRetriever` merges the ranked
-lists with reciprocal rank fusion.
+Combining vector search and BM25 results, typically merged with reciprocal
+rank fusion.
 
 **Reciprocal rank fusion (RRF)**
 
@@ -185,11 +184,7 @@ than trying to compare provider-specific scores directly.
 
 **Vector store**
 
-A component that stores vectors and finds nearby vectors. The repository
-includes an in-memory implementation and an optional persistent LanceDB
-implementation.
-
-See [RAG pipeline](rag/index.md).
+A component that stores vectors and finds nearby vectors.
 
 ## Evaluation
 
@@ -229,8 +224,7 @@ See [Evaluation framework](architecture-eval.md).
 
 Development mode enabled with `AGENTIC_NO_LLM=1`. Supported model-client paths
 return deterministic placeholder text, which is useful for interface tests. It
-does not make every subsystem deterministic and does not change RAG component
-selection.
+does not make every subsystem deterministic.
 
 See [No-LLM development mode](NO_LLM_MODE.md).
 

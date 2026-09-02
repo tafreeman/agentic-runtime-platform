@@ -1,0 +1,209 @@
+{
+  "schema_version": "1",
+  "run_id": "fixture-basic-batch",
+  "manifest": {
+    "run_name": "fixture-arm",
+    "target_fingerprint": "ollama:deepseek-v4-flash:0731-cloud@20ace0a669f0",
+    "sampling": {
+      "attempts": 1,
+      "seed": 12345,
+      "temperature": 0.0
+    }
+  },
+  "resolved_dataset": {
+    "dataset_id": "fixture.jsonl",
+    "revision": "sha256:fixturerevision",
+    "row_count": 5
+  },
+  "samples": [
+    {
+      "sample": {
+        "sample_id": "proj__pass-1",
+        "metadata": {"instance_id": "proj__pass-1", "kind": "SWEBENCH"}
+      },
+      "execution": {
+        "sample_id": "proj__pass-1",
+        "attempt": 1,
+        "status": "completed",
+        "output": {
+          "workflow": "swe_fix_direct",
+          "requested_model": "ollama:deepseek-v4-flash:0731-cloud",
+          "models_used": ["ollama:deepseek-v4-flash:0731-cloud"],
+          "step_count": 1,
+          "elapsed_seconds": 12.5,
+          "patched_source": "diff --git a/x b/x",
+          "root_cause": "off by one",
+          "verification_report": "ok"
+        },
+        "artifacts": {},
+        "input_tokens": null,
+        "output_tokens": null,
+        "cost_usd": null,
+        "latency_ms": null,
+        "model_name": null,
+        "error": null,
+        "started_at": "2026-08-30T05:00:00.000000Z",
+        "finished_at": "2026-08-30T05:01:00.000000Z",
+        "trace_refs": []
+      },
+      "grade": {
+        "sample_id": "proj__pass-1",
+        "grader": "swebench-composite@1",
+        "grader_type": "deterministic",
+        "status": "pass",
+        "score": 1.0,
+        "hard_gate": true,
+        "evidence": {},
+        "oracle_provenance": {},
+        "rubric_id": "swe_fix_composite_v1",
+        "created_at": "2026-08-30T05:01:00.100000Z"
+      }
+    },
+    {
+      "sample": {
+        "sample_id": "proj__timeout-1",
+        "metadata": {"instance_id": "proj__timeout-1", "kind": "SWEBENCH"}
+      },
+      "execution": {
+        "sample_id": "proj__timeout-1",
+        "attempt": 1,
+        "status": "timeout",
+        "output": null,
+        "artifacts": {},
+        "input_tokens": null,
+        "output_tokens": null,
+        "cost_usd": null,
+        "latency_ms": null,
+        "model_name": null,
+        "error": {
+          "code": "target_timeout",
+          "message": "subprocess target exceeded 900.0s timeout",
+          "type": "TimeoutError"
+        },
+        "started_at": "2026-08-30T06:00:00.000000Z",
+        "finished_at": "2026-08-30T06:15:00.000000Z",
+        "trace_refs": []
+      },
+      "grade": null
+    },
+    {
+      "sample": {
+        "sample_id": "proj__baddata-1",
+        "metadata": {"instance_id": "proj__baddata-1", "kind": "SWEBENCH"}
+      },
+      "execution": {
+        "sample_id": "proj__baddata-1",
+        "attempt": 1,
+        "status": "error",
+        "output": null,
+        "artifacts": {},
+        "input_tokens": null,
+        "output_tokens": null,
+        "cost_usd": null,
+        "latency_ms": null,
+        "model_name": null,
+        "error": {
+          "code": "target_failure",
+          "message": "subprocess target produced no response line"
+        },
+        "started_at": "2026-08-30T07:00:00.000000Z",
+        "finished_at": "2026-08-30T07:02:00.000000Z",
+        "trace_refs": []
+      },
+      "grade": {
+        "sample_id": "proj__baddata-1",
+        "grader": "swebench-composite@1",
+        "grader_type": "deterministic",
+        "status": "fail",
+        "score": 0.0,
+        "hard_gate": true,
+        "evidence": {"note": "stale grade left over from a prior attempt"},
+        "oracle_provenance": {},
+        "rubric_id": "swe_fix_composite_v1",
+        "created_at": "2026-08-30T07:02:00.100000Z"
+      }
+    },
+    {
+      "sample": {
+        "sample_id": "proj__spilled-1",
+        "metadata": {"instance_id": "proj__spilled-1", "kind": "SWEBENCH"}
+      },
+      "execution": {
+        "sample_id": "proj__spilled-1",
+        "attempt": 1,
+        "status": "completed",
+        "output": null,
+        "artifacts": {
+          "output_ref": "sha256:8c2bbf9dc89854257f3c5142ba2da8bc02b77c3ecd9654921a373f14efa92f4f"
+        },
+        "input_tokens": null,
+        "output_tokens": null,
+        "cost_usd": null,
+        "latency_ms": null,
+        "model_name": null,
+        "error": null,
+        "started_at": "2026-08-30T08:00:00.000000Z",
+        "finished_at": "2026-08-30T08:05:00.000000Z",
+        "trace_refs": []
+      },
+      "grade": {
+        "sample_id": "proj__spilled-1",
+        "grader": "swebench-composite@1",
+        "grader_type": "deterministic",
+        "status": "fail",
+        "score": 0.0,
+        "hard_gate": true,
+        "evidence": {},
+        "oracle_provenance": {},
+        "rubric_id": "swe_fix_composite_v1",
+        "created_at": "2026-08-30T08:05:00.100000Z"
+      }
+    },
+    {
+      "sample": {
+        "sample_id": "proj__subsec-1",
+        "metadata": {"instance_id": "proj__subsec-1", "kind": "SWEBENCH"}
+      },
+      "execution": {
+        "sample_id": "proj__subsec-1",
+        "attempt": 1,
+        "status": "completed",
+        "output": {
+          "workflow": "swe_fix_direct",
+          "requested_model": "ollama:deepseek-v4-flash:0731-cloud",
+          "models_used": ["ollama:deepseek-v4-flash:0731-cloud"],
+          "step_count": 1,
+          "elapsed_seconds": 0.25,
+          "patched_source": "diff --git a/y b/y",
+          "root_cause": "typo",
+          "verification_report": "ok"
+        },
+        "artifacts": {},
+        "input_tokens": null,
+        "output_tokens": null,
+        "cost_usd": null,
+        "latency_ms": null,
+        "model_name": null,
+        "error": null,
+        "started_at": "2026-08-30T09:00:00.000000Z",
+        "finished_at": "2026-08-30T09:00:00.250000Z",
+        "trace_refs": []
+      },
+      "grade": {
+        "sample_id": "proj__subsec-1",
+        "grader": "swebench-composite@1",
+        "grader_type": "deterministic",
+        "status": "pass",
+        "score": 1.0,
+        "hard_gate": true,
+        "evidence": {},
+        "oracle_provenance": {},
+        "rubric_id": "swe_fix_composite_v1",
+        "created_at": "2026-08-30T09:00:00.300000Z"
+      }
+    }
+  ],
+  "started_at": "2026-08-30T05:00:00.000000+00:00",
+  "finished_at": "2026-08-30T09:00:00.300000+00:00",
+  "generated_at": "2026-08-30T09:00:01.000000+00:00"
+}

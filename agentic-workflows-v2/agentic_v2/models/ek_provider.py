@@ -188,6 +188,14 @@ class SmartRouterProvider:
         chat_messages = list(messages)
         tool_list = list(tools) if tools else None
 
+        if model is not None:
+            # An explicit model bypasses router.get_model_for_tier entirely --
+            # and with it, that method's cost-lane ceiling check -- so it must
+            # be validated here instead (ARP-IMPROVEMENTS F1).
+            from .model_registry import enforce_cost_lane_ceiling
+
+            enforce_cost_lane_ceiling(model)
+
         tried: list[str] = []
         last_error: Exception | None = None
 

@@ -10,7 +10,7 @@ Last verified: 2026-07-28.
 | Area | Path | Purpose |
 |---|---|---|
 | Shared tools | repository root and `tools/` | Provider clients, benchmark helpers, cache, and shared errors |
-| Runtime | `agentic-workflows-v2/` | Workflow loader, execution engines, agents, tools, model routing, RAG, CLI, and server |
+| Runtime | `agentic-workflows-v2/` | Workflow loader, execution engines, agents, tools, model routing, CLI, and server |
 | Dashboard | `agentic-workflows-v2/ui/` | Browser interface for workflows, models, runs, and evaluations |
 | Evaluation | `agentic-v2-eval/` | Offline scoring, metrics, evaluators, runners, and reports |
 | Cross-package tests | `tests/e2e/` | Verify public behavior across package boundaries |
@@ -43,19 +43,6 @@ The repository root installs as the `agentic-tools` Python package.
 These controls reduce risk but do not make every deployment secure by default.
 An exposed service still requires deliberate authentication, network, storage,
 secret, and tool-policy configuration.
-
-### RAG components
-
-- Document and chunk models.
-- Text and Markdown loaders.
-- Character-based recursive chunking.
-- Deterministic and provider-backed embedding adapters.
-- In-memory and LanceDB vector stores.
-- BM25, vector, hybrid fusion, optional reranking, and context assembly.
-
-The Python components support real embeddings and durable vector storage when
-the RAG extra is installed. The current `agentic rag` CLI does not persist its
-index between commands. See [RAG](rag/index.md).
 
 ### Evaluation
 
@@ -110,7 +97,6 @@ agentic-runtime-platform/
 |   |   |-- engine/                native execution
 |   |   |-- langchain/             LangGraph adapter
 |   |   |-- models/                routing and provider health
-|   |   |-- rag/                   retrieval components
 |   |   |-- server/                FastAPI, WebSocket, and SSE
 |   |   |-- tools/                 runtime tools
 |   |   `-- workflows/             loader and YAML definitions
@@ -133,7 +119,6 @@ agentic-runtime-platform/
   integration test.
 - Native and LangGraph execution do not support every feature equally.
 - Some state is process-local even when Redis is configured.
-- The RAG CLI is not a persistent indexing service.
 - Live provider evaluation is separate from the default unit-test path.
 
 The maintained list is [Known limitations](KNOWN_LIMITATIONS.md).

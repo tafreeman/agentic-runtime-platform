@@ -27,6 +27,15 @@ NOTEBOOKLM_MODEL / NOTEBOOKLM_GEMINI_MODEL
     Optional default Gemini model used by ``notebooklm:`` alias.
 AGENTIC_MODEL_TIER_{N}
     Force a specific model ID for tier N (e.g. ``AGENTIC_MODEL_TIER_2=gh:openai/gpt-4o``).
+AGENTIC_MAX_COST_LANE
+    ``local``, ``free``, or ``paid`` (default). Ceiling enforced by
+    :func:`get_model_candidates_for_tier` against each candidate's curated
+    :func:`agentic_v2.models.model_registry.cost_lane_for`: a candidate ranked
+    above the ceiling is dropped, never merely reordered. Fails closed -- an
+    uncurated model is treated as ``paid``. Raises
+    :class:`agentic_v2.models.model_registry.CostLaneCeilingExceededError`
+    rather than falling through to an unfiltered chain when every candidate is
+    filtered out. See ARP-IMPROVEMENTS F1.
 DEEP_RESEARCH_* (optional)
     Can be used with ``env:VAR|fallback`` per-step overrides in workflow YAML.
 
@@ -45,7 +54,7 @@ import os
 from collections.abc import Callable, Iterator, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 if TYPE_CHECKING:
     from ..models.router import FallbackChain, ModelRouter, ModelTier
@@ -60,6 +69,7 @@ from ..models.ollama_discovery import discover_ollama_models
 from .model_builders import (
     _resolve_notebooklm_model_name,
     build_anthropic_model,
+    build_digitalocean_model,
     build_gemini_model,
     build_github_model,
     build_lmstudio_model,
@@ -245,6 +255,20 @@ def _registry_strict_enabled() -> bool:
         "true",
         "yes",
     )
+
+
+def _max_cost_lane_ceiling() -> Literal["local", "free", "paid"]:
+    """Read ``AGENTIC_MAX_COST_LANE`` (delegates to the shared implementation).
+
+    Thin re-export kept so existing call sites/tests importing this name
+    from ``langchain.models`` keep working; the canonical implementation --
+    shared with the native engine's ``ModelRouter`` / ``SmartModelRouter`` so
+    a ceiling set once applies regardless of engine -- lives in
+    :func:`agentic_v2.models.model_registry.max_cost_lane_ceiling`.
+    """
+    from ..models.model_registry import max_cost_lane_ceiling
+
+    return max_cost_lane_ceiling()
 
 
 def detect_registry_drift(
@@ -569,6 +593,7 @@ _PREFIX_BUILDERS: tuple[tuple[str, Any], ...] = (
     ("openai:", build_openai_model),
     ("nvidia:", build_nvidia_model),
     ("openrouter:", build_openrouter_model),
+    ("digitalocean:", build_digitalocean_model),
     ("anthropic:", build_anthropic_model),
     ("claude:", build_anthropic_model),
     ("gemini:", build_gemini_model),
@@ -586,6 +611,7 @@ _KNOWN_PREFIXES: tuple[str, ...] = (
     "openai:",
     "nvidia:",
     "openrouter:",
+    "digitalocean:",
     "azure:",
     "local:",
     "windows-ai:",
@@ -651,8 +677,7 @@ def get_chat_model(model_id: str, temperature: float = 0.0) -> Any:
 
     supported = ", ".join(prefix for prefix, _ in _PREFIX_BUILDERS)
     raise ValueError(
-        f"Unsupported model provider in '{model_id}'. "
-        f"Supported prefixes: {supported}."
+        f"Unsupported model provider in '{model_id}'. Supported prefixes: {supported}."
     )
 
 
@@ -731,6 +756,7 @@ def get_model_candidates_for_tier(
     *,
     include_unavailable: bool = False,
     include_gh_backup: bool = True,
+    max_cost_lane: Literal["local", "free", "paid"] | None = None,
 ) -> list[str]:
     """Return ordered candidate model IDs for a tier, including fallbacks.
 
@@ -742,6 +768,15 @@ def get_model_candidates_for_tier(
     4. Probed tier default from ``_TIER_DEFAULTS``
     5. Tier fallback chain from ``_TIER_FALLBACK_CHAINS``
     6. GitHub backup models (when ``GITHUB_TOKEN`` is configured)
+
+    A cost-lane ceiling is then enforced (unless ``include_unavailable``):
+    ``max_cost_lane`` when given, otherwise ``AGENTIC_MAX_COST_LANE``
+    (default ``"paid"``, i.e. no filtering -- unchanged behavior). The
+    ceiling drops candidates above it -- pinned entries included, so an
+    explicit ``model_override`` cannot bypass it -- and raises
+    :class:`agentic_v2.models.model_registry.CostLaneCeilingExceededError`
+    if that empties an otherwise non-empty list, rather than silently
+    returning nothing or falling through unfiltered (ARP-IMPROVEMENTS F1).
     """
     pinned: list[str] = []
 
@@ -775,7 +810,11 @@ def get_model_candidates_for_tier(
         return dedupe_keep_order(ordered_pinned + ordered_fallback)
 
     # Drop ids quarantined by drift detection (retired at provider; ADR-040).
-    from ..models.model_registry import is_quarantined, provider_for
+    from ..models.model_registry import (
+        apply_cost_lane_ceiling,
+        is_quarantined,
+        provider_for,
+    )
 
     ordered_pinned = [m for m in ordered_pinned if not is_quarantined(m)]
     filtered_fallback = [
@@ -783,7 +822,13 @@ def get_model_candidates_for_tier(
         for m in ordered_fallback
         if is_provider_available(provider_for(m)) and not is_quarantined(m)
     ]
-    return dedupe_keep_order(ordered_pinned + filtered_fallback)
+    candidates = dedupe_keep_order(ordered_pinned + filtered_fallback)
+
+    # Filters pinned entries too -- an explicit model_override must not be
+    # able to bypass the ceiling it exists to enforce.
+    return apply_cost_lane_ceiling(
+        candidates, ceiling=max_cost_lane, context=f"tier {tier}"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -805,6 +850,7 @@ __all__ = [
     "build_openai_model",
     "build_nvidia_model",
     "build_openrouter_model",
+    "build_digitalocean_model",
     "build_anthropic_model",
     "build_gemini_model",
     "build_notebooklm_model",

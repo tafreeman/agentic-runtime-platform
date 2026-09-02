@@ -9,12 +9,14 @@ import pytest
 from agentic_v2.langchain.models import (
     _dedupe_keep_order,
     _is_provider_available,
+    _max_cost_lane_ceiling,
     _provider_prefix,
     _resolve_model_override,
     enumerate_known_models,
     get_model_candidates_for_tier,
     is_retryable_model_error,
 )
+from agentic_v2.models.model_registry import CostLaneCeilingExceededError, cost_lane_for
 from agentic_v2.models.ollama_discovery import OllamaModelInfo
 
 
@@ -211,6 +213,105 @@ class TestGetModelCandidatesForTier:
         """Returned list has no duplicates."""
         result = get_model_candidates_for_tier(2, include_unavailable=True)
         assert len(result) == len(set(result))
+
+
+class TestCostLaneCeiling:
+    """Tests for AGENTIC_MAX_COST_LANE / max_cost_lane (ARP-IMPROVEMENTS F1).
+
+    ``_TIER_DEFAULTS`` and ``_TIER_FALLBACK_CHAINS`` are process-wide globals
+    that other tests in the same session can mutate (e.g. anything that
+    triggers a real ``probe_and_update_tier_defaults()``, which -- in a
+    keyless CI environment -- rewrites the tier-1 default to the only
+    always-available local model). Relying on the production registry's real
+    tier-1 shape (paid-heavy chain, ``ollama:gemma4:31b`` local tail) plus
+    ambient credentials made these tests pass locally but fail in CI's
+    no-key jobs, where no paid provider is available at all. The autouse
+    fixture below pins both globals and a fake credential explicitly so
+    every test here is self-contained regardless of session history or real
+    environment credentials.
+    """
+
+    _PAID = "anthropic:claude-haiku-4-5-20251001"
+    _LOCAL = "ollama:gemma4:31b"
+
+    @pytest.fixture(autouse=True)
+    def _pin_tier_1(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        from agentic_v2.langchain import models as lcm
+
+        monkeypatch.setitem(lcm._TIER_DEFAULTS, 1, self._PAID)
+        monkeypatch.setitem(lcm._TIER_FALLBACK_CHAINS, 1, [self._PAID, self._LOCAL])
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "fake-key-for-cost-lane-tests")
+        monkeypatch.delenv("AGENTIC_MAX_COST_LANE", raising=False)
+        # An ambient OLLAMA_API_KEY would make cost_lane_for downgrade _LOCAL
+        # to "free" unless the daemon actually has it pulled (ADR-051) --
+        # irrelevant to what these tests exercise, so keep it out of the way.
+        monkeypatch.delenv("OLLAMA_API_KEY", raising=False)
+
+    def test_default_ceiling_is_paid_unset(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.delenv("AGENTIC_MAX_COST_LANE", raising=False)
+        assert _max_cost_lane_ceiling() == "paid"
+
+    def test_invalid_env_value_falls_back_to_paid_and_warns(
+        self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        monkeypatch.setenv("AGENTIC_MAX_COST_LANE", "bogus-lane")
+        with caplog.at_level(logging.WARNING):
+            assert _max_cost_lane_ceiling() == "paid"
+        assert any("not recognised" in r.message for r in caplog.records)
+
+    def test_default_ceiling_does_not_filter(self) -> None:
+        """Unset AGENTIC_MAX_COST_LANE -> unchanged behavior (no filtering)."""
+        result = get_model_candidates_for_tier(1)
+        assert any(cost_lane_for(m) == "paid" for m in result)
+
+    def test_free_ceiling_drops_paid_candidates(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("AGENTIC_MAX_COST_LANE", "free")
+        result = get_model_candidates_for_tier(1)
+        assert result == [self._LOCAL]
+        assert all(cost_lane_for(m) != "paid" for m in result)
+
+    def test_free_ceiling_drops_a_paid_model_override_too(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A pinned override cannot bypass the ceiling it exists to enforce."""
+        monkeypatch.setenv("AGENTIC_MAX_COST_LANE", "free")
+        result = get_model_candidates_for_tier(1, model_override=self._PAID)
+        assert self._PAID not in result
+
+    def test_max_cost_lane_kwarg_overrides_env(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("AGENTIC_MAX_COST_LANE", "free")
+        result = get_model_candidates_for_tier(1, max_cost_lane="paid")
+        assert any(cost_lane_for(m) == "paid" for m in result)
+
+    def test_ceiling_raises_when_every_candidate_is_filtered(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Fail closed: an all-paid chain under a free ceiling raises, it does
+        not silently return an empty list or fall through unfiltered."""
+        from agentic_v2.langchain import models as lcm
+
+        # Override the fixture's fallback (which includes the local tail) so
+        # every candidate -- pinned default included -- is paid.
+        monkeypatch.setitem(lcm._TIER_FALLBACK_CHAINS, 1, [self._PAID])
+        monkeypatch.setenv("AGENTIC_MAX_COST_LANE", "free")
+        with pytest.raises(CostLaneCeilingExceededError, match="free"):
+            get_model_candidates_for_tier(1, include_gh_backup=False)
+
+    def test_include_unavailable_bypasses_the_ceiling(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """include_unavailable=True is the existing "show everything, unfiltered"
+        introspection path (already skips quarantine filtering); the ceiling
+        follows that same precedent rather than applying there too."""
+        monkeypatch.setenv("AGENTIC_MAX_COST_LANE", "free")
+        result = get_model_candidates_for_tier(1, include_unavailable=True)
+        assert any(cost_lane_for(m) == "paid" for m in result)
 
 
 class TestEnumerateKnownModelsMerge:

@@ -12,7 +12,7 @@ The repository contains three Python packages and one Node application:
 | Path | Package | Purpose |
 |---|---|---|
 | repository root | `agentic-tools` | Shared model and benchmark utilities |
-| `agentic-workflows-v2/` | `agentic-workflows-v2` | Runtime, CLI, server, and RAG components |
+| `agentic-workflows-v2/` | `agentic-workflows-v2` | Runtime, CLI, and server |
 | `agentic-v2-eval/` | `agentic-v2-eval` | Rubrics, evaluators, runners, and reporters |
 | `agentic-workflows-v2/ui/` | private npm package | React dashboard |
 
@@ -93,7 +93,6 @@ Extras are declared in `agentic-workflows-v2/pyproject.toml`.
 | `server` | FastAPI, Uvicorn, multipart uploads, rate limiting, and JWT verification |
 | `langchain` | The default adapter for named YAML workflows and LangGraph compilation during validation |
 | `tracing` | OpenTelemetry SDK, OTLP exporters, Prometheus exporter, and client |
-| `rag` | LiteLLM-backed embeddings and LanceDB storage |
 | `ek` | ExecutionKit integration |
 | `devex` | Process inspection used by development commands |
 | `mcp` | WebSocket transport for the MCP client |
@@ -106,13 +105,13 @@ Add extras to the same editable install:
 
 ```bash
 python -m pip install \
-  -e "./agentic-workflows-v2[dev,server,langchain,tracing,rag,redis]" \
+  -e "./agentic-workflows-v2[dev,server,langchain,tracing,redis]" \
   -c ci-constraints.txt
 ```
 
 Optional packages fail when their feature is selected, not when the base
-runtime is imported. For example, requesting LanceDB without the `rag` extra
-raises an install hint.
+runtime is imported. For example, requesting the PostgreSQL checkpointer
+without the `postgres` extra raises an install hint.
 
 ## Deterministic verification
 
@@ -164,12 +163,9 @@ Set only the providers you intend to use. Common chat-provider variables are:
 | Azure AI Foundry | `AZURE_FOUNDRY_API_KEY` and a configured Foundry endpoint |
 | NVIDIA NIM | `NVIDIA_API_KEY`, or `NVIDIA_BASE_URL` for a self-hosted endpoint |
 | OpenRouter | `OPENROUTER_API_KEY` |
+| DigitalOcean Serverless Inference | `DIGITALOCEAN_TOKEN` |
 | GitHub Models | `GITHUB_TOKEN` or `GH_TOKEN` |
 | Ollama | `OLLAMA_HOST`; `OLLAMA_API_KEY` only when the endpoint requires it |
-
-RAG embedding credentials are separate. `provider="openai"` reads
-`OPENAI_API_KEY`, `provider="voyage"` reads `VOYAGE_API_KEY`, and
-`provider="local"` routes through an Ollama-compatible embedding endpoint.
 
 See [Configuration](../configuration.md) for model overrides, endpoint
 settings, authentication, storage, and security controls.

@@ -1,4 +1,4 @@
-"""CLI helper functions for adapter comparison and RAG operations.
+"""CLI helper functions for adapter comparison.
 
 Extracted from ``main.py`` to keep the command module under 800 lines.
 These functions encapsulate the business logic called by the Typer
@@ -11,7 +11,6 @@ import asyncio
 import logging
 import time
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -274,86 +273,3 @@ def _run_adapter(
             "step_count": 0,
             "elapsed": round(elapsed, 2),
         }
-
-
-# ---------------------------------------------------------------------------
-# Module-level RAG state so ingest + search share a session
-# ---------------------------------------------------------------------------
-
-_rag_vectorstore = None
-_rag_retriever = None
-
-
-def _rag_ingest_impl(source: str) -> int:
-    """Ingest a file into the RAG pipeline and return chunk count.
-
-    Args:
-        source: Path to the file to ingest.
-
-    Returns:
-        Number of chunks ingested.
-
-    Raises:
-        FileNotFoundError: If the source path does not exist.
-    """
-    global _rag_vectorstore, _rag_retriever
-
-    from ..rag import (
-        HybridRetriever,
-        IngestionPipeline,
-        InMemoryEmbedder,
-        InMemoryVectorStore,
-        MarkdownLoader,
-        RecursiveChunker,
-        TextLoader,
-    )
-
-    source_path = Path(source)
-    if not source_path.exists():
-        raise FileNotFoundError(f"Source not found: {source}")
-
-    # Pick loader based on extension
-    if source_path.suffix in (".md", ".markdown"):
-        loader = MarkdownLoader()
-    else:
-        loader = TextLoader()
-
-    pipeline = IngestionPipeline(loader=loader, chunker=RecursiveChunker())
-    chunks = asyncio.run(pipeline.ingest(str(source_path)))
-
-    if not chunks:
-        return 0
-
-    embedder = InMemoryEmbedder()
-    if _rag_vectorstore is None:
-        _rag_vectorstore = InMemoryVectorStore()
-
-    embeddings = asyncio.run(embedder.embed([c.content for c in chunks]))
-    asyncio.run(_rag_vectorstore.add(chunks, embeddings))
-
-    _rag_retriever = HybridRetriever(
-        embedder=embedder,
-        vectorstore=_rag_vectorstore,
-    )
-    _rag_retriever.index_chunks(chunks)
-
-    return len(chunks)
-
-
-def _rag_search_impl(query: str, top_k: int) -> list[dict]:
-    """Search the RAG index and return results.
-
-    Args:
-        query: Search query string.
-        top_k: Maximum number of results.
-
-    Returns:
-        List of dicts with ``content`` and ``score`` keys.
-    """
-    global _rag_retriever
-
-    if _rag_retriever is None:
-        return []
-
-    results = asyncio.run(_rag_retriever.retrieve(query, top_k=top_k))
-    return [{"content": r.content, "score": r.score} for r in results]

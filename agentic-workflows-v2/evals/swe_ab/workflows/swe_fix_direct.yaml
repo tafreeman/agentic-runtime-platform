@@ -1,0 +1,102 @@
+name: swe_fix_direct
+description: >-
+  Arm A of the SWE fix A/B — single-pass defect repair. Read the failing case,
+  then return the corrected file in one coder step. No review, no revision loop.
+  Deliberately the cheapest orchestration that can still satisfy the shared
+  output contract.
+version: "1.0"
+
+capabilities:
+  inputs: [bug_report, code_file, source_code, failing_test]
+  outputs: [patched_source, root_cause, verification_report]
+
+# Both arms declare the SAME rubric id and scoring profile: the treatment under
+# test is the orchestration shape, not the grading standard.
+evaluation:
+  rubric_id: swe_fix_v1
+  scoring_profile: B
+  criteria:
+    - name: root_cause_accuracy
+      definition: Accuracy of the stated root cause against the actual defect.
+      evidence_required:
+        - Causal chain from failing test to the defective line
+        - No claim contradicted by the supplied source
+      scale:
+        "1": Root cause missed or wrong
+        "2": Superficial; core cause missed
+        "3": Correct cause, minor gaps
+        "4": Accurate and evidenced
+        "5": Precise, fully evidenced
+      weight: 0.30
+      critical_floor: 0.70
+      formula_id: zero_one
+    - name: patch_quality
+      definition: Correctness and minimality of the returned file.
+      evidence_required:
+        - Returned source is a complete, parseable module
+        - Change is confined to the defect, not a rewrite
+      scale:
+        "1": Does not parse or is truncated
+        "2": Parses but does not address the cause
+        "3": Addresses the cause, collateral edits present
+        "4": Correct and reasonably scoped
+        "5": Correct and minimal
+      weight: 0.50
+      critical_floor: 0.75
+      formula_id: zero_one
+    - name: verification
+      definition: Specificity of the stated verification plan.
+      evidence_required:
+        - Names the test(s) that should now pass
+      scale:
+        "1": No verification stated
+        "2": Generic assertion of correctness
+        "3": Names the failing test
+        "4": Names tests plus an edge case
+        "5": Names tests, edge cases, and regression risk
+      weight: 0.20
+      formula_id: zero_one
+
+inputs:
+  bug_report:
+    type: string
+    description: Failing-test output plus the defect description for this case.
+  code_file:
+    type: string
+    description: Repo-relative path of the single source file under repair.
+  source_code:
+    type: string
+    description: >-
+      The complete current contents of that file, defect included. Supplied
+      inline so the run never depends on the agent having filesystem tools —
+      both arms see byte-identical input.
+  failing_test:
+    type: string
+    description: Node id of the test that currently fails.
+
+steps:
+  - name: repair
+    agent: tier2_coder
+    tools: []
+    description: >-
+      Return the COMPLETE corrected contents of the file — not a diff, not a
+      fragment, not an explanation with code in it. Change only what the defect
+      requires; everything else must come back byte-identical. Never alter a
+      test to make it pass.
+    inputs:
+      bug_report: ${inputs.bug_report}
+      file_path: ${inputs.code_file}
+      source_code: ${inputs.source_code}
+      failing_test: ${inputs.failing_test}
+    outputs:
+      patched_source: corrected_file_contents
+      root_cause: root_cause_statement
+      verification_report: verification_plan
+
+outputs:
+  patched_source:
+    from: ${steps.repair.outputs.patched_source}
+  root_cause:
+    from: ${steps.repair.outputs.root_cause}
+  verification_report:
+    from: ${steps.repair.outputs.verification_report}

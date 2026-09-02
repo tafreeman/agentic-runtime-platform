@@ -188,6 +188,29 @@ def local_model_names() -> frozenset[str]:
     return resolved
 
 
+def is_served_locally(model_name: str) -> bool:
+    """True when the local daemon's ``/api/tags`` can serve ``model_name``.
+
+    Tag names are fully qualified (``qwen3-coder:30b``); a bare request name
+    also matches its ``:latest`` alias, mirroring the daemon's own resolution.
+    Matching is case-insensitive -- the daemon resolves ``Gemma4:31b`` and
+    ``gemma4:31b`` to the same model, and locally pulled tags may carry mixed
+    case (``hf.co/...Qwen3.6-27B-GGUF:Q8_0``).
+
+    The single source of truth for "will this id actually stay local":
+    :func:`agentic_v2.langchain.model_builders.build_ollama_model` uses it to
+    decide whether to reroute to the account-bound ``https://ollama.com``
+    cloud endpoint (ADR-051), and
+    :func:`agentic_v2.models.model_registry.cost_lane_for` uses it so a
+    curated ``"local"`` cost lane can't silently mean "actually cloud" under
+    an ``AGENTIC_MAX_COST_LANE=local`` ceiling (ARP-IMPROVEMENTS F1) --
+    both must agree, since they are answering the same question.
+    """
+    names = {name.lower() for name in local_model_names()}
+    requested = model_name.lower()
+    return requested in names or f"{requested}:latest" in names
+
+
 def discover_ollama_models() -> list[OllamaModelInfo]:
     """Discover Ollama models actually available right now (best-effort).
 
@@ -227,4 +250,9 @@ def discover_ollama_models() -> list[OllamaModelInfo]:
     return discovered
 
 
-__all__ = ["OllamaModelInfo", "discover_ollama_models", "local_model_names"]
+__all__ = [
+    "OllamaModelInfo",
+    "discover_ollama_models",
+    "is_served_locally",
+    "local_model_names",
+]

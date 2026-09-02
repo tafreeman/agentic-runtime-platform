@@ -31,7 +31,6 @@ the current directory.
 | `agentic validate` | Validate a workflow without running it |
 | `agentic serve` | Start the FastAPI server and packaged UI |
 | `agentic version` | Print package and runtime version information |
-| `agentic rag` | Run the current process-local RAG commands |
 | `agentic devex` | Run development checks |
 
 ## `agentic run`
@@ -191,39 +190,6 @@ agentic version
 ```
 
 Prints the installed runtime version and basic environment information.
-
-## `agentic rag`
-
-The command group currently has two commands:
-
-```bash
-agentic rag ingest --source ./notes.md
-agentic rag search "deployment requirements" --top-k 5
-```
-
-### `agentic rag ingest`
-
-| Option | Type | Default | Meaning |
-|---|---|---|---|
-| `--source`, `-s` | path | required | Markdown or text file to ingest |
-| `--collection`, `-c` | text | `default` | Accepted by the CLI but not connected to storage yet |
-
-The implementation loads one file, chunks it, creates deterministic hash-based
-embeddings, and stores the vectors in process memory. Directory loading,
-provider-backed embeddings, and persistent collection storage are available
-through the Python RAG components but are not wired into this command.
-
-### `agentic rag search`
-
-| Option | Type | Default | Meaning |
-|---|---|---|---|
-| `--top-k`, `-k` | integer | `5` | Maximum result count |
-
-Each CLI invocation is a new process, so an index created by `rag ingest` is
-discarded when that command exits. A later `rag search` invocation therefore
-has no index to search. Treat these commands as an incomplete development
-surface. Use the [RAG Python API](rag/index.md) for a working ingest-and-search
-flow in one process.
 
 ## `agentic devex`
 

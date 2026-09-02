@@ -1,0 +1,27 @@
+# Machine-generated and reproducible. `tools/mine_cases.py` rebuilds the case
+# tree deterministically (fixed seed, pinned source SHA), so committing 100
+# ast.unparse-formatted copies of another repo's source would only pollute this
+# repo's lint surface for no reproducibility gain.
+dataset/cases/
+# Likewise the SWE-bench case tree: broken.py there is verbatim Django
+# source, and build_swebench_cases.py reproduces it from the prebuilt
+# instance images. Vendoring another project's source to save a rebuild is
+# a bad trade.
+dataset/swebench_cases/
+
+# Run outputs: spilled artifacts and the bridge's scratch cwd. reports/ is
+# deliberately NOT here -- it's the actual per-sample evidence this campaign
+# is built to produce, and at ~250 KB/wave it costs nothing to keep durable
+# in git rather than living only on whichever machine last ran a wave.
+artifacts/
+sandbox/
+
+# Ledger databases and their blob store. The tracked artifact is the JSONL
+# export (ledger/export/), which diffs and rebuilds the database via
+# import_jsonl; a binary .db does neither. WAL/SHM sidecars are transient.
+ledger/*.db
+ledger/*.db-wal
+ledger/*.db-shm
+ledger/blobs/
+
+__pycache__/
