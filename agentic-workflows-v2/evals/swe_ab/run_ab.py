@@ -121,6 +121,9 @@ PAID_CREDENTIALS = (
     # refund the call.
     "NVIDIA_API_KEY",
     "NVIDIA_BASE_URL",
+    # DigitalOcean Serverless Inference: same fallback-contamination risk as
+    # NVIDIA above, and real billing exposure against a $100, expiring credit.
+    "DIGITALOCEAN_TOKEN",
 )
 
 
@@ -301,6 +304,7 @@ def grader_fingerprint() -> str:
 _OWN_CREDENTIALS_BY_PREFIX = {
     "nvidia": ("NVIDIA_API_KEY", "NVIDIA_BASE_URL"),
     "openrouter": ("OPENROUTER_API_KEY",),
+    "digitalocean": ("DIGITALOCEAN_TOKEN",),
 }
 
 
