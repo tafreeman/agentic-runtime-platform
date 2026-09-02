@@ -233,7 +233,7 @@ requires-dist = [
     { name = "aiofiles", specifier = ">=23.0,<26" },
     { name = "aiohttp", specifier = ">=3.14.3,<4" },
     { name = "aiosqlite", marker = "extra == 'sqlite'", specifier = ">=0.19,<1" },
-    { name = "anthropic", marker = "extra == 'claude'", specifier = ">=0.40,<1" },
+    { name = "anthropic", marker = "extra == 'claude'", specifier = ">=0.40,<2" },
     { name = "black", marker = "extra == 'dev'", specifier = ">=23.0" },
     { name = "cachetools", specifier = ">=5.0,<8" },
     { name = "claude-agent-sdk", marker = "extra == 'claude'", specifier = ">=0.1,<1" },
