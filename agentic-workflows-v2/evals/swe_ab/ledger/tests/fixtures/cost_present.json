@@ -1,0 +1,66 @@
+{
+  "schema_version": "1",
+  "run_id": "fixture-cost-present",
+  "manifest": {
+    "run_name": "fixture-arm",
+    "target_fingerprint": "ollama:deepseek-v4-flash:0731-cloud@20ace0a669f0",
+    "sampling": {
+      "attempts": 1,
+      "seed": 1,
+      "temperature": 0.0
+    }
+  },
+  "resolved_dataset": {
+    "dataset_id": "fixture.jsonl",
+    "revision": "sha256:fixturerevision",
+    "row_count": 1
+  },
+  "samples": [
+    {
+      "sample": {
+        "sample_id": "proj__cost-1",
+        "metadata": {"instance_id": "proj__cost-1", "kind": "SWEBENCH"}
+      },
+      "execution": {
+        "sample_id": "proj__cost-1",
+        "attempt": 1,
+        "status": "completed",
+        "output": {
+          "workflow": "swe_fix_direct",
+          "requested_model": "ollama:deepseek-v4-flash:0731-cloud",
+          "models_used": ["ollama:deepseek-v4-flash:0731-cloud"],
+          "step_count": 1,
+          "elapsed_seconds": 4.0,
+          "patched_source": "",
+          "root_cause": "",
+          "verification_report": ""
+        },
+        "artifacts": {},
+        "input_tokens": 1000,
+        "output_tokens": 200,
+        "cost_usd": 0.0123,
+        "latency_ms": 2500.0,
+        "model_name": "deepseek-v4-flash",
+        "error": null,
+        "started_at": "2026-08-30T12:00:00.000000Z",
+        "finished_at": "2026-08-30T12:00:04.000000Z",
+        "trace_refs": []
+      },
+      "grade": {
+        "sample_id": "proj__cost-1",
+        "grader": "swebench-composite@1",
+        "grader_type": "deterministic",
+        "status": "pass",
+        "score": 1.0,
+        "hard_gate": true,
+        "evidence": {},
+        "oracle_provenance": {},
+        "rubric_id": "swe_fix_composite_v1",
+        "created_at": "2026-08-30T12:00:04.100000Z"
+      }
+    }
+  ],
+  "started_at": "2026-08-30T12:00:00.000000+00:00",
+  "finished_at": "2026-08-30T12:00:04.100000+00:00",
+  "generated_at": "2026-08-30T12:00:05.000000+00:00"
+}
