@@ -557,9 +557,13 @@ class CampaignPlan:
 #: second one inside it" -- the harness changed underneath waves 1-7 via
 #: PR #282 (the wave-8 boundary), and Ollama Cloud pushed a live weight
 #: update between wave 9 and wave 10 (the wave-10 boundary). Waves sharing a
-#: label here share a substrate; every report in this family has
-#: `manifest.code_fingerprint = null`, so without this label all three
-#: segments would collide onto one substrate and hide a real runtime change.
+#: label here share a substrate. Waves 1-7 do have `manifest.code_fingerprint
+#: = null`, so without this label they and every other null-fingerprint
+#: report (every non-wave campaign) would collide onto one substrate; waves
+#: 8-11 already carry a real, distinct `code_fingerprint` of their own, but
+#: `_with_effective_runtime_digest` applies this label unconditionally
+#: whenever the report is silent, rather than relying on that holding for
+#: every future report too.
 _WAVE_SEGMENT_LABEL: Mapping[int, str] = {
     **{n: "closed-pre-pr282" for n in range(1, 8)},
     8: "seg2-post-pr282",
@@ -721,6 +725,28 @@ EXCLUDED_REPORTS: Mapping[str, str] = {
 # ---------------------------------------------------------------------
 
 
+def _with_effective_runtime_digest(
+    report: Mapping[str, Any], fallback_label: str
+) -> Mapping[str, Any]:
+    """`report`, or a shallow copy with `manifest.code_fingerprint` set to
+    `fallback_label` when the report's own value is null/absent.
+
+    `derive_substrate` (inside `load_report`) folds `manifest.
+    code_fingerprint` into `substrate.runtime_digest` verbatim; a null value
+    there always becomes the literal string `"unknown"`, so every report
+    with a null fingerprint -- regardless of wave, segment or campaign --
+    would otherwise collide onto one substrate. `WavePlan.substrate_label`
+    is this migration's explicit segment identity for exactly that case;
+    applying it here means the segment split is guaranteed by this
+    migration's own design, not by whichever reports happen to already
+    carry a distinct real fingerprint.
+    """
+    manifest = report.get("manifest") or {}
+    if manifest.get("code_fingerprint"):
+        return report
+    return {**report, "manifest": {**manifest, "code_fingerprint": fallback_label}}
+
+
 def _instance_ids_of(report: Mapping[str, Any]) -> set[str]:
     ids: set[str] = set()
     for sample in report.get("samples", ()):
@@ -773,6 +799,7 @@ def migrate_wave(
         report_path = REPORTS_DIR / filename
         report: Mapping[str, Any] = json.loads(report_path.read_text(encoding="utf-8"))
         opened_at = opened_at or report.get("generated_at")
+        report = _with_effective_runtime_digest(report, wave_plan.substrate_label)
 
         provider, wire_ref = resolve_model_ref(report)
         model_id = register_model(store, provider, wire_ref)

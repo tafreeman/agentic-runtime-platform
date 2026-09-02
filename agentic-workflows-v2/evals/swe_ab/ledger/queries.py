@@ -110,6 +110,24 @@ def _arms_in_wave(
     return tuple((r["arm_id"], r["arm_key"]) for r in rows)
 
 
+#: `grade` has no `UNIQUE(trial_id)` -- a correction is a second row with a
+#: new `grade_id`, the same `trial_id`, and `supersedes` pointing at the row
+#: it replaces (`grade.supersedes REFERENCES grade (grade_id)` in
+#: schema.sql). A plain `JOIN grade g ON g.trial_id = t.trial_id` therefore
+#: joins to every row a corrected trial has ever had, not just the current
+#: one: `n_verdicts` can exceed `n_trials`, pass counts can include a stale
+#: outcome, and per-instance reads can pick either row nondeterministically.
+#: Every join to `grade` below uses this in place of the bare table name so
+#: a superseded row is invisible to every statistic, exactly like an
+#: UPDATE would have made it if the schema allowed updates at all.
+_ACTIVE_GRADE = """(
+    SELECT * FROM grade
+    WHERE grade_id NOT IN (
+        SELECT supersedes FROM grade WHERE supersedes IS NOT NULL
+    )
+)"""
+
+
 def _instance_statuses(
     conn: sqlite3.Connection, wave_id: str, arm_id: str
 ) -> dict[tuple[str, int], tuple[str, str | None]]:
@@ -126,9 +144,9 @@ def _instance_statuses(
         """
         SELECT t.task_id, t.run_idx, t.op_status, g.outcome
         FROM trial t
-        LEFT JOIN grade g ON g.trial_id = t.trial_id
+        LEFT JOIN {active_grade} g ON g.trial_id = t.trial_id
         WHERE t.wave_id = ? AND t.arm_id = ?
-        """,
+        """.format(active_grade=_ACTIVE_GRADE),  # noqa: S608, UP032 -- active_grade is a fixed module constant; an f-string here would retrigger S608 on the interpolation
         (wave_id, arm_id),
     ).fetchall()
     result: dict[tuple[str, int], tuple[str, str | None]] = {}
@@ -194,9 +212,9 @@ def arm_pass_rates(conn: sqlite3.Connection, wave_id: str) -> tuple[ArmPassRate,
             SELECT COUNT(*) AS n_verdicts,
                    SUM(CASE WHEN g.outcome = 'pass' THEN 1 ELSE 0 END) AS n_pass
             FROM trial t
-            JOIN grade g ON g.trial_id = t.trial_id
+            JOIN {active_grade} g ON g.trial_id = t.trial_id
             WHERE t.wave_id = ? AND t.arm_id = ? AND g.outcome IS NOT NULL
-            """,
+            """.format(active_grade=_ACTIVE_GRADE),  # noqa: S608, UP032 -- active_grade is a fixed module constant; an f-string here would retrigger S608 on the interpolation
             (wave_id, arm_id),
         ).fetchone()
         n_verdicts: int = verdict_row["n_verdicts"]
@@ -498,11 +516,11 @@ def repeat_aggregate(
                SUM(CASE WHEN g.outcome = 'pass' THEN 1 ELSE 0 END) AS n_pass
         FROM trial t
         JOIN arm a ON a.arm_id = t.arm_id
-        LEFT JOIN grade g ON g.trial_id = t.trial_id
+        LEFT JOIN {active_grade} g ON g.trial_id = t.trial_id
         WHERE t.wave_id = ?
         GROUP BY a.arm_id, t.task_id
         ORDER BY a.arm_key, t.task_id
-        """,
+        """.format(active_grade=_ACTIVE_GRADE),  # noqa: S608, UP032 -- active_grade is a fixed module constant; an f-string here would retrigger S608 on the interpolation
         (wave_id,),
     ).fetchall()
 
@@ -597,7 +615,7 @@ _COST_SQL = """
         SUM(sp.gpu_seconds) FILTER (WHERE g.trial_id IS NOT NULL) AS v_sum_gpu_seconds,
         COUNT(sp.gpu_seconds) FILTER (WHERE g.trial_id IS NOT NULL) AS v_cov_gpu_seconds
     FROM trial t
-    LEFT JOIN grade g ON g.trial_id = t.trial_id
+    LEFT JOIN {active_grade} g ON g.trial_id = t.trial_id
     LEFT JOIN (
         SELECT s1.trial_id, s1.cost_usd, s1.gpu_seconds
         FROM spend s1
@@ -609,7 +627,7 @@ _COST_SQL = """
         )
     ) sp ON sp.trial_id = t.trial_id
     WHERE t.wave_id = ? AND t.arm_id = ?
-"""
+""".format(active_grade=_ACTIVE_GRADE)  # noqa: S608, UP032 -- active_grade is a fixed module constant; an f-string here would retrigger S608 on the interpolation
 
 
 def _sum_field(row: sqlite3.Row, col: str) -> float | None:
@@ -796,9 +814,9 @@ def completeness(conn: sqlite3.Connection, wave_id: str) -> Completeness:
         verdict_row = conn.execute(
             """
             SELECT COUNT(*) AS n_verdicts FROM trial t
-            JOIN grade g ON g.trial_id = t.trial_id
+            JOIN {active_grade} g ON g.trial_id = t.trial_id
             WHERE t.wave_id = ? AND t.arm_id = ? AND g.outcome IS NOT NULL
-            """,
+            """.format(active_grade=_ACTIVE_GRADE),  # noqa: S608, UP032 -- active_grade is a fixed module constant; an f-string here would retrigger S608 on the interpolation
             (wave_id, arm_id),
         ).fetchone()
         n_verdicts: int = verdict_row["n_verdicts"]
@@ -930,13 +948,22 @@ def verdict(
     summary.
 
     `is_sound` is False whenever the wave is incomplete (some arm is
-    missing planned cells) or unbalanced (arms do not have matching
-    trial/verdict counts). The significance test is still computed and
-    returned either way -- nothing here is hidden -- but `summary`
-    refuses to present it as a conclusion when `is_sound` is False; a
-    reader must not be able to see a p-value here and mistake it for a
-    sound one. `store.py` enforces arm balance at write time already;
-    this is the read-time check for the wave as it actually stands.
+    missing planned cells) or unbalanced (arms do not cover the same
+    `(task_id, run_idx)` cells with an `op_status = 'ok'` trial). The
+    significance test is still computed and returned either way -- nothing
+    here is hidden -- but `summary` refuses to present it as a conclusion
+    when `is_sound` is False; a reader must not be able to see a p-value
+    here and mistake it for a sound one. `store.py` enforces this same
+    check at write time already; this is the read-time check for the wave
+    as it actually stands.
+
+    Comparing cell *sets*, not just their counts, matters: two arms can
+    each have run exactly 10 cells while covering 10 *different* ones (one
+    arm's task 3 swapped for the other's task 7, say) -- equal counts,
+    unsound comparison. `paired_outcomes` already excludes the mismatched
+    cells from its own 2x2 table regardless, but a reader looking at
+    `is_sound` alone must see the same caveat that read would have earned
+    them, not "sound" because the tallies happened to match.
     """
     pass_rates = arm_pass_rates(conn, wave_id)
     completeness_result = completeness(conn, wave_id)
@@ -950,10 +977,20 @@ def verdict(
             + ", ".join(incomplete_arms)
             + " are missing planned cells"
         )
-    trial_counts = {a.n_trials for a in pass_rates}
-    verdict_counts = {a.n_verdicts for a in pass_rates}
-    if len(trial_counts) > 1 or len(verdict_counts) > 1:
-        caveats.append("unbalanced: arms do not have matching trial/verdict counts")
+    ok_cells_by_arm = [
+        {
+            key
+            for key, (op_status, _outcome) in _instance_statuses(
+                conn, wave_id, a.arm_id
+            ).items()
+            if op_status == "ok"
+        }
+        for a in pass_rates
+    ]
+    if len(ok_cells_by_arm) > 1 and any(
+        cells != ok_cells_by_arm[0] for cells in ok_cells_by_arm[1:]
+    ):
+        caveats.append("unbalanced: arms do not cover the same (task, run) cells")
     is_sound = not caveats
 
     k = len(pass_rates)

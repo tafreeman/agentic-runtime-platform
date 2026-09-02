@@ -590,6 +590,57 @@ def test_arm_pass_rates_with_only_clean_passes_and_fails(
     assert b.pass_rate_verdicts.point == pytest.approx(0.75)
 
 
+def _supersede_the_grade(
+    conn: sqlite3.Connection, *, trial_id: str, new_outcome: str
+) -> None:
+    """Insert a correction grade for `trial_id`'s existing grade, with
+    `supersedes` set to the row it replaces -- the one shape `make_grade`
+    cannot build (it always sets `outcome = status = result` on a single,
+    unlinked row).
+    """
+    old = conn.execute(
+        "SELECT grade_id, grader_id FROM grade WHERE trial_id = ?", (trial_id,)
+    ).fetchone()
+    _insert(
+        conn,
+        "grade",
+        Grade(
+            grade_id=f"{old['grade_id']}_corrected",
+            trial_id=trial_id,
+            grader_id=old["grader_id"],
+            status=new_outcome,
+            outcome=new_outcome,
+            score=1.0 if new_outcome == "pass" else 0.0,
+            evidence_blob=None,
+            oracle_provenance=None,
+            graded_at="2026-01-02T00:00:00Z",
+            supersedes=old["grade_id"],
+        ).to_row(),
+    )
+
+
+def test_arm_pass_rates_counts_only_the_correction_not_the_superseded_grade(
+    ledger_conn: sqlite3.Connection,
+) -> None:
+    seeded = seed_wave(
+        ledger_conn, n_tasks=1, arm_keys=("arm_a",), cells={("arm_a", 1, 1): "pass"}
+    )
+    trial_id = ledger_conn.execute(
+        "SELECT trial_id FROM trial WHERE wave_id = ?", (seeded.wave_id,)
+    ).fetchone()["trial_id"]
+    _supersede_the_grade(ledger_conn, trial_id=trial_id, new_outcome="fail")
+
+    rates = arm_pass_rates(ledger_conn, seeded.wave_id)
+    assert len(rates) == 1
+    a = rates[0]
+    # One trial, one grade *history* of two rows -- but exactly one active
+    # verdict, and it reflects the correction (fail), not the original
+    # (pass) or both.
+    assert a.n_trials == 1
+    assert a.n_verdicts == 1
+    assert a.n_pass == 0
+
+
 def test_arm_pass_rates_excludes_operational_failures_from_verdict_rate_but_not_all_trials_rate(
     ledger_conn: sqlite3.Connection,
 ) -> None:
@@ -724,6 +775,43 @@ def test_paired_outcomes_counts_the_2x2_table(ledger_conn: sqlite3.Connection) -
     assert result.neither == 1  # task 4
     assert result.n_excluded == 0
     assert result.excluded_reasons == ()
+
+
+def test_paired_outcomes_uses_the_correction_not_the_superseded_grade(
+    ledger_conn: sqlite3.Connection,
+) -> None:
+    # Same 2x2 as test_paired_outcomes_counts_the_2x2_table, except arm_a's
+    # task-1 "pass" is later corrected to "fail" -- both_pass/only_a must
+    # shift accordingly rather than a stale or duplicated row leaking in.
+    seeded = seed_wave(
+        ledger_conn,
+        n_tasks=4,
+        arm_keys=("arm_a", "arm_b"),
+        cells={
+            ("arm_a", 1, 1): "pass",
+            ("arm_a", 2, 1): "pass",
+            ("arm_a", 3, 1): "fail",
+            ("arm_a", 4, 1): "fail",
+            ("arm_b", 1, 1): "fail",
+            ("arm_b", 2, 1): "pass",
+            ("arm_b", 3, 1): "pass",
+            ("arm_b", 4, 1): "fail",
+        },
+    )
+    arm_a_task_1_trial = ledger_conn.execute(
+        "SELECT trial_id FROM trial WHERE wave_id = ? AND arm_id = ? AND task_id = ?",
+        (seeded.wave_id, seeded.arm_ids["arm_a"], seeded.task_ids[1]),
+    ).fetchone()["trial_id"]
+    _supersede_the_grade(ledger_conn, trial_id=arm_a_task_1_trial, new_outcome="fail")
+
+    result = paired_outcomes(
+        ledger_conn, seeded.wave_id, seeded.arm_ids["arm_a"], seeded.arm_ids["arm_b"]
+    )
+    assert result.n_compared == 4
+    assert result.both_pass == 1  # task 2, unaffected
+    assert result.only_a == 0  # task 1: arm_a corrected to fail, arm_b already fail
+    assert result.only_b == 1  # task 3, unaffected
+    assert result.neither == 2  # tasks 1 (corrected) and 4
 
 
 def test_paired_outcomes_excludes_half_the_tasks_when_one_arm_times_out(
@@ -1313,6 +1401,34 @@ def test_verdict_on_a_complete_balanced_two_arm_wave_is_sound(
     assert v.paired is not None
     assert v.omnibus is None
     assert "VERDICT" in v.summary
+
+
+def test_verdict_flags_unbalanced_when_cells_differ_but_counts_match(
+    ledger_conn: sqlite3.Connection,
+) -> None:
+    # Both arms run exactly 3 tasks each -- equal n_trials, equal
+    # n_verdicts -- but arm_a's is {1,2,3} and arm_b's is {2,3,4}. A
+    # count-only comparison would call this balanced; it is not.
+    seeded = seed_wave(
+        ledger_conn,
+        n_tasks=4,
+        arm_keys=("arm_a", "arm_b"),
+        cells={
+            ("arm_a", 1, 1): "pass",
+            ("arm_a", 2, 1): "pass",
+            ("arm_a", 3, 1): "fail",
+            ("arm_b", 2, 1): "pass",
+            ("arm_b", 3, 1): "fail",
+            ("arm_b", 4, 1): "pass",
+        },
+    )
+    rates = arm_pass_rates(ledger_conn, seeded.wave_id)
+    assert {r.n_trials for r in rates} == {3}
+    assert {r.n_verdicts for r in rates} == {3}
+
+    v = verdict(ledger_conn, seeded.wave_id)
+    assert v.is_sound is False
+    assert any("unbalanced" in c for c in v.caveats)
 
 
 def test_verdict_on_unbalanced_wave_flags_it_rather_than_reporting_significance(
