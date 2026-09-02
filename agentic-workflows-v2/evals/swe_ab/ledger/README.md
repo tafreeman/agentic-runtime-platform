@@ -116,7 +116,34 @@ config override to check them too.
 ## What is tracked
 
 The database itself is not committed. `store.export_jsonl` writes one
-deterministically ordered `.jsonl` per table, and that export is what belongs in
-git — it diffs, and `import_jsonl` rebuilds the database from it. Blobs stay on
-disk under their digest; rows carry a `retention` of `durable` or `prunable` so
-transcripts can be deleted without losing the numbers that go with them.
+deterministically ordered `.jsonl` per table under `ledger/export/`, and that
+export is what belongs in git — it diffs, and `import_jsonl` rebuilds the
+database from it. Blobs stay on disk under their digest; rows carry a
+`retention` of `durable` or `prunable` so transcripts can be deleted without
+losing the numbers that go with them.
+
+## Cutover
+
+`../migrate_reports.py` and `../diff_verdicts.py` (one level up, alongside
+`analyze.py` and `run_ab.py` — they read `reports/`, `dataset/` and
+`workflows/`, none of which this package touches) load the campaign's report
+files into the rows above and check the result against `analyze.py`'s own
+arithmetic:
+
+```bash
+uv run python migrate_reports.py   # writes ledger/campaign.db, ledger/blobs/,
+                                    # ledger/export/, ledger/export/pending_blobs.jsonl
+uv run python diff_verdicts.py     # McNemar p / paired-bootstrap CI, ledger vs analyze.py
+```
+
+37 of the 42 files under `reports/` are migrated as of the last run (5
+excluded, each with a reason recorded in `migrate_reports.EXCLUDED_REPORTS`)
+into 1,703 trials and 1,130 grades across 21 waves in 8 campaigns.
+`diff_verdicts.py` compares all 15 two-arm waves that have an instance both
+arms verdicted on; all 15 agree with `analyze.py` exactly on the discordant
+counts and McNemar's p, and within tolerance on the bootstrap CI (order-
+sensitive by construction — see `diff_verdicts.py`'s module docstring).
+`pending_blobs.jsonl` is 0 rows on this corpus: every one of the 813 spilled
+`answer_blob` references resolves against `artifacts/` on this machine, but
+the mechanism (and its `blob` tombstone fallback for a digest that does not)
+is exercised in `ledger/tests/test_migrate_reports.py` regardless.

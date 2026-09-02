@@ -1,0 +1,14 @@
+{"arm_config_id":"arm_bc53a0aed73c0e54","arm_id":"armrow_062fd83915893a80","arm_key":"arm-a-direct","campaign_id":"cmp_ff3478ba116224be","role":"control"}
+{"arm_config_id":"arm_bc53a0aed73c0e54","arm_id":"armrow_15deb2ebd2766485","arm_key":"arm-a-direct","campaign_id":"cmp_f375dfb45823a2d0","role":"control"}
+{"arm_config_id":"arm_bc53a0aed73c0e54","arm_id":"armrow_2d28e63b780dff83","arm_key":"arm-a-direct","campaign_id":"cmp_30daf3332e529acc","role":"control"}
+{"arm_config_id":"arm_84e84688b7cc1d64","arm_id":"armrow_38c7aaff4887e819","arm_key":"arm-b-review-loop","campaign_id":"cmp_f375dfb45823a2d0","role":"treatment"}
+{"arm_config_id":"arm_6453b3b7b64bc344","arm_id":"armrow_462ab900442a68d3","arm_key":"arm-a-direct","campaign_id":"cmp_ebd9b03306dd7179","role":"control"}
+{"arm_config_id":"arm_c1e3735534586ddf","arm_id":"armrow_5b8c148a0de5e8a8","arm_key":"arm-a-direct","campaign_id":"cmp_85ca5e3805f3c6c3","role":"control"}
+{"arm_config_id":"arm_02c18370c56dcb47","arm_id":"armrow_6ea4dd2ee79aac2e","arm_key":"arm-a-direct","campaign_id":"cmp_8658aa80213ceb26","role":"control"}
+{"arm_config_id":"arm_2a5f9edec2192c68","arm_id":"armrow_74c035cef829c4f2","arm_key":"arm-b-review-loop","campaign_id":"cmp_8658aa80213ceb26","role":"treatment"}
+{"arm_config_id":"arm_84e84688b7cc1d64","arm_id":"armrow_9870e21b7f564f0f","arm_key":"arm-b-review-loop","campaign_id":"cmp_30daf3332e529acc","role":"treatment"}
+{"arm_config_id":"arm_bc53a0aed73c0e54","arm_id":"armrow_ba94ee9d2f3c290d","arm_key":"arm-a-direct","campaign_id":"cmp_c79671dd2f7fcfd5","role":"control"}
+{"arm_config_id":"arm_6453b3b7b64bc344","arm_id":"armrow_c622265b11c0bacc","arm_key":"arm-a-direct","campaign_id":"cmp_a0a19916b5bbb708","role":"control"}
+{"arm_config_id":"arm_84e84688b7cc1d64","arm_id":"armrow_ea1016a9ce064977","arm_key":"arm-b-review-loop","campaign_id":"cmp_ff3478ba116224be","role":"treatment"}
+{"arm_config_id":"arm_3d8f77bfc9422701","arm_id":"armrow_f638b0a052a70e80","arm_key":"arm-b-review-loop","campaign_id":"cmp_85ca5e3805f3c6c3","role":"treatment"}
+{"arm_config_id":"arm_318f274530efd7f1","arm_id":"armrow_fbd428dbded3f621","arm_key":"arm-b-review-loop","campaign_id":"cmp_a0a19916b5bbb708","role":"treatment"}
