@@ -14,9 +14,26 @@ Each wave is ~16 instances, ~50 minutes, both arms, self-contained.
 
 | | |
 |---|---|
-| Banked | 47 paired instances |
-| Target | ~200 (≈10 more waves) |
-| Current reading | A 61.7%, B 59.6%, B−A −2.1%, **p = 1.00** |
+| Banked (closed segment, waves 1-7) | 115 paired instances |
+| Banked (new segment, waves 8+9, fingerprint `22e3ed974042`) | 33 paired instances |
+| Banked (new segment, waves 10+11, fingerprint `20ace0a669f0`) | 36 paired instances |
+| Target | ~200 per model-identity slice (not the closed segment) |
+| Current reading (closed segment) | A 55.7%, B 56.5%, B−A +0.9%, **p = 1.00** |
+| Current reading (wave 8+9) | A 51.5%, B 39.4%, B−A −12.1%, **p = 0.125** |
+| Current reading (wave 10+11) | A 58.3%, B 38.9%, B−A −19.4%, **p = 0.0391 — first significant reading, n still small** |
+
+**Wave 8 opened a new segment; wave 10 opened a second one inside it.** The
+harness (`run_ab.py`, `graders.py`, `rubric.py`, `swebench_graders.py`,
+`analyze.py`) changed underneath waves 1-7 via a concurrent session's
+`PR #282` — that's the wave-8 boundary. Between wave 9 and wave 10,
+`bridge.py` changed again (the §2.18 fix, `aff74062`) — `analyze.py` itself
+refuses to union runs with different `target_fingerprint`s, so wave 10 is
+its own slice. (This was first recorded as an Ollama served-weights update;
+EVIDENCE.md §2.21 corrects it.) **Before unioning any new wave, check its
+`manifest.target_fingerprint` against the slice you're adding it to**
+(`grep target_fingerprint` on the report JSON): it changes with the workflow
+YAML, `bridge.py` or the model id. It does not change when a provider
+updates the weights behind a tag — nothing in the kit records that yet.
 
 ---
 
@@ -24,8 +41,16 @@ Each wave is ~16 instances, ~50 minutes, both arms, self-contained.
 
 ```bash
 cd C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab
-uv run python tools/run_wave.py --wave <N> --size 16 --prune-images
+uv run --extra swe-ab python tools/run_wave.py --wave <N> --size 16 --prune-images
 ```
+
+**Retrying a wave** (`--wave <N>` again, without `--rebuild-cases`) keeps any
+arm report that is already complete for that manifest and runs only the
+missing arm; a wave whose two reports are both complete is refused, and so
+is `--rebuild-cases` once any report exists — `run_ab.py` writes to the same
+`reports/arm-*-wave<N>.json` paths, so either would overwrite graded
+evidence (rule 3). A report that exists but does not cover the manifest is
+refused too: move it aside by hand rather than let a retry replace it.
 
 `<N>` = highest existing `dataset/cases.swebench.wave*.jsonl` number, plus 1.
 The number is for naming only — overlap prevention comes from the builder
@@ -38,20 +63,20 @@ Takes ~50 min. Produces `reports/arm-a-direct-wave<N>.json` and
 
 ## After each wave
 
-Union everything and record the reading:
+Union everything **in the new segment only** (wave 8 onward — never mix in
+the closed segment's `swebench-c4`/`swebench-fixed`/wave1-7 reports, see the
+segment-boundary note above):
 
 ```bash
 uv run python analyze.py \
-  --left  reports/arm-a-direct-swebench-c4.json \
-  --left  reports/arm-a-direct-wave1.json \
+  --left  reports/arm-a-direct-wave8.json \
   --left  reports/arm-a-direct-wave<N>.json \
-  --right reports/arm-b-review-loop-swebench-fixed.json \
-  --right reports/arm-b-review-loop-wave1.json \
+  --right reports/arm-b-review-loop-wave8.json \
   --right reports/arm-b-review-loop-wave<N>.json
 ```
 
 Add one `--left`/`--right` pair per wave. Append the result to the table in
-`EVIDENCE.md` §1.3: n, both arms' rates, B−A, CI, McNemar p, discordant pairs.
+`EVIDENCE.md` §1.7: n, both arms' rates, B−A, CI, McNemar p, discordant pairs.
 
 ---
 
@@ -114,8 +139,8 @@ Stop and report rather than continuing if:
 
 ## What would make the result quotable
 
-- **~200 paired instances.** At 47 the interval is ±14 points; nothing smaller
-  resolves a 2-point difference.
+- **~200 paired instances.** At 59 the interval is ±11.9 points around a
+  dead-even point estimate; nothing smaller resolves a difference this size.
 - **A difficulty split.** Wave 1 hinted the review loop may only help where the
   direct arm fails (A 41.7% there, B 58.3%). Reporting the union rate alone
   would hide that. Once n is large enough, split by the `difficulty` field in

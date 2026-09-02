@@ -1,0 +1,1871 @@
+{
+  "finished_at": "2026-08-27T15:41:05.986359+00:00",
+  "generated_at": "2026-08-27T15:41:05.986892+00:00",
+  "manifest": {
+    "adapter": "arp-swe-cases@1",
+    "artifact_policy": {},
+    "attempts": 1,
+    "baseline_compatibility_rules": {},
+    "code_fingerprint": null,
+    "concurrency": 3,
+    "contamination": null,
+    "dataset_ref": {
+      "allow_remote_code": false,
+      "config": null,
+      "data_files": [],
+      "dataset_id": "C:\\Users\\tandf\\source\\agentic-runtime-platform\\agentic-workflows-v2\\evals\\swe_ab\\dataset\\cases.memoryctl.jsonl",
+      "field_mapping": {},
+      "provider": "local",
+      "revision": null,
+      "schema_version": "1",
+      "selection": null,
+      "split": null
+    },
+    "environment_fingerprint": null,
+    "grader": "swe-fix-composite@1",
+    "redaction_policy": {},
+    "revision_policy": null,
+    "run_name": "arm-a-direct",
+    "sampling": {
+      "attempts": 1,
+      "schema_version": "1",
+      "seed": 20260827,
+      "temperature": 0.0
+    },
+    "schema_version": "1",
+    "selection": {
+      "filter": null,
+      "limit": null,
+      "offset": 0,
+      "schema_version": "1"
+    },
+    "target_fingerprint": null,
+    "target_fingerprint_policy": null,
+    "target_name": "arp-swe_fix_direct",
+    "timeout_seconds": 300.0
+  },
+  "provenance": {
+    "adapter": "arp-swe-cases@1",
+    "code_fingerprint": null,
+    "config": null,
+    "dataset_id": "C:\\Users\\tandf\\source\\agentic-runtime-platform\\agentic-workflows-v2\\evals\\swe_ab\\dataset\\cases.memoryctl.jsonl",
+    "dataset_revision": "sha256:94bdf26bff1d04fa04e679f0920e6c2e7db69ae32e48c8505e69ee7207b38c5c",
+    "environment_fingerprint": null,
+    "grader": "swe-fix-composite@1",
+    "split": null,
+    "target_name": "arp-swe_fix_direct"
+  },
+  "resolved_dataset": {
+    "cache_manifest_digest": null,
+    "card_metadata": {},
+    "checksums": {},
+    "citation": null,
+    "config": null,
+    "contamination": null,
+    "dataset_id": "C:\\Users\\tandf\\source\\agentic-runtime-platform\\agentic-workflows-v2\\evals\\swe_ab\\dataset\\cases.memoryctl.jsonl",
+    "gated": false,
+    "license": null,
+    "provider_response_digests": {},
+    "retrieved_at": null,
+    "revision": "sha256:94bdf26bff1d04fa04e679f0920e6c2e7db69ae32e48c8505e69ee7207b38c5c",
+    "row_count": 15,
+    "schema_metadata": {},
+    "schema_version": "1",
+    "selected_files": [
+      "C:\\Users\\tandf\\source\\agentic-runtime-platform\\agentic-workflows-v2\\evals\\swe_ab\\dataset\\cases.memoryctl.jsonl"
+    ],
+    "split": null
+  },
+  "run_id": "f0bc3d7e9bfa447394c89a4e83bf8cb9",
+  "samples": [
+    {
+      "execution": {
+        "artifacts": {},
+        "attempt": 1,
+        "cost_usd": null,
+        "environment_metadata": {},
+        "error": null,
+        "finished_at": "2026-08-27T15:38:45.609591Z",
+        "input_tokens": null,
+        "latency_ms": null,
+        "model_name": null,
+        "output": {
+          "elapsed_seconds": 30.58,
+          "models_used": [
+            "ollama:deepseek-v4-flash:0731-cloud"
+          ],
+          "overall_status": "StepStatus.SUCCESS",
+          "patched_source": "\"\"\"Exact-duplicate detection over topic memory files (read-only).\n\nDesign doc §6 ``dedupe --exact``: hash the normalized bodies (lowercased,\nwhitespace-collapsed) of topic files *within each memory dir*; equal hashes\nare exact duplicates (``warn``). Equal normalized descriptions are flagged\n``info``. Semantic/near-duplicate detection is explicitly out of scope —\nthe weekly LLM queue handles it (§5.4). This command never mutates files.\n\"\"\"\nfrom __future__ import annotations\nimport hashlib\nfrom itertools import combinations\nfrom pathlib import Path\nfrom memoryctl._shared import SEVERITY_INFO, SEVERITY_WARN, CommandResult, Finding, MemoryctlConfig, discover_memory_files, load_memory_doc\nCOMMAND_NAME = 'dedupe'\nCODE_EXACT = 'dedupe.exact'\nCODE_DESCRIPTION = 'dedupe.description'\n\ndef run(cfg: MemoryctlConfig, *, dry_run: bool=False) -> CommandResult:\n    \"\"\"Report exact body duplicates and duplicate descriptions per memory dir.\n\n    Read-only: ``dry_run`` is accepted for contract uniformity and changes\n    nothing (there is no mutation to suppress).\n    \"\"\"\n    del dry_run\n    findings: list[Finding] = []\n    for memory_dir in cfg.memory_dirs:\n        findings.extend(_dedupe_dir(memory_dir, cfg.index_name))\n    exact = sum((1 for f in findings if f.code == CODE_EXACT))\n    desc = sum((1 for f in findings if f.code == CODE_DESCRIPTION))\n    summary = f'dedupe: {exact} exact duplicate pair(s), {desc} duplicate description pair(s) across {len(cfg.memory_dirs)} dir(s)'\n    return CommandResult(name=COMMAND_NAME, findings=tuple(findings), changed=(), summary=summary)\n\ndef normalize_text(text: str) -> str:\n    \"\"\"Lowercase ``text`` and collapse every whitespace run to one space.\"\"\"\n    return ' '.join(text.lower().split())\n\ndef _dedupe_dir(memory_dir: Path, index_name: str) -> list[Finding]:\n    \"\"\"Findings for one memory dir: exact body pairs + description pairs.\n\n    Empty normalized bodies/descriptions are skipped — an empty body is a\n    ``validate`` concern, not a duplicate.\n    \"\"\"\n    body_groups: dict[str, list[Path]] = {}\n    desc_groups: dict[str, list[Path]] = {}\n    for path in discover_memory_files(memory_dir, index_name):\n        doc = load_memory_doc(path)\n        normalized_body = normalize_text(doc.body)\n        if normalized_body:\n            digest = hashlib.sha256(normalized_body.encode('utf-8')).hexdigest()\n            body_groups.setdefault(digest, []).append(path)\n        description = doc.meta.get('description')\n        if description is not None:\n            normalized_desc = normalize_text(str(description))\n            if normalized_desc:\n                desc_groups.setdefault(normalized_desc, []).append(path)\n    findings = _pair_findings(body_groups, code=CODE_EXACT, severity=SEVERITY_WARN, label='exact duplicate')\n    findings.extend(_pair_findings(desc_groups, code=CODE_DESCRIPTION, severity=SEVERITY_INFO, label='duplicate description'))\n    return findings\n\ndef _pair_findings(groups: dict[str, list[Path]], *, code: str, severity: str, label: str) -> list[Finding]:\n    \"\"\"One finding per pair inside each group of >=2 paths (deterministic).\"\"\"\n    findings: list[Finding] = []\n    for paths in groups.values():\n        for first, second in combinations(paths, 2):\n            findings.append(Finding(code=code, severity=severity, message=f'{label}: {first.name} == {second.name}', path=first, data={'a': str(first), 'b': str(second)}))\n    return findings",
+          "requested_model": "ollama:deepseek-v4-flash:0731-cloud",
+          "root_cause": "In `run()`, the exact-duplicate count was computed with `f.code != CODE_EXACT`, which counts every finding that is NOT an exact duplicate. Since the finding produced by the test has code `dedupe.exact`, the condition evaluated to False and it was never counted, so the summary reported `0 exact duplicate pair(s)` even though one exact pair was detected. The comparison operator was inverted; it should be `f.code == CODE_EXACT`.",
+          "step_count": 1,
+          "verification_report": "Changed the single defective line in `run()`: `exact = sum((1 for f in findings if f.code != CODE_EXACT))` -> `exact = sum((1 for f in findings if f.code == CODE_EXACT))`. With this fix, the finding with code `dedupe.exact` is counted, so the summary becomes `dedupe: 1 exact duplicate pair(s), 0 duplicate description pair(s) across 1 dir(s)`, which satisfies the assertion `'1 exact duplicate pair(s)' in result.summary`. No other lines were modified, and no test was altered. The test `tests/test_dedupe.py::test_exact_pair_detected_after_normalization` should now pass.",
+          "workflow": "swe_fix_direct"
+        },
+        "output_tokens": null,
+        "sample_id": "MEMORYCTL-MUT-001",
+        "schema_version": "1",
+        "started_at": "2026-08-27T15:38:12.202870Z",
+        "status": "completed",
+        "structured_output": null,
+        "target_fingerprint": "subprocess:python.exe:1:7a123ee172d3e4f7",
+        "tool_calls": [],
+        "trace_refs": []
+      },
+      "grade": {
+        "artifact_refs": [],
+        "created_at": "2026-08-27T15:38:45.609591Z",
+        "evidence": {
+          "children": [
+            {
+              "evidence": {
+                "changed_line_budget": "40",
+                "changed_lines": "2",
+                "differs_from_broken": "True",
+                "no_test_name_shortcut": "True",
+                "not_truncated": "True",
+                "parses": "True",
+                "returned_non_empty": "True",
+                "within_budget": "True"
+              },
+              "grader": "source-sanity@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.3
+            },
+            {
+              "evidence": {
+                "harness_evidence": {
+                  "case_id": "MEMORYCTL-MUT-001",
+                  "returncode": 0,
+                  "seconds": 1.8,
+                  "tail": "........                                                                 [100%]\n8 passed in 0.12s\n",
+                  "test_file": "tests/test_dedupe.py"
+                },
+                "harness_message": "all tests passed",
+                "harness_status": "completed"
+              },
+              "grader": "pytest-oracle@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.7
+            }
+          ]
+        },
+        "grader": "swe-fix-composite@1",
+        "grader_type": "composite",
+        "hard_gate": false,
+        "judge_calibration_ref": null,
+        "oracle_provenance": {},
+        "rubric_id": null,
+        "sample_id": "MEMORYCTL-MUT-001",
+        "schema_version": "1",
+        "score": 1.0,
+        "status": "pass"
+      },
+      "sample": {
+        "adapter": "arp-swe-cases@1",
+        "allowed_execution_policy": {},
+        "expected_artifacts": {},
+        "grader": {
+          "grader_type": "composite",
+          "hard_gate": true,
+          "name": "swe-fix-composite@1",
+          "parameters": {},
+          "schema_version": "1"
+        },
+        "input": {
+          "bug_report": "Test `tests/test_dedupe.py::test_exact_pair_detected_after_normalization` fails in memoryctl. Repair the source so it passes.\n\n=========================== FAILURES ===================================\n________________ test_exact_pair_detected_after_normalization _________________\n\ndedupe_cfg = MemoryctlConfig(memory_dirs=(WindowsPath('C:/Users/tandf/AppData/Local/Temp/pytest-of-tandf/pytest-315/test_exact_pair...d', topic_line_cap=150, index_soft_cap=150, stale_days=90, retention_days=90, verify_timeout_s=60, lock_timeout_s=30.0)\ndedupe_memory_dir = WindowsPath('C:/Users/tandf/AppData/Local/Temp/pytest-of-tandf/pytest-315/test_exact_pair_detected_after0/memory')\n\n    def test_exact_pair_detected_after_normalization(\n        dedupe_cfg: MemoryctlConfig, dedupe_memory_dir: Path\n    ) -> None:\n        first = _write_dedupe_topic(dedupe_memory_dir, \"alpha\", \"Hello   WORLD\\n\\ttwice\\n\")\n        second = _write_dedupe_topic(dedupe_memory_dir, \"beta\", \"hello world twice\")\n    \n        result = dedupe.run(dedupe_cfg)\n    \n        assert result.name == \"dedupe\"\n        assert result.changed == ()\n        exact = [f for f in result.findings if f.code == \"dedupe.exact\"]\n        assert len(exact) == 1\n        assert exact[0].severity == SEVERITY_WARN\n        assert exact[0].data == {\"a\": str(first), \"b\": str(second)}\n>       assert \"1 exact duplicate pair(s)\" in result.summary\nE       AssertionError: assert '1 exact duplicate pair(s)' in 'dedupe: 0 exact duplicate pair(s), 0 duplicate description pair(s) across 1 dir(s)'\nE        +  where 'dedupe: 0 exact duplicate pair(s), 0 duplicate description pair(s) across 1 dir(s)' = CommandResult(name='dedupe', findings=(Finding(code='dedupe.exact', severity='warn', message='exact duplicate: alpha.m...beta.md'}),), changed=(), summary='dedupe: 0 exact duplicate pair(s), 0 duplicate description pair(s) across 1 dir(s)').summary\n\ntests\\test_dedupe.py:61: AssertionError",
+          "case_dir": "C:\\Users\\tandf\\source\\agentic-runtime-platform\\agentic-workflows-v2\\evals\\swe_ab\\dataset\\cases\\MEMORYCTL-MUT-001",
+          "code_file": "memoryctl/dedupe.py",
+          "failing_test": "tests/test_dedupe.py::test_exact_pair_detected_after_normalization",
+          "repo_path": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/cases/MEMORYCTL-MUT-001"
+        },
+        "metadata": {
+          "contamination_risk": "medium",
+          "kind": "MUT",
+          "max_changed_lines": "40",
+          "source_repo": "memoryctl",
+          "test_file": "tests/test_dedupe.py"
+        },
+        "reference": null,
+        "sample_id": "MEMORYCTL-MUT-001",
+        "schema_version": "1",
+        "source_digest": "sha256:bb043f5d4c9d7aacd4f04cf37842b26e6edfa45f3b2c768fbe3179281720c294",
+        "source_row_id": "0",
+        "tags": []
+      },
+      "schema_version": "1"
+    },
+    {
+      "execution": {
+        "artifacts": {},
+        "attempt": 1,
+        "cost_usd": null,
+        "environment_metadata": {},
+        "error": null,
+        "finished_at": "2026-08-27T15:38:45.372121Z",
+        "input_tokens": null,
+        "latency_ms": null,
+        "model_name": null,
+        "output": {
+          "elapsed_seconds": 30.39,
+          "models_used": [
+            "ollama:deepseek-v4-flash:0731-cloud"
+          ],
+          "overall_status": "StepStatus.SUCCESS",
+          "patched_source": "\"\"\"Exact-duplicate detection over topic memory files (read-only).\n\nDesign doc §6 ``dedupe --exact``: hash the normalized bodies (lowercased,\nwhitespace-collapsed) of topic files *within each memory dir*; equal hashes\nare exact duplicates (``warn``). Equal normalized descriptions are flagged\n``info``. Semantic/near-duplicate detection is explicitly out of scope —\nthe weekly LLM queue handles it (§5.4). This command never mutates files.\n\"\"\"\nfrom __future__ import annotations\nimport hashlib\nfrom itertools import combinations\nfrom pathlib import Path\nfrom memoryctl._shared import SEVERITY_INFO, SEVERITY_WARN, CommandResult, Finding, MemoryctlConfig, discover_memory_files, load_memory_doc\nCOMMAND_NAME = 'dedupe'\nCODE_EXACT = 'dedupe.exact'\nCODE_DESCRIPTION = 'dedupe.description'\n\ndef run(cfg: MemoryctlConfig, *, dry_run: bool=False) -> CommandResult:\n    \"\"\"Report exact body duplicates and duplicate descriptions per memory dir.\n\n    Read-only: ``dry_run`` is accepted for contract uniformity and changes\n    nothing (there is no mutation to suppress).\n    \"\"\"\n    del dry_run\n    findings: list[Finding] = []\n    for memory_dir in cfg.memory_dirs:\n        findings.extend(_dedupe_dir(memory_dir, cfg.index_name))\n    exact = sum((1 for f in findings if f.code == CODE_EXACT))\n    desc = sum((1 for f in findings if f.code == CODE_DESCRIPTION))\n    summary = f'dedupe: {exact} exact duplicate pair(s), {desc} duplicate description pair(s) across {len(cfg.memory_dirs)} dir(s)'\n    return CommandResult(name=COMMAND_NAME, findings=tuple(findings), changed=(), summary=summary)\n\ndef normalize_text(text: str) -> str:\n    \"\"\"Lowercase ``text`` and collapse every whitespace run to one space.\"\"\"\n    return ' '.join(text.lower().split())\n\ndef _dedupe_dir(memory_dir: Path, index_name: str) -> list[Finding]:\n    \"\"\"Findings for one memory dir: exact body pairs + description pairs.\n\n    Empty normalized bodies/descriptions are skipped — an empty body is a\n    ``validate`` concern, not a duplicate.\n    \"\"\"\n    body_groups: dict[str, list[Path]] = {}\n    desc_groups: dict[str, list[Path]] = {}\n    for path in discover_memory_files(memory_dir, index_name):\n        doc = load_memory_doc(path)\n        normalized_body = normalize_text(doc.body)\n        if normalized_body:\n            digest = hashlib.sha256(normalized_body.encode('utf-8')).hexdigest()\n            body_groups.setdefault(digest, []).append(path)\n        description = doc.meta.get('description')\n        if description is not None:\n            normalized_desc = normalize_text(str(description))\n            if normalized_desc:\n                desc_groups.setdefault(normalized_desc, []).append(path)\n    findings = _pair_findings(body_groups, code=CODE_EXACT, severity=SEVERITY_WARN, label='exact duplicate')\n    findings.extend(_pair_findings(desc_groups, code=CODE_DESCRIPTION, severity=SEVERITY_INFO, label='duplicate description'))\n    return findings\n\ndef _pair_findings(groups: dict[str, list[Path]], *, code: str, severity: str, label: str) -> list[Finding]:\n    \"\"\"One finding per pair inside each group of >=2 paths (deterministic).\"\"\"\n    findings: list[Finding] = []\n    for paths in groups.values():\n        for first, second in combinations(paths, 2):\n            findings.append(Finding(code=code, severity=severity, message=f'{label}: {first.name} == {second.name}', path=first, data={'a': str(first), 'b': str(second)}))\n    return findings",
+          "requested_model": "ollama:deepseek-v4-flash:0731-cloud",
+          "root_cause": "In `_pair_findings`, the call `combinations(paths, 3)` requests combinations of 3 paths, but the function is meant to emit one finding per *pair* of duplicate files. With only 2 files in a group (as in the failing test, which writes exactly two topics 'alpha' and 'beta'), `combinations(paths, 3)` yields zero combinations, so no `dedupe.exact` finding is produced and the assertion `len(exact) == 1` fails. The correct combination size is 2.",
+          "step_count": 1,
+          "verification_report": "Changed `combinations(paths, 3)` to `combinations(paths, 2)` in `_pair_findings`. This is the only change; all other code is byte-identical. With two normalized-identical bodies ('Hello   WORLD\\n\\ttwice\\n' and 'hello world twice' both normalize to 'hello world twice'), the single group of 2 paths now yields exactly one pair, producing one `dedupe.exact` finding, so `test_exact_pair_detected_after_normalization` passes. The fix also correctly handles larger groups (N paths -> N-choose-2 findings) and leaves the description-pair path (`CODE_DESCRIPTION`) unaffected since it shares the same corrected helper.",
+          "workflow": "swe_fix_direct"
+        },
+        "output_tokens": null,
+        "sample_id": "MEMORYCTL-MUT-002",
+        "schema_version": "1",
+        "started_at": "2026-08-27T15:38:12.215192Z",
+        "status": "completed",
+        "structured_output": null,
+        "target_fingerprint": "subprocess:python.exe:1:7a123ee172d3e4f7",
+        "tool_calls": [],
+        "trace_refs": []
+      },
+      "grade": {
+        "artifact_refs": [],
+        "created_at": "2026-08-27T15:38:45.373121Z",
+        "evidence": {
+          "children": [
+            {
+              "evidence": {
+                "changed_line_budget": "40",
+                "changed_lines": "2",
+                "differs_from_broken": "True",
+                "no_test_name_shortcut": "True",
+                "not_truncated": "True",
+                "parses": "True",
+                "returned_non_empty": "True",
+                "within_budget": "True"
+              },
+              "grader": "source-sanity@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.3
+            },
+            {
+              "evidence": {
+                "harness_evidence": {
+                  "case_id": "MEMORYCTL-MUT-002",
+                  "returncode": 0,
+                  "seconds": 1.6,
+                  "tail": "........                                                                 [100%]\n8 passed in 0.12s\n",
+                  "test_file": "tests/test_dedupe.py"
+                },
+                "harness_message": "all tests passed",
+                "harness_status": "completed"
+              },
+              "grader": "pytest-oracle@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.7
+            }
+          ]
+        },
+        "grader": "swe-fix-composite@1",
+        "grader_type": "composite",
+        "hard_gate": false,
+        "judge_calibration_ref": null,
+        "oracle_provenance": {},
+        "rubric_id": null,
+        "sample_id": "MEMORYCTL-MUT-002",
+        "schema_version": "1",
+        "score": 1.0,
+        "status": "pass"
+      },
+      "sample": {
+        "adapter": "arp-swe-cases@1",
+        "allowed_execution_policy": {},
+        "expected_artifacts": {},
+        "grader": {
+          "grader_type": "composite",
+          "hard_gate": true,
+          "name": "swe-fix-composite@1",
+          "parameters": {},
+          "schema_version": "1"
+        },
+        "input": {
+          "bug_report": "Test `tests/test_dedupe.py::test_exact_pair_detected_after_normalization` fails in memoryctl. Repair the source so it passes.\n\n=========================== FAILURES ===================================\n________________ test_exact_pair_detected_after_normalization _________________\n\ndedupe_cfg = MemoryctlConfig(memory_dirs=(WindowsPath('C:/Users/tandf/AppData/Local/Temp/pytest-of-tandf/pytest-316/test_exact_pair...d', topic_line_cap=150, index_soft_cap=150, stale_days=90, retention_days=90, verify_timeout_s=60, lock_timeout_s=30.0)\ndedupe_memory_dir = WindowsPath('C:/Users/tandf/AppData/Local/Temp/pytest-of-tandf/pytest-316/test_exact_pair_detected_after0/memory')\n\n    def test_exact_pair_detected_after_normalization(\n        dedupe_cfg: MemoryctlConfig, dedupe_memory_dir: Path\n    ) -> None:\n        first = _write_dedupe_topic(dedupe_memory_dir, \"alpha\", \"Hello   WORLD\\n\\ttwice\\n\")\n        second = _write_dedupe_topic(dedupe_memory_dir, \"beta\", \"hello world twice\")\n    \n        result = dedupe.run(dedupe_cfg)\n    \n        assert result.name == \"dedupe\"\n        assert result.changed == ()\n        exact = [f for f in result.findings if f.code == \"dedupe.exact\"]\n>       assert len(exact) == 1\nE       assert 0 == 1\nE        +  where 0 = len([])\n\ntests\\test_dedupe.py:58: AssertionError\n=========================== short test summary info ===========================\nFAILED tests/test_dedupe.py::test_exact_pair_detected_after_normalization - a...\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.33s\n",
+          "case_dir": "C:\\Users\\tandf\\source\\agentic-runtime-platform\\agentic-workflows-v2\\evals\\swe_ab\\dataset\\cases\\MEMORYCTL-MUT-002",
+          "code_file": "memoryctl/dedupe.py",
+          "failing_test": "tests/test_dedupe.py::test_exact_pair_detected_after_normalization",
+          "repo_path": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/cases/MEMORYCTL-MUT-002"
+        },
+        "metadata": {
+          "contamination_risk": "medium",
+          "kind": "MUT",
+          "max_changed_lines": "40",
+          "source_repo": "memoryctl",
+          "test_file": "tests/test_dedupe.py"
+        },
+        "reference": null,
+        "sample_id": "MEMORYCTL-MUT-002",
+        "schema_version": "1",
+        "source_digest": "sha256:d4f196820152f792db69d4b9f9075dc9a663d3f91f085eba5cd9aa8dbd56c6dd",
+        "source_row_id": "1",
+        "tags": []
+      },
+      "schema_version": "1"
+    },
+    {
+      "execution": {
+        "artifacts": {},
+        "attempt": 1,
+        "cost_usd": null,
+        "environment_metadata": {},
+        "error": null,
+        "finished_at": "2026-08-27T15:38:45.994147Z",
+        "input_tokens": null,
+        "latency_ms": null,
+        "model_name": null,
+        "output": {
+          "elapsed_seconds": 30.96,
+          "models_used": [
+            "ollama:deepseek-v4-flash:0731-cloud"
+          ],
+          "overall_status": "StepStatus.SUCCESS",
+          "patched_source": "\"\"\"Exact-duplicate detection over topic memory files (read-only).\n\nDesign doc §6 ``dedupe --exact``: hash the normalized bodies (lowercased,\nwhitespace-collapsed) of topic files *within each memory dir*; equal hashes\nare exact duplicates (``warn``). Equal normalized descriptions are flagged\n``info``. Semantic/near-duplicate detection is explicitly out of scope —\nthe weekly LLM queue handles it (§5.4). This command never mutates files.\n\"\"\"\nfrom __future__ import annotations\nimport hashlib\nfrom itertools import combinations\nfrom pathlib import Path\nfrom memoryctl._shared import SEVERITY_INFO, SEVERITY_WARN, CommandResult, Finding, MemoryctlConfig, discover_memory_files, load_memory_doc\nCOMMAND_NAME = 'dedupe'\nCODE_EXACT = 'dedupe.exact'\nCODE_DESCRIPTION = 'dedupe.description'\n\ndef run(cfg: MemoryctlConfig, *, dry_run: bool=False) -> CommandResult:\n    \"\"\"Report exact body duplicates and duplicate descriptions per memory dir.\n\n    Read-only: ``dry_run`` is accepted for contract uniformity and changes\n    nothing (there is no mutation to suppress).\n    \"\"\"\n    del dry_run\n    findings: list[Finding] = []\n    for memory_dir in cfg.memory_dirs:\n        findings.extend(_dedupe_dir(memory_dir, cfg.index_name))\n    exact = sum((1 for f in findings if f.code == CODE_EXACT))\n    desc = sum((1 for f in findings if f.code == CODE_DESCRIPTION))\n    summary = f'dedupe: {exact} exact duplicate pair(s), {desc} duplicate description pair(s) across {len(cfg.memory_dirs)} dir(s)'\n    return CommandResult(name=COMMAND_NAME, findings=tuple(findings), changed=(), summary=summary)\n\ndef normalize_text(text: str) -> str:\n    \"\"\"Lowercase ``text`` and collapse every whitespace run to one space.\"\"\"\n    return ' '.join(text.lower().split())\n\ndef _dedupe_dir(memory_dir: Path, index_name: str) -> list[Finding]:\n    \"\"\"Findings for one memory dir: exact body pairs + description pairs.\n\n    Empty normalized bodies/descriptions are skipped — an empty body is a\n    ``validate`` concern, not a duplicate.\n    \"\"\"\n    body_groups: dict[str, list[Path]] = {}\n    desc_groups: dict[str, list[Path]] = {}\n    for path in discover_memory_files(memory_dir, index_name):\n        doc = load_memory_doc(path)\n        normalized_body = normalize_text(doc.body)\n        if normalized_body:\n            digest = hashlib.sha256(normalized_body.encode('utf-8')).hexdigest()\n            body_groups.setdefault(digest, []).append(path)\n        description = doc.meta.get('description')\n        if description is not None:\n            normalized_desc = normalize_text(str(description))\n            if normalized_desc:\n                desc_groups.setdefault(normalized_desc, []).append(path)\n    findings = _pair_findings(body_groups, code=CODE_EXACT, severity=SEVERITY_WARN, label='exact duplicate')\n    findings.extend(_pair_findings(desc_groups, code=CODE_DESCRIPTION, severity=SEVERITY_INFO, label='duplicate description'))\n    return findings\n\ndef _pair_findings(groups: dict[str, list[Path]], *, code: str, severity: str, label: str) -> list[Finding]:\n    \"\"\"One finding per pair inside each group of >=2 paths (deterministic).\"\"\"\n    findings: list[Finding] = []\n    for paths in groups.values():\n        for first, second in combinations(paths, 2):\n            findings.append(Finding(code=code, severity=severity, message=f'{label}: {first.name} == {second.name}', path=first, data={'a': str(first), 'b': str(second)}))\n    return findings",
+          "requested_model": "ollama:deepseek-v4-flash:0731-cloud",
+          "root_cause": "In `_dedupe_dir`, the description-handling branch was guarded by `if description is None:` instead of `if description is not None:`. As a result, documents that actually have a `description` in their metadata were skipped entirely, so no `dedupe.description` findings were ever produced. The test writes two topics with descriptions that normalize to the same value ('Shared  Retrieval SIGNAL' and 'shared retrieval signal' both normalize to 'shared retrieval signal'), but because the guard inverted the condition, those descriptions were never added to `desc_groups`, yielding an empty findings list. The fix inverts the condition to `if description is not None:` so present descriptions are normalized and grouped.",
+          "step_count": 1,
+          "verification_report": "The single-line defect was corrected: `if description is None:` -> `if description is not None:`. With this change, the two test topics' descriptions ('Shared  Retrieval SIGNAL' and 'shared retrieval signal') both normalize to 'shared retrieval signal', are grouped together, and `_pair_findings` emits one `dedupe.description` finding (severity info). The test assertion `[f.code for f in result.findings] == ['dedupe.description']` will now pass. No other logic was altered; body deduplication, normalization, and finding construction remain byte-identical. The test file was not modified.",
+          "workflow": "swe_fix_direct"
+        },
+        "output_tokens": null,
+        "sample_id": "MEMORYCTL-MUT-003",
+        "schema_version": "1",
+        "started_at": "2026-08-27T15:38:12.220410Z",
+        "status": "completed",
+        "structured_output": null,
+        "target_fingerprint": "subprocess:python.exe:1:7a123ee172d3e4f7",
+        "tool_calls": [],
+        "trace_refs": []
+      },
+      "grade": {
+        "artifact_refs": [],
+        "created_at": "2026-08-27T15:38:45.995143Z",
+        "evidence": {
+          "children": [
+            {
+              "evidence": {
+                "changed_line_budget": "40",
+                "changed_lines": "2",
+                "differs_from_broken": "True",
+                "no_test_name_shortcut": "True",
+                "not_truncated": "True",
+                "parses": "True",
+                "returned_non_empty": "True",
+                "within_budget": "True"
+              },
+              "grader": "source-sanity@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.3
+            },
+            {
+              "evidence": {
+                "harness_evidence": {
+                  "case_id": "MEMORYCTL-MUT-003",
+                  "returncode": 0,
+                  "seconds": 1.8,
+                  "tail": "........                                                                 [100%]\n8 passed in 0.12s\n",
+                  "test_file": "tests/test_dedupe.py"
+                },
+                "harness_message": "all tests passed",
+                "harness_status": "completed"
+              },
+              "grader": "pytest-oracle@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.7
+            }
+          ]
+        },
+        "grader": "swe-fix-composite@1",
+        "grader_type": "composite",
+        "hard_gate": false,
+        "judge_calibration_ref": null,
+        "oracle_provenance": {},
+        "rubric_id": null,
+        "sample_id": "MEMORYCTL-MUT-003",
+        "schema_version": "1",
+        "score": 1.0,
+        "status": "pass"
+      },
+      "sample": {
+        "adapter": "arp-swe-cases@1",
+        "allowed_execution_policy": {},
+        "expected_artifacts": {},
+        "grader": {
+          "grader_type": "composite",
+          "hard_gate": true,
+          "name": "swe-fix-composite@1",
+          "parameters": {},
+          "schema_version": "1"
+        },
+        "input": {
+          "bug_report": "Test `tests/test_dedupe.py::test_duplicate_descriptions_flagged_info` fails in memoryctl. Repair the source so it passes.\n\n=========================== FAILURES ===================================\n__________________ test_duplicate_descriptions_flagged_info ___________________\n\ndedupe_cfg = MemoryctlConfig(memory_dirs=(WindowsPath('C:/Users/tandf/AppData/Local/Temp/pytest-of-tandf/pytest-318/test_duplicate_...d', topic_line_cap=150, index_soft_cap=150, stale_days=90, retention_days=90, verify_timeout_s=60, lock_timeout_s=30.0)\ndedupe_memory_dir = WindowsPath('C:/Users/tandf/AppData/Local/Temp/pytest-of-tandf/pytest-318/test_duplicate_descriptions_fl0/memory')\n\n    def test_duplicate_descriptions_flagged_info(\n        dedupe_cfg: MemoryctlConfig, dedupe_memory_dir: Path\n    ) -> None:\n        first = _write_dedupe_topic(\n            dedupe_memory_dir, \"alpha\", \"body one\", description=\"Shared  Retrieval SIGNAL\"\n        )\n        second = _write_dedupe_topic(\n            dedupe_memory_dir, \"beta\", \"body two\", description=\"shared retrieval signal\"\n        )\n    \n        result = dedupe.run(dedupe_cfg)\n    \n>       assert [f.code for f in result.findings] == [\"dedupe.description\"]\nE       AssertionError: assert [] == ['dedupe.description']\nE         \nE         Right contains one more item: 'dedupe.description'\nE         Use -v to get more diff\n\ntests\\test_dedupe.py:90: AssertionError\n=========================== short test summary info ===========================\nFAILED tests/test_dedupe.py::test_duplicate_descriptions_flagged_info - Asser...\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed, 2 passed in 0.36s\n",
+          "case_dir": "C:\\Users\\tandf\\source\\agentic-runtime-platform\\agentic-workflows-v2\\evals\\swe_ab\\dataset\\cases\\MEMORYCTL-MUT-003",
+          "code_file": "memoryctl/dedupe.py",
+          "failing_test": "tests/test_dedupe.py::test_duplicate_descriptions_flagged_info",
+          "repo_path": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/cases/MEMORYCTL-MUT-003"
+        },
+        "metadata": {
+          "contamination_risk": "medium",
+          "kind": "MUT",
+          "max_changed_lines": "40",
+          "source_repo": "memoryctl",
+          "test_file": "tests/test_dedupe.py"
+        },
+        "reference": null,
+        "sample_id": "MEMORYCTL-MUT-003",
+        "schema_version": "1",
+        "source_digest": "sha256:d2a2a13109c978be77adbbca10a933619e9ac47dd1f09de7becc846131142932",
+        "source_row_id": "2",
+        "tags": []
+      },
+      "schema_version": "1"
+    },
+    {
+      "execution": {
+        "artifacts": {},
+        "attempt": 1,
+        "cost_usd": null,
+        "environment_metadata": {},
+        "error": null,
+        "finished_at": "2026-08-27T15:38:57.551909Z",
+        "input_tokens": null,
+        "latency_ms": null,
+        "model_name": null,
+        "output": {
+          "elapsed_seconds": 7.92,
+          "models_used": [
+            "ollama:deepseek-v4-flash:0731-cloud"
+          ],
+          "overall_status": "StepStatus.SUCCESS",
+          "patched_source": "\"\"\"Exact-duplicate detection over topic memory files (read-only).\n\nDesign doc §6 ``dedupe --exact``: hash the normalized bodies (lowercased,\nwhitespace-collapsed) of topic files *within each memory dir*; equal hashes\nare exact duplicates (``warn``). Equal normalized descriptions are flagged\n``info``. Semantic/near-duplicate detection is explicitly out of scope —\nthe weekly LLM queue handles it (§5.4). This command never mutates files.\n\"\"\"\nfrom __future__ import annotations\nimport hashlib\nfrom itertools import combinations\nfrom pathlib import Path\nfrom memoryctl._shared import SEVERITY_INFO, SEVERITY_WARN, CommandResult, Finding, MemoryctlConfig, discover_memory_files, load_memory_doc\nCOMMAND_NAME = 'dedupe'\nCODE_EXACT = 'dedupe.exact'\nCODE_DESCRIPTION = 'dedupe.description'\n\ndef run(cfg: MemoryctlConfig, *, dry_run: bool=False) -> CommandResult:\n    \"\"\"Report exact body duplicates and duplicate descriptions per memory dir.\n\n    Read-only: ``dry_run`` is accepted for contract uniformity and changes\n    nothing (there is no mutation to suppress).\n    \"\"\"\n    del dry_run\n    findings: list[Finding] = []\n    for memory_dir in cfg.memory_dirs:\n        findings.extend(_dedupe_dir(memory_dir, cfg.index_name))\n    exact = sum((1 for f in findings if f.code == CODE_EXACT))\n    desc = sum((1 for f in findings if f.code == CODE_DESCRIPTION))\n    summary = f'dedupe: {exact} exact duplicate pair(s), {desc} duplicate description pair(s) across {len(cfg.memory_dirs)} dir(s)'\n    return CommandResult(name=COMMAND_NAME, findings=tuple(findings), changed=(), summary=summary)\n\ndef normalize_text(text: str) -> str:\n    \"\"\"Lowercase ``text`` and collapse every whitespace run to one space.\"\"\"\n    return ' '.join(text.lower().split())\n\ndef _dedupe_dir(memory_dir: Path, index_name: str) -> list[Finding]:\n    \"\"\"Findings for one memory dir: exact body pairs + description pairs.\n\n    Empty normalized bodies/descriptions are skipped — an empty body is a\n    ``validate`` concern, not a duplicate.\n    \"\"\"\n    body_groups: dict[str, list[Path]] = {}\n    desc_groups: dict[str, list[Path]] = {}\n    for path in discover_memory_files(memory_dir, index_name):\n        doc = load_memory_doc(path)\n        normalized_body = normalize_text(doc.body)\n        if normalized_body:\n            digest = hashlib.sha256(normalized_body.encode('utf-8')).hexdigest()\n            body_groups.setdefault(digest, []).append(path)\n        description = doc.meta.get('description')\n        if description is not None:\n            normalized_desc = normalize_text(str(description))\n            if normalized_desc:\n                desc_groups.setdefault(normalized_desc, []).append(path)\n    findings = _pair_findings(body_groups, code=CODE_EXACT, severity=SEVERITY_WARN, label='exact duplicate')\n    findings.extend(_pair_findings(desc_groups, code=CODE_DESCRIPTION, severity=SEVERITY_INFO, label='duplicate description'))\n    return findings\n\ndef _pair_findings(groups: dict[str, list[Path]], *, code: str, severity: str, label: str) -> list[Finding]:\n    \"\"\"One finding per pair inside each group of >=2 paths (deterministic).\"\"\"\n    findings: list[Finding] = []\n    for paths in groups.values():\n        for first, second in combinations(paths, 2):\n            findings.append(Finding(code=code, severity=severity, message=f'{label}: {first.name} == {second.name}', path=first, data={'a': str(first), 'b': str(second)}))\n    return findings",
+          "requested_model": "ollama:deepseek-v4-flash:0731-cloud",
+          "root_cause": "In `run()`, the exact-duplicate count was computed as `sum((2 for f in findings if f.code == CODE_EXACT))`, multiplying the number of findings by 2. But each `dedupe.exact` finding already represents exactly one duplicate pair (one finding per `combinations(paths, 2)` pair). With a single exact pair, this produced a summary of '2 exact duplicate pair(s)' instead of '1 exact duplicate pair(s)', failing the assertion `'1 exact duplicate pair(s)' in result.summary`.",
+          "step_count": 1,
+          "verification_report": "Changed only the `exact` count in `run()` from `sum((2 for f in findings if f.code == CODE_EXACT))` to `sum((1 for f in findings if f.code == CODE_EXACT))`, so each finding counts as one pair. The `desc` count already used `1` per finding and was left unchanged. With one exact pair, the summary now reads 'dedupe: 1 exact duplicate pair(s), 0 duplicate description pair(s) across 1 dir(s)', which satisfies `assert '1 exact duplicate pair(s)' in result.summary`. No test files were modified; all other source lines are byte-identical to the original.",
+          "workflow": "swe_fix_direct"
+        },
+        "output_tokens": null,
+        "sample_id": "MEMORYCTL-MUT-004",
+        "schema_version": "1",
+        "started_at": "2026-08-27T15:38:46.983970Z",
+        "status": "completed",
+        "structured_output": null,
+        "target_fingerprint": "subprocess:python.exe:1:7a123ee172d3e4f7",
+        "tool_calls": [],
+        "trace_refs": []
+      },
+      "grade": {
+        "artifact_refs": [],
+        "created_at": "2026-08-27T15:38:57.551909Z",
+        "evidence": {
+          "children": [
+            {
+              "evidence": {
+                "changed_line_budget": "40",
+                "changed_lines": "2",
+                "differs_from_broken": "True",
+                "no_test_name_shortcut": "True",
+                "not_truncated": "True",
+                "parses": "True",
+                "returned_non_empty": "True",
+                "within_budget": "True"
+              },
+              "grader": "source-sanity@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.3
+            },
+            {
+              "evidence": {
+                "harness_evidence": {
+                  "case_id": "MEMORYCTL-MUT-004",
+                  "returncode": 0,
+                  "seconds": 1.6,
+                  "tail": "........                                                                 [100%]\n8 passed in 0.11s\n",
+                  "test_file": "tests/test_dedupe.py"
+                },
+                "harness_message": "all tests passed",
+                "harness_status": "completed"
+              },
+              "grader": "pytest-oracle@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.7
+            }
+          ]
+        },
+        "grader": "swe-fix-composite@1",
+        "grader_type": "composite",
+        "hard_gate": false,
+        "judge_calibration_ref": null,
+        "oracle_provenance": {},
+        "rubric_id": null,
+        "sample_id": "MEMORYCTL-MUT-004",
+        "schema_version": "1",
+        "score": 1.0,
+        "status": "pass"
+      },
+      "sample": {
+        "adapter": "arp-swe-cases@1",
+        "allowed_execution_policy": {},
+        "expected_artifacts": {},
+        "grader": {
+          "grader_type": "composite",
+          "hard_gate": true,
+          "name": "swe-fix-composite@1",
+          "parameters": {},
+          "schema_version": "1"
+        },
+        "input": {
+          "bug_report": "Test `tests/test_dedupe.py::test_exact_pair_detected_after_normalization` fails in memoryctl. Repair the source so it passes.\n\n=========================== FAILURES ===================================\n________________ test_exact_pair_detected_after_normalization _________________\n\ndedupe_cfg = MemoryctlConfig(memory_dirs=(WindowsPath('C:/Users/tandf/AppData/Local/Temp/pytest-of-tandf/pytest-319/test_exact_pair...d', topic_line_cap=150, index_soft_cap=150, stale_days=90, retention_days=90, verify_timeout_s=60, lock_timeout_s=30.0)\ndedupe_memory_dir = WindowsPath('C:/Users/tandf/AppData/Local/Temp/pytest-of-tandf/pytest-319/test_exact_pair_detected_after0/memory')\n\n    def test_exact_pair_detected_after_normalization(\n        dedupe_cfg: MemoryctlConfig, dedupe_memory_dir: Path\n    ) -> None:\n        first = _write_dedupe_topic(dedupe_memory_dir, \"alpha\", \"Hello   WORLD\\n\\ttwice\\n\")\n        second = _write_dedupe_topic(dedupe_memory_dir, \"beta\", \"hello world twice\")\n    \n        result = dedupe.run(dedupe_cfg)\n    \n        assert result.name == \"dedupe\"\n        assert result.changed == ()\n        exact = [f for f in result.findings if f.code == \"dedupe.exact\"]\n        assert len(exact) == 1\n        assert exact[0].severity == SEVERITY_WARN\n        assert exact[0].data == {\"a\": str(first), \"b\": str(second)}\n>       assert \"1 exact duplicate pair(s)\" in result.summary\nE       AssertionError: assert '1 exact duplicate pair(s)' in 'dedupe: 2 exact duplicate pair(s), 0 duplicate description pair(s) across 1 dir(s)'\nE        +  where 'dedupe: 2 exact duplicate pair(s), 0 duplicate description pair(s) across 1 dir(s)' = CommandResult(name='dedupe', findings=(Finding(code='dedupe.exact', severity='warn', message='exact duplicate: alpha.m...beta.md'}),), changed=(), summary='dedupe: 2 exact duplicate pair(s), 0 duplicate description pair(s) across 1 dir(s)').summary\n\ntests\\test_dedupe.py:61: AssertionError",
+          "case_dir": "C:\\Users\\tandf\\source\\agentic-runtime-platform\\agentic-workflows-v2\\evals\\swe_ab\\dataset\\cases\\MEMORYCTL-MUT-004",
+          "code_file": "memoryctl/dedupe.py",
+          "failing_test": "tests/test_dedupe.py::test_exact_pair_detected_after_normalization",
+          "repo_path": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/cases/MEMORYCTL-MUT-004"
+        },
+        "metadata": {
+          "contamination_risk": "medium",
+          "kind": "MUT",
+          "max_changed_lines": "40",
+          "source_repo": "memoryctl",
+          "test_file": "tests/test_dedupe.py"
+        },
+        "reference": null,
+        "sample_id": "MEMORYCTL-MUT-004",
+        "schema_version": "1",
+        "source_digest": "sha256:791e7a7220c4a4b210e1f6f9654e678cff0239543f931d3dd65addf2ab9d0f14",
+        "source_row_id": "3",
+        "tags": []
+      },
+      "schema_version": "1"
+    },
+    {
+      "execution": {
+        "artifacts": {},
+        "attempt": 1,
+        "cost_usd": null,
+        "environment_metadata": {},
+        "error": null,
+        "finished_at": "2026-08-27T15:39:27.142590Z",
+        "input_tokens": null,
+        "latency_ms": null,
+        "model_name": null,
+        "output": {
+          "elapsed_seconds": 35.56,
+          "models_used": [
+            "ollama:deepseek-v4-flash:0731-cloud"
+          ],
+          "overall_status": "StepStatus.SUCCESS",
+          "patched_source": "\"\"\"Schema lint over memory topic files (``memoryctl validate``).\n\nChecks every topic file discovered in each configured memory directory\nagainst the frontmatter schema in the design doc (AGENT_CONTEXT_SYSTEM.md\nsection 4.1). Read-only: this command never mutates any file, so malformed\nfiles are reported deterministically before they ever reach a model.\n\"\"\"\nfrom __future__ import annotations\nfrom datetime import date, datetime\nfrom pathlib import Path\nfrom memoryctl._shared import DATE_FORMAT, REQUIRED_META_KEYS, SEVERITY_ERROR, SEVERITY_WARN, STATUS_ACTIVE, STATUS_SUPERSEDED_PREFIX, VALID_SUBTYPES, VALID_TYPES, CommandResult, Finding, MemoryctlConfig, discover_memory_files, load_memory_doc\nCOMMAND_NAME = 'validate'\nDESCRIPTION_MAX_CHARS = 200\nTYPE_SEMANTIC = 'semantic'\nVERIFY_KEY = 'verify'\nDATE_KEYS = ('created', 'updated')\n\ndef _is_valid_date(value: object) -> bool:\n    \"\"\"True when ``value`` is a date/datetime or a valid YYYY-MM-DD string.\n\n    ``yaml.safe_load`` turns bare dates into :class:`datetime.date`\n    instances (and timestamps into :class:`datetime.datetime`, a\n    ``date`` subclass), so both are accepted alongside valid strings.\n    \"\"\"\n    if isinstance(value, date):\n        return True\n    if isinstance(value, str):\n        try:\n            datetime.strptime(value, DATE_FORMAT)\n        except ValueError:\n            return False\n        return True\n    return False\n\ndef _required_key_errors(path: Path, meta: dict[str, object]) -> list[Finding]:\n    \"\"\"Errors for required frontmatter keys that are absent or null.\"\"\"\n    missing = [key for key in REQUIRED_META_KEYS if meta.get(key) is None]\n    if not missing:\n        return []\n    return [Finding(code='schema.missing-keys', severity=SEVERITY_ERROR, message=f\"missing required frontmatter keys: {', '.join(missing)}\", path=path, data={'missing': missing})]\n\ndef _type_errors(path: Path, meta: dict[str, object]) -> list[Finding]:\n    \"\"\"Errors for an invalid ``type`` or a bad semantic ``subtype``.\"\"\"\n    findings: list[Finding] = []\n    doc_type = meta.get('type')\n    if doc_type is not None and doc_type not in VALID_TYPES:\n        findings.append(Finding(code='schema.invalid-type', severity=SEVERITY_ERROR, message=f'type {doc_type!r} not one of {VALID_TYPES}', path=path, data={'type': str(doc_type)}))\n    if doc_type == TYPE_SEMANTIC and meta.get('subtype') not in VALID_SUBTYPES:\n        subtype = meta.get('subtype')\n        findings.append(Finding(code='schema.invalid-subtype', severity=SEVERITY_ERROR, message=f'semantic file needs subtype in {VALID_SUBTYPES}, got {subtype!r}', path=path, data={'subtype': str(subtype)}))\n    return findings\n\ndef _date_errors(path: Path, meta: dict[str, object]) -> list[Finding]:\n    \"\"\"Errors for ``created``/``updated`` values that are not dates.\"\"\"\n    findings: list[Finding] = []\n    for key in DATE_KEYS:\n        value = meta.get(key)\n        if value is not None and (not _is_valid_date(value)):\n            findings.append(Finding(code='schema.invalid-date', severity=SEVERITY_ERROR, message=f'{key} is not a YYYY-MM-DD date: {value!r}', path=path, data={'key': key, 'value': str(value)}))\n    return findings\n\ndef _status_errors(path: Path, meta: dict[str, object]) -> list[Finding]:\n    \"\"\"Errors for a ``status`` outside active/superseded-by semantics.\"\"\"\n    status = meta.get('status')\n    if status is None or status == STATUS_ACTIVE:\n        return []\n    if isinstance(status, str) and status.startswith(STATUS_SUPERSEDED_PREFIX):\n        return []\n    return [Finding(code='schema.invalid-status', severity=SEVERITY_ERROR, message=f'status must be {STATUS_ACTIVE!r} or start with {STATUS_SUPERSEDED_PREFIX!r}, got {status!r}', path=path, data={'status': str(status)})]\n\ndef _warn_findings(path: Path, meta: dict[str, object]) -> list[Finding]:\n    \"\"\"Non-fatal quality warnings: naming, description, verify hygiene.\"\"\"\n    findings: list[Finding] = []\n    name = meta.get('name')\n    if name is not None and str(name) != path.stem:\n        findings.append(Finding(code='schema.name-mismatch', severity=SEVERITY_WARN, message=f'name {name!r} != filename stem {path.stem!r}', path=path, data={'name': str(name), 'stem': path.stem}))\n    description = meta.get('description')\n    if description is not None:\n        text = str(description).strip()\n        if not text or len(text) > DESCRIPTION_MAX_CHARS:\n            findings.append(Finding(code='schema.description-length', severity=SEVERITY_WARN, message=f'description empty or over {DESCRIPTION_MAX_CHARS} chars ({len(text)})', path=path, data={'length': len(text)}))\n    if meta.get('type') == TYPE_SEMANTIC and VERIFY_KEY not in meta:\n        findings.append(Finding(code='schema.no-verify', severity=SEVERITY_WARN, message=\"semantic fact has no verify command (use 'manual')\", path=path))\n    return findings\n\ndef _file_findings(path: Path) -> list[Finding]:\n    \"\"\"All schema findings for one topic file.\"\"\"\n    doc = load_memory_doc(path)\n    if not doc.meta:\n        return [Finding(code='schema.missing-frontmatter', severity=SEVERITY_ERROR, message='missing or empty YAML frontmatter', path=path)]\n    findings: list[Finding] = []\n    findings.extend(_required_key_errors(path, doc.meta))\n    findings.extend(_type_errors(path, doc.meta))\n    findings.extend(_date_errors(path, doc.meta))\n    findings.extend(_status_errors(path, doc.meta))\n    findings.extend(_warn_findings(path, doc.meta))\n    return findings\n\ndef run(cfg: MemoryctlConfig, *, dry_run: bool=False) -> CommandResult:\n    \"\"\"Lint frontmatter of every topic file in ``cfg.memory_dirs``.\n\n    Read-only; ``dry_run`` is accepted for contract uniformity but has\n    no effect because validation never mutates anything.\n    \"\"\"\n    del dry_run\n    findings: list[Finding] = []\n    file_count = 0\n    for memory_dir in cfg.memory_dirs:\n        for path in discover_memory_files(memory_dir, cfg.index_name):\n            file_count += 1\n            findings.extend(_file_findings(path))\n    error_count = sum((1 for f in findings if f.severity == SEVERITY_ERROR))\n    warn_count = sum((1 for f in findings if f.severity == SEVERITY_WARN))\n    return CommandResult(name=COMMAND_NAME, findings=tuple(findings), changed=(), summary=f'{file_count} files, {error_count} errors, {warn_count} warnings')",
+          "requested_model": "ollama:deepseek-v4-flash:0731-cloud",
+          "root_cause": "In `_status_errors`, the validity check used `or` instead of `and`: `if isinstance(status, str) or status.startswith(STATUS_SUPERSEDED_PREFIX):`. This caused any string status (including `'retired'`) to be treated as valid, so no `schema.invalid-status` finding was emitted for the retired file. The test expects exactly one such error (for the retired status), while the superseded-by status remains valid.",
+          "step_count": 1,
+          "verification_report": "The fix changes the condition to `if isinstance(status, str) and status.startswith(STATUS_SUPERSEDED_PREFIX):`. With this correction, a status is only considered valid if it is a string AND starts with the superseded-by prefix. The `'retired'` status no longer matches the valid pattern and produces a `schema.invalid-status` error, while `'superseded-by:[[new-fact]]'` remains valid. The test `test_validate_status_active_and_superseded_ok_others_error` should now pass, as it expects exactly one invalid-status finding. No other code paths were altered.",
+          "workflow": "swe_fix_direct"
+        },
+        "output_tokens": null,
+        "sample_id": "MEMORYCTL-MUT-005",
+        "schema_version": "1",
+        "started_at": "2026-08-27T15:38:48.762280Z",
+        "status": "completed",
+        "structured_output": null,
+        "target_fingerprint": "subprocess:python.exe:1:7a123ee172d3e4f7",
+        "tool_calls": [],
+        "trace_refs": []
+      },
+      "grade": {
+        "artifact_refs": [],
+        "created_at": "2026-08-27T15:39:27.142590Z",
+        "evidence": {
+          "children": [
+            {
+              "evidence": {
+                "changed_line_budget": "40",
+                "changed_lines": "2",
+                "differs_from_broken": "True",
+                "no_test_name_shortcut": "True",
+                "not_truncated": "True",
+                "parses": "True",
+                "returned_non_empty": "True",
+                "within_budget": "True"
+              },
+              "grader": "source-sanity@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.3
+            },
+            {
+              "evidence": {
+                "harness_evidence": {
+                  "case_id": "MEMORYCTL-MUT-005",
+                  "returncode": 0,
+                  "seconds": 2.1,
+                  "tail": "..........                                                               [100%]\n10 passed in 0.16s\n",
+                  "test_file": "tests/test_validate.py"
+                },
+                "harness_message": "all tests passed",
+                "harness_status": "completed"
+              },
+              "grader": "pytest-oracle@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.7
+            }
+          ]
+        },
+        "grader": "swe-fix-composite@1",
+        "grader_type": "composite",
+        "hard_gate": false,
+        "judge_calibration_ref": null,
+        "oracle_provenance": {},
+        "rubric_id": null,
+        "sample_id": "MEMORYCTL-MUT-005",
+        "schema_version": "1",
+        "score": 1.0,
+        "status": "pass"
+      },
+      "sample": {
+        "adapter": "arp-swe-cases@1",
+        "allowed_execution_policy": {},
+        "expected_artifacts": {},
+        "grader": {
+          "grader_type": "composite",
+          "hard_gate": true,
+          "name": "swe-fix-composite@1",
+          "parameters": {},
+          "schema_version": "1"
+        },
+        "input": {
+          "bug_report": "Test `tests/test_validate.py::test_validate_status_active_and_superseded_ok_others_error` fails in memoryctl. Repair the source so it passes.\n\n=========================== FAILURES ===================================\n_________ test_validate_status_active_and_superseded_ok_others_error __________\n\nvalidate_cfg = MemoryctlConfig(memory_dirs=(WindowsPath('C:/Users/tandf/AppData/Local/Temp/pytest-of-tandf/pytest-322/test_validate_s...d', topic_line_cap=150, index_soft_cap=150, stale_days=90, retention_days=90, verify_timeout_s=60, lock_timeout_s=30.0)\nvalidate_memory_dir = WindowsPath('C:/Users/tandf/AppData/Local/Temp/pytest-of-tandf/pytest-322/test_validate_status_active_an0/memory')\n\n    def test_validate_status_active_and_superseded_ok_others_error(\n        validate_cfg: MemoryctlConfig, validate_memory_dir: Path\n    ) -> None:\n        superseded = _valid_topic_text(\"old-fact\").replace(\n            \"status: active\", \"status: 'superseded-by:[[new-fact]]'\"\n        )\n        _write(validate_memory_dir, \"old-fact.md\", superseded)\n        retired = _valid_topic_text(\"retired-fact\").replace(\n            \"status: active\", \"status: retired\"\n        )\n        _write(validate_memory_dir, \"retired-fact.md\", retired)\n    \n        result = validate.run(validate_cfg)\n    \n        status_errors = [f for f in result.findings if f.code == \"schema.invalid-status\"]\n>       assert len(status_errors) == 1\nE       assert 0 == 1\nE        +  where 0 = len([])\n\ntests\\test_validate.py:174: AssertionError\n=========================== short test summary info ===========================\nFAILED tests/test_validate.py::test_validate_status_active_and_superseded_ok_others_error\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed, 7 passed in 0.43s\n",
+          "case_dir": "C:\\Users\\tandf\\source\\agentic-runtime-platform\\agentic-workflows-v2\\evals\\swe_ab\\dataset\\cases\\MEMORYCTL-MUT-005",
+          "code_file": "memoryctl/validate.py",
+          "failing_test": "tests/test_validate.py::test_validate_status_active_and_superseded_ok_others_error",
+          "repo_path": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/cases/MEMORYCTL-MUT-005"
+        },
+        "metadata": {
+          "contamination_risk": "medium",
+          "kind": "MUT",
+          "max_changed_lines": "40",
+          "source_repo": "memoryctl",
+          "test_file": "tests/test_validate.py"
+        },
+        "reference": null,
+        "sample_id": "MEMORYCTL-MUT-005",
+        "schema_version": "1",
+        "source_digest": "sha256:f67f7ec9325bfd66a6179474fbe9e75f6f84df6138f0b2049a92712f344246cc",
+        "source_row_id": "4",
+        "tags": []
+      },
+      "schema_version": "1"
+    },
+    {
+      "execution": {
+        "artifacts": {},
+        "attempt": 1,
+        "cost_usd": null,
+        "environment_metadata": {},
+        "error": null,
+        "finished_at": "2026-08-27T15:39:02.918176Z",
+        "input_tokens": null,
+        "latency_ms": null,
+        "model_name": null,
+        "output": {
+          "elapsed_seconds": 9.8,
+          "models_used": [
+            "ollama:deepseek-v4-flash:0731-cloud"
+          ],
+          "overall_status": "StepStatus.SUCCESS",
+          "patched_source": "\"\"\"Schema lint over memory topic files (``memoryctl validate``).\n\nChecks every topic file discovered in each configured memory directory\nagainst the frontmatter schema in the design doc (AGENT_CONTEXT_SYSTEM.md\nsection 4.1). Read-only: this command never mutates any file, so malformed\nfiles are reported deterministically before they ever reach a model.\n\"\"\"\nfrom __future__ import annotations\nfrom datetime import date, datetime\nfrom pathlib import Path\nfrom memoryctl._shared import DATE_FORMAT, REQUIRED_META_KEYS, SEVERITY_ERROR, SEVERITY_WARN, STATUS_ACTIVE, STATUS_SUPERSEDED_PREFIX, VALID_SUBTYPES, VALID_TYPES, CommandResult, Finding, MemoryctlConfig, discover_memory_files, load_memory_doc\nCOMMAND_NAME = 'validate'\nDESCRIPTION_MAX_CHARS = 200\nTYPE_SEMANTIC = 'semantic'\nVERIFY_KEY = 'verify'\nDATE_KEYS = ('created', 'updated')\n\ndef _is_valid_date(value: object) -> bool:\n    \"\"\"True when ``value`` is a date/datetime or a valid YYYY-MM-DD string.\n\n    ``yaml.safe_load`` turns bare dates into :class:`datetime.date`\n    instances (and timestamps into :class:`datetime.datetime`, a\n    ``date`` subclass), so both are accepted alongside valid strings.\n    \"\"\"\n    if isinstance(value, date):\n        return True\n    if isinstance(value, str):\n        try:\n            datetime.strptime(value, DATE_FORMAT)\n        except ValueError:\n            return False\n        return True\n    return False\n\ndef _required_key_errors(path: Path, meta: dict[str, object]) -> list[Finding]:\n    \"\"\"Errors for required frontmatter keys that are absent or null.\"\"\"\n    missing = [key for key in REQUIRED_META_KEYS if meta.get(key) is None]\n    if not missing:\n        return []\n    return [Finding(code='schema.missing-keys', severity=SEVERITY_ERROR, message=f\"missing required frontmatter keys: {', '.join(missing)}\", path=path, data={'missing': missing})]\n\ndef _type_errors(path: Path, meta: dict[str, object]) -> list[Finding]:\n    \"\"\"Errors for an invalid ``type`` or a bad semantic ``subtype``.\"\"\"\n    findings: list[Finding] = []\n    doc_type = meta.get('type')\n    if doc_type is not None and doc_type not in VALID_TYPES:\n        findings.append(Finding(code='schema.invalid-type', severity=SEVERITY_ERROR, message=f'type {doc_type!r} not one of {VALID_TYPES}', path=path, data={'type': str(doc_type)}))\n    if doc_type == TYPE_SEMANTIC and meta.get('subtype') not in VALID_SUBTYPES:\n        subtype = meta.get('subtype')\n        findings.append(Finding(code='schema.invalid-subtype', severity=SEVERITY_ERROR, message=f'semantic file needs subtype in {VALID_SUBTYPES}, got {subtype!r}', path=path, data={'subtype': str(subtype)}))\n    return findings\n\ndef _date_errors(path: Path, meta: dict[str, object]) -> list[Finding]:\n    \"\"\"Errors for ``created``/``updated`` values that are not dates.\"\"\"\n    findings: list[Finding] = []\n    for key in DATE_KEYS:\n        value = meta.get(key)\n        if value is not None and (not _is_valid_date(value)):\n            findings.append(Finding(code='schema.invalid-date', severity=SEVERITY_ERROR, message=f'{key} is not a YYYY-MM-DD date: {value!r}', path=path, data={'key': key, 'value': str(value)}))\n    return findings\n\ndef _status_errors(path: Path, meta: dict[str, object]) -> list[Finding]:\n    \"\"\"Errors for a ``status`` outside active/superseded-by semantics.\"\"\"\n    status = meta.get('status')\n    if status is None or status == STATUS_ACTIVE:\n        return []\n    if isinstance(status, str) and status.startswith(STATUS_SUPERSEDED_PREFIX):\n        return []\n    return [Finding(code='schema.invalid-status', severity=SEVERITY_ERROR, message=f'status must be {STATUS_ACTIVE!r} or start with {STATUS_SUPERSEDED_PREFIX!r}, got {status!r}', path=path, data={'status': str(status)})]\n\ndef _warn_findings(path: Path, meta: dict[str, object]) -> list[Finding]:\n    \"\"\"Non-fatal quality warnings: naming, description, verify hygiene.\"\"\"\n    findings: list[Finding] = []\n    name = meta.get('name')\n    if name is not None and str(name) != path.stem:\n        findings.append(Finding(code='schema.name-mismatch', severity=SEVERITY_WARN, message=f'name {name!r} != filename stem {path.stem!r}', path=path, data={'name': str(name), 'stem': path.stem}))\n    description = meta.get('description')\n    if description is not None:\n        text = str(description).strip()\n        if not text or len(text) > DESCRIPTION_MAX_CHARS:\n            findings.append(Finding(code='schema.description-length', severity=SEVERITY_WARN, message=f'description empty or over {DESCRIPTION_MAX_CHARS} chars ({len(text)})', path=path, data={'length': len(text)}))\n    if meta.get('type') == TYPE_SEMANTIC and VERIFY_KEY not in meta:\n        findings.append(Finding(code='schema.no-verify', severity=SEVERITY_WARN, message=\"semantic fact has no verify command (use 'manual')\", path=path))\n    return findings\n\ndef _file_findings(path: Path) -> list[Finding]:\n    \"\"\"All schema findings for one topic file.\"\"\"\n    doc = load_memory_doc(path)\n    if not doc.meta:\n        return [Finding(code='schema.missing-frontmatter', severity=SEVERITY_ERROR, message='missing or empty YAML frontmatter', path=path)]\n    findings: list[Finding] = []\n    findings.extend(_required_key_errors(path, doc.meta))\n    findings.extend(_type_errors(path, doc.meta))\n    findings.extend(_date_errors(path, doc.meta))\n    findings.extend(_status_errors(path, doc.meta))\n    findings.extend(_warn_findings(path, doc.meta))\n    return findings\n\ndef run(cfg: MemoryctlConfig, *, dry_run: bool=False) -> CommandResult:\n    \"\"\"Lint frontmatter of every topic file in ``cfg.memory_dirs``.\n\n    Read-only; ``dry_run`` is accepted for contract uniformity but has\n    no effect because validation never mutates anything.\n    \"\"\"\n    del dry_run\n    findings: list[Finding] = []\n    file_count = 0\n    for memory_dir in cfg.memory_dirs:\n        for path in discover_memory_files(memory_dir, cfg.index_name):\n            file_count += 1\n            findings.extend(_file_findings(path))\n    error_count = sum((1 for f in findings if f.severity == SEVERITY_ERROR))\n    warn_count = sum((1 for f in findings if f.severity == SEVERITY_WARN))\n    return CommandResult(name=COMMAND_NAME, findings=tuple(findings), changed=(), summary=f'{file_count} files, {error_count} errors, {warn_count} warnings')",
+          "requested_model": "ollama:deepseek-v4-flash:0731-cloud",
+          "root_cause": "In `_type_errors`, the membership test was inverted: `if doc_type is not None and doc_type in VALID_TYPES:` flagged a finding whenever the type WAS valid. The happy-path test writes a file with type 'semantic' (a valid type), so the branch fired and produced a spurious `schema.invalid-type` error. The condition should reject types that are NOT in VALID_TYPES.",
+          "step_count": 1,
+          "verification_report": "Changed the condition in `_type_errors` from `doc_type in VALID_TYPES` to `doc_type not in VALID_TYPES`. This is the only change; all other code is byte-identical. With the fix, a valid 'semantic' type no longer triggers `schema.invalid-type`, so `test_validate_happy_path_no_findings` should pass. No test files were modified. (Verification by inspection of the single-line logic inversion; run `pytest tests/test_validate.py::test_validate_happy_path_no_findings` to confirm.)",
+          "workflow": "swe_fix_direct"
+        },
+        "output_tokens": null,
+        "sample_id": "MEMORYCTL-MUT-006",
+        "schema_version": "1",
+        "started_at": "2026-08-27T15:38:50.596306Z",
+        "status": "completed",
+        "structured_output": null,
+        "target_fingerprint": "subprocess:python.exe:1:7a123ee172d3e4f7",
+        "tool_calls": [],
+        "trace_refs": []
+      },
+      "grade": {
+        "artifact_refs": [],
+        "created_at": "2026-08-27T15:39:02.919175Z",
+        "evidence": {
+          "children": [
+            {
+              "evidence": {
+                "changed_line_budget": "40",
+                "changed_lines": "2",
+                "differs_from_broken": "True",
+                "no_test_name_shortcut": "True",
+                "not_truncated": "True",
+                "parses": "True",
+                "returned_non_empty": "True",
+                "within_budget": "True"
+              },
+              "grader": "source-sanity@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.3
+            },
+            {
+              "evidence": {
+                "harness_evidence": {
+                  "case_id": "MEMORYCTL-MUT-006",
+                  "returncode": 0,
+                  "seconds": 1.6,
+                  "tail": "..........                                                               [100%]\n10 passed in 0.13s\n",
+                  "test_file": "tests/test_validate.py"
+                },
+                "harness_message": "all tests passed",
+                "harness_status": "completed"
+              },
+              "grader": "pytest-oracle@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.7
+            }
+          ]
+        },
+        "grader": "swe-fix-composite@1",
+        "grader_type": "composite",
+        "hard_gate": false,
+        "judge_calibration_ref": null,
+        "oracle_provenance": {},
+        "rubric_id": null,
+        "sample_id": "MEMORYCTL-MUT-006",
+        "schema_version": "1",
+        "score": 1.0,
+        "status": "pass"
+      },
+      "sample": {
+        "adapter": "arp-swe-cases@1",
+        "allowed_execution_policy": {},
+        "expected_artifacts": {},
+        "grader": {
+          "grader_type": "composite",
+          "hard_gate": true,
+          "name": "swe-fix-composite@1",
+          "parameters": {},
+          "schema_version": "1"
+        },
+        "input": {
+          "bug_report": "Test `tests/test_validate.py::test_validate_happy_path_no_findings` fails in memoryctl. Repair the source so it passes.\n\n=========================== FAILURES ===================================\n____________________ test_validate_happy_path_no_findings _____________________\n\nvalidate_cfg = MemoryctlConfig(memory_dirs=(WindowsPath('C:/Users/tandf/AppData/Local/Temp/pytest-of-tandf/pytest-324/test_validate_h...d', topic_line_cap=150, index_soft_cap=150, stale_days=90, retention_days=90, verify_timeout_s=60, lock_timeout_s=30.0)\nvalidate_memory_dir = WindowsPath('C:/Users/tandf/AppData/Local/Temp/pytest-of-tandf/pytest-324/test_validate_happy_path_no_fi0/memory')\n\n    def test_validate_happy_path_no_findings(\n        validate_cfg: MemoryctlConfig, validate_memory_dir: Path\n    ) -> None:\n        _write(validate_memory_dir, \"good-fact.md\", _valid_topic_text(\"good-fact\"))\n    \n        result = validate.run(validate_cfg)\n    \n        assert result.name == \"validate\"\n>       assert result.findings == ()\nE       assert (Finding(code...'semantic'}),) == ()\nE         \nE         Left contains one more item: Finding(code='schema.invalid-type', severity='error', message=\"type 'semantic' not one of ('semantic', 'episodic', 'pr...Local/Temp/pytest-of-tandf/pytest-324/test_validate_happy_path_no_fi0/memory/good-fact.md'), data={'type': 'semantic'})\nE         Use -v to get more diff\n\ntests\\test_validate.py:66: AssertionError\n=========================== short test summary info ===========================\nFAILED tests/test_validate.py::test_validate_happy_path_no_findings - assert ...\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.43s\n",
+          "case_dir": "C:\\Users\\tandf\\source\\agentic-runtime-platform\\agentic-workflows-v2\\evals\\swe_ab\\dataset\\cases\\MEMORYCTL-MUT-006",
+          "code_file": "memoryctl/validate.py",
+          "failing_test": "tests/test_validate.py::test_validate_happy_path_no_findings",
+          "repo_path": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/cases/MEMORYCTL-MUT-006"
+        },
+        "metadata": {
+          "contamination_risk": "medium",
+          "kind": "MUT",
+          "max_changed_lines": "40",
+          "source_repo": "memoryctl",
+          "test_file": "tests/test_validate.py"
+        },
+        "reference": null,
+        "sample_id": "MEMORYCTL-MUT-006",
+        "schema_version": "1",
+        "source_digest": "sha256:8c9c2caf151850246fa14afd22d4e22b46deb35c99024738dae55085b880c6f3",
+        "source_row_id": "5",
+        "tags": []
+      },
+      "schema_version": "1"
+    },
+    {
+      "execution": {
+        "artifacts": {},
+        "attempt": 1,
+        "cost_usd": null,
+        "environment_metadata": {},
+        "error": null,
+        "finished_at": "2026-08-27T15:39:28.003686Z",
+        "input_tokens": null,
+        "latency_ms": null,
+        "model_name": null,
+        "output": {
+          "elapsed_seconds": 26.26,
+          "models_used": [
+            "ollama:deepseek-v4-flash:0731-cloud"
+          ],
+          "overall_status": "StepStatus.SUCCESS",
+          "patched_source": "\"\"\"Schema lint over memory topic files (``memoryctl validate``).\n\nChecks every topic file discovered in each configured memory directory\nagainst the frontmatter schema in the design doc (AGENT_CONTEXT_SYSTEM.md\nsection 4.1). Read-only: this command never mutates any file, so malformed\nfiles are reported deterministically before they ever reach a model.\n\"\"\"\nfrom __future__ import annotations\nfrom datetime import date, datetime\nfrom pathlib import Path\nfrom memoryctl._shared import DATE_FORMAT, REQUIRED_META_KEYS, SEVERITY_ERROR, SEVERITY_WARN, STATUS_ACTIVE, STATUS_SUPERSEDED_PREFIX, VALID_SUBTYPES, VALID_TYPES, CommandResult, Finding, MemoryctlConfig, discover_memory_files, load_memory_doc\nCOMMAND_NAME = 'validate'\nDESCRIPTION_MAX_CHARS = 200\nTYPE_SEMANTIC = 'semantic'\nVERIFY_KEY = 'verify'\nDATE_KEYS = ('created', 'updated')\n\ndef _is_valid_date(value: object) -> bool:\n    \"\"\"True when ``value`` is a date/datetime or a valid YYYY-MM-DD string.\n\n    ``yaml.safe_load`` turns bare dates into :class:`datetime.date`\n    instances (and timestamps into :class:`datetime.datetime`, a\n    ``date`` subclass), so both are accepted alongside valid strings.\n    \"\"\"\n    if isinstance(value, date):\n        return True\n    if isinstance(value, str):\n        try:\n            datetime.strptime(value, DATE_FORMAT)\n        except ValueError:\n            return False\n        return True\n    return False\n\ndef _required_key_errors(path: Path, meta: dict[str, object]) -> list[Finding]:\n    \"\"\"Errors for required frontmatter keys that are absent or null.\"\"\"\n    missing = [key for key in REQUIRED_META_KEYS if meta.get(key) is None]\n    if not missing:\n        return []\n    return [Finding(code='schema.missing-keys', severity=SEVERITY_ERROR, message=f\"missing required frontmatter keys: {', '.join(missing)}\", path=path, data={'missing': missing})]\n\ndef _type_errors(path: Path, meta: dict[str, object]) -> list[Finding]:\n    \"\"\"Errors for an invalid ``type`` or a bad semantic ``subtype``.\"\"\"\n    findings: list[Finding] = []\n    doc_type = meta.get('type')\n    if doc_type is None or doc_type not in VALID_TYPES:\n        findings.append(Finding(code='schema.invalid-type', severity=SEVERITY_ERROR, message=f'type {doc_type!r} not one of {VALID_TYPES}', path=path, data={'type': str(doc_type)}))\n    if doc_type == TYPE_SEMANTIC and meta.get('subtype') not in VALID_SUBTYPES:\n        subtype = meta.get('subtype')\n        findings.append(Finding(code='schema.invalid-subtype', severity=SEVERITY_ERROR, message=f'semantic file needs subtype in {VALID_SUBTYPES}, got {subtype!r}', path=path, data={'subtype': str(subtype)}))\n    return findings\n\ndef _date_errors(path: Path, meta: dict[str, object]) -> list[Finding]:\n    \"\"\"Errors for ``created``/``updated`` values that are not dates.\"\"\"\n    findings: list[Finding] = []\n    for key in DATE_KEYS:\n        value = meta.get(key)\n        if value is not None and (not _is_valid_date(value)):\n            findings.append(Finding(code='schema.invalid-date', severity=SEVERITY_ERROR, message=f'{key} is not a YYYY-MM-DD date: {value!r}', path=path, data={'key': key, 'value': str(value)}))\n    return findings\n\ndef _status_errors(path: Path, meta: dict[str, object]) -> list[Finding]:\n    \"\"\"Errors for a ``status`` outside active/superseded-by semantics.\"\"\"\n    status = meta.get('status')\n    if status is None or status == STATUS_ACTIVE:\n        return []\n    if isinstance(status, str) and status.startswith(STATUS_SUPERSEDED_PREFIX):\n        return []\n    return [Finding(code='schema.invalid-status', severity=SEVERITY_ERROR, message=f'status must be {STATUS_ACTIVE!r} or start with {STATUS_SUPERSEDED_PREFIX!r}, got {status!r}', path=path, data={'status': str(status)})]\n\ndef _warn_findings(path: Path, meta: dict[str, object]) -> list[Finding]:\n    \"\"\"Non-fatal quality warnings: naming, description, verify hygiene.\"\"\"\n    findings: list[Finding] = []\n    name = meta.get('name')\n    if name is not None and str(name) != path.stem:\n        findings.append(Finding(code='schema.name-mismatch', severity=SEVERITY_WARN, message=f'name {name!r} != filename stem {path.stem!r}', path=path, data={'name': str(name), 'stem': path.stem}))\n    description = meta.get('description')\n    if description is not None:\n        text = str(description).strip()\n        if not text or len(text) > DESCRIPTION_MAX_CHARS:\n            findings.append(Finding(code='schema.description-length', severity=SEVERITY_WARN, message=f'description empty or over {DESCRIPTION_MAX_CHARS} chars ({len(text)})', path=path, data={'length': len(text)}))\n    if meta.get('type') == TYPE_SEMANTIC and VERIFY_KEY not in meta:\n        findings.append(Finding(code='schema.no-verify', severity=SEVERITY_WARN, message=\"semantic fact has no verify command (use 'manual')\", path=path))\n    return findings\n\ndef _file_findings(path: Path) -> list[Finding]:\n    \"\"\"All schema findings for one topic file.\"\"\"\n    doc = load_memory_doc(path)\n    if not doc.meta:\n        return [Finding(code='schema.missing-frontmatter', severity=SEVERITY_ERROR, message='missing or empty YAML frontmatter', path=path)]\n    findings: list[Finding] = []\n    findings.extend(_required_key_errors(path, doc.meta))\n    findings.extend(_type_errors(path, doc.meta))\n    findings.extend(_date_errors(path, doc.meta))\n    findings.extend(_status_errors(path, doc.meta))\n    findings.extend(_warn_findings(path, doc.meta))\n    return findings\n\ndef run(cfg: MemoryctlConfig, *, dry_run: bool=False) -> CommandResult:\n    \"\"\"Lint frontmatter of every topic file in ``cfg.memory_dirs``.\n\n    Read-only; ``dry_run`` is accepted for contract uniformity but has\n    no effect because validation never mutates anything.\n    \"\"\"\n    del dry_run\n    findings: list[Finding] = []\n    file_count = 0\n    for memory_dir in cfg.memory_dirs:\n        for path in discover_memory_files(memory_dir, cfg.index_name):\n            file_count += 1\n            findings.extend(_file_findings(path))\n    error_count = sum((1 for f in findings if f.severity == SEVERITY_ERROR))\n    warn_count = sum((1 for f in findings if f.severity == SEVERITY_WARN))\n    return CommandResult(name=COMMAND_NAME, findings=tuple(findings), changed=(), summary=f'{file_count} files, {error_count} errors, {warn_count} warnings')",
+          "requested_model": "ollama:deepseek-v4-flash:0731-cloud",
+          "root_cause": "In `_type_errors`, the guard condition used `and` instead of `or`: `if doc_type is None and doc_type not in VALID_TYPES:`. When a file has an invalid type like `'bogus'`, `doc_type` is not None, so the `and` short-circuits to False and no `schema.invalid-type` finding is emitted. The condition should be `or` so that either a missing type (None) or a type not in VALID_TYPES is flagged as an error.",
+          "step_count": 1,
+          "verification_report": "Changed the condition in `_type_errors` from `if doc_type is None and doc_type not in VALID_TYPES:` to `if doc_type is None or doc_type not in VALID_TYPES:`. This is the only change; all other code is byte-identical. With this fix, a file whose `type` is `'bogus'` (not in VALID_TYPES) now produces a `schema.invalid-type` error finding, so `test_validate_invalid_type_is_error` will pass. The existing 4 passing tests are unaffected since the change only adds findings for invalid types that were previously missed.",
+          "workflow": "swe_fix_direct"
+        },
+        "output_tokens": null,
+        "sample_id": "MEMORYCTL-MUT-007",
+        "schema_version": "1",
+        "started_at": "2026-08-27T15:38:59.131408Z",
+        "status": "completed",
+        "structured_output": null,
+        "target_fingerprint": "subprocess:python.exe:1:7a123ee172d3e4f7",
+        "tool_calls": [],
+        "trace_refs": []
+      },
+      "grade": {
+        "artifact_refs": [],
+        "created_at": "2026-08-27T15:39:28.003686Z",
+        "evidence": {
+          "children": [
+            {
+              "evidence": {
+                "changed_line_budget": "40",
+                "changed_lines": "2",
+                "differs_from_broken": "True",
+                "no_test_name_shortcut": "True",
+                "not_truncated": "True",
+                "parses": "True",
+                "returned_non_empty": "True",
+                "within_budget": "True"
+              },
+              "grader": "source-sanity@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.3
+            },
+            {
+              "evidence": {
+                "harness_evidence": {
+                  "case_id": "MEMORYCTL-MUT-007",
+                  "returncode": 0,
+                  "seconds": 2.4,
+                  "tail": "..........                                                               [100%]\n10 passed in 0.18s\n",
+                  "test_file": "tests/test_validate.py"
+                },
+                "harness_message": "all tests passed",
+                "harness_status": "completed"
+              },
+              "grader": "pytest-oracle@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.7
+            }
+          ]
+        },
+        "grader": "swe-fix-composite@1",
+        "grader_type": "composite",
+        "hard_gate": false,
+        "judge_calibration_ref": null,
+        "oracle_provenance": {},
+        "rubric_id": null,
+        "sample_id": "MEMORYCTL-MUT-007",
+        "schema_version": "1",
+        "score": 1.0,
+        "status": "pass"
+      },
+      "sample": {
+        "adapter": "arp-swe-cases@1",
+        "allowed_execution_policy": {},
+        "expected_artifacts": {},
+        "grader": {
+          "grader_type": "composite",
+          "hard_gate": true,
+          "name": "swe-fix-composite@1",
+          "parameters": {},
+          "schema_version": "1"
+        },
+        "input": {
+          "bug_report": "Test `tests/test_validate.py::test_validate_invalid_type_is_error` fails in memoryctl. Repair the source so it passes.\n\n=========================== FAILURES ===================================\n_____________________ test_validate_invalid_type_is_error _____________________\n\nvalidate_cfg = MemoryctlConfig(memory_dirs=(WindowsPath('C:/Users/tandf/AppData/Local/Temp/pytest-of-tandf/pytest-325/test_validate_i...d', topic_line_cap=150, index_soft_cap=150, stale_days=90, retention_days=90, verify_timeout_s=60, lock_timeout_s=30.0)\nvalidate_memory_dir = WindowsPath('C:/Users/tandf/AppData/Local/Temp/pytest-of-tandf/pytest-325/test_validate_invalid_type_is_0/memory')\n\n    def test_validate_invalid_type_is_error(\n        validate_cfg: MemoryctlConfig, validate_memory_dir: Path\n    ) -> None:\n        text = _valid_topic_text(\"bad-type\").replace(\"type: semantic\", \"type: bogus\")\n        _write(validate_memory_dir, \"bad-type.md\", text)\n    \n        result = validate.run(validate_cfg)\n    \n>       assert \"schema.invalid-type\" in _codes(result)\nE       AssertionError: assert 'schema.invalid-type' in []\nE        +  where [] = _codes(CommandResult(name='validate', findings=(), changed=(), summary='1 files, 0 errors, 0 warnings'))\n\ntests\\test_validate.py:124: AssertionError\n=========================== short test summary info ===========================\nFAILED tests/test_validate.py::test_validate_invalid_type_is_error - Assertio...\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed, 4 passed in 0.39s\n",
+          "case_dir": "C:\\Users\\tandf\\source\\agentic-runtime-platform\\agentic-workflows-v2\\evals\\swe_ab\\dataset\\cases\\MEMORYCTL-MUT-007",
+          "code_file": "memoryctl/validate.py",
+          "failing_test": "tests/test_validate.py::test_validate_invalid_type_is_error",
+          "repo_path": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/cases/MEMORYCTL-MUT-007"
+        },
+        "metadata": {
+          "contamination_risk": "medium",
+          "kind": "MUT",
+          "max_changed_lines": "40",
+          "source_repo": "memoryctl",
+          "test_file": "tests/test_validate.py"
+        },
+        "reference": null,
+        "sample_id": "MEMORYCTL-MUT-007",
+        "schema_version": "1",
+        "source_digest": "sha256:ce18e1a656e693e39794312add8df4f6a879e32c63138ae86e575d33fd159cec",
+        "source_row_id": "6",
+        "tags": []
+      },
+      "schema_version": "1"
+    },
+    {
+      "execution": {
+        "artifacts": {},
+        "attempt": 1,
+        "cost_usd": null,
+        "environment_metadata": {},
+        "error": null,
+        "finished_at": "2026-08-27T15:39:30.207659Z",
+        "input_tokens": null,
+        "latency_ms": null,
+        "model_name": null,
+        "output": {
+          "elapsed_seconds": 23.03,
+          "models_used": [
+            "ollama:deepseek-v4-flash:0731-cloud"
+          ],
+          "overall_status": "StepStatus.SUCCESS",
+          "patched_source": "\"\"\"Schema lint over memory topic files (``memoryctl validate``).\n\nChecks every topic file discovered in each configured memory directory\nagainst the frontmatter schema in the design doc (AGENT_CONTEXT_SYSTEM.md\nsection 4.1). Read-only: this command never mutates any file, so malformed\nfiles are reported deterministically before they ever reach a model.\n\"\"\"\nfrom __future__ import annotations\nfrom datetime import date, datetime\nfrom pathlib import Path\nfrom memoryctl._shared import DATE_FORMAT, REQUIRED_META_KEYS, SEVERITY_ERROR, SEVERITY_WARN, STATUS_ACTIVE, STATUS_SUPERSEDED_PREFIX, VALID_SUBTYPES, VALID_TYPES, CommandResult, Finding, MemoryctlConfig, discover_memory_files, load_memory_doc\nCOMMAND_NAME = 'validate'\nDESCRIPTION_MAX_CHARS = 200\nTYPE_SEMANTIC = 'semantic'\nVERIFY_KEY = 'verify'\nDATE_KEYS = ('created', 'updated')\n\ndef _is_valid_date(value: object) -> bool:\n    \"\"\"True when ``value`` is a date/datetime or a valid YYYY-MM-DD string.\n\n    ``yaml.safe_load`` turns bare dates into :class:`datetime.date`\n    instances (and timestamps into :class:`datetime.datetime`, a\n    ``date`` subclass), so both are accepted alongside valid strings.\n    \"\"\"\n    if isinstance(value, date):\n        return True\n    if isinstance(value, str):\n        try:\n            datetime.strptime(value, DATE_FORMAT)\n        except ValueError:\n            return False\n        return True\n    return False\n\ndef _required_key_errors(path: Path, meta: dict[str, object]) -> list[Finding]:\n    \"\"\"Errors for required frontmatter keys that are absent or null.\"\"\"\n    missing = [key for key in REQUIRED_META_KEYS if meta.get(key) is None]\n    if not missing:\n        return []\n    return [Finding(code='schema.missing-keys', severity=SEVERITY_ERROR, message=f\"missing required frontmatter keys: {', '.join(missing)}\", path=path, data={'missing': missing})]\n\ndef _type_errors(path: Path, meta: dict[str, object]) -> list[Finding]:\n    \"\"\"Errors for an invalid ``type`` or a bad semantic ``subtype``.\"\"\"\n    findings: list[Finding] = []\n    doc_type = meta.get('type')\n    if doc_type is not None and doc_type not in VALID_TYPES:\n        findings.append(Finding(code='schema.invalid-type', severity=SEVERITY_ERROR, message=f'type {doc_type!r} not one of {VALID_TYPES}', path=path, data={'type': str(doc_type)}))\n    if doc_type == TYPE_SEMANTIC and meta.get('subtype') not in VALID_SUBTYPES:\n        subtype = meta.get('subtype')\n        findings.append(Finding(code='schema.invalid-subtype', severity=SEVERITY_ERROR, message=f'semantic file needs subtype in {VALID_SUBTYPES}, got {subtype!r}', path=path, data={'subtype': str(subtype)}))\n    return findings\n\ndef _date_errors(path: Path, meta: dict[str, object]) -> list[Finding]:\n    \"\"\"Errors for ``created``/``updated`` values that are not dates.\"\"\"\n    findings: list[Finding] = []\n    for key in DATE_KEYS:\n        value = meta.get(key)\n        if value is not None and (not _is_valid_date(value)):\n            findings.append(Finding(code='schema.invalid-date', severity=SEVERITY_ERROR, message=f'{key} is not a YYYY-MM-DD date: {value!r}', path=path, data={'key': key, 'value': str(value)}))\n    return findings\n\ndef _status_errors(path: Path, meta: dict[str, object]) -> list[Finding]:\n    \"\"\"Errors for a ``status`` outside active/superseded-by semantics.\"\"\"\n    status = meta.get('status')\n    if status is None or status == STATUS_ACTIVE:\n        return []\n    if isinstance(status, str) and status.startswith(STATUS_SUPERSEDED_PREFIX):\n        return []\n    return [Finding(code='schema.invalid-status', severity=SEVERITY_ERROR, message=f'status must be {STATUS_ACTIVE!r} or start with {STATUS_SUPERSEDED_PREFIX!r}, got {status!r}', path=path, data={'status': str(status)})]\n\ndef _warn_findings(path: Path, meta: dict[str, object]) -> list[Finding]:\n    \"\"\"Non-fatal quality warnings: naming, description, verify hygiene.\"\"\"\n    findings: list[Finding] = []\n    name = meta.get('name')\n    if name is not None and str(name) != path.stem:\n        findings.append(Finding(code='schema.name-mismatch', severity=SEVERITY_WARN, message=f'name {name!r} != filename stem {path.stem!r}', path=path, data={'name': str(name), 'stem': path.stem}))\n    description = meta.get('description')\n    if description is not None:\n        text = str(description).strip()\n        if not text or len(text) > DESCRIPTION_MAX_CHARS:\n            findings.append(Finding(code='schema.description-length', severity=SEVERITY_WARN, message=f'description empty or over {DESCRIPTION_MAX_CHARS} chars ({len(text)})', path=path, data={'length': len(text)}))\n    if meta.get('type') == TYPE_SEMANTIC and VERIFY_KEY not in meta:\n        findings.append(Finding(code='schema.no-verify', severity=SEVERITY_WARN, message=\"semantic fact has no verify command (use 'manual')\", path=path))\n    return findings\n\ndef _file_findings(path: Path) -> list[Finding]:\n    \"\"\"All schema findings for one topic file.\"\"\"\n    doc = load_memory_doc(path)\n    if not doc.meta:\n        return [Finding(code='schema.missing-frontmatter', severity=SEVERITY_ERROR, message='missing or empty YAML frontmatter', path=path)]\n    findings: list[Finding] = []\n    findings.extend(_required_key_errors(path, doc.meta))\n    findings.extend(_type_errors(path, doc.meta))\n    findings.extend(_date_errors(path, doc.meta))\n    findings.extend(_status_errors(path, doc.meta))\n    findings.extend(_warn_findings(path, doc.meta))\n    return findings\n\ndef run(cfg: MemoryctlConfig, *, dry_run: bool=False) -> CommandResult:\n    \"\"\"Lint frontmatter of every topic file in ``cfg.memory_dirs``.\n\n    Read-only; ``dry_run`` is accepted for contract uniformity but has\n    no effect because validation never mutates anything.\n    \"\"\"\n    del dry_run\n    findings: list[Finding] = []\n    file_count = 0\n    for memory_dir in cfg.memory_dirs:\n        for path in discover_memory_files(memory_dir, cfg.index_name):\n            file_count += 1\n            findings.extend(_file_findings(path))\n    error_count = sum((1 for f in findings if f.severity == SEVERITY_ERROR))\n    warn_count = sum((1 for f in findings if f.severity == SEVERITY_WARN))\n    return CommandResult(name=COMMAND_NAME, findings=tuple(findings), changed=(), summary=f'{file_count} files, {error_count} errors, {warn_count} warnings')",
+          "requested_model": "ollama:deepseek-v4-flash:0731-cloud",
+          "root_cause": "In `run()`, the error count was computed with an inverted condition: `f.severity != SEVERITY_ERROR`. This counted every finding that was NOT an error (i.e., warnings) instead of counting actual errors. For a file with missing frontmatter, the single finding is an error, so `error_count` was 0 instead of 1, producing the summary '1 files, 0 errors, 0 warnings' instead of the expected '1 files, 1 errors, 0 warnings'.",
+          "step_count": 1,
+          "verification_report": "Changed the error-count generator expression in `run()` from `f.severity != SEVERITY_ERROR` to `f.severity == SEVERITY_ERROR`. This is the only change; all other code is byte-identical. With the fix, a file lacking frontmatter yields one `schema.missing-frontmatter` finding with severity `SEVERITY_ERROR`, so `error_count` becomes 1 and the summary reads '1 files, 1 errors, 0 warnings', matching the test assertion. The warning count logic was already correct and is unchanged. No test files were modified.",
+          "workflow": "swe_fix_direct"
+        },
+        "output_tokens": null,
+        "sample_id": "MEMORYCTL-MUT-008",
+        "schema_version": "1",
+        "started_at": "2026-08-27T15:39:04.550884Z",
+        "status": "completed",
+        "structured_output": null,
+        "target_fingerprint": "subprocess:python.exe:1:7a123ee172d3e4f7",
+        "tool_calls": [],
+        "trace_refs": []
+      },
+      "grade": {
+        "artifact_refs": [],
+        "created_at": "2026-08-27T15:39:30.207659Z",
+        "evidence": {
+          "children": [
+            {
+              "evidence": {
+                "changed_line_budget": "40",
+                "changed_lines": "2",
+                "differs_from_broken": "True",
+                "no_test_name_shortcut": "True",
+                "not_truncated": "True",
+                "parses": "True",
+                "returned_non_empty": "True",
+                "within_budget": "True"
+              },
+              "grader": "source-sanity@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.3
+            },
+            {
+              "evidence": {
+                "harness_evidence": {
+                  "case_id": "MEMORYCTL-MUT-008",
+                  "returncode": 0,
+                  "seconds": 2.3,
+                  "tail": "..........                                                               [100%]\n10 passed in 0.18s\n",
+                  "test_file": "tests/test_validate.py"
+                },
+                "harness_message": "all tests passed",
+                "harness_status": "completed"
+              },
+              "grader": "pytest-oracle@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.7
+            }
+          ]
+        },
+        "grader": "swe-fix-composite@1",
+        "grader_type": "composite",
+        "hard_gate": false,
+        "judge_calibration_ref": null,
+        "oracle_provenance": {},
+        "rubric_id": null,
+        "sample_id": "MEMORYCTL-MUT-008",
+        "schema_version": "1",
+        "score": 1.0,
+        "status": "pass"
+      },
+      "sample": {
+        "adapter": "arp-swe-cases@1",
+        "allowed_execution_policy": {},
+        "expected_artifacts": {},
+        "grader": {
+          "grader_type": "composite",
+          "hard_gate": true,
+          "name": "swe-fix-composite@1",
+          "parameters": {},
+          "schema_version": "1"
+        },
+        "input": {
+          "bug_report": "Test `tests/test_validate.py::test_validate_missing_frontmatter_is_error` fails in memoryctl. Repair the source so it passes.\n\n=========================== FAILURES ===================================\n_________________ test_validate_missing_frontmatter_is_error __________________\n\nvalidate_cfg = MemoryctlConfig(memory_dirs=(WindowsPath('C:/Users/tandf/AppData/Local/Temp/pytest-of-tandf/pytest-326/test_validate_m...d', topic_line_cap=150, index_soft_cap=150, stale_days=90, retention_days=90, verify_timeout_s=60, lock_timeout_s=30.0)\nvalidate_memory_dir = WindowsPath('C:/Users/tandf/AppData/Local/Temp/pytest-of-tandf/pytest-326/test_validate_missing_frontmat0/memory')\n\n    def test_validate_missing_frontmatter_is_error(\n        validate_cfg: MemoryctlConfig, validate_memory_dir: Path\n    ) -> None:\n        path = _write(validate_memory_dir, \"no-meta.md\", \"just some text\\n\")\n    \n        result = validate.run(validate_cfg)\n    \n        assert _codes(result) == [\"schema.missing-frontmatter\"]\n        assert result.findings[0].severity == SEVERITY_ERROR\n        assert result.findings[0].path == path\n>       assert result.summary == \"1 files, 1 errors, 0 warnings\"\nE       AssertionError: assert '1 files, 0 e...s, 0 warnings' == '1 files, 1 e...s, 0 warnings'\nE         \nE         - 1 files, 1 errors, 0 warnings\nE         ?          ^\nE         + 1 files, 0 errors, 0 warnings\nE         ?          ^\n\ntests\\test_validate.py:95: AssertionError\n=========================== short test summary info ===========================\nFAILED tests/test_validate.py::test_validate_missing_frontmatter_is_error - A...\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed, 2 passed in 0.46s\n",
+          "case_dir": "C:\\Users\\tandf\\source\\agentic-runtime-platform\\agentic-workflows-v2\\evals\\swe_ab\\dataset\\cases\\MEMORYCTL-MUT-008",
+          "code_file": "memoryctl/validate.py",
+          "failing_test": "tests/test_validate.py::test_validate_missing_frontmatter_is_error",
+          "repo_path": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/cases/MEMORYCTL-MUT-008"
+        },
+        "metadata": {
+          "contamination_risk": "medium",
+          "kind": "MUT",
+          "max_changed_lines": "40",
+          "source_repo": "memoryctl",
+          "test_file": "tests/test_validate.py"
+        },
+        "reference": null,
+        "sample_id": "MEMORYCTL-MUT-008",
+        "schema_version": "1",
+        "source_digest": "sha256:79a3e4d16b26fcd88cac0f82cfd1f1c6864f79bd7325cfba159d6163d216d398",
+        "source_row_id": "7",
+        "tags": []
+      },
+      "schema_version": "1"
+    },
+    {
+      "execution": {
+        "artifacts": {
+          "output_ref": "sha256:964245e98cac9cf4d2241ebfb6bfa171276b99f21782df8c4dee1e83f55aff8d"
+        },
+        "attempt": 1,
+        "cost_usd": null,
+        "environment_metadata": {},
+        "error": null,
+        "finished_at": "2026-08-27T15:40:04.490308Z",
+        "input_tokens": null,
+        "latency_ms": null,
+        "model_name": null,
+        "output": null,
+        "output_tokens": null,
+        "sample_id": "MEMORYCTL-MUT-009",
+        "schema_version": "1",
+        "started_at": "2026-08-27T15:39:29.234111Z",
+        "status": "completed",
+        "structured_output": null,
+        "target_fingerprint": "subprocess:python.exe:1:7a123ee172d3e4f7",
+        "tool_calls": [],
+        "trace_refs": []
+      },
+      "grade": {
+        "artifact_refs": [],
+        "created_at": "2026-08-27T15:40:04.491306Z",
+        "evidence": {
+          "children": [
+            {
+              "evidence": {
+                "changed_line_budget": "40",
+                "changed_lines": "2",
+                "differs_from_broken": "True",
+                "no_test_name_shortcut": "True",
+                "not_truncated": "True",
+                "parses": "True",
+                "returned_non_empty": "True",
+                "within_budget": "True"
+              },
+              "grader": "source-sanity@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.3
+            },
+            {
+              "evidence": {
+                "harness_evidence": {
+                  "case_id": "MEMORYCTL-MUT-009",
+                  "returncode": 0,
+                  "seconds": 1.8,
+                  "tail": "...................                                                      [100%]\n19 passed in 0.20s\n",
+                  "test_file": "tests/test_links.py"
+                },
+                "harness_message": "all tests passed",
+                "harness_status": "completed"
+              },
+              "grader": "pytest-oracle@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.7
+            }
+          ]
+        },
+        "grader": "swe-fix-composite@1",
+        "grader_type": "composite",
+        "hard_gate": false,
+        "judge_calibration_ref": null,
+        "oracle_provenance": {},
+        "rubric_id": null,
+        "sample_id": "MEMORYCTL-MUT-009",
+        "schema_version": "1",
+        "score": 1.0,
+        "status": "pass"
+      },
+      "sample": {
+        "adapter": "arp-swe-cases@1",
+        "allowed_execution_policy": {},
+        "expected_artifacts": {},
+        "grader": {
+          "grader_type": "composite",
+          "hard_gate": true,
+          "name": "swe-fix-composite@1",
+          "parameters": {},
+          "schema_version": "1"
+        },
+        "input": {
+          "bug_report": "Test `tests/test_links.py::TestPlaybooks::test_missing_entry_is_error` fails in memoryctl. Repair the source so it passes.\n\n=========================== FAILURES ===================================\n__________________ TestPlaybooks.test_missing_entry_is_error __________________\n\nself = <tests.test_links.TestPlaybooks object at 0x000001ADBD82EC10>\nlinks_fleet_dir = WindowsPath('C:/Users/tandf/AppData/Local/Temp/pytest-of-tandf/pytest-329/test_missing_entry_is_error0/fleet')\nlinks_memory_dir = WindowsPath('C:/Users/tandf/AppData/Local/Temp/pytest-of-tandf/pytest-329/test_missing_entry_is_error0/memory')\n\n    def test_missing_entry_is_error(\n        self, links_fleet_dir: Path, links_memory_dir: Path\n    ) -> None:\n        _write(\n            links_fleet_dir / \"playbooks\" / \"fix-it.md\",\n            \"---\\nname: fix-it\\nentry: scripts/fix-it.ps1\\n---\\nSteps.\\n\",\n        )\n        cfg = MemoryctlConfig(\n            memory_dirs=(links_memory_dir,), fleet_dir=links_fleet_dir\n        )\n    \n        result = links.run(cfg)\n    \n        found = _by_code(result, links.CODE_ENTRY_MISSING)\n>       assert len(found) == 1\nE       assert 0 == 1\nE        +  where 0 = len([])\n\ntests\\test_links.py:170: AssertionError\n=========================== short test summary info ===========================\nFAILED tests/test_links.py::TestPlaybooks::test_missing_entry_is_error - asse...\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed, 9 passed in 0.43s\n",
+          "case_dir": "C:\\Users\\tandf\\source\\agentic-runtime-platform\\agentic-workflows-v2\\evals\\swe_ab\\dataset\\cases\\MEMORYCTL-MUT-009",
+          "code_file": "memoryctl/links.py",
+          "failing_test": "tests/test_links.py::TestPlaybooks::test_missing_entry_is_error",
+          "repo_path": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/cases/MEMORYCTL-MUT-009"
+        },
+        "metadata": {
+          "contamination_risk": "medium",
+          "kind": "MUT",
+          "max_changed_lines": "40",
+          "source_repo": "memoryctl",
+          "test_file": "tests/test_links.py"
+        },
+        "reference": null,
+        "sample_id": "MEMORYCTL-MUT-009",
+        "schema_version": "1",
+        "source_digest": "sha256:4b4488b3d785c60ec36578e20d34c0bbc413a9d76f1d594414ca2eaabcc09086",
+        "source_row_id": "8",
+        "tags": []
+      },
+      "schema_version": "1"
+    },
+    {
+      "execution": {
+        "artifacts": {
+          "output_ref": "sha256:37e63aadef5335e84034e622473fb09c7756172f11c12dd56f54b04f80673446"
+        },
+        "attempt": 1,
+        "cost_usd": null,
+        "environment_metadata": {},
+        "error": null,
+        "finished_at": "2026-08-27T15:40:05.185043Z",
+        "input_tokens": null,
+        "latency_ms": null,
+        "model_name": null,
+        "output": null,
+        "output_tokens": null,
+        "sample_id": "MEMORYCTL-MUT-010",
+        "schema_version": "1",
+        "started_at": "2026-08-27T15:39:31.602387Z",
+        "status": "completed",
+        "structured_output": null,
+        "target_fingerprint": "subprocess:python.exe:1:7a123ee172d3e4f7",
+        "tool_calls": [],
+        "trace_refs": []
+      },
+      "grade": {
+        "artifact_refs": [],
+        "created_at": "2026-08-27T15:40:05.185043Z",
+        "evidence": {
+          "children": [
+            {
+              "evidence": {
+                "changed_line_budget": "40",
+                "changed_lines": "2",
+                "differs_from_broken": "True",
+                "no_test_name_shortcut": "True",
+                "not_truncated": "True",
+                "parses": "True",
+                "returned_non_empty": "True",
+                "within_budget": "True"
+              },
+              "grader": "source-sanity@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.3
+            },
+            {
+              "evidence": {
+                "harness_evidence": {
+                  "case_id": "MEMORYCTL-MUT-010",
+                  "returncode": 0,
+                  "seconds": 2.1,
+                  "tail": "...................                                                      [100%]\n19 passed in 0.28s\n",
+                  "test_file": "tests/test_links.py"
+                },
+                "harness_message": "all tests passed",
+                "harness_status": "completed"
+              },
+              "grader": "pytest-oracle@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.7
+            }
+          ]
+        },
+        "grader": "swe-fix-composite@1",
+        "grader_type": "composite",
+        "hard_gate": false,
+        "judge_calibration_ref": null,
+        "oracle_provenance": {},
+        "rubric_id": null,
+        "sample_id": "MEMORYCTL-MUT-010",
+        "schema_version": "1",
+        "score": 1.0,
+        "status": "pass"
+      },
+      "sample": {
+        "adapter": "arp-swe-cases@1",
+        "allowed_execution_policy": {},
+        "expected_artifacts": {},
+        "grader": {
+          "grader_type": "composite",
+          "hard_gate": true,
+          "name": "swe-fix-composite@1",
+          "parameters": {},
+          "schema_version": "1"
+        },
+        "input": {
+          "bug_report": "Test `tests/test_links.py::TestWikiLinks::test_resolved_wiki_link_is_clean` fails in memoryctl. Repair the source so it passes.\n\n=========================== FAILURES ===================================\n_______________ TestWikiLinks.test_resolved_wiki_link_is_clean ________________\n\nself = <tests.test_links.TestWikiLinks object at 0x000001DFF0442C10>\nlinks_memory_dir = WindowsPath('C:/Users/tandf/AppData/Local/Temp/pytest-of-tandf/pytest-331/test_resolved_wiki_link_is_cle0/memory')\nlinks_cfg = MemoryctlConfig(memory_dirs=(WindowsPath('C:/Users/tandf/AppData/Local/Temp/pytest-of-tandf/pytest-331/test_resolved_w...d', topic_line_cap=150, index_soft_cap=150, stale_days=90, retention_days=90, verify_timeout_s=60, lock_timeout_s=30.0)\n\n    def test_resolved_wiki_link_is_clean(\n        self, links_memory_dir: Path, links_cfg: MemoryctlConfig\n    ) -> None:\n        _write(links_memory_dir / \"npm-over-npx.md\", \"Use npm.\")\n        _write(links_memory_dir / \"other.md\", \"See [[npm-over-npx]] for detail.\")\n    \n        result = links.run(links_cfg)\n    \n>       assert _by_code(result, links.CODE_WIKI_UNRESOLVED) == []\nE       AssertionError: assert [Finding(code...m-over-npx'})] == []\nE         \nE         Left contains one more item: Finding(code='links.wiki-unresolved', severity='warn', message='wiki-link [[npm-over-npx]] matches no topic-file stem'...cal/Temp/pytest-of-tandf/pytest-331/test_resolved_wiki_link_is_cle0/memory/other.md'), data={'target': 'npm-over-npx'})\nE         Use -v to get more diff\n\ntests\\test_links.py:56: AssertionError\n=========================== short test summary info ===========================\nFAILED tests/test_links.py::TestWikiLinks::test_resolved_wiki_link_is_clean\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.44s\n",
+          "case_dir": "C:\\Users\\tandf\\source\\agentic-runtime-platform\\agentic-workflows-v2\\evals\\swe_ab\\dataset\\cases\\MEMORYCTL-MUT-010",
+          "code_file": "memoryctl/links.py",
+          "failing_test": "tests/test_links.py::TestWikiLinks::test_resolved_wiki_link_is_clean",
+          "repo_path": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/cases/MEMORYCTL-MUT-010"
+        },
+        "metadata": {
+          "contamination_risk": "medium",
+          "kind": "MUT",
+          "max_changed_lines": "40",
+          "source_repo": "memoryctl",
+          "test_file": "tests/test_links.py"
+        },
+        "reference": null,
+        "sample_id": "MEMORYCTL-MUT-010",
+        "schema_version": "1",
+        "source_digest": "sha256:123a5df3fa0371c4d795fd28d706c83e58eb032633adad37ec043d9b319bac2c",
+        "source_row_id": "9",
+        "tags": []
+      },
+      "schema_version": "1"
+    },
+    {
+      "execution": {
+        "artifacts": {
+          "output_ref": "sha256:1271864b0285d0160730a27c95de0269135ea374ae4c7d20674fc74ed3e61afe"
+        },
+        "attempt": 1,
+        "cost_usd": null,
+        "environment_metadata": {},
+        "error": null,
+        "finished_at": "2026-08-27T15:40:08.179686Z",
+        "input_tokens": null,
+        "latency_ms": null,
+        "model_name": null,
+        "output": null,
+        "output_tokens": null,
+        "sample_id": "MEMORYCTL-MUT-011",
+        "schema_version": "1",
+        "started_at": "2026-08-27T15:39:33.899535Z",
+        "status": "completed",
+        "structured_output": null,
+        "target_fingerprint": "subprocess:python.exe:1:7a123ee172d3e4f7",
+        "tool_calls": [],
+        "trace_refs": []
+      },
+      "grade": {
+        "artifact_refs": [],
+        "created_at": "2026-08-27T15:40:08.179686Z",
+        "evidence": {
+          "children": [
+            {
+              "evidence": {
+                "changed_line_budget": "40",
+                "changed_lines": "2",
+                "differs_from_broken": "True",
+                "no_test_name_shortcut": "True",
+                "not_truncated": "True",
+                "parses": "True",
+                "returned_non_empty": "True",
+                "within_budget": "True"
+              },
+              "grader": "source-sanity@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.3
+            },
+            {
+              "evidence": {
+                "harness_evidence": {
+                  "case_id": "MEMORYCTL-MUT-011",
+                  "returncode": 0,
+                  "seconds": 2.3,
+                  "tail": "...................                                                      [100%]\n19 passed in 0.20s\n",
+                  "test_file": "tests/test_links.py"
+                },
+                "harness_message": "all tests passed",
+                "harness_status": "completed"
+              },
+              "grader": "pytest-oracle@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.7
+            }
+          ]
+        },
+        "grader": "swe-fix-composite@1",
+        "grader_type": "composite",
+        "hard_gate": false,
+        "judge_calibration_ref": null,
+        "oracle_provenance": {},
+        "rubric_id": null,
+        "sample_id": "MEMORYCTL-MUT-011",
+        "schema_version": "1",
+        "score": 1.0,
+        "status": "pass"
+      },
+      "sample": {
+        "adapter": "arp-swe-cases@1",
+        "allowed_execution_policy": {},
+        "expected_artifacts": {},
+        "grader": {
+          "grader_type": "composite",
+          "hard_gate": true,
+          "name": "swe-fix-composite@1",
+          "parameters": {},
+          "schema_version": "1"
+        },
+        "input": {
+          "bug_report": "Test `tests/test_links.py::TestMarkdownLinks::test_dead_relative_link_is_error` fails in memoryctl. Repair the source so it passes.\n\n=========================== FAILURES ===================================\n_____________ TestMarkdownLinks.test_dead_relative_link_is_error ______________\n\nself = <tests.test_links.TestMarkdownLinks object at 0x000001A79A91E850>\nlinks_memory_dir = WindowsPath('C:/Users/tandf/AppData/Local/Temp/pytest-of-tandf/pytest-333/test_dead_relative_link_is_err0/memory')\nlinks_cfg = MemoryctlConfig(memory_dirs=(WindowsPath('C:/Users/tandf/AppData/Local/Temp/pytest-of-tandf/pytest-333/test_dead_relat...d', topic_line_cap=150, index_soft_cap=150, stale_days=90, retention_days=90, verify_timeout_s=60, lock_timeout_s=30.0)\n\n    def test_dead_relative_link_is_error(\n        self, links_memory_dir: Path, links_cfg: MemoryctlConfig\n    ) -> None:\n        _write(links_memory_dir / \"topic.md\", \"See [gone](missing.md).\")\n    \n>       result = links.run(links_cfg)\n                 ^^^^^^^^^^^^^^^^^^^^\n\ntests\\test_links.py:104: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\nmemoryctl\\links.py:46: in run\n    dir_findings, dir_external, dir_count = _scan_memory_dir(root, cfg.index_name)\n                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nmemoryctl\\links.py:71: in _scan_memory_dir\n    file_findings, file_external = _scan_file(path, stems)\n                                   ^^^^^^^^^^^^^^^^^^^^^^^\nmemoryctl\\links.py:96: in _scan_file\n    findings = [*_wiki_findings(path, doc.body, stems), *_dead_link_findings(path, doc.body)]\n                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nmemoryctl\\links.py:124: in _dead_link_findings\n    target = _normalize_md_target(match.group(1))\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ",
+          "case_dir": "C:\\Users\\tandf\\source\\agentic-runtime-platform\\agentic-workflows-v2\\evals\\swe_ab\\dataset\\cases\\MEMORYCTL-MUT-011",
+          "code_file": "memoryctl/links.py",
+          "failing_test": "tests/test_links.py::TestMarkdownLinks::test_dead_relative_link_is_error",
+          "repo_path": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/cases/MEMORYCTL-MUT-011"
+        },
+        "metadata": {
+          "contamination_risk": "medium",
+          "kind": "MUT",
+          "max_changed_lines": "40",
+          "source_repo": "memoryctl",
+          "test_file": "tests/test_links.py"
+        },
+        "reference": null,
+        "sample_id": "MEMORYCTL-MUT-011",
+        "schema_version": "1",
+        "source_digest": "sha256:12b9784e66c3935779a921eb6b6595b8a6bda1ea99ff19c1163bfe31adf563e5",
+        "source_row_id": "10",
+        "tags": []
+      },
+      "schema_version": "1"
+    },
+    {
+      "execution": {
+        "artifacts": {},
+        "attempt": 1,
+        "cost_usd": null,
+        "environment_metadata": {},
+        "error": null,
+        "finished_at": "2026-08-27T15:41:00.964019Z",
+        "input_tokens": null,
+        "latency_ms": null,
+        "model_name": null,
+        "output": {
+          "elapsed_seconds": 51.47,
+          "models_used": [
+            "ollama:deepseek-v4-flash:0731-cloud"
+          ],
+          "overall_status": "StepStatus.SUCCESS",
+          "patched_source": "\"\"\"Execute machine-runnable ``verify:`` commands from topic frontmatter.\n\nDesign doc §5.1/§6: memories are hypotheses (P5). Every topic file whose\nfrontmatter carries a ``verify`` command other than ``manual`` is executed\ndeterministically and the pass/fail outcome is recorded as a finding; only\nfailures need LLM interpretation downstream. Files without a ``verify`` key\n(or marked ``manual``) are counted in the summary only. This command never\nmutates files.\n\"\"\"\nfrom __future__ import annotations\nimport contextlib\nimport os\nimport signal\nimport subprocess\nimport sys\nfrom collections import Counter\nfrom pathlib import Path\nfrom memoryctl._shared import SEVERITY_ERROR, SEVERITY_INFO, VERIFY_MANUAL, CommandResult, Finding, MemoryctlConfig, discover_memory_files, load_memory_doc\nCOMMAND_NAME = 'verify'\nCODE_PASS = 'verify.pass'\nCODE_FAIL = 'verify.fail'\nCODE_TIMEOUT = 'verify.timeout'\nCODE_WOULD_RUN = 'verify.would-run'\nSTDERR_TAIL_CHARS = 300\n\ndef run(cfg: MemoryctlConfig, *, dry_run: bool=False) -> CommandResult:\n    \"\"\"Run every runnable ``verify:`` command and report pass/fail/timeout.\n\n    With ``dry_run`` the commands are listed as ``verify.would-run``\n    findings and nothing is executed. Read-only either way.\n    \"\"\"\n    findings: list[Finding] = []\n    manual_count = 0\n    for memory_dir in cfg.memory_dirs:\n        for path in discover_memory_files(memory_dir, cfg.index_name):\n            doc = load_memory_doc(path)\n            raw = doc.meta.get('verify')\n            if raw is None or str(raw).strip() == VERIFY_MANUAL:\n                manual_count += 1\n                continue\n            command = str(raw)\n            if dry_run:\n                findings.append(_would_run_finding(command, path))\n                continue\n            findings.append(_execute_verify(command, path, cfg.verify_timeout_s))\n    summary = _summarize(findings, manual_count, dry_run=dry_run)\n    return CommandResult(name=COMMAND_NAME, findings=tuple(findings), changed=(), summary=summary)\n\ndef _would_run_finding(command: str, path: Path) -> Finding:\n    \"\"\"Dry-run placeholder finding for one verify command.\"\"\"\n    return Finding(code=CODE_WOULD_RUN, severity=SEVERITY_INFO, message=f'would run: {command}', path=path, data={'command': command})\n\ndef _spawn_shell(command: str) -> subprocess.Popen[str]:\n    \"\"\"Start one verify command's shell.\n\n    shell=True is required and intentional: verify commands are\n    user-authored shell snippets in the same trust domain as hooks\n    (design doc §4.1) — configuration, not external input. On POSIX the\n    shell gets its own session so a timeout can kill the whole process\n    group, not just the shell; on Windows ``Popen.kill`` terminates the\n    shell only (grandchildren are not tracked — accepted limitation).\n    \"\"\"\n    if sys.platform == 'win32':\n        return subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)\n    return subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, start_new_session=True)\n\ndef _kill_tree(proc: subprocess.Popen[str]) -> None:\n    \"\"\"Kill a timed-out verify process — on POSIX, its whole group.\"\"\"\n    if sys.platform == 'win32':\n        proc.kill()\n        return\n    with contextlib.suppress(ProcessLookupError, PermissionError):\n        os.killpg(os.getpgid(proc.pid), signal.SIGKILL)\n\ndef _execute_verify(command: str, path: Path, timeout_s: int) -> Finding:\n    \"\"\"Execute one verify command and map its outcome to a finding.\"\"\"\n    proc = _spawn_shell(command)\n    try:\n        _stdout, stderr = proc.communicate(timeout=timeout_s)\n    except subprocess.TimeoutExpired:\n        _kill_tree(proc)\n        proc.communicate()\n        return Finding(code=CODE_TIMEOUT, severity=SEVERITY_ERROR, message=f'verify timed out after {timeout_s}s: {command}', path=path, data={'command': command, 'timeout_s': timeout_s})\n    if proc.returncode == 0:\n        return Finding(code=CODE_PASS, severity=SEVERITY_INFO, message=f'verified: {command}', path=path, data={'command': command})\n    stderr_tail = (stderr or '')[-STDERR_TAIL_CHARS:]\n    return Finding(code=CODE_FAIL, severity=SEVERITY_ERROR, message=f'verify failed (exit {proc.returncode}): {command}', path=path, data={'command': command, 'returncode': proc.returncode, 'stderr_tail': stderr_tail})\n\ndef _summarize(findings: list[Finding], manual_count: int, *, dry_run: bool) -> str:\n    \"\"\"One-line summary with the manual/unset count (info-only per spec).\"\"\"\n    counts = Counter((f.code for f in findings))\n    if dry_run:\n        return f'verify (dry-run): would run {counts[CODE_WOULD_RUN]} command(s); {manual_count} manual/unset'\n    return f'verify: {counts[CODE_PASS]} pass, {counts[CODE_FAIL]} fail, {counts[CODE_TIMEOUT]} timeout, {manual_count} manual/unset'",
+          "requested_model": "ollama:deepseek-v4-flash:0731-cloud",
+          "root_cause": "The `_kill_tree` helper has its platform branches inverted. On Windows (`sys.platform == 'win32'`) it calls `os.killpg(os.getpgid(proc.pid), signal.SIGKILL)`, but `os.killpg` and `os.getpgid` are POSIX-only and do not exist on Windows, so this raises `AttributeError`. That exception is raised while handling the `subprocess.TimeoutExpired` inside `_execute_verify`'s `except` block, so the `verify.timeout` finding is never returned and the test fails. The docstring states the intended behavior: on POSIX the shell runs in its own session so a timeout should kill the whole process group via `os.killpg`, while on Windows `Popen.kill` terminates the shell only. The fix swaps the two branches so each platform uses the correct mechanism.",
+          "step_count": 1,
+          "verification_report": "Patched `memoryctl/verify_cmd.py` by swapping the bodies of the two branches in `_kill_tree`. Now Windows uses `proc.kill()` (shell only, as documented) and POSIX uses `os.killpg(os.getpgid(proc.pid), signal.SIGKILL)` to kill the whole process group, wrapped in `contextlib.suppress(ProcessLookupError, PermissionError)`. With this change, `_execute_verify`'s `except subprocess.TimeoutExpired` block completes without raising, so a timed-out verify command is correctly mapped to a `verify.timeout` error finding. The test `tests/test_verify_cmd.py::test_timeout_produces_error_finding` should now pass. All other code is unchanged and byte-identical to the original.",
+          "workflow": "swe_fix_direct"
+        },
+        "output_tokens": null,
+        "sample_id": "MEMORYCTL-MUT-012",
+        "schema_version": "1",
+        "started_at": "2026-08-27T15:40:06.390483Z",
+        "status": "completed",
+        "structured_output": null,
+        "target_fingerprint": "subprocess:python.exe:1:7a123ee172d3e4f7",
+        "tool_calls": [],
+        "trace_refs": []
+      },
+      "grade": {
+        "artifact_refs": [],
+        "created_at": "2026-08-27T15:41:00.964019Z",
+        "evidence": {
+          "children": [
+            {
+              "evidence": {
+                "changed_line_budget": "40",
+                "changed_lines": "6",
+                "differs_from_broken": "True",
+                "no_test_name_shortcut": "True",
+                "not_truncated": "True",
+                "parses": "True",
+                "returned_non_empty": "True",
+                "within_budget": "True"
+              },
+              "grader": "source-sanity@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.3
+            },
+            {
+              "evidence": {
+                "harness_evidence": {
+                  "case_id": "MEMORYCTL-MUT-012",
+                  "returncode": 0,
+                  "seconds": 5.0,
+                  "tail": "......                                                                   [100%]\n6 passed in 3.37s\n",
+                  "test_file": "tests/test_verify_cmd.py"
+                },
+                "harness_message": "all tests passed",
+                "harness_status": "completed"
+              },
+              "grader": "pytest-oracle@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.7
+            }
+          ]
+        },
+        "grader": "swe-fix-composite@1",
+        "grader_type": "composite",
+        "hard_gate": false,
+        "judge_calibration_ref": null,
+        "oracle_provenance": {},
+        "rubric_id": null,
+        "sample_id": "MEMORYCTL-MUT-012",
+        "schema_version": "1",
+        "score": 1.0,
+        "status": "pass"
+      },
+      "sample": {
+        "adapter": "arp-swe-cases@1",
+        "allowed_execution_policy": {},
+        "expected_artifacts": {},
+        "grader": {
+          "grader_type": "composite",
+          "hard_gate": true,
+          "name": "swe-fix-composite@1",
+          "parameters": {},
+          "schema_version": "1"
+        },
+        "input": {
+          "bug_report": "Test `tests/test_verify_cmd.py::test_timeout_produces_error_finding` fails in memoryctl. Repair the source so it passes.\n\n=========================== FAILURES ===================================\n_____________________ test_timeout_produces_error_finding _____________________\n\ncommand = '\"C:\\\\Python313\\\\python.exe\" -c \"import time; time.sleep(3)\"'\npath = WindowsPath('C:/Users/tandf/AppData/Local/Temp/pytest-of-tandf/pytest-335/test_timeout_produces_error_fi0/memory/sleeper.md')\ntimeout_s = 1\n\n    def _execute_verify(command: str, path: Path, timeout_s: int) -> Finding:\n        \"\"\"Execute one verify command and map its outcome to a finding.\"\"\"\n        proc = _spawn_shell(command)\n        try:\n>           _stdout, stderr = proc.communicate(timeout=timeout_s)\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\nmemoryctl\\verify_cmd.py:79: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\nC:\\Python313\\Lib\\subprocess.py:1222: in communicate\n    stdout, stderr = self._communicate(input, endtime, timeout)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\n\nself = <Popen: returncode: None args: '\"C:\\\\Python313\\\\python.exe\" -c \"import time;...>\ninput = None, endtime = 45520.638828, orig_timeout = 1\n\n    def _communicate(self, input, endtime, orig_timeout):\n        # Start reader threads feeding into a list hanging off of this\n        # object, unless they've already been started.\n        if self.stdout and not hasattr(self, \"_stdout_buff\"):\n            self._stdout_buff = []\n            self.stdout_thread = \\\n                    threading.Thread(target=self._readerthread,\n                                     args=(self.stdout, self._stdout_buff))\n            self.stdout_thread.daemon = True\n            self.stdout_thread.start()\n        if self.stderr and not hasat",
+          "case_dir": "C:\\Users\\tandf\\source\\agentic-runtime-platform\\agentic-workflows-v2\\evals\\swe_ab\\dataset\\cases\\MEMORYCTL-MUT-012",
+          "code_file": "memoryctl/verify_cmd.py",
+          "failing_test": "tests/test_verify_cmd.py::test_timeout_produces_error_finding",
+          "repo_path": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/cases/MEMORYCTL-MUT-012"
+        },
+        "metadata": {
+          "contamination_risk": "medium",
+          "kind": "MUT",
+          "max_changed_lines": "40",
+          "source_repo": "memoryctl",
+          "test_file": "tests/test_verify_cmd.py"
+        },
+        "reference": null,
+        "sample_id": "MEMORYCTL-MUT-012",
+        "schema_version": "1",
+        "source_digest": "sha256:3d3ba0004084cdabf199919b53811e1d89e778e1be13f94c6599b055a8b0771f",
+        "source_row_id": "11",
+        "tags": []
+      },
+      "schema_version": "1"
+    },
+    {
+      "execution": {
+        "artifacts": {},
+        "attempt": 1,
+        "cost_usd": null,
+        "environment_metadata": {},
+        "error": null,
+        "finished_at": "2026-08-27T15:40:20.268195Z",
+        "input_tokens": null,
+        "latency_ms": null,
+        "model_name": null,
+        "output": {
+          "elapsed_seconds": 8.65,
+          "models_used": [
+            "ollama:deepseek-v4-flash:0731-cloud"
+          ],
+          "overall_status": "StepStatus.SUCCESS",
+          "patched_source": "\"\"\"Execute machine-runnable ``verify:`` commands from topic frontmatter.\n\nDesign doc §5.1/§6: memories are hypotheses (P5). Every topic file whose\nfrontmatter carries a ``verify`` command other than ``manual`` is executed\ndeterministically and the pass/fail outcome is recorded as a finding; only\nfailures need LLM interpretation downstream. Files without a ``verify`` key\n(or marked ``manual``) are counted in the summary only. This command never\nmutates files.\n\"\"\"\nfrom __future__ import annotations\nimport contextlib\nimport os\nimport signal\nimport subprocess\nimport sys\nfrom collections import Counter\nfrom pathlib import Path\nfrom memoryctl._shared import SEVERITY_ERROR, SEVERITY_INFO, VERIFY_MANUAL, CommandResult, Finding, MemoryctlConfig, discover_memory_files, load_memory_doc\nCOMMAND_NAME = 'verify'\nCODE_PASS = 'verify.pass'\nCODE_FAIL = 'verify.fail'\nCODE_TIMEOUT = 'verify.timeout'\nCODE_WOULD_RUN = 'verify.would-run'\nSTDERR_TAIL_CHARS = 300\n\ndef run(cfg: MemoryctlConfig, *, dry_run: bool=False) -> CommandResult:\n    \"\"\"Run every runnable ``verify:`` command and report pass/fail/timeout.\n\n    With ``dry_run`` the commands are listed as ``verify.would-run``\n    findings and nothing is executed. Read-only either way.\n    \"\"\"\n    findings: list[Finding] = []\n    manual_count = 0\n    for memory_dir in cfg.memory_dirs:\n        for path in discover_memory_files(memory_dir, cfg.index_name):\n            doc = load_memory_doc(path)\n            raw = doc.meta.get('verify')\n            if raw is None or str(raw).strip() == VERIFY_MANUAL:\n                manual_count += 1\n                continue\n            command = str(raw)\n            if dry_run:\n                findings.append(_would_run_finding(command, path))\n                continue\n            findings.append(_execute_verify(command, path, cfg.verify_timeout_s))\n    summary = _summarize(findings, manual_count, dry_run=dry_run)\n    return CommandResult(name=COMMAND_NAME, findings=tuple(findings), changed=(), summary=summary)\n\ndef _would_run_finding(command: str, path: Path) -> Finding:\n    \"\"\"Dry-run placeholder finding for one verify command.\"\"\"\n    return Finding(code=CODE_WOULD_RUN, severity=SEVERITY_INFO, message=f'would run: {command}', path=path, data={'command': command})\n\ndef _spawn_shell(command: str) -> subprocess.Popen[str]:\n    \"\"\"Start one verify command's shell.\n\n    shell=True is required and intentional: verify commands are\n    user-authored shell snippets in the same trust domain as hooks\n    (design doc §4.1) — configuration, not external input. On POSIX the\n    shell gets its own session so a timeout can kill the whole process\n    group, not just the shell; on Windows ``Popen.kill`` terminates the\n    shell only (grandchildren are not tracked — accepted limitation).\n    \"\"\"\n    if sys.platform == 'win32':\n        return subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)\n    return subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, start_new_session=True)\n\ndef _kill_tree(proc: subprocess.Popen[str]) -> None:\n    \"\"\"Kill a timed-out verify process — on POSIX, its whole group.\"\"\"\n    if sys.platform != 'win32':\n        with contextlib.suppress(ProcessLookupError, PermissionError):\n            os.killpg(os.getpgid(proc.pid), signal.SIGKILL)\n        return\n    proc.kill()\n\ndef _execute_verify(command: str, path: Path, timeout_s: int) -> Finding:\n    \"\"\"Execute one verify command and map its outcome to a finding.\"\"\"\n    proc = _spawn_shell(command)\n    try:\n        _stdout, stderr = proc.communicate(timeout=timeout_s)\n    except subprocess.TimeoutExpired:\n        _kill_tree(proc)\n        proc.communicate()\n        return Finding(code=CODE_TIMEOUT, severity=SEVERITY_ERROR, message=f'verify timed out after {timeout_s}s: {command}', path=path, data={'command': command, 'timeout_s': timeout_s})\n    if proc.returncode == 0:\n        return Finding(code=CODE_PASS, severity=SEVERITY_INFO, message=f'verified: {command}', path=path, data={'command': command})\n    stderr_tail = (stderr or '')[-STDERR_TAIL_CHARS:]\n    return Finding(code=CODE_FAIL, severity=SEVERITY_ERROR, message=f'verify failed (exit {proc.returncode}): {command}', path=path, data={'command': command, 'returncode': proc.returncode, 'stderr_tail': stderr_tail})\n\ndef _summarize(findings: list[Finding], manual_count: int, *, dry_run: bool) -> str:\n    \"\"\"One-line summary with the manual/unset count (info-only per spec).\"\"\"\n    counts = Counter((f.code for f in findings))\n    if dry_run:\n        return f'verify (dry-run): would run {counts[CODE_WOULD_RUN]} command(s); {manual_count} manual/unset'\n    return f'verify: {counts[CODE_PASS]} pass, {counts[CODE_FAIL]} fail, {counts[CODE_TIMEOUT]} timeout, {manual_count} manual/unset'",
+          "requested_model": "ollama:deepseek-v4-flash:0731-cloud",
+          "root_cause": "The `manual_count` variable was initialized to 1 instead of 0. This caused the summary to overcount manual/unset files by one. In the failing test, there are exactly two manual/unset topics (one marked 'manual' and one with no verify key), so the expected count is 2, but the code produced 3.",
+          "step_count": 1,
+          "verification_report": "Changed `manual_count = 1` to `manual_count = 0` in `memoryctl/verify_cmd.py`. The test `tests/test_verify_cmd.py::test_pass_fail_and_manual` now passes because the summary reports '2 manual/unset' as expected. No other behavior is affected.",
+          "workflow": "swe_fix_direct"
+        },
+        "output_tokens": null,
+        "sample_id": "MEMORYCTL-MUT-013",
+        "schema_version": "1",
+        "started_at": "2026-08-27T15:40:08.487766Z",
+        "status": "completed",
+        "structured_output": null,
+        "target_fingerprint": "subprocess:python.exe:1:7a123ee172d3e4f7",
+        "tool_calls": [],
+        "trace_refs": []
+      },
+      "grade": {
+        "artifact_refs": [],
+        "created_at": "2026-08-27T15:40:20.268195Z",
+        "evidence": {
+          "children": [
+            {
+              "evidence": {
+                "changed_line_budget": "40",
+                "changed_lines": "2",
+                "differs_from_broken": "True",
+                "no_test_name_shortcut": "True",
+                "not_truncated": "True",
+                "parses": "True",
+                "returned_non_empty": "True",
+                "within_budget": "True"
+              },
+              "grader": "source-sanity@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.3
+            },
+            {
+              "evidence": {
+                "harness_evidence": {
+                  "case_id": "MEMORYCTL-MUT-013",
+                  "returncode": 0,
+                  "seconds": 5.0,
+                  "tail": "......                                                                   [100%]\n6 passed in 3.36s\n",
+                  "test_file": "tests/test_verify_cmd.py"
+                },
+                "harness_message": "all tests passed",
+                "harness_status": "completed"
+              },
+              "grader": "pytest-oracle@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.7
+            }
+          ]
+        },
+        "grader": "swe-fix-composite@1",
+        "grader_type": "composite",
+        "hard_gate": false,
+        "judge_calibration_ref": null,
+        "oracle_provenance": {},
+        "rubric_id": null,
+        "sample_id": "MEMORYCTL-MUT-013",
+        "schema_version": "1",
+        "score": 1.0,
+        "status": "pass"
+      },
+      "sample": {
+        "adapter": "arp-swe-cases@1",
+        "allowed_execution_policy": {},
+        "expected_artifacts": {},
+        "grader": {
+          "grader_type": "composite",
+          "hard_gate": true,
+          "name": "swe-fix-composite@1",
+          "parameters": {},
+          "schema_version": "1"
+        },
+        "input": {
+          "bug_report": "Test `tests/test_verify_cmd.py::test_pass_fail_and_manual` fails in memoryctl. Repair the source so it passes.\n\n=========================== FAILURES ===================================\n__________________________ test_pass_fail_and_manual __________________________\n\nverify_cmd_cfg = MemoryctlConfig(memory_dirs=(WindowsPath('C:/Users/tandf/AppData/Local/Temp/pytest-of-tandf/pytest-336/test_pass_fail_...d', topic_line_cap=150, index_soft_cap=150, stale_days=90, retention_days=90, verify_timeout_s=30, lock_timeout_s=30.0)\nverify_cmd_memory_dir = WindowsPath('C:/Users/tandf/AppData/Local/Temp/pytest-of-tandf/pytest-336/test_pass_fail_and_manual0/memory')\n\n    def test_pass_fail_and_manual(\n        verify_cmd_cfg: MemoryctlConfig, verify_cmd_memory_dir: Path\n    ) -> None:\n        pass_path = _write_verify_topic(verify_cmd_memory_dir, \"passes\", PASS_COMMAND)\n        fail_path = _write_verify_topic(verify_cmd_memory_dir, \"fails\", FAIL_COMMAND)\n        _write_verify_topic(verify_cmd_memory_dir, \"manual\", \"manual\")\n        _write_verify_topic(verify_cmd_memory_dir, \"unset\", None)\n    \n        result = verify_cmd.run(verify_cmd_cfg)\n    \n        assert result.name == \"verify\"\n        assert result.changed == ()\n        by_code = {f.code: f for f in result.findings}\n        assert set(by_code) == {\"verify.pass\", \"verify.fail\"}\n        assert by_code[\"verify.pass\"].severity == SEVERITY_INFO\n        assert by_code[\"verify.pass\"].path == pass_path\n        failure = by_code[\"verify.fail\"]\n        assert failure.severity == SEVERITY_ERROR\n        assert failure.path == fail_path\n        assert failure.data[\"returncode\"] == 3\n        assert \"boom\" in str(failure.data[\"stderr_tail\"])\n        assert \"1 pass\" in result.summary\n        assert \"1 fail\" in result.summary\n>       assert \"2 manual/unset\" in result.summary\nE       assert '2 manual/unset' in 'verify: 1 pass, 1 fail, 0 timeout, 3 manual/uns",
+          "case_dir": "C:\\Users\\tandf\\source\\agentic-runtime-platform\\agentic-workflows-v2\\evals\\swe_ab\\dataset\\cases\\MEMORYCTL-MUT-013",
+          "code_file": "memoryctl/verify_cmd.py",
+          "failing_test": "tests/test_verify_cmd.py::test_pass_fail_and_manual",
+          "repo_path": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/cases/MEMORYCTL-MUT-013"
+        },
+        "metadata": {
+          "contamination_risk": "medium",
+          "kind": "MUT",
+          "max_changed_lines": "40",
+          "source_repo": "memoryctl",
+          "test_file": "tests/test_verify_cmd.py"
+        },
+        "reference": null,
+        "sample_id": "MEMORYCTL-MUT-013",
+        "schema_version": "1",
+        "source_digest": "sha256:643a83f73798d0f7ac2ae8518b4a800397c2426c990913335fb5c2563320fb2f",
+        "source_row_id": "12",
+        "tags": []
+      },
+      "schema_version": "1"
+    },
+    {
+      "execution": {
+        "artifacts": {},
+        "attempt": 1,
+        "cost_usd": null,
+        "environment_metadata": {},
+        "error": null,
+        "finished_at": "2026-08-27T15:40:21.280412Z",
+        "input_tokens": null,
+        "latency_ms": null,
+        "model_name": null,
+        "output": {
+          "elapsed_seconds": 7.66,
+          "models_used": [
+            "ollama:deepseek-v4-flash:0731-cloud"
+          ],
+          "overall_status": "StepStatus.SUCCESS",
+          "patched_source": "\"\"\"Execute machine-runnable ``verify:`` commands from topic frontmatter.\n\nDesign doc §5.1/§6: memories are hypotheses (P5). Every topic file whose\nfrontmatter carries a ``verify`` command other than ``manual`` is executed\ndeterministically and the pass/fail outcome is recorded as a finding; only\nfailures need LLM interpretation downstream. Files without a ``verify`` key\n(or marked ``manual``) are counted in the summary only. This command never\nmutates files.\n\"\"\"\nfrom __future__ import annotations\nimport contextlib\nimport os\nimport signal\nimport subprocess\nimport sys\nfrom collections import Counter\nfrom pathlib import Path\nfrom memoryctl._shared import SEVERITY_ERROR, SEVERITY_INFO, VERIFY_MANUAL, CommandResult, Finding, MemoryctlConfig, discover_memory_files, load_memory_doc\nCOMMAND_NAME = 'verify'\nCODE_PASS = 'verify.pass'\nCODE_FAIL = 'verify.fail'\nCODE_TIMEOUT = 'verify.timeout'\nCODE_WOULD_RUN = 'verify.would-run'\nSTDERR_TAIL_CHARS = 300\n\ndef run(cfg: MemoryctlConfig, *, dry_run: bool=False) -> CommandResult:\n    \"\"\"Run every runnable ``verify:`` command and report pass/fail/timeout.\n\n    With ``dry_run`` the commands are listed as ``verify.would-run``\n    findings and nothing is executed. Read-only either way.\n    \"\"\"\n    findings: list[Finding] = []\n    manual_count = 0\n    for memory_dir in cfg.memory_dirs:\n        for path in discover_memory_files(memory_dir, cfg.index_name):\n            doc = load_memory_doc(path)\n            raw = doc.meta.get('verify')\n            if raw is None or str(raw).strip() == VERIFY_MANUAL:\n                manual_count += 1\n                continue\n            command = str(raw)\n            if dry_run:\n                findings.append(_would_run_finding(command, path))\n                continue\n            findings.append(_execute_verify(command, path, cfg.verify_timeout_s))\n    summary = _summarize(findings, manual_count, dry_run=dry_run)\n    return CommandResult(name=COMMAND_NAME, findings=tuple(findings), changed=(), summary=summary)\n\ndef _would_run_finding(command: str, path: Path) -> Finding:\n    \"\"\"Dry-run placeholder finding for one verify command.\"\"\"\n    return Finding(code=CODE_WOULD_RUN, severity=SEVERITY_INFO, message=f'would run: {command}', path=path, data={'command': command})\n\ndef _spawn_shell(command: str) -> subprocess.Popen[str]:\n    \"\"\"Start one verify command's shell.\n\n    shell=True is required and intentional: verify commands are\n    user-authored shell snippets in the same trust domain as hooks\n    (design doc §4.1) — configuration, not external input. On POSIX the\n    shell gets its own session so a timeout can kill the whole process\n    group, not just the shell; on Windows ``Popen.kill`` terminates the\n    shell only (grandchildren are not tracked — accepted limitation).\n    \"\"\"\n    if sys.platform == 'win32':\n        return subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)\n    return subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, start_new_session=True)\n\ndef _kill_tree(proc: subprocess.Popen[str]) -> None:\n    \"\"\"Kill a timed-out verify process — on POSIX, its whole group.\"\"\"\n    if sys.platform != 'win32':\n        with contextlib.suppress(ProcessLookupError, PermissionError):\n            os.killpg(os.getpgid(proc.pid), signal.SIGKILL)\n        return\n    proc.kill()\n\ndef _execute_verify(command: str, path: Path, timeout_s: int) -> Finding:\n    \"\"\"Execute one verify command and map its outcome to a finding.\"\"\"\n    proc = _spawn_shell(command)\n    try:\n        _stdout, stderr = proc.communicate(timeout=timeout_s)\n    except subprocess.TimeoutExpired:\n        _kill_tree(proc)\n        proc.communicate()\n        return Finding(code=CODE_TIMEOUT, severity=SEVERITY_ERROR, message=f'verify timed out after {timeout_s}s: {command}', path=path, data={'command': command, 'timeout_s': timeout_s})\n    if proc.returncode == 0:\n        return Finding(code=CODE_PASS, severity=SEVERITY_INFO, message=f'verified: {command}', path=path, data={'command': command})\n    stderr_tail = (stderr or '')[-STDERR_TAIL_CHARS:]\n    return Finding(code=CODE_FAIL, severity=SEVERITY_ERROR, message=f'verify failed (exit {proc.returncode}): {command}', path=path, data={'command': command, 'returncode': proc.returncode, 'stderr_tail': stderr_tail})\n\ndef _summarize(findings: list[Finding], manual_count: int, *, dry_run: bool) -> str:\n    \"\"\"One-line summary with the manual/unset count (info-only per spec).\"\"\"\n    counts = Counter((f.code for f in findings))\n    if dry_run:\n        return f'verify (dry-run): would run {counts[CODE_WOULD_RUN]} command(s); {manual_count} manual/unset'\n    return f'verify: {counts[CODE_PASS]} pass, {counts[CODE_FAIL]} fail, {counts[CODE_TIMEOUT]} timeout, {manual_count} manual/unset'",
+          "requested_model": "ollama:deepseek-v4-flash:0731-cloud",
+          "root_cause": "In `run()`, the `manual_count` accumulator was incremented by 2 for each file that is manual/unset (`manual_count += 2`). The test writes 4 topic files: 2 runnable (passes, fails) and 2 manual/unset (manual, unset). The summary should report the number of manual/unset files, which is 2, but the code reported 4. The fix changes the increment to `manual_count += 1` so each manual/unset file counts once.",
+          "step_count": 1,
+          "verification_report": "The only change is `manual_count += 2` → `manual_count += 1` in `memoryctl/verify_cmd.py`. This makes the summary report '2 manual/unset' for the test scenario (2 manual/unset files), matching the assertion `assert '2 manual/unset' in result.summary`. All other logic (pass/fail/timeout counting, dry-run behavior, finding construction) is unchanged. The test `tests/test_verify_cmd.py::test_pass_fail_and_manual` should now pass.",
+          "workflow": "swe_fix_direct"
+        },
+        "output_tokens": null,
+        "sample_id": "MEMORYCTL-MUT-014",
+        "schema_version": "1",
+        "started_at": "2026-08-27T15:40:10.791647Z",
+        "status": "completed",
+        "structured_output": null,
+        "target_fingerprint": "subprocess:python.exe:1:7a123ee172d3e4f7",
+        "tool_calls": [],
+        "trace_refs": []
+      },
+      "grade": {
+        "artifact_refs": [],
+        "created_at": "2026-08-27T15:40:21.280412Z",
+        "evidence": {
+          "children": [
+            {
+              "evidence": {
+                "changed_line_budget": "40",
+                "changed_lines": "2",
+                "differs_from_broken": "True",
+                "no_test_name_shortcut": "True",
+                "not_truncated": "True",
+                "parses": "True",
+                "returned_non_empty": "True",
+                "within_budget": "True"
+              },
+              "grader": "source-sanity@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.3
+            },
+            {
+              "evidence": {
+                "harness_evidence": {
+                  "case_id": "MEMORYCTL-MUT-014",
+                  "returncode": 0,
+                  "seconds": 5.2,
+                  "tail": "......                                                                   [100%]\n6 passed in 3.41s\n",
+                  "test_file": "tests/test_verify_cmd.py"
+                },
+                "harness_message": "all tests passed",
+                "harness_status": "completed"
+              },
+              "grader": "pytest-oracle@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.7
+            }
+          ]
+        },
+        "grader": "swe-fix-composite@1",
+        "grader_type": "composite",
+        "hard_gate": false,
+        "judge_calibration_ref": null,
+        "oracle_provenance": {},
+        "rubric_id": null,
+        "sample_id": "MEMORYCTL-MUT-014",
+        "schema_version": "1",
+        "score": 1.0,
+        "status": "pass"
+      },
+      "sample": {
+        "adapter": "arp-swe-cases@1",
+        "allowed_execution_policy": {},
+        "expected_artifacts": {},
+        "grader": {
+          "grader_type": "composite",
+          "hard_gate": true,
+          "name": "swe-fix-composite@1",
+          "parameters": {},
+          "schema_version": "1"
+        },
+        "input": {
+          "bug_report": "Test `tests/test_verify_cmd.py::test_pass_fail_and_manual` fails in memoryctl. Repair the source so it passes.\n\n=========================== FAILURES ===================================\n__________________________ test_pass_fail_and_manual __________________________\n\nverify_cmd_cfg = MemoryctlConfig(memory_dirs=(WindowsPath('C:/Users/tandf/AppData/Local/Temp/pytest-of-tandf/pytest-337/test_pass_fail_...d', topic_line_cap=150, index_soft_cap=150, stale_days=90, retention_days=90, verify_timeout_s=30, lock_timeout_s=30.0)\nverify_cmd_memory_dir = WindowsPath('C:/Users/tandf/AppData/Local/Temp/pytest-of-tandf/pytest-337/test_pass_fail_and_manual0/memory')\n\n    def test_pass_fail_and_manual(\n        verify_cmd_cfg: MemoryctlConfig, verify_cmd_memory_dir: Path\n    ) -> None:\n        pass_path = _write_verify_topic(verify_cmd_memory_dir, \"passes\", PASS_COMMAND)\n        fail_path = _write_verify_topic(verify_cmd_memory_dir, \"fails\", FAIL_COMMAND)\n        _write_verify_topic(verify_cmd_memory_dir, \"manual\", \"manual\")\n        _write_verify_topic(verify_cmd_memory_dir, \"unset\", None)\n    \n        result = verify_cmd.run(verify_cmd_cfg)\n    \n        assert result.name == \"verify\"\n        assert result.changed == ()\n        by_code = {f.code: f for f in result.findings}\n        assert set(by_code) == {\"verify.pass\", \"verify.fail\"}\n        assert by_code[\"verify.pass\"].severity == SEVERITY_INFO\n        assert by_code[\"verify.pass\"].path == pass_path\n        failure = by_code[\"verify.fail\"]\n        assert failure.severity == SEVERITY_ERROR\n        assert failure.path == fail_path\n        assert failure.data[\"returncode\"] == 3\n        assert \"boom\" in str(failure.data[\"stderr_tail\"])\n        assert \"1 pass\" in result.summary\n        assert \"1 fail\" in result.summary\n>       assert \"2 manual/unset\" in result.summary\nE       assert '2 manual/unset' in 'verify: 1 pass, 1 fail, 0 timeout, 4 manual/uns",
+          "case_dir": "C:\\Users\\tandf\\source\\agentic-runtime-platform\\agentic-workflows-v2\\evals\\swe_ab\\dataset\\cases\\MEMORYCTL-MUT-014",
+          "code_file": "memoryctl/verify_cmd.py",
+          "failing_test": "tests/test_verify_cmd.py::test_pass_fail_and_manual",
+          "repo_path": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/cases/MEMORYCTL-MUT-014"
+        },
+        "metadata": {
+          "contamination_risk": "medium",
+          "kind": "MUT",
+          "max_changed_lines": "40",
+          "source_repo": "memoryctl",
+          "test_file": "tests/test_verify_cmd.py"
+        },
+        "reference": null,
+        "sample_id": "MEMORYCTL-MUT-014",
+        "schema_version": "1",
+        "source_digest": "sha256:d617605e4b2cfe07de2ac7ff40ae74df32c0142fe02cc9ef65d73c2e06ffaf4c",
+        "source_row_id": "13",
+        "tags": []
+      },
+      "schema_version": "1"
+    },
+    {
+      "execution": {
+        "artifacts": {
+          "output_ref": "sha256:0b199a60c69d952df0c56033c20a4bd510518e01741bbf67aff539460be796d8"
+        },
+        "attempt": 1,
+        "cost_usd": null,
+        "environment_metadata": {},
+        "error": null,
+        "finished_at": "2026-08-27T15:40:53.930487Z",
+        "input_tokens": null,
+        "latency_ms": null,
+        "model_name": null,
+        "output": null,
+        "output_tokens": null,
+        "sample_id": "MEMORYCTL-MUT-015",
+        "schema_version": "1",
+        "started_at": "2026-08-27T15:40:25.236234Z",
+        "status": "completed",
+        "structured_output": null,
+        "target_fingerprint": "subprocess:python.exe:1:7a123ee172d3e4f7",
+        "tool_calls": [],
+        "trace_refs": []
+      },
+      "grade": {
+        "artifact_refs": [],
+        "created_at": "2026-08-27T15:40:53.930487Z",
+        "evidence": {
+          "children": [
+            {
+              "evidence": {
+                "changed_line_budget": "40",
+                "changed_lines": "2",
+                "differs_from_broken": "True",
+                "no_test_name_shortcut": "True",
+                "not_truncated": "True",
+                "parses": "True",
+                "returned_non_empty": "True",
+                "within_budget": "True"
+              },
+              "grader": "source-sanity@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.3
+            },
+            {
+              "evidence": {
+                "harness_evidence": {
+                  "case_id": "MEMORYCTL-MUT-015",
+                  "returncode": 0,
+                  "seconds": 1.7,
+                  "tail": "........                                                                 [100%]\n8 passed in 0.24s\n",
+                  "test_file": "tests/test_cli.py"
+                },
+                "harness_message": "all tests passed",
+                "harness_status": "completed"
+              },
+              "grader": "pytest-oracle@1",
+              "hard_gate": true,
+              "score": 1.0,
+              "status": "pass",
+              "weight": 0.7
+            }
+          ]
+        },
+        "grader": "swe-fix-composite@1",
+        "grader_type": "composite",
+        "hard_gate": false,
+        "judge_calibration_ref": null,
+        "oracle_provenance": {},
+        "rubric_id": null,
+        "sample_id": "MEMORYCTL-MUT-015",
+        "schema_version": "1",
+        "score": 1.0,
+        "status": "pass"
+      },
+      "sample": {
+        "adapter": "arp-swe-cases@1",
+        "allowed_execution_policy": {},
+        "expected_artifacts": {},
+        "grader": {
+          "grader_type": "composite",
+          "hard_gate": true,
+          "name": "swe-fix-composite@1",
+          "parameters": {},
+          "schema_version": "1"
+        },
+        "input": {
+          "bug_report": "Test `tests/test_cli.py::test_cli_stats_reduces_and_exits_zero` fails in memoryctl. Repair the source so it passes.\n\n=========================== FAILURES ===================================\n____________________ test_cli_stats_reduces_and_exits_zero ____________________\n\ncli_memory_dir = WindowsPath('C:/Users/tandf/AppData/Local/Temp/pytest-of-tandf/pytest-340/test_cli_stats_reduces_and_exi0/memory')\ncli_fleet_dir = WindowsPath('C:/Users/tandf/AppData/Local/Temp/pytest-of-tandf/pytest-340/test_cli_stats_reduces_and_exi0/fleet')\n\n    def test_cli_stats_reduces_and_exits_zero(\n        cli_memory_dir: Path, cli_fleet_dir: Path\n    ) -> None:\n        result = runner.invoke(\n            app,\n            [\n                \"--memory-dir\",\n                str(cli_memory_dir),\n                \"--fleet-dir\",\n                str(cli_fleet_dir),\n                \"stats\",\n            ],\n        )\n    \n>       assert result.exit_code == 0, result.output\nE       AssertionError: stats — reduced 1 new run(s) into stats.json\nE           info stats.reduced: reduced run run-1 (1 episode(s)) \nE         (C:\\Users\\tandf\\AppData\\Local\\Temp\\pytest-of-tandf\\pytest-340\\test_cli_stats_re\nE         duces_and_exi0\\fleet\\runs\\run-1)\nE         \nE       assert 1 == 0\nE        +  where 1 = <Result SystemExit(1)>.exit_code\n\ntests\\test_cli.py:86: AssertionError\n=========================== short test summary info ===========================\nFAILED tests/test_cli.py::test_cli_stats_reduces_and_exits_zero - AssertionEr...\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.61s\n",
+          "case_dir": "C:\\Users\\tandf\\source\\agentic-runtime-platform\\agentic-workflows-v2\\evals\\swe_ab\\dataset\\cases\\MEMORYCTL-MUT-015",
+          "code_file": "memoryctl/cli.py",
+          "failing_test": "tests/test_cli.py::test_cli_stats_reduces_and_exits_zero",
+          "repo_path": "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab/dataset/cases/MEMORYCTL-MUT-015"
+        },
+        "metadata": {
+          "contamination_risk": "medium",
+          "kind": "MUT",
+          "max_changed_lines": "40",
+          "source_repo": "memoryctl",
+          "test_file": "tests/test_cli.py"
+        },
+        "reference": null,
+        "sample_id": "MEMORYCTL-MUT-015",
+        "schema_version": "1",
+        "source_digest": "sha256:473a4fb91326bdc3711f23f541d3f396dc9ed0bb54014799278825a63f4b6f4a",
+        "source_row_id": "14",
+        "tags": []
+      },
+      "schema_version": "1"
+    }
+  ],
+  "schema_version": "1",
+  "started_at": "2026-08-27T15:38:12.201220+00:00",
+  "summary": {
+    "abstained": 0,
+    "cancelled": 0,
+    "errors": 0,
+    "failed": 0,
+    "partial": 0,
+    "passed": 15,
+    "schema_version": "1",
+    "timeouts": 0,
+    "total": 15,
+    "unavailable": 0
+  }
+}

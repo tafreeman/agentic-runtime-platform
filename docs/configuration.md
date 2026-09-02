@@ -63,6 +63,7 @@ selected adapter, installed extras, endpoint access, and configured model IDs.
 | GitHub Models | `GITHUB_TOKEN` or `GH_TOKEN` |
 | NVIDIA NIM | `NVIDIA_API_KEY`; optional `NVIDIA_BASE_URL` for self-hosted NIM |
 | OpenRouter | `OPENROUTER_API_KEY`; optional `OPENROUTER_BASE_URL` |
+| DigitalOcean Serverless Inference | `DIGITALOCEAN_TOKEN` (LangChain path only; ids are `digitalocean:<catalog id>`) |
 | Azure OpenAI | `AZURE_OPENAI_API_KEY` and `AZURE_OPENAI_ENDPOINT`, or indexed pairs such as `_0`, `_1`, and matching deployment values |
 | Azure AI Foundry | `AZURE_FOUNDRY_API_KEY` and the endpoint selected by the Foundry adapter |
 | Ollama runtime | `OLLAMA_BASE_URL`, default `http://localhost:11434`; optional `OLLAMA_API_KEY` |
@@ -101,21 +102,6 @@ behavior. If every candidate is filtered out, the request fails with
 `CostLaneCeilingExceededError` naming the ceiling rather than silently
 returning nothing or falling back to an unfiltered chain. See
 [ADR-059](adr/ADR-059-model-cost-lane-ceiling.md).
-
-## RAG embeddings
-
-RAG embedding providers are configured in `EmbeddingConfig`, not by the chat
-model tier settings.
-
-| `EmbeddingConfig.provider` | Credential or endpoint behavior |
-|---|---|
-| `openai` | Reads `OPENAI_API_KEY` |
-| `voyage` | Reads `VOYAGE_API_KEY` |
-| `local` | Uses a LiteLLM Ollama model string; no key is forwarded by the RAG module |
-| `litellm` | Passes the configured model string to LiteLLM, which resolves its normal environment settings |
-
-The configured model and dimensions must match the stored index. See
-[RAG pipeline](rag/index.md).
 
 ## Execution and model-call settings
 

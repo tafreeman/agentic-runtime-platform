@@ -50,6 +50,7 @@ will report `UNAVAILABLE`, which is correct behaviour but produces no verdicts.
 | **EvalKit venv with `swebench` extra** | grader imports | `uv sync --extra swebench` |
 | **ARP venv** | `bridge.py` runs there | `.../agentic-runtime-platform/.venv/Scripts/python.exe` |
 | **SWE-bench Verified parquet** | case source | see §3 |
+| **pandas (`swe-ab` extra)** | `build_swebench_cases.py` reads the parquet | `uv sync --extra swe-ab` once, and pass `--extra swe-ab` to every `uv run` below — a plain exact `uv sync` drops it again (EVIDENCE.md §2.12) |
 | **~2 GB free disk per instance** | instance images | `df -h /c` |
 
 ### Not required, despite appearances
@@ -122,10 +123,10 @@ run: `git -C <worktree> checkout -- .`
 
 ```bash
 # One wave, both arms, pinned settings (the normal path)
-uv run python tools/run_wave.py --wave N --size 16
+uv run --extra swe-ab python tools/run_wave.py --wave N --size 16
 
 # Same, and drop this wave's images afterwards (long campaigns)
-uv run python tools/run_wave.py --wave N --size 16 --prune-images
+uv run --extra swe-ab python tools/run_wave.py --wave N --size 16 --prune-images
 
 # Analysis across every wave so far
 uv run python analyze.py \
@@ -180,15 +181,70 @@ is **not yet done**.
 
 ---
 
-## 7. Campaign state, 2026-08-28
+## 7. Campaign state, 2026-08-30
 
 | | |
 |---|---|
-| Banked | **47 paired SWE-bench instances** — A 61.7%, B 59.6%, p = 1.00 |
-| Built | 50 SWE-bench case directories, 132 mutation cases |
-| Waves run | wave 1 (12 instances) plus the 35-instance hand-built set |
-| Target | ~200 paired instances (≈ 10 more hour-waves) |
-| Next | `run_wave.py --wave 2 --size 16` |
+| Banked (closed segment, waves 1-7) | **115 paired SWE-bench instances** — A 55.7%, B 56.5%, p = 1.00 |
+| Banked (new segment, wave 8+9, fingerprint `22e3ed974042`) | **33 paired instances** — A 51.5%, B 39.4%, p = 0.125 |
+| Banked (new segment, wave 10+11, fingerprint `20ace0a669f0`) | **36 paired instances** — A 58.3%, B 38.9%, **p = 0.0391** — first significant reading in the campaign, still a small n (EVIDENCE.md §1.7) |
+| Banked (NIM track, separate provider) | 16 paired instances — A 50.0%, B 50.0%, p = 1.00, exactly tied (EVIDENCE.md §1.8) |
+| Built | ~290 SWE-bench case directories, 132 mutation cases |
+| Waves run | closed segment: wave 1 (12), wave 2 (12), wave 3 (8), wave 4 (12), wave 5 (12), wave 6 (7), wave 7 (17) plus the 35-instance hand-built set and the 20-instance hard-rated slice. New segment: wave 8 (17), wave 9 (16), wave 10 (18), wave 11 (18), graded on the harness merged via `PR #282`. Plus a standalone 16-instance NIM batch (`cases.swebench.nim1.jsonl`). |
+| Target | ~200 paired instances per model-identity slice (wave 8+9, wave 10, and whichever future waves match one or the other) |
+| Next | `run_wave.py --wave 12 --size 16` — the wave number is the highest existing `dataset/cases.swebench.wave*.jsonl` plus one (wave 11 is graded and landed, so 12 as of 2026-09-02). Never reuse a graded wave's number: `run_wave.py` refuses `--rebuild-cases` once that wave's reports exist, and a plain rerun keeps every complete arm report and runs only the missing arm (a fully graded number is refused outright), because `run_ab.py` writes to the same report paths and would overwrite them. A new wave is never-before-graded by construction — `build_swebench_cases.py` skips every instance a tracked manifest or report has already drawn, not only the ones with a local case directory (this campaign stopped reusing the closed segment's instances, 2026-08-30). **Check the resulting report's `manifest.target_fingerprint`** before unioning it with wave 8+9 or wave 10+11 — it changes whenever the workflow YAML, `bridge.py` or the model id changed, and that is a new slice (EVIDENCE.md §2.21); it does not detect a provider-side weight update, which the kit does not record yet. |
+
+**Fingerprint change mid-segment, 2026-08-30 (EVIDENCE.md §2.21, corrected
+2026-09-02).** Between wave 9 and wave 10 the `target_fingerprint` changed
+and `analyze.py` refused to union them. At the time this was recorded as
+Ollama Cloud updating `deepseek-v4-flash:0731-cloud`'s served weights; it
+was the §2.18 `bridge.py` fix (`aff74062`) landing between the waves — the
+fingerprint hashes the model id plus the workflow YAML and `bridge.py`, and
+both values reproduce from that file alone. The "new segment" is still
+three slices, but they are harness slices. The fingerprint check catches a
+harness or model-id change; it cannot see a provider-side weight update,
+which nothing in the kit records yet.
+
+**Stopped reusing the closed segment's instances, 2026-08-30.** A batch
+reusing all 135 closed-segment instances under the new harness ran for
+~70 minutes (70/135 arm A) before being stopped, human-directed, in favor of
+every new-segment wave drawing strictly fresh, never-before-graded
+instances — consistent with this campaign's existing non-overlap guarantee
+(§6 above) rather than an exception to it. Always pass `--rebuild-cases` to
+`run_wave.py` going forward.
+
+**Harness updated 2026-08-29 — `PR #282` merged into `origin/swe_ab_evals`.**
+A concurrent session independently rewrote `run_ab.py`, `graders.py`,
+`rubric.py`, `swebench_graders.py`, `analyze.py`, `bridge.py` and
+`mine_cases.py`, plus fixed the NIM reasoning-model bug in ARP's shared
+model-building code. Reconciled by fast-forwarding to the merged state and
+reapplying this session's three tooling fixes (offset, `WAVE_MIX`, encoding —
+all confirmed intact post-merge, see EVIDENCE.md §2.15/§2.16) on top; nothing
+from either side was lost. **Waves 1-7 and the hard-rated slice are graded
+against the pre-merge harness and are now a closed segment — do not union
+wave 8 onward with them.**
+
+**Concurrent grading is validated safe** (EVIDENCE.md §2.14): pre-build waves
+sequentially with `--build-only` (avoids the instance-selection race,
+EVIDENCE.md §2.13), then grade multiple already-built waves' `run_ab.py`
+calls at once — measured at most 2 concurrent instance containers, ~18% host
+CPU, >20 GB RAM free throughout a 4-job trial. The bottleneck is Ollama
+inference latency, not Docker/CPU.
+
+**Offset-outruns-small-pool bug, found after wave 3 and fixed before wave 4
+(EVIDENCE.md §2.13):** wave 3 built only 8/16 target cases. The scikit-learn
+and matplotlib `15 min - 1 hour` buckets both returned 0 new instances — not
+real exhaustion. `run_wave.py` was computing `offset = (wave - 1) * 8` and
+passing it to every bucket alike; `build_swebench_cases.py` sliced
+`pool.iloc[offset:]` **before** checking what was already built, so a growing
+offset could skip past an entire small pool (scikit-learn's and matplotlib's
+filtered pools are only 13 rows each) and permanently strand real, unbuilt
+instances in it. The `already`-built directory check (§6 above) already
+guarantees non-overlap on its own, so `offset` was redundant for correctness
+and only harmful. **Fixed:** `offset` is now pinned at `0` in `run_wave.py` —
+approved as a tooling/sampling fix, not a campaign change, since it does not
+touch the model, workflow, oracle or grader, and every already-graded
+instance's result is untouched.
 
 ---
 
@@ -201,3 +257,4 @@ is **not yet done**.
 | Reasoning models return empty content | `done_reason: length`, no text | `"think": false` or a much larger `num_predict` |
 | Lemonade probed on the wrong port | nothing answers on `:8000` | it serves on **`:13305`** |
 | WSL apt is broken | `dpkg was interrupted` | not needed; the container route replaces it |
+| An ad-hoc `pip`/`uv pip install` in the shared `.venv` isn't in `uv.lock` | `ModuleNotFoundError` appears after a plain `uv run`/`uv sync` by *any* session sharing this venv, not just yours | `uv add <pkg>` in the owning project's `pyproject.toml` so the lockfile pins it — a venv-only install (EVIDENCE.md §2.12) can vanish at any time |

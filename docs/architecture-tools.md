@@ -34,7 +34,7 @@ graph TD
         llm --> bench
     end
 
-    awv2["agentic-workflows-v2\n(runtime + server + RAG)"]
+    awv2["agentic-workflows-v2\n(runtime + server)"]
     eval["agentic-v2-eval\n(evaluation framework)"]
 
     workspace --> awv2

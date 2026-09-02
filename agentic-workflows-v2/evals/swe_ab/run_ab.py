@@ -121,6 +121,9 @@ PAID_CREDENTIALS = (
     # refund the call.
     "NVIDIA_API_KEY",
     "NVIDIA_BASE_URL",
+    # DigitalOcean Serverless Inference: same fallback-contamination risk as
+    # NVIDIA above, and real billing exposure against a $100, expiring credit.
+    "DIGITALOCEAN_TOKEN",
 )
 
 
@@ -292,11 +295,27 @@ def grader_fingerprint() -> str:
     return digest.hexdigest()[:12]
 
 
+#: Which PAID_CREDENTIALS entries a provider needs for *itself*. When that
+#: provider is the model under test (not a fallback), blanking its own
+#: credential would break the primary call, so build_child_env exempts
+#: exactly these vars for a matching model prefix. Safe only because
+#: bridge.py's model-candidate patch guarantees no *other* model is ever
+#: tried in the same run -- this can't open a path to a different provider.
+_OWN_CREDENTIALS_BY_PREFIX = {
+    "nvidia": ("NVIDIA_API_KEY", "NVIDIA_BASE_URL"),
+    "openrouter": ("OPENROUTER_API_KEY",),
+    "digitalocean": ("DIGITALOCEAN_TOKEN",),
+}
+
+
 def build_child_env(workflow: str, model: str, timeout: float) -> dict[str, str]:
     # Blank, never delete -- see PAID_CREDENTIALS for why deleting is defeated
     # by the child re-reading ARP's .env.
     env = dict(os.environ)
-    env.update(dict.fromkeys(PAID_CREDENTIALS, ""))
+    blanked = dict.fromkeys(PAID_CREDENTIALS, "")
+    for var in _OWN_CREDENTIALS_BY_PREFIX.get(model.split(":", 1)[0], ()):
+        blanked.pop(var, None)
+    env.update(blanked)
     env["AB_WORKFLOW"] = workflow
     env["AB_MODEL"] = model
     env["AB_TIMEOUT"] = str(timeout)
@@ -304,6 +323,12 @@ def build_child_env(workflow: str, model: str, timeout: float) -> dict[str, str]
     # tier default can never quietly substitute a different one mid-run.
     for tier in range(0, 6):
         env[f"AGENTIC_MODEL_TIER_{tier}"] = model
+    # AGENTIC_MODEL_TIER_* only reorders candidates -- get_model_candidates_for_tier
+    # still appends the registry's fallback chain after the pin (see bridge.py's
+    # monkeypatch of that function for why, and why a cost-lane ceiling can't fix
+    # it: deepseek-v4-flash:0731-cloud itself resolves to "paid" -- it isn't
+    # curated in the registry at all, so a ceiling that excludes paid fallbacks
+    # excludes the model under test too).
     env["PYTHONIOENCODING"] = "utf-8"
     return env
 
