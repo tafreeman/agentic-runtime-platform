@@ -265,7 +265,11 @@ mypy-extensions==1.1.0
     #   mypy
 nodeenv==1.10.0
     # via pre-commit
-numpy==2.4.4
+numpy==2.4.6 ; python_full_version < '3.12'
+    # via
+    #   agentic-tools
+    #   pandas
+numpy==2.5.2 ; python_full_version >= '3.12'
     # via
     #   agentic-tools
     #   pandas
@@ -366,7 +370,7 @@ pyasn1-modules==0.4.2
     # via google-auth
 pycparser==3.0 ; implementation_name != 'PyPy'
     # via cffi
-pydantic==2.13.4
+pydantic==2.13.5
     # via
     #   agentic-evalkit
     #   agentic-tools
@@ -384,7 +388,7 @@ pydantic==2.13.4
     #   ollama
     #   openai
     #   pydantic-settings
-pydantic-core==2.46.4
+pydantic-core==2.46.5
     # via pydantic
 pydantic-settings==2.14.2
     # via
