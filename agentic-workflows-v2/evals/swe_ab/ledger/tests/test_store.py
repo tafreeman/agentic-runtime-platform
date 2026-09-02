@@ -644,6 +644,61 @@ def test_append_trial_duplicate_identity_raises_ledger_integrity_error(
     assert str(excinfo.value)
 
 
+def test_append_trial_same_cell_new_trial_id_without_supersedes_raises(
+    ledger_store: LedgerStore,
+) -> None:
+    """A second, non-correcting trial claiming the same design cell (same
+    wave_id/arm_id/task_id/run_idx) must still be rejected even with a
+    distinct trial_id -- `idx_trial_active_cell` covers what the old
+    composite PRIMARY KEY used to."""
+    fixture = seed_wave_fixture(ledger_store)
+    ledger_store.append_trial(
+        mk_trial(
+            trial_id="trl_first",
+            task_id=fixture.task_ids[0],
+            arm_id=fixture.arm_control_id,
+        )
+    )
+    with pytest.raises(LedgerIntegrityError):
+        ledger_store.append_trial(
+            mk_trial(
+                trial_id="trl_second",
+                task_id=fixture.task_ids[0],
+                arm_id=fixture.arm_control_id,
+            )
+        )
+
+
+def test_append_trial_correction_via_supersedes_succeeds(
+    ledger_store: LedgerStore,
+) -> None:
+    """A correction -- new trial_id, `supersedes` pointing at the row it
+    replaces, same design cell -- must be insertable; this is the whole
+    reason `trial.supersedes` exists."""
+    fixture = seed_wave_fixture(ledger_store)
+    ledger_store.append_trial(
+        mk_trial(
+            trial_id="trl_original",
+            task_id=fixture.task_ids[0],
+            arm_id=fixture.arm_control_id,
+        )
+    )
+    ledger_store.append_trial(
+        mk_trial(
+            trial_id="trl_correction",
+            task_id=fixture.task_ids[0],
+            arm_id=fixture.arm_control_id,
+            supersedes="trl_original",
+        )
+    )
+    conn = ledger_store.connection
+    assert conn.execute("SELECT COUNT(*) FROM trial").fetchone()[0] == 2
+    row = conn.execute(
+        "SELECT supersedes FROM trial WHERE trial_id = 'trl_correction'"
+    ).fetchone()
+    assert row["supersedes"] == "trl_original"
+
+
 def test_append_grade_on_non_ok_trial_raises_ledger_integrity_error(
     ledger_store: LedgerStore,
 ) -> None:
