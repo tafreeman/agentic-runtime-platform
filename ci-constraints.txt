@@ -39,7 +39,7 @@ anyio==4.13.0
     #   sse-starlette
     #   starlette
     #   watchfiles
-ast-serialize==0.3.0
+ast-serialize==0.9.0
     # via mypy
 async-timeout==5.0.1 ; python_full_version < '3.11.3'
     # via redis
@@ -78,7 +78,7 @@ colorama==0.4.6 ; sys_platform == 'win32'
     #   pytest
     #   tqdm
     #   uvicorn
-coverage==7.15.4
+coverage==7.13.5
     # via pytest-cov
 cryptography==50.0.1
     # via
@@ -98,7 +98,7 @@ docstring-parser==0.18.0
     # via anthropic
 executionkit==0.3.0
     # via agentic-workflows-v2
-fakeredis==2.37.1
+fakeredis==2.35.1
     # via agentic-workflows-v2
 fastapi==0.136.0
     # via agentic-workflows-v2
@@ -236,7 +236,7 @@ langsmith==0.10.3
     # via
     #   agentic-workflows-v2
     #   langchain-core
-librt==0.11.0 ; platform_python_implementation != 'PyPy'
+librt==0.15.0 ; platform_python_implementation != 'PyPy'
     # via mypy
 limits==5.8.0
     # via slowapi
@@ -525,7 +525,7 @@ typer==0.24.1
     #   agentic-evalkit
     #   agentic-workflows-v2
     #   huggingface-hub
-types-pyyaml==6.0.12.20260815
+types-pyyaml==6.0.12.20260408
     # via agentic-v2-eval
 typing-extensions==4.15.0
     # via
