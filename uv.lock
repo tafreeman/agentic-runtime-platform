@@ -148,7 +148,6 @@ dependencies = [
     { name = "jinja2" },
     { name = "jmespath" },
     { name = "ollama" },
-    { name = "pandas" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "python-json-logger" },
@@ -216,6 +215,9 @@ server = [
 sqlite = [
     { name = "aiosqlite" },
 ]
+swe-ab = [
+    { name = "pandas" },
+]
 tracing = [
     { name = "opentelemetry-exporter-otlp-proto-grpc" },
     { name = "opentelemetry-exporter-otlp-proto-http" },
@@ -260,7 +262,7 @@ requires-dist = [
     { name = "opentelemetry-exporter-otlp-proto-http", marker = "extra == 'tracing'", specifier = ">=1.20,<2" },
     { name = "opentelemetry-exporter-prometheus", marker = "extra == 'tracing'", specifier = ">=0.48b0,<1" },
     { name = "opentelemetry-sdk", marker = "extra == 'tracing'", specifier = ">=1.20,<2" },
-    { name = "pandas", specifier = ">=3.0.5" },
+    { name = "pandas", marker = "extra == 'swe-ab'", specifier = ">=3.0.5,<4" },
     { name = "prometheus-client", marker = "extra == 'tracing'", specifier = ">=0.17,<1" },
     { name = "psutil", marker = "extra == 'devex'", specifier = ">=6.0" },
     { name = "psycopg", extras = ["binary"], marker = "extra == 'postgres'", specifier = ">=3.1,<4" },
@@ -284,7 +286,7 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'server'", specifier = ">=0.23,<1" },
     { name = "websockets", marker = "extra == 'mcp'", specifier = ">=12.0,<18" },
 ]
-provides-extras = ["ek", "eval", "dev", "server", "langchain", "tracing", "claude", "devex", "mcp", "redis", "sqlite", "postgres"]
+provides-extras = ["ek", "eval", "swe-ab", "dev", "server", "langchain", "tracing", "claude", "devex", "mcp", "redis", "sqlite", "postgres"]
 
 [[package]]
 name = "aiofiles"

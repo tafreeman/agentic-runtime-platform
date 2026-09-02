@@ -39,7 +39,7 @@ report JSON) rather than assuming same-model-name means same model.
 
 ```bash
 cd C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2/evals/swe_ab
-uv run python tools/run_wave.py --wave <N> --size 16 --prune-images
+uv run --extra swe-ab python tools/run_wave.py --wave <N> --size 16 --prune-images
 ```
 
 `<N>` = highest existing `dataset/cases.swebench.wave*.jsonl` number, plus 1.

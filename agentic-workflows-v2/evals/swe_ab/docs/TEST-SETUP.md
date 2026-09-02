@@ -50,7 +50,7 @@ will report `UNAVAILABLE`, which is correct behaviour but produces no verdicts.
 | **EvalKit venv with `swebench` extra** | grader imports | `uv sync --extra swebench` |
 | **ARP venv** | `bridge.py` runs there | `.../agentic-runtime-platform/.venv/Scripts/python.exe` |
 | **SWE-bench Verified parquet** | case source | see §3 |
-| **pandas (ARP dependency)** | `build_swebench_cases.py` reads the parquet | `uv run python -c "import pandas"` from `evals/swe_ab` |
+| **pandas (`swe-ab` extra)** | `build_swebench_cases.py` reads the parquet | `uv sync --extra swe-ab` once, and pass `--extra swe-ab` to every `uv run` below — a plain exact `uv sync` drops it again (EVIDENCE.md §2.12) |
 | **~2 GB free disk per instance** | instance images | `df -h /c` |
 
 ### Not required, despite appearances
@@ -123,10 +123,10 @@ run: `git -C <worktree> checkout -- .`
 
 ```bash
 # One wave, both arms, pinned settings (the normal path)
-uv run python tools/run_wave.py --wave N --size 16
+uv run --extra swe-ab python tools/run_wave.py --wave N --size 16
 
 # Same, and drop this wave's images afterwards (long campaigns)
-uv run python tools/run_wave.py --wave N --size 16 --prune-images
+uv run --extra swe-ab python tools/run_wave.py --wave N --size 16 --prune-images
 
 # Analysis across every wave so far
 uv run python analyze.py \

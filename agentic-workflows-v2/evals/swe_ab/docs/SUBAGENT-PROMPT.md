@@ -36,7 +36,7 @@ Run waves 3 through 6, one at a time, and report the union after each.
     from container_harness import container_preflight; print(container_preflight() or 'READY')"
 
   # one wave (N = highest existing dataset/cases.swebench.wave*.jsonl + 1)
-  uv run python tools/run_wave.py --wave N --size 16 --prune-images
+  uv run --extra swe-ab python tools/run_wave.py --wave N --size 16 --prune-images
 
   # union every wave so far — one --left/--right pair per report
   uv run python analyze.py \
