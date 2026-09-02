@@ -25,18 +25,18 @@ Arm B (swe_fix_review_loop) is five steps with an adversarial regression review.
 Same model, same inputs, same rubric. The question is whether Arm B's extra
 steps buy more resolved instances than they cost.
 
-Banked: 47 paired instances. Arm A 61.7%, Arm B 59.6%, McNemar p = 1.00.
-Target: ~200 paired instances. Each wave adds ~16 and takes ~50 minutes.
+Banked: 59 paired instances. Arm A 59.3%, Arm B 59.3%, McNemar p = 1.00.
+Target: ~200 paired instances. Each wave adds ~12-16 and takes ~50 minutes.
 
 YOUR TASK
-Run waves 2 through 5, one at a time, and report the union after each.
+Run waves 3 through 6, one at a time, and report the union after each.
 
   # preflight — do not proceed unless this prints READY
   uv run python -c "import sys; sys.path.insert(0,'.'); \
     from container_harness import container_preflight; print(container_preflight() or 'READY')"
 
   # one wave (N = highest existing dataset/cases.swebench.wave*.jsonl + 1)
-  uv run python tools/run_wave.py --wave N --size 16 --prune-images
+  uv run --extra swe-ab python tools/run_wave.py --wave N --size 16 --prune-images
 
   # union every wave so far — one --left/--right pair per report
   uv run python analyze.py \

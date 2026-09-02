@@ -77,8 +77,6 @@ that the same step will fail with a configured model.
 
 - `agentic-v2-eval` can run deterministic rubric and metric scoring without a
   key, but its LLM-backed evaluators still need an injected live or fake client.
-- RAG embedding selection is independent. `InMemoryEmbedder` is explicitly
-  deterministic, while provider-backed embeddings still need their service.
 - Direct provider SDK examples or integrations may have their own credential
   gates. Confirm that a path uses the shared runtime client before assuming
   this flag covers it.

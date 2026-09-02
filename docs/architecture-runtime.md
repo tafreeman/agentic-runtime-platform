@@ -17,7 +17,7 @@ The system has four structural layers:
 1. **Server layer** — FastAPI application with CORS, rate limiting, API-key auth, and prompt-sanitization middleware. Exposes REST endpoints and a WebSocket pub/sub hub.
 2. **Adapter registry** — A singleton that maps names (`"langchain"`, `"native"`) to `ExecutionEngine` protocol implementations, making engines runtime-swappable without code changes.
 3. **Execution engines** — Two fully operational engines: a LangGraph state-machine compiler (`langchain` adapter) and a native Kahn's-algorithm DAG executor (`native` adapter).
-4. **Agent and tool layer** — Typed `BaseAgent[TInput, TOutput]` subclasses, built-in tools, model routing, and RAG components.
+4. **Agent and tool layer** — Typed `BaseAgent[TInput, TOutput]` subclasses, built-in tools, and model routing.
 
 ---
 
@@ -28,13 +28,11 @@ The system has four structural layers:
 | Runtime | Python 3.11+ | Async-first via `asyncio` |
 | Web framework | FastAPI | ASGI, async route handlers |
 | Data validation | Pydantic v2 | All models use `model_dump()` / `model_validate()` |
-| CLI | Typer | Workflow, server, RAG, and developer commands |
+| CLI | Typer | Workflow, server, and developer commands |
 | HTTP client | httpx / aiohttp | Async outbound requests from tools |
 | Templating | Jinja2 | Prompt template rendering |
 | LLM orchestration | LangChain / LangGraph | Optional; guarded by `try/except ImportError` |
 | Tracing | OpenTelemetry | OTEL SDK; opt-in via `AGENTIC_TRACING=1` |
-| Vector store | In-memory cosine store or LanceDB | LanceDB via the `[rag]` optional extra |
-| RAG embeddings | OpenAI / Voyage / local / LiteLLM | Provider selected in `rag/config.py` |
 | Frontend | React 19 + Vite 8 | Served from `ui/dist/` |
 | Graph UI | @xyflow/react 12 | DAG visualization canvas |
 | Data fetching | TanStack Query | Frontend cache and server state |
@@ -56,7 +54,6 @@ agentic-workflows-v2/
 │   ├── contracts/           # Pydantic I/O models, events, messages, sanitization
 │   ├── core/                # Protocols, memory, errors
 │   ├── models/              # LLM client wrappers, SmartModelRouter, Redis CB state
-│   ├── rag/                 # Load, chunk, embed, retrieve, rerank, and assemble
 │   ├── scoring/             # Scoring/judge domain (extracted from server/ per ADR-032)
 │   ├── governance/          # Approval gate + escalation sink
 │   ├── prompts/             # 7 agent persona definitions (.md)
@@ -282,7 +279,6 @@ Agents can compose optional capabilities via mixins:
 
 | Mixin | Capability |
 |-------|-----------|
-| `SupportsRAGMixin` | Augments prompts with RAG-retrieved context |
 | `SupportsVerificationMixin` | Enables output verification and self-correction cycles |
 | `SupportsStreamingMixin` | Emits token-level streaming events |
 
@@ -377,49 +373,7 @@ The tools layer enforces a **DENY-by-default** safety policy for high-risk opera
 
 ## 9. RAG pipeline
 
-**Source:** `agentic_v2/rag/`
-
-The RAG pipeline provides document ingestion, indexing, and retrieval for context augmentation. It is used directly by the `RAGMemoryStore` and the `SupportsRAGMixin`.
-
-```
-Document Loading
-      ↓
-Recursive Chunking
-      ↓
-Content-Hash Deduplication
-      ↓
-Embedding (with hash-based cache)
-      ↓
-    ┌─────────────────────────────┐
-    │  Vector Index               │   ← cosine similarity (in-memory or LanceDB)
-    │  BM25 Keyword Index         │   ← lexical matching
-    └─────────────────────────────┘
-      ↓
-  Hybrid Retrieval (RRF fusion)
-      ↓
-  Token-Budget Assembly
-      ↓
-  OTEL Trace Spans
-```
-
-| Stage | Detail |
-|-------|--------|
-| **Document loading** | Plain text (`.txt`) and Markdown (`.md`, `.markdown`) inputs |
-| **Recursive chunking** | Splits on configured text separators before falling back to character counts; `chunk_size` and `chunk_overlap` are character counts in the current implementation |
-| **Content-hash deduplication** | Each chunk is hashed (SHA-256 of normalised content); duplicate chunks are skipped during embedding |
-| **Embedding** | Vectors are computed lazily and cached by content hash, avoiding re-embedding unchanged content across ingestion runs |
-| **Vector index** | `InMemoryVectorStore` (pure-Python cosine similarity) by default; `LanceDBVectorStore` for a persistent on-disk index (`[rag]` extra) |
-| **BM25 keyword index** | In-memory BM25 index over chunk text; captures exact-match and term-frequency signals |
-| **Hybrid retrieval (RRF)** | Reciprocal Rank Fusion merges vector and keyword result lists |
-| **Token-budget assembly** | Greedily appends the highest-ranked chunks until a configured token budget is reached |
-| **OTEL tracing** | Each pipeline stage emits OpenTelemetry spans |
-
-See [`adr/RAG-pipeline-blueprint.md`](adr/RAG-pipeline-blueprint.md) and [ADR-035](adr/ADR-035-rag-pipeline-architecture.md).
-
-The current `agentic rag` commands construct an in-memory hash embedder and
-vector store directly. Separate CLI invocations do not share an index, and the
-CLI does not use the provider-backed factory described above. See
-[Known limitations](KNOWN_LIMITATIONS.md).
+*(Removed: the RAG package was removed from ARP — superseded by the standalone groundkit repo; see [ADR-057](adr/ADR-057-remove-rag-package.md).)*
 
 ---
 
@@ -466,7 +420,7 @@ All protocols use PEP 544 structural subtyping — conformance is checked by sha
 | `DetectorProtocol` | A pluggable threat-scanner inspecting text for a category (secrets, prompt injection, PII, etc.). Requires `name`, `version` properties and `scan(text) -> Sequence[Finding]`. Used by the sanitization middleware pipeline. |
 | `MiddlewareProtocol` | A pipeline middleware that transforms or gates content. Requires `process(content, context) -> SanitizationResult`. Multiple middlewares are chained for layered defense. |
 | `VerifierProtocol` | A post-step quality gate. Requires `verify(step_output, policy) -> VerificationStatus`. Plugged into the execution engine to enforce output quality before the next step runs. |
-| `MemoryStore` (alias) | Deprecated backward-compatible alias for `MemoryStoreProtocol` from `core.memory` — async key-value store with search. Implementations: `InMemoryStore`, `RAGMemoryStore`. |
+| `MemoryStore` (alias) | Deprecated backward-compatible alias for `MemoryStoreProtocol` from `core.memory` — async key-value store with search. Implementations: `InMemoryStore`. |
 
 ---
 
@@ -542,7 +496,7 @@ Source: `integrations/otel.py`
 
 OpenTelemetry tracing is opt-in and activated by setting **`AGENTIC_TRACING=1`**. The exporter endpoint, protocol, and service name are then read from the standard `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_PROTOCOL`, and `OTEL_SERVICE_NAME` variables (defaults: gRPC to `http://localhost:4317`). The tracer is obtained via `get_tracer()`, which returns `None` when tracing is disabled; all call sites guard with `if _tracer:`.
 
-Traced spans include `engine.execute` (top-level workflow span on `DAGExecutor.execute()`) and `agent.<name>` (per-agent span on `BaseAgent.run()`), plus RAG pipeline stages. On server shutdown, `shutdown_tracing()` flushes pending spans. Any OTLP-compatible collector (Jaeger, Tempo, etc.) works. CORS headers expose `traceparent` and `tracestate` so cross-origin frontends can read them.
+Traced spans include `engine.execute` (top-level workflow span on `DAGExecutor.execute()`) and `agent.<name>` (per-agent span on `BaseAgent.run()`). On server shutdown, `shutdown_tracing()` flushes pending spans. Any OTLP-compatible collector (Jaeger, Tempo, etc.) works. CORS headers expose `traceparent` and `tracestate` so cross-origin frontends can read them.
 
 ### 14.2 Metrics
 
@@ -608,7 +562,7 @@ When set, a deterministic placeholder is installed at both engine chokepoints:
 Both native and LangGraph engines run end-to-end without LLM provider credentials. Structured JSON parsers in the agent layer still emit valid `StepResult` objects. This mode is intended for CI smoke tests and local development without API keys.
 
 !!! note
-    No-LLM mode is **not** a simulator. Evaluation runs and semantic RAG retrieval require real provider keys.
+    No-LLM mode is **not** a simulator. Evaluation runs require real provider keys.
 
 ---
 
@@ -652,7 +606,7 @@ Workflow definitions are configured in YAML under `agentic_v2/workflows/definiti
 
 **Source:** `agentic_v2/cli/`
 
-The CLI is implemented with **Typer**. `rag` and `devex` are command groups:
+The CLI is implemented with **Typer**. `devex` is a command group:
 
 | Command | Description |
 |---------|-------------|
@@ -664,8 +618,6 @@ The CLI is implemented with **Typer**. `rag` and `devex` are command groups:
 | `agentic validate <workflow>` | Validate a workflow YAML without executing it |
 | `agentic serve` | Start the FastAPI development server |
 | `agentic version` | Print version information |
-| `agentic rag ingest --source <path>` | Ingest documents into the RAG index |
-| `agentic rag search <query>` | Run a search query against the RAG index |
 
 The `compare` command is useful for verifying that the native and LangGraph engines produce equivalent outputs for a given workflow, which is important when migrating workflows between engines.
 
@@ -734,9 +686,8 @@ Merged from the 2026-03-03 architecture review. Captures weaknesses and recommen
 
 ### Current architecture gaps
 
-- The default vector store / memory implementations are in-memory; the LanceDB adapter exists but is optional.
+- The only memory implementation is in-memory (`InMemoryStore`); there is no durable backend.
 - No adapter/tool plugin discovery — registration is import-time only (no `entry_points` or directory scan).
-- RAG prompt-injection hardening (system-prompt-level delimiter framing for retrieved documents) is a noted architectural gap.
 
 ### Prioritized recommendations
 
@@ -745,12 +696,10 @@ Merged from the 2026-03-03 architecture review. Captures weaknesses and recommen
 | 1 | Tighten protocol signatures — replace `Any` in `ExecutionEngine.execute()` / `AgentProtocol.run()` with bounded TypeVars or Union types | 4 | M | High |
 | 2 | Bridge `ExecutionContext` into `LangChainEngine` so both engines share state during adapter-routed execution | 4 | M | High |
 | 3 | Add cross-package integration tests covering the LLM client → engine → eval scoring path | 4 | M | High |
-| 4 | Add RAG prompt-injection hardening (delimiter framing in system prompts for retrieved docs) | 4 | M | High |
-| 5 | Promote the persistent `LanceDBVectorStore` path to a documented production configuration | 4 | M | Medium |
-| 6 | Continue splitting `server/routes/workflows.py` into smaller route modules | 3 | S | Medium |
-| 7 | Add a standalone `quickstart.py` / CLI command running a simple workflow end-to-end | 3 | S | Medium |
-| 8 | Document "How to implement ExecutionEngine / VectorStoreProtocol" with test templates | 3 | S | Medium |
-| 9 | Add adapter/tool plugin discovery via `entry_points` or directory scan | 3 | M | Low |
+| 4 | Continue splitting `server/routes/workflows.py` into smaller route modules | 3 | S | Medium |
+| 5 | Add a standalone `quickstart.py` / CLI command running a simple workflow end-to-end | 3 | S | Medium |
+| 6 | Document "How to implement ExecutionEngine" with test templates | 3 | S | Medium |
+| 7 | Add adapter/tool plugin discovery via `entry_points` or directory scan | 3 | M | Low |
 
 ---
 
@@ -760,4 +709,3 @@ Merged from the 2026-03-03 architecture review. Captures weaknesses and recommen
 - **Operations / deployment**: Focus on §17 (configuration), §13 (security), §14 (observability), and `docs/deployment-guide.md`.
 - **Architect reviewing a change**: Read §5.2 (request lifecycle) and the relevant adapter in `adapters/`.
 - **Security reviewer**: Read §13 in full, plus `server/auth.py`, `server/middleware/__init__.py`, and `contracts/sanitization.py`.
-- **RAG engineer**: Proceed directly to `docs/rag/index.md`.

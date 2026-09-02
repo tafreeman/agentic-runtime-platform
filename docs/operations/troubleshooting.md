@@ -217,32 +217,6 @@ Honor the provider's retry guidance and inspect the router's fallback result.
 Do not copy rate or quota values from documentation; provider limits depend on
 the current account and can change.
 
-## RAG
-
-### Search in a new shell returns no results
-
-The current `agentic rag ingest` and `agentic rag search` commands use separate
-in-process stores. An index created by one command is not available to the next
-process. The CLI also does not yet apply its collection option.
-
-Use the Python RAG API with a durable vector store for real applications. See
-the [RAG guide](../rag/index.md) and [Known limitations](../KNOWN_LIMITATIONS.md).
-
-### Retrieval quality is unexpectedly poor
-
-Check which embedder was constructed. `InMemoryEmbedder` is a deterministic
-hash test double, not a semantic embedding model. Also confirm that stored and
-query vectors came from the same provider, model, dimensions, and
-normalization. Do not silently fall back to a different embedding space.
-
-### LanceDB cannot be imported
-
-Install the runtime's RAG extra:
-
-```text
-python -m pip install -e "./agentic-workflows-v2[rag]"
-```
-
 ## File, shell, and code tools
 
 ### File or Git tool says `AGENTIC_FILE_BASE_DIR` is not set

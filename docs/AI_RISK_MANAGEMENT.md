@@ -24,9 +24,8 @@ The platform:
 - runs deterministic and model-backed steps;
 - calls local or external model providers;
 - can expose the runtime through a FastAPI server and React dashboard;
-- records run data and optional audit, metric, and trace data;
-- provides an evaluation package for datasets, rubrics, and reports; and
-- includes optional retrieval and indexing components.
+- records run data and optional audit, metric, and trace data; and
+- provides an evaluation package for datasets, rubrics, and reports.
 
 The platform does not train foundation models. It also does not determine
 whether a use case, dataset, prompt, provider, or model is appropriate for a
@@ -137,31 +136,6 @@ or confidential data to a provider without explicit organizational approval.
 Test every configured fallback, define which failures may cross provider
 boundaries, monitor provider-specific results, and document a manual disable
 procedure.
-
-### Retrieval quality and index integrity
-
-**Repository controls**
-
-- RAG components use explicit loader, chunker, embedding, vector-store,
-  retriever, reranker, and context-assembly interfaces.
-- Persistent LanceDB storage and provider-backed embeddings are available
-  through optional components.
-- Retrieved context can be framed and limited by a token budget.
-
-**Limits**
-
-- The current `agentic rag` CLI uses a process-local hash embedder and
-  in-memory store. It is suitable for smoke tests, not semantic production
-  retrieval.
-- Embeddings from different providers are not interchangeable.
-- Reranker and metadata-filter behavior has documented restrictions.
-
-**Deployment action**
-
-Choose one approved embedding space per index, use durable storage, record the
-embedding model and dimensions with the index, evaluate retrieval quality, and
-  review the [known limitations](KNOWN_LIMITATIONS.md) before enabling RAG in a
-  deployment.
 
 ### Malformed workflow output
 
