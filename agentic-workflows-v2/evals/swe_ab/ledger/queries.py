@@ -13,6 +13,14 @@ two numbers side by side -- a verdicts-only read (the accuracy question)
 and an all-trials read (the operational question) -- rather than picking
 one and hiding the other.
 
+A related trap the schema does NOT protect against: `op_status == 'ok'`
+does not by itself mean a verdict exists. The grader can run and still
+report `status` `abstain`/`unavailable`/`error` (`grade.outcome IS NULL`
+in exactly those cases, per the CHECK constraint) -- an operationally
+clean trial the grader itself could not score. Every function below that
+asks "did this arm produce a verdict here" checks `grade.outcome IS NOT
+NULL`, never `trial.op_status == 'ok'` alone.
+
 The second rule: arms within one wave share a `substrate_id` by
 construction (`trg_trial_substrate_match`), but two waves may not. No
 function here accepts more than one `wave_id` at a time; the one function
@@ -107,8 +115,12 @@ def _instance_statuses(
 ) -> dict[tuple[str, int], tuple[str, str | None]]:
     """Map `(task_id, run_idx) -> (op_status, outcome)` for one arm.
 
-    `outcome` is `None` unless `op_status == 'ok'` (the schema guarantees
-    a grade row, and therefore an outcome, exists exactly then).
+    `outcome` is `None` whenever `op_status != 'ok'` (no grade row exists
+    at all then) but is *also* `None` when `op_status == 'ok'` and the
+    grader itself reported `abstain`/`unavailable`/`error` -- a trial that
+    ran cleanly but was not scored. Callers must not treat `op_status ==
+    'ok'` alone as "this instance has a verdict"; check `outcome is not
+    None`.
     """
     rows = conn.execute(
         """
@@ -163,6 +175,11 @@ def arm_pass_rates(conn: sqlite3.Connection, wave_id: str) -> tuple[ArmPassRate,
     docstring): over verdicts only, and over every trial including
     operational failures. Never just one -- that is the whole point of
     this ledger.
+
+    "Verdict" here means `grade.outcome IS NOT NULL` -- a trial that ran
+    fine (`op_status='ok'`) but whose grader reported `abstain`/
+    `unavailable`/`error` is neither a pass nor a verdict; it is excluded
+    from `n_verdicts` the same as an operational failure would be.
     """
     results: list[ArmPassRate] = []
     for arm_id, arm_key in _arms_in_wave(conn, wave_id):
@@ -178,7 +195,7 @@ def arm_pass_rates(conn: sqlite3.Connection, wave_id: str) -> tuple[ArmPassRate,
                    SUM(CASE WHEN g.outcome = 'pass' THEN 1 ELSE 0 END) AS n_pass
             FROM trial t
             JOIN grade g ON g.trial_id = t.trial_id
-            WHERE t.wave_id = ? AND t.arm_id = ?
+            WHERE t.wave_id = ? AND t.arm_id = ? AND g.outcome IS NOT NULL
             """,
             (wave_id, arm_id),
         ).fetchone()
@@ -226,11 +243,13 @@ class ExclusionReason:
     """Why one `(task_id, run_idx)` instance was dropped from the 2x2.
 
     `arm_a_status`/`arm_b_status` are `"verdict"` for the side that DID
-    produce one, and either the other side's `op_status` or `"no_trial"`
-    (no trial row exists at all for that arm at that instance) for the
-    side that did not. An instance excluded because BOTH sides lack a
-    verdict gets its own bucket -- e.g. `("timeout", "error")` -- rather
-    than being folded into either side's count.
+    produce one, and for the side that did not: the other side's
+    `op_status` if it isn't `'ok'`, `"no_trial"` if no trial row exists at
+    all for that arm at that instance, or `"ok_no_verdict"` if the trial
+    ran fine but its grade's own status was `abstain`/`unavailable`/
+    `error`. An instance excluded because BOTH sides lack a verdict gets
+    its own bucket -- e.g. `("timeout", "ok_no_verdict")` -- rather than
+    being folded into either side's count.
     """
 
     arm_a_status: str
@@ -256,17 +275,27 @@ class PairedResult:
     excluded_reasons: tuple[ExclusionReason, ...]
 
 
+def _exclusion_label(op_status: str, outcome: str | None, has_verdict: bool) -> str:
+    if has_verdict:
+        return "verdict"
+    if op_status == "ok":
+        return "ok_no_verdict"
+    return op_status
+
+
 def paired_outcomes(
     conn: sqlite3.Connection, wave_id: str, arm_a: str, arm_b: str
 ) -> PairedResult:
     """McNemar + bootstrap over instances where BOTH `arm_a` and `arm_b`
     produced a verdict at the same `(task_id, run_idx)`.
 
-    An instance where either side has no trial at all, or has a trial
-    whose `op_status != 'ok'`, is excluded from the 2x2 table and counted
-    in `excluded_reasons` instead of being scored as a loss for that arm
-    -- an operational failure is never a wrong answer (ADR-0008's rule,
-    enforced here at the query layer).
+    An instance where either side has no trial at all, has a trial whose
+    `op_status != 'ok'`, or ran fine but got no pass/fail grade (grader
+    `abstain`/`unavailable`/`error` -- see the module docstring), is
+    excluded from the 2x2 table and counted in `excluded_reasons` instead
+    of being scored as a loss for that arm -- an operational failure is
+    never a wrong answer (ADR-0008's rule, enforced here at the query
+    layer), and neither is a grader that declined to answer.
     """
     a_status = _instance_statuses(conn, wave_id, arm_a)
     b_status = _instance_statuses(conn, wave_id, arm_b)
@@ -279,8 +308,8 @@ def paired_outcomes(
     for key in instances:
         a_op, a_outcome = a_status.get(key, ("no_trial", None))
         b_op, b_outcome = b_status.get(key, ("no_trial", None))
-        a_verdict = a_op == "ok"
-        b_verdict = b_op == "ok"
+        a_verdict = a_op == "ok" and a_outcome is not None
+        b_verdict = b_op == "ok" and b_outcome is not None
         if a_verdict and b_verdict:
             a_pass = a_outcome == "pass"
             b_pass = b_outcome == "pass"
@@ -295,8 +324,8 @@ def paired_outcomes(
             deltas.append(float(b_pass) - float(a_pass))
         else:
             reason_key = (
-                "verdict" if a_verdict else a_op,
-                "verdict" if b_verdict else b_op,
+                _exclusion_label(a_op, a_outcome, a_verdict),
+                _exclusion_label(b_op, b_outcome, b_verdict),
             )
             exclusions[reason_key] = exclusions.get(reason_key, 0) + 1
 
@@ -374,7 +403,10 @@ def omnibus(conn: sqlite3.Connection, wave_id: str) -> OmnibusResult:
     complete_instances = sorted(
         key
         for key in common_keys
-        if all(statuses[arm_id][key][0] == "ok" for arm_id, _ in arms)
+        if all(
+            statuses[arm_id][key][0] == "ok" and statuses[arm_id][key][1] is not None
+            for arm_id, _ in arms
+        )
     )
 
     table = [
@@ -462,7 +494,7 @@ def repeat_aggregate(
     rows = conn.execute(
         """
         SELECT a.arm_id, a.arm_key, t.task_id,
-               COUNT(*) FILTER (WHERE t.op_status = 'ok') AS n_verdict,
+               COUNT(*) FILTER (WHERE g.outcome IS NOT NULL) AS n_verdict,
                SUM(CASE WHEN g.outcome = 'pass' THEN 1 ELSE 0 END) AS n_pass
         FROM trial t
         JOIN arm a ON a.arm_id = t.arm_id
@@ -765,7 +797,7 @@ def completeness(conn: sqlite3.Connection, wave_id: str) -> Completeness:
             """
             SELECT COUNT(*) AS n_verdicts FROM trial t
             JOIN grade g ON g.trial_id = t.trial_id
-            WHERE t.wave_id = ? AND t.arm_id = ?
+            WHERE t.wave_id = ? AND t.arm_id = ? AND g.outcome IS NOT NULL
             """,
             (wave_id, arm_id),
         ).fetchone()
