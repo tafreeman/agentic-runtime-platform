@@ -1037,10 +1037,6 @@
         
       
         
-          
-        
-      
-        
       
     
     
@@ -1058,9 +1054,8 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
         
           
-          <div class="md-nav__link md-nav__container">
-            <a href="../rag/" class="md-nav__link ">
-              
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
   
   
   <span class="md-ellipsis">
@@ -1074,14 +1069,8 @@
   
   
 
-            </a>
-            
-              
-              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
-          </div>
+            <span class="md-nav__icon md-icon"></span>
+          </label>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
@@ -1148,8 +1137,6 @@
     </li>
   
 
-              
-            
               
             
               
@@ -1757,45 +1744,6 @@
     <span class="md-ellipsis">
       
         Consensus
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#retrieval" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Retrieval
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Retrieval">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#hybrid-retrieval" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Hybrid retrieval
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#retrieved-content-boundaries" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Retrieved-content boundaries
       
     </span>
   </a>
@@ -3365,45 +3313,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#retrieval" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Retrieval
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Retrieval">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#hybrid-retrieval" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Hybrid retrieval
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#retrieved-content-boundaries" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Retrieved-content boundaries
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#evaluation-and-review" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3583,8 +3492,8 @@ limits and can summarize older content.</p>
 <ul>
 <li>Implementation: <code>agentic_v2/agents/memory.py</code></li>
 </ul>
-<p>This is per-agent conversation state. It is separate from the RAG document
-store and from persisted workflow checkpoints.</p>
+<p>This is per-agent conversation state. It is separate from persisted workflow
+checkpoints.</p>
 <h2 id="models-and-reliability">Models and reliability<a class="headerlink" href="#models-and-reliability" title="Permanent link">&para;</a></h2>
 <h3 id="model-routing-and-circuit-state">Model routing and circuit state<a class="headerlink" href="#model-routing-and-circuit-state" title="Permanent link">&para;</a></h3>
 <p><code>SmartModelRouter</code> combines model availability and recorded statistics when it
@@ -3605,25 +3514,6 @@ configured store. They are not a provider service-level guarantee.</p>
 </ul>
 <p>Agreement can reduce isolated variation, but several models can agree on the
 same error. Keep evidence-based checks outside the vote.</p>
-<h2 id="retrieval">Retrieval<a class="headerlink" href="#retrieval" title="Permanent link">&para;</a></h2>
-<h3 id="hybrid-retrieval">Hybrid retrieval<a class="headerlink" href="#hybrid-retrieval" title="Permanent link">&para;</a></h3>
-<p><code>HybridRetriever</code> combines keyword and vector rankings with reciprocal rank
-fusion.</p>
-<ul>
-<li>Keyword index and fusion: <code>agentic_v2/rag/retrieval.py</code></li>
-<li>Context assembly: <code>agentic_v2/rag/context_assembly.py</code></li>
-</ul>
-<p>The standalone <code>agentic rag</code> command does not use the complete production RAG
-stack. See <a href="../rag/">RAG</a> for the active CLI limitations.</p>
-<h3 id="retrieved-content-boundaries">Retrieved-content boundaries<a class="headerlink" href="#retrieved-content-boundaries" title="Permanent link">&para;</a></h3>
-<p><code>frame_content()</code> marks retrieved text as data and
-<code>TokenBudgetAssembler</code> limits the amount of content added to a prompt.</p>
-<ul>
-<li>Implementation: <code>agentic_v2/rag/context_assembly.py</code></li>
-</ul>
-<p>Framing reduces ambiguity between instructions and retrieved text. It is one
-control, not a complete prompt-injection defense. Source trust, tool
-permissions, output validation, and human review still matter.</p>
 <h2 id="evaluation-and-review">Evaluation and review<a class="headerlink" href="#evaluation-and-review" title="Permanent link">&para;</a></h2>
 <h3 id="agent-self-review">Agent self-review<a class="headerlink" href="#agent-self-review" title="Permanent link">&para;</a></h3>
 <p><code>CoderAgent.reflect()</code> implements an optional review pass through the
@@ -3673,7 +3563,7 @@ data contract, stopping conditions, provider calls, and tests.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 31, 2026 12:55:56 UTC">August 31, 2026</span>
   </span>
 
     

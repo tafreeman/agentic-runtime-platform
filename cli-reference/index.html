@@ -1037,10 +1037,6 @@
         
       
         
-          
-        
-      
-        
       
     
     
@@ -1058,9 +1054,8 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
         
           
-          <div class="md-nav__link md-nav__container">
-            <a href="../rag/" class="md-nav__link ">
-              
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
   
   
   <span class="md-ellipsis">
@@ -1074,14 +1069,8 @@
   
   
 
-            </a>
-            
-              
-              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
-          </div>
+            <span class="md-nav__icon md-icon"></span>
+          </label>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
@@ -1148,8 +1137,6 @@
     </li>
   
 
-              
-            
               
             
               
@@ -1420,45 +1407,6 @@
       
     </span>
   </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#agentic-rag" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        agentic rag
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="agentic rag">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#agentic-rag-ingest" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        agentic rag ingest
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#agentic-rag-search" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        agentic rag search
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -3241,45 +3189,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#agentic-rag" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        agentic rag
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="agentic rag">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#agentic-rag-ingest" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        agentic rag ingest
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#agentic-rag-search" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        agentic rag search
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#agentic-devex" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3456,10 +3365,6 @@ the current directory.</p>
 <tr>
 <td><code>agentic version</code></td>
 <td>Print package and runtime version information</td>
-</tr>
-<tr>
-<td><code>agentic rag</code></td>
-<td>Run the current process-local RAG commands</td>
 </tr>
 <tr>
 <td><code>agentic devex</code></td>
@@ -3705,75 +3610,17 @@ adapter.</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>agentic<span class="w"> </span>version
 </span></code></pre></div>
 <p>Prints the installed runtime version and basic environment information.</p>
-<h2 id="agentic-rag"><code>agentic rag</code><a class="headerlink" href="#agentic-rag" title="Permanent link">&para;</a></h2>
-<p>The command group currently has two commands:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>agentic<span class="w"> </span>rag<span class="w"> </span>ingest<span class="w"> </span>--source<span class="w"> </span>./notes.md
-</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>agentic<span class="w"> </span>rag<span class="w"> </span>search<span class="w"> </span><span class="s2">"deployment requirements"</span><span class="w"> </span>--top-k<span class="w"> </span><span class="m">5</span>
-</span></code></pre></div>
-<h3 id="agentic-rag-ingest"><code>agentic rag ingest</code><a class="headerlink" href="#agentic-rag-ingest" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Type</th>
-<th>Default</th>
-<th>Meaning</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--source</code>, <code>-s</code></td>
-<td>path</td>
-<td>required</td>
-<td>Markdown or text file to ingest</td>
-</tr>
-<tr>
-<td><code>--collection</code>, <code>-c</code></td>
-<td>text</td>
-<td><code>default</code></td>
-<td>Accepted by the CLI but not connected to storage yet</td>
-</tr>
-</tbody>
-</table>
-<p>The implementation loads one file, chunks it, creates deterministic hash-based
-embeddings, and stores the vectors in process memory. Directory loading,
-provider-backed embeddings, and persistent collection storage are available
-through the Python RAG components but are not wired into this command.</p>
-<h3 id="agentic-rag-search"><code>agentic rag search</code><a class="headerlink" href="#agentic-rag-search" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Type</th>
-<th>Default</th>
-<th>Meaning</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--top-k</code>, <code>-k</code></td>
-<td>integer</td>
-<td><code>5</code></td>
-<td>Maximum result count</td>
-</tr>
-</tbody>
-</table>
-<p>Each CLI invocation is a new process, so an index created by <code>rag ingest</code> is
-discarded when that command exits. A later <code>rag search</code> invocation therefore
-has no index to search. Treat these commands as an incomplete development
-surface. Use the <a href="../rag/">RAG Python API</a> for a working ingest-and-search
-flow in one process.</p>
 <h2 id="agentic-devex"><code>agentic devex</code><a class="headerlink" href="#agentic-devex" title="Permanent link">&para;</a></h2>
 <h3 id="port-checks">Port checks<a class="headerlink" href="#port-checks" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>agentic<span class="w"> </span>devex<span class="w"> </span>port-guard<span class="w"> </span>--backend-port<span class="w"> </span><span class="m">8010</span><span class="w"> </span>--frontend-port<span class="w"> </span><span class="m">5173</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>agentic<span class="w"> </span>devex<span class="w"> </span>port-guard<span class="w"> </span>--backend-port<span class="w"> </span><span class="m">8010</span><span class="w"> </span>--frontend-port<span class="w"> </span><span class="m">5173</span>
 </span></code></pre></div>
 <p>The command's built-in defaults are <code>8012</code> and <code>5174</code>, which differ from
 <code>just dev</code>. Pass the ports explicitly when checking the standard development
 launcher.</p>
 <h3 id="workspace-tests">Workspace tests<a class="headerlink" href="#workspace-tests" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>agentic<span class="w"> </span>devex<span class="w"> </span>workspace-test-runner
-</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>agentic<span class="w"> </span>devex<span class="w"> </span>workspace-test-runner<span class="w"> </span>--coverage
-</span><span id="__span-18-3"><a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>agentic<span class="w"> </span>devex<span class="w"> </span>workspace-test-runner<span class="w"> </span>--package<span class="w"> </span>agentic-workflows-v2
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>agentic<span class="w"> </span>devex<span class="w"> </span>workspace-test-runner
+</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>agentic<span class="w"> </span>devex<span class="w"> </span>workspace-test-runner<span class="w"> </span>--coverage
+</span><span id="__span-17-3"><a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>agentic<span class="w"> </span>devex<span class="w"> </span>workspace-test-runner<span class="w"> </span>--package<span class="w"> </span>agentic-workflows-v2
 </span></code></pre></div>
 <table>
 <thead>
@@ -3802,8 +3649,8 @@ launcher.</p>
 </tbody>
 </table>
 <h3 id="workflow-linter">Workflow linter<a class="headerlink" href="#workflow-linter" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>agentic<span class="w"> </span>devex<span class="w"> </span>workflow-linter<span class="w"> </span>code_review
-</span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>agentic<span class="w"> </span>devex<span class="w"> </span>workflow-linter<span class="w"> </span>./workflow.yaml<span class="w"> </span>--strict
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>agentic<span class="w"> </span>devex<span class="w"> </span>workflow-linter<span class="w"> </span>code_review
+</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>agentic<span class="w"> </span>devex<span class="w"> </span>workflow-linter<span class="w"> </span>./workflow.yaml<span class="w"> </span>--strict
 </span></code></pre></div>
 <p><code>--strict</code> treats warnings as violations.</p>
 <h2 id="environment-behavior">Environment behavior<a class="headerlink" href="#environment-behavior" title="Permanent link">&para;</a></h2>
@@ -3818,9 +3665,9 @@ launcher.</p>
 </ul>
 <h2 id="getting-help">Getting help<a class="headerlink" href="#getting-help" title="Permanent link">&para;</a></h2>
 <p>Every group and command supports <code>--help</code>:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>agentic<span class="w"> </span>--help
-</span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>agentic<span class="w"> </span>run<span class="w"> </span>--help
-</span><span id="__span-20-3"><a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>agentic<span class="w"> </span>devex<span class="w"> </span>workspace-test-runner<span class="w"> </span>--help
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>agentic<span class="w"> </span>--help
+</span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>agentic<span class="w"> </span>run<span class="w"> </span>--help
+</span><span id="__span-19-3"><a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>agentic<span class="w"> </span>devex<span class="w"> </span>workspace-test-runner<span class="w"> </span>--help
 </span></code></pre></div>
 <p>Typer's generated help is the source of truth for installed command options.
 This page records the command behavior in the current repository.</p>
@@ -3846,7 +3693,7 @@ This page records the command behavior in the current repository.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 31, 2026 12:55:56 UTC">August 31, 2026</span>
   </span>
 
     

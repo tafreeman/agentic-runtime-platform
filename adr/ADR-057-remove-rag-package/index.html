@@ -10,13 +10,9 @@
       
       
       
-        <link rel="canonical" href="https://tafreeman.github.io/agentic-runtime-platform/tools/windows-ai/">
+        <link rel="canonical" href="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-057-remove-rag-package/">
       
       
-        <link rel="prev" href="../local-models/">
-      
-      
-        <link rel="next" href="../model-probing/">
       
       
         
@@ -27,7 +23,7 @@
     
     
       
-        <title>Windows AI - Agentic Runtime Platform</title>
+        <title>ADR-057: Remove the agentic_v2.rag Package (Superseded by groundkit) - Agentic Runtime Platform</title>
       
     
     
@@ -67,17 +63,17 @@
     
   
 <meta property="og:type" content="website" />
-<meta property="og:title" content="Windows AI - Agentic Runtime Platform" />
+<meta property="og:title" content="ADR-057: Remove the agentic_v2.rag Package (Superseded by groundkit) - Agentic Runtime Platform" />
 <meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
-<meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/tools/windows-ai.png" />
+<meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-057-remove-rag-package.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
-<meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/tools/windows-ai/" />
+<meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-057-remove-rag-package/" />
 <meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:title" content="Windows AI - Agentic Runtime Platform" />
+<meta property="twitter:title" content="ADR-057: Remove the agentic_v2.rag Package (Superseded by groundkit) - Agentic Runtime Platform" />
 <meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
-<meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/tools/windows-ai.png" />
+<meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-057-remove-rag-package.png" />
 </head>
   
   
@@ -95,7 +91,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#windows-ai-and-phi-silica" class="md-skip">
+        <a href="#adr-057-remove-the-agentic_v2rag-package-superseded-by-groundkit" class="md-skip">
           Skip to content
         </a>
       
@@ -129,7 +125,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Windows AI
+              ADR-057: Remove the agentic_v2.rag Package (Superseded by groundkit)
             
           </span>
         </div>
@@ -370,13 +366,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../tools/" class="md-tabs__link">
           
   
   
@@ -1794,8 +1788,6 @@
       
   
   
-    
-  
   
   
     
@@ -1823,23 +1815,20 @@
     
     
       
-        
-        
-      
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../" class="md-nav__link ">
+            <a href="../../tools/" class="md-nav__link ">
               
   
   
@@ -1857,13 +1846,13 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="">
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1911,7 +1900,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../llm-client/" class="md-nav__link">
+      <a href="../../tools/llm-client/" class="md-nav__link">
         
   
   
@@ -1939,7 +1928,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../local-models/" class="md-nav__link">
+      <a href="../../tools/local-models/" class="md-nav__link">
         
   
   
@@ -1964,37 +1953,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Windows AI
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../tools/windows-ai/" class="md-nav__link">
         
   
   
@@ -2010,92 +1972,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Prerequisites
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#check-availability" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Check availability
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#generate-text" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Generate text
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#shared-client" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Shared client
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#limited-access-feature-settings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Limited Access Feature settings
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#diagnose-a-failure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Diagnose a failure
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -2108,7 +1984,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../model-probing/" class="md-nav__link">
+      <a href="../../tools/model-probing/" class="md-nav__link">
         
   
   
@@ -2136,7 +2012,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../provider-limits/" class="md-nav__link">
+      <a href="../../tools/provider-limits/" class="md-nav__link">
         
   
   
@@ -2164,7 +2040,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../benchmarks/" class="md-nav__link">
+      <a href="../../tools/benchmarks/" class="md-nav__link">
         
   
   
@@ -2874,7 +2750,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/ADR-INDEX/" class="md-nav__link">
+      <a href="../ADR-INDEX/" class="md-nav__link">
         
   
   
@@ -2985,10 +2861,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
+  <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Prerequisites
+        Context
       
     </span>
   </a>
@@ -2996,10 +2872,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#check-availability" class="md-nav__link">
+  <a href="#decision" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Check availability
+        Decision
       
     </span>
   </a>
@@ -3007,10 +2883,49 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#generate-text" class="md-nav__link">
+  <a href="#consequences" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Generate text
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative / migration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternatives considered
       
     </span>
   </a>
@@ -3018,32 +2933,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#shared-client" class="md-nav__link">
+  <a href="#implementation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Shared client
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#limited-access-feature-settings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Limited Access Feature settings
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#diagnose-a-failure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Diagnose a failure
+        Implementation
       
     </span>
   </a>
@@ -3067,7 +2960,7 @@
 
 
   
-    <a href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/tools/windows-ai.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/adr/ADR-057-remove-rag-package.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -3076,139 +2969,181 @@
     
       
     
-    <a href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/tools/windows-ai.md" title="View source of this page" class="md-content__button md-icon">
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/adr/ADR-057-remove-rag-package.md" title="View source of this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
     </a>
   
 
 
-<h1 id="windows-ai-and-phi-silica">Windows AI and Phi Silica<a class="headerlink" href="#windows-ai-and-phi-silica" title="Permanent link">&para;</a></h1>
-<p><code>tools.llm.windows_ai.WindowsAIModel</code> calls Phi Silica through the repository's
-.NET bridge:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>tools/llm/windows_ai_bridge/PhiSilicaBridge.csproj
-</span></code></pre></div>
-<p>Python does not call the Windows AI API directly. For each check or generation
-request it starts the bridge with <code>dotnet run</code>.</p>
-<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
-<p>The integration requires:</p>
-<ul>
-<li>Windows;</li>
-<li>a device and Windows configuration that expose Phi Silica;</li>
-<li>a compatible .NET SDK on <code>PATH</code>;</li>
-<li>the bridge project and its Windows App SDK dependencies; and</li>
-<li>Limited Access Feature settings when required by the installed Windows/App
-  SDK channel.</li>
-</ul>
-<p>The repository cannot infer that a machine is supported from its processor name
-alone. Use the bridge check.</p>
-<h2 id="check-availability">Check availability<a class="headerlink" href="#check-availability" title="Permanent link">&para;</a></h2>
-<p>From the repository root:</p>
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">tools</span><span class="p">.</span><span class="n">llm</span><span class="p">.</span><span class="n">windows_ai</span> <span class="p">-</span><span class="n">-info</span>
-</span></code></pre></div>
-<p>Or from Python:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.windows_ai</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="n">check_windows_ai_available</span><span class="p">,</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">get_model_info</span><span class="p">,</span>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="p">)</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
-</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="nb">print</span><span class="p">(</span><span class="n">check_windows_ai_available</span><span class="p">())</span>
-</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="nb">print</span><span class="p">(</span><span class="n">get_model_info</span><span class="p">())</span>
-</span></code></pre></div>
-<p>The check runs:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>dotnet run --project &lt;bridge-project&gt; -- --info
-</span></code></pre></div>
-<p>and parses the bridge's JSON output. <code>available: true</code> is stronger evidence than
-the project merely building, but a real generation smoke test is still needed.</p>
-<h2 id="generate-text">Generate text<a class="headerlink" href="#generate-text" title="Permanent link">&para;</a></h2>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.windows_ai</span><span class="w"> </span><span class="kn">import</span> <span class="n">WindowsAIModel</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">model</span> <span class="o">=</span> <span class="n">WindowsAIModel</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">response</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="s2">"Explain this stack trace."</span><span class="p">,</span>
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="n">system_instruction</span><span class="o">=</span><span class="s2">"Answer for a software engineer."</span><span class="p">,</span>
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="n">temperature</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
-</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="n">max_tokens</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span>
-</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="p">)</span>
-</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
-</span></code></pre></div>
-<p>Important current behavior:</p>
-<ul>
-<li>construction runs an availability check;</li>
-<li>generation has a 120-second bridge subprocess timeout;</li>
-<li><code>temperature</code> and <code>max_tokens</code> are logged in verbose mode but are not passed
-  as separate bridge command-line arguments;</li>
-<li>generation failures are returned as strings beginning with <code>[ERROR]</code> instead
-  of being raised.</li>
-</ul>
-<p>Check for the error prefix before treating the response as model output.</p>
-<h2 id="shared-client">Shared client<a class="headerlink" href="#shared-client" title="Permanent link">&para;</a></h2>
-<p>The root shared client exposes the bridge through a model prefix:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.llm_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">LLMClient</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">response</span> <span class="o">=</span> <span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="s2">"windows-ai:phi-silica"</span><span class="p">,</span>
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="s2">"Summarize this change."</span><span class="p">,</span>
-</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="p">)</span>
-</span></code></pre></div>
-<p>The shared client wraps bridge failures in <code>LLMClientError</code>, but the underlying
-Windows wrapper may still return an <code>[ERROR]</code> string. Test the failure paths
-used by your caller.</p>
-<h2 id="limited-access-feature-settings">Limited Access Feature settings<a class="headerlink" href="#limited-access-feature-settings" title="Permanent link">&para;</a></h2>
-<p>When the Windows API requires Limited Access Feature credentials, the bridge
-reads:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>PHI_SILICA_LAF_FEATURE_ID=&lt;feature-id&gt;
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>PHI_SILICA_LAF_TOKEN=&lt;token&gt;
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>PHI_SILICA_LAF_ATTESTATION=&lt;attestation&gt;
-</span></code></pre></div>
-<p>Treat these values as secrets. Do not commit them or print them in diagnostic
-output.</p>
-<h2 id="diagnose-a-failure">Diagnose a failure<a class="headerlink" href="#diagnose-a-failure" title="Permanent link">&para;</a></h2>
-<p>Run checks in this order:</p>
+<h1 id="adr-057-remove-the-agentic_v2rag-package-superseded-by-groundkit">ADR-057: Remove the <code>agentic_v2.rag</code> Package (Superseded by groundkit)<a class="headerlink" href="#adr-057-remove-the-agentic_v2rag-package-superseded-by-groundkit" title="Permanent link">&para;</a></h1>
+<p><strong>Status:</strong> Accepted
+<strong>Date:</strong> 2026-08-10
+<strong>Supersedes:</strong> <a href="../ADR-035-rag-pipeline-architecture/">ADR-035</a> (RAG Pipeline Architecture)
+<strong>Related:</strong> groundkit <code>ADR-0001-promote-vs-rewrite</code> (Accepted 2026-08-10, external repo — <code>github.com/tafreeman/groundkit</code>), <a href="../ADR-032-extract-scoring-package/">ADR-032</a> (extract-a-domain-out-of-ARP precedent), <a href="../ADR-023-executionkit-runtime-contract-relationship/">ADR-023</a> (external-package precedent, ExecutionKit)</p>
+<hr />
+<h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
+<p>ADR-035 shipped <code>agentic_v2/rag/</code> as a well-typed, Protocol-seamed RAG library —
+seventeen modules, roughly 3,900 lines, with LanceDB + LiteLLM hybrid retrieval
+and Pydantic v2 contracts at every boundary. It was never wired into the
+product it lived in: no server route references it, no agent auto-registers
+<code>RAGSearchTool</code>/<code>RAGIngestTool</code>, and the only live entry point — the
+<code>agentic rag</code> CLI group — held all state in module-level globals that reset
+every process, so nothing it produced survived a restart.</p>
+<p>A standalone repository, <strong>groundkit</strong>, exists to be the production-grade RAG
+library ARP's package aspired to but never became. groundkit's own
+<code>ADR-0001-promote-vs-rewrite</code> (Accepted 2026-08-10) ran a 9-agent fan-out
+inventory over <code>agentic_v2/rag/</code> at ARP branch <code>relock_scope</code>, read every
+module in full, and adversarially confirmed all eight claimed production
+gaps: no persistence across processes, no directory-scale ingestion,
+unimplemented LanceDB metadata filtering, Protocol-naming mismatches between
+<code>reranking.py</code>/<code>vectorstore.py</code> and <code>protocols.py</code>, no retrieval-quality eval
+metrics, no retrieval service API, no MCP server surface, and no retrieval
+IaC. It also catalogued specific defects to fix at port time rather than
+carry forward: an infinite loop in <code>RecursiveChunker._hard_split</code> on
+separator-free text, a negative-score crash in <code>CrossEncoderReranker</code> against
+its own <code>Field(ge=0.0)</code> contract, the silently-absorbed <code>_metadata_filter</code>
+keyword, an unescaped LanceDB delete predicate, and a credential leak via
+<code>__cause__</code> in <code>embeddings.py</code>. Its recorded decision is explicit: <em>"ARP's
+<code>agentic_v2.rag</code> package is expected to be deprecated and removed once
+groundkit is established, tracked as separate ARP work"</em> — with <strong>no
+cherry-pick</strong> of groundkit's fixes back into this repo. This ADR is that
+separate work.</p>
+<p>Three facts, verified 2026-08-10, make this a clean removal rather than a
+phased deprecation:</p>
 <ol>
-<li><code>dotnet --info</code></li>
-<li><code>dotnet build .\tools\llm\windows_ai_bridge\PhiSilicaBridge.csproj</code></li>
-<li><code>dotnet run --project .\tools\llm\windows_ai_bridge\PhiSilicaBridge.csproj -- --info</code></li>
-<li><code>python -m tools.llm.windows_ai --info</code></li>
-<li>one short generation request</li>
+<li><strong>Zero non-test consumers.</strong> A repo-wide import scan found no caller of
+   <code>agentic_v2.rag</code> outside its own CLI wiring — no server router, no agent
+   resolver, no other package reaches into it.</li>
+<li><strong>The CI job was never a required check.</strong> <code>rag-extra-tests</code>
+   (<code>.github/workflows/ci.yml</code>) — the job that installed the <code>lancedb</code>/
+   <code>litellm</code> backends and ran the RAG suites against them instead of fakes —
+   was <code>continue-on-error: true</code> by design (see its own comment: "a
+   resolution failure in a heavy optional extra should not block an
+   unrelated PR"). It was never promoted to a required branch-protection
+   check, so its removal drops no enforced gate.</li>
+<li><strong>The package counted toward the coverage gate, not around it.</strong>
+   <code>agentic_v2/rag/</code> was not listed under <code>[tool.coverage.run] omit</code> in
+   <code>agentic-workflows-v2/pyproject.toml</code>; its ~14 dedicated test files were
+   measured as part of the 80% gate <code>.claude/rules/ci.md</code> describes, not
+   excluded from it.</li>
 </ol>
-<p>Common results:</p>
-<table>
-<thead>
-<tr>
-<th>Result</th>
-<th>Meaning</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>Not running on Windows</code></td>
-<td>The bridge is unavailable on this platform</td>
-</tr>
-<tr>
-<td><code>Bridge project not found</code></td>
-<td>The repository path or installation is incomplete</td>
-</tr>
-<tr>
-<td><code>dotnet not found</code></td>
-<td>Install or expose a compatible .NET SDK</td>
-</tr>
-<tr>
-<td><code>available: false</code> with a bridge error</td>
-<td>Read the returned Windows/Phi Silica error</td>
-</tr>
-<tr>
-<td><code>Bridge --info timed out</code></td>
-<td>The .NET or Windows AI initialization did not finish in the check timeout</td>
-</tr>
-<tr>
-<td><code>[ERROR] Phi Silica request timed out (120s)</code></td>
-<td>Generation exceeded the Python subprocess timeout</td>
-</tr>
-</tbody>
-</table>
-<p>Keep the full <code>--info</code> result, Windows build, bridge revision, and device model
-with benchmark evidence.</p>
+<p>ADR-035 (as amended 2026-07-28) already documents the gap between this
+package's original design intent and what shipped: no retry/backoff/circuit
+breaker on the embedding path, no embedding cache, no OTEL spans (only
+callback events), an unimplemented <code>SemanticChunker</code>, unimplemented
+ingestion-time deduplication, and the two Protocol-signature mismatches
+groundkit's inventory independently confirmed. None of that backlog is
+picked up here — it is superseded, not fixed in place.</p>
+<hr />
+<h2 id="decision">Decision<a class="headerlink" href="#decision" title="Permanent link">&para;</a></h2>
+<p>Remove <code>agentic_v2.rag</code> <strong>outright — no deprecation shim, no
+<code>DeprecationWarning</code> period.</strong> The zero-non-test-consumer finding is what
+makes this the right call: a shim exists to protect call sites during a
+migration window, and there are none to protect. (Contrast ADR-031, where
+the LangGraph adapter got a <code>DeprecationWarning</code> period because it had real
+import-time consumers to warn before removal.)</p>
+<p>This was executed on this branch (<code>rag_removal</code>) in a single commit,
+<code>9db6129f</code> (<code>refactor(rag): remove the agentic_v2.rag package, CLI, tests,
+and CI job</code>). Full removal scope:</p>
+<ul>
+<li><strong>The <code>agentic_v2/rag/</code> package</strong> — seventeen modules: <code>__init__.py</code>,
+  <code>chunking.py</code>, <code>config.py</code>, <code>context_assembly.py</code>, <code>contracts.py</code>,
+  <code>embeddings.py</code>, <code>errors.py</code>, <code>factory.py</code>, <code>ingestion.py</code>, <code>loaders.py</code>,
+  <code>memory.py</code>, <code>protocols.py</code>, <code>reranking.py</code>, <code>retrieval.py</code>, <code>tools.py</code>,
+  <code>tracing.py</code>, <code>vectorstore.py</code>.</li>
+<li><strong>The <code>agentic rag</code> CLI group</strong> — <code>agentic_v2/cli/rag_commands.py</code>, the
+  RAG-specific helper functions in <code>agentic_v2/cli/helpers.py</code>, and the
+  group's registration in <code>agentic_v2/cli/main.py</code>.</li>
+<li><strong>14 dedicated test files</strong> — the <code>tests/test_rag_*.py</code> suites
+  (<code>test_rag_context_assembly.py</code>, <code>test_rag_contracts.py</code>,
+  <code>test_rag_embeddings.py</code>, <code>test_rag_embeddings_litellm.py</code>,
+  <code>test_rag_factory.py</code>, <code>test_rag_ingestion.py</code>, <code>test_rag_memory.py</code>,
+  <code>test_rag_reranking.py</code>, <code>test_rag_retrieval.py</code>, <code>test_rag_tools.py</code>,
+  <code>test_rag_tracing.py</code>, <code>test_rag_vectorstore.py</code>), plus
+  <code>test_vectorstore_lancedb.py</code>, <code>test_vectorstore_metadata.py</code>,
+  <code>test_memory_store.py</code>, and <code>test_cli_adapter.py</code> — and the RAG-specific
+  sections of the mixed suite <code>tests/test_protocol_conformance.py</code>.</li>
+<li><strong>The <code>[rag]</code> optional extra</strong> in <code>agentic-workflows-v2/pyproject.toml</code>
+  (<code>lancedb&gt;=0.15,&lt;1</code>, <code>litellm&gt;=1.84,&lt;2</code>).</li>
+<li><strong><code>docs/rag/</code></strong> (the standalone RAG usage guide, <code>docs/rag/index.md</code>).</li>
+<li><strong><code>examples/02_rag_pipeline.py</code>.</strong></li>
+<li><strong>The non-blocking <code>rag-extra-tests</code> CI job</strong> in
+  <code>.github/workflows/ci.yml</code>.</li>
+</ul>
+<p><code>docs/adr/ADR-035-rag-pipeline-architecture.md</code> and
+<code>docs/adr/RAG-pipeline-blueprint.md</code> are <strong>retained</strong>, per this repo's
+convention of not deleting superseded decision records (see, e.g., ADR-031,
+ADR-016), and are updated to point here rather than rewritten.</p>
+<hr />
+<h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
+<h3 id="positive">Positive<a class="headerlink" href="#positive" title="Permanent link">&para;</a></h3>
+<ul>
+<li>ARP sheds a subsystem it never wired into the product — roughly 3,900
+  lines of maintained-but-unused code — along with the transitive optional
+  dependency surface (<code>lancedb</code>, <code>litellm</code>) that came with it.</li>
+<li>One RAG implementation going forward instead of two slowly diverging ones;
+  groundkit's stricter gates (<code>mypy --strict</code> repo-wide, no
+  <code>continue-on-error</code> on any job that is the sole proof of a backend) become
+  the only place RAG defects get fixed.</li>
+<li>The 80%-coverage-gated subset of <code>agentic_v2</code> shrinks by the RAG package
+  and its ~14 test files. The percentage the gate reports going forward
+  measures a smaller, fully product-connected surface — this is a change in
+  what is measured, not a lowered bar.</li>
+</ul>
+<h3 id="negative-migration">Negative / migration<a class="headerlink" href="#negative-migration" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>pip install agentic-workflows-v2[rag]</code> no longer resolves</strong> — the extra
+  is gone from <code>pyproject.toml</code>.</li>
+<li>Anyone constructing <code>agentic_v2.rag.tools.RAGSearchTool</code> /
+  <code>RAGIngestTool</code> directly (no evidence any production code did) must
+  migrate to groundkit once it ships a public release. groundkit is
+  pre-v0.1.0 as of this ADR's date, so there is a gap between this removal
+  and a consumable replacement; ARP carries no interim shim across that gap
+  — the zero-non-test-consumer finding is what makes that acceptable.</li>
+<li>The <code>agentic rag</code> CLI group has no ARP-side replacement. groundkit's own
+  MCP server surface (the port destination named for <code>tools.py</code> in its
+  ADR-0001) is the intended replacement path, not an ARP CLI.</li>
+<li>Fixes recorded against <code>agentic_v2/rag/</code> — the ADR-035 Negative list and
+  groundkit ADR-0001's port-time hazard list (the <code>_hard_split</code> infinite
+  loop, the negative cross-encoder score crash, the silent metadata-filter
+  no-op, the <code>NoOpReranker</code> keyword mismatch, the unescaped LanceDB delete
+  predicate, the <code>__cause__</code> credential leak) — do not get fixed in ARP.
+  They are fixed at groundkit's port time instead, per the no-cherry-pick
+  decision in groundkit ADR-0001.</li>
+</ul>
+<hr />
+<h2 id="alternatives-considered">Alternatives considered<a class="headerlink" href="#alternatives-considered" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Deprecate in place with a <code>DeprecationWarning</code> period</strong> (the ADR-031
+  LangGraph-adapter pattern). Rejected: that pattern protects import-time
+  consumers during a migration window. The repo-wide scan found none, so a
+  warning period would elapse silently, delaying cleanup for no protected
+  caller.</li>
+<li><strong>Keep <code>agentic_v2.rag</code> and let groundkit duplicate the surface.</strong>
+  Rejected: two RAG implementations invite the same behavioral-divergence
+  risk ADR-031 raised about running two execution engines, for a package
+  groundkit's own inventory already found unwired and defect-bearing. It
+  also keeps <code>lancedb</code>/<code>litellm</code> in ARP's optional-dependency tree for no
+  consumer.</li>
+<li><strong>Cherry-pick groundkit's fixes back into ARP's copy instead of removing
+  it.</strong> Rejected — this was the owner's decision recorded in groundkit
+  ADR-0001 itself ("no cherry-pick ... tracked as separate ARP work"), not a
+  choice remade here. ARP and groundkit are peers under the portfolio's
+  composition rules, not a library-and-consumer pair.</li>
+<li><strong>Leave the <code>rag-extra-tests</code> CI job in place, pointing at a deleted
+  package.</strong> Rejected: it would fail immediately (<code>pip install -e
+  "agentic-workflows-v2/[dev,rag]"</code> has nothing to install) and, being
+  <code>continue-on-error</code>, would report green while proving nothing.</li>
+</ul>
+<hr />
+<h2 id="implementation">Implementation<a class="headerlink" href="#implementation" title="Permanent link">&para;</a></h2>
+<p>Executed on this branch (<code>rag_removal</code>) in a single commit, <code>9db6129f</code>
+(<code>refactor(rag): remove the agentic_v2.rag package, CLI, tests, and CI job</code>)
+— see that commit for the exact file list (41 files changed, 2 insertions,
+10,506 deletions). This is a complete cut; no follow-up removal work is
+expected in ARP. Migration guidance for RAG functionality is: adopt
+groundkit once it reaches v0.1.0.</p>
 
 
 
@@ -3231,7 +3166,7 @@ with benchmark evidence.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 29, 2026 22:33:47 UTC">August 29, 2026</span>
   </span>
 
     
@@ -3241,7 +3176,7 @@ with benchmark evidence.</p>
     <span class="md-icon" title="Created">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 29, 2026 22:33:47 UTC">August 29, 2026</span>
   </span>
 
     
@@ -3271,44 +3206,6 @@ with benchmark evidence.</p>
       
         <footer class="md-footer">
   
-    
-      
-      <nav class="md-footer__inner md-grid" aria-label="Footer" >
-        
-          
-          <a href="../local-models/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Local ONNX models">
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
-            </div>
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Previous
-              </span>
-              <div class="md-ellipsis">
-                Local ONNX models
-              </div>
-            </div>
-          </a>
-        
-        
-          
-          <a href="../model-probing/" class="md-footer__link md-footer__link--next" aria-label="Next: Model probing">
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              <div class="md-ellipsis">
-                Model probing
-              </div>
-            </div>
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
-            </div>
-          </a>
-        
-      </nav>
     
   
   <div class="md-footer-meta md-typeset">

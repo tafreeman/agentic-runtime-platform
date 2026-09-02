@@ -5,7 +5,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
-<meta content="Documentation for the workflow runtime, server, UI, evaluation package, and RAG components." name="description"/>
+<meta content="Documentation for the workflow runtime, server, UI, and evaluation package." name="description"/>
 <link href="https://tafreeman.github.io/agentic-runtime-platform/" rel="canonical"/>
 <link href="getting-started/" rel="next"/>
 <link href="assets/images/favicon.png" rel="icon"/>
@@ -22,7 +22,7 @@
 <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
 <meta content="website" property="og:type"/>
 <meta content="Agentic Runtime Platform" property="og:title"/>
-<meta content="Documentation for the workflow runtime, server, UI, evaluation package, and RAG components." property="og:description"/>
+<meta content="Documentation for the workflow runtime, server, UI, and evaluation package." property="og:description"/>
 <meta content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/index.png" property="og:image"/>
 <meta content="image/png" property="og:image:type"/>
 <meta content="1200" property="og:image:width"/>
@@ -30,7 +30,7 @@
 <meta content="https://tafreeman.github.io/agentic-runtime-platform/" property="og:url"/>
 <meta content="summary_large_image" property="twitter:card"/>
 <meta content="Agentic Runtime Platform" property="twitter:title"/>
-<meta content="Documentation for the workflow runtime, server, UI, evaluation package, and RAG components." property="twitter:description"/>
+<meta content="Documentation for the workflow runtime, server, UI, and evaluation package." property="twitter:description"/>
 <meta content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/index.png" property="twitter:image"/>
 </head>
 <body data-md-color-accent="cyan" data-md-color-primary="black" data-md-color-scheme="slate" dir="ltr">
@@ -358,15 +358,6 @@
     </span>
 </a>
 </li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#rag">
-<span class="md-ellipsis">
-      
-        RAG
-      
-    </span>
-</a>
-</li>
 </ul>
 </nav>
 </li>
@@ -602,8 +593,7 @@
 </li>
 <li class="md-nav__item md-nav__item--nested">
 <input class="md-nav__toggle md-toggle" id="__nav_4" type="checkbox"/>
-<div class="md-nav__link md-nav__container">
-<a class="md-nav__link" href="rag/">
+<label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
 <span class="md-ellipsis">
     
   
@@ -612,11 +602,8 @@
 
     
   </span>
-</a>
-<label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
 <span class="md-nav__icon md-icon"></span>
 </label>
-</div>
 <nav aria-expanded="false" aria-labelledby="__nav_4_label" class="md-nav" data-md-level="1">
 <label class="md-nav__title" for="__nav_4">
 <span class="md-nav__icon md-icon"></span>
@@ -1418,15 +1405,6 @@
     </span>
 </a>
 </li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#rag">
-<span class="md-ellipsis">
-      
-        RAG
-      
-    </span>
-</a>
-</li>
 </ul>
 </nav>
 </li>
@@ -1476,9 +1454,9 @@ directed acyclic graph: steps declare their inputs, outputs, and dependencies;
 the runtime schedules ready steps, runs independent work concurrently, and
 prevents downstream steps from using failed or missing outputs.</p>
 <p>The repository includes a Python runtime and CLI, a FastAPI server, a React
-dashboard, an evaluation package, shared model utilities, and a RAG library.
-It supports local development without provider credentials and real provider
-calls when credentials are configured.</p>
+dashboard, an evaluation package, and shared model utilities. It supports
+local development without provider credentials and real provider calls when
+credentials are configured.</p>
 <p><a class="md-button md-button--primary" href="getting-started/quickstart/">Run the quick start</a>
 <a class="md-button" href="ARCHITECTURE/">Read the architecture</a>
 <a class="md-button" href="KNOWN_LIMITATIONS/">Check known limitations</a></p>
@@ -1543,10 +1521,6 @@ verify response quality or structured model output.</p>
 <td><a href="architecture-eval/">Evaluation architecture</a></td>
 </tr>
 <tr>
-<td>Build an ingest-and-search flow</td>
-<td><a href="rag/">RAG pipeline</a></td>
-</tr>
-<tr>
 <td>Deploy or troubleshoot the service</td>
 <td><a href="operations/">Operations</a></td>
 </tr>
@@ -1597,24 +1571,11 @@ must connect an approval provider before those calls can succeed.</p>
 <li>Optional LLM-as-judge scoring</li>
 <li>JSON, Markdown, and HTML reports</li>
 </ul>
-<h3 id="rag">RAG<a class="headerlink" href="#rag" title="Permanent link">¶</a></h3>
-<ul>
-<li>Markdown and text loading</li>
-<li>Recursive chunking</li>
-<li>Deterministic and provider-backed embeddings</li>
-<li>In-memory and LanceDB vector stores</li>
-<li>BM25 and reciprocal-rank fusion</li>
-<li>Optional reranking and bounded context assembly</li>
-</ul>
-<p>The Python components support these paths. The current <code>agentic rag</code> CLI is a
-development surface: it uses process-local deterministic vectors and does not
-preserve an index between separate commands. See the
-<a href="rag/">RAG documentation</a> for the supported Python flow.</p>
 <h2 id="repository-numbers">Repository numbers<a class="headerlink" href="#repository-numbers" title="Permanent link">¶</a></h2>
 <p>These values are generated from the current source tree:</p>
 <div class="stat-strip">
 <div class="stat-item">
-<div class="stat-value">4,152</div>
+<div class="stat-value">3,821</div>
 <div class="stat-label">Backend tests</div>
 </div>
 <div class="stat-item">
@@ -1622,7 +1583,7 @@ preserve an index between separate commands. See the
 <div class="stat-label">Coverage gate, CI-enforced</div>
 </div>
 <div class="stat-item">
-<div class="stat-value">52</div>
+<div class="stat-value">53</div>
 <div class="stat-label">ADRs</div>
 </div>
 <div class="stat-item">
@@ -1630,7 +1591,7 @@ preserve an index between separate commands. See the
 <div class="stat-label">Production workflows</div>
 </div>
 </div>
-<p>52 architecture decision records capture accepted, rejected, superseded, and
+<p>53 architecture decision records capture accepted, rejected, superseded, and
 proposed choices. The <a href="adr/ADR-INDEX/">ADR index</a> is the source of truth for
 their status.</p>
 <p>The test count is a static count of Python test functions. It is not a claim
@@ -1666,7 +1627,7 @@ but deployment still requires operator decisions:</p>
 <span class="md-icon" title="Last update">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
 </span>
-<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 28, 2026 17:58:05 UTC">August 28, 2026</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="September 2, 2026 15:13:26 UTC">September 2, 2026</span>
 </span>
 <span class="md-source-file__fact">
 <span class="md-icon" title="Created">

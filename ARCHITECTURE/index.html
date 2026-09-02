@@ -487,15 +487,6 @@
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#rag-boundary">
-<span class="md-ellipsis">
-      
-        RAG boundary
-      
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
 <a class="md-nav__link" href="#persistence-and-shared-state">
 <span class="md-ellipsis">
       
@@ -590,8 +581,7 @@
 </li>
 <li class="md-nav__item md-nav__item--nested">
 <input class="md-nav__toggle md-toggle" id="__nav_4" type="checkbox"/>
-<div class="md-nav__link md-nav__container">
-<a class="md-nav__link" href="../rag/">
+<label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
 <span class="md-ellipsis">
     
   
@@ -600,11 +590,8 @@
 
     
   </span>
-</a>
-<label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
 <span class="md-nav__icon md-icon"></span>
 </label>
-</div>
 <nav aria-expanded="false" aria-labelledby="__nav_4_label" class="md-nav" data-md-level="1">
 <label class="md-nav__title" for="__nav_4">
 <span class="md-nav__icon md-icon"></span>
@@ -1397,15 +1384,6 @@
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#rag-boundary">
-<span class="md-ellipsis">
-      
-        RAG boundary
-      
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
 <a class="md-nav__link" href="#persistence-and-shared-state">
 <span class="md-ellipsis">
       
@@ -1467,7 +1445,7 @@ linked deep dives for implementation detail.</p>
 <tr>
 <td>Runtime</td>
 <td><code>agentic-workflows-v2/</code></td>
-<td>Workflow loading, execution, agents, model routing, RAG, CLI, and server</td>
+<td>Workflow loading, execution, agents, model routing, CLI, and server</td>
 </tr>
 <tr>
 <td>Dashboard</td>
@@ -1502,7 +1480,6 @@ packages depend on that installed package; they should not reach into the
     NATIVE --&gt; AGENT["Agents and tools"]
     GRAPH --&gt; AGENT
     AGENT --&gt; ROUTER["Model router"]
-    AGENT --&gt; RAG["RAG components"]
     ROUTER --&gt; PROVIDER["Model providers"]
     NATIVE --&gt; RESULT["Typed run result"]
     GRAPH --&gt; RESULT
@@ -1595,17 +1572,6 @@ provider. Saved UI settings may select endpoints and models but do not return
 secret values.</p>
 <p>See <a href="../architecture-runtime/">Runtime architecture</a> and
 <a href="../configuration/#model-providers">Configuration</a>.</p>
-<h2 id="rag-boundary">RAG boundary<a class="headerlink" href="#rag-boundary" title="Permanent link">¶</a></h2>
-<p><code>agentic_v2/rag/</code> provides document models, loaders, character-based chunking,
-embedding adapters, vector stores, BM25 search, reciprocal-rank fusion,
-optional reranking, and token-budget context assembly.</p>
-<p>The Python factory can construct provider-backed embeddings and a durable
-LanceDB store when the required extra is installed. <code>InMemoryEmbedder</code> and
-<code>InMemoryVectorStore</code> are test and demonstration components.</p>
-<p>The current <code>agentic rag</code> CLI does not persist an index between commands and
-does not yet use the new factory. Do not treat its ingest command as a durable
-indexing service. See <a href="../rag/">RAG</a> and
-<a href="../KNOWN_LIMITATIONS/">Known limitations</a>.</p>
 <h2 id="persistence-and-shared-state">Persistence and shared state<a class="headerlink" href="#persistence-and-shared-state" title="Permanent link">¶</a></h2>
 <p>Different data has different storage:</p>
 <table>
@@ -1646,11 +1612,6 @@ indexing service. See <a href="../rag/">RAG</a> and
 <td>UI provider and tier settings</td>
 <td><code>~/.agentic/ui-settings.json</code></td>
 <td>No remote settings backend</td>
-</tr>
-<tr>
-<td><code>RAGMemoryStore</code> key map</td>
-<td>Process-local</td>
-<td>No durable key map</td>
 </tr>
 </tbody>
 </table>
@@ -1750,7 +1711,7 @@ describe a later design; add a new ADR that supersedes it and update the index.<
 <span class="md-icon" title="Last update">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
 </span>
-<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 31, 2026 12:55:56 UTC">August 31, 2026</span>
 </span>
 <span class="md-source-file__fact">
 <span class="md-icon" title="Created">

@@ -1037,10 +1037,6 @@
         
       
         
-          
-        
-      
-        
       
     
     
@@ -1058,9 +1054,8 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
         
           
-          <div class="md-nav__link md-nav__container">
-            <a href="../rag/" class="md-nav__link ">
-              
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
   
   
   <span class="md-ellipsis">
@@ -1074,14 +1069,8 @@
   
   
 
-            </a>
-            
-              
-              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
-          </div>
+            <span class="md-nav__icon md-icon"></span>
+          </label>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
@@ -1148,8 +1137,6 @@
     </li>
   
 
-              
-            
               
             
               
@@ -3219,7 +3206,7 @@ orientation before reading source. It avoids counts that become stale.</p>
 <tr>
 <td><code>runtime</code></td>
 <td><code>agentic-workflows-v2/</code></td>
-<td>Workflow runtime, CLI, server, agents, model routing, tools, and RAG</td>
+<td>Workflow runtime, CLI, server, agents, model routing, and tools</td>
 </tr>
 <tr>
 <td><code>ui</code></td>
@@ -3263,12 +3250,11 @@ orientation before reading source. It avoids counts that become stale.</p>
 </span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>|-- langchain/         LangGraph compilation and execution
 </span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>|-- models/            model routing, health, and provider state
 </span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>|-- prompts/           persona prompt assets
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>|-- rag/               loading, chunking, embeddings, stores, and retrieval
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>|-- scoring/           runtime run scoring and judge logic
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>|-- security/          request and egress controls
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>|-- server/            FastAPI, routes, streaming, replay, and persistence
-</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>|-- tools/             runtime tools
-</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>`-- workflows/         workflow loading and bundled YAML definitions
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>|-- scoring/           runtime run scoring and judge logic
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>|-- security/          request and egress controls
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>|-- server/            FastAPI, routes, streaming, replay, and persistence
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>|-- tools/             runtime tools
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>`-- workflows/         workflow loading and bundled YAML definitions
 </span></code></pre></div>
 <h2 id="entry-points">Entry points<a class="headerlink" href="#entry-points" title="Permanent link">&para;</a></h2>
 <table>
@@ -3322,8 +3308,7 @@ orientation before reading source. It avoids counts that become stale.</p>
 </span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>agentic validate
 </span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>agentic serve
 </span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>agentic version
-</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>agentic rag
-</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>agentic devex
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>agentic devex
 </span></code></pre></div>
 <p>There is no <code>agentic eval</code> command. Offline evaluation uses
 <code>agentic-v2-eval</code>; server evaluation uses <code>/api/eval/*</code> and run evaluation
@@ -3331,9 +3316,6 @@ routes.</p>
 <p>The default <code>run</code> adapter is <code>langchain</code>. <code>agentic serve</code> defaults to port
 <code>8000</code>; the combined development environment uses backend port <code>8010</code> and UI
 port <code>5173</code>.</p>
-<p>The current RAG CLI creates an in-process hash index and does not persist data
-between commands. The Python RAG factory is the path for provider-backed
-embeddings and LanceDB.</p>
 <h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
 <p>Settings load from constructor overrides, environment variables, <code>.env</code>, and
 model defaults in that order. Some credentials are read again at call time
@@ -3397,10 +3379,6 @@ prove provider behavior.</p>
 <td><code>docs/configuration.md</code></td>
 </tr>
 <tr>
-<td>How does RAG behave?</td>
-<td><code>docs/rag/index.md</code></td>
-</tr>
-<tr>
 <td>What is not supported?</td>
 <td><code>docs/KNOWN_LIMITATIONS.md</code></td>
 </tr>
@@ -3438,7 +3416,7 @@ verify facts that can drift.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 31, 2026 12:55:56 UTC">August 31, 2026</span>
   </span>
 
     

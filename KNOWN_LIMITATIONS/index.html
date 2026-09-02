@@ -1037,10 +1037,6 @@
         
       
         
-          
-        
-      
-        
       
     
     
@@ -1058,9 +1054,8 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
         
           
-          <div class="md-nav__link md-nav__container">
-            <a href="../rag/" class="md-nav__link ">
-              
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
   
   
   <span class="md-ellipsis">
@@ -1074,14 +1069,8 @@
   
   
 
-            </a>
-            
-              
-              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
-          </div>
+            <span class="md-nav__icon md-icon"></span>
+          </label>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
@@ -1148,8 +1137,6 @@
     </li>
   
 
-              
-            
               
             
               
@@ -3785,93 +3772,17 @@ configured.</p>
 <li><strong>Upstream fix:</strong> None at the header layer — tenant enforcement requires an authenticated identity (<a href="../adr/ADR-021-jwt-oidc-authentication/">ADR-021</a>) or a gateway.</li>
 </ul>
 <h3 id="46-no-ci-job-installs-the-rag-extra-so-the-embedding-and-lancedb-paths-are-proven-only-against-fakes">4.6 No CI job installs the <code>rag</code> extra, so the embedding and LanceDB paths are proven only against fakes<a class="headerlink" href="#46-no-ci-job-installs-the-rag-extra-so-the-embedding-and-lancedb-paths-are-proven-only-against-fakes" title="Permanent link">&para;</a></h3>
-<p>The RAG pipeline's two optional backends live behind the <code>rag</code> extra (<code>lancedb&gt;=0.15,&lt;1</code>, <code>litellm&gt;=1.84,&lt;2</code> in <code>agentic-workflows-v2/pyproject.toml</code>). <strong>No CI job installs it.</strong> <code>ci.yml</code> installs <code>agentic-workflows-v2/[dev,server,mcp,langchain,tracing]</code> (plus <code>ek</code> in the single <code>ek-delegation-tests</code> job), and <code>windows-workflows-ci.yml</code> runs <code>uv sync --frozen --extra dev --extra server --extra langchain</code>. Grepping the workflow directory for the <code>rag</code> extra returns nothing.</p>
-<p>The code is written for this: <code>LiteLLMEmbedder</code> imports <code>litellm</code> lazily inside <code>_load_litellm()</code>, and <code>LanceDBVectorStore</code> is bound to <code>None</code> when <code>lancedb</code> is absent, so <code>import agentic_v2.rag</code> is safe. The suites are written for it too — <code>tests/test_rag_embeddings_litellm.py</code> and <code>tests/test_rag_factory.py</code> deliberately avoid <code>pytest.importorskip</code> and inject a fake <code>litellm</code> instead, so the real embedder code executes in CI rather than being skipped silently while the run stays green.</p>
-<p>What that leaves unproven is the part a fake cannot stand in for: <strong>no automated test anywhere calls a real embedding provider, and no CI run ever constructs a real LanceDB table.</strong> Response-shape parsing is duck-typed (accepting <code>.data</code>/<code>["data"]</code> and <code>.embedding</code>/<code>["embedding"]</code>) and was validated against a real provider response by hand, not against a pinned <code>litellm</code> response model in a test.</p>
-<ul>
-<li><strong>Surface:</strong> <code>.github/workflows/ci.yml</code> (install steps), <code>.github/workflows/windows-workflows-ci.yml</code>, <code>agentic_v2/rag/embeddings.py</code> (<code>_load_litellm</code>, <code>_parse_embedding_response</code>), <code>agentic_v2/rag/vectorstore.py</code> (<code>_LANCEDB_AVAILABLE</code> guard), <code>tests/test_vectorstore_lancedb.py</code> (<code>pytest.importorskip("lancedb")</code> — skipped in CI).</li>
-<li><strong>Risk:</strong> A breaking change in <code>litellm</code>'s embedding response shape, or in LanceDB's table API, passes CI green. The failure would first appear at runtime on a machine that actually installed the extra.</li>
-<li><strong>Workaround:</strong> From the repository root, install the extra with
-  <code>python -m pip install -e "./agentic-workflows-v2[dev,rag]"</code>, then run
-  <code>python -m pytest agentic-workflows-v2/tests -k "rag or vectorstore or embed" -q</code>.
-  Treat that as a pre-release step, not a per-PR one.</li>
-<li><strong>Status:</strong> Accepted. The extra is heavy (<code>litellm</code> pulls a large dependency tree), and the fake-injection pattern is what keeps the LiteLLM and factory code measured rather than skipped — <code>agentic_v2/rag/*</code> is <strong>not</strong> in <code>[tool.coverage.run] omit</code>, unlike the optional surfaces in §1.2, so uncovered lines there would drag the gated 80% figure down.</li>
-<li><strong>Upstream fix:</strong> <strong>Implemented.</strong> <code>ci.yml</code> now carries the <code>rag-extra-tests</code> job described here — installing <code>[dev,rag]</code>, asserting <code>lancedb</code> and <code>litellm</code> actually import (so a resolution failure cannot pass as a silent skip), and running the RAG suites plus <code>tests/test_vectorstore_lancedb.py</code>. It is <code>continue-on-error</code> as specified above; promote it to required once it has a stable history. A live-provider embedding call still needs a credential and still belongs in a cron lane, not a PR gate.</li>
-</ul>
+<p><em>(Resolved by removal: the RAG package was removed from ARP — superseded by the standalone groundkit repo; see ADR-057.)</em></p>
 <h3 id="47-cross-provider-embedding-fallback-mixes-semantic-spaces-and-pins-a-single-dimensionality">4.7 Cross-provider embedding fallback mixes semantic spaces and pins a single dimensionality<a class="headerlink" href="#47-cross-provider-embedding-fallback-mixes-semantic-spaces-and-pins-a-single-dimensionality" title="Permanent link">&para;</a></h3>
-<p><code>build_embedder(config, fallback=True)</code> wraps the configured provider in the ADR-035 chain — configured provider first, then the remaining providers in the documented Voyage → OpenAI → local order (<code>FALLBACK_PROVIDER_ORDER</code> in <code>agentic_v2/rag/factory.py</code>). It is opt-in and <strong>must stay opt-in</strong>, for two independent reasons.</p>
-<p>First, <strong>different providers embed into different semantic spaces.</strong> A vector from <code>openai/text-embedding-3-small</code> is not comparable to one from <code>voyage/voyage-3</code>. If a fallback fires mid-ingestion, the index ends up holding vectors from two spaces and cosine similarity across them is meaningless — retrieval quality degrades and nothing raises. <code>FallbackEmbedder.__init__</code> refuses a chain whose members disagree on provider identity unless the caller passes <code>allow_mixed_provider_identities=True</code>; the factory passes it and logs a <code>WARNING</code> naming every model in the chain, but a warning is not a guard.</p>
-<p>Second, <strong><code>FallbackEmbedder</code> requires one shared dimensionality</strong>, so <code>_fallback_chain()</code> gives every member the configured <code>EmbeddingConfig.dimensions</code> via <code>model_copy</code>. <code>LiteLLMEmbedder</code> does <strong>not</strong> forward a <code>dimensions=</code> request parameter to LiteLLM (<code>_call_litellm</code> sends only <code>model</code>, <code>input</code>, and optionally <code>api_key</code>), so a provider whose native width differs fails the post-parse width check and the chain advances to the next member. At the <code>EmbeddingConfig</code> default of 1536, <code>voyage-3</code> (1024 native) and <code>nomic-embed-text</code> (768 native) both fail that check, so a default-configured chain can exhaust without producing a vector. Failing loudly is correct — a truncated or padded vector would corrupt the index silently — but it means the chain works in practice only when every provider natively emits the configured width.</p>
-<ul>
-<li><strong>Surface:</strong> <code>agentic_v2/rag/factory.py</code> (<code>_fallback_chain</code>, <code>build_embedder</code>, <code>FALLBACK_PROVIDER_ORDER</code>, <code>FALLBACK_EMBEDDING_MODELS</code>), <code>agentic_v2/rag/embeddings.py</code> (<code>FallbackEmbedder</code>, <code>_validate_provider_dimensions</code>, <code>_validate_provider_identities</code>, <code>_call_litellm</code>).</li>
-<li><strong>Risk:</strong> Enabling fallback against an index already populated by one provider silently poisons it with vectors from another space. Enabling it at default dimensions produces <code>EmbeddingError: All 3 embedding providers failed</code> rather than a working fallback.</li>
-<li><strong>Workaround:</strong> Leave <code>fallback=False</code> (the default) for any pipeline writing to a persistent index. If you do enable it, set <code>EmbeddingConfig.dimensions</code> to a width every provider in the chain emits natively, and rebuild the index from scratch when the effective provider changes. For a read-only query path against an index you did not build, do not enable it at all.</li>
-<li><strong>Status:</strong> Accepted and deliberate. The alternative — silently reshaping vectors to fit — is worse. The documented ADR-035 fallback order is preserved; the constraint that makes it narrow is now written down in <a href="../adr/ADR-035-rag-pipeline-architecture/">ADR-035</a> rather than discovered at runtime.</li>
-<li><strong>Upstream fix:</strong> Future sprint — pass <code>dimensions</code> through to LiteLLM for providers that honor a Matryoshka/<code>dimensions</code> request, and stamp the producing provider identity into stored chunk metadata so a mixed index is detectable after the fact.</li>
-</ul>
+<p><em>(Resolved by removal: the RAG package was removed from ARP — superseded by the standalone groundkit repo; see ADR-057.)</em></p>
 <h3 id="48-the-reranker-is-not-fully-constructible-from-configuration">4.8 The reranker is not fully constructible from configuration<a class="headerlink" href="#48-the-reranker-is-not-fully-constructible-from-configuration" title="Permanent link">&para;</a></h3>
-<p><code>build_reranker(config)</code> is config-driven only for <code>strategy="none"</code>. Neither model-backed strategy can be built from a <code>RerankerConfig</code> alone, because a frozen JSON-shaped Pydantic model cannot carry a callable:</p>
-<ul>
-<li><strong><code>"cross_encoder"</code></strong> with no <code>predict_fn=</code> falls through to <code>CrossEncoderReranker</code>'s own loader, which imports <strong><code>sentence-transformers</code> — a package no extra in <code>agentic-workflows-v2/pyproject.toml</code> declares</strong>, not <code>rag</code> and not any other. A machine that ran <code>pip install -e ".[rag]"</code> still gets <code>ImportError: sentence-transformers is required for CrossEncoderReranker</code>.</li>
-<li><strong><code>"llm"</code></strong> has no default scorer at all; <code>build_reranker</code> raises <code>RAGError</code> unless the caller passes <code>score_fn=</code>.</li>
-</ul>
-<p>Two further config fields are inert. <code>RerankerConfig.top_k</code> is not a constructor argument for any reranker — it is a per-call argument of <code>rerank()</code> — so a caller who sets it in config and never threads it through gets the library default of 5. <code>RerankerConfig.model_name</code> is ignored entirely for <code>strategy="llm"</code>, since <code>LLMReranker</code> takes no model name.</p>
-<p>Separately, two implementations do not structurally match the protocols they are declared against, and <code>isinstance</code> cannot catch it because <code>runtime_checkable</code> only checks member presence:</p>
-<ul>
-<li><code>NoOpReranker.rerank</code> names its first parameter <code>_query</code> where <code>RerankerProtocol</code> declares <code>query</code>, so <code>rerank(query=..., results=...)</code> raises <code>TypeError</code> for the <strong>default</strong> strategy while succeeding for the other two. mypy does not flag a leading-underscore parameter name, so no static gate catches it. The only in-repo caller (<code>agentic_v2/rag/retrieval.py</code>) calls positionally, so nothing is broken today.</li>
-<li>
-<p><code>LanceDBVectorStore.search</code> names its third parameter <code>_metadata_filter</code> and also accepts <code>**kwargs</code>, so a <code>metadata_filter={...}</code> keyword call does not raise — it is absorbed and <strong>ignored</strong>, returning plausible-looking but unfiltered results. This one mypy does catch, which is why <code>factory.py</code> carries a load-bearing <code># type: ignore[return-value]</code> on the LanceDB construction with the reason inline.</p>
-</li>
-<li>
-<p><strong>Surface:</strong> <code>agentic_v2/rag/factory.py</code> (<code>build_reranker</code>, <code>_build_cross_encoder</code>, and the three module-docstring notes), <code>agentic_v2/rag/reranking.py</code> (<code>NoOpReranker.rerank</code>, <code>CrossEncoderReranker.__init__</code>), <code>agentic_v2/rag/vectorstore.py</code> (<code>LanceDBVectorStore.search</code>), <code>agentic_v2/rag/protocols.py</code>.</p>
-</li>
-<li><strong>Risk:</strong> The ADR-035 three-stage pipeline is not reachable from configuration alone — a caller must supply a scorer in Python. Metadata filtering against a LanceDB store returns wrong results rather than an error, which is the worse failure mode of the two.</li>
-<li><strong>Workaround:</strong> Pass <code>reranker_predict_fn=</code> / <code>reranker_score_fn=</code> to <code>build_rag_components()</code> (explicit, documented keyword arguments), <code>pip install sentence-transformers</code> separately if you want the default cross-encoder, call every reranker <strong>positionally</strong>, and do not rely on <code>metadata_filter</code> against LanceDB — filter in the caller.</li>
-<li><strong>Status:</strong> Accepted for now. The keyword escape hatch is explicit rather than silent, and both protocol mismatches are recorded in <code>factory.py</code>'s docstrings rather than hidden.</li>
-<li><strong>Upstream fix:</strong> Rename <code>_query</code> → <code>query</code> in <code>reranking.py</code> and either implement or reject <code>metadata_filter</code> in <code>LanceDBVectorStore.search</code> (removing the <code># type: ignore</code>). Decide separately whether <code>sentence-transformers</code> should be declared by an extra or the cross-encoder default should require an explicit <code>predict_fn</code>.</li>
-</ul>
+<p><em>(Resolved by removal: the RAG package was removed from ARP — superseded by the standalone groundkit repo; see ADR-057.)</em></p>
 <h3 id="49-inmemoryembedder-is-a-hash-based-test-double-not-an-embedder">4.9 <code>InMemoryEmbedder</code> is a hash-based test double, not an embedder<a class="headerlink" href="#49-inmemoryembedder-is-a-hash-based-test-double-not-an-embedder" title="Permanent link">&para;</a></h3>
-<p><code>InMemoryEmbedder</code> (<code>agentic_v2/rag/embeddings.py</code>) produces vectors by hashing text with SHA-256 and expanding the digest bytes to the requested dimensionality. It is deterministic and needs no credentials, which makes it useful for tests and offline development — but it carries <strong>no semantic signal whatsoever</strong>. Two paraphrases of the same sentence hash to unrelated vectors, so similarity search over an <code>InMemoryEmbedder</code> index degenerates to near-exact-match.</p>
-<p>It matters because several examples and docstrings use it as the obvious zero-setup default — <code>agentic_v2/rag/memory.py</code>'s module docstring hardcodes <code>InMemoryEmbedder(dimensions=384)</code> — and because a hash embedder never errors, so a pipeline built on one looks healthy while retrieving noise.</p>
-<ul>
-<li><strong>Surface:</strong> <code>agentic_v2/rag/embeddings.py</code> (<code>InMemoryEmbedder</code>, <code>provider="local"</code>, <code>model_name="in-memory-hash-v1"</code>), <code>agentic_v2/rag/memory.py</code> (docstring example).</li>
-<li><strong>Risk:</strong> Mistaking it for a working local embedder. A demo or evaluation run built on it produces retrieval numbers that mean nothing.</li>
-<li><strong>Workaround:</strong> Use <code>build_embedder(EmbeddingConfig(provider="local", model_name="nomic-embed-text", dimensions=768))</code> for a genuinely local path (routes to <code>ollama/nomic-embed-text</code> via LiteLLM and needs a running Ollama), or a hosted provider for anything measured.</li>
-<li><strong>Status:</strong> Accepted and intentional. <code>build_embedder()</code> / <code>build_rag_components()</code> never return it for a production provider string: <code>factory.py</code> does not reference <code>InMemoryEmbedder</code> at all except in the module docstring stating the prohibition, and <code>tests/test_rag_factory.py::test_provider_routes_to_expected_litellm_model_string</code> asserts <code>isinstance(embedder, LiteLLMEmbedder)</code> for each of the four provider strings. It must be constructed directly and on purpose.</li>
-<li><strong>Upstream fix:</strong> None planned. The guard is that no factory path can hand it back by accident.</li>
-</ul>
+<p><em>(Resolved by removal: the RAG package was removed from ARP — superseded by the standalone groundkit repo; see ADR-057.)</em></p>
 <h3 id="410-a-failed-embedding-call-scrubs-the-credential-from-the-message-but-not-from-the-exception-chain">4.10 A failed embedding call scrubs the credential from the message but not from the exception chain<a class="headerlink" href="#410-a-failed-embedding-call-scrubs-the-credential-from-the-message-but-not-from-the-exception-chain" title="Permanent link">&para;</a></h3>
-<p><code>LiteLLMEmbedder._call_litellm</code> wraps any provider exception in an <code>EmbeddingError</code> whose message has been passed through <code>_redact_secret(str(exc), api_key)</code>, so the API key cannot appear in the raised message. But it raises <code>from exc</code>, which keeps the <strong>original, unscrubbed</strong> exception on <code>__cause__</code>. Providers do sometimes echo request material — including the key — back in their error text.</p>
-<p>The practical consequence: <code>str(err)</code> is safe, and <code>FallbackEmbedder</code>'s own <code>logger.warning("Embedding provider failed, trying next: %s", exc)</code> is safe because it passes no <code>exc_info</code>. Any caller that logs with <code>logger.exception(...)</code>, <code>exc_info=True</code>, or prints a full traceback will print the credential.</p>
-<ul>
-<li><strong>Surface:</strong> <code>agentic_v2/rag/embeddings.py</code> (<code>_call_litellm</code>'s <code>raise EmbeddingError(...) from exc</code>, <code>_redact_secret</code>).</li>
-<li><strong>Risk:</strong> A credential reaching application logs or an error-reporting service through the <code>__cause__</code> chain, in violation of the no-secrets-in-logs rule that the redaction was added to enforce.</li>
-<li><strong>Workaround:</strong> Do not log embedding failures with <code>exc_info</code> / <code>logger.exception</code>. Log <code>str(err)</code> from the <code>EmbeddingError</code>, which is already scrubbed.</li>
-<li><strong>Status:</strong> Known, not yet fixed. Documented here rather than left to be rediscovered; the redaction that does exist covers the message, which is the path every in-repo caller uses.</li>
-<li><strong>Upstream fix:</strong> Raise from a scrubbed exception, or use <code>raise ... from None</code> with the scrubbed detail already inlined in the message, accepting the loss of the original traceback frame.</li>
-</ul>
+<p><em>(Resolved by removal: the RAG package was removed from ARP — superseded by the standalone groundkit repo; see ADR-057.)</em></p>
 <h3 id="411-the-agentic-rag-commands-do-not-share-or-persist-an-index">4.11 The <code>agentic rag</code> commands do not share or persist an index<a class="headerlink" href="#411-the-agentic-rag-commands-do-not-share-or-persist-an-index" title="Permanent link">&para;</a></h3>
-<p><code>agentic rag ingest</code> constructs an <code>InMemoryEmbedder</code>,
-<code>InMemoryVectorStore</code>, and <code>HybridRetriever</code> in module globals. A CLI command
-runs in a new process, so those globals disappear when <code>ingest</code> exits. A later
-<code>agentic rag search</code> process has no retriever and returns no results.</p>
-<p>The command also accepts <code>--collection</code> without using it and shows a directory
-example even though the helper selects a single file loader and does not
-enumerate a directory.</p>
-<ul>
-<li><strong>Surface:</strong> <code>agentic_v2/cli/rag_commands.py</code> and
-  <code>agentic_v2/cli/helpers.py</code>.</li>
-<li><strong>Risk:</strong> The commands report successful ingestion but cannot provide a
-  useful follow-up search from a normal second invocation.</li>
-<li><strong>Workaround:</strong> Build the RAG Python components or <code>RAGIngestTool</code> and
-  <code>RAGSearchTool</code> inside one long-lived process. Use a LanceDB store when
-  vectors must survive restarts.</li>
-<li><strong>Status:</strong> Incomplete CLI surface. The Python RAG pipeline is usable and
-  documented separately.</li>
-<li><strong>Upstream fix:</strong> Construct components from <code>RAGConfig</code>, persist the selected
-  collection, and make both commands reopen the same index. Remove or implement
-  directory ingestion and collection selection as part of that change.</li>
-</ul>
+<p><em>(Resolved by removal: the RAG package was removed from ARP — superseded by the standalone groundkit repo; see ADR-057.)</em></p>
 <h3 id="412-the-model-inventory-command-fails-from-the-repository-root">4.12 The model inventory command fails from the repository root<a class="headerlink" href="#412-the-model-inventory-command-fails-from-the-repository-root" title="Permanent link">&para;</a></h3>
 <p><code>python -m tools.llm.model_inventory</code> imports <code>llm_client</code> as a top-level
 module. In the installed repository package, that module is
@@ -3999,7 +3910,7 @@ exist.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 9, 2026 13:38:16 UTC">August 9, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 29, 2026 22:33:47 UTC">August 29, 2026</span>
   </span>
 
     

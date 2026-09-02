@@ -1031,10 +1031,6 @@
         
       
         
-          
-        
-      
-        
       
     
     
@@ -1052,9 +1048,8 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
         
           
-          <div class="md-nav__link md-nav__container">
-            <a href="../../rag/" class="md-nav__link ">
-              
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
   
   
   <span class="md-ellipsis">
@@ -1068,14 +1063,8 @@
   
   
 
-            </a>
-            
-              
-              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
-          </div>
+            <span class="md-nav__icon md-icon"></span>
+          </label>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
@@ -1142,8 +1131,6 @@
     </li>
   
 
-              
-            
               
             
               
@@ -3073,6 +3060,14 @@
 
 
 <h1 id="blueprint-for-the-rag-retrieval-pipeline">Blueprint for the RAG retrieval pipeline<a class="headerlink" href="#blueprint-for-the-rag-retrieval-pipeline" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Historical document.</strong> The RAG package this blueprint describes
+(<code>agentic_v2/rag/</code>) was removed from agentic-runtime-platform — see
+<a href="../ADR-057-remove-rag-package/">ADR-057</a> — and is superseded by the
+standalone <code>groundkit</code> repo (private pre-release as of 2026-08-10).
+Retained for research-provenance reference only; treat it as history, not
+as current architecture.</p>
+</blockquote>
 <p><strong>LanceDB with Voyage 4 embeddings, hybrid search with cross-encoder reranking, and full Pydantic v2 typed contracts are the selected foundation for this pipeline.</strong> The design is async-first, abstracts providers via LiteLLM, uses multi-stage retrieval (dense + BM25 → RRF fusion → reranking), and layers explicit resilience around every external call. The research below covers each implementation layer, from vector store selection to CI/CD regression testing, calibrated to the existing monorepo's LangChain/LangGraph engine, Pydantic contracts, YAML configuration style, and eval framework.</p>
 <hr />
 <h2 id="lancedb-emerges-as-the-clear-vector-store-choice">LanceDB emerges as the clear vector store choice<a class="headerlink" href="#lancedb-emerges-as-the-clear-vector-store-choice" title="Permanent link">&para;</a></h2>
@@ -3281,7 +3276,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 27, 2026 12:43:26 UTC">July 27, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 29, 2026 22:33:47 UTC">August 29, 2026</span>
   </span>
 
     

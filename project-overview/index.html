@@ -1037,10 +1037,6 @@
         
       
         
-          
-        
-      
-        
       
     
     
@@ -1058,9 +1054,8 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
         
           
-          <div class="md-nav__link md-nav__container">
-            <a href="../rag/" class="md-nav__link ">
-              
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
   
   
   <span class="md-ellipsis">
@@ -1074,14 +1069,8 @@
   
   
 
-            </a>
-            
-              
-              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
-          </div>
+            <span class="md-nav__icon md-icon"></span>
+          </label>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
@@ -1148,8 +1137,6 @@
     </li>
   
 
-              
-            
               
             
               
@@ -2739,17 +2726,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#rag-components" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        RAG components
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#evaluation" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3104,17 +3080,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#rag-components" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        RAG components
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#evaluation" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3240,7 +3205,7 @@ evaluating multi-step AI workflows.</p>
 <tr>
 <td>Runtime</td>
 <td><code>agentic-workflows-v2/</code></td>
-<td>Workflow loader, execution engines, agents, tools, model routing, RAG, CLI, and server</td>
+<td>Workflow loader, execution engines, agents, tools, model routing, CLI, and server</td>
 </tr>
 <tr>
 <td>Dashboard</td>
@@ -3285,18 +3250,6 @@ evaluating multi-step AI workflows.</p>
 <p>These controls reduce risk but do not make every deployment secure by default.
 An exposed service still requires deliberate authentication, network, storage,
 secret, and tool-policy configuration.</p>
-<h3 id="rag-components">RAG components<a class="headerlink" href="#rag-components" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Document and chunk models.</li>
-<li>Text and Markdown loaders.</li>
-<li>Character-based recursive chunking.</li>
-<li>Deterministic and provider-backed embedding adapters.</li>
-<li>In-memory and LanceDB vector stores.</li>
-<li>BM25, vector, hybrid fusion, optional reranking, and context assembly.</li>
-</ul>
-<p>The Python components support real embeddings and durable vector storage when
-the RAG extra is installed. The current <code>agentic rag</code> CLI does not persist its
-index between commands. See <a href="../rag/">RAG</a>.</p>
 <h3 id="evaluation">Evaluation<a class="headerlink" href="#evaluation" title="Permanent link">&para;</a></h3>
 <p>There are two evaluation paths:</p>
 <ul>
@@ -3389,20 +3342,19 @@ versions.</p>
 </span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>|   |   |-- engine/                native execution
 </span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>|   |   |-- langchain/             LangGraph adapter
 </span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>|   |   |-- models/                routing and provider health
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>|   |   |-- rag/                   retrieval components
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>|   |   |-- server/                FastAPI, WebSocket, and SSE
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>|   |   |-- tools/                 runtime tools
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>|   |   `-- workflows/             loader and YAML definitions
-</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>|   |-- tests/                     runtime and server tests
-</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>|   `-- ui/                        React dashboard
-</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>|-- agentic-v2-eval/
-</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>|   |-- src/agentic_v2_eval/       offline evaluation package
-</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>|   `-- tests/
-</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>|-- tests/e2e/                     cross-package tests
-</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>|-- docs/                          maintained documentation and ADRs
-</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>|-- examples/                      small Python examples
-</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>|-- infra/                         deployment configuration
-</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>`-- otel/                          telemetry collector configuration
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>|   |   |-- server/                FastAPI, WebSocket, and SSE
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>|   |   |-- tools/                 runtime tools
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>|   |   `-- workflows/             loader and YAML definitions
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>|   |-- tests/                     runtime and server tests
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>|   `-- ui/                        React dashboard
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>|-- agentic-v2-eval/
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>|   |-- src/agentic_v2_eval/       offline evaluation package
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>|   `-- tests/
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>|-- tests/e2e/                     cross-package tests
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>|-- docs/                          maintained documentation and ADRs
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>|-- examples/                      small Python examples
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>|-- infra/                         deployment configuration
+</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>`-- otel/                          telemetry collector configuration
 </span></code></pre></div>
 <h2 id="current-boundaries-and-limits">Current boundaries and limits<a class="headerlink" href="#current-boundaries-and-limits" title="Permanent link">&para;</a></h2>
 <ul>
@@ -3411,7 +3363,6 @@ versions.</p>
   integration test.</li>
 <li>Native and LangGraph execution do not support every feature equally.</li>
 <li>Some state is process-local even when Redis is configured.</li>
-<li>The RAG CLI is not a persistent indexing service.</li>
 <li>Live provider evaluation is separate from the default unit-test path.</li>
 </ul>
 <p>The maintained list is <a href="../KNOWN_LIMITATIONS/">Known limitations</a>.</p>
@@ -3488,7 +3439,7 @@ versions.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 31, 2026 12:55:56 UTC">August 31, 2026</span>
   </span>
 
     

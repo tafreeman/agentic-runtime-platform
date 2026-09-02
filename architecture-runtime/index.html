@@ -1803,10 +1803,6 @@
         
       
         
-          
-        
-      
-        
       
     
     
@@ -1824,9 +1820,8 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
         
           
-          <div class="md-nav__link md-nav__container">
-            <a href="../rag/" class="md-nav__link ">
-              
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
   
   
   <span class="md-ellipsis">
@@ -1840,14 +1835,8 @@
   
   
 
-            </a>
-            
-              
-              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
-          </div>
+            <span class="md-nav__icon md-icon"></span>
+          </label>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
@@ -1914,8 +1903,6 @@
     </li>
   
 
-              
-            
               
             
               
@@ -4407,7 +4394,7 @@
 <li><strong>Server layer</strong> — FastAPI application with CORS, rate limiting, API-key auth, and prompt-sanitization middleware. Exposes REST endpoints and a WebSocket pub/sub hub.</li>
 <li><strong>Adapter registry</strong> — A singleton that maps names (<code>"langchain"</code>, <code>"native"</code>) to <code>ExecutionEngine</code> protocol implementations, making engines runtime-swappable without code changes.</li>
 <li><strong>Execution engines</strong> — Two fully operational engines: a LangGraph state-machine compiler (<code>langchain</code> adapter) and a native Kahn's-algorithm DAG executor (<code>native</code> adapter).</li>
-<li><strong>Agent and tool layer</strong> — Typed <code>BaseAgent[TInput, TOutput]</code> subclasses, built-in tools, model routing, and RAG components.</li>
+<li><strong>Agent and tool layer</strong> — Typed <code>BaseAgent[TInput, TOutput]</code> subclasses, built-in tools, and model routing.</li>
 </ol>
 <hr />
 <h2 id="2-technology-stack">2. Technology stack<a class="headerlink" href="#2-technology-stack" title="Permanent link">&para;</a></h2>
@@ -4438,7 +4425,7 @@
 <tr>
 <td>CLI</td>
 <td>Typer</td>
-<td>Workflow, server, RAG, and developer commands</td>
+<td>Workflow, server, and developer commands</td>
 </tr>
 <tr>
 <td>HTTP client</td>
@@ -4459,16 +4446,6 @@
 <td>Tracing</td>
 <td>OpenTelemetry</td>
 <td>OTEL SDK; opt-in via <code>AGENTIC_TRACING=1</code></td>
-</tr>
-<tr>
-<td>Vector store</td>
-<td>In-memory cosine store or LanceDB</td>
-<td>LanceDB via the <code>[rag]</code> optional extra</td>
-</tr>
-<tr>
-<td>RAG embeddings</td>
-<td>OpenAI / Voyage / local / LiteLLM</td>
-<td>Provider selected in <code>rag/config.py</code></td>
 </tr>
 <tr>
 <td>Frontend</td>
@@ -4509,17 +4486,16 @@
 </span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│   ├── contracts/           # Pydantic I/O models, events, messages, sanitization
 </span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│   ├── core/                # Protocols, memory, errors
 </span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│   ├── models/              # LLM client wrappers, SmartModelRouter, Redis CB state
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│   ├── rag/                 # Load, chunk, embed, retrieve, rerank, and assemble
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│   ├── scoring/             # Scoring/judge domain (extracted from server/ per ADR-032)
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│   ├── governance/          # Approval gate + escalation sink
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│   ├── prompts/             # 7 agent persona definitions (.md)
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│   ├── tools/builtin/       # Built-in runtime tools
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>│   ├── workflows/           # YAML loader, run logger, definitions/ (8 YAML workflows)
-</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│   ├── middleware/          # Sanitization detectors
-</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│   ├── integrations/        # OTEL tracing, metrics, MCP adapters
-</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>│   └── cli/                 # Typer CLI entry points
-</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>├── tests/                   # Runtime and server tests
-</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>└── ui/                      # React 19 dashboard (separate build)
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│   ├── scoring/             # Scoring/judge domain (extracted from server/ per ADR-032)
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│   ├── governance/          # Approval gate + escalation sink
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│   ├── prompts/             # 7 agent persona definitions (.md)
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│   ├── tools/builtin/       # Built-in runtime tools
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│   ├── workflows/           # YAML loader, run logger, definitions/ (8 YAML workflows)
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>│   ├── middleware/          # Sanitization detectors
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│   ├── integrations/        # OTEL tracing, metrics, MCP adapters
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│   └── cli/                 # Typer CLI entry points
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>├── tests/                   # Runtime and server tests
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>└── ui/                      # React 19 dashboard (separate build)
 </span></code></pre></div>
 <hr />
 <h2 id="4-dual-execution-engine-architecture">4. Dual execution engine architecture<a class="headerlink" href="#4-dual-execution-engine-architecture" title="Permanent link">&para;</a></h2>
@@ -4785,10 +4761,6 @@
 </thead>
 <tbody>
 <tr>
-<td><code>SupportsRAGMixin</code></td>
-<td>Augments prompts with RAG-retrieved context</td>
-</tr>
-<tr>
 <td><code>SupportsVerificationMixin</code></td>
 <td>Enables output verification and self-correction cycles</td>
 </tr>
@@ -4976,78 +4948,7 @@
 </table>
 <hr />
 <h2 id="9-rag-pipeline">9. RAG pipeline<a class="headerlink" href="#9-rag-pipeline" title="Permanent link">&para;</a></h2>
-<p><strong>Source:</strong> <code>agentic_v2/rag/</code></p>
-<p>The RAG pipeline provides document ingestion, indexing, and retrieval for context augmentation. It is used directly by the <code>RAGMemoryStore</code> and the <code>SupportsRAGMixin</code>.</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>Document Loading
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>      ↓
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>Recursive Chunking
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>      ↓
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>Content-Hash Deduplication
-</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>      ↓
-</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>Embedding (with hash-based cache)
-</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>      ↓
-</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>    ┌─────────────────────────────┐
-</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>    │  Vector Index               │   ← cosine similarity (in-memory or LanceDB)
-</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>    │  BM25 Keyword Index         │   ← lexical matching
-</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>    └─────────────────────────────┘
-</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>      ↓
-</span><span id="__span-6-14"><a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>  Hybrid Retrieval (RRF fusion)
-</span><span id="__span-6-15"><a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>      ↓
-</span><span id="__span-6-16"><a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>  Token-Budget Assembly
-</span><span id="__span-6-17"><a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>      ↓
-</span><span id="__span-6-18"><a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>  OTEL Trace Spans
-</span></code></pre></div>
-<table>
-<thead>
-<tr>
-<th>Stage</th>
-<th>Detail</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Document loading</strong></td>
-<td>Plain text (<code>.txt</code>) and Markdown (<code>.md</code>, <code>.markdown</code>) inputs</td>
-</tr>
-<tr>
-<td><strong>Recursive chunking</strong></td>
-<td>Splits on configured text separators before falling back to character counts; <code>chunk_size</code> and <code>chunk_overlap</code> are character counts in the current implementation</td>
-</tr>
-<tr>
-<td><strong>Content-hash deduplication</strong></td>
-<td>Each chunk is hashed (SHA-256 of normalised content); duplicate chunks are skipped during embedding</td>
-</tr>
-<tr>
-<td><strong>Embedding</strong></td>
-<td>Vectors are computed lazily and cached by content hash, avoiding re-embedding unchanged content across ingestion runs</td>
-</tr>
-<tr>
-<td><strong>Vector index</strong></td>
-<td><code>InMemoryVectorStore</code> (pure-Python cosine similarity) by default; <code>LanceDBVectorStore</code> for a persistent on-disk index (<code>[rag]</code> extra)</td>
-</tr>
-<tr>
-<td><strong>BM25 keyword index</strong></td>
-<td>In-memory BM25 index over chunk text; captures exact-match and term-frequency signals</td>
-</tr>
-<tr>
-<td><strong>Hybrid retrieval (RRF)</strong></td>
-<td>Reciprocal Rank Fusion merges vector and keyword result lists</td>
-</tr>
-<tr>
-<td><strong>Token-budget assembly</strong></td>
-<td>Greedily appends the highest-ranked chunks until a configured token budget is reached</td>
-</tr>
-<tr>
-<td><strong>OTEL tracing</strong></td>
-<td>Each pipeline stage emits OpenTelemetry spans</td>
-</tr>
-</tbody>
-</table>
-<p>See <a href="../adr/RAG-pipeline-blueprint/"><code>adr/RAG-pipeline-blueprint.md</code></a> and <a href="../adr/ADR-035-rag-pipeline-architecture/">ADR-035</a>.</p>
-<p>The current <code>agentic rag</code> commands construct an in-memory hash embedder and
-vector store directly. Separate CLI invocations do not share an index, and the
-CLI does not use the provider-backed factory described above. See
-<a href="../KNOWN_LIMITATIONS/">Known limitations</a>.</p>
+<p><em>(Removed: the RAG package was removed from ARP — superseded by the standalone groundkit repo; see <a href="../adr/ADR-057-remove-rag-package/">ADR-057</a>.)</em></p>
 <hr />
 <h2 id="10-scoring-package">10. Scoring package<a class="headerlink" href="#10-scoring-package" title="Permanent link">&para;</a></h2>
 <p><strong>Source:</strong> <code>agentic_v2/scoring/</code> (extracted from <code>server/</code> per <a href="../adr/ADR-032-extract-scoring-package/">ADR-032</a>)</p>
@@ -5098,8 +4999,8 @@ CLI does not use the provider-backed factory described above. See
 </tr>
 </tbody>
 </table>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>agentic_v2.server  →  agentic_v2.scoring
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>        (no upward imports into server)
+<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>agentic_v2.server  →  agentic_v2.scoring
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>        (no upward imports into server)
 </span></code></pre></div>
 <p>This in-server scoring pipeline is independent of the offline <code>agentic-v2-eval</code> package — see <a href="../integration-architecture/"><code>integration-architecture.md</code></a>.</p>
 <hr />
@@ -5148,7 +5049,7 @@ CLI does not use the provider-backed factory described above. See
 </tr>
 <tr>
 <td><code>MemoryStore</code> (alias)</td>
-<td>Deprecated backward-compatible alias for <code>MemoryStoreProtocol</code> from <code>core.memory</code> — async key-value store with search. Implementations: <code>InMemoryStore</code>, <code>RAGMemoryStore</code>.</td>
+<td>Deprecated backward-compatible alias for <code>MemoryStoreProtocol</code> from <code>core.memory</code> — async key-value store with search. Implementations: <code>InMemoryStore</code>.</td>
 </tr>
 </tbody>
 </table>
@@ -5266,7 +5167,7 @@ CLI does not use the provider-backed factory described above. See
 <h3 id="141-otel-tracing">14.1 OTEL tracing<a class="headerlink" href="#141-otel-tracing" title="Permanent link">&para;</a></h3>
 <p>Source: <code>integrations/otel.py</code></p>
 <p>OpenTelemetry tracing is opt-in and activated by setting <strong><code>AGENTIC_TRACING=1</code></strong>. The exporter endpoint, protocol, and service name are then read from the standard <code>OTEL_EXPORTER_OTLP_ENDPOINT</code>, <code>OTEL_EXPORTER_OTLP_PROTOCOL</code>, and <code>OTEL_SERVICE_NAME</code> variables (defaults: gRPC to <code>http://localhost:4317</code>). The tracer is obtained via <code>get_tracer()</code>, which returns <code>None</code> when tracing is disabled; all call sites guard with <code>if _tracer:</code>.</p>
-<p>Traced spans include <code>engine.execute</code> (top-level workflow span on <code>DAGExecutor.execute()</code>) and <code>agent.&lt;name&gt;</code> (per-agent span on <code>BaseAgent.run()</code>), plus RAG pipeline stages. On server shutdown, <code>shutdown_tracing()</code> flushes pending spans. Any OTLP-compatible collector (Jaeger, Tempo, etc.) works. CORS headers expose <code>traceparent</code> and <code>tracestate</code> so cross-origin frontends can read them.</p>
+<p>Traced spans include <code>engine.execute</code> (top-level workflow span on <code>DAGExecutor.execute()</code>) and <code>agent.&lt;name&gt;</code> (per-agent span on <code>BaseAgent.run()</code>). On server shutdown, <code>shutdown_tracing()</code> flushes pending spans. Any OTLP-compatible collector (Jaeger, Tempo, etc.) works. CORS headers expose <code>traceparent</code> and <code>tracestate</code> so cross-origin frontends can read them.</p>
 <h3 id="142-metrics">14.2 Metrics<a class="headerlink" href="#142-metrics" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong><code>integrations/metrics.py</code></strong> — OTEL Metrics SDK with a Prometheus-compatible <code>/metrics</code> scrape endpoint, enabled with <code>AGENTIC_METRICS=1</code>. Imports are guarded so the module degrades to a no-op when <code>opentelemetry-exporter-prometheus</code> is not installed.</li>
@@ -5315,9 +5216,9 @@ CLI does not use the provider-backed factory described above. See
 <h2 id="15-wire-format-codegen-gate">15. Wire-format codegen gate<a class="headerlink" href="#15-wire-format-codegen-gate" title="Permanent link">&para;</a></h2>
 <p>The Pydantic contracts are the source for committed JSON Schemas and generated
 TypeScript interfaces. From <code>agentic-workflows-v2</code>:</p>
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">scripts</span><span class="p">.</span><span class="n">generate_ts_types</span>
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">npm</span> <span class="p">-</span><span class="n">-prefix</span> <span class="n">ui</span> <span class="n">run</span> <span class="n">generate</span><span class="p">:</span><span class="n">types</span>
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">python</span> <span class="n">scripts</span><span class="p">/</span><span class="n">generate_schemas</span><span class="p">.</span><span class="n">py</span>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">scripts</span><span class="p">.</span><span class="n">generate_ts_types</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">npm</span> <span class="p">-</span><span class="n">-prefix</span> <span class="n">ui</span> <span class="n">run</span> <span class="n">generate</span><span class="p">:</span><span class="n">types</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">python</span> <span class="n">scripts</span><span class="p">/</span><span class="n">generate_schemas</span><span class="p">.</span><span class="n">py</span>
 </span></code></pre></div>
 <p>The drift checks cover execution events, chat contracts, step results, DAG
 responses, workflow input and editor shapes, and run summaries. CI fails when
@@ -5335,7 +5236,7 @@ generated files differ from the committed versions. See
 <p>Both native and LangGraph engines run end-to-end without LLM provider credentials. Structured JSON parsers in the agent layer still emit valid <code>StepResult</code> objects. This mode is intended for CI smoke tests and local development without API keys.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>No-LLM mode is <strong>not</strong> a simulator. Evaluation runs and semantic RAG retrieval require real provider keys.</p>
+<p>No-LLM mode is <strong>not</strong> a simulator. Evaluation runs require real provider keys.</p>
 </div>
 <hr />
 <h2 id="17-configuration">17. Configuration<a class="headerlink" href="#17-configuration" title="Permanent link">&para;</a></h2>
@@ -5471,7 +5372,7 @@ generated files differ from the committed versions. See
 <hr />
 <h2 id="18-cli">18. CLI<a class="headerlink" href="#18-cli" title="Permanent link">&para;</a></h2>
 <p><strong>Source:</strong> <code>agentic_v2/cli/</code></p>
-<p>The CLI is implemented with <strong>Typer</strong>. <code>rag</code> and <code>devex</code> are command groups:</p>
+<p>The CLI is implemented with <strong>Typer</strong>. <code>devex</code> is a command group:</p>
 <table>
 <thead>
 <tr>
@@ -5511,14 +5412,6 @@ generated files differ from the committed versions. See
 <tr>
 <td><code>agentic version</code></td>
 <td>Print version information</td>
-</tr>
-<tr>
-<td><code>agentic rag ingest --source &lt;path&gt;</code></td>
-<td>Ingest documents into the RAG index</td>
-</tr>
-<tr>
-<td><code>agentic rag search &lt;query&gt;</code></td>
-<td>Run a search query against the RAG index</td>
 </tr>
 </tbody>
 </table>
@@ -5571,9 +5464,8 @@ which is not designed for large-scale analytical queries.</p>
 </ul>
 <h3 id="current-architecture-gaps">Current architecture gaps<a class="headerlink" href="#current-architecture-gaps" title="Permanent link">&para;</a></h3>
 <ul>
-<li>The default vector store / memory implementations are in-memory; the LanceDB adapter exists but is optional.</li>
+<li>The only memory implementation is in-memory (<code>InMemoryStore</code>); there is no durable backend.</li>
 <li>No adapter/tool plugin discovery — registration is import-time only (no <code>entry_points</code> or directory scan).</li>
-<li>RAG prompt-injection hardening (system-prompt-level delimiter framing for retrieved documents) is a noted architectural gap.</li>
 </ul>
 <h3 id="prioritized-recommendations">Prioritized recommendations<a class="headerlink" href="#prioritized-recommendations" title="Permanent link">&para;</a></h3>
 <table>
@@ -5610,41 +5502,27 @@ which is not designed for large-scale analytical queries.</p>
 </tr>
 <tr>
 <td>4</td>
-<td>Add RAG prompt-injection hardening (delimiter framing in system prompts for retrieved docs)</td>
-<td style="text-align: center;">4</td>
-<td style="text-align: center;">M</td>
-<td style="text-align: center;">High</td>
-</tr>
-<tr>
-<td>5</td>
-<td>Promote the persistent <code>LanceDBVectorStore</code> path to a documented production configuration</td>
-<td style="text-align: center;">4</td>
-<td style="text-align: center;">M</td>
-<td style="text-align: center;">Medium</td>
-</tr>
-<tr>
-<td>6</td>
 <td>Continue splitting <code>server/routes/workflows.py</code> into smaller route modules</td>
 <td style="text-align: center;">3</td>
 <td style="text-align: center;">S</td>
 <td style="text-align: center;">Medium</td>
 </tr>
 <tr>
-<td>7</td>
+<td>5</td>
 <td>Add a standalone <code>quickstart.py</code> / CLI command running a simple workflow end-to-end</td>
 <td style="text-align: center;">3</td>
 <td style="text-align: center;">S</td>
 <td style="text-align: center;">Medium</td>
 </tr>
 <tr>
-<td>8</td>
-<td>Document "How to implement ExecutionEngine / VectorStoreProtocol" with test templates</td>
+<td>6</td>
+<td>Document "How to implement ExecutionEngine" with test templates</td>
 <td style="text-align: center;">3</td>
 <td style="text-align: center;">S</td>
 <td style="text-align: center;">Medium</td>
 </tr>
 <tr>
-<td>9</td>
+<td>7</td>
 <td>Add adapter/tool plugin discovery via <code>entry_points</code> or directory scan</td>
 <td style="text-align: center;">3</td>
 <td style="text-align: center;">M</td>
@@ -5659,7 +5537,6 @@ which is not designed for large-scale analytical queries.</p>
 <li><strong>Operations / deployment</strong>: Focus on §17 (configuration), §13 (security), §14 (observability), and <code>docs/deployment-guide.md</code>.</li>
 <li><strong>Architect reviewing a change</strong>: Read §5.2 (request lifecycle) and the relevant adapter in <code>adapters/</code>.</li>
 <li><strong>Security reviewer</strong>: Read §13 in full, plus <code>server/auth.py</code>, <code>server/middleware/__init__.py</code>, and <code>contracts/sanitization.py</code>.</li>
-<li><strong>RAG engineer</strong>: Proceed directly to <code>docs/rag/index.md</code>.</li>
 </ul>
 
 
@@ -5683,7 +5560,7 @@ which is not designed for large-scale analytical queries.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 31, 2026 12:55:56 UTC">August 31, 2026</span>
   </span>
 
     

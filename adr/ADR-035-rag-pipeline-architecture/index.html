@@ -1031,10 +1031,6 @@
         
       
         
-          
-        
-      
-        
       
     
     
@@ -1052,9 +1048,8 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
         
           
-          <div class="md-nav__link md-nav__container">
-            <a href="../../rag/" class="md-nav__link ">
-              
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
   
   
   <span class="md-ellipsis">
@@ -1068,14 +1063,8 @@
   
   
 
-            </a>
-            
-              
-              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
-          </div>
+            <span class="md-nav__icon md-icon"></span>
+          </label>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
@@ -1142,8 +1131,6 @@
     </li>
   
 
-              
-            
               
             
               
@@ -2990,14 +2977,17 @@
 
 
 <h1 id="adr-035-rag-pipeline-architecture-lancedb-voyage-4-hybrid-search">ADR-035: RAG Pipeline Architecture (LanceDB + Voyage 4 Hybrid Search)<a class="headerlink" href="#adr-035-rag-pipeline-architecture-lancedb-voyage-4-hybrid-search" title="Permanent link">&para;</a></h1>
-<p><strong>Status:</strong> Accepted
+<p><strong>Status:</strong> Superseded — the <code>agentic_v2/rag/</code> package this ADR describes was
+removed outright; see ADR-057.
 <strong>Date:</strong> 2026-06-17
 <strong>Amended:</strong> 2026-07-28 — reconciled with the as-built code. The original text
 described the pipeline as intended; several capabilities it described in the
 present tense were never written. The sections below now state what exists and
 name what does not. The title is unchanged because <code>ADR-INDEX.md</code> and four other
 documents link this ADR by title.
-<strong>Related:</strong> <a href="../ADR-014-pydantic-wire-format/">ADR-014</a> (wire-format contract discipline), <a href="../ADR-001-002-003-architecture-decisions/">ADR-002</a> (SmartModelRouter), <a href="../ADR-019-dag-executor-top-level-timeout/">ADR-019</a> (DAG timeout), <a href="../ADR-023-executionkit-runtime-contract-relationship/">ADR-023</a> (ExecutionKit execution kernel)</p>
+<strong>Related:</strong> <a href="../ADR-014-pydantic-wire-format/">ADR-014</a> (wire-format contract discipline), <a href="../ADR-001-002-003-architecture-decisions/">ADR-002</a> (SmartModelRouter), <a href="../ADR-019-dag-executor-top-level-timeout/">ADR-019</a> (DAG timeout), <a href="../ADR-023-executionkit-runtime-contract-relationship/">ADR-023</a> (ExecutionKit execution kernel)
+<strong>Superseded by:</strong> <a href="../ADR-057-remove-rag-package/">ADR-057</a> — Remove the
+<code>agentic_v2.rag</code> Package (Superseded by groundkit)</p>
 <hr />
 <h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
 <p>The runtime needs a retrieval-augmented generation (RAG) pipeline that agents
@@ -3480,7 +3470,7 @@ unimplemented; read it as rationale, not as a description of the code.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:56:55 UTC">July 29, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 29, 2026 22:33:47 UTC">August 29, 2026</span>
   </span>
 
     
