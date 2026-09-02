@@ -181,7 +181,8 @@ superseded; the adapter remains part of the current architecture. See
 ## Model providers
 
 The runtime supports OpenAI, Anthropic, Gemini, Azure OpenAI, Azure AI Foundry,
-NVIDIA NIM, OpenRouter, Ollama, and compatible local endpoints. Provider
+NVIDIA NIM, OpenRouter, DigitalOcean Serverless Inference, Ollama, and
+compatible local endpoints. Provider
 packages and credentials depend on the selected execution path.
 
 Copy the environment template before using a real provider:

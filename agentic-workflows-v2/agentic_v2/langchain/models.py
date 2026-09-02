@@ -69,6 +69,7 @@ from ..models.ollama_discovery import discover_ollama_models
 from .model_builders import (
     _resolve_notebooklm_model_name,
     build_anthropic_model,
+    build_digitalocean_model,
     build_gemini_model,
     build_github_model,
     build_lmstudio_model,
@@ -592,6 +593,7 @@ _PREFIX_BUILDERS: tuple[tuple[str, Any], ...] = (
     ("openai:", build_openai_model),
     ("nvidia:", build_nvidia_model),
     ("openrouter:", build_openrouter_model),
+    ("digitalocean:", build_digitalocean_model),
     ("anthropic:", build_anthropic_model),
     ("claude:", build_anthropic_model),
     ("gemini:", build_gemini_model),
@@ -609,6 +611,7 @@ _KNOWN_PREFIXES: tuple[str, ...] = (
     "openai:",
     "nvidia:",
     "openrouter:",
+    "digitalocean:",
     "azure:",
     "local:",
     "windows-ai:",
@@ -674,8 +677,7 @@ def get_chat_model(model_id: str, temperature: float = 0.0) -> Any:
 
     supported = ", ".join(prefix for prefix, _ in _PREFIX_BUILDERS)
     raise ValueError(
-        f"Unsupported model provider in '{model_id}'. "
-        f"Supported prefixes: {supported}."
+        f"Unsupported model provider in '{model_id}'. Supported prefixes: {supported}."
     )
 
 
@@ -848,6 +850,7 @@ __all__ = [
     "build_openai_model",
     "build_nvidia_model",
     "build_openrouter_model",
+    "build_digitalocean_model",
     "build_anthropic_model",
     "build_gemini_model",
     "build_notebooklm_model",
