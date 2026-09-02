@@ -14,4 +14,12 @@ reports/
 artifacts/
 sandbox/
 
+# Ledger databases and their blob store. The tracked artifact is the JSONL
+# export (ledger/export/), which diffs and rebuilds the database via
+# import_jsonl; a binary .db does neither. WAL/SHM sidecars are transient.
+ledger/*.db
+ledger/*.db-wal
+ledger/*.db-shm
+ledger/blobs/
+
 __pycache__/
