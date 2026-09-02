@@ -157,6 +157,12 @@ rises with file size and the ratio compresses rather than growing further
 
 ### 1.6 Every report on disk
 
+Regenerated 2026-09-02 from `reports/` (42 files, in start order) when
+the campaign landed on `main`; each row is the report's own `summary` block.
+`err` and `timeout` are operational non-verdicts (ADR-0008), never folded into
+`fail`. Which rows may be unioned is governed by §1.3, §1.7-§1.9 and the
+segment-boundary note above §1, not by this inventory.
+
 | report | n | pass | fail | err | timeout |
 |---|---|---|---|---|---|
 | `arm-a-direct.json` | 132 | 110 | 19 | 0 | 3 |
@@ -167,16 +173,47 @@ rises with file size and the ratio compresses rather than growing further
 | `arm-a-direct-bigfile-probe.json` | 1 | 1 | 0 | 0 | 0 |
 | `arm-a-direct-swebench.json` *(invalid)* | 35 | 25 | 9 | 1 | 0 |
 | `arm-b-review-loop-swebench.json` *(invalid)* | 35 | 18 | 16 | 1 | 0 |
-| `arm-a-direct-swebench-c4.json` | 35 | 24 | 11 | 0 | 0 |
 | `arm-b-review-loop-swebench-fixed.json` | 35 | 21 | 14 | 0 | 0 |
+| `arm-a-direct-swebench-c4.json` | 35 | 24 | 11 | 0 | 0 |
 | `arm-a-direct-wave1.json` | 12 | 5 | 7 | 0 | 0 |
 | `arm-b-review-loop-wave1.json` | 12 | 7 | 4 | 0 | 1 |
+| `arm-a-direct-wave2.json` | 12 | 6 | 5 | 1 | 0 |
+| `arm-b-review-loop-wave2.json` | 12 | 7 | 3 | 1 | 1 |
+| `arm-a-direct-wave3.json` | 8 | 5 | 3 | 0 | 0 |
+| `arm-b-review-loop-wave3.json` | 8 | 6 | 2 | 0 | 0 |
+| `arm-a-direct-wave4.json` | 12 | 6 | 5 | 1 | 0 |
+| `arm-b-review-loop-wave4.json` | 12 | 6 | 6 | 0 | 0 |
+| `arm-a-direct-wave5.json` | 12 | 7 | 4 | 1 | 0 |
+| `arm-b-review-loop-wave5.json` | 12 | 4 | 8 | 0 | 0 |
+| `arm-a-direct-wave6.json` | 7 | 3 | 4 | 0 | 0 |
+| `arm-b-review-loop-wave6.json` | 7 | 4 | 2 | 0 | 1 |
+| `arm-a-direct-wave7.json` | 17 | 8 | 9 | 0 | 0 |
+| `arm-b-review-loop-wave7.json` | 17 | 10 | 7 | 0 | 0 |
 | `arm-a-direct-hard-slice.json` | 20 | 5 | 15 | 0 | 0 |
 | `arm-b-review-loop-hard-slice.json` | 20 | 3 | 16 | 0 | 1 |
+| `arm-a-direct-wave8.json` | 17 | 11 | 4 | 2 | 0 |
+| `arm-b-review-loop-wave8.json` | 17 | 8 | 5 | 3 | 1 |
+| `arm-a-direct-wave9.json` | 16 | 6 | 5 | 4 | 1 |
+| `arm-b-review-loop-wave9.json` | 16 | 5 | 1 | 9 | 1 |
+| `arm-a-direct-nim1.json` | 16 | 8 | 6 | 0 | 2 |
+| `arm-a-direct-wave10.json` | 18 | 12 | 6 | 0 | 0 |
+| `arm-b-review-loop-wave10.json` | 18 | 8 | 10 | 0 | 0 |
+| `arm-b-review-loop-nim1.json` | 16 | 8 | 5 | 3 | 0 |
+| `arm-a-direct-wave11.json` | 18 | 9 | 9 | 0 | 0 |
+| `arm-b-review-loop-wave11.json` | 18 | 6 | 12 | 0 | 0 |
+| `arm-a-direct-run3backfill.json` | 168 | 94 | 72 | 2 | 0 |
+| `arm-a-direct-nimbackfill.json` *(arm A only, degraded endpoint — §1.8)* | 204 | 26 | 53 | 22 | 103 |
+| `arm-a-direct-minimax1.json` | 204 | 59 | 140 | 4 | 1 |
+| `arm-b-review-loop-minimax1.json` | 204 | 50 | 146 | 8 | 0 |
+| `arm-a-direct-glm53.json` *(non-viable — §2.22)* | 204 | 0 | 0 | 204 | 0 |
+| `arm-b-review-loop-glm53.json` *(non-viable — §2.22)* | 204 | 0 | 0 | 204 | 0 |
 
-The two marked *invalid* are retained deliberately: they are the evidence for
-the confounds in §2.6 and §2.7, and deleting them would erase the record of
-why the matched pair had to be re-run.
+Retained deliberately, per WAVE-RUNBOOK rule 3: the two marked *invalid* are the
+evidence for the confounds in §2.6 and §2.7; `arm-a-direct-nimbackfill.json`
+(arm A only, 103 timeouts against a degraded free endpoint, §1.8) and the `glm53`
+pair (204/204 errors on both arms, §2.22) are the record of why those tracks
+stopped, not capability readings. Deleting any of them would erase the record of
+why a re-run or a track change was needed.
 
 ### 1.7 SWE-bench Verified, new segment (post-`PR #282` harness)
 
@@ -473,6 +510,13 @@ anything the lockfile does not know about.
 **Fix:** `uv add pandas` in `agentic-workflows-v2/pyproject.toml`, so `uv.lock`
 pins it and every future sync — on this machine or a fresh clone — keeps it.
 Confirmed to survive a subsequent `uv run` from `evals/swe_ab`.
+
+**2026-09-02, on landing to `main`:** pandas moved from the runtime dependency
+set to a `swe-ab` extra (`agentic-workflows-v2/pyproject.toml`), since only
+`build_swebench_cases.py` imports it. The lockfile still pins it, but a plain
+exact `uv sync` without `--extra swe-ab` drops it again — so every runbook
+command that builds cases now reads `uv run --extra swe-ab ...`, and
+`TEST-SETUP.md` §2 says so.
 
 Retrying wave 2 then hit a second, unrelated bug: `docker()` in
 `build_swebench_cases.py` crashed with `TypeError: unsupported operand
@@ -854,7 +898,7 @@ time already sunk.
 
 | | |
 |---|---|
-| Branch | `swe_ab_evals` (agentic-runtime-platform) |
+| Branch | `main` (agentic-runtime-platform) — the campaign branches `swe_ab_evals`/`eval_ledger` landed 2026-09 via PR #282 (squash, through wave 7's harness) and the follow-up campaign PR |
 | Kit | `agentic-workflows-v2/evals/swe_ab/` |
 | Reports | `reports/*.json`, one per arm per run |
 | Case data | gitignored; rebuilt by `tools/mine_cases.py`, `tools/build_swebench_cases.py` |

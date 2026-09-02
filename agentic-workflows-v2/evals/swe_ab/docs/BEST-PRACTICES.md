@@ -105,7 +105,7 @@ capability.
 | 60 | ~15 pp |
 | ~200 | ~8 pp — what this campaign's question actually needs |
 
-At 59 paired instances with 14 discordant pairs, differences at this scale are
+At 115 paired instances with 29 discordant pairs, differences at this scale are
 not resolvable. **The interval is the result, not the point estimate.**
 
 ---
@@ -282,7 +282,7 @@ quoted without them is a different, stronger claim than the evidence supports:
 
 1. **Oracle retrieval.** The model is told which file to fix. Full SWE-bench also
    requires finding it. **These are not leaderboard numbers.**
-2. **Underpowered.** 59 paired instances with 14 discordant pairs cannot resolve
+2. **Underpowered.** 115 paired instances with 29 discordant pairs cannot resolve
    a difference of this size.
 3. **One model, one attempt.** `attempts=1`; pass@1 hides per-case sampling
    noise. Report pass@1 and pass@3 side by side when you can.
