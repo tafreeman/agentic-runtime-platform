@@ -41,6 +41,7 @@ test: _require-venv
 
 docs: _require-venv
     & "{{venv_python}}" agentic-workflows-v2/scripts/check_docs_refs.py
+    & "{{venv_python}}" scripts/check-doc-drift.py
     & "{{venv_python}}" scripts/generate_doc_stats.py --check
 
 # Build the exact release artifacts, validate metadata, then install all wheels

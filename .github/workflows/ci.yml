@@ -521,7 +521,7 @@ jobs:
         run: python scripts/validate-workflows.py
 
   check-doc-drift:
-    name: Protocol ↔ ARCHITECTURE.md drift
+    name: Documentation and ADR governance drift
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -529,8 +529,11 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: "3.11"
-      - name: Check protocol names appear in ARCHITECTURE.md
+      - name: Check protocol and ADR documentation drift
         run: python scripts/check-doc-drift.py
+
+      - name: Check current documentation paths and retired surfaces
+        run: python agentic-workflows-v2/scripts/check_docs_refs.py
 
   doc-stats-drift:
     # Fail the build if docs/index.md's derived "by the numbers" stats (backend

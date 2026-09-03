@@ -1,6 +1,6 @@
 # ADR-042: Adopt `agentic-evalkit` as ARP's Evaluation Framework (Sliced Migration)
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-07-03
 **Related:** `agentic-v2-eval/` (in-tree package being superseded),
 `agentic_v2/scoring/step_scoring.py`, `agentic_v2/scoring/evalkit_bridge.py`

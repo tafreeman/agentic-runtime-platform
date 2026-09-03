@@ -45,7 +45,6 @@ agentic <command> --help
 | `validate` | Validate and compile a workflow |
 | `serve` | Start the FastAPI server |
 | `version` | Print the package version |
-| `rag` | Use the experimental process-local RAG CLI |
 | `devex` | Run development diagnostics |
 
 Example:
@@ -57,8 +56,8 @@ agentic run code_review --input .\input.json --output .\result.json
 The input file is JSON. The default adapter is `langchain`; pass
 `--adapter native` when you need the native engine.
 
-See the repository [CLI reference](../../docs/cli-reference.md) for arguments,
-exit behavior, and current RAG limitations.
+See the repository [CLI reference](../../docs/cli-reference.md) for arguments
+and exit behavior.
 
 ## HTTP and streams
 

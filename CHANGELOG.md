@@ -6,6 +6,12 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### ARP public-truth and ADR governance drift controls (2026-09-03)
+
+- Removed current-facing references to the retrieval package and command surface deleted by ADR-057, and pointed migration guidance at the standalone groundkit repository.
+- Marked ADR-042 Accepted while retaining the implementation tracker's honest partial-slice status; removed accepted ADR-054 and ADR-057 from the parked-number note.
+- Expanded the documentation drift gates to reject retired runtime surfaces, ADR body/index status disagreements, and accepted ADR numbers still described as parked or in flight.
+
 ### SWE-bench A/B campaign evidence lands on main; `swe-ab` extra (2026-09-02)
 
 - **`evals/swe_ab/reports/` is now tracked** (42 reports, ~9 MB): the per-sample verdicts are the evidence the campaign exists to produce, and they previously lived only on whichever machine last ran a wave. `artifacts/`, `sandbox/` and the case trees stay ignored. `docs/EVIDENCE.md` §1.6 is regenerated from the corpus and carries the trust caveats per slice; nothing is deleted (WAVE-RUNBOOK rule 3).

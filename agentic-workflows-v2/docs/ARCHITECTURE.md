@@ -41,7 +41,6 @@ for the completed workflow result.
 | `agents/` | Typed model-and-tool loops and orchestration |
 | `models/` | Model tiers, routing, clients, statistics, and fallback |
 | `tools/` | Tool registry and built-in tools |
-| `rag/` | Ingestion, retrieval, context assembly, and RAG tools |
 | `evaluation/` and `scoring/` | Runtime evaluation and step scoring |
 | `governance/`, `security/`, `middleware/` | Approval and request controls |
 | `server/` | FastAPI routes, background runs, auth, and live streams |
@@ -69,8 +68,8 @@ written as JSON run logs for history and diagnostics. Checkpoint support is
 separate and must be configured for resumable work.
 
 Do not assume process-local state is shared between server replicas. Rate
-limits, some caches, the experimental RAG CLI, and other in-memory components
-need external coordination or storage when replicas must agree.
+limits, caches, and other in-memory components need external coordination or
+storage when replicas must agree.
 
 ## Model and tool boundaries
 

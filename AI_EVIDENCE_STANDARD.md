@@ -106,10 +106,12 @@ Required:
 - retrieval and context-assembly tests; and
 - persistence behavior across process boundaries.
 
-The current `agentic rag` CLI uses a process-local hash embedder and in-memory
-store. It is useful for exercising the command path, but it is not evidence of
-semantic retrieval or persistent indexing. Provider-backed embeddings and
-LanceDB require a separately verified construction path.
+ARP does not ship a retrieval package or command. A claim that composes ARP
+with an external retrieval system must identify that system and verify every
+construction and persistence path above. The standalone
+[groundkit](https://github.com/tafreeman/groundkit) repository is the successor
+named by [ADR-057](docs/adr/ADR-057-remove-rag-package.md); its evidence remains
+independent from ARP's.
 
 ### Evaluation
 
@@ -221,7 +223,8 @@ the underlying Python and npm commands directly.
 
 These limits must remain visible in public summaries:
 
-- The RAG CLI index is process-local and uses deterministic hash embeddings.
+- ARP ships no retrieval package or command; external retrieval evidence must
+  name and verify the integrated system separately.
 - `tools.llm.model_inventory` currently fails to import its legacy
   `llm_client` dependency.
 - ONNX discovery and exact-model LangChain chat do not use the same model-ID

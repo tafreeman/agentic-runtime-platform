@@ -117,17 +117,18 @@ June's work landed as a run of accepted ADRs rather than a named epic; the [ADR 
 |------|--------|------|
 | Safe AST expression interpreter replaces `eval()` in the engine condition evaluator | [ADR-024](adr/ADR-024-expression-evaluator-ast-sandbox.md) | 2026-06-13 |
 | Scoring/judge domain extracted into `agentic_v2.scoring` (breaks the server "god package"); import-time project-root resolution fix in the eval-config loader | [ADR-032](adr/ADR-032-extract-scoring-package.md), [ADR-033](adr/ADR-033-eval-config-project-root-resolution.md) | 2026-06-17 |
-| RAG modules for ingestion, retrieval, context assembly, and optional LanceDB storage. The current CLI still uses a process-local hash index. | [ADR-035](adr/ADR-035-rag-pipeline-architecture.md) | 2026-06-17 |
+| Retrieval modules shipped, then were removed after the package proved unwired and non-persistent; the standalone groundkit repository is the successor. | [ADR-035](adr/ADR-035-rag-pipeline-architecture.md), [ADR-057](adr/ADR-057-remove-rag-package.md) | 2026-06-17 → 2026-08-10 |
 | Model discovery overhaul: official `ollama` SDK backend, live Ollama discovery, LM Studio + ONNX local discovery, keyed cloud-provider discovery, and a curated single-source model registry with probe-time drift detection | [ADR-036](adr/ADR-036-ollama-sdk-backend.md) – [ADR-040](adr/ADR-040-curated-model-registry.md) | 2026-06-21 → 2026-06-25 |
 | Bounded human-approval gate timeout — a hung `ApprovalProvider` fails closed (DENIED) within a configurable bound (default 30 min) | [ADR-041](adr/ADR-041-approval-gate-timeout.md) | 2026-06-29 |
 
-**In flight:** [ADR-042](adr/ADR-042-agentic-evalkit-adoption.md) remains
-Proposed. `agentic-evalkit>=0.3.0,<0.4.0` is available through the runtime's
+**Accepted, partially implemented:**
+[ADR-042](adr/ADR-042-agentic-evalkit-adoption.md) records the sliced migration
+decision. `agentic-evalkit>=0.3.0,<0.4.0` is available through the runtime's
 optional `eval` extra, and the additive `evalkit_bridge` module has landed. The
 pin tracks the published PyPI release, and CI installs the extra in the
 `evalkit-bridge-tests` job, so the bridge is exercised rather than skipped.
 `step_scoring.py` still imports the in-tree `agentic_v2_eval` package, so the
-cutover and later package removal have not happened.
+cutover and later package removal remain future slices.
 
 ---
 
