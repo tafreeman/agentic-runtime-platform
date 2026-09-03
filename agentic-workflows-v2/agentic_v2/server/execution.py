@@ -315,11 +315,18 @@ async def _run_via_native_adapter(
     from ..adapters import get_registry
     from ..engine.context import ExecutionContext
     from ..workflows.loader import WorkflowLoader
+    from ..workflows.runner import (
+        resolve_workflow_outputs,
+        seed_workflow_inputs,
+        validate_workflow_inputs,
+    )
 
     loader = WorkflowLoader()
     workflow_def = loader.load(workflow_name)
     dag = workflow_def.dag
-    ctx = ExecutionContext(variables=dict(workflow_inputs))
+    validated = validate_workflow_inputs(workflow_def, workflow_inputs)
+    ctx = ExecutionContext(workflow_id=run_id, run_id=run_id)
+    seed_workflow_inputs(ctx, validated)
 
     engine = get_registry().get_adapter(adapter_name)
     raw = await engine.execute(
@@ -329,7 +336,14 @@ async def _run_via_native_adapter(
         thread_id=run_id,
     )
 
-    return normalize_workflow_result(raw, workflow_name=workflow_name, run_id=run_id)
+    result = normalize_workflow_result(
+        raw,
+        workflow_name=workflow_name,
+        run_id=run_id,
+    )
+    result.final_output = resolve_workflow_outputs(workflow_def, ctx, result)
+    result.workflow_name = workflow_def.name
+    return result
 
 
 async def _run_native_stream(

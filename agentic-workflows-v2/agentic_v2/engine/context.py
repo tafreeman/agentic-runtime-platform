@@ -184,11 +184,9 @@ class ExecutionContext:
     # Checkpointing
     checkpoint_dir: Path | None = None
 
-    # Init-only convenience: callers may seed the variable store directly via
-    # ``ExecutionContext(variables={...})`` (used by the native DAG adapter in
-    # server/execution.py and the CLI helpers). ``__post_init__`` copies it into
-    # the private ``_variables`` field; the langchain adapter seeds ``_variables``
-    # by other means, which is why only the native/CLI paths exercised this.
+    # Init-only convenience for low-level callers that construct dynamic DAGs
+    # and choose their context shape explicitly. Named YAML entry points instead
+    # validate values and seed the ``inputs`` namespace used by expressions.
     variables: InitVar[dict[str, Any] | None] = None
 
     def __post_init__(self, variables: dict[str, Any] | None) -> None:

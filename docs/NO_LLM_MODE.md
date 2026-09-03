@@ -26,13 +26,14 @@ $env:AGENTIC_NO_LLM = "1"
 ```
 
 `test_deterministic` contains two tier-0 agent steps. In the current native
-path those agents still enter the model-client loop, which returns placeholder
-values instead of contacting a provider. The workflow finishes with
-`Status: SUCCESS`, but may log input-mapping and tool-provider warnings. Use it
-as an executor smoke test, not as proof that its step outputs are meaningful.
+and LangGraph paths those agents execute deterministic echo/count handlers
+without entering a model-client loop. The workflow finishes with
+`Status: SUCCESS` and returns the declared `processed_text` and `step_count`
+outputs, making it the preferred adapter smoke test.
 
-Depending on the client path, placeholder output may be a fixed text value or
-a small mapping such as:
+Tier-1 and higher agents still use placeholder clients in this mode. Depending
+on the client path, placeholder output may be a fixed text value or a small
+mapping such as:
 
 ```text
 {"placeholder": true, "reason": "llm_unavailable"}

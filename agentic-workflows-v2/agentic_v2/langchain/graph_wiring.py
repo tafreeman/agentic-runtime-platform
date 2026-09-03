@@ -42,6 +42,7 @@ from ..artifact_contracts import (
     expected_output_keys,
     validate_and_normalize_artifacts,
 )
+from ..engine.consensus import coerce_min_agreement, majority_vote
 from ..engine.llm_output_parsing import (
     extract_json_candidates,
     normalize_expected_structure,
@@ -106,6 +107,38 @@ def _tier0_count_text(state: WorkflowState) -> dict[str, Any]:
     }
 
 
+def _tier0_consensus(state: WorkflowState) -> dict[str, Any]:
+    """Majority-vote resolved samples with the native tier-0 semantics."""
+    ctx = dict(state.get("context", {}))
+    samples = ctx.get("samples")
+    if not isinstance(samples, (list, tuple)):
+        samples = [] if samples is None else [samples]
+
+    mode = ctx.get("mode") or "majority"
+    if mode != "majority":
+        logger.warning("Unknown consensus mode '%s'; using majority vote.", mode)
+
+    result = majority_vote(
+        samples,
+        min_agreement=coerce_min_agreement(ctx.get("min_agreement")),
+    )
+    output = {
+        "winner": result.winner,
+        "agreement": result.agreement,
+        "votes": result.votes,
+        "tied": result.tied,
+        "meets_threshold": result.meets_threshold,
+        "total_samples": result.total_samples,
+    }
+    return {
+        "context": {**ctx, **output},
+        "steps": {
+            **state.get("steps", {}),
+            "__current__": {"status": "success", "outputs": output},
+        },
+    }
+
+
 def _tier0_parse_code(state: WorkflowState) -> dict[str, Any]:
     """Deterministic code parsing (no LLM)."""
     ctx = dict(state.get("context", {}))
@@ -162,6 +195,7 @@ _TIER0_REGISTRY: dict[str, Any] = {
     "tier0_parser": _tier0_parse_code,
     "tier0_process": _tier0_process_text,
     "tier0_counter": _tier0_count_text,
+    "tier0_consensus": _tier0_consensus,
 }
 
 
@@ -820,7 +854,10 @@ def _build_failure_update(
         err_text = f"{err_text} (last model={last.get('model')}: {last.get('error')})"
     end_time = datetime.now(UTC)
     if lane_crossings:
-        failure_metadata = {**(failure_metadata or {}), "lane_crossings": lane_crossings}
+        failure_metadata = {
+            **(failure_metadata or {}),
+            "lane_crossings": lane_crossings,
+        }
     steps = record_step_result(
         state,
         step.name,
