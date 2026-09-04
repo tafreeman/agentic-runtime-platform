@@ -163,29 +163,12 @@ Tenant scoping ([ADR-022](adr/ADR-022-tenant-isolation.md)) resolves a tenant fr
 - **Status:** Accepted. `X-Tenant-ID` is a documented compatibility path for local/dev and API-key deployments (ADR-022), not a per-tenant security boundary in the unauthenticated default. [ROADMAP.md](ROADMAP.md) E8-2 is worded to match.
 - **Upstream fix:** None at the header layer — tenant enforcement requires an authenticated identity ([ADR-021](adr/ADR-021-jwt-oidc-authentication.md)) or a gateway.
 
-### 4.6 No CI job installs the `rag` extra, so the embedding and LanceDB paths are proven only against fakes
+### 4.6–4.11 Retired with the retrieval package
 
-*(Resolved by removal: the RAG package was removed from ARP — superseded by the standalone groundkit repo; see ADR-057.)*
-
-### 4.7 Cross-provider embedding fallback mixes semantic spaces and pins a single dimensionality
-
-*(Resolved by removal: the RAG package was removed from ARP — superseded by the standalone groundkit repo; see ADR-057.)*
-
-### 4.8 The reranker is not fully constructible from configuration
-
-*(Resolved by removal: the RAG package was removed from ARP — superseded by the standalone groundkit repo; see ADR-057.)*
-
-### 4.9 `InMemoryEmbedder` is a hash-based test double, not an embedder
-
-*(Resolved by removal: the RAG package was removed from ARP — superseded by the standalone groundkit repo; see ADR-057.)*
-
-### 4.10 A failed embedding call scrubs the credential from the message but not from the exception chain
-
-*(Resolved by removal: the RAG package was removed from ARP — superseded by the standalone groundkit repo; see ADR-057.)*
-
-### 4.11 The `agentic rag` commands do not share or persist an index
-
-*(Resolved by removal: the RAG package was removed from ARP — superseded by the standalone groundkit repo; see ADR-057.)*
+The six retrieval limitations previously recorded here are no longer current
+ARP behavior because the package and command surface were removed. The removal,
+migration boundary, and historical defects remain recorded in
+[ADR-057](adr/ADR-057-remove-rag-package.md) and the changelog.
 
 ### 4.12 The model inventory command fails from the repository root
 

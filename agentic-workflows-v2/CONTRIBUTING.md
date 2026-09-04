@@ -17,7 +17,6 @@ Keep runtime concerns inside their existing areas:
 | Public wire models | `agentic_v2/contracts/` and selected `agentic_v2/server/models*` |
 | Server | `agentic_v2/server/` |
 | Model routing | `agentic_v2/models/` |
-| RAG | `agentic_v2/rag/` |
 | Workflow definitions | `agentic_v2/workflows/` |
 | Dashboard | `ui/src/` |
 

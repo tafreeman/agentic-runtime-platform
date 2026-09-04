@@ -41,7 +41,6 @@ artifacts.
 | `middleware/` | Request and response middleware |
 | `models/` | Routing, clients, statistics, and model tiers |
 | `prompts/` | Runtime persona prompts |
-| `rag/` | Retrieval and ingestion components |
 | `scoring/` | Runtime step and workflow scoring |
 | `security/` | Input, network, and execution controls |
 | `server/` | FastAPI application, models, routes, and live streams |

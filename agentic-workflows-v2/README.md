@@ -40,7 +40,6 @@ Useful optional extras are:
 | `eval` | Agentic EvalKit integration |
 | `tracing` | OpenTelemetry exporters and metrics support |
 | `claude` | Claude SDK adapters |
-| `rag` | LanceDB and document-loading support |
 | `devex` | Process and port-management helpers |
 | `mcp` | MCP support |
 | `redis` | Redis event and replay support |
@@ -134,7 +133,6 @@ See [Workflows](docs/WORKFLOWS.md) for the YAML format and runtime behavior.
 | `agentic_v2/contracts/` | Stable request, result, and event models |
 | `agentic_v2/workflows/` | Workflow loading, validation, and definitions |
 | `agentic_v2/server/` | FastAPI application and routes |
-| `agentic_v2/rag/` | Retrieval components and embedding adapters |
 | `tests/` | Runtime and server tests |
 | `ui/` | React dashboard |
 | `scripts/` | Contract generation and local utilities |
@@ -154,7 +152,7 @@ you use. Important behavior:
 - `AGENTIC_CORS_ORIGINS` sets the browser origin allowlist.
 - `AGENTIC_TRACING=true` enables tracing when the `tracing` extra is installed.
 
-The full variable reference, including RAG, OIDC, replay, checkpoint, and
+The full variable reference, including OIDC, replay, checkpoint, and
 tool-boundary settings, is in [Configuration](../docs/configuration.md).
 
 ## Development checks
@@ -184,7 +182,7 @@ TypeScript types. Follow the commands in the root
 - [Architecture](../docs/ARCHITECTURE.md)
 - [Getting started](../docs/getting-started/index.md)
 - [Runtime API](../docs/api-contracts-runtime.md)
-- [RAG](../docs/rag/index.md)
+- [Retrieval migration](../docs/adr/ADR-057-remove-rag-package.md)
 - [Known limitations](../docs/KNOWN_LIMITATIONS.md)
 - [Package development guide](docs/DEVELOPMENT.md)
 

@@ -23,7 +23,7 @@ Tutorials:
 
 The repository-level [documentation site](../../docs/index.md) is the
 canonical operator and contributor guide. It covers configuration, deployment,
-security, evaluation, RAG, troubleshooting, and known limitations.
+security, evaluation, troubleshooting, and known limitations.
 
 ## Historical documents
 

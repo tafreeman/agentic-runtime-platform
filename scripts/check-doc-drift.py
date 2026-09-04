@@ -1,7 +1,7 @@
-"""Check that every Protocol class in core/protocols.py appears in docs/ARCHITECTURE.md.
+"""Check protocol documentation and ADR governance metadata for drift.
 
-Exit 0 if all protocol names are documented, exit 1 with a clear error listing
-the missing entries.
+Exit 0 when protocol names are documented, ADR body/index statuses agree, and
+the ADR reservation note does not claim a number already marked Accepted.
 
 Usage:
     python scripts/check-doc-drift.py
@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import re
 import sys
 from pathlib import Path
 
@@ -23,6 +24,23 @@ DEFAULT_PROTOCOLS_PATH = (
     REPO_ROOT / "agentic-workflows-v2" / "agentic_v2" / "core" / "protocols.py"
 )
 DEFAULT_DOCS_PATH = REPO_ROOT / "docs" / "ARCHITECTURE.md"
+DEFAULT_ADR_DIR = REPO_ROOT / "docs" / "adr"
+DEFAULT_ADR_INDEX = DEFAULT_ADR_DIR / "ADR-INDEX.md"
+
+ADR_INDEX_STATUS_RE = re.compile(
+    r"^\|\s+\*\*(?P<number>\d{3})\*\*\s+\|.*?\|\s+"
+    r"(?P<status>Accepted|Proposed|Superseded)(?:\s+→\s+\d{3})?\s+\|",
+    re.MULTILINE,
+)
+ADR_BODY_STATUS_RE = re.compile(
+    r"^\*\*Status:\*\*\s*(?P<status>Accepted|Proposed|Superseded)\b",
+    re.MULTILINE,
+)
+ADR_FILE_NUMBER_RE = re.compile(r"^ADR-(?P<number>\d{3})-")
+# Decisions whose acceptance is a repository invariant, not merely a claim that
+# the body and index happen to agree. ADR-042 is shipped through a pinned extra,
+# bridge implementation, boundary test, and dedicated CI lane.
+REQUIRED_ADR_STATUSES = {"042": "Accepted"}
 
 
 def extract_protocol_names(protocols_path: Path) -> list[str]:
@@ -99,6 +117,66 @@ def find_missing_protocols(
     return [name for name in protocol_names if name not in doc_text]
 
 
+def extract_adr_index_statuses(index_text: str) -> dict[str, str]:
+    """Return normalized ADR statuses from the index's quick-access table."""
+    return {
+        match.group("number"): match.group("status")
+        for match in ADR_INDEX_STATUS_RE.finditer(index_text)
+    }
+
+
+def extract_adr_body_statuses(adr_dir: Path) -> dict[str, tuple[str, Path]]:
+    """Return explicit ADR body statuses keyed by their three-digit number.
+
+    Early bundled ADRs do not carry ``**Status:**`` metadata and are skipped.
+    Every ADR that does declare the field is governed by this check.
+    """
+    statuses: dict[str, tuple[str, Path]] = {}
+    for path in sorted(adr_dir.glob("ADR-*.md")):
+        number_match = ADR_FILE_NUMBER_RE.match(path.name)
+        if not number_match or path.name == "ADR-INDEX.md":
+            continue
+        status_match = ADR_BODY_STATUS_RE.search(path.read_text(encoding="utf-8"))
+        if status_match:
+            statuses[number_match.group("number")] = (
+                status_match.group("status"),
+                path,
+            )
+    return statuses
+
+
+def find_adr_status_mismatches(
+    index_statuses: dict[str, str],
+    body_statuses: dict[str, tuple[str, Path]],
+) -> list[tuple[str, str, str, Path]]:
+    """Return body/index status disagreements for ADRs with explicit metadata."""
+    mismatches: list[tuple[str, str, str, Path]] = []
+    for number, (body_status, path) in sorted(body_statuses.items()):
+        index_status = index_statuses.get(number, "MISSING")
+        if body_status != index_status:
+            mismatches.append((number, body_status, index_status, path))
+    return mismatches
+
+
+def extract_claimed_adr_numbers(index_text: str) -> set[str]:
+    """Return numbers called claimed by parked or in-flight work in the note."""
+    note_match = re.search(
+        r"\*\*Note:\*\*(?P<note>.*?)(?:\n\n---|\Z)",
+        index_text,
+        re.DOTALL,
+    )
+    if not note_match:
+        return set()
+    claim_match = re.search(
+        r"(?P<refs>ADR-\d{3}.*?)\s+are claimed by parked or in-flight work",
+        note_match.group("note"),
+        re.DOTALL,
+    )
+    if not claim_match:
+        return set()
+    return set(re.findall(r"ADR-(\d{3})", claim_match.group("refs")))
+
+
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments.
 
@@ -123,6 +201,18 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_DOCS_PATH,
         help=f"Path to ARCHITECTURE.md (default: {DEFAULT_DOCS_PATH})",
     )
+    parser.add_argument(
+        "--adr-dir",
+        type=Path,
+        default=DEFAULT_ADR_DIR,
+        help=f"ADR directory (default: {DEFAULT_ADR_DIR})",
+    )
+    parser.add_argument(
+        "--adr-index",
+        type=Path,
+        default=DEFAULT_ADR_INDEX,
+        help=f"ADR index (default: {DEFAULT_ADR_INDEX})",
+    )
     return parser.parse_args()
 
 
@@ -137,6 +227,8 @@ def main() -> int:
 
     protocols_path: Path = args.protocols.resolve()
     docs_path: Path = args.docs.resolve()
+    adr_dir: Path = args.adr_dir.resolve()
+    adr_index: Path = args.adr_index.resolve()
 
     # Validate file existence before doing anything else.
     if not protocols_path.is_file():
@@ -153,6 +245,14 @@ def main() -> int:
         )
         return 2
 
+    if not adr_dir.is_dir():
+        print(f"ERROR: ADR directory not found: {adr_dir}", file=sys.stderr)
+        return 2
+
+    if not adr_index.is_file():
+        print(f"ERROR: ADR index not found: {adr_index}", file=sys.stderr)
+        return 2
+
     print(f"Parsing protocols from: {protocols_path}")
     protocol_names = extract_protocol_names(protocols_path)
     print(f"Found {len(protocol_names)} protocol(s): {', '.join(protocol_names)}")
@@ -162,28 +262,79 @@ def main() -> int:
 
     missing = find_missing_protocols(protocol_names, doc_text)
 
+    has_drift = bool(missing)
     if not missing:
         print(
             f"OK — all {len(protocol_names)} protocol(s) are documented in "
             f"{docs_path.name}."
         )
-        return 0
+    else:
+        print(
+            f"\nDOC-DRIFT DETECTED — {len(missing)} protocol(s) missing from "
+            f"{docs_path}:\n",
+            file=sys.stderr,
+        )
+        for name in missing:
+            print(f"  - {name}", file=sys.stderr)
 
-    # Print a clear, actionable error.
-    print(
-        f"\nDOC-DRIFT DETECTED — {len(missing)} protocol(s) missing from "
-        f"{docs_path}:\n",
-        file=sys.stderr,
+    index_text = adr_index.read_text(encoding="utf-8")
+    index_statuses = extract_adr_index_statuses(index_text)
+    body_statuses = extract_adr_body_statuses(adr_dir)
+    mismatches = find_adr_status_mismatches(index_statuses, body_statuses)
+    required_status_mismatches = sorted(
+        (number, expected, index_statuses.get(number, "MISSING"))
+        for number, expected in REQUIRED_ADR_STATUSES.items()
+        if index_statuses.get(number) != expected
     )
-    for name in missing:
-        print(f"  - {name}", file=sys.stderr)
+    accepted_claims = sorted(
+        number
+        for number in extract_claimed_adr_numbers(index_text)
+        if index_statuses.get(number) == "Accepted"
+    )
 
-    print(
-        "\nAdd each missing protocol name to docs/ARCHITECTURE.md "
-        "(e.g. in the 'Core protocols' section) then re-run this check.",
-        file=sys.stderr,
-    )
-    return 1
+    if mismatches:
+        has_drift = True
+        print("\nADR STATUS DRIFT DETECTED:", file=sys.stderr)
+        for number, body_status, index_status, path in mismatches:
+            print(
+                f"  - ADR-{number}: body={body_status}, index={index_status} "
+                f"({path.name})",
+                file=sys.stderr,
+            )
+    else:
+        print(f"OK — {len(body_statuses)} explicit ADR statuses match the index.")
+
+    if required_status_mismatches:
+        has_drift = True
+        print("\nADR DECISION STATUS DRIFT DETECTED:", file=sys.stderr)
+        for number, expected, actual in required_status_mismatches:
+            print(
+                f"  - ADR-{number}: expected={expected}, index={actual}",
+                file=sys.stderr,
+            )
+    else:
+        print("OK — required shipped ADR decisions retain their accepted status.")
+
+    if accepted_claims:
+        has_drift = True
+        print(
+            "\nADR RESERVATION DRIFT DETECTED — Accepted numbers are still "
+            "claimed by parked or in-flight work:",
+            file=sys.stderr,
+        )
+        for number in accepted_claims:
+            print(f"  - ADR-{number}", file=sys.stderr)
+    else:
+        print("OK — no Accepted ADR number is claimed by parked or in-flight work.")
+
+    if has_drift:
+        print(
+            "\nUpdate the architecture/protocol documentation, ADR body/index "
+            "statuses, or reservation note, then re-run this check.",
+            file=sys.stderr,
+        )
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
