@@ -11,6 +11,11 @@ All notable changes to this project are documented here.
 - Removed current-facing references to the retrieval package and command surface deleted by ADR-057, and pointed migration guidance at the standalone groundkit repository.
 - Marked ADR-042 Accepted while retaining the implementation tracker's honest partial-slice status; removed accepted ADR-054 and ADR-057 from the parked-number note.
 - Expanded the documentation drift gates to reject retired runtime surfaces, ADR body/index status disagreements, and accepted ADR numbers still described as parked or in flight.
+### Native YAML adapters now honor the declared input/output contract (2026-09-03)
+
+- **CLI and server native execution now validate workflow inputs and seed them under `inputs`.** Shipped `${inputs.*}` expressions no longer resolve to `None`, input-controlled branches agree with the LangGraph adapter, and missing required inputs fail before execution.
+- **Native results now expose declared workflow outputs.** The deterministic smoke workflows return `processed_text` and `step_count` instead of the executor's internal context, and server results retain the requested run identity.
+- **Adapter parity is behavior-tested across every shipped YAML.** The suite checks status/topology, input-driven decisions, and declared outputs under `AGENTIC_NO_LLM=1`; native tier-0 echo/count handlers no longer fall through to an LLM placeholder, and LangGraph now executes the shipped deterministic consensus handler instead of treating it as an unknown no-op.
 
 ### SWE-bench A/B campaign evidence lands on main; `swe-ab` extra (2026-09-02)
 

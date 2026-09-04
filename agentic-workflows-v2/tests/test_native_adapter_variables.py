@@ -1,15 +1,9 @@
-"""Regression tests: ``ExecutionContext(variables=...)`` and the native adapter.
+"""Regression tests for explicit variables on low-level native DAG execution.
 
-``server/execution.py`` (``_run_via_native_adapter``, line ~307) and
-``cli/helpers.py`` construct ``ExecutionContext(variables=dict(...))``. The
-dataclass stores variables in the private ``_variables`` field, so without the
-``variables`` InitVar shim that kwarg raised
-``TypeError: ExecutionContext.__init__() got an unexpected keyword argument
-'variables'`` on every native ``POST /api/run`` request. The langchain adapter
-(the production default) seeds variables by other means, so this path was
-undertested — ``test_server_adapters`` even monkeypatches
-``_run_via_native_adapter`` with a fake, so the real constructor + native
-execution path was never exercised. These tests close that gap.
+Named YAML entry points validate inputs and seed the ``inputs`` namespace; their
+behavior is covered in ``test_adapter_output_parity.py``.  The ``variables``
+constructor remains supported for callers that build a dynamic DAG and choose
+its context shape explicitly.
 """
 
 from __future__ import annotations
@@ -37,14 +31,7 @@ def test_execution_context_accepts_variables_kwarg() -> None:
 async def test_native_adapter_runs_workflow_with_seeded_variables(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """A workflow runs end-to-end through the native adapter with seeded inputs.
-
-    Mirrors the production ``_run_via_native_adapter`` path:
-    ``ctx = ExecutionContext(variables=dict(workflow_inputs))`` followed by
-    ``engine.execute(dag, ctx)``. Before the fix this raised ``TypeError`` at
-    construction; the step body also asserts the seeded input is visible, so a
-    silently-unseeded store would fail the run rather than pass.
-    """
+    """A dynamic DAG can opt into flat variables through the low-level API."""
     monkeypatch.setenv("AGENTIC_NO_LLM", "1")
 
     async def check_input(ctx: ExecutionContext) -> dict[str, object]:

@@ -35,9 +35,9 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from ..core.errors import ConfigurationError
 from ..integrations.otel import get_tracer as _get_tracer
 from ..models.router import ModelTier
+from .consensus import coerce_min_agreement, majority_vote
 from .context import ExecutionContext
 from .llm_output_parsing import (
     extract_files_from_artifact,
@@ -103,6 +103,25 @@ _TIER_MAX_TOKENS: dict[ModelTier, int] = {
 # ---------------------------------------------------------------------------
 # Tier-0 deterministic step implementations
 # ---------------------------------------------------------------------------
+
+
+def _coerce_text_input(value: Any) -> str:
+    """Normalize workflow text inputs for deterministic tier-0 handlers."""
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value
+    return str(value)
+
+
+async def _process_text_step(ctx: ExecutionContext) -> dict[str, Any]:
+    """Tier-0: echo the step's resolved text input without using an LLM."""
+    return {"result": _coerce_text_input(await ctx.get("text"))}
+
+
+async def _count_text_step(ctx: ExecutionContext) -> dict[str, Any]:
+    """Tier-0: count characters in the step's resolved text input."""
+    return {"count": len(_coerce_text_input(await ctx.get("text")))}
 
 
 async def _parse_code_step(ctx: ExecutionContext) -> dict[str, Any]:
@@ -216,21 +235,7 @@ def _coerce_min_agreement(raw: Any) -> float:
     intended to set, making ``meets_threshold`` fail-open (always true). Raise a
     :class:`ConfigurationError` instead so the step fails closed.
     """
-    if raw is None:
-        return 0.0
-    try:
-        value = float(raw)
-    except (TypeError, ValueError) as exc:
-        raise ConfigurationError(
-            f"consensus 'min_agreement' must be a number in [0.0, 1.0]; got "
-            f"{raw!r} (unparseable). Refusing to fail open."
-        ) from exc
-    if not 0.0 <= value <= 1.0:
-        raise ConfigurationError(
-            f"consensus 'min_agreement' must be in [0.0, 1.0]; got {value}. "
-            "Refusing to fail open."
-        )
-    return value
+    return coerce_min_agreement(raw)
 
 
 async def _consensus_step(ctx: ExecutionContext) -> dict[str, Any]:
@@ -248,8 +253,6 @@ async def _consensus_step(ctx: ExecutionContext) -> dict[str, Any]:
     Returns the consensus fields downstream steps and ``when:`` conditions can
     branch on (e.g. ``when: ${steps.vote.outputs.meets_threshold}``).
     """
-    from .consensus import majority_vote
-
     samples = await _gather_consensus_samples(ctx)
 
     min_agreement = _coerce_min_agreement(await ctx.get("min_agreement"))
@@ -272,6 +275,8 @@ async def _consensus_step(ctx: ExecutionContext) -> dict[str, Any]:
 # Registry of known tier-0 deterministic step implementations
 TIER0_REGISTRY: dict[str, StepFunction] = {
     "tier0_parser": _parse_code_step,
+    "tier0_process": _process_text_step,
+    "tier0_counter": _count_text_step,
     "tier0_consensus": _consensus_step,
 }
 

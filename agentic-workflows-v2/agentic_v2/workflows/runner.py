@@ -43,6 +43,113 @@ class WorkflowValidationError(ValueError):
         self.errors = errors
 
 
+def validate_workflow_inputs(
+    definition: WorkflowDefinition,
+    supplied: dict[str, Any],
+) -> dict[str, Any]:
+    """Validate supplied values and apply defaults from a workflow definition."""
+    validated: dict[str, Any] = {}
+    errors: list[str] = []
+
+    for name, input_def in definition.inputs.items():
+        if name in supplied:
+            value = supplied[name]
+            if input_def.required and isinstance(value, str) and not value.strip():
+                errors.append(f"Required input '{name}' must not be empty")
+                continue
+            if input_def.enum and value not in input_def.enum:
+                errors.append(
+                    f"Input '{name}' must be one of {input_def.enum}, got '{value}'"
+                )
+            validated[name] = value
+        elif input_def.default is not None:
+            validated[name] = input_def.default
+        elif input_def.required:
+            errors.append(f"Missing required input '{name}'")
+
+    if errors:
+        raise WorkflowValidationError(definition.name, errors)
+
+    return validated
+
+
+def seed_workflow_inputs(
+    ctx: ExecutionContext,
+    validated: Mapping[str, Any],
+) -> None:
+    """Seed validated values under the namespace used by shipped YAML files."""
+    ctx.set_sync("inputs", dict(validated))
+
+
+def _resolve_workflow_output_expr(
+    evaluator: ExpressionEvaluator,
+    from_expr: Any,
+) -> Any:
+    """Resolve a workflow output expression, including nested mappings/lists."""
+    if isinstance(from_expr, str):
+        expr = from_expr.strip()
+        if expr.startswith("${") and expr.endswith("}"):
+            expr = expr[2:-1].strip()
+        return evaluator.resolve_variable(expr)
+
+    if isinstance(from_expr, dict):
+        return {
+            key: _resolve_workflow_output_expr(evaluator, value)
+            for key, value in from_expr.items()
+        }
+
+    if isinstance(from_expr, list):
+        return [_resolve_workflow_output_expr(evaluator, item) for item in from_expr]
+
+    return from_expr
+
+
+def resolve_workflow_outputs(
+    definition: WorkflowDefinition,
+    ctx: ExecutionContext,
+    result: WorkflowResult,
+) -> dict[str, Any]:
+    """Resolve a workflow's declared outputs from its completed native context."""
+    outputs: dict[str, Any] = {}
+    unresolved_required_outputs: list[str] = []
+    step_results = {step.step_name: step for step in result.steps}
+    evaluator = ExpressionEvaluator(ctx, step_results)
+
+    for name, output_def in definition.outputs.items():
+        from_expr = output_def.from_expr
+        if from_expr in ("", None):
+            continue
+
+        try:
+            value = _resolve_workflow_output_expr(evaluator, from_expr)
+            outputs[name] = value
+            if value is None and not output_def.optional:
+                unresolved_required_outputs.append(name)
+                logger.warning(
+                    "Required output '%s' resolved to None from '%s'",
+                    name,
+                    from_expr,
+                )
+        except Exception:
+            if not output_def.optional:
+                unresolved_required_outputs.append(name)
+                logger.warning(
+                    "Failed to resolve required output '%s' from '%s'",
+                    name,
+                    from_expr,
+                )
+            outputs[name] = None
+
+    if unresolved_required_outputs:
+        result.metadata["unresolved_required_outputs"] = sorted(
+            set(unresolved_required_outputs)
+        )
+    else:
+        result.metadata.pop("unresolved_required_outputs", None)
+
+    return outputs
+
+
 class WorkflowRunner:
     """Load, validate, execute, and resolve YAML workflows.
 
@@ -146,7 +253,7 @@ class WorkflowRunner:
         self._trace_adapter.emit_workflow_start(workflow_name, run_id, validated)
 
         # Seed inputs into context as a top-level namespace for expression resolution.
-        ctx.set_sync("inputs", dict(validated))
+        seed_workflow_inputs(ctx, validated)
 
         # Register sanitization middleware in DI container if available
         try:
@@ -208,7 +315,7 @@ class WorkflowRunner:
         if ctx is None:
             ctx = ExecutionContext(workflow_id=f"wf-{definition.name}")
 
-        ctx.set_sync("inputs", dict(validated))
+        seed_workflow_inputs(ctx, validated)
 
         result, runtime_profile, runtime_artifacts = await self._execute_definition(
             definition,
@@ -352,31 +459,7 @@ class WorkflowRunner:
         self, definition: WorkflowDefinition, supplied: dict[str, Any]
     ) -> dict[str, Any]:
         """Validate and apply defaults for workflow inputs."""
-        validated: dict[str, Any] = {}
-        errors: list[str] = []
-
-        for name, input_def in definition.inputs.items():
-            if name in supplied:
-                value = supplied[name]
-                # Treat empty string as missing for required string inputs
-                if input_def.required and isinstance(value, str) and not value.strip():
-                    errors.append(f"Required input '{name}' must not be empty")
-                    continue
-                # Enum check
-                if input_def.enum and value not in input_def.enum:
-                    errors.append(
-                        f"Input '{name}' must be one of {input_def.enum}, got '{value}'"
-                    )
-                validated[name] = value
-            elif input_def.default is not None:
-                validated[name] = input_def.default
-            elif input_def.required:
-                errors.append(f"Missing required input '{name}'")
-
-        if errors:
-            raise WorkflowValidationError(definition.name, errors)
-
-        return validated
+        return validate_workflow_inputs(definition, supplied)
 
     @staticmethod
     def _resolve_outputs(
@@ -385,47 +468,7 @@ class WorkflowRunner:
         result: WorkflowResult,
     ) -> dict[str, Any]:
         """Resolve declared outputs from the execution context."""
-        outputs: dict[str, Any] = {}
-        unresolved_required_outputs: list[str] = []
-
-        # Build step_results dict from the WorkflowResult so the evaluator
-        # can resolve ${steps.X.outputs.Y} references.
-        step_results = {s.step_name: s for s in result.steps}
-        evaluator = ExpressionEvaluator(ctx, step_results)
-
-        for name, output_def in definition.outputs.items():
-            from_expr = output_def.from_expr
-            if from_expr in ("", None):
-                continue
-
-            try:
-                value = WorkflowRunner._resolve_output_expr(evaluator, from_expr)
-                outputs[name] = value
-                if value is None and not output_def.optional:
-                    unresolved_required_outputs.append(name)
-                    logger.warning(
-                        "Required output '%s' resolved to None from '%s'",
-                        name,
-                        from_expr,
-                    )
-            except Exception:
-                if not output_def.optional:
-                    unresolved_required_outputs.append(name)
-                    logger.warning(
-                        "Failed to resolve required output '%s' from '%s'",
-                        name,
-                        from_expr,
-                    )
-                outputs[name] = None
-
-        if unresolved_required_outputs:
-            result.metadata["unresolved_required_outputs"] = sorted(
-                set(unresolved_required_outputs)
-            )
-        else:
-            result.metadata.pop("unresolved_required_outputs", None)
-
-        return outputs
+        return resolve_workflow_outputs(definition, ctx, result)
 
     @staticmethod
     def _resolve_output_expr(
@@ -433,25 +476,7 @@ class WorkflowRunner:
         from_expr: Any,
     ) -> Any:
         """Resolve workflow output expressions from string/dict/list mappings."""
-        if isinstance(from_expr, str):
-            expr = from_expr.strip()
-            if expr.startswith("${") and expr.endswith("}"):
-                expr = expr[2:-1].strip()
-            return evaluator.resolve_variable(expr)
-
-        if isinstance(from_expr, dict):
-            resolved: dict[str, Any] = {}
-            for key, value in from_expr.items():
-                resolved[key] = WorkflowRunner._resolve_output_expr(evaluator, value)
-            return resolved
-
-        if isinstance(from_expr, list):
-            return [
-                WorkflowRunner._resolve_output_expr(evaluator, item)
-                for item in from_expr
-            ]
-
-        return from_expr
+        return _resolve_workflow_output_expr(evaluator, from_expr)
 
 
 # -------------------------------------------------------------------------

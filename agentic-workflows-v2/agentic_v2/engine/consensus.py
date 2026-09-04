@@ -31,9 +31,12 @@ from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from typing import Any
 
+from ..core.errors import ConfigurationError
+
 __all__ = [
     "ConsensusResult",
     "canonical_key",
+    "coerce_min_agreement",
     "majority_vote",
     "self_consistency",
 ]
@@ -91,6 +94,25 @@ def canonical_key(value: Any) -> str:
         except (TypeError, ValueError):
             return repr(value)
     return repr(value)
+
+
+def coerce_min_agreement(raw: Any) -> float:
+    """Parse and validate a consensus threshold without failing open."""
+    if raw is None:
+        return 0.0
+    try:
+        value = float(raw)
+    except (TypeError, ValueError) as exc:
+        raise ConfigurationError(
+            f"consensus 'min_agreement' must be a number in [0.0, 1.0]; got "
+            f"{raw!r} (unparseable). Refusing to fail open."
+        ) from exc
+    if not 0.0 <= value <= 1.0:
+        raise ConfigurationError(
+            f"consensus 'min_agreement' must be in [0.0, 1.0]; got {value}. "
+            "Refusing to fail open."
+        )
+    return value
 
 
 def _resolve_key_fn(key: Callable[[Any], str] | None) -> Callable[[Any], str]:
