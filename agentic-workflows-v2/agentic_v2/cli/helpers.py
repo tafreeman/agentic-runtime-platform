@@ -195,17 +195,26 @@ def _run_via_adapter(
     from ..adapters import get_registry
     from ..engine.context import ExecutionContext
     from ..workflows.loader import WorkflowLoader
+    from ..workflows.runner import (
+        resolve_workflow_outputs,
+        seed_workflow_inputs,
+        validate_workflow_inputs,
+    )
 
     loader = WorkflowLoader()
     workflow_def = loader.load(workflow_name)
     dag = workflow_def.dag
-    ctx = ExecutionContext(variables=dict(input_data))
+    validated = validate_workflow_inputs(workflow_def, input_data)
+    ctx = ExecutionContext(workflow_id=f"wf-{workflow_name}")
+    seed_workflow_inputs(ctx, validated)
 
     engine = get_registry().get_adapter(adapter_name)
 
     start = time.perf_counter()
     result = asyncio.run(engine.execute(dag, ctx))
     wall_clock = time.perf_counter() - start
+    result.final_output = resolve_workflow_outputs(workflow_def, ctx, result)
+    result.workflow_name = workflow_def.name
     return _normalize_result(workflow_name, result, wall_clock)
 
 
