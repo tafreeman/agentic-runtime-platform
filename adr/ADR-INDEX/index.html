@@ -3050,7 +3050,7 @@ only five:</p>
 <li><strong><a href="../ADR-001-002-003-architecture-decisions/">ADR-002</a></strong> — SmartModelRouter circuit-breaker hardening (three-state breaker, adaptive cooldowns, bulkheads).</li>
 <li><strong><a href="../ADR-014-pydantic-wire-format/">ADR-014</a></strong> — the Pydantic discriminated-union wire format that every event contract and the drift CI gate build on.</li>
 <li><strong><a href="../ADR-023-executionkit-runtime-contract-relationship/">ADR-023</a></strong> — how the runtime relates to the external ExecutionKit kernel (single <code>executionkit</code> package).</li>
-<li><strong><a href="../ADR-042-agentic-evalkit-adoption/">ADR-042</a></strong> — the in-flight sliced migration from in-tree <code>agentic-v2-eval</code> to the external <code>agentic-evalkit</code> framework.</li>
+<li><strong><a href="../ADR-042-agentic-evalkit-adoption/">ADR-042</a></strong> — the accepted sliced migration from in-tree <code>agentic-v2-eval</code> to the external <code>agentic-evalkit</code> framework; the bridge slice is implemented.</li>
 </ul>
 <hr />
 <h2 id="quick-access-deck">Quick-access deck<a class="headerlink" href="#quick-access-deck" title="Permanent link">&para;</a></h2>
@@ -3288,8 +3288,8 @@ only five:</p>
 </tr>
 <tr>
 <td><strong>042</strong></td>
-<td>Adopt <code>agentic-evalkit</code> as ARP's evaluation framework, superseding in-tree <code>agentic-v2-eval</code>, via a sliced migration (A: dependency, B: bridge module, C: cut over step_scoring, D: deprecate+delete agentic-v2-eval, E: CI cutover); evalkit stays optional until it has a public remote</td>
-<td>Proposed</td>
+<td>Adopt <code>agentic-evalkit</code> as ARP's evaluation framework via a sliced migration; dependency and bridge slices shipped, while scoring cutover and in-tree package removal remain future slices</td>
+<td>Accepted</td>
 <td><a href="../ADR-042-agentic-evalkit-adoption/">ADR-042</a></td>
 </tr>
 <tr>
@@ -3383,13 +3383,7 @@ only five:</p>
 <td><a href="../ADR-059-model-cost-lane-ceiling/">ADR-059</a></td>
 </tr>
 <tr>
-<td>=======</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td><strong>Note:</strong> ADRs 004-006 and 013 were never created or were withdrawn; those numbering gaps are intentional and should not be reclaimed. ADR-049, ADR-053, ADR-054, and ADR-057 are claimed by parked or in-flight work (an ADR-049 noncompensatory-gates draft in a stashed working set; ADR-053 by the memoryctl branch behind PR #205; ADR-054 by open PR #210; ADR-057 by the in-flight rag-removal branch) — do not reclaim those numbers either. (The decision once numbered ADR-013 in the <code>agentic-systems-lab</code> fork was salvaged into this repo as <strong>ADR-031</strong>, not as 013.) ADR-023 working notes (migration plan, phase tracker, finish plan, divergence audit, preservation matrix) were moved to <a href="../drafts/"><code>drafts/</code></a> on 2026-06-17 to resolve a naming collision; the canonical decision record remains at ADR-023.</td>
+<td><strong>Note:</strong> ADRs 004-006 and 013 were never created or were withdrawn; those numbering gaps are intentional and should not be reclaimed. ADR-049 and ADR-053 are claimed by parked or in-flight work (ADR-049 by a noncompensatory-gates draft in a stashed working set; ADR-053 by the memoryctl branch behind PR #205) — do not reclaim those numbers either. (The decision once numbered ADR-013 in the <code>agentic-systems-lab</code> fork was salvaged into this repo as <strong>ADR-031</strong>, not as 013.) ADR-023 working notes (migration plan, phase tracker, finish plan, divergence audit, preservation matrix) were moved to <a href="../drafts/"><code>drafts/</code></a> on 2026-06-17 to resolve a naming collision; the canonical decision record remains at ADR-023.</td>
 <td></td>
 <td></td>
 <td></td>
@@ -3712,7 +3706,7 @@ not a statement about implementation state.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 30, 2026 23:10:31 UTC">August 30, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="September 4, 2026 02:04:19 UTC">September 4, 2026</span>
   </span>
 
     

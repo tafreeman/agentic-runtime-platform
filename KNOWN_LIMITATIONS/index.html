@@ -2693,65 +2693,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#46-no-ci-job-installs-the-rag-extra-so-the-embedding-and-lancedb-paths-are-proven-only-against-fakes" class="md-nav__link">
+  <a href="#46411-retired-with-the-retrieval-package" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4.6 No CI job installs the rag extra, so the embedding and LanceDB paths are proven only against fakes
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#47-cross-provider-embedding-fallback-mixes-semantic-spaces-and-pins-a-single-dimensionality" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4.7 Cross-provider embedding fallback mixes semantic spaces and pins a single dimensionality
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#48-the-reranker-is-not-fully-constructible-from-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4.8 The reranker is not fully constructible from configuration
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#49-inmemoryembedder-is-a-hash-based-test-double-not-an-embedder" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4.9 InMemoryEmbedder is a hash-based test double, not an embedder
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#410-a-failed-embedding-call-scrubs-the-credential-from-the-message-but-not-from-the-exception-chain" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4.10 A failed embedding call scrubs the credential from the message but not from the exception chain
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#411-the-agentic-rag-commands-do-not-share-or-persist-an-index" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4.11 The agentic rag commands do not share or persist an index
+        4.6–4.11 Retired with the retrieval package
       
     </span>
   </a>
@@ -3430,65 +3375,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#46-no-ci-job-installs-the-rag-extra-so-the-embedding-and-lancedb-paths-are-proven-only-against-fakes" class="md-nav__link">
+  <a href="#46411-retired-with-the-retrieval-package" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4.6 No CI job installs the rag extra, so the embedding and LanceDB paths are proven only against fakes
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#47-cross-provider-embedding-fallback-mixes-semantic-spaces-and-pins-a-single-dimensionality" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4.7 Cross-provider embedding fallback mixes semantic spaces and pins a single dimensionality
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#48-the-reranker-is-not-fully-constructible-from-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4.8 The reranker is not fully constructible from configuration
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#49-inmemoryembedder-is-a-hash-based-test-double-not-an-embedder" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4.9 InMemoryEmbedder is a hash-based test double, not an embedder
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#410-a-failed-embedding-call-scrubs-the-credential-from-the-message-but-not-from-the-exception-chain" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4.10 A failed embedding call scrubs the credential from the message but not from the exception chain
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#411-the-agentic-rag-commands-do-not-share-or-persist-an-index" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4.11 The agentic rag commands do not share or persist an index
+        4.6–4.11 Retired with the retrieval package
       
     </span>
   </a>
@@ -3771,18 +3661,11 @@ configured.</p>
 <li><strong>Status:</strong> Accepted. <code>X-Tenant-ID</code> is a documented compatibility path for local/dev and API-key deployments (ADR-022), not a per-tenant security boundary in the unauthenticated default. <a href="../ROADMAP/">ROADMAP.md</a> E8-2 is worded to match.</li>
 <li><strong>Upstream fix:</strong> None at the header layer — tenant enforcement requires an authenticated identity (<a href="../adr/ADR-021-jwt-oidc-authentication/">ADR-021</a>) or a gateway.</li>
 </ul>
-<h3 id="46-no-ci-job-installs-the-rag-extra-so-the-embedding-and-lancedb-paths-are-proven-only-against-fakes">4.6 No CI job installs the <code>rag</code> extra, so the embedding and LanceDB paths are proven only against fakes<a class="headerlink" href="#46-no-ci-job-installs-the-rag-extra-so-the-embedding-and-lancedb-paths-are-proven-only-against-fakes" title="Permanent link">&para;</a></h3>
-<p><em>(Resolved by removal: the RAG package was removed from ARP — superseded by the standalone groundkit repo; see ADR-057.)</em></p>
-<h3 id="47-cross-provider-embedding-fallback-mixes-semantic-spaces-and-pins-a-single-dimensionality">4.7 Cross-provider embedding fallback mixes semantic spaces and pins a single dimensionality<a class="headerlink" href="#47-cross-provider-embedding-fallback-mixes-semantic-spaces-and-pins-a-single-dimensionality" title="Permanent link">&para;</a></h3>
-<p><em>(Resolved by removal: the RAG package was removed from ARP — superseded by the standalone groundkit repo; see ADR-057.)</em></p>
-<h3 id="48-the-reranker-is-not-fully-constructible-from-configuration">4.8 The reranker is not fully constructible from configuration<a class="headerlink" href="#48-the-reranker-is-not-fully-constructible-from-configuration" title="Permanent link">&para;</a></h3>
-<p><em>(Resolved by removal: the RAG package was removed from ARP — superseded by the standalone groundkit repo; see ADR-057.)</em></p>
-<h3 id="49-inmemoryembedder-is-a-hash-based-test-double-not-an-embedder">4.9 <code>InMemoryEmbedder</code> is a hash-based test double, not an embedder<a class="headerlink" href="#49-inmemoryembedder-is-a-hash-based-test-double-not-an-embedder" title="Permanent link">&para;</a></h3>
-<p><em>(Resolved by removal: the RAG package was removed from ARP — superseded by the standalone groundkit repo; see ADR-057.)</em></p>
-<h3 id="410-a-failed-embedding-call-scrubs-the-credential-from-the-message-but-not-from-the-exception-chain">4.10 A failed embedding call scrubs the credential from the message but not from the exception chain<a class="headerlink" href="#410-a-failed-embedding-call-scrubs-the-credential-from-the-message-but-not-from-the-exception-chain" title="Permanent link">&para;</a></h3>
-<p><em>(Resolved by removal: the RAG package was removed from ARP — superseded by the standalone groundkit repo; see ADR-057.)</em></p>
-<h3 id="411-the-agentic-rag-commands-do-not-share-or-persist-an-index">4.11 The <code>agentic rag</code> commands do not share or persist an index<a class="headerlink" href="#411-the-agentic-rag-commands-do-not-share-or-persist-an-index" title="Permanent link">&para;</a></h3>
-<p><em>(Resolved by removal: the RAG package was removed from ARP — superseded by the standalone groundkit repo; see ADR-057.)</em></p>
+<h3 id="46411-retired-with-the-retrieval-package">4.6–4.11 Retired with the retrieval package<a class="headerlink" href="#46411-retired-with-the-retrieval-package" title="Permanent link">&para;</a></h3>
+<p>The six retrieval limitations previously recorded here are no longer current
+ARP behavior because the package and command surface were removed. The removal,
+migration boundary, and historical defects remain recorded in
+<a href="../adr/ADR-057-remove-rag-package/">ADR-057</a> and the changelog.</p>
 <h3 id="412-the-model-inventory-command-fails-from-the-repository-root">4.12 The model inventory command fails from the repository root<a class="headerlink" href="#412-the-model-inventory-command-fails-from-the-repository-root" title="Permanent link">&para;</a></h3>
 <p><code>python -m tools.llm.model_inventory</code> imports <code>llm_client</code> as a top-level
 module. In the installed repository package, that module is
@@ -3910,7 +3793,7 @@ exist.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 29, 2026 22:33:47 UTC">August 29, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="September 4, 2026 02:04:19 UTC">September 4, 2026</span>
   </span>
 
     
