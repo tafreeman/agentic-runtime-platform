@@ -2,7 +2,181 @@
   "version": 1,
   "records": [
     {
-      "timestamp": "2026-04-22T07:53:53.286Z",
+      "timestamp": "2026-08-07T07:36:50.484Z",
+      "fails": 0,
+      "total": 50,
+      "rate": 0
+    },
+    {
+      "timestamp": "2026-08-08T07:27:40.283Z",
+      "fails": 0,
+      "total": 50,
+      "rate": 0
+    },
+    {
+      "timestamp": "2026-08-09T07:28:14.392Z",
+      "fails": 0,
+      "total": 50,
+      "rate": 0
+    },
+    {
+      "timestamp": "2026-08-10T07:39:02.450Z",
+      "fails": 0,
+      "total": 50,
+      "rate": 0
+    },
+    {
+      "timestamp": "2026-08-11T07:33:58.329Z",
+      "fails": 0,
+      "total": 50,
+      "rate": 0
+    },
+    {
+      "timestamp": "2026-08-12T07:37:50.823Z",
+      "fails": 0,
+      "total": 50,
+      "rate": 0
+    },
+    {
+      "timestamp": "2026-08-13T07:38:01.393Z",
+      "fails": 0,
+      "total": 50,
+      "rate": 0
+    },
+    {
+      "timestamp": "2026-08-14T07:37:39.714Z",
+      "fails": 0,
+      "total": 50,
+      "rate": 0
+    },
+    {
+      "timestamp": "2026-08-15T07:17:52.747Z",
+      "fails": 0,
+      "total": 50,
+      "rate": 0
+    },
+    {
+      "timestamp": "2026-08-16T07:19:30.807Z",
+      "fails": 0,
+      "total": 50,
+      "rate": 0
+    },
+    {
+      "timestamp": "2026-08-17T07:28:02.969Z",
+      "fails": 0,
+      "total": 50,
+      "rate": 0
+    },
+    {
+      "timestamp": "2026-08-18T07:23:00.426Z",
+      "fails": 0,
+      "total": 50,
+      "rate": 0
+    },
+    {
+      "timestamp": "2026-08-20T07:24:03.152Z",
+      "fails": 0,
+      "total": 50,
+      "rate": 0
+    },
+    {
+      "timestamp": "2026-08-21T07:24:15.899Z",
+      "fails": 0,
+      "total": 50,
+      "rate": 0
+    },
+    {
+      "timestamp": "2026-08-22T07:19:42.266Z",
+      "fails": 0,
+      "total": 50,
+      "rate": 0
+    },
+    {
+      "timestamp": "2026-08-23T07:20:25.760Z",
+      "fails": 0,
+      "total": 50,
+      "rate": 0
+    },
+    {
+      "timestamp": "2026-08-24T07:30:45.912Z",
+      "fails": 0,
+      "total": 50,
+      "rate": 0
+    },
+    {
+      "timestamp": "2026-08-25T07:24:44.512Z",
+      "fails": 0,
+      "total": 50,
+      "rate": 0
+    },
+    {
+      "timestamp": "2026-08-26T07:24:13.435Z",
+      "fails": 0,
+      "total": 50,
+      "rate": 0
+    },
+    {
+      "timestamp": "2026-08-27T10:23:18.430Z",
+      "fails": 0,
+      "total": 50,
+      "rate": 0
+    },
+    {
+      "timestamp": "2026-08-28T10:37:40.497Z",
+      "fails": 0,
+      "total": 50,
+      "rate": 0
+    },
+    {
+      "timestamp": "2026-08-29T07:13:35.000Z",
+      "fails": 0,
+      "total": 50,
+      "rate": 0
+    },
+    {
+      "timestamp": "2026-08-30T07:13:46.175Z",
+      "fails": 0,
+      "total": 50,
+      "rate": 0
+    },
+    {
+      "timestamp": "2026-08-31T07:21:02.676Z",
+      "fails": 0,
+      "total": 50,
+      "rate": 0
+    },
+    {
+      "timestamp": "2026-09-01T07:14:23.248Z",
+      "fails": 0,
+      "total": 50,
+      "rate": 0
+    },
+    {
+      "timestamp": "2026-09-02T07:16:03.113Z",
+      "fails": 0,
+      "total": 50,
+      "rate": 0
+    },
+    {
+      "timestamp": "2026-09-03T07:14:27.543Z",
+      "fails": 0,
+      "total": 50,
+      "rate": 0
+    },
+    {
+      "timestamp": "2026-09-04T07:21:32.756Z",
+      "fails": 0,
+      "total": 50,
+      "rate": 0
+    },
+    {
+      "timestamp": "2026-09-05T07:13:18.089Z",
+      "fails": 0,
+      "total": 50,
+      "rate": 0
+    },
+    {
+      "timestamp": "2026-09-06T07:14:14.249Z",
       "fails": 0,
       "total": 50,
       "rate": 0
