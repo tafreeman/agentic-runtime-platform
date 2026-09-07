@@ -30,6 +30,47 @@ every deployment concern is solved. Read
 [Known limitations](docs/KNOWN_LIMITATIONS.md) before using it in a
 long-running or multi-tenant environment.
 
+## Demo and evidence
+
+- **[Five-minute demo](docs/DEMO.md)** — proves the CLI, API, WebSocket
+  stream, and dashboard work together end to end, with no provider
+  credential.
+- **[Load and shared-state evidence](docs/flagship.md)** — proves horizontal
+  scale-out and exact Redis-CAS shared-counter consistency under concurrent
+  writes, from a reproducible local k6 run.
+
+Two concrete outcomes from that demo:
+
+**A successful run.** The Quick start command below
+(`AGENTIC_NO_LLM=1 agentic run test_deterministic ...`) finishes with
+`Status: SUCCESS`; the five-minute demo repeats the same workflow through the
+dashboard and confirms the HTTP request, the live WebSocket event stream, and
+the saved run all reach the UI.
+
+**An approval-denied run.** High-impact tools (`shell`, `shell_exec`,
+`execute_python`, `file_write`, `file_delete`, `build_app`, `http_post`, and
+more) require approval from a registered `ApprovalProvider`. A fresh install
+registers none, so the gate fails closed: the call is denied and the tool
+body never runs. Run the tests that exercise this directly:
+
+```bash
+cd agentic-workflows-v2
+python -m pytest tests/test_approval_gates.py -k fails_closed -v
+```
+
+Every case denies before execution, with `metadata["approval_decision"] ==
+"denied"` — for example, `test_build_app_no_provider_fails_closed` proves
+`BuildAppTool` never starts its install/build/test shell. The denial message
+itself, quoted directly from the gate rather than paraphrased:
+
+> Tool 'build_app' requires approval: denied by no provider registered
+> (fail-closed). Register an ApprovalProvider via
+> agentic_v2.governance.set_approval_provider(...) or disable the
+> requirement.
+
+See [Known limitations §4.3](docs/KNOWN_LIMITATIONS.md) for what this gate
+covers today and what is still missing (a UI-driven pause/resume flow).
+
 ## What is included
 
 | Area | What it provides |
