@@ -110,26 +110,109 @@ not resolvable. **The interval is the result, not the point estimate.**
 
 ---
 
-## 3. Cost control is environmental, not configurable
+## 3. Cost control needs two controls, not one
 
 **ARP walks into paid providers on its own.** When a step's output misses its
 declared contract, `_invoke_with_failover` walks the tier chain; the first probe
-of this campaign reached Anthropic and returned a billing error. There is no
-configuration flag that disables it, and `model_override` only *prepends* to the
-candidate list — the paid fallbacks still follow it. *(EVIDENCE §2.5)*
+of this campaign reached Anthropic and returned a billing error. `model_override`
+only *prepends* to the candidate list — the paid fallbacks still follow it.
+*(EVIDENCE §2.5)*
 
-> **Rule: make the paid path unreachable, not merely un-preferred.**
-> `run_ab.py` deletes every paid credential from the child environment before
-> spawning the bridge. A provider without a key cannot be called at all — free
-> by construction, not by policy.
+> **Rule: make the paid path unreachable, not merely un-preferred — at both
+> layers, because neither one covers the other.**
 
-The credentials removed: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`,
-`GITHUB_TOKEN`, `OPENROUTER_API_KEY`, `AZURE_OPENAI_API_KEY`,
-`AZURE_FOUNDRY_API_KEY`, `CLAUDE_CODE_OAUTH_TOKEN`.
+**Layer 1 — the credential strip (`run_ab.py`, `PAID_CREDENTIALS`).** Every paid
+credential is *blanked* in the child environment before the bridge is spawned. It
+is blanked and never deleted: `EnvSecretProvider` calls `load_dotenv(override=False)`
+inside the child, so a deleted name is re-hydrated from ARP's own `.env` and the
+strip achieves nothing, while an empty value survives and reads as absent. A
+provider without a key cannot be called at all.
 
-This is a workaround for a platform gap, not a design. The proper fix — a cost
-lane on every registered model and a ceiling the candidate resolver enforces —
-is written up in [ARP-IMPROVEMENTS-PROMPT.md](ARP-IMPROVEMENTS-PROMPT.md).
+The list grew twice, reactively, and that is the point — it is a denylist, so it
+is only ever as complete as the last incident: `ANTHROPIC_API_KEY`,
+`OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_API_BASE`, `GEMINI_API_KEY`,
+`GOOGLE_API_KEY`, `GITHUB_TOKEN`, `OPENROUTER_API_KEY`, `AZURE_OPENAI_API_KEY`,
+`AZURE_FOUNDRY_API_KEY`, `CLAUDE_CODE_OAUTH_TOKEN`, `NVIDIA_API_KEY`,
+`NVIDIA_BASE_URL`, `DIGITALOCEAN_TOKEN`.
+
+**Layer 2 — the cost-lane ceiling (ADR-059, wired in 2026-09-06).** The platform
+gap this section used to describe as unfixed is fixed: `AGENTIC_MAX_COST_LANE=free`
+makes `get_model_candidates_for_tier` *filter* the chain rather than reorder it,
+pinned entries included. `run_ab.py` sets it in `build_child_env`. This is an
+allowlist and catches what a denylist cannot — a paid model reachable by a path
+the eval kit does not control.
+
+> **Rule: a credential strip only covers providers that read a credential from
+> the environment. Assume that is not all of them.**
+> Two paths in this stack do not. The Claude Code CLI backend authenticates with
+> no key present. And **Ollama Cloud holds its credential in the local ollama
+> daemon** — verified 2026-09-07, a completion on `deepseek-v4-flash:0731-cloud`
+> returned 200 with `OLLAMA_API_KEY` unset. `PAID_CREDENTIALS` never protected
+> that path at any point in this campaign.
+
+The ceiling only works for a model curated `cost_lane: free` in
+`model_registry.yaml`: `cost_lane_for` **fails closed to `paid`**, so an
+uncurated model under test is filtered out along with the paid fallbacks. It
+does not raise when that happens — the registry's `local` Ollama tail ranks
+below `free` and survives the filter — so the run would continue on a *different*
+model. `bridge.py._require_model_within_cost_lane` therefore refuses to start,
+naming the fix, rather than letting a wave complete on a substitute.
+
+> **Rule: before running a new model, curate its cost lane — from the
+> provider's price list and a live call, never from the model's name.**
+> One entry in `model_registry.yaml` with `tiers: []` — curating a lane is not
+> promoting a model into routing (ADR-040).
+
+**A lane's cost status is a point-in-time fact, not a property of the name.**
+As of 2026-09-07 `ollama.com/pricing` meters every cloud model per token
+(`deepseek-v4-flash` $0.22 in / $0.66 out, doubling Mon–Fri 12:00–18:00 UTC;
+`glm-5.3` $1.40/$4.40), drawn against a plan allowance — this operator's
+subscription is $20/month including $60 of usage credits. That is a prepaid
+drawdown, not open-ended billing, but it is a charge, and ADR-059 defines `free`
+as *no charge*. Both `ollama:*:cloud` ids are therefore curated `paid`.
+
+**This is not a finding against the campaign's own reasoning.** Ollama's cloud
+lineup and terms changed shortly after the waves ran, so what the campaign
+recorded may well have been accurate when it was recorded — which is exactly the
+point. Do not carry a cost judgment forward across a campaign boundary; re-verify
+it, the same way ADR-040 already requires for model ids.
+
+What *is* durable, and was verified rather than inferred: **the credential strip
+never covered this path at any price**, because Ollama Cloud authenticates from
+the daemon (above). A future re-verification that finds the lane free again would
+not change that.
+Verified-free alternatives, each confirmed 2026-09-07 by a live completion
+returning `usage.cost == 0` — the id list alone is not evidence, since several
+advertised `:free` ids do not currently serve:
+
+| Model | Context | Verified 2026-09-07 |
+|---|---|---|
+| `openrouter:cohere/north-mini-code:free` | 256,000 | `cost=0` at ~10:00 **and** ~11:30 |
+| `openrouter:inclusionai/ling-3.0-flash-fin:free` | 262,144 | `cost=0` at ~10:00 **and** ~11:30 |
+
+> **A free lane can close between two checks on the same morning.**
+> `minimax/minimax-m3:free` and `minimax/minimax-m2.7:free` both answered with
+> `usage.cost == 0` at ~10:00 on 2026-09-07. By ~11:30 both were gone from
+> `/v1/models` entirely and returned `404 "This model is unavailable for free.
+> The paid version is available now"`. Ninety minutes. They are kept in
+> `model_registry.yaml` as `deprecated`/`paid` rather than deleted, so the next
+> reader sees the event instead of wondering where the ids went.
+>
+> The practical rule: **re-verify the lane at the start of every wave, not once
+> per campaign** — and prefer a model that has held free across at least two
+> separate checks, which is why only two survive the table above.
+
+NVIDIA NIM's "Free Endpoint" models are also genuinely free and already curated
+(`tiers: []` block) — `deepseek-v4-flash-0731`, `minimax-m3`,
+`nemotron-3-super-120b-a12b` and `gemma-4-31b-it` all answered on 2026-09-07.
+Note NIM's `minimax-m3` card carries a deprecation notice, and three curated ids
+have since left the live listing: `nvidia/nemotron-3-nano-30b-a3b`,
+`openai/gpt-oss-120b`, `stepfun-ai/step-3.7-flash`.
+
+Neither layer collapses the chain to exactly one model. That is still
+`bridge.py`'s job: it pins the candidate list and refuses to grade any sample
+another model answered. The ceiling bounds what a substitution can *cost*; only
+the pin bounds what it can *be*.
 
 **Never print an API key.** Load it inside the subprocess that needs it and emit
 only results.
