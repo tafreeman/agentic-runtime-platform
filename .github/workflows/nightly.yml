@@ -32,7 +32,7 @@ jobs:
           cache-dependency-path: agentic-workflows-v2/ui/package-lock.json
 
       - name: Install backend
-        run: pip install -e "agentic-workflows-v2/[dev,server]"
+        run: pip install -e "agentic-workflows-v2/[dev,server]" -c ci-constraints.txt
 
       - name: Install UI deps
         run: npm --prefix agentic-workflows-v2/ui ci

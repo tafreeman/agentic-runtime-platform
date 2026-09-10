@@ -77,9 +77,9 @@ jobs:
         # dropping the "./" turns the argument into a PyPI lookup, which is the
         # bug that made earlier repairs fail ("No matching distribution").
         run: |
-          pip install -e "."
-          pip install -e "./agentic-workflows-v2[dev,server,langchain]"
-          pip install -e "./agentic-v2-eval[dev]"
+          pip install -e "." -c ci-constraints.txt
+          pip install -e "./agentic-workflows-v2[dev,server,langchain]" -c ci-constraints.txt
+          pip install -e "./agentic-v2-eval[dev]" -c ci-constraints.txt
 
       - name: Run pip-audit (fail on HIGH/CRITICAL)
         # Scans the full shared environment that covers all three packages.

@@ -32,9 +32,9 @@ jobs:
       - name: Install Python packages
         run: |
           python -m pip install --upgrade pip
-          pip install -e "."
-          pip install -e "agentic-workflows-v2/[dev]"
-          pip install -e "agentic-v2-eval/[dev]"
+          pip install -e "." -c ci-constraints.txt
+          pip install -e "agentic-workflows-v2/[dev]" -c ci-constraints.txt
+          pip install -e "agentic-v2-eval/[dev]" -c ci-constraints.txt
 
       - name: Install cyclonedx-bom
         run: pip install cyclonedx-bom
