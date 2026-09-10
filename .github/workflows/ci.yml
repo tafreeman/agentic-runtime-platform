@@ -337,6 +337,11 @@ jobs:
             tests/test_evalkit_bridge.py \
             tests/contract/test_evalkit_boundary.py \
             -q --timeout=120
+      - name: Verify runtime scoring without the legacy evaluation package
+        run: |
+          python -m pip uninstall -y agentic-v2-eval
+          cd agentic-workflows-v2
+          python -m pytest tests/test_step_scoring_additional.py -q --timeout=120
 
   wire-format-drift:
     # Sprint B #3 / S1-1 — prevent silent Python <-> TypeScript wire-format drift.

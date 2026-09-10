@@ -125,11 +125,17 @@ jobs:
         run: |
           python -c "import agentic_evalkit; print('agentic-evalkit', getattr(agentic_evalkit, '__version__', '?'))"
       - name: Run the EvalKit-gated suite
-        # No continue-on-error — see the ek job above.
+        # No continue-on-error — see the ek job above. test_step_scoring_additional.py
+        # is included because runtime step scoring (agentic_v2/scoring/step_scoring.py)
+        # now calls the EVK bridge directly (ADR-042 Slice C) — an unpinned
+        # agentic-evalkit regression on that path is exactly what this job exists
+        # to catch, and it would otherwise only ever run against the pinned
+        # version in ci.yml.
         run: |
           set -euo pipefail
           cd agentic-workflows-v2
           python -m pytest \
             tests/test_evalkit_bridge.py \
             tests/contract/test_evalkit_boundary.py \
+            tests/test_step_scoring_additional.py \
             -q --timeout=120

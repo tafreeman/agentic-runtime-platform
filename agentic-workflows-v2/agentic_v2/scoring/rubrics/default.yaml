@@ -1,0 +1,12 @@
+# Default evaluation rubric
+
+criteria:
+  - name: Accuracy
+    weight: 0.5
+    description: "How accurate are the predictions?"
+  - name: Completeness
+    weight: 0.3
+    description: "Does the output cover all required aspects?"
+  - name: Efficiency
+    weight: 0.2
+    description: "How quickly is the task completed?"
