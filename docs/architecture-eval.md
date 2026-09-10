@@ -25,9 +25,10 @@ All evaluator implementations depend only on `LLMClientProtocol` — a structura
 
 The package is a `uv` workspace member and declares `agentic-tools` as a
 dependency. Its concrete LLM adapter loads the shared client only when needed.
-The runtime imports the evaluation protocol and, for optional step scoring,
-rubric and scorer helpers. The evaluation package does not import the runtime,
-so the package dependency remains one-way.
+The legacy protocol adapter remains in the runtime, but optional step scoring
+now uses the external EvalKit bridge and runtime-owned rubric resources
+(ADR-042 Slice C). Missing criterion evidence is reported as unavailable, not
+a numeric quality score. The evaluation package does not import the runtime.
 
 ---
 

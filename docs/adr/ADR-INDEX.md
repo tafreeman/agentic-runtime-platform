@@ -10,7 +10,7 @@ only five:
 - **[ADR-002](ADR-001-002-003-architecture-decisions.md)** — SmartModelRouter circuit-breaker hardening (three-state breaker, adaptive cooldowns, bulkheads).
 - **[ADR-014](ADR-014-pydantic-wire-format.md)** — the Pydantic discriminated-union wire format that every event contract and the drift CI gate build on.
 - **[ADR-023](ADR-023-executionkit-runtime-contract-relationship.md)** — how the runtime relates to the external ExecutionKit kernel (single `executionkit` package).
-- **[ADR-042](ADR-042-agentic-evalkit-adoption.md)** — the accepted sliced migration from in-tree `agentic-v2-eval` to the external `agentic-evalkit` framework; the bridge slice is implemented.
+- **[ADR-042](ADR-042-agentic-evalkit-adoption.md)** — the accepted sliced migration from in-tree `agentic-v2-eval` to the external `agentic-evalkit` framework; dependency, bridge, and scoring-cutover slices (A-C) are implemented.
 
 ---
 
@@ -55,7 +55,7 @@ only five:
 | **039** | Live model discovery for keyed cloud providers (OpenAI / Anthropic / Gemini / GitHub Models) | Accepted | [ADR-039](ADR-039-cloud-model-discovery.md) |
 | **040** | Curated single-source model registry (one YAML + loader feeds both engines; reconciles divergent tier chains) | Accepted | [ADR-040](ADR-040-curated-model-registry.md) |
 | **041** | Bounded human-approval gate timeout — a hung ApprovalProvider fails closed (DENIED) within a configurable bound (default 30 min) instead of blocking the gated tool indefinitely | Accepted | [ADR-041](ADR-041-approval-gate-timeout.md) |
-| **042** | Adopt `agentic-evalkit` as ARP's evaluation framework via a sliced migration; dependency and bridge slices shipped, while scoring cutover and in-tree package removal remain future slices | Accepted | [ADR-042](ADR-042-agentic-evalkit-adoption.md) |
+| **042** | Adopt `agentic-evalkit` as ARP's evaluation framework via a sliced migration; dependency, bridge, and scoring-cutover slices (A-C) shipped, in-tree package removal (D/E) sequenced behind repointing `scripts/eval_gate.py` off its required-check dependency on the legacy package | Accepted | [ADR-042](ADR-042-agentic-evalkit-adoption.md) |
 | **043** | Configurable workflow UI: per-step node config (model params / persona / observers) in the YAML schema, a JSON UI-settings store for provider endpoints + tier reranks (below env-var pins in routing precedence), self-describing DAG edges, and replay-based run comparison (`POST /api/eval/compare`) | Accepted | [ADR-043](ADR-043-configurable-workflow-ui.md) |
 | **044** | Evaluation scoring visibility (issue #172): loader-side `golden_output_path` resolution inlined as `golden_output_text`, loud+typed judge skips (`judge_skipped`/`judge_skip_reason`/`judge_skip_code`, `expected_text_present`, opt-in `judge_required` → `JudgeRequiredError` scoped to the evaluation), replay sample rehydration with task_id verification, and a config-backed efficiency SLO band | Accepted | [ADR-044](ADR-044-evaluation-scoring-visibility.md) |
 | **045** | `BuildAppTool` requires human approval — the `build_app` install/build/test shell tool joins the fail-closed HITL gate (it was ungated, contradicting the shell-approval claim) | Accepted | [ADR-045](ADR-045-build-app-approval-gate.md) |
@@ -171,7 +171,7 @@ Eval / Scoring Domain:
 | 036 | Yes | 100% (`OllamaBackend` on `ollama.AsyncClient`; `ollama` promoted to core dep) | test_ollama_canonical.py (SDK-stubbed) | 2026-06-21 |
 | 037 | Yes | 100% (`models/ollama_discovery.py` raw probe; merged into `enumerate_known_models`; UI badges) | test_ollama_discovery.py, test_langchain_models_unit.py, ModelFinderPage.test.tsx | 2026-06-21 |
 | 038 | Yes | 100% (`models/local_discovery.py` LM Studio `/api/v1/models` + compatibility fallbacks and ONNX `genai_config.json`; merged into `enumerate_known_models`) | test_local_discovery.py, test_langchain_models_unit.py | 2026-07-14 |
-| 042 | Partial | Slice B only: `agentic_v2/scoring/evalkit_bridge.py` (additive, not wired into `step_scoring.py`) | test_evalkit_bridge.py (skips without evalkit installed) | 2026-07-03 |
+| 042 | Yes | Slices A-C: `scoring/step_scoring.py` scores through `scoring/evalkit_bridge.py` against runtime-owned rubrics in `scoring/rubrics/`; no legacy imports remain under `agentic_v2/scoring/`; unavailable evidence carries no numeric score. D/E pending — `scripts/eval_gate.py`, `models/llm.py`, and the bridge's parity tests still import `agentic_v2_eval`. | test_evalkit_bridge.py; test_step_scoring_additional.py (fresh-interpreter legacy-import block + package AST scan) | 2026-09-10 |
 
 ---
 
