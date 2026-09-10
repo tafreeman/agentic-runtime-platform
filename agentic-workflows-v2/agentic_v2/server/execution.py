@@ -289,7 +289,7 @@ def _stream_dict(
 # and _step_end_event can call it without creating a circular import.
 from . import _step_events as _step_events_mod
 
-_step_events_mod._stream_dict_ref = _stream_dict
+_step_events_mod.set_stream_dict_materializer(_stream_dict)
 
 
 async def _run_via_native_adapter(

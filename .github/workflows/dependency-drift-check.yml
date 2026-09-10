@@ -1,0 +1,135 @@
+# Unpinned Dependency Drift Check
+#
+# ARP holds tight upper-bound version pins on the two optional third-party
+# integrations it reaches deepest into: `executionkit` (the `ek` extra,
+# >=0.3.0,<0.4.0) and `agentic-evalkit` (the `eval` extra, >=0.3.0,<0.4.0) —
+# see agentic-workflows-v2/pyproject.toml. That is deliberate: both packages
+# are pre-1.0 and ARP imports private/internal symbols from each
+# (`executionkit.patterns.base._TrackedProvider`, and the
+# Rubric/RubricCriterion/CallableTarget adaptation in
+# `agentic_v2/scoring/evalkit_bridge.py`) with no consumer contract test on
+# the upstream side. A tight pin protects TODAY's build.
+#
+# It does nothing for TOMORROW's. `ci.yml`'s `ek-delegation-tests` and
+# `evalkit-bridge-tests` jobs are the only places CI ever exercises these two
+# integrations, and both always install with `-c ci-constraints.txt` — the
+# exact lockfile-pinned versions. Nobody finds out a new EK or EVK release
+# breaks ARP's usage until someone manually bumps the upper bound in
+# pyproject.toml, by which point the incompatible release is already the one
+# being adopted.
+#
+# This workflow closes that gap by running the same two test suites WITHOUT
+# the constraints pin on the packages that carry the `ek`/`eval` extras, so
+# pip resolves whatever version currently satisfies the `>=0.3.0,<0.4.0`
+# range in pyproject.toml (today that is still within 0.3.x, but a new 0.3.x
+# point release upstream would be picked up here well before anyone touches
+# the pin by hand). A red run here means "the next EK/EVK release in range
+# will break ARP" — exactly the early warning the tight pin above otherwise
+# forgoes. It runs on a schedule rather than per-PR because its outcome
+# tracks the external package index, not this repo's diff — the same
+# reasoning dependency-audit.yml uses for its weekly pip-audit/npm-audit
+# runs.
+#
+# Deliberately NOT a required status check: a brand-new workflow file isn't
+# one by default, and turning it into one would need a branch-protection/
+# ruleset change with its own separate authorization — this file does not
+# attempt that. A red run here is a signal to go investigate and, if
+# genuine, tighten the pin further or wait on an upstream fix — not
+# something that should block unrelated PRs, so no job here uses
+# continue-on-error to swallow a real failure.
+
+name: Dependency Drift Check
+
+on:
+  schedule:
+    # Weekly scan: Monday 06:00 UTC — same cadence as dependency-audit.yml.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  ek-delegation-drift:
+    # Unpinned mirror of ci.yml's ek-delegation-tests job — see the header
+    # comment above for why this exists. Keep the checkout/setup-python/
+    # verify-importable/pytest steps and the test file list in sync with
+    # that job; the only intended difference is the missing
+    # `-c ci-constraints.txt` on the editable installs below.
+    name: EK step-delegation drift check (unpinned ek extra)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install packages (ek extra, no constraints pin)
+        # Deliberately no `-c ci-constraints.txt` on these two lines: pip
+        # resolves whatever version currently satisfies the `ek` extra's
+        # `executionkit>=0.3.0,<0.4.0` range in
+        # agentic-workflows-v2/pyproject.toml, instead of the exact version
+        # ci.yml's pinned job installs. That is the entire point of this
+        # workflow — see the header comment.
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "."
+          pip install -e "agentic-workflows-v2/[dev,server,mcp,langchain,tracing,ek]"
+      - name: Verify executionkit is importable
+        # Guard against the silent-skip failure mode ci.yml's job also
+        # guards against: if the ek extra ever fails to resolve/install,
+        # fail loudly here rather than let the tests below quietly
+        # module-skip and report green.
+        run: |
+          python -c "import executionkit; print('executionkit', getattr(executionkit, '__version__', '?'))"
+      - name: Run the EK-gated suite
+        # No continue-on-error: a failure here IS the finding this workflow
+        # exists to surface. Swallowing it would defeat the whole point.
+        run: |
+          set -euo pipefail
+          cd agentic-workflows-v2
+          python -m pytest \
+            tests/engine/test_step_ek_delegation.py \
+            tests/engine/test_step_tool_path.py \
+            tests/models/test_ek_adapters.py \
+            tests/models/test_ek_provider.py \
+            tests/models/test_ek_provider_wrapper.py \
+            -q --timeout=120
+
+  evalkit-bridge-drift:
+    # Unpinned mirror of ci.yml's evalkit-bridge-tests job — same reasoning
+    # as ek-delegation-drift above, for the `eval` extra instead.
+    name: EvalKit bridge drift check (unpinned eval extra)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install packages (eval extra, no constraints pin)
+        # Same reasoning as the ek job above: no `-c ci-constraints.txt` on
+        # the root or agentic-workflows-v2 installs, so pip resolves
+        # whatever version currently satisfies the `eval` extra's
+        # `agentic-evalkit>=0.3.0,<0.4.0` range. agentic-v2-eval stays
+        # pinned to ci-constraints.txt — it's the in-tree legacy eval
+        # package with no dependency on agentic-evalkit, only installed
+        # here so tests/test_evalkit_bridge.py can import agentic_v2_eval
+        # at collection time, so pinning it doesn't defeat this workflow's
+        # purpose.
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "."
+          pip install -e "agentic-workflows-v2/[dev,server,mcp,langchain,tracing,eval]"
+          pip install -e "agentic-v2-eval/[dev]" -c ci-constraints.txt
+      - name: Verify agentic_evalkit is importable
+        # Fail loudly if the extra stops resolving, rather than letting the
+        # tests below quietly importorskip and report green.
+        run: |
+          python -c "import agentic_evalkit; print('agentic-evalkit', getattr(agentic_evalkit, '__version__', '?'))"
+      - name: Run the EvalKit-gated suite
+        # No continue-on-error — see the ek job above.
+        run: |
+          set -euo pipefail
+          cd agentic-workflows-v2
+          python -m pytest \
+            tests/test_evalkit_bridge.py \
+            tests/contract/test_evalkit_boundary.py \
+            -q --timeout=120
