@@ -56,9 +56,9 @@ jobs:
     name: EK step-delegation drift check (unpinned ek extra)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.11"
       - name: Install packages (ek extra, no constraints pin)
@@ -99,9 +99,9 @@ jobs:
     name: EvalKit bridge drift check (unpinned eval extra)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.11"
       - name: Install packages (eval extra, no constraints pin)

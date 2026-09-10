@@ -69,7 +69,7 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Resolve PR metadata
         id: pr
@@ -115,7 +115,7 @@ jobs:
           git checkout "${{ steps.pr.outputs.head_ref }}"
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.11"
 
@@ -171,7 +171,7 @@ jobs:
     outputs:
       prs: ${{ steps.list.outputs.prs }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: List open Dependabot pip/uv PRs
         id: list
@@ -237,7 +237,7 @@ jobs:
       matrix:
         pr_number: ${{ fromJson(needs.discover-relock-candidates.outputs.prs) }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       # Re-validated here even though discover-relock-candidates already
       # filtered on author and head ref: a PR can close, merge, or (in theory)
@@ -285,7 +285,7 @@ jobs:
           git checkout "${{ steps.pr.outputs.head_ref }}"
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.11"
 
