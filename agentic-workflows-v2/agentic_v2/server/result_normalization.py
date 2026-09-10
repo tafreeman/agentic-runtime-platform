@@ -36,7 +36,20 @@ from typing import Any, Mapping
 
 from fastapi import HTTPException
 
-from ..contracts import StepResult, StepStatus, WorkflowResult
+from ..contracts import StepStatus, WorkflowResult
+from ..contracts.result_conversion import (
+    as_dict as as_dict,
+)
+from ..contracts.result_conversion import (
+    build_step_results as build_step_results,
+)
+from ..contracts.result_conversion import (
+    coerce_step_status as coerce_step_status,
+)
+from ..contracts.result_conversion import (
+    extract_tokens as extract_tokens,
+)
+from ..contracts.result_conversion import workflow_status
 from ..workflows.run_logger import RunLogger
 from .evaluation import (
     adapt_sample_to_workflow_inputs,
@@ -118,174 +131,6 @@ def merge_dataset_and_request_inputs(
     return merged
 
 
-def as_dict(value: Any) -> dict[str, Any]:
-    """Normalize an arbitrary value into a JSON-serializable dict.
-
-    Args:
-        value: Input value (dict passed through, None becomes ``{}``,
-            anything else wrapped as ``{"value": value}``).
-
-    Returns:
-        Dict representation of the value.
-    """
-    if isinstance(value, dict):
-        return value
-    if value is None:
-        return {}
-    return {"value": value}
-
-
-def coerce_step_status(value: Any) -> StepStatus:
-    """Coerce a status-like value into a :class:`StepStatus` enum member.
-
-    Handles string variants (e.g., ``"succeeded"``, ``"completed"``,
-    ``"in_progress"``) and passes through existing ``StepStatus`` instances.
-
-    Args:
-        value: Raw status value from a runner or step dict.
-
-    Returns:
-        Corresponding ``StepStatus`` member (defaults to ``FAILED``).
-    """
-    if isinstance(value, StepStatus):
-        return value
-    normalized = str(value or "").strip().lower()
-    if normalized in {"success", "succeeded", "completed"}:
-        return StepStatus.SUCCESS
-    if normalized in {"skipped", "skip"}:
-        return StepStatus.SKIPPED
-    if normalized in {"pending", "queued"}:
-        return StepStatus.PENDING
-    if normalized in {"running", "in_progress"}:
-        return StepStatus.RUNNING
-    return StepStatus.FAILED
-
-
-def extract_tokens(metadata: Mapping[str, Any]) -> int | None:
-    """Extract total token count from step metadata.
-
-    Checks for ``tokens_used`` directly, then sums ``input_tokens`` and
-    ``output_tokens`` if available.
-
-    Args:
-        metadata: Step metadata mapping.
-
-    Returns:
-        Total token count, or None if not available.
-    """
-    direct = metadata.get("tokens_used")
-    if isinstance(direct, int):
-        return direct
-    input_tokens = metadata.get("input_tokens")
-    output_tokens = metadata.get("output_tokens")
-    if isinstance(input_tokens, int) or isinstance(output_tokens, int):
-        return int(input_tokens or 0) + int(output_tokens or 0)
-    return None
-
-
-def build_step_results(
-    steps_map: Mapping[str, Any],
-    *,
-    token_counts: Mapping[str, Any] | None = None,
-    models_used: Mapping[str, Any] | None = None,
-) -> list[StepResult]:
-    """Convert LangGraph step state mappings into contract :class:`StepResult` objects.
-
-    Merges token counts and model identifiers from separate metadata
-    dictionaries into each step result.
-
-    Args:
-        steps_map: Mapping of step name to step state dict.
-        token_counts: Optional per-step token usage mapping.
-        models_used: Optional per-step model identifier mapping.
-
-    Returns:
-        List of :class:`StepResult` instances.
-    """
-    token_counts = token_counts or {}
-    models_used = models_used or {}
-
-    results: list[StepResult] = []
-    for step_name, step_data in steps_map.items():
-        if not isinstance(step_data, Mapping):
-            continue
-        results.append(
-            _build_single_step_result(
-                step_name,
-                step_data,
-                token_counts=token_counts,
-                models_used=models_used,
-            )
-        )
-
-    return results
-
-
-def _step_metadata(step_data: Mapping[str, Any], token_meta: Any) -> dict[str, Any]:
-    """Build a step's metadata dict, folding in token counts when available."""
-    metadata_raw = step_data.get("metadata")
-    metadata: dict[str, Any] = (
-        dict(metadata_raw) if isinstance(metadata_raw, Mapping) else {}
-    )
-    if isinstance(token_meta, Mapping):
-        input_tokens = int(token_meta.get("input") or 0)
-        output_tokens = int(token_meta.get("output") or 0)
-        metadata.setdefault("input_tokens", input_tokens)
-        metadata.setdefault("output_tokens", output_tokens)
-        metadata.setdefault("tokens_used", input_tokens + output_tokens)
-    return metadata
-
-
-def _build_single_step_result(
-    step_name: Any,
-    step_data: Mapping[str, Any],
-    *,
-    token_counts: Mapping[str, Any],
-    models_used: Mapping[str, Any],
-) -> StepResult:
-    """Convert one step state mapping into a contract :class:`StepResult`."""
-    metadata = _step_metadata(step_data, token_counts.get(step_name))
-
-    model_used = models_used.get(step_name)
-    if model_used is None:
-        model_used = step_data.get("model_used")
-    if not isinstance(model_used, str):
-        model_used = None
-
-    error_val = step_data.get("error")
-    error_text = str(error_val) if error_val else None
-
-    start_ts = step_data.get("start_time")
-    start_time = (
-        datetime.fromisoformat(start_ts)
-        if isinstance(start_ts, str)
-        else datetime.now(UTC)
-    )
-
-    end_ts = step_data.get("end_time")
-    end_time = datetime.fromisoformat(end_ts) if isinstance(end_ts, str) else None
-
-    return StepResult(
-        step_name=str(step_name),
-        status=coerce_step_status(step_data.get("status")),
-        agent_role=(
-            str(step_data.get("agent_role"))
-            if step_data.get("agent_role") is not None
-            else None
-        ),
-        tier=(
-            int(step_data["tier"]) if isinstance(step_data.get("tier"), int) else None
-        ),
-        model_used=model_used,
-        input_data=as_dict(step_data.get("inputs")),
-        output_data=as_dict(step_data.get("outputs")),
-        error=error_text,
-        metadata=metadata,
-        start_time=start_time,
-        end_time=end_time,
-    )
-
-
 def _normalize_result_errors(result: Any) -> list[str]:
     """Coerce a runner result's ``errors`` attribute into a list of strings."""
     raw_errors = getattr(result, "errors", [])
@@ -359,7 +204,9 @@ def normalize_workflow_result(
     )
 
     errors = _normalize_result_errors(result)
-    overall_status = _resolve_overall_status(result, errors)
+    overall_status = workflow_status(
+        steps, _resolve_overall_status(result, errors), has_errors=bool(errors)
+    )
     elapsed_seconds = _coerce_elapsed_seconds(result)
 
     end_time = datetime.now(UTC)

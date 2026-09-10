@@ -35,7 +35,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
-from ..adapters import get_registry
+from ..adapters.workflows import execute_workflow, load_workflow
 from ..devex.cli import devex_app
 from ..integrations.otel import create_trace_adapter, shutdown_tracing
 from .display import (
@@ -49,7 +49,6 @@ from .display import (
 from .helpers import (
     _normalize_result,
     _run_adapter,
-    _run_via_adapter,
 )
 
 logger = logging.getLogger(__name__)
@@ -116,7 +115,7 @@ def _resolve_workflow_source(workflow: str) -> tuple[str, Path | None]:
         if not workflow_path.exists():
             console.print(f"[red]Error:[/red] Workflow file not found: {workflow}")
             raise typer.Exit(1)
-        return workflow_path.stem, workflow_path.parent
+        return workflow_path.name, workflow_path.parent
     return workflow, None
 
 
@@ -145,27 +144,12 @@ def _execute_run(
     ) as progress:
         task = progress.add_task(f"Executing {workflow_def.name}...", total=None)
         start_time = time.perf_counter()
-        if adapter == "langchain":
-            # LangChainEngine resolves a workflow by name (optionally
-            # scoped to definitions_dir for a file-path invocation);
-            # native adapters need an already-built DAG/ExecutionContext,
-            # handled by _run_via_adapter. Both go through the registry —
-            # ExecutionEngine.execute()'s `workflow` argument is
-            # intentionally engine-specific by protocol design.
-            engine = get_registry().get_adapter("langchain")
-            raw_result = asyncio.run(
-                engine.execute(
-                    workflow_name,
-                    thread_id=workflow_name,
-                    definitions_dir=definitions_dir,
-                    **input_data,
-                )
-            )
-            wall_clock = time.perf_counter() - start_time
-            result = _normalize_result(workflow_name, raw_result, wall_clock)
-        else:
-            # Non-langchain path: dispatch through the adapter registry
-            result = _run_via_adapter(adapter, workflow_name, input_data)
+        raw_result = asyncio.run(
+            execute_workflow(adapter, workflow_def, input_data, run_id=workflow_name)
+        )
+        result = _normalize_result(
+            workflow_name, raw_result, time.perf_counter() - start_time
+        )
         progress.update(task, completed=True)
     return result
 
@@ -244,14 +228,14 @@ def run(
         agentic run ./my_workflow.yaml --dry-run
         agentic run code_review --adapter native --input review_input.json
     """
-    if adapter == "langchain":
-        _require_langchain()
     try:
         # Resolve name from file path
         workflow_name, definitions_dir = _resolve_workflow_source(workflow)
 
         try:
-            workflow_def = load_workflow_config(workflow_name, definitions_dir)
+            workflow_def = load_workflow(
+                adapter, workflow_name, definitions_dir=definitions_dir
+            )
         except FileNotFoundError as e:
             console.print(f"[red]Error:[/red] {e}")
             raise typer.Exit(1) from e

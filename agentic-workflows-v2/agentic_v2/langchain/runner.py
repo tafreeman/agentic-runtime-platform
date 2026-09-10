@@ -20,16 +20,20 @@ import logging
 import sys
 import time
 import uuid
+from contextlib import aclosing
+from copy import deepcopy
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, AsyncIterator, Iterator
+from typing import Any, AsyncIterator, Awaitable, Callable, Iterator, Mapping
 
 from ..contracts import WorkflowResult
 from ..integrations.base import TraceAdapter
 from ..integrations.tracing import NullTraceAdapter
 from ..settings import get_settings
+from ..utils.path_safety import ensure_within_base
 from .config import (
     WorkflowConfig,
+    _parse_file,
     list_workflows,
     load_workflow_config,
     validate_workflow_inputs,
@@ -48,6 +52,51 @@ logger = logging.getLogger(__name__)
 # Private aliases keep call-site names stable throughout this module.
 _steps_dict_to_list = steps_dict_to_list
 _build_workflow_result = build_workflow_result
+
+
+class _ProgressCallbackError(Exception):
+    """Distinguish observer failures from graph failures; never replay either."""
+
+    def __init__(self, error: Exception) -> None:
+        super().__init__(str(error))
+        self.error = error
+
+
+def _is_workflow_path(workflow: str | Path) -> bool:
+    return (
+        isinstance(workflow, Path)
+        or "/" in workflow
+        or "\\" in workflow
+        or Path(workflow).suffix in {".yaml", ".yml"}
+    )
+
+
+def _task_progress_update(task: dict[str, Any], run_id: str) -> dict[str, Any]:
+    """Translate a real LangGraph task lifecycle event into engine progress."""
+    event = {
+        "run_id": run_id,
+        "step": task["name"],
+        "task_id": task["id"],
+        "timestamp": datetime.now(UTC).isoformat(),
+    }
+    if "input" in task:
+        return {**event, "type": "step_start", "input": task["input"]}
+
+    update = dict(task.get("result") or {})
+    step = update.get("steps", {}).get(task["name"], {})
+    error = task.get("error") or step.get("error")
+    status = step.get("status", "success")
+    if error or status in {"failed", "error"}:
+        status = "failed"
+    elif task.get("interrupts"):
+        status = "interrupted"
+    return {
+        **event,
+        "type": "step_error" if status == "failed" else "step_end",
+        "status": status,
+        "output": step.get("outputs", update),
+        "error": str(error) if error else None,
+    }
 
 
 def _checkpoint_thread_id(
@@ -334,6 +383,51 @@ class WorkflowRunner:
     # Public API
     # -----------------------------------------------------------------
 
+    def load_workflow(
+        self, workflow_name: str | Path, *, definitions_dir: Path | None = None
+    ) -> WorkflowConfig:
+        """Load a YAML name/path without changing runner execution services.
+
+        Bare names use the supplied directory, this runner's directory,
+        or the package default. Relative file paths use the supplied
+        directory when present; bare filenames also honor this runner's
+        directory. Explicit paths select the exact .yaml/.yml file.
+        Returned configs are independent copies, so edits cannot poison
+        the YAML loader cache.
+        """
+        if not isinstance(workflow_name, (str, Path)):
+            raise TypeError("Workflow name must be a string or Path")
+        directory = (
+            definitions_dir if definitions_dir is not None else self._definitions_dir
+        )
+        if not _is_workflow_path(workflow_name):
+            return deepcopy(load_workflow_config(workflow_name, directory))
+        path = Path(workflow_name)
+        if not path.is_absolute() and directory is not None:
+            if definitions_dir is not None or path.parent == Path("."):
+                path = directory / path
+        if path.suffix in {".yaml", ".yml"}:
+            # The caller explicitly selected this directory; retain the loader's
+            # containment check, including rejection of symlinks outside it.
+            return _parse_file(ensure_within_base(path, path.parent))
+        return deepcopy(load_workflow_config(path.name, path.parent))
+
+    def _execution_config(
+        self, workflow: str | Path | WorkflowConfig, use_cache: bool
+    ) -> tuple[WorkflowConfig, bool]:
+        if isinstance(workflow, WorkflowConfig):
+            # Loaded definitions may share a name or be edited between calls.
+            # Snapshot their contents and neither read nor write the name cache.
+            return deepcopy(workflow), False
+        if not isinstance(workflow, (str, Path)):
+            raise TypeError(
+                "Workflow must be a YAML name/path or LangChain WorkflowConfig; "
+                "native WorkflowDefinition/DAG objects are unsupported"
+            )
+        return self.load_workflow(workflow), use_cache and not _is_workflow_path(
+            workflow
+        )
+
     def invoke(
         self,
         workflow_name: str,
@@ -426,13 +520,15 @@ class WorkflowRunner:
 
     async def run(
         self,
-        workflow_name: str,
+        workflow_name: str | Path | WorkflowConfig,
         *,
         ctx: Any = None,
         use_cache: bool = True,
         thread_id: str | None = None,
         run_config: dict[str, Any] | None = None,
         model_override: str | None = None,
+        on_update: Callable[[dict[str, Any]], Awaitable[None]] | None = None,
+        workflow_inputs: Mapping[str, Any] | None = None,
         **inputs: Any,
     ) -> WorkflowResult:
         """Run a workflow asynchronously.
@@ -440,7 +536,8 @@ class WorkflowRunner:
         Parameters
         ----------
         workflow_name:
-            Name of the YAML workflow.
+            YAML name/path or a loaded LangChain WorkflowConfig. Loaded
+            configs execute their contents and bypass the compiled name cache.
         ctx:
             Optional execution context.  When supplied, its variables are
             merged into the LangGraph ``state["context"]`` so that workflow
@@ -453,11 +550,20 @@ class WorkflowRunner:
             for the unmodified workflow is never read or poisoned.
         inputs:
             Keyword arguments matching the workflow's declared inputs.
+        workflow_inputs:
+            Structured data, overriding legacy keyword inputs. Keys such as
+            ``ctx`` and ``on_update`` are data here, never execution controls.
+        on_update:
+            Awaited callback for actual step_start/step_end/step_error events.
+            Uses one graph stream with reducer-applied state snapshots for the
+            result. Callback exceptions propagate; graph exceptions retain the
+            existing failed-result behavior. Neither failure replays the graph.
         """
-        config = load_workflow_config(workflow_name, self._definitions_dir)
+        config, use_cache = self._execution_config(workflow_name, use_cache)
+        workflow_name = config.name
         if model_override is not None:
             config = _apply_model_override(config, model_override)
-        validated = self._validate_inputs(config, inputs)
+        validated = self._validate_inputs(config, {**inputs, **(workflow_inputs or {})})
         graph = self._get_or_compile(config, use_cache and model_override is None)
         run_id = thread_id or str(uuid.uuid4())
         langgraph_config = self._build_langgraph_config(
@@ -484,7 +590,12 @@ class WorkflowRunner:
         started_at = datetime.now(UTC)
         start = time.perf_counter()
         try:
-            final = await graph.ainvoke(state, config=langgraph_config)
+            if on_update is None:
+                final = await graph.ainvoke(state, config=langgraph_config)
+            else:
+                final = await self._run_with_updates(
+                    graph, state, langgraph_config, run_id, on_update
+                )
         except Exception as e:
             elapsed = time.perf_counter() - start
             self._trace_adapter.emit_workflow_end(
@@ -493,6 +604,8 @@ class WorkflowRunner:
                 "failed",
                 {"errors": [str(e)]},
             )
+            if isinstance(e, _ProgressCallbackError):
+                raise e.error from None
             return _build_workflow_result(
                 workflow_name=workflow_name,
                 run_id=run_id,
@@ -581,13 +694,14 @@ class WorkflowRunner:
 
     async def astream(
         self,
-        workflow_name: str,
+        workflow_name: str | Path | WorkflowConfig,
         *,
         ctx: Any = None,
         use_cache: bool = True,
         thread_id: str | None = None,
         run_config: dict[str, Any] | None = None,
         model_override: str | None = None,
+        workflow_inputs: Mapping[str, Any] | None = None,
         **inputs: Any,
     ) -> AsyncIterator[dict[str, Any]]:
         """Stream workflow execution events asynchronously.
@@ -595,7 +709,8 @@ class WorkflowRunner:
         Parameters
         ----------
         workflow_name:
-            Name of the YAML workflow.
+            YAML name/path or a loaded LangChain WorkflowConfig. Loaded
+            configs execute their contents and bypass the compiled name cache.
         ctx:
             Optional execution context.  When supplied, its variables are
             merged into the LangGraph ``state["context"]`` before streaming
@@ -609,11 +724,15 @@ class WorkflowRunner:
             for the unmodified workflow is never read or poisoned.
         inputs:
             Keyword arguments matching the workflow's declared inputs.
+        workflow_inputs:
+            Structured data, overriding legacy keyword inputs without
+            colliding with execution controls.
         """
-        config = load_workflow_config(workflow_name, self._definitions_dir)
+        config, use_cache = self._execution_config(workflow_name, use_cache)
+        workflow_name = config.name
         if model_override is not None:
             config = _apply_model_override(config, model_override)
-        validated = self._validate_inputs(config, inputs)
+        validated = self._validate_inputs(config, {**inputs, **(workflow_inputs or {})})
         graph = self._get_or_compile(config, use_cache and model_override is None)
         run_id = thread_id or str(uuid.uuid4())
         langgraph_config = self._build_langgraph_config(
@@ -829,6 +948,75 @@ class WorkflowRunner:
     # -----------------------------------------------------------------
     # Internal
     # -----------------------------------------------------------------
+
+    @staticmethod
+    async def _run_with_updates(
+        graph: Any,
+        state: WorkflowState,
+        langgraph_config: dict[str, Any],
+        run_id: str,
+        on_update: Callable[[dict[str, Any]], Awaitable[None]],
+    ) -> dict[str, Any]:
+        """Execute once, observing tasks and retaining aggregate state values.
+
+        Never merge task deltas ourselves: LangGraph applies reducers to
+        parallel writes, appended messages/errors, and repeated loop nodes.
+        Closing the stream on callback failure also closes graph execution.
+        """
+        final: dict[str, Any] = dict(state)
+        active_tasks: dict[str, dict[str, Any]] = {}
+        try:
+            async with aclosing(
+                graph.astream(
+                    state, config=langgraph_config, stream_mode=["tasks", "values"]
+                )
+            ) as events:
+                async for mode, payload in events:
+                    if mode == "values":
+                        final = payload
+                    elif mode == "tasks":
+                        if "input" in payload:
+                            active_tasks[payload["id"]] = payload
+                        else:
+                            active_tasks.pop(payload["id"], None)
+                        try:
+                            await on_update(_task_progress_update(payload, run_id))
+                        except Exception as error:
+                            raise _ProgressCallbackError(error) from error
+        except _ProgressCallbackError:
+            raise
+        except Exception as error:
+            # LangGraph can raise before draining the failing task's result
+            # event. Its exception notes identify that task. Only label a step
+            # when that identity matches an observed start; reducer/scheduler
+            # errors (or changed upstream notes) stay workflow-level failures.
+            notes = getattr(error, "__notes__", ())
+            failed_task = next(
+                (
+                    task
+                    for task_id, task in active_tasks.items()
+                    if any(f"id '{task_id}'" in note for note in notes)
+                ),
+                None,
+            )
+            event = (
+                _task_progress_update(
+                    {
+                        "id": failed_task["id"],
+                        "name": failed_task["name"],
+                        "error": str(error),
+                    },
+                    run_id,
+                )
+                if failed_task is not None
+                else {"type": "workflow_error", "run_id": run_id, "error": str(error)}
+            )
+            try:
+                await on_update(event)
+            except Exception as callback_error:
+                raise _ProgressCallbackError(callback_error) from callback_error
+            raise
+        return final
 
     def _get_or_compile(self, config: WorkflowConfig, use_cache: bool) -> Any:
         """Compile a WorkflowConfig to a graph, with optional caching."""

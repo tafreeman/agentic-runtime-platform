@@ -17,14 +17,14 @@ from __future__ import annotations
 import asyncio
 import logging
 from pathlib import Path
-from typing import Any, Awaitable, Callable
+from typing import Any, Awaitable, Callable, Mapping
 
 from ...contracts import StepStatus, WorkflowResult
 from ...engine.context import ExecutionContext
 from ...engine.dag import DAG
 from ...engine.dag_executor import DAGExecutor
 from ...engine.pipeline import Pipeline, PipelineExecutor
-from ...workflows.loader import WorkflowDefinition
+from ...workflows.loader import WorkflowDefinition, WorkflowLoader
 from ._checkpoint_store import CheckpointStore
 
 logger = logging.getLogger(__name__)
@@ -64,11 +64,25 @@ class NativeEngine:
     # ExecutionEngine protocol
     # ------------------------------------------------------------------
 
+    def load_workflow(
+        self, workflow_name: str, *, definitions_dir: Path | None = None
+    ) -> WorkflowDefinition:
+        """Load a native definition, honoring a caller's source directory."""
+        loader = WorkflowLoader(definitions_dir=definitions_dir)
+        path = Path(workflow_name)
+        if path.suffix in {".yaml", ".yml"}:
+            if not path.is_absolute():
+                path = loader.definitions_dir / path
+            return loader.load_file(path)
+        return loader.load(workflow_name)
+
     async def execute(
         self,
         workflow: Any,
         ctx: ExecutionContext | None = None,
         on_update: Callable[[dict[str, Any]], Awaitable[None]] | None = None,
+        *,
+        workflow_inputs: Mapping[str, Any] | None = None,
         **kwargs: Any,
     ) -> WorkflowResult:
         """Execute a workflow using the appropriate native executor.
@@ -78,9 +92,17 @@ class NativeEngine:
         SQLite so that :meth:`resume` can skip already-finished work.
 
         Args:
-            workflow: A :class:`DAG` or :class:`Pipeline` instance.
+            workflow: A loaded :class:`WorkflowDefinition`, :class:`DAG`,
+                or :class:`Pipeline` instance.
             ctx: Execution context for shared variables and services.
             on_update: Async callback for progress events.
+            workflow_inputs: Input data for a loaded definition, kept
+                separate from executor controls.  When supplied for a
+                :class:`WorkflowDefinition`, the inputs are validated
+                against the declaration, seeded into the context, and the
+                declared outputs are resolved onto the result.  When
+                omitted, execution keeps the legacy executor behavior:
+                the context is used as-is with no declaration validation.
             **kwargs: Forwarded to the underlying executor.  Supported
                 extra keys:
 
@@ -95,6 +117,18 @@ class NativeEngine:
         """
         if ctx is None:
             ctx = ExecutionContext()
+
+        if isinstance(workflow, WorkflowDefinition) and workflow_inputs is not None:
+            from ...workflows.runner import (
+                seed_workflow_inputs,
+                validate_workflow_inputs,
+            )
+
+            seed_workflow_inputs(
+                ctx, validate_workflow_inputs(workflow, dict(workflow_inputs))
+            )
+        elif workflow_inputs is not None:
+            ctx.set_sync("inputs", dict(workflow_inputs))
 
         thread_id: str | None = kwargs.pop("thread_id", None)
         should_checkpoint = thread_id is not None and self._checkpoint_store is not None
@@ -111,7 +145,13 @@ class NativeEngine:
         )
 
         try:
-            return await self._dispatch(workflow, ctx, wrapped_update, **kwargs)
+            result = await self._dispatch(workflow, ctx, wrapped_update, **kwargs)
+            if isinstance(workflow, WorkflowDefinition) and workflow_inputs is not None:
+                from ...workflows.runner import resolve_workflow_outputs
+
+                result.final_output = resolve_workflow_outputs(workflow, ctx, result)
+                result.workflow_name = workflow.name
+            return result
         finally:
             if self._checkpoint_tasks:
                 await asyncio.gather(

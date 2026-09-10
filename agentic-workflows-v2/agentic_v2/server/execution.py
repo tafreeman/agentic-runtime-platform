@@ -312,38 +312,12 @@ async def _run_via_native_adapter(
     Returns:
         A fully populated :class:`WorkflowResult`.
     """
-    from ..adapters import get_registry
-    from ..engine.context import ExecutionContext
-    from ..workflows.loader import WorkflowLoader
-    from ..workflows.runner import (
-        resolve_workflow_outputs,
-        seed_workflow_inputs,
-        validate_workflow_inputs,
-    )
+    from ..adapters.workflows import execute_workflow, load_workflow
 
-    loader = WorkflowLoader()
-    workflow_def = loader.load(workflow_name)
-    dag = workflow_def.dag
-    validated = validate_workflow_inputs(workflow_def, workflow_inputs)
-    ctx = ExecutionContext(workflow_id=run_id, run_id=run_id)
-    seed_workflow_inputs(ctx, validated)
-
-    engine = get_registry().get_adapter(adapter_name)
-    raw = await engine.execute(
-        dag,
-        ctx,
-        on_update=on_update,
-        thread_id=run_id,
+    definition = load_workflow(adapter_name, workflow_name)
+    return await execute_workflow(
+        adapter_name, definition, workflow_inputs, run_id=run_id, on_update=on_update
     )
-
-    result = normalize_workflow_result(
-        raw,
-        workflow_name=workflow_name,
-        run_id=run_id,
-    )
-    result.final_output = resolve_workflow_outputs(workflow_def, ctx, result)
-    result.workflow_name = workflow_def.name
-    return result
 
 
 async def _run_native_stream(
@@ -503,21 +477,13 @@ def _build_stream_result(
     token_counts, models_used = _get_lc_runner().extract_metadata(aggregated_state)
     errors = [str(err) for err in aggregated_state.get("errors", []) if err]
 
-    overall_status = StepStatus.SUCCESS
     step_state = aggregated_state.get("steps", {})
-    if errors or any(
-        isinstance(step_data, Mapping)
-        and str(step_data.get("status", "")).strip().lower() == "failed"
-        for step_data in step_state.values()
-    ):
-        overall_status = StepStatus.FAILED
-
     raw_result = SimpleNamespace(
         steps=step_state,
         token_counts=token_counts,
         models_used=models_used,
         errors=errors,
-        overall_status=overall_status,
+        overall_status=StepStatus.SUCCESS,
         elapsed_seconds=max(0.0, time.perf_counter() - started_perf),
         final_output=resolved_outputs,
     )

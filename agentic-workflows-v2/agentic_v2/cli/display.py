@@ -35,8 +35,9 @@ _STATUS_STYLE: dict[str, str] = {
 def _step_label(step) -> str:
     """Return a Rich-markup label string for a single workflow step."""
     label = f"[yellow]{step.name}[/yellow]"
-    if step.agent:
-        label += f" [dim]({step.agent})[/dim]"
+    agent = getattr(step, "agent", None) or getattr(step, "metadata", {}).get("agent")
+    if agent:
+        label += f" [dim]({agent})[/dim]"
     if step.depends_on:
         label += f" <- {step.depends_on}"
     return label
@@ -46,13 +47,15 @@ def _compute_step_levels(workflow_def) -> dict[int, list]:
     """Compute parallel execution levels (depth in the DAG) for each step.
 
     Args:
-        workflow_def: A ``WorkflowConfig`` instance whose ``.steps`` list
-            contains objects with ``.name`` and ``.depends_on`` attributes.
+        workflow_def: A loaded adapter definition with named, dependent steps.
 
     Returns:
         Dict mapping level index (0 = root) to the list of steps at that level.
     """
-    step_index = {s.name: s for s in workflow_def.steps}
+    steps = getattr(workflow_def, "steps", None)
+    if steps is None:
+        steps = list(workflow_def.dag.steps.values())
+    step_index = {s.name: s for s in steps}
     step_levels: dict[str, int] = {}
 
     def _depth(name: str, visited: set) -> int:
@@ -70,11 +73,11 @@ def _compute_step_levels(workflow_def) -> dict[int, list]:
         step_levels[name] = d
         return d
 
-    for step in workflow_def.steps:
+    for step in steps:
         _depth(step.name, set())
 
     levels: dict[int, list] = {}
-    for step in workflow_def.steps:
+    for step in steps:
         levels.setdefault(step_levels.get(step.name, 0), []).append(step)
     return levels
 

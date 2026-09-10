@@ -55,6 +55,38 @@ This dual-engine situation creates three risks: **behavioral divergence** (ident
 
 ---
 
+### Implementation update — 2026-09-10
+
+PR #315 removed the registry's adapter-name validation branch, moved
+`StepResultRecord` into `contracts`, and simplified CLI result display. The
+follow-up completes the loading and result-conversion contracts:
+
+- `adapters.workflows` loads through the selected adapter and passes the
+  resulting definition to `execute` unchanged. CLI run/compare execution and
+  native server execution share this path. Workflow data travels in a
+  `workflow_inputs` mapping, separate from execution controls.
+- Definitions remain adapter-owned: LangChain uses `WorkflowConfig`; native
+  uses `WorkflowDefinition` (and still accepts raw `DAG`/`Pipeline`). LangChain
+  rejects a native definition explicitly. It executes loaded config contents
+  with the name cache bypassed, preserving the injected runner's tracing and
+  checkpointer services. This refines the common-definition proposal above
+  without claiming that the two configuration formats are interchangeable.
+- LangChain `execute(on_update=...)` observes task lifecycle events and obtains
+  final state from LangGraph's reducer-applied snapshots in one execution.
+  Callback failures propagate without replaying the graph. A graph error
+  emits a step error when its exception identifies an observed task; otherwise
+  it emits a workflow error.
+- `contracts.result_conversion` owns raw step status, token, model and timestamp
+  conversion. CLI, server and persistence use the same typed step evidence.
+  Unknown/missing statuses fail closed, and incomplete steps do not imply
+  overall success.
+
+Full runner consolidation remains open. The server's LangChain streaming
+runner still owns tracing, checkpoint lifecycle, observer filtering and stream
+aggregation. Replacing it requires explicit service injection and parity tests
+for those behaviors, plus review of its existing fallback-to-invoke behavior.
+This update does not retire either engine or that server runner.
+
 ## ADR-002: SmartModelRouter circuit-breaker hardening for multi-backend LLM routing
 
 ### Context
