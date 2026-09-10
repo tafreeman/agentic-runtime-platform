@@ -155,6 +155,26 @@ you use. Important behavior:
 The full variable reference, including OIDC, replay, checkpoint, and
 tool-boundary settings, is in [Configuration](../docs/configuration.md).
 
+## Step-scoring evidence
+
+Install `pip install 'agentic-workflows-v2[eval]'` to enable the EvalKit bridge.
+Step scoring reports `unavailable` until a trusted deterministic grader supplies
+evidence for every weighted criterion. Nonempty output alone earns no score.
+The runtime owns its rubric files; this path does not need `agentic-v2-eval`.
+
+Application code can pass a `grader` callback to `build_step_scoring_listener`.
+It receives the step name, agent type, and output text and returns criterion
+names mapped to `CriterionEvidence(score, evidence)`. Scores must be finite and
+between zero and one. `exact_match_evidence(expected, actual)` checks literal
+equality only; it does not establish broader quality. No model judge is enabled
+by this change.
+
+The default server listener has no grader configured. Its
+`metadata.step_scores` records `status`, `reason`, and `output_present`;
+unavailable observations have null `weighted_score` and `passed`, and are
+excluded from `avg_score`. These diagnostics do not approve tools or route
+workflows. Do not interpret an unavailable result as a pass.
+
 ## Development checks
 
 Run the broad checks from the repository root:

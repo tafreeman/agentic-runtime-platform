@@ -1,28 +1,9 @@
-"""ARP-side adapter bridge to the external ``agentic-evalkit`` library (ADR-042).
+"""ARP adapter for the published optional EvalKit dependency (ADR-042).
 
-This module is the ARP half of the evalkit integration described in
-``docs/adr/ADR-042-agentic-evalkit-adoption.md``. ``agentic-evalkit`` is a
-standalone evaluation framework developed independently of this repository
-(see ../agentic-evalkit in the wider workspace) and
-does not yet have a public git remote, so it is treated as an **optional**
-dependency here: CI for ``agentic-workflows-v2`` must stay green whether or
-not it is installed. Every public symbol in this module degrades gracefully
-(raises a clear ``RuntimeError``, not an ``ImportError`` at call time) when
-evalkit is absent.
-
-``agentic_evalkit`` enforces, via its own AST-based boundary contract test,
-that it never imports anything from ``agentic_v2``, ``tools``, or
-``executionkit``. That invariant means all of the ARP <-> evalkit adaptation
-logic necessarily lives on the ARP side of the boundary — here — rather than
-in evalkit itself. This module only *adapts*: it does not change evalkit's
-public API and it does not wire into any ARP call site yet (that is Slice C;
-see the ADR's slice plan). ``agentic_v2/scoring/step_scoring.py`` is
-untouched by this module.
-
-Mirrors the guarded-import convention already used by
-``agentic_v2/scoring/step_scoring.py`` (``_EVAL_AVAILABLE``), except the flag
-here is public (``EVALKIT_AVAILABLE``) since this module's whole purpose is
-to be evalkit-facing and callers need to branch on it explicitly.
+Slice C uses this bridge from live step scoring. ARP owns its rubric resources;
+EVK supplies public Rubric models and the bridge preserves legacy weighted
+arithmetic. Runtime callers require complete criterion evidence before scoring.
+The dependency remains one-way: EVK never imports ARP.
 """
 
 from __future__ import annotations
@@ -51,9 +32,7 @@ def _require_evalkit() -> None:
     Raises:
         RuntimeError: Always, when ``EVALKIT_AVAILABLE`` is ``False``. The
             message names the supported install so a caller knows exactly what
-            to do; callers in CI simply never reach here because this module's
-            functions are never invoked from ``step_scoring.py`` yet (Slice B
-            is additive-only).
+            to do; runtime callers report unavailable scoring when EVK is absent.
     """
     if not EVALKIT_AVAILABLE:
         raise RuntimeError(

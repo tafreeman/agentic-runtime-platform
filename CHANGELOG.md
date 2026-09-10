@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased - step-scoring evidence and EvalKit cutover
+
+- Removed the automatic 0.7 score for nonempty step output. Unmeasured quality
+  now reports `unavailable` with null score/pass fields; output presence remains
+  a diagnostic. Averages exclude unavailable observations.
+- Runtime step scoring uses the optional EvalKit bridge and bundled runtime
+  rubrics without the legacy evaluation package. Trusted deterministic graders
+  may supply criterion evidence; ordinary agent output cannot grant a pass.
+- Consumers of `metadata.step_scores` must handle nullable `weighted_score`,
+  `passed`, and `avg_score`, and inspect `status`/`reason`. Missing EvalKit now
+  produces explicit unavailable observations instead of omitting the listener.
+
+
 All notable changes to this project are documented here.
 
 ---
