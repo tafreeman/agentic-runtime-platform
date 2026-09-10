@@ -21,7 +21,10 @@ Response models:
     :class:`RunsSummaryResponse` -- aggregate run statistics.
     :class:`RunSummaryModel` -- single run summary for list views.
     :class:`ListEvaluationDatasetsResponse` -- available datasets for eval UI.
-    :class:`StepResultRecord` -- HTTP wire shape for a step in GET /api/runs/{filename}.
+
+Re-exported here for backward compatibility:
+    :class:`StepResultRecord` -- HTTP wire shape for a step in GET
+    /api/runs/{filename}; canonically defined in ``agentic_v2.contracts``.
 """
 
 from __future__ import annotations
@@ -39,8 +42,17 @@ from pydantic import (
     model_validator,
 )
 
-from ..contracts import StepStatus
+from ..contracts import (
+    StepResultRecord,  # noqa: F401 -- re-exported, see below
+    StepStatus,
+)
 from ..ui_settings import ModelPackRef
+
+# StepResultRecord (imported above) re-exports from contracts/ so
+# workflows/run_logger.py can import it without reaching into server (see
+# its docstring in contracts/messages.py for the cycle this avoids).
+# Existing `from agentic_v2.server.models import StepResultRecord` call
+# sites keep working unchanged.
 
 
 class HealthResponse(BaseModel):
@@ -99,59 +111,6 @@ class ReadinessResponse(BaseModel):
         default_factory=list,
         description="Models whose circuit breaker is currently OPEN.",
     )
-
-
-class StepResultRecord(BaseModel):
-    """HTTP wire shape for a single step in ``GET /api/runs/{filename}``.
-
-    This is the canonical Pydantic model for the dict produced by
-    ``build_step_record()`` in ``agentic_v2.workflows.run_logger``.
-    Field names reflect the HTTP wire names: ``input``/``output`` (not the
-    internal ``input_data``/``output_data``), and ``tokens_used`` extracted
-    from step metadata.
-
-    ``extra="forbid"`` ensures any future ``build_step_record()`` additions
-    surface immediately at runtime rather than silently drifting.
-
-    Attributes:
-        step_name: Identifier of the step within the workflow DAG.
-        status: Terminal status string (e.g. ``"success"``, ``"failed"``).
-        agent_role: Agent persona/role name assigned to this step.
-        tier: Model tier integer (0=no LLM, 1=1–3B, 2=7–14B, 3=32B+), or None.
-        model_used: Resolved model identifier used for execution.
-        duration_ms: Wall-clock execution time in milliseconds, or None if step
-            did not complete (``end_time`` absent).
-        retry_count: Number of retry attempts made (0 = first attempt succeeded).
-        tokens_used: Token count extracted from step metadata, or None.
-        input: Step input data (truncated dict).
-        output: Step output data (truncated dict).
-        error: Error message if the step failed, else None.
-        error_type: Exception class name if the step failed, else None.
-        start_time: ISO-8601 start timestamp, or None.
-        end_time: ISO-8601 end timestamp, or None.
-        metadata: Remaining step metadata after ``tokens_used`` extraction, or None.
-    """
-
-    model_config = ConfigDict(extra="forbid")
-
-    step_name: str
-    status: str
-    agent_role: str | None = None
-    tier: int | None = None
-    model_used: str | None = None
-    duration_ms: float | None = None
-    retry_count: int = 0
-    tokens_used: int | None = None
-    # No default — `build_step_record()` always supplies these, and dropping
-    # the default forces JSON Schema to list them in `required[]` so the
-    # generated TS type marks them as present rather than `?:`.
-    input: dict[str, Any]
-    output: dict[str, Any]
-    error: str | None = None
-    error_type: str | None = None
-    start_time: str | None = None
-    end_time: str | None = None
-    metadata: dict[str, Any] | None = None
 
 
 class WorkflowExecutionProfileRequest(BaseModel):

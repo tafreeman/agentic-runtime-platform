@@ -174,7 +174,7 @@ const STEP_RESULT_HEADER = `/**
  * Regenerate with: npm run generate:types (from agentic-workflows-v2/ui/)
  *
  * Source JSON Schema: agentic-workflows-v2/tests/schemas/step_result.schema.json
- * Origin Pydantic model: agentic_v2.server.models.StepResultRecord
+ * Origin Pydantic model: agentic_v2.contracts.messages.StepResultRecord
  *
  * CI fails the 'wire-format-drift' job if this file does not match a fresh
  * regeneration from the committed schema.

@@ -19,7 +19,7 @@ import logging
 import threading
 from typing import Any
 
-from ..core.errors import AdapterError, AdapterNotFoundError, ConfigurationError
+from ..core.errors import AdapterError, AdapterNotFoundError
 
 logger = logging.getLogger(__name__)
 
@@ -111,33 +111,32 @@ class AdapterRegistry:
     def validate_selected(self, name: str) -> None:
         """Eagerly validate that the selected adapter is fully functional.
 
-        For ``"langchain"``: attempts to import the LangChain module surface and
-        raises :class:`~agentic_v2.core.errors.ConfigurationError` with an
-        actionable install hint if the optional extras are missing.
-
-        For ``"native"`` (and any other adapter): this method is a no-op —
-        the native engine has no optional dependencies.
+        Delegates to the registered engine class's optional
+        ``validate_configuration()`` classmethod, if it defines one — e.g.
+        the LangChain adapter raises
+        :class:`~agentic_v2.core.errors.ConfigurationError` with an
+        actionable install hint when its optional extras are missing.
+        Adapters with no optional dependencies (e.g. ``"native"``) simply
+        don't define the hook, so this is a no-op for them.  An
+        unregistered *name* is also a no-op here — :meth:`get_adapter` is
+        what raises for an unknown name.
 
         Args:
             name: Registered adapter name to validate (e.g. ``"langchain"``).
 
         Raises:
-            ConfigurationError: When *name* is ``"langchain"`` and the
-                ``langchain``/``langgraph`` extras are not installed.
+            ConfigurationError: If the adapter's ``validate_configuration``
+                hook raises one.
         """
-        if name != "langchain":
+        with self._instance_lock:
+            entry = self._adapters.get(name)
+        if entry is None:
             return
 
-        try:
-            import langchain  # noqa: F401
-            import langgraph  # noqa: F401
-        except ImportError as exc:
-            raise ConfigurationError(
-                "LangChain engine selected but extras not installed. "
-                "Install with: pip install -e '.[langchain]'"
-            ) from exc
-
-        logger.debug("LangChain adapter validation passed")
+        engine_class = entry[0]
+        validate = getattr(engine_class, "validate_configuration", None)
+        if callable(validate):
+            validate()
 
 
 def get_registry() -> AdapterRegistry:
