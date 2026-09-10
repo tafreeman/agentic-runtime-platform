@@ -1,19 +1,24 @@
 version: 2
 
 # Grouping: each ecosystem batches all of a week's minor/patch bumps into ONE
-# pull request (majors are ignored below and never grouped). This collapses the
-# ~16 individual PRs we used to get into ~5 grouped PRs, and avoids the pairwise
-# lockfile conflicts that separate PRs cause (npm shares one package-lock.json;
-# pip shares one uv.lock).
+# pull request; a major bump is never folded into that grouped PR — it opens as
+# its own ungrouped PR per package, per the major-version policy below. This
+# collapses the ~16 individual PRs we used to get into ~5 grouped PRs, and
+# avoids the pairwise lockfile conflicts that separate PRs cause (npm shares
+# one package-lock.json; pip shares one uv.lock).
 #
 # Auto-merge (see .github/workflows/dependabot-auto-merge.yml): npm, github-actions
 # and docker patch/minor PRs self-merge once the required checks pass. pip is
 # deliberately NOT auto-merged — Dependabot does not regenerate uv.lock, so a pip
 # PR must have its lock + ci-constraints.txt re-synced before merge (one grouped
-# PR per directory, merged by hand — or via .github/workflows/dependabot-relock.yml
-# (workflow_dispatch) — after `uv lock` + re-export. Note that workflow uses
-# plain `uv lock`, not `just relock`'s `uv lock --upgrade`: see the comment on
-# its relock step for why (`--upgrade` turned a 3-package PR into 100).
+# PR per directory, merged by hand — or via .github/workflows/dependabot-relock.yml,
+# either its workflow_dispatch escape hatch or its scheduled job — after `uv lock`
+# + re-export. Note that workflow uses plain `uv lock`, not `just relock`'s
+# `uv lock --upgrade`: see the comment on its relock step for why (`--upgrade`
+# turned a 3-package PR into 100). Regardless of ecosystem, a major-bump PR is
+# NEVER auto-merged either: dependabot-auto-merge.yml's condition only matches
+# `semver-patch`/`semver-minor` update-type, so allowing majors to open below
+# does not change what can self-merge.
 #
 # pip-root is split by NAME PATTERN into pip-root-llm / pip-root-tooling /
 # pip-root-rest. A dependency-type split was tried first and did not work: of
@@ -26,6 +31,18 @@ version: 2
 # ...) is lower-risk and reviewable at a glance separately. pip-runtime and
 # pip-eval stay single groups — each is already small (3 and a handful of
 # updates respectively).
+#
+# Major-version policy: every dependency below may now be proposed for a major
+# bump EXCEPT `executionkit` and `agentic-evalkit`. Both are pre-1.0 packages
+# whose private internals ARP reaches into directly (see the `ek` / `eval`
+# extras in agentic-workflows-v2/pyproject.toml and ADR-023); their tight
+# `>=0.3.0,<0.4.0` upper-bound pins are a deliberate compatibility contract,
+# not neglect, and widening them must stay a conscious manual edit, never a
+# Dependabot suggestion. They show up in two places — root, via the transitive
+# pins ci-constraints.txt exports for the whole workspace, and
+# agentic-workflows-v2, where the extras are declared — so both of those pip
+# blocks carry a per-name ignore for the two packages instead of the old
+# blanket wildcard.
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -41,11 +58,10 @@ updates:
       github-actions:
         patterns:
           - "*"
-    # Major bumps are not created (see the ignore rule below); only patch/minor are
-    # opened, grouped above, and auto-merged by the auto-merge workflow.
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
+    # Major bumps now open too (see the major-version policy at the top of this
+    # file) — but as their own ungrouped PR per action, never folded into the
+    # grouped patch/minor PR above, and dependabot-auto-merge.yml's
+    # update-type check means a major here still always needs a human.
 
   - package-ecosystem: "pip"
     directory: "/"
@@ -87,8 +103,17 @@ updates:
       pip-root-rest:
         patterns:
           - "*"
+    # executionkit and agentic-evalkit land in this directory too — not as
+    # direct root dependencies, but as transitive pins that `uv export
+    # --all-packages --all-extras` writes into root ci-constraints.txt (see
+    # dependabot-relock.yml). Carve them out of major bumps per the
+    # major-version policy at the top of this file; every other dependency
+    # here, in whichever pip-root-* group it falls into above, is now free to
+    # receive one.
     ignore:
-      - dependency-name: "*"
+      - dependency-name: "executionkit"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "agentic-evalkit"
         update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "pip"
@@ -105,8 +130,15 @@ updates:
       pip-runtime:
         patterns:
           - "*"
+    # executionkit (`ek` extra) and agentic-evalkit (`eval` extra) are declared
+    # directly in this directory's pyproject.toml. See the major-version
+    # policy at the top of this file: their tight upper-bound pins stay fully
+    # enforced, so majors stay ignored for these two names specifically, while
+    # every other dependency in this group is now free to receive one.
     ignore:
-      - dependency-name: "*"
+      - dependency-name: "executionkit"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "agentic-evalkit"
         update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "pip"
@@ -123,9 +155,10 @@ updates:
       pip-eval:
         patterns:
           - "*"
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
+    # No executionkit/agentic-evalkit carve-out needed here — neither appears
+    # in this directory's own pyproject.toml — so, per the major-version
+    # policy at the top of this file, every dependency in this group is free
+    # to receive a major-bump PR.
 
   - package-ecosystem: "npm"
     directory: "/agentic-workflows-v2/ui"
@@ -141,9 +174,8 @@ updates:
       ui-npm:
         patterns:
           - "*"
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
+    # Per the major-version policy at the top of this file: no carve-out
+    # applies to the npm ecosystem, so majors are now open here too.
 
   - package-ecosystem: "docker"
     directory: "/"
@@ -159,14 +191,16 @@ updates:
       docker:
         patterns:
           - "*"
+    # Per the major-version policy at the top of this file: no carve-out
+    # applies to the docker ecosystem, so majors are now open here too — this
+    # is unrelated to, and does not loosen, the python-image rule below.
     ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
-      # Dependabot treats 3.11 -> 3.14 as a MINOR bump of the python image, so
-      # the wildcard major-only rule above does not stop it. An interpreter bump
-      # changes the ABI tag the image installs wheels for and has repeatedly
-      # broken the release image (PRs #106, #158, #222: pinned zstandard/cffi
-      # have no cp314 wheels, so pip source-builds and fails on slim). Bump the
-      # base image deliberately, together with requires-python and the CI matrix.
+      # Dependabot treats 3.11 -> 3.14 as a MINOR bump of the python image, so a
+      # major-only rule was never enough to stop it on its own. An interpreter
+      # bump changes the ABI tag the image installs wheels for and has
+      # repeatedly broken the release image (PRs #106, #158, #222: pinned
+      # zstandard/cffi have no cp314 wheels, so pip source-builds and fails on
+      # slim). Bump the base image deliberately, together with requires-python
+      # and the CI matrix.
       - dependency-name: "python"
         update-types: ["version-update:semver-minor"]

@@ -8,18 +8,32 @@ name: Relock Dependabot pip PR
 # "the lockfile needs to be updated" before it ever reaches the diff check,
 # so every pip Dependabot PR opens red on a required check. The fix was
 # already documented as a manual step — clone, `just relock`, review,
-# commit, push — this workflow runs those same three commands on demand so
-# a maintainer can unblock a PR from the Actions tab instead of a local
-# checkout.
+# commit, push — the `relock` job below runs those same three commands on
+# demand so a maintainer can unblock a PR from the Actions tab instead of a
+# local checkout.
 #
-# Deliberately workflow_dispatch-only, never `pull_request`: GitHub
-# force-downgrades GITHUB_TOKEN to read-only and withholds repository
-# secrets for any run associated with a Dependabot-authored PR ref, on both
-# `pull_request` and `pull_request_target` — a push-back step wired to
-# those events cannot obtain write access without a PAT this repo does not
-# provision. A manually dispatched run against an arbitrary ref is not
-# subject to that restriction, so it can push the relocked files straight
-# back onto the PR branch with the default token.
+# That manual job is deliberately workflow_dispatch-only, never
+# `pull_request`: GitHub force-downgrades GITHUB_TOKEN to read-only and
+# withholds repository secrets for any run associated with a
+# Dependabot-authored PR ref, on both `pull_request` and
+# `pull_request_target` — a push-back step wired to those events cannot
+# obtain write access without a PAT this repo does not provision. A
+# manually dispatched run against an arbitrary ref is not subject to that
+# restriction, so it can push the relocked files straight back onto the PR
+# branch with the default token.
+#
+# The gap that leaves: nothing runs the fix automatically. A human has to
+# notice a red Dependabot PR and manually dispatch this workflow with its
+# number. `schedule` is exempt from the same GITHUB_TOKEN downgrade — it is
+# not associated with a Dependabot PR ref at all, it just happens to check
+# one out — so the `discover-relock-candidates` + `relock-scheduled` jobs
+# below close that gap unattended: list the open Dependabot pip/uv PRs, then
+# run the exact same guard + plain-`uv lock` + export + commit + push steps
+# against each one. Deliberately duplicated rather than shared via a
+# reusable/composite action: this repo has no existing composite-action
+# convention, both call sites are short, and the scheduled path never takes
+# an `upgrade_package` input at all (no `--upgrade-package` branch to keep in
+# sync) — see that job's relock step for the one line that matters.
 
 on:
   workflow_dispatch:
@@ -32,6 +46,13 @@ on:
         description: "Optional: also upgrade this one package in the lock (for security PRs that edit ci-constraints.txt directly, e.g. cryptography)"
         required: false
         type: string
+  schedule:
+    # Daily rather than pinned to dependabot.yml's Monday 05:15-05:30 UTC pip
+    # PR-open window: catches that week's grouped PRs the same day, plus any
+    # out-of-band security PR Dependabot opens on a pip advisory any other
+    # day. Cheap to run daily — the commit/push step below no-ops in seconds
+    # whenever nothing needs relocking.
+    - cron: '0 12 * * *'  # 12:00 UTC
 
 permissions:
   contents: write
@@ -39,7 +60,11 @@ permissions:
 
 jobs:
   relock:
-    name: Relock uv.lock + ci-constraints.txt
+    name: Relock uv.lock + ci-constraints.txt (manual)
+    # Guards against a `schedule` run trying to resolve an empty
+    # `inputs.pr_number` — this job only ever makes sense for the
+    # workflow_dispatch trigger.
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -135,4 +160,128 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add uv.lock ci-constraints.txt
           git commit -m "chore(deps): relock uv.lock for PR #${{ inputs.pr_number }}"
+          git push origin "HEAD:refs/heads/${{ steps.pr.outputs.head_ref }}"
+
+  discover-relock-candidates:
+    name: Find open Dependabot pip/uv PRs
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    outputs:
+      prs: ${{ steps.list.outputs.prs }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: List open Dependabot pip/uv PRs
+        id: list
+        run: |
+          set -euo pipefail
+          # Same author-string and head-ref matching as the manual job's
+          # guard step above (both `app/dependabot` and `dependabot[bot]`
+          # forms; `dependabot/pip/*` and `dependabot/uv/*` branches), applied
+          # here as a filter instead of a hard failure so the discovery step
+          # simply skips anything that isn't a Dependabot pip/uv PR rather
+          # than erroring the whole scheduled run over one unrelated PR.
+          prs_json=$(gh pr list --state open --json number,author,headRefName \
+            --jq '[.[] | select(.author.login == "app/dependabot" or .author.login == "dependabot[bot]") | select(.headRefName | startswith("dependabot/pip/") or startswith("dependabot/uv/")) | .number]')
+          echo "Open Dependabot pip/uv PRs: $prs_json"
+          echo "prs=$prs_json" >> "$GITHUB_OUTPUT"
+
+  relock-scheduled:
+    name: Relock uv.lock + ci-constraints.txt (PR #${{ matrix.pr_number }})
+    needs: discover-relock-candidates
+    # Skip the job entirely rather than let a matrix built from an empty
+    # array run — there is nothing to relock when no Dependabot pip/uv PR is
+    # open.
+    if: needs.discover-relock-candidates.outputs.prs != '[]'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    strategy:
+      fail-fast: false
+      matrix:
+        pr_number: ${{ fromJson(needs.discover-relock-candidates.outputs.prs) }}
+    steps:
+      - uses: actions/checkout@v6
+
+      # Re-validated here even though discover-relock-candidates already
+      # filtered on author and head ref: a PR can close, merge, or (in theory)
+      # change hands in the window between that listing and this job running.
+      # Same guard, same acceptance list, as the manual job above.
+      - name: Resolve PR metadata
+        id: pr
+        run: |
+          set -euo pipefail
+          state=$(gh pr view "${{ matrix.pr_number }}" --json state --jq .state)
+          author=$(gh pr view "${{ matrix.pr_number }}" --json author --jq .author.login)
+          head_ref=$(gh pr view "${{ matrix.pr_number }}" --json headRefName --jq .headRefName)
+          echo "state=$state" >> "$GITHUB_OUTPUT"
+          echo "author=$author" >> "$GITHUB_OUTPUT"
+          echo "head_ref=$head_ref" >> "$GITHUB_OUTPUT"
+
+      - name: Guard — only relock open Dependabot pip/uv PRs
+        run: |
+          set -euo pipefail
+          if [ "${{ steps.pr.outputs.state }}" != "OPEN" ]; then
+            echo "::error::PR #${{ matrix.pr_number }} is ${{ steps.pr.outputs.state }}, not OPEN"
+            exit 1
+          fi
+          # See the manual `relock` job's identical guard step for why both
+          # author forms and both branch prefixes are accepted.
+          case "${{ steps.pr.outputs.author }}" in
+            "app/dependabot"|"dependabot[bot]") ;;
+            *)
+              echo "::error::PR #${{ matrix.pr_number }} author is '${{ steps.pr.outputs.author }}', not Dependabot — refusing to relock a human PR"
+              exit 1
+              ;;
+          esac
+          case "${{ steps.pr.outputs.head_ref }}" in
+            dependabot/pip/*|dependabot/uv/*) ;;
+            *)
+              echo "::error::Head ref '${{ steps.pr.outputs.head_ref }}' doesn't look like a pip/uv Dependabot branch — refusing"
+              exit 1
+              ;;
+          esac
+
+      - name: Check out the PR branch
+        run: |
+          set -euo pipefail
+          git fetch origin "${{ steps.pr.outputs.head_ref }}"
+          git checkout "${{ steps.pr.outputs.head_ref }}"
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Relock uv.lock and regenerate ci-constraints.txt
+        # Same command and same uv pin as the manual job's identically-named
+        # step. Unlike that job, there is no `upgrade_package` input to branch
+        # on here at all — the scheduled path only ever exists to close the
+        # "Dependabot bumped pyproject/ci-constraints.txt but not uv.lock" gap
+        # with a plain `uv lock`, never to opportunistically upgrade anything
+        # beyond what Dependabot itself already proposed. The single-package
+        # `--upgrade-package` escape hatch for ci-constraints.txt-only
+        # security PRs stays a deliberate, manual, workflow_dispatch-only
+        # action.
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          pip install "uv==0.11.2"
+          uv lock
+          uv export --locked --no-hashes --no-emit-workspace \
+            --all-packages --all-extras -o ci-constraints.txt
+
+      - name: Commit and push if changed
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- uv.lock ci-constraints.txt; then
+            echo "uv.lock and ci-constraints.txt are already in sync — nothing to push."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add uv.lock ci-constraints.txt
+          git commit -m "chore(deps): relock uv.lock for PR #${{ matrix.pr_number }}"
           git push origin "HEAD:refs/heads/${{ steps.pr.outputs.head_ref }}"
