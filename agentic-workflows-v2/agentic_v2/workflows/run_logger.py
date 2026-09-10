@@ -15,7 +15,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from ..contracts import StepResult, StepStatus, WorkflowResult
+from ..contracts import StepResult, StepResultRecord, StepStatus, WorkflowResult
 from ..core.tenant import DEFAULT_TENANT_ID, sanitize_tenant_id, tenant_run_dir
 
 logger = logging.getLogger(__name__)
@@ -62,55 +62,38 @@ def _truncate(value: Any, max_len: int = 10_000) -> Any:
     return value
 
 
-def build_step_record(step: Any) -> dict[str, Any]:
+def build_step_record(step: StepResult) -> dict[str, Any]:
     """Build a structured record for a single step.
 
-    The returned dict is validated through
-    :class:`~agentic_v2.server.models.StepResultRecord` before being returned.
-    Any mismatch between this function and the Pydantic model surfaces via a
-    structured WARNING log; the call returns a minimal fallback record (with
-    the original validation error preserved under ``metadata.validation_error``)
-    so that one malformed step cannot destroy the entire run log on disk.
-
-    The import is deferred to avoid a circular dependency:
-    ``server.app`` → ``routes.evaluation_routes`` → ``workflows.run_logger`` would
-    form a cycle if ``server.models`` were imported at module level here.
+    The returned dict is validated through :class:`StepResultRecord`
+    before being returned. Any mismatch between this function and the
+    Pydantic model surfaces via a structured WARNING log; the call returns
+    a minimal fallback record (with the original validation error
+    preserved under ``metadata.validation_error``) so that one malformed
+    step cannot destroy the entire run log on disk.
     """
-    # Deferred import to break circular dependency: run_logger → server.models
-    # → server.__init__ → server.app → routes → run_logger.
     from pydantic import ValidationError
 
-    from ..server.models import StepResultRecord
-
-    step_name = getattr(step, "step_name", "<unknown>")
-    raw_status = getattr(step, "status", "error")
-    status_value = raw_status.value if hasattr(raw_status, "value") else str(raw_status)
+    step_name = step.step_name
+    status_value = step.status.value
+    metadata = step.metadata or {}
 
     record = {
         "step_name": step_name,
         "status": status_value,
-        "agent_role": getattr(step, "agent_role", None),
-        "tier": getattr(step, "tier", None),
-        "model_used": getattr(step, "model_used", None),
-        "duration_ms": getattr(step, "duration_ms", None),
-        "retry_count": getattr(step, "retry_count", 0),
-        "tokens_used": (getattr(step, "metadata", {}) or {}).get("tokens_used"),
-        "input": _truncate(getattr(step, "input_data", {}) or {}),
-        "output": _truncate(getattr(step, "output_data", {}) or {}),
-        "error": getattr(step, "error", None),
-        "error_type": getattr(step, "error_type", None),
-        "start_time": (
-            step.start_time.isoformat() if getattr(step, "start_time", None) else None
-        ),
-        "end_time": (
-            step.end_time.isoformat() if getattr(step, "end_time", None) else None
-        ),
-        "metadata": {
-            k: v
-            for k, v in (getattr(step, "metadata", {}) or {}).items()
-            if k != "tokens_used"
-        }
-        or None,
+        "agent_role": step.agent_role,
+        "tier": step.tier,
+        "model_used": step.model_used,
+        "duration_ms": step.duration_ms,
+        "retry_count": step.retry_count,
+        "tokens_used": metadata.get("tokens_used"),
+        "input": _truncate(step.input_data),
+        "output": _truncate(step.output_data),
+        "error": step.error,
+        "error_type": step.error_type,
+        "start_time": step.start_time.isoformat() if step.start_time else None,
+        "end_time": step.end_time.isoformat() if step.end_time else None,
+        "metadata": {k: v for k, v in metadata.items() if k != "tokens_used"} or None,
     }
 
     try:

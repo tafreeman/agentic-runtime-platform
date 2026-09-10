@@ -35,6 +35,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
+from ..adapters import get_registry
 from ..devex.cli import devex_app
 from ..integrations.otel import create_trace_adapter, shutdown_tracing
 from .display import (
@@ -145,19 +146,18 @@ def _execute_run(
         task = progress.add_task(f"Executing {workflow_def.name}...", total=None)
         start_time = time.perf_counter()
         if adapter == "langchain":
-            # TODO(ADR-001): The LangChain path uses a separate
-            # WorkflowRunner (from ..langchain) that compiles workflows
-            # into LangGraph state machines via compile_workflow().  It
-            # relies on load_workflow_config() (not the native YAML
-            # loader) and produces a different result shape.  Unifying
-            # both paths through the AdapterRegistry requires the
-            # LangChain adapter to accept the same workflow-loading
-            # interface as the native path — tracked for Phase 2.
-            runner = WorkflowRunner(definitions_dir=definitions_dir)
+            # LangChainEngine resolves a workflow by name (optionally
+            # scoped to definitions_dir for a file-path invocation);
+            # native adapters need an already-built DAG/ExecutionContext,
+            # handled by _run_via_adapter. Both go through the registry —
+            # ExecutionEngine.execute()'s `workflow` argument is
+            # intentionally engine-specific by protocol design.
+            engine = get_registry().get_adapter("langchain")
             raw_result = asyncio.run(
-                runner.run(
+                engine.execute(
                     workflow_name,
                     thread_id=workflow_name,
+                    definitions_dir=definitions_dir,
                     **input_data,
                 )
             )

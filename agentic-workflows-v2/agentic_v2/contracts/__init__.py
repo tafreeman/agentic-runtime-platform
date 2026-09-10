@@ -12,7 +12,8 @@ Exports by category:
   :class:`ReviewStatus`, :class:`TestGateStatus`.
 - **Message contracts**: :class:`AgentMessage` (inter-agent),
   :class:`StepResult` (per-step outcome), :class:`WorkflowResult`
-  (aggregate run outcome).
+  (aggregate run outcome), :class:`StepResultRecord` (HTTP wire shape for
+  a logged step, ``GET /api/runs/{filename}``).
 - **Review contracts**: :class:`FindingSeverity`, :class:`Finding`,
   :class:`ReviewReport` — structured code review output with
   ``ReviewStatus.normalize()`` for LLM output coercion.
@@ -64,6 +65,7 @@ from .messages import (
     ReviewReport,
     ReviewStatus,
     StepResult,
+    StepResultRecord,
     StepStatus,
     TestGateStatus,
     WorkflowResult,
@@ -92,6 +94,7 @@ __all__ = [
     "TestGateStatus",
     "AgentMessage",
     "StepResult",
+    "StepResultRecord",
     "WorkflowResult",
     # Review
     "FindingSeverity",

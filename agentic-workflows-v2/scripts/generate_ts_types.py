@@ -7,7 +7,7 @@ to produce the TypeScript mirrors of the Python contracts.
 
 Sources of truth:
     ``agentic_v2/contracts/events.py``       → tests/schemas/events.schema.json
-    ``agentic_v2/server/models.py``          → tests/schemas/step_result.schema.json
+    ``agentic_v2/contracts/messages.py``     → tests/schemas/step_result.schema.json
     ``agentic_v2/server/models.py``          → tests/schemas/dag_response.schema.json
     ``agentic_v2/server/models.py``          → tests/schemas/workflow_input_schema.schema.json
     ``agentic_v2/server/models.py``          → tests/schemas/workflow_editor_step.schema.json
@@ -33,10 +33,10 @@ from pydantic import TypeAdapter
 
 from agentic_v2.contracts.chat import ChatRequest, ChatStreamEvent
 from agentic_v2.contracts.events import ExecutionEvent
+from agentic_v2.contracts.messages import StepResultRecord
 from agentic_v2.server.models import (
     DAGResponse,
     RunsSummaryResponse,
-    StepResultRecord,
     WorkflowEditorStep,
     WorkflowInputSchemaResponse,
 )

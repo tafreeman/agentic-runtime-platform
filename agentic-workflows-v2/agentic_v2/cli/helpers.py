@@ -13,16 +13,20 @@ import time
 from dataclasses import dataclass
 from typing import Any
 
+from ..contracts import WorkflowResult
+
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class _NormalizedResult:
-    """Lightweight result object normalised for CLI display.
+    """Lightweight result object shaped for CLI display.
 
-    Adapts the contracts ``WorkflowResult`` returned by the native engine
-    into the same attribute shape that ``_show_results`` and the output-file
-    block in ``main.py`` consume from the LangChain runner result.
+    Both adapters' ``execute()``/``run()`` already return a contract
+    :class:`~agentic_v2.contracts.WorkflowResult`; this reshapes its typed
+    fields (``StepResult`` list, enum status, ...) into the plain
+    dict/str/float attributes that ``_show_results`` and the output-file
+    block in ``main.py`` display.
     """
 
     workflow_name: str
@@ -38,124 +42,44 @@ class _NormalizedResult:
 # ---------------------------------------------------------------------------
 
 
-def _as_dict(value: Any) -> dict[str, Any]:
-    """Return *value* as a plain dict, or an empty dict for None."""
-    if isinstance(value, dict):
-        return value
-    if value is None:
-        return {}
-    return {"value": value}
-
-
-def _status_str(status_val: Any) -> str:
-    """Convert a status enum or raw value to a lowercase string."""
-    if status_val is None:
-        return "unknown"
-    if hasattr(status_val, "value"):
-        return str(status_val.value)
-    return str(status_val)
-
-
-def _normalise_steps(steps_raw: Any) -> dict[str, Any]:
-    """Convert a list of ``StepResult`` objects into a name-keyed dict.
-
-    Args:
-        steps_raw: Either a ``list[StepResult]`` (native engine) or an
-            already-keyed mapping (pass-through).
-
-    Returns:
-        Dict mapping step name to a small status/outputs/error dict.
-    """
-    if not isinstance(steps_raw, list):
-        return dict(steps_raw) if steps_raw else {}
-
-    steps_dict: dict[str, Any] = {}
-    for sr in steps_raw:
-        name = getattr(sr, "step_name", None) or getattr(sr, "name", str(sr))
-        sr_status = getattr(sr, "status", None)
-        steps_dict[str(name)] = {
-            "status": _status_str(sr_status),
-            "outputs": getattr(sr, "output_data", None) or {},
-            "error": getattr(sr, "error", None),
-        }
-    return steps_dict
-
-
-def _collect_errors(result: Any, steps_raw: Any) -> list[str]:
-    """Gather error strings from result metadata and failed steps.
-
-    Args:
-        result: Raw engine result object.
-        steps_raw: The ``steps`` attribute of *result* (may be a list or
-            mapping).
+def _collect_errors(result: WorkflowResult) -> list[str]:
+    """Gather error strings from failed steps and result metadata.
 
     Returns:
         Deduplicated list of non-empty error strings.
     """
-    errors: list[str] = []
-    raw_errors = getattr(result, "errors", None)
-    if isinstance(raw_errors, list):
-        errors.extend(str(err) for err in raw_errors if err)
+    errors = [step.error for step in result.steps if step.error]
 
-    metadata = getattr(result, "metadata", {}) or {}
-    if isinstance(metadata, dict):
-        meta_errors = metadata.get("errors")
-        if isinstance(meta_errors, list):
-            errors.extend(str(e) for e in meta_errors if e)
+    meta_errors = result.metadata.get("errors")
+    if isinstance(meta_errors, list):
+        errors.extend(str(e) for e in meta_errors if e)
 
-    step_list = steps_raw if isinstance(steps_raw, list) else []
-    for sr in step_list:
-        err = getattr(sr, "error", None)
-        if err:
-            errors.append(str(err))
-
-    return list(dict.fromkeys(errors))
-
-
-def _elapsed_seconds(result: Any, wall_clock: float) -> float:
-    """Resolve elapsed seconds from result metadata or wall-clock fallback.
-
-    Args:
-        result: Raw engine result object.
-        wall_clock: Measured wall-clock duration in seconds.
-
-    Returns:
-        Best-estimate elapsed seconds.
-    """
-    duration_ms = getattr(result, "total_duration_ms", None)
-    if isinstance(duration_ms, (int, float)) and duration_ms > 0:
-        return duration_ms / 1000.0
-    elapsed_seconds = getattr(result, "elapsed_seconds", None)
-    if isinstance(elapsed_seconds, (int, float)) and elapsed_seconds >= 0:
-        return float(elapsed_seconds)
-    return wall_clock
+    return list(dict.fromkeys(str(e) for e in errors))
 
 
 def _normalize_result(
     workflow_name: str,
-    result: Any,
+    result: WorkflowResult,
     wall_clock: float,
 ) -> _NormalizedResult:
-    """Normalize engine-specific workflow results for CLI display/output."""
-    overall_status = getattr(result, "overall_status", None)
-    status = (
-        _status_str(overall_status)
-        if overall_status is not None
-        else _status_str(getattr(result, "status", None))
-    )
-
-    steps_raw = getattr(result, "steps", [])
-    outputs = _as_dict(
-        getattr(result, "final_output", None) or getattr(result, "outputs", None)
-    )
+    """Reshape a contract WorkflowResult into the CLI's display dataclass."""
+    duration_ms = result.total_duration_ms
+    elapsed_seconds = duration_ms / 1000.0 if duration_ms else wall_clock
 
     return _NormalizedResult(
-        workflow_name=getattr(result, "workflow_name", workflow_name),
-        status=status,
-        steps=_normalise_steps(steps_raw),
-        outputs=outputs,
-        errors=_collect_errors(result, steps_raw),
-        elapsed_seconds=round(_elapsed_seconds(result, wall_clock), 3),
+        workflow_name=result.workflow_name or workflow_name,
+        status=result.overall_status.value,
+        steps={
+            step.step_name: {
+                "status": step.status.value,
+                "outputs": step.output_data,
+                "error": step.error,
+            }
+            for step in result.steps
+        },
+        outputs=result.final_output,
+        errors=_collect_errors(result),
+        elapsed_seconds=round(elapsed_seconds, 3),
     )
 
 
@@ -241,8 +165,10 @@ def _run_adapter(
     adapters therefore go through :func:`_run_via_adapter`, which performs
     that resolution; passing the bare name straight to the native engine
     makes it raise ``TypeError`` and report a spurious ``failed`` row.
-    (The same name-based split exists in ``main.py::_execute_run``;
-    unifying the two loading paths is ADR-001 Phase 2 work.)
+    Both branches call through the same :class:`AdapterRegistry` lookup
+    above — the split is only in what shape ``execute()`` needs per
+    engine, which ``ExecutionEngine``'s protocol intentionally leaves
+    engine-specific (see ``core/protocols.py``).
 
     Args:
         adapter_name: Registered adapter name (e.g. ``"native"``, ``"langchain"``).

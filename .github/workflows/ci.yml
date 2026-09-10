@@ -347,7 +347,7 @@ jobs:
     # Sprint B #3 / S1-1 — prevent silent Python <-> TypeScript wire-format drift.
     # Sources of truth:
     #   agentic_v2/contracts/events.py              → events.schema.json + events.generated.ts
-    #   agentic_v2/server/models.StepResultRecord   → step_result.schema.json + step_result.generated.ts
+    #   agentic_v2/contracts/messages.StepResultRecord → step_result.schema.json + step_result.generated.ts
     #   agentic_v2/server/models.DAGResponse        → dag_response.schema.json + dag_response.generated.ts
     #   agentic_v2/server/models.WorkflowInputSchemaResponse → workflow_input_schema.schema.json + workflow_input_schema.generated.ts
     #   agentic_v2/server/models.WorkflowEditorStep → workflow_editor_step.schema.json + workflow_editor_step.generated.ts
