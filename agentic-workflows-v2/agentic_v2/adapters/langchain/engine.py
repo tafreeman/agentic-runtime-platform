@@ -17,9 +17,11 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, AsyncIterator
+from typing import Any, AsyncIterator, Awaitable, Callable, Mapping
 
+from ...contracts import WorkflowResult
 from ...core.errors import ConfigurationError
+from ...langchain.config import WorkflowConfig
 from ...langchain.dependencies import (
     is_missing_langchain_dependency_error,
     to_missing_langchain_dependency_error,
@@ -50,8 +52,10 @@ class LangChainEngine:
     :class:`~agentic_v2.core.protocols.SupportsStreaming` via structural
     subtyping — no explicit inheritance required.
 
-    The ``workflow`` argument to :meth:`execute` and :meth:`stream` must
-    be a **string** naming a YAML workflow definition (e.g. ``"code_review"``).
+    ``execute`` and ``stream`` accept a YAML name/path or a LangChain
+    ``WorkflowConfig`` (the parsed inputs, outputs, and StepConfig list).
+    Loaded configs execute their supplied contents, bypassing the name cache.
+    Native ``WorkflowDefinition``/DAG objects are not supported.
 
     Args:
         runner: An existing :class:`WorkflowRunner` instance.  If ``None``
@@ -97,58 +101,49 @@ class LangChainEngine:
         return self._runner
 
     @staticmethod
-    def _resolve_workflow_name(workflow: Any) -> str:
-        """Accept either a workflow name or an already-loaded definition.
-
-        Native's ``NativeEngine.execute()`` accepts an already-loaded
-        ``WorkflowDefinition`` alongside its compiled ``DAG``/``Pipeline``
-        forms; this mirrors that so callers can load a workflow once (by
-        name or by file path) and pass the same object to whichever
-        adapter they selected, instead of special-casing "langchain wants
-        a bare name" at every call site.
-        """
-        if isinstance(workflow, str):
+    def _validate_workflow(workflow: Any) -> str | Path | WorkflowConfig:
+        """Reject incompatible definitions instead of reloading their name."""
+        if isinstance(workflow, (str, Path, WorkflowConfig)):
             return workflow
-        name = getattr(workflow, "name", None)
-        if isinstance(name, str) and name:
-            return name
         raise TypeError(
-            f"LangChainEngine workflow name must be a string (or an "
-            f"object with a 'name' attribute), got {type(workflow).__name__}"
+            "LangChainEngine workflow name must be a string or Path, or supply "
+            "a LangChain WorkflowConfig; native WorkflowDefinition/DAG objects "
+            f"are unsupported (got {type(workflow).__name__})"
         )
 
-    def _runner_for(self, definitions_dir: Path | None) -> Any:
-        """Return the runner to use, honoring a per-call *definitions_dir*.
+    def load_workflow(
+        self, workflow_name: str, *, definitions_dir: Path | None = None
+    ) -> WorkflowConfig:
+        """Load a YAML name/path using this engine's runner and directory default.
 
-        The cached :attr:`runner` singleton is built once with no
-        directory override, for the common case of running a registered
-        workflow by name.  A caller resolving a workflow from an
-        arbitrary YAML file path (e.g. ``agentic run ./my_workflow.yaml``)
-        needs a runner scoped to that file's directory instead, so this
-        builds a one-off runner rather than mutating the shared instance.
+        The returned config is an independent copy, safe for caller
+        edits. A per-call directory affects loading only; tracing and
+        checkpoints remain attached to the injected runner.
         """
-        if definitions_dir is None:
-            return self.runner
-        if not _HAS_LANGCHAIN:
-            assert _LANGCHAIN_IMPORT_ERROR is not None
-            raise _LANGCHAIN_IMPORT_ERROR
-        return _WorkflowRunner(definitions_dir=definitions_dir)
+        return self.runner.load_workflow(workflow_name, definitions_dir=definitions_dir)
+
+    def _execution_workflow(
+        self, workflow: Any, definitions_dir: Path | None
+    ) -> str | Path | WorkflowConfig:
+        workflow = self._validate_workflow(workflow)
+        if definitions_dir is not None and not isinstance(workflow, WorkflowConfig):
+            return self.load_workflow(str(workflow), definitions_dir=definitions_dir)
+        return workflow
 
     async def execute(
         self,
         workflow: Any,
         ctx: Any = None,
+        on_update: Callable[[dict[str, Any]], Awaitable[None]] | None = None,
         *,
         definitions_dir: Path | None = None,
+        workflow_inputs: Mapping[str, Any] | None = None,
         **kwargs: Any,
-    ) -> Any:
-        """Execute a workflow by name via the LangChain runner.
+    ) -> WorkflowResult:
+        """Execute a YAML name/path or the contents of a loaded WorkflowConfig.
 
         Args:
-            workflow: Workflow name string (e.g. ``"code_review"``), or an
-                already-loaded object exposing a ``.name`` attribute (e.g.
-                a :class:`~agentic_v2.langchain.config.WorkflowConfig` or
-                :class:`~agentic_v2.workflows.loader.WorkflowDefinition`).
+            workflow: YAML name/path or LangChain ``WorkflowConfig``.
             ctx: Execution context forwarded to
                 :meth:`WorkflowRunner.run`.  When the context has an
                 ``all_variables()`` method (i.e. is an
@@ -158,6 +153,12 @@ class LangChainEngine:
             definitions_dir: Optional directory to resolve *workflow*
                 from, for a workflow loaded from an arbitrary YAML file
                 path rather than the default definitions directory.
+            on_update: Awaited callback receiving real ``step_start``,
+                ``step_end``, and ``step_error`` events. Callback exceptions
+                propagate without replaying execution.
+            workflow_inputs: Structured workflow data; keys cannot collide
+                with execution controls. These values override legacy keyword
+                inputs with the same name.
             **kwargs: Forwarded as keyword inputs to
                 :meth:`WorkflowRunner.run`.
 
@@ -166,17 +167,14 @@ class LangChainEngine:
             the runner.
 
         Raises:
-            TypeError: If *workflow* is not a string or name-bearing object.
+            TypeError: If *workflow* is not a YAML name/path or WorkflowConfig.
         """
-        workflow_name = self._resolve_workflow_name(workflow)
-
-        logger.debug(
-            "LangChainEngine.execute: forwarding ctx=%r to runner.run for workflow %r",
-            ctx,
-            workflow_name,
-        )
-        runner = self._runner_for(definitions_dir)
-        return await runner.run(workflow_name, ctx=ctx, **kwargs)
+        workflow = self._execution_workflow(workflow, definitions_dir)
+        if on_update is not None:
+            kwargs["on_update"] = on_update
+        if workflow_inputs is not None:
+            kwargs["workflow_inputs"] = workflow_inputs
+        return await self.runner.run(workflow, ctx=ctx, **kwargs)
 
     async def stream(
         self,
@@ -184,18 +182,20 @@ class LangChainEngine:
         ctx: Any = None,
         *,
         definitions_dir: Path | None = None,
+        workflow_inputs: Mapping[str, Any] | None = None,
         **kwargs: Any,
     ) -> AsyncIterator[dict[str, Any]]:
         """Stream execution events for a workflow.
 
         Args:
-            workflow: Workflow name string, or an already-loaded object
-                exposing a ``.name`` attribute (see :meth:`execute`).
+            workflow: YAML name/path or LangChain ``WorkflowConfig``.
             ctx: Execution context forwarded to
                 :meth:`WorkflowRunner.astream` so that caller-supplied
                 variables are merged into LangGraph state before streaming.
             definitions_dir: Optional directory to resolve *workflow*
                 from; see :meth:`execute`.
+            workflow_inputs: Structured workflow data, overriding legacy
+                keyword inputs. See :meth:`execute`.
             **kwargs: Forwarded as keyword inputs to
                 :meth:`WorkflowRunner.astream`.
 
@@ -203,15 +203,10 @@ class LangChainEngine:
             Event dictionaries from the LangGraph execution.
 
         Raises:
-            TypeError: If *workflow* is not a string or name-bearing object.
+            TypeError: If *workflow* is not a YAML name/path or WorkflowConfig.
         """
-        workflow_name = self._resolve_workflow_name(workflow)
-
-        logger.debug(
-            "LangChainEngine.stream: forwarding ctx=%r to runner.astream for workflow %r",
-            ctx,
-            workflow_name,
-        )
-        runner = self._runner_for(definitions_dir)
-        async for event in runner.astream(workflow_name, ctx=ctx, **kwargs):
+        workflow = self._execution_workflow(workflow, definitions_dir)
+        if workflow_inputs is not None:
+            kwargs["workflow_inputs"] = workflow_inputs
+        async for event in self.runner.astream(workflow, ctx=ctx, **kwargs):
             yield event

@@ -19,13 +19,12 @@ extract_metadata
 
 from __future__ import annotations
 
-import logging
 from datetime import datetime, timedelta
 from typing import Any
 
-from ..contracts import StepResult, StepStatus, WorkflowResult
-
-logger = logging.getLogger(__name__)
+from ..contracts import StepResult, WorkflowResult
+from ..contracts.result_conversion import build_step_results, workflow_status
+from ..contracts.result_conversion import extract_metadata as extract_metadata
 
 
 def steps_dict_to_list(
@@ -33,65 +32,10 @@ def steps_dict_to_list(
     token_counts: dict[str, dict] | None = None,
     models_used: dict[str, str] | None = None,
 ) -> list[StepResult]:
-    """Convert a LangGraph step mapping to an ordered list of ``StepResult`` objects.
-
-    Args:
-        steps_dict: Mapping of step name to step data from LangGraph state.
-        token_counts: Per-step token counts extracted from metadata.
-        models_used: Per-step model identifiers.
-
-    Returns:
-        Ordered list of ``StepResult`` Pydantic models.
-    """
-    token_counts = token_counts or {}
-    models_used = models_used or {}
-    results: list[StepResult] = []
-
-    for step_name, step_data in steps_dict.items():
-        if not isinstance(step_data, dict):
-            continue
-
-        raw_status = step_data.get("status", "success")
-        if raw_status == "success":
-            status = StepStatus.SUCCESS
-        elif raw_status in ("failed", "error"):
-            status = StepStatus.FAILED
-        elif raw_status == "skipped":
-            status = StepStatus.SKIPPED
-        else:
-            logger.warning(
-                "Unknown step status %r for step %r, defaulting to FAILED",
-                raw_status,
-                step_name,
-            )
-            status = StepStatus.FAILED
-
-        # Start from the step's recorded metadata (e.g. structured contract
-        # diagnostics from graph_wiring) so it survives into the run log and
-        # UI; token counts are layered on top.
-        recorded_meta = step_data.get("metadata")
-        meta: dict[str, Any] = (
-            dict(recorded_meta) if isinstance(recorded_meta, dict) else {}
-        )
-        step_tokens = token_counts.get(step_name, {})
-        if step_tokens:
-            meta["input_tokens"] = step_tokens.get("input", 0)
-            meta["output_tokens"] = step_tokens.get("output", 0)
-
-        results.append(
-            StepResult(
-                step_name=step_name,
-                status=status,
-                agent_role=step_data.get("agent"),
-                model_used=models_used.get(step_name),
-                input_data=step_data.get("inputs", {}),
-                output_data=step_data.get("outputs", {}),
-                error=step_data.get("error"),
-                metadata=meta,
-            )
-        )
-
-    return results
+    """Convert raw steps using the same evidence rules as API and persistence."""
+    return build_step_results(
+        steps_dict, token_counts=token_counts, models_used=models_used
+    )
 
 
 def build_workflow_result(
@@ -130,10 +74,7 @@ def build_workflow_result(
         A populated ``WorkflowResult`` contract object.
     """
     errors = errors or []
-    if failed or errors:
-        overall_status = StepStatus.FAILED
-    else:
-        overall_status = StepStatus.SUCCESS
+    overall_status = workflow_status(steps or [], has_errors=failed or bool(errors))
 
     ended_at = started_at + timedelta(seconds=elapsed_seconds)
 
@@ -159,32 +100,3 @@ def build_workflow_result(
         final_output=outputs or {},
         metadata=metadata,
     )
-
-
-def extract_metadata(
-    final_state: dict[str, Any],
-) -> tuple[dict[str, dict], dict[str, str]]:
-    """Extract per-step token counts and model identifiers from final workflow state.
-
-    Args:
-        final_state: The LangGraph state dict produced after workflow execution.
-
-    Returns:
-        A two-tuple of ``(token_counts, models_used)`` where ``token_counts``
-        maps step name to ``{"input": int, "output": int}`` and
-        ``models_used`` maps step name to the model identifier string.
-    """
-    token_counts: dict[str, dict] = {}
-    models_used: dict[str, str] = {}
-
-    for step_name, step_data in final_state.get("steps", {}).items():
-        meta = step_data.get("metadata", {})
-        if meta.get("input_tokens") or meta.get("output_tokens"):
-            token_counts[step_name] = {
-                "input": meta.get("input_tokens", 0),
-                "output": meta.get("output_tokens", 0),
-            }
-        if model := meta.get("model"):
-            models_used[step_name] = model
-
-    return token_counts, models_used

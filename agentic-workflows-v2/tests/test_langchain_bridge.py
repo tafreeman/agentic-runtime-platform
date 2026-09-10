@@ -65,11 +65,11 @@ class TestStepsDictToList:
         result = _steps_dict_to_list(steps)
         assert result[0].status == StepStatus.FAILED
 
-    def test_missing_status_defaults_to_success(self):
-        """When no status key present, LangGraph convention = success."""
+    def test_missing_status_defaults_to_failed(self):
+        """Missing execution evidence must not fabricate success (F6)."""
         steps = {"step_f": {"outputs": {"y": 2}}}
         result = _steps_dict_to_list(steps)
-        assert result[0].status == StepStatus.SUCCESS
+        assert result[0].status == StepStatus.FAILED
 
     def test_non_dict_step_data_skipped(self):
         steps = {"step_ok": {"status": "success"}, "step_bad": "not-a-dict"}

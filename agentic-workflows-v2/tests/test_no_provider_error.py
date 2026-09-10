@@ -146,12 +146,10 @@ def test_cli_catches_no_provider_error_gracefully(
     )
 
     with (
-        patch.object(
-            cli_main, "load_workflow_config", return_value=fake_workflow, create=True
-        ),
+        patch.object(cli_main, "load_workflow", return_value=fake_workflow),
         patch.object(
             cli_main,
-            "_run_via_adapter",
+            "execute_workflow",
             side_effect=NoProviderConfiguredError(),
         ),
     ):

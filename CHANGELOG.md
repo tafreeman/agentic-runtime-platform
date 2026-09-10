@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased - workflow adapter contract completion
+
+- CLI execution and native server execution share adapter-owned loading,
+  input validation and output resolution. Explicit YAML paths select the
+  requested file for either adapter.
+- LangChain executes supplied `WorkflowConfig` contents without reloading
+  their names or reusing a graph cached for different contents. Progress
+  callbacks observe execution and propagate observer failures without replay.
+- Runner, server and run-log step evidence share status, token, model and
+  timestamp conversion. Missing status fails closed; failed or incomplete
+  steps cannot produce an overall successful result.
+
 ## Unreleased - step-scoring evidence and EvalKit cutover
 
 - Removed the automatic 0.7 score for nonempty step output. Unmeasured quality

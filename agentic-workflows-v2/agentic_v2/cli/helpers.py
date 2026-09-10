@@ -93,53 +93,13 @@ def _run_via_adapter(
     workflow_name: str,
     input_data: dict[str, Any],
 ) -> _NormalizedResult:
-    """Execute a workflow through the named adapter and return a normalised result.
+    """Load and execute using the selected adapter's workflow contract."""
+    from ..adapters.workflows import execute_workflow, load_workflow
 
-    Loads the workflow definition via
-    :class:`~agentic_v2.workflows.loader.WorkflowLoader`, builds an
-    :class:`~agentic_v2.engine.context.ExecutionContext` from *input_data*,
-    and calls ``engine.execute(dag, ctx)``.  The raw
-    :class:`~agentic_v2.contracts.WorkflowResult` is then normalised into a
-    :class:`_NormalizedResult` so the CLI display helpers can consume it
-    without knowing about the adapter's internal result shape.
-
-    Args:
-        adapter_name: Registered adapter name (e.g. ``"native"``).
-        workflow_name: Workflow definition name.
-        input_data: Input variables for the workflow.
-
-    Returns:
-        A :class:`_NormalizedResult` with ``status``, ``steps``, ``outputs``,
-        ``errors``, and ``elapsed_seconds`` attributes.
-
-    Raises:
-        AdapterNotFoundError: If *adapter_name* is not registered.
-        WorkflowLoadError: If the workflow definition cannot be found.
-    """
-    from ..adapters import get_registry
-    from ..engine.context import ExecutionContext
-    from ..workflows.loader import WorkflowLoader
-    from ..workflows.runner import (
-        resolve_workflow_outputs,
-        seed_workflow_inputs,
-        validate_workflow_inputs,
-    )
-
-    loader = WorkflowLoader()
-    workflow_def = loader.load(workflow_name)
-    dag = workflow_def.dag
-    validated = validate_workflow_inputs(workflow_def, input_data)
-    ctx = ExecutionContext(workflow_id=f"wf-{workflow_name}")
-    seed_workflow_inputs(ctx, validated)
-
-    engine = get_registry().get_adapter(adapter_name)
-
+    definition = load_workflow(adapter_name, workflow_name)
     start = time.perf_counter()
-    result = asyncio.run(engine.execute(dag, ctx))
-    wall_clock = time.perf_counter() - start
-    result.final_output = resolve_workflow_outputs(workflow_def, ctx, result)
-    result.workflow_name = workflow_def.name
-    return _normalize_result(workflow_name, result, wall_clock)
+    result = asyncio.run(execute_workflow(adapter_name, definition, input_data))
+    return _normalize_result(workflow_name, result, time.perf_counter() - start)
 
 
 def _summarize_for_compare(result: _NormalizedResult) -> dict[str, Any]:
@@ -156,49 +116,21 @@ def _run_adapter(
     workflow_name: str,
     input_data: dict[str, Any],
 ) -> dict[str, Any]:
-    """Run a workflow through a specific adapter and return summary metrics.
+    """Run a named workflow and reduce its typed result to comparison metrics.
 
-    Each adapter takes a different ``workflow`` argument: the LangChain
-    adapter resolves a workflow *name* itself, while the native engine
-    needs an already-loaded :class:`~agentic_v2.engine.dag.DAG` plus an
-    :class:`~agentic_v2.engine.context.ExecutionContext`.  Non-LangChain
-    adapters therefore go through :func:`_run_via_adapter`, which performs
-    that resolution; passing the bare name straight to the native engine
-    makes it raise ``TypeError`` and report a spurious ``failed`` row.
-    Both branches call through the same :class:`AdapterRegistry` lookup
-    above — the split is only in what shape ``execute()`` needs per
-    engine, which ``ExecutionEngine``'s protocol intentionally leaves
-    engine-specific (see ``core/protocols.py``).
-
-    Args:
-        adapter_name: Registered adapter name (e.g. ``"native"``, ``"langchain"``).
-        workflow_name: Workflow definition name.
-        input_data: Input variables for the workflow.
-
-    Returns:
-        Dict with ``status``, ``step_count``, and ``elapsed`` keys.  A
-        ``status`` of ``"failed"`` with zero steps is returned when the
-        adapter raises during execution, so callers must treat that row as
-        a failure.
-
-    Raises:
-        AdapterNotFoundError: If *adapter_name* is not registered.
+    Unknown adapter names raise; execution failures produce a failed
+    row.
     """
     from ..adapters import get_registry
 
     # Resolved outside the try below: an unregistered adapter name is a
     # user error (usually a typo) and should surface with the registry's
     # "Available: ..." hint rather than be flattened into a failed row.
-    engine = get_registry().get_adapter(adapter_name)
+    get_registry().get_adapter(adapter_name)
 
     start = time.perf_counter()
     try:
-        if adapter_name == "langchain":
-            raw_result = asyncio.run(engine.execute(workflow_name, **input_data))
-            wall_clock = time.perf_counter() - start
-            normalized = _normalize_result(workflow_name, raw_result, wall_clock)
-        else:
-            normalized = _run_via_adapter(adapter_name, workflow_name, input_data)
+        normalized = _run_via_adapter(adapter_name, workflow_name, input_data)
         return _summarize_for_compare(normalized)
     except Exception as exc:
         elapsed = time.perf_counter() - start

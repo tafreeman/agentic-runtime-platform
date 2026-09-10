@@ -77,6 +77,14 @@ agentic version
 The `--input` value is a path to a JSON file, not inline JSON. See the
 [CLI reference](../docs/cli-reference.md) for all commands and exit behavior.
 
+Programmatic callers can use `adapters.workflows.load_workflow(adapter, name)`
+and `await adapters.workflows.execute_workflow(adapter, definition, inputs)`.
+Each adapter loads its own definition format; execution uses that object's
+contents. LangChain accepts `WorkflowConfig`, while native accepts
+`WorkflowDefinition`, `DAG`, or `Pipeline` through its engine. Pass workflow
+data as `workflow_inputs` when calling an engine directly, keeping input names
+separate from controls such as `thread_id` and `on_update`.
+
 ## Start the backend and dashboard
 
 From the repository root:
