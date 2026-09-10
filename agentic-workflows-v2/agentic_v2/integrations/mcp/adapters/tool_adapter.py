@@ -23,6 +23,7 @@ from agentic_v2.integrations.mcp.error_envelope import (
     ToolResultEnvelope,
 )
 from agentic_v2.integrations.mcp.protocol.client import (
+    TOOL_CALL_TIMEOUT,
     McpProtocolClient,
     McpProtocolError,
     McpTimeoutError,
@@ -30,9 +31,6 @@ from agentic_v2.integrations.mcp.protocol.client import (
 from agentic_v2.integrations.mcp.types import McpToolDescriptor
 
 logger = logging.getLogger(__name__)
-
-# Tool execution timeout (matching claude-code-main)
-TOOL_CALL_TIMEOUT = 120.0  # 2 minutes
 
 # Sentinel text for a valid, non-error empty result.
 EMPTY_RESULT_TEXT = "[Tool returned no content]"

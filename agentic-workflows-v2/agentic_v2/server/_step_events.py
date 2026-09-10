@@ -15,7 +15,7 @@ accepts the materializer as an injected callable stored in ``_stream_dict_ref``.
 Internal protocol
 -----------------
     import agentic_v2.server._step_events as _se
-    _se._stream_dict_ref = _stream_dict   # done once in execution.py
+    _se.set_stream_dict_materializer(_stream_dict)   # done once in execution.py
 """
 
 from __future__ import annotations
@@ -30,6 +30,12 @@ from .result_normalization import extract_tokens
 # Injected by execution.py after it defines _stream_dict.
 # Type: (value, *, run_id, step_name, direction, tenant_id) -> dict[str, Any]
 _stream_dict_ref: Callable[..., dict[str, Any]] | None = None
+
+
+def set_stream_dict_materializer(fn: Callable[..., dict[str, Any]]) -> None:
+    """Register the stream-dict materializer, called once by execution.py at import time."""
+    global _stream_dict_ref
+    _stream_dict_ref = fn
 
 
 def _get_stream_dict() -> Callable[..., dict[str, Any]]:
