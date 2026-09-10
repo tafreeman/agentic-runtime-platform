@@ -177,16 +177,50 @@ jobs:
         id: list
         run: |
           set -euo pipefail
-          # Same author-string and head-ref matching as the manual job's
-          # guard step above (both `app/dependabot` and `dependabot[bot]`
-          # forms; `dependabot/pip/*` and `dependabot/uv/*` branches), applied
-          # here as a filter instead of a hard failure so the discovery step
-          # simply skips anything that isn't a Dependabot pip/uv PR rather
-          # than erroring the whole scheduled run over one unrelated PR.
-          prs_json=$(gh pr list --state open --json number,author,headRefName \
-            --jq '[.[] | select(.author.login == "app/dependabot" or .author.login == "dependabot[bot]") | select(.headRefName | startswith("dependabot/pip/") or startswith("dependabot/uv/")) | .number]')
-          echo "Open Dependabot pip/uv PRs: $prs_json"
-          echo "prs=$prs_json" >> "$GITHUB_OUTPUT"
+          # `--app dependabot` filters server-side (gh pr list's default page
+          # size is 30 items -- a client-side --jq filter on an unpaginated
+          # list would silently drop older pip PRs once this repo's combined
+          # human + Dependabot PR count, across every ecosystem the
+          # major-version policy now opens PRs for, exceeds that on any given
+          # day). -L 100 as a generous ceiling on top of that. Head-ref is
+          # still filtered client-side to narrow the app's PRs down to pip/uv
+          # specifically (dependabot also opens github-actions/npm/docker PRs
+          # under this same app).
+          candidates_json=$(gh pr list --state open --app dependabot -L 100 \
+            --json number,headRefName \
+            --jq '[.[] | select(.headRefName | startswith("dependabot/pip/") or startswith("dependabot/uv/")) | .number]')
+          echo "Candidate Dependabot pip/uv PRs: $candidates_json"
+
+          # A candidate that touches ci-constraints.txt WITHOUT also touching
+          # any pyproject.toml is a security-alert PR Dependabot applied
+          # straight to the generated constraints file (see this workflow's
+          # header comment) rather than a normal version-range bump. Plain
+          # `uv lock` below reads pyproject.toml, sees no change, and
+          # regenerates ci-constraints.txt from the OLD locked version --
+          # silently reverting the PR's own security fix, which this job
+          # would then commit. A PR that touches BOTH files is a normal bump
+          # (pyproject.toml drives the lock correctly); only touching
+          # ci-constraints.txt alone is the dangerous case.
+          safe_json="[]"
+          skipped_list=""
+          for pr in $(echo "$candidates_json" | jq -r '.[]'); do
+            files=$(gh pr view "$pr" --json files --jq '[.files[].path]')
+            if echo "$files" | jq -e '
+                 (index("ci-constraints.txt") != null) and
+                 ([.[] | select(endswith("pyproject.toml"))] | length == 0)
+               ' > /dev/null; then
+              skipped_list="$skipped_list $pr"
+            else
+              safe_json=$(echo "$safe_json" | jq --argjson n "$pr" '. + [$n]')
+            fi
+          done
+
+          if [ -n "$skipped_list" ]; then
+            echo "::warning::Skipping constraint-only PR(s) from the scheduled relock sweep (they touch ci-constraints.txt directly with no pyproject.toml change -- a security bump applied straight to the constraints file): ${skipped_list# }. A plain 'uv lock' here would regenerate ci-constraints.txt from the unchanged pyproject.toml and revert the fix. Relock these manually via workflow_dispatch with the upgrade_package input set to the bumped package, so 'uv lock --upgrade-package' preserves it."
+          fi
+
+          echo "Safe to auto-relock: $safe_json"
+          echo "prs=$safe_json" >> "$GITHUB_OUTPUT"
 
   relock-scheduled:
     name: Relock uv.lock + ci-constraints.txt (PR #${{ matrix.pr_number }})
