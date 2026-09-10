@@ -2938,6 +2938,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#implementation-update-2026-09-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation update — 2026-09-10
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3287,6 +3298,36 @@
 <li><strong>Refactor <code>orchestrator.py</code>'s <code>execute_as_dag</code></strong> to call through the protocol interface rather than directly constructing DAGs.</li>
 </ol>
 <hr />
+<h3 id="implementation-update-2026-09-10">Implementation update — 2026-09-10<a class="headerlink" href="#implementation-update-2026-09-10" title="Permanent link">&para;</a></h3>
+<p>PR #315 removed the registry's adapter-name validation branch, moved
+<code>StepResultRecord</code> into <code>contracts</code>, and simplified CLI result display. The
+follow-up completes the loading and result-conversion contracts:</p>
+<ul>
+<li><code>adapters.workflows</code> loads through the selected adapter and passes the
+  resulting definition to <code>execute</code> unchanged. CLI run/compare execution and
+  native server execution share this path. Workflow data travels in a
+  <code>workflow_inputs</code> mapping, separate from execution controls.</li>
+<li>Definitions remain adapter-owned: LangChain uses <code>WorkflowConfig</code>; native
+  uses <code>WorkflowDefinition</code> (and still accepts raw <code>DAG</code>/<code>Pipeline</code>). LangChain
+  rejects a native definition explicitly. It executes loaded config contents
+  with the name cache bypassed, preserving the injected runner's tracing and
+  checkpointer services. This refines the common-definition proposal above
+  without claiming that the two configuration formats are interchangeable.</li>
+<li>LangChain <code>execute(on_update=...)</code> observes task lifecycle events and obtains
+  final state from LangGraph's reducer-applied snapshots in one execution.
+  Callback failures propagate without replaying the graph. A graph error
+  emits a step error when its exception identifies an observed task; otherwise
+  it emits a workflow error.</li>
+<li><code>contracts.result_conversion</code> owns raw step status, token, model and timestamp
+  conversion. CLI, server and persistence use the same typed step evidence.
+  Unknown/missing statuses fail closed, and incomplete steps do not imply
+  overall success.</li>
+</ul>
+<p>Full runner consolidation remains open. The server's LangChain streaming
+runner still owns tracing, checkpoint lifecycle, observer filtering and stream
+aggregation. Replacing it requires explicit service injection and parity tests
+for those behaviors, plus review of its existing fallback-to-invoke behavior.
+This update does not retire either engine or that server runner.</p>
 <h2 id="adr-002-smartmodelrouter-circuit-breaker-hardening-for-multi-backend-llm-routing">ADR-002: SmartModelRouter circuit-breaker hardening for multi-backend LLM routing<a class="headerlink" href="#adr-002-smartmodelrouter-circuit-breaker-hardening-for-multi-backend-llm-routing" title="Permanent link">&para;</a></h2>
 <h3 id="context_1">Context<a class="headerlink" href="#context_1" title="Permanent link">&para;</a></h3>
 <p>The <code>SmartModelRouter</code> (<code>smart_router.py</code>) extends <code>ModelRouter</code> with per-model <code>ModelStats</code> tracking (EMA latency, percentile tracking from p50–p99, sliding window), a three-state circuit breaker (CLOSED → OPEN → HALF_OPEN), adaptive cooldowns via <code>CooldownConfig</code> (base 30s failure / 120s rate-limit / 60s timeout, <strong>1.5× consecutive multiplier</strong>, 600s max), and health-weighted model selection scoring success_rate at 60%, low latency at 20%, and recency at 20%. The fallback chain executes across <strong>5+ providers</strong> (GitHub Models, OpenAI, Azure OpenAI, Gemini, Anthropic, Ollama, local Phi Silica), classifying errors into rate-limit, timeout, and permanent categories.</p>
@@ -3564,7 +3605,7 @@ tiebreaker for coalesce() best-of-N selection.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 27, 2026 12:43:26 UTC">July 27, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="September 10, 2026 23:19:47 UTC">September 10, 2026</span>
   </span>
 
     
