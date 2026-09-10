@@ -3050,7 +3050,7 @@ only five:</p>
 <li><strong><a href="../ADR-001-002-003-architecture-decisions/">ADR-002</a></strong> — SmartModelRouter circuit-breaker hardening (three-state breaker, adaptive cooldowns, bulkheads).</li>
 <li><strong><a href="../ADR-014-pydantic-wire-format/">ADR-014</a></strong> — the Pydantic discriminated-union wire format that every event contract and the drift CI gate build on.</li>
 <li><strong><a href="../ADR-023-executionkit-runtime-contract-relationship/">ADR-023</a></strong> — how the runtime relates to the external ExecutionKit kernel (single <code>executionkit</code> package).</li>
-<li><strong><a href="../ADR-042-agentic-evalkit-adoption/">ADR-042</a></strong> — the accepted sliced migration from in-tree <code>agentic-v2-eval</code> to the external <code>agentic-evalkit</code> framework; the bridge slice is implemented.</li>
+<li><strong><a href="../ADR-042-agentic-evalkit-adoption/">ADR-042</a></strong> — the accepted sliced migration from in-tree <code>agentic-v2-eval</code> to the external <code>agentic-evalkit</code> framework; dependency, bridge, and scoring-cutover slices (A-C) are implemented.</li>
 </ul>
 <hr />
 <h2 id="quick-access-deck">Quick-access deck<a class="headerlink" href="#quick-access-deck" title="Permanent link">&para;</a></h2>
@@ -3288,7 +3288,7 @@ only five:</p>
 </tr>
 <tr>
 <td><strong>042</strong></td>
-<td>Adopt <code>agentic-evalkit</code> as ARP's evaluation framework via a sliced migration; dependency and bridge slices shipped, while scoring cutover and in-tree package removal remain future slices</td>
+<td>Adopt <code>agentic-evalkit</code> as ARP's evaluation framework via a sliced migration; dependency, bridge, and scoring-cutover slices (A-C) shipped, in-tree package removal (D/E) sequenced behind repointing <code>scripts/eval_gate.py</code> off its required-check dependency on the legacy package</td>
 <td>Accepted</td>
 <td><a href="../ADR-042-agentic-evalkit-adoption/">ADR-042</a></td>
 </tr>
@@ -3656,10 +3656,10 @@ not a statement about implementation state.</p>
 </tr>
 <tr>
 <td>042</td>
-<td style="text-align: center;">Partial</td>
-<td style="text-align: center;">Slice B only: <code>agentic_v2/scoring/evalkit_bridge.py</code> (additive, not wired into <code>step_scoring.py</code>)</td>
-<td style="text-align: center;">test_evalkit_bridge.py (skips without evalkit installed)</td>
-<td>2026-07-03</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;">Slices A-C: <code>scoring/step_scoring.py</code> scores through <code>scoring/evalkit_bridge.py</code> against runtime-owned rubrics in <code>scoring/rubrics/</code>; no legacy imports remain under <code>agentic_v2/scoring/</code>; unavailable evidence carries no numeric score. D/E pending — <code>scripts/eval_gate.py</code>, <code>models/llm.py</code>, and the bridge's parity tests still import <code>agentic_v2_eval</code>.</td>
+<td style="text-align: center;">test_evalkit_bridge.py; test_step_scoring_additional.py (fresh-interpreter legacy-import block + package AST scan)</td>
+<td>2026-09-10</td>
 </tr>
 </tbody>
 </table>
@@ -3706,7 +3706,7 @@ not a statement about implementation state.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="September 4, 2026 02:04:19 UTC">September 4, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="September 10, 2026 12:34:50 UTC">September 10, 2026</span>
   </span>
 
     

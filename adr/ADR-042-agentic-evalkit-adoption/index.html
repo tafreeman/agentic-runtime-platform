@@ -2861,6 +2861,28 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#slice-c-implementation-update-2026-09-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Slice C implementation update (2026-09-10)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#slice-de-scope-decision-2026-09-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Slice D/E scope decision (2026-09-10)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3010,6 +3032,111 @@ install <code>agentic-evalkit</code>" are both obsolete.</p>
 <code>RuntimeError</code>-rather-than-ImportError contract, and the one-way boundary are
 unchanged requirements.</p>
 </blockquote>
+<h2 id="slice-c-implementation-update-2026-09-10">Slice C implementation update (2026-09-10)<a class="headerlink" href="#slice-c-implementation-update-2026-09-10" title="Permanent link">&para;</a></h2>
+<p>Runtime <code>scoring/step_scoring.py</code> now calls the EVK bridge and loads the
+<code>agent</code>, <code>code</code>, and <code>default</code> rubrics from runtime-owned package resources.
+There are no legacy evaluation imports under <code>agentic_v2/scoring/</code>.
+The optional <code>eval</code> extra and its shipping version bounds remain unchanged.</p>
+<p>The old nonempty-output score of 0.7 is removed. A step is <code>scored</code> only when
+trusted deterministic criterion evidence covers every positive-weight criterion.
+Otherwise it is <code>unavailable</code>, with <code>weighted_score=null</code>, <code>passed=null</code>, a
+reason, and a separate <code>output_present</code> diagnostic. Missing evidence is excluded
+from averages and pass counts. No grader is configured by default, so ordinary
+runtime observations are unavailable rather than fabricated quality judgments.
+An absent EVK dependency also produces unavailable diagnostics.</p>
+<p>Application code can inject a <code>StepGrader</code> into <code>build_step_scoring_listener</code>;
+agent output and event payload fields cannot supply evidence. The initial
+<code>exact_match_evidence</code> helper measures literal equality only; it must not be
+mapped to holistic criteria such as efficiency or code quality. A model judge
+requires a separate calibration and authority design before adoption.
+These listener results remain advisory run metadata and do not drive routing,
+workflow success, or approval gates. Any future gate must explicitly require a
+scored result; null is never approval.</p>
+<p>The bridge retains its legacy arithmetic for direct callers, including the
+fixed denominator for missing criteria. Runtime scoring deliberately requires
+complete evidence before invoking that arithmetic. Thresholds and criterion
+weights remain unchanged for fully measured results.</p>
+<p>CI runs the step-scoring regression suite after uninstalling the legacy package.
+Tests also block legacy imports in a fresh interpreter. Slice D/E (legacy
+package retirement and broader CI cutover) remain separate work; the unrelated
+<code>models/llm.py</code> protocol import is not removed in Slice C.</p>
+<p>The original proposal below records the earlier A/B state; this update supersedes
+its descriptions of step scoring as an unwired or legacy-dependent path.</p>
+<h2 id="slice-de-scope-decision-2026-09-10">Slice D/E scope decision (2026-09-10)<a class="headerlink" href="#slice-de-scope-decision-2026-09-10" title="Permanent link">&para;</a></h2>
+<p>Slice C removed the last legacy import from <code>agentic_v2/scoring/</code>, but three
+sites outside that package still import <code>agentic_v2_eval</code> at module level:
+<code>agentic_v2/models/llm.py:5</code> (<code>LLMClientProtocol</code>), <code>scripts/eval_gate.py:66-67</code>
+(<code>load_rubric</code>, <code>Scorer</code>, <code>ScoringResult</code>), and
+<code>tests/test_evalkit_bridge.py:22-23</code> (legacy-parity assertions). Deleting the
+package before those are resolved breaks the build. Slice D/E is therefore
+sequenced behind them rather than dated.</p>
+<p><code>scripts/eval_gate.py</code> is the gating one. It drives <code>eval-golden-gate</code> in
+<code>eval-package-ci.yml</code>, a required status check on <code>main</code> (that workflow's own
+comment at lines 23-28 records why it carries no <code>paths:</code> filter). The port is
+not a symbol swap: the gate reads <code>ScoringResult.missing_criteria</code> as a
+hard-fail guard against a typo'd criterion silently shrinking the denominator,
+and <code>evalkit_bridge.score_criteria</code> returns a bare float with no equivalent
+channel. Repointing the gate at the bridge would also make a required check
+depend on the optional <code>eval</code> extra, which <code>eval-package-ci.yml</code> does not
+install. That tradeoff — extend the bridge with a missing-criteria result and
+install the extra in the gate job, versus keeping the gate's weighted mean
+ARP-local and dependency-free — is decided in Slice D0, not here.</p>
+<p>The order is D0 (repoint <code>scripts/eval_gate.py</code> and prove <code>eval-golden-gate</code>
+green without the legacy package installed), then D1 (<code>models/llm.py</code> and the
+bridge's parity tests), then D2 (delete the package and the infrastructure that
+installs it). D2 does not start until D0 is merged and green on <code>main</code>. No
+deletion date is committed here because D0's dependency question is open.</p>
+<p><code>agentic_v2/models/llm.py</code> is in scope for Slice D1 and is resolved by deleting
+the module. It defines a single <code>LLMClient</code> adapter that nothing in the
+repository imports: <code>agentic_v2/models/__init__.py</code> re-exports <code>LLMClientWrapper</code>
+and <code>LLMBackend</code> from <code>client.py</code> and never this class, no other module
+references it, and it is already listed under <code>[tool.coverage.run] omit</code>. The
+import is also undeclared — <code>agentic-workflows-v2/pyproject.toml</code> lists
+<code>agentic-v2-eval</code> in neither <code>dependencies</code> nor any extra, so the module only
+imports at all because the uv workspace installs the sibling package editable. A
+wheel install of <code>agentic-workflows-v2</code> alone already yields a module that
+raises <code>ModuleNotFoundError</code>. This supersedes the original Consequences entry
+that reserved a landing spot for <code>LLMClientProtocol</code>: with no consumer, the
+protocol needs no home. Should the adapter be wanted later, its structural
+protocol is four lines and belongs inline in ARP, not in evalkit.</p>
+<p><code>tests/test_evalkit_bridge.py</code>'s parity assertions against the legacy <code>Scorer</code>
+are also Slice D1. They served their purpose at Slice B, where exact parity was
+the acceptance criterion; keeping them alive is the only reason
+<code>ci.yml</code>'s <code>evalkit-bridge-tests</code> job installs the legacy package at all (see
+the comment at <code>ci.yml:323-325</code>). Slice D1 replaces them with committed expected
+values so the parity evidence survives the package's deletion.</p>
+<p><code>agentic_v2/evaluation/normalization.py</code> and <code>agentic_v2/server/evaluation.py</code>
+are <strong>out of scope for this ADR</strong>, despite being grouped with it by name in an
+earlier tech-debt audit. <code>evaluation/normalization.py</code> is a dependency-free
+registry of six formulas that map a raw metric onto <code>[0.0, 1.0]</code>, plus a
+sample-size adjustment; it owns no rubric, judge, dataset, or evaluator,
+imports nothing beyond <code>dataclasses</code> and <code>typing</code>, and is a shared leaf utility
+of <code>agentic_v2/scoring/</code> rather than a competing evaluation surface —
+ADR-010 already records this distinction, and ADR-032 records the decision to
+have callers import it directly. <code>server/evaluation.py</code> is a backward-compatible
+facade: it re-exports from <code>server/datasets.py</code> and <code>scoring/evaluation_scoring.py</code>,
+and its only logic is a delegation wrapper around <code>score_workflow_result_impl</code>
+plus a monkeypatch shim. Neither file imports <code>agentic_v2_eval</code> or
+<code>agentic_evalkit</code>, and neither changes under Slice D/E. Consolidating them is a
+separate question about the server scoring layer, answerable under ADR-032,
+not here.</p>
+<p>Slice D2's removal surface, recorded so it is not rediscovered: the workspace
+member in the root <code>pyproject.toml</code>, <code>uv.lock</code> and the regenerated
+<code>ci-constraints.txt</code>, the <code>release-manifest.toml</code> component entry, the
+<code>Dockerfile</code>, <code>justfile</code> and devcontainer install lines, the <code>.pre-commit-config.yaml</code>
+mypy-strict hook scoped to <code>agentic-v2-eval/src/</code>, the package entry in
+<code>agentic_v2/devex/workspace_test_runner.py</code>, the installs in <code>ci.yml</code>
+(<code>python-smoke</code>, the whole-repo coverage step, and both halves of
+<code>evalkit-bridge-tests</code>), the whole of <code>eval-package-ci.yml</code>, and the installs in
+<code>upstream-compatibility.yml</code> and <code>sbom.yml</code>. Docs follow: the <code>mkdocs.yml</code> nav
+entry, <code>docs/architecture-eval.md</code>, and <code>docs/deep-dive-agentic-v2-eval.md</code>.</p>
+<p>Slice D2 also drops six rubric YAMLs the runtime does not own. The runtime
+carries <code>agent</code>, <code>code</code>, and <code>default</code> under <code>agentic_v2/scoring/rubrics/</code>; the
+legacy package additionally ships <code>coding_standards</code>, <code>pattern</code>,
+<code>prompt_pattern</code>, <code>prompt_standard</code>, and <code>quality</code>, which are read only by that
+package's own evaluators and have no consumer elsewhere in the repository.
+They are deleted with it rather than migrated; any later need for one is a new
+runtime-owned resource.</p>
 <h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
 <p><code>agentic-v2-eval</code> is ARP's in-tree evaluation package: rubric-YAML scoring
 (<code>Scorer</code>), an LLM-as-judge, dataset adapters, sandboxed execution, and
@@ -3244,7 +3371,7 @@ package index entry), so:</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="September 4, 2026 02:04:19 UTC">September 4, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="September 10, 2026 12:34:50 UTC">September 10, 2026</span>
   </span>
 
     
