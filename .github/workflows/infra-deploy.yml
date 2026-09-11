@@ -36,7 +36,7 @@ jobs:
     name: bicep build + lint (no cloud)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Bicep build (compile + lint)
         run: |
           az bicep install
@@ -50,7 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # OIDC login — these vars are repo/environment configuration, NOT secrets.
       - name: Azure login (OIDC, no client secret)
