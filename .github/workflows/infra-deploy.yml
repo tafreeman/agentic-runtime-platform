@@ -54,7 +54,7 @@ jobs:
 
       # OIDC login — these vars are repo/environment configuration, NOT secrets.
       - name: Azure login (OIDC, no client secret)
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
