@@ -27,7 +27,7 @@ anthropic==0.125.0
     #   agentic-tools
     #   agentic-workflows-v2
     #   langchain-anthropic
-anyio==4.13.0
+anyio==4.14.2
     # via
     #   anthropic
     #   claude-agent-sdk
