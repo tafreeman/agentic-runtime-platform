@@ -56,6 +56,7 @@ from .agents import create_agent, parse_agent_tier
 from .config import StepConfig, WorkflowConfig
 from .expressions import evaluate_condition, resolve_expression
 from .models import get_model_candidates_for_tier, is_retryable_model_error
+from .response_sanitization import sanitize_agent_response_text
 from .state import WorkflowState
 
 logger = logging.getLogger(__name__)
@@ -770,7 +771,12 @@ def _invoke_with_failover(
             agent_result = agent.invoke(
                 {"messages": [HumanMessage(content=task_description)]}
             )
-            response_text = extract_agent_response_text(agent_result)
+            # Masked before anything else reads it: the output check, the
+            # parsed step outputs, context, traces and the recorded message
+            # all derive from this one string (parity with the native client).
+            response_text = sanitize_agent_response_text(
+                extract_agent_response_text(agent_result)
+            )
             invalid_response = response_ok is not None and not response_ok(
                 response_text
             )

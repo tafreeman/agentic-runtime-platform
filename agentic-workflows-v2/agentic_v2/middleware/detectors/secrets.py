@@ -93,6 +93,14 @@ class SecretDetector:
         placeholder. ``findings`` are identical to :meth:`scan`. Text with no
         findings is returned byte-for-byte unchanged.
         """
+        return self.scan_and_mask_sync(text)
+
+    def scan_and_mask_sync(self, text: str) -> tuple[str, Sequence[Finding]]:
+        """Synchronous form of :meth:`scan_and_mask`, for callers with no event loop.
+
+        Detection is pure CPU (regex and entropy), so the async method is a
+        thin wrapper over this one and the two cannot drift.
+        """
         detections = self._detect(text)
         findings = tuple(finding for _start, _end, finding in detections)
         spans = [

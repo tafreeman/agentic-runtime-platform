@@ -129,13 +129,22 @@ Named YAML workflows default to LangGraph. Runtime-generated `DAG` and
 | `AGENTIC_REQUIRE_TOOL_APPROVAL` | `0` | Require approval for every tool call |
 | `AGENTIC_APPROVAL_REQUIRED_TOOLS` | empty | Comma-separated extra tool names that require approval |
 | `AGENTIC_APPROVAL_TIMEOUT_SECONDS` | `1800` | Maximum wait for an approval decision; zero or negative disables the timeout |
-| `AGENTIC_SANITIZE_AGENT_LOOP` | `1` | Sanitize model input and output inside the shared agent loop |
+| `AGENTIC_SANITIZE_AGENT_LOOP` | `1` | Sanitize model output on both engines, and model input inside the native agent loop |
 
 High-impact built-in tools can require approval even when the global flag is
 off. A required approval with no registered provider is denied.
 
 `AGENTIC_SANITIZE_AGENT_LOOP` fails safe: an unrecognized value leaves
 sanitization enabled. It is skipped under `AGENTIC_NO_LLM`.
+
+What it covers differs by engine:
+
+- **Native engine:** the shared LLM client sanitizes every prompt and every
+  response, including each turn inside the tool loop.
+- **LangGraph engine:** secrets are masked in each step's final response
+  before its outputs are parsed, so step outputs, context, traces and run
+  results never carry them. The agent's intermediate turns inside a step are
+  not scanned, and prompts are not sanitized on this path.
 
 ## HTTP authentication
 
