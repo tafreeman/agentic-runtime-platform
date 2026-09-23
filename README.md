@@ -325,7 +325,7 @@ and pull-request requirements.
 
 Read [Security hardening](docs/operations/security-hardening.md),
 [Known limitations](docs/KNOWN_LIMITATIONS.md), and the
-[security policy](agentic-workflows-v2/SECURITY.md) before deployment.
+[security policy](SECURITY.md) before deployment.
 
 ## License
 
