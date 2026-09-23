@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased - LangGraph response redaction
+
+- The LangGraph engine now masks secrets in each step's final model response
+  before parsing its outputs. Previously only the native engine did, inside
+  the shared LLM client. LangGraph agents never call that client, so a secret
+  a model echoed on the default path for named YAML workflows reached step
+  outputs, context, traces and run results unmasked. The same
+  `ResponseSanitizer` runs under the same switches as the native path
+  (`AGENTIC_SANITIZE_AGENT_LOOP`, skipped under `AGENTIC_NO_LLM`). Intermediate
+  turns inside a LangGraph agent are still not scanned; `docs/configuration.md`
+  states what each engine covers.
+- `ResponseSanitizer`, `SecretDetector` and `UnicodeSanitizer` gain synchronous
+  forms (`sanitize_response_sync`, `scan_and_mask_sync`, `sanitize_sync`). The
+  async methods now delegate to them, so the two paths share one
+  implementation. The LangGraph step nodes are synchronous, which is why this
+  path needs them.
+
 ## Unreleased - workflow adapter contract completion
 
 - CLI execution and native server execution share adapter-owned loading,

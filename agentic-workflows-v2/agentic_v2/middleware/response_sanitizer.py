@@ -54,13 +54,24 @@ class ResponseSanitizer:
             SanitizationResult. Classification will be CLEAN or REDACTED
             (responses are never blocked — they've already been generated).
         """
+        return self.sanitize_response_sync(response_text)
+
+    def sanitize_response_sync(self, response_text: str) -> SanitizationResult:
+        """Synchronous form of :meth:`sanitize_response`.
+
+        Both detectors are pure CPU, so this needs no event loop. That matters
+        to the LangGraph engine, whose step nodes are synchronous and may run
+        on a thread that already has a loop (see
+        :mod:`agentic_v2.langchain.response_sanitization`). The async method is
+        a thin wrapper over this one, so the two paths cannot drift.
+        """
         all_findings: list[Finding] = []
         current_text = response_text
         detector_versions: dict[str, str] = {}
 
         # Unicode normalization
         if self._unicode_sanitizer is not None:
-            cleaned, unicode_findings = await self._unicode_sanitizer.sanitize(
+            cleaned, unicode_findings = self._unicode_sanitizer.sanitize_sync(
                 current_text
             )
             all_findings.extend(unicode_findings)
@@ -74,7 +85,7 @@ class ResponseSanitizer:
         secret_masked_text = current_text
         if self._secret_detector is not None:
             secret_masked_text, secret_findings = (
-                await self._secret_detector.scan_and_mask(current_text)
+                self._secret_detector.scan_and_mask_sync(current_text)
             )
             all_findings.extend(secret_findings)
             detector_versions[self._secret_detector.name] = (
