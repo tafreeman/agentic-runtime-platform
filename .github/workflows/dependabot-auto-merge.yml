@@ -25,9 +25,18 @@ jobs:
       # but NOT uv.lock, so an auto-merged pip PR would land a stale lockfile and turn
       # the `ci-constraints.txt in sync with uv.lock` job red on main. pip PRs are
       # merged by hand after `just relock` (re-locks + regenerates ci-constraints.txt).
-      - name: Auto-merge patch/minor updates (non-pip)
+      #
+      # uv is excluded for the same reason. Dependabot *security* updates arrive
+      # under the `uv` ecosystem even though dependabot.yml configures none, and
+      # #320 (anyio 4.13.0 -> 4.14.2) did exactly that: it touched only
+      # ci-constraints.txt, was auto-merged with the sync job red, and left
+      # main's uv.lock resolving the vulnerable anyio. Because this job merges
+      # with GITHUB_TOKEN, the push to main triggered no CI run either, so
+      # nothing on main showed the drift.
+      - name: Auto-merge patch/minor updates (non-Python)
         if: >
           steps.meta.outputs.package-ecosystem != 'pip' &&
+          steps.meta.outputs.package-ecosystem != 'uv' &&
           (steps.meta.outputs.update-type == 'version-update:semver-patch' ||
            steps.meta.outputs.update-type == 'version-update:semver-minor')
         run: gh pr merge --auto --squash "$PR_URL"
