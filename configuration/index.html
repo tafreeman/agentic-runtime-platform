@@ -3655,7 +3655,7 @@ consume the budget.</p>
 <tr>
 <td><code>AGENTIC_SANITIZE_AGENT_LOOP</code></td>
 <td><code>1</code></td>
-<td>Sanitize model input and output inside the shared agent loop</td>
+<td>Sanitize model output on both engines, and model input inside the native agent loop</td>
 </tr>
 </tbody>
 </table>
@@ -3663,6 +3663,15 @@ consume the budget.</p>
 off. A required approval with no registered provider is denied.</p>
 <p><code>AGENTIC_SANITIZE_AGENT_LOOP</code> fails safe: an unrecognized value leaves
 sanitization enabled. It is skipped under <code>AGENTIC_NO_LLM</code>.</p>
+<p>What it covers differs by engine:</p>
+<ul>
+<li><strong>Native engine:</strong> the shared LLM client sanitizes every prompt and every
+  response, including each turn inside the tool loop.</li>
+<li><strong>LangGraph engine:</strong> secrets are masked in each step's final response
+  before its outputs are parsed, so step outputs, context, traces and run
+  results never carry them. The agent's intermediate turns inside a step are
+  not scanned, and prompts are not sanitized on this path.</li>
+</ul>
 <h2 id="http-authentication">HTTP authentication<a class="headerlink" href="#http-authentication" title="Permanent link">&para;</a></h2>
 <h3 id="static-api-key">Static API key<a class="headerlink" href="#static-api-key" title="Permanent link">&para;</a></h3>
 <table>
@@ -4111,7 +4120,7 @@ management outside the process. See
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="September 2, 2026 15:13:26 UTC">September 2, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="September 23, 2026 12:29:30 UTC">September 23, 2026</span>
   </span>
 
     
