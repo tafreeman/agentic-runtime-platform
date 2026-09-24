@@ -1,7 +1,9 @@
 """Replay deterministic adversaries against the independent Lean specification.
 
-Build with ``cd proofs && lake build``. Opt in with ARP_LEAN_REPLAY=1.
-Import errors are deliberately never converted into skips.
+Build with ``cd proofs && lake build``. Tests that need the compiled spec skip
+unless ARP_LEAN_REPLAY=1. The strict-xfail tests pin known executor defects;
+they need no Lean and run in every suite. Import errors are deliberately never
+converted into skips.
 """
 
 from __future__ import annotations
@@ -170,11 +172,20 @@ async def test_dag_executor_lean_failure_propagation(lean_binary: Path) -> None:
     assert await run_case(plan, 2, [0, 0, 0], [0, 1, 2]) == oracle(lean_binary, plan, 2)
 
 
-@pytest.mark.parametrize("outcome", ["pending", "running", "retrying", "exception"])
-async def test_dag_executor_lean_lifecycle_counterexamples(
-    lean_binary: Path, monkeypatch: pytest.MonkeyPatch, outcome: str
+@pytest.mark.xfail(
+    raises=AssertionError,
+    strict=True,
+    reason=(
+        "Known defect: a PENDING, RUNNING or RETRYING result unblocks dependents "
+        "and the run still reports SUCCESS, breaking ADR-060 safety and honest "
+        "status. Remove this marker in the fix."
+    ),
+)
+@pytest.mark.parametrize("outcome", ["pending", "running", "retrying"])
+async def test_dag_executor_nonterminal_outcome_fails_closed(
+    monkeypatch: pytest.MonkeyPatch, outcome: str
 ) -> None:
-    """Reproduce the result/lifecycle mismatch without changing engine code."""
+    """A step that ends nonterminal must fail and skip its dependents."""
     manager = StepStateManager()
     monkeypatch.setattr(
         "agentic_v2.engine.dag_executor.StepStateManager", lambda: manager
@@ -183,10 +194,47 @@ async def test_dag_executor_lean_lifecycle_counterexamples(
         {"depends_on": [], "outcome": outcome},
         {"depends_on": [0], "outcome": "success"},
     ]
-    actual = await run_case(plan, 1, [0, 0], [0, 1])
-    assert actual == oracle(lean_binary, plan, 1)
-    expected_life = StepState.RUNNING if outcome == "exception" else StepState.FAILED
-    assert manager.get_state("0") == expected_life
+    assert await run_case(plan, 1, [0, 0], [0, 1]) == {
+        "steps": [
+            {"status": "failed", "skip": "none"},
+            {"status": "skipped", "skip": "upstream"},
+        ],
+        "overall": "failed",
+    }
+    assert manager.get_state("0") == StepState.FAILED
+
+
+@pytest.mark.xfail(
+    raises=AssertionError,
+    strict=True,
+    reason=(
+        "Known defect: _record_task_exception records FAILED but leaves the "
+        "step's lifecycle RUNNING and emits no step_end. Remove this marker "
+        "in the fix."
+    ),
+)
+async def test_dag_executor_exception_ends_step_lifecycle(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A step that raises must end FAILED in its lifecycle and in a step_end event."""
+    manager = StepStateManager()
+    monkeypatch.setattr(
+        "agentic_v2.engine.dag_executor.StepStateManager", lambda: manager
+    )
+    events: list[dict[str, Any]] = []
+
+    async def on_update(event: dict[str, Any]) -> None:
+        events.append(event)
+
+    plan = [{"depends_on": [], "outcome": "exception"}]
+    dag = DAG(name="exception-lifecycle").add(StepDefinition(name="0"))
+    result = await DAGExecutor(step_executor=ScriptedRunner(plan, [0])).execute(
+        dag, ctx=ExecutionContext(), on_update=on_update
+    )
+    assert result.overall_status == StepStatus.FAILED
+    assert manager.get_state("0") == StepState.FAILED
+    step_ends = [e for e in events if e["type"] == "step_end" and e["step"] == "0"]
+    assert [e["status"] for e in step_ends] == ["failed"]
 
 
 @pytest.mark.parametrize("limit", [-1, 0])
