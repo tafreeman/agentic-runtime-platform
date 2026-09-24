@@ -1,9 +1,9 @@
 # Unpinned Dependency Drift Check
 #
 # ARP holds tight upper-bound version pins on the two optional third-party
-# integrations it reaches deepest into: `executionkit` (the `ek` extra,
-# >=0.3.0,<0.4.0) and `agentic-evalkit` (the `eval` extra, >=0.3.0,<0.4.0) —
-# see agentic-workflows-v2/pyproject.toml. That is deliberate: both packages
+# integrations it reaches deepest into: `executionkit` (the `ek` extra) and
+# `agentic-evalkit` (the `eval` extra), each capped below its next minor
+# release — see agentic-workflows-v2/pyproject.toml. That is deliberate: both packages
 # are pre-1.0 and ARP imports private/internal symbols from each
 # (`executionkit.patterns.base._TrackedProvider`, and the
 # Rubric/RubricCriterion/CallableTarget adaptation in
@@ -20,10 +20,10 @@
 #
 # This workflow closes that gap by running the same two test suites WITHOUT
 # the constraints pin on the packages that carry the `ek`/`eval` extras, so
-# pip resolves whatever version currently satisfies the `>=0.3.0,<0.4.0`
-# range in pyproject.toml (today that is still within 0.3.x, but a new 0.3.x
-# point release upstream would be picked up here well before anyone touches
-# the pin by hand). A red run here means "the next EK/EVK release in range
+# pip resolves whatever version currently satisfies each extra's range in
+# pyproject.toml (a new point release upstream within that range is picked
+# up here well before anyone touches the pin by hand). A red run here means
+# "the next EK/EVK release in range
 # will break ARP" — exactly the early warning the tight pin above otherwise
 # forgoes. It runs on a schedule rather than per-PR because its outcome
 # tracks the external package index, not this repo's diff — the same
@@ -64,7 +64,7 @@ jobs:
       - name: Install packages (ek extra, no constraints pin)
         # Deliberately no `-c ci-constraints.txt` on these two lines: pip
         # resolves whatever version currently satisfies the `ek` extra's
-        # `executionkit>=0.3.0,<0.4.0` range in
+        # `executionkit` range in
         # agentic-workflows-v2/pyproject.toml, instead of the exact version
         # ci.yml's pinned job installs. That is the entire point of this
         # workflow — see the header comment.
@@ -108,7 +108,7 @@ jobs:
         # Same reasoning as the ek job above: no `-c ci-constraints.txt` on
         # the root or agentic-workflows-v2 installs, so pip resolves
         # whatever version currently satisfies the `eval` extra's
-        # `agentic-evalkit>=0.3.0,<0.4.0` range. agentic-v2-eval stays
+        # `agentic-evalkit` range. agentic-v2-eval stays
         # pinned to ci-constraints.txt — it's the in-tree legacy eval
         # package with no dependency on agentic-evalkit, only installed
         # here so tests/test_evalkit_bridge.py can import agentic_v2_eval

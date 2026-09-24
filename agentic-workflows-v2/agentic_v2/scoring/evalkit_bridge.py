@@ -39,7 +39,7 @@ def _require_evalkit() -> None:
             "agentic-evalkit is not installed. It is an optional dependency "
             "(see ADR-042). Enable it with the extra: "
             "pip install 'agentic-workflows-v2[eval]' — or install the "
-            "published package directly: pip install 'agentic-evalkit>=0.3.0,<0.4.0'"
+            "published package directly: pip install 'agentic-evalkit>=0.4.1,<0.5.0'"
         )
 
 

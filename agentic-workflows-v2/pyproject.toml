@@ -44,12 +44,12 @@ agentic-tools = { workspace = true }
 # `executionkit-contracts` seam is dropped), consumed from the published PyPI
 # release. httpx (an EK [httpx] extra) is already a base runtime dependency, so
 # EK's value types + error tree import with no extra.
-ek = ["executionkit>=0.3.0,<0.4.0"]
+ek = ["executionkit>=0.4.0,<0.5.0"]
 # agentic-evalkit: standalone offline evaluation toolkit, now a public package
 # on PyPI. Consumed as a normal versioned PyPI dependency; CI can install this
 # extra now that the repo is public (no cross-repo credential needed).
 eval = [
-    "agentic-evalkit>=0.3.0,<0.4.0",
+    "agentic-evalkit>=0.4.1,<0.5.0",
 ]
 # SWE-bench A/B evaluation kit (evals/swe_ab): build_swebench_cases.py reads the
 # SWE-bench Verified parquet with pandas. Kept out of the runtime dependency set
