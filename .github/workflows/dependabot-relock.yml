@@ -34,6 +34,12 @@ name: Relock Dependabot pip PR
 # convention, both call sites are short, and the scheduled path never takes
 # an `upgrade_package` input at all (no `--upgrade-package` branch to keep in
 # sync) — see that job's relock step for the one line that matters.
+#
+# One gap neither path closes: both push with GITHUB_TOKEN, and GitHub starts
+# no workflow run for a push made with that token. The relock commit lands on
+# the PR branch, but CI does not run on the new head until a user action
+# triggers it: closing and reopening the PR from a user account does. Every
+# relock that has merged so far (#246, #296) was pushed from a user account.
 
 on:
   workflow_dispatch:
@@ -211,7 +217,7 @@ jobs:
                ' > /dev/null; then
               skipped_list="$skipped_list $pr"
             else
-              safe_json=$(echo "$safe_json" | jq --argjson n "$pr" '. + [$n]')
+              safe_json=$(echo "$safe_json" | jq -c --argjson n "$pr" '. + [$n]')
             fi
           done
 
@@ -219,6 +225,10 @@ jobs:
             echo "::warning::Skipping constraint-only PR(s) from the scheduled relock sweep (they touch ci-constraints.txt directly with no pyproject.toml change -- a security bump applied straight to the constraints file): ${skipped_list# }. A plain 'uv lock' here would regenerate ci-constraints.txt from the unchanged pyproject.toml and revert the fix. Relock these manually via workflow_dispatch with the upgrade_package input set to the bumped package, so 'uv lock --upgrade-package' preserves it."
           fi
 
+          # $GITHUB_OUTPUT takes one `name=value` per line, so safe_json must
+          # stay compact (`jq -c` above). jq pretty-prints by default, and
+          # the multi-line array failed every scheduled run from the day this
+          # job was added with "Invalid format '  323,'".
           echo "Safe to auto-relock: $safe_json"
           echo "prs=$safe_json" >> "$GITHUB_OUTPUT"
 
