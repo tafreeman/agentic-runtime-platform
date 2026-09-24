@@ -114,18 +114,42 @@ class _RunState:
     tasks: set[asyncio.Task] = field(default_factory=set)
 
 
+async def _notify(state: _RunState, event: dict[str, Any]) -> None:
+    """Send *event* to the ``on_update`` observer, if there is one.
+
+    The observer (UI, WebSocket, scoring, checkpoint wrapper) cannot change
+    the run. An exception from it used to escape ``execute()`` mid-batch,
+    leaving running steps orphaned, or fail a step whose work never ran.
+    It is logged and counted in ``metadata["observer_errors"]`` instead;
+    cancellation still propagates.
+    """
+    if state.on_update is None:
+        return
+    try:
+        await state.on_update(event)
+    except Exception:
+        errors = state.result.metadata.get("observer_errors", 0)
+        state.result.metadata["observer_errors"] = errors + 1
+        logger.warning(
+            "on_update observer failed on %s for workflow %r",
+            event.get("type"),
+            state.dag.name,
+            exc_info=True,
+        )
+
+
 async def _run_step(state: _RunState, step_name: str) -> tuple[str, StepResult]:
     """Execute a single step and return its name + result tuple."""
     state.state_manager.transition(step_name, StepState.RUNNING)
-    if state.on_update:
-        await state.on_update(
-            {
-                "type": "step_start",
-                "run_id": state.result.workflow_id,
-                "step": step_name,
-                "timestamp": datetime.now(UTC).isoformat(),
-            }
-        )
+    await _notify(
+        state,
+        {
+            "type": "step_start",
+            "run_id": state.result.workflow_id,
+            "step": step_name,
+            "timestamp": datetime.now(UTC).isoformat(),
+        },
+    )
     step_def = state.dag.steps[step_name]
     step_result = await state.step_executor.execute(step_def, state.ctx)
     return step_name, step_result
@@ -217,23 +241,23 @@ async def _emit_step_end(
     state: _RunState, step_name: str, step_result: StepResult
 ) -> None:
     """Signal step completion to external observers (UI/WebSockets)."""
-    if state.on_update:
-        await state.on_update(
-            {
-                "type": "step_end",
-                "run_id": state.result.workflow_id,
-                "step": step_name,
-                "status": step_result.status.value,
-                "duration_ms": step_result.duration_ms,
-                "model_used": step_result.model_used,
-                "tokens_used": step_result.metadata.get("tokens_used"),
-                "tier": step_result.tier,
-                "input": step_result.input_data,
-                "output": step_result.output_data,
-                "error": step_result.error,
-                "timestamp": datetime.now(UTC).isoformat(),
-            }
-        )
+    await _notify(
+        state,
+        {
+            "type": "step_end",
+            "run_id": state.result.workflow_id,
+            "step": step_name,
+            "status": step_result.status.value,
+            "duration_ms": step_result.duration_ms,
+            "model_used": step_result.model_used,
+            "tokens_used": step_result.metadata.get("tokens_used"),
+            "tier": step_result.tier,
+            "input": step_result.input_data,
+            "output": step_result.output_data,
+            "error": step_result.error,
+            "timestamp": datetime.now(UTC).isoformat(),
+        },
+    )
 
 
 def _transition_outcome_state(
@@ -577,16 +601,6 @@ class DAGExecutor:
             overall_status=StepStatus.RUNNING,
         )
 
-        if on_update:
-            await on_update(
-                {
-                    "type": "workflow_start",
-                    "run_id": result.workflow_id,
-                    "workflow_name": result.workflow_name,
-                    "timestamp": datetime.now(UTC).isoformat(),
-                }
-            )
-
         adjacency = dag.build_adjacency_list()
         in_degree = {name: len(step.depends_on) for name, step in dag.steps.items()}
 
@@ -606,6 +620,15 @@ class DAGExecutor:
             adjacency=adjacency,
             in_degree=in_degree,
             ready=deque([name for name, deg in in_degree.items() if deg == 0]),
+        )
+        await _notify(
+            state,
+            {
+                "type": "workflow_start",
+                "run_id": result.workflow_id,
+                "workflow_name": result.workflow_name,
+                "timestamp": datetime.now(UTC).isoformat(),
+            },
         )
 
         try:
@@ -644,14 +667,13 @@ class DAGExecutor:
         result.final_output = ctx.all_variables()
         result.mark_complete(result.overall_status == StepStatus.SUCCESS)
 
-        if on_update:
-            await on_update(
-                {
-                    "type": "workflow_end",
-                    "run_id": result.workflow_id,
-                    "status": result.overall_status.value,
-                    "timestamp": datetime.now(UTC).isoformat(),
-                }
-            )
-
+        await _notify(
+            state,
+            {
+                "type": "workflow_end",
+                "run_id": result.workflow_id,
+                "status": result.overall_status.value,
+                "timestamp": datetime.now(UTC).isoformat(),
+            },
+        )
         return result
