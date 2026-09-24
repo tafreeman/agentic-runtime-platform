@@ -161,8 +161,9 @@ class TestCompareCommand:
     ):
         """A failed adapter row makes compare exit non-zero.
 
-        A comparison in which one side never ran is not a valid comparison,
-        so it must not be reportable as success to a script or CI job.
+        A comparison in which one side never ran is not a valid
+        comparison, so it must not be reportable as success to a script
+        or CI job.
         """
         mock_load_config.return_value = MagicMock(
             name="test_workflow", description="Test"

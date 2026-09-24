@@ -30,11 +30,12 @@ repos:
   # splits comment-tagged imports onto their own line), so the two never reach
   # a fixpoint under `pre-commit run --all-files`. ruff is the single sorter.
 
-  # Rev matches ci-constraints.txt (ruff==0.15.17): CI's lint job runs this
+  # Rev matches ci-constraints.txt (ruff==0.16.5): CI's lint job runs this
   # exact version over agentic_v2/ and tests/, so a hook-version skew would
-  # let local and CI disagree about what "clean" means.
-  - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.15.17
+  # let local and CI disagree about what "clean" means. Dependabot bumps the
+  # constraint, not this rev; bump this in the same PR.
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.5
     hooks:
       - id: ruff
         args: ["--fix"]
@@ -59,10 +60,10 @@ repos:
   # to strict typing, and without --follow-imports=skip mypy wanders into the
   # repo-root tools/ package and strict-checks it too (same reason the CI
   # typecheck-core-contracts job passes that flag). Rev matches
-  # ci-constraints.txt (mypy==2.1.0). The broader agentic-workflows-v2/ type
+  # ci-constraints.txt (mypy==2.3.1). The broader agentic-workflows-v2/ type
   # debt is tracked separately (target Q3 2026).
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v2.1.0
+    rev: v2.3.1
     hooks:
       - id: mypy
         name: mypy (agentic-v2-eval src)

@@ -104,9 +104,7 @@ def verify(case_dir: Path, *, full: bool) -> Verdict | None:
         if code in (124, 125):
             return Verdict(case_id, repo, False, output[:60])
         if expected_node and expected_node not in output:
-            return Verdict(
-                case_id, repo, False, f"failed, but not at {expected_node}"
-            )
+            return Verdict(case_id, repo, False, f"failed, but not at {expected_node}")
 
         if full:
             gold = (case_dir / "gold.py").read_text(encoding="utf-8")

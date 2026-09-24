@@ -112,9 +112,9 @@ def _parse_models(data: dict[str, Any]) -> list[FoundryLocalModelInfo]:
 def discover_foundry_local_models() -> list[FoundryLocalModelInfo]:
     """Discover models Foundry Local currently lists (best-effort).
 
-    Returns an empty list when the service is unreachable, misconfigured, or
-    its response does not match the shapes this parser tolerates. Never
-    raises.
+    Returns an empty list when the service is unreachable,
+    misconfigured, or its response does not match the shapes this parser
+    tolerates. Never raises.
     """
     data = _get_json(f"{_base_url()}{_MODELS_PATH}")
     if not data:

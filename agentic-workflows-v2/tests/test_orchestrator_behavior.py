@@ -646,8 +646,8 @@ def _plan_json(*subtasks: tuple[str, list[str]]) -> str:
 
 
 class TestPlanSchedulingRules:
-    """The orchestrator refuses plans it cannot finish and never reports a
-    partial run as a success."""
+    """The orchestrator refuses plans it cannot finish and never reports a partial run
+    as a success."""
 
     def test_max_parallel_below_one_is_rejected(self):
         from pydantic import ValidationError
@@ -678,8 +678,8 @@ class TestPlanSchedulingRules:
         ],
     )
     async def test_invalid_plan_fails_before_any_subtask_runs(self, plan, expected):
-        """A cyclic plan, or one naming a subtask that does not exist, used to
-        stop silently and report success."""
+        """A cyclic plan, or one naming a subtask that does not exist, used to stop
+        silently and report success."""
         from agentic_v2.agents.orchestrator import OrchestratorInput
 
         call_log: list[str] = []
@@ -730,8 +730,8 @@ class TestPlanSchedulingRules:
 
     @pytest.mark.asyncio
     async def test_invalid_plan_is_refused_even_without_agents(self):
-        """With no agents registered nothing runs, but an invalid plan used to
-        skip validation and report success."""
+        """With no agents registered nothing runs, but an invalid plan used to skip
+        validation and report success."""
         from agentic_v2.agents.orchestrator import OrchestratorInput
 
         orch = OrchestratorAgent()
@@ -745,8 +745,8 @@ class TestPlanSchedulingRules:
 
     @pytest.mark.asyncio
     async def test_unsuccessful_agent_output_fails_the_subtask(self):
-        """An agent that returns success=False (a coder that could not extract
-        code, say) used to mark its subtask SUCCESS, so dependents ran."""
+        """An agent that returns success=False (a coder that could not extract code,
+        say) used to mark its subtask SUCCESS, so dependents ran."""
         from agentic_v2.agents.orchestrator import OrchestratorInput
 
         call_log: list[str] = []

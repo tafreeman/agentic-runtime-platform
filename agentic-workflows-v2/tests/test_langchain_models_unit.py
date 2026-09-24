@@ -307,8 +307,8 @@ class TestCostLaneCeiling:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """include_unavailable=True is the existing "show everything, unfiltered"
-        introspection path (already skips quarantine filtering); the ceiling
-        follows that same precedent rather than applying there too."""
+        introspection path (already skips quarantine filtering); the ceiling follows
+        that same precedent rather than applying there too."""
         monkeypatch.setenv("AGENTIC_MAX_COST_LANE", "free")
         result = get_model_candidates_for_tier(1, include_unavailable=True)
         assert any(cost_lane_for(m) == "paid" for m in result)

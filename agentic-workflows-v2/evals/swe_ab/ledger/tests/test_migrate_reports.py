@@ -457,13 +457,11 @@ def test_migrate_wave_end_to_end_with_synthetic_reports(
 def test_migrate_wave_gives_different_substrate_labels_different_substrates(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Two waves whose reports both have a null `code_fingerprint` (true of
-    every wave 1-7 report in the real corpus) must not collapse onto the
-    same `substrate_id` just because `WavePlan.substrate_label` differs --
-    that collapse is exactly what let waves from different runtime segments
-    get silently pooled together before `_with_effective_runtime_digest`
-    existed.
-    """
+    """Two waves whose reports both have a null `code_fingerprint` (true of every wave
+    1-7 report in the real corpus) must not collapse onto the same `substrate_id` just
+    because `WavePlan.substrate_label` differs -- that collapse is exactly what let
+    waves from different runtime segments get silently pooled together before
+    `_with_effective_runtime_digest` existed."""
     reports_dir = tmp_path / "reports"
     reports_dir.mkdir()
     dataset_dir = tmp_path / "dataset"
@@ -543,10 +541,9 @@ def test_migrate_wave_gives_different_substrate_labels_different_substrates(
 def _verdict_pass_rate(
     conn: sqlite3.Connection, *, wave_id: str
 ) -> dict[str, tuple[int, int]]:
-    """`{arm_key: (n_pass, n_verdicts)}` -- a minimal local read, not a copy
-    of `ledger.queries.arm_pass_rates`, so this test does not depend on that
-    module's own correctness to check migrate_wave's output.
-    """
+    """`{arm_key: (n_pass, n_verdicts)}` -- a minimal local read, not a copy of
+    `ledger.queries.arm_pass_rates`, so this test does not depend on that module's own
+    correctness to check migrate_wave's output."""
     rows = conn.execute(
         "SELECT arm.arm_key AS arm_key, grade.outcome AS outcome "
         "FROM trial "

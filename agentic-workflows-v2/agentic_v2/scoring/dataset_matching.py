@@ -438,9 +438,7 @@ def _materialize_file_input(
     candidate: Path | None = None
     if any(sep in value for sep in ("/", "\\")) or value.endswith((".py", ".txt")):
         try:
-            candidate = ensure_within_base(
-                artifacts_root / value, artifacts_root
-            )
+            candidate = ensure_within_base(artifacts_root / value, artifacts_root)
             if candidate.is_file():
                 return str(candidate)
         except (ValueError, OSError):

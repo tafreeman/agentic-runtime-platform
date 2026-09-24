@@ -212,8 +212,10 @@ def _lower_incomplete_gamma_series(a: float, x: float) -> float:
 
 
 def _upper_incomplete_gamma_cf(a: float, x: float) -> float:
-    """Regularized upper incomplete gamma `Q(a, x)` via a continued
-    fraction (Lentz's method). Converges quickly for `x >= a + 1`; see
+    """Regularized upper incomplete gamma `Q(a, x)` via a continued fraction (Lentz's
+    method).
+
+    Converges quickly for `x >= a + 1`; see
     `chi2_sf`.
     """
     gln = math.lgamma(a)

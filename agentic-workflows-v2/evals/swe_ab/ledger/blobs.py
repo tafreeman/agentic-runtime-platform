@@ -1,5 +1,5 @@
-"""Content-addressed on-disk store for large ledger payloads (transcripts,
-patches, problem statements, error dumps).
+"""Content-addressed on-disk store for large ledger payloads (transcripts, patches,
+problem statements, error dumps).
 
 A blob's location is derived entirely from its content: `put()` hashes the
 bytes with `ledger.ids.digest_bytes` and writes them under a two-level
@@ -40,8 +40,10 @@ def _utc_now_iso() -> str:
 
 
 def _atomic_write(dest: Path, data: bytes) -> None:
-    """Write `data` to `dest` atomically: temp file in the same directory,
-    fsync, then `os.replace`. If anything fails before the replace, the
+    """Write `data` to `dest` atomically: temp file in the same directory, fsync, then
+    `os.replace`.
+
+    If anything fails before the replace, the
     temp file is removed and `dest` is left untouched — never partially
     written.
     """
@@ -86,8 +88,8 @@ class BlobStore:
         return self._root
 
     def path_for(self, digest: str) -> Path:
-        """Return the on-disk path a blob with `digest` would live at,
-        whether or not it currently exists."""
+        """Return the on-disk path a blob with `digest` would live at, whether or not it
+        currently exists."""
         hex_part = _hex_part(digest)
         return self._root / hex_part[:2] / hex_part[2:]
 
@@ -95,8 +97,9 @@ class BlobStore:
         return self.path_for(digest).is_file()
 
     def put(self, data: bytes, *, media_type: str, retention: str) -> Blob:
-        """Store `data`, keyed by its own digest, and return the `Blob`
-        row for it. Idempotent: writing the same bytes twice performs the
+        """Store `data`, keyed by its own digest, and return the `Blob` row for it.
+
+        Idempotent: writing the same bytes twice performs the
         write once — the second call finds the path already occupied and
         returns without touching disk again.
         """
@@ -134,8 +137,8 @@ class BlobStore:
         return data
 
     def prune(self, digests: Iterable[str]) -> int:
-        """Delete the named blobs from disk and return the count actually
-        removed (a digest with no file on disk is skipped, not an error).
+        """Delete the named blobs from disk and return the count actually removed (a
+        digest with no file on disk is skipped, not an error).
 
         Callers are responsible for only passing digests whose `blob` row
         has `retention='prunable'` in the ledger database — `BlobStore`

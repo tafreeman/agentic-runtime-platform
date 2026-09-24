@@ -249,8 +249,8 @@ async def test_dataset_resolution_runs_before_input_validation(
 async def test_defaults_and_extras_reach_background_task(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    """Declared defaults are applied to the queued inputs, and undeclared
-    extras survive the merge.
+    """Declared defaults are applied to the queued inputs, and undeclared extras survive
+    the merge.
 
     Regression guard: the route must not discard ``validate_workflow_inputs``'s
     return value (defaults would be lost to non-LangChain adapters that seed

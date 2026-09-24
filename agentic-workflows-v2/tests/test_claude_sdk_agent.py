@@ -62,7 +62,9 @@ def result(
     )
 
 
-def patch_query(monkeypatch: pytest.MonkeyPatch, *messages: Any) -> list[dict[str, Any]]:
+def patch_query(
+    monkeypatch: pytest.MonkeyPatch, *messages: Any
+) -> list[dict[str, Any]]:
     calls: list[dict[str, Any]] = []
 
     async def _query(*, prompt: str, options: Any):  # type: ignore[no-untyped-def]

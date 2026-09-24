@@ -424,7 +424,9 @@ def apply_cost_lane_ceiling(
     return within_ceiling
 
 
-def enforce_cost_lane_ceiling(model_id: str, *, ceiling: CostLane | None = None) -> None:
+def enforce_cost_lane_ceiling(
+    model_id: str, *, ceiling: CostLane | None = None
+) -> None:
     """Raise :class:`CostLaneCeilingExceededError` if ``model_id`` is above the ceiling.
 
     For call sites where a single explicit model is used exactly as given,
@@ -537,7 +539,8 @@ class RegistryDriftError(RuntimeError):
 class CostLaneCeilingExceededError(RuntimeError):
     """Raised when an ``AGENTIC_MAX_COST_LANE`` ceiling filters every candidate.
 
-    Fail-closed (ARP-IMPROVEMENTS F1): a caller that asks for e.g. ``"free"``
-    and gets an empty candidate list must see this, never a silent empty list
-    or a silent fall-through to an unfiltered (potentially paid) chain.
+    Fail-closed (ARP-IMPROVEMENTS F1): a caller that asks for e.g.
+    ``"free"`` and gets an empty candidate list must see this, never a
+    silent empty list or a silent fall-through to an unfiltered
+    (potentially paid) chain.
     """

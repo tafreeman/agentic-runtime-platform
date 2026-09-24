@@ -31,9 +31,9 @@ KIT_ROOT = Path(__file__).resolve().parent
 if str(KIT_ROOT) not in sys.path:
     sys.path.insert(0, str(KIT_ROOT))
 
-from agentic_evalkit.artifacts import ArtifactStore  # noqa: E402
-from agentic_evalkit.datasets.local import LocalDatasetProvider  # noqa: E402
-from agentic_evalkit.models import (  # noqa: E402
+from agentic_evalkit.artifacts import ArtifactStore
+from agentic_evalkit.datasets.local import LocalDatasetProvider
+from agentic_evalkit.models import (
     DatasetRef,
     DatasetSelection,
     EvalRunManifest,
@@ -43,10 +43,10 @@ from agentic_evalkit.models import (  # noqa: E402
     SamplingPolicy,
     SourceRecord,
 )
-from agentic_evalkit.reporters.json import JsonReporter  # noqa: E402
-from agentic_evalkit.runner import EvalRunner  # noqa: E402
-from agentic_evalkit.targets.subprocess import SubprocessTarget  # noqa: E402
-from graders import (  # noqa: E402
+from agentic_evalkit.reporters.json import JsonReporter
+from agentic_evalkit.runner import EvalRunner
+from agentic_evalkit.targets.subprocess import SubprocessTarget
+from graders import (
     build_grader,
     cleanup_worktree,
     load_oracle,
@@ -58,7 +58,9 @@ if TYPE_CHECKING:
 
 CASES_JSONL = KIT_ROOT / "dataset" / "cases.jsonl"
 REPORTS_DIR = KIT_ROOT / "reports"
-ARP_PYTHON = Path("C:/Users/tandf/source/agentic-runtime-platform/.venv/Scripts/python.exe")
+ARP_PYTHON = Path(
+    "C:/Users/tandf/source/agentic-runtime-platform/.venv/Scripts/python.exe"
+)
 SCRATCH = Path(
     "C:/Users/tandf/AppData/Local/Temp/claude/"
     "C--Users-tandf-source-agentic-evalkit/98683646-eaf6-4196-85d4-372846e7317f/scratchpad"
@@ -128,7 +130,10 @@ PAID_CREDENTIALS = (
 
 
 class SweCaseAdapter:
-    """Projects one mined case into an ``EvalSample``. Pure projection, no I/O."""
+    """Projects one mined case into an ``EvalSample``.
+
+    Pure projection, no I/O.
+    """
 
     api_version = "1"
     name = ADAPTER_NAME
@@ -287,7 +292,12 @@ def grader_fingerprint() -> str:
     surely as a model change does, so it belongs in the union identity.
     """
     digest = hashlib.sha256()
-    for name in ("graders.py", "swebench_graders.py", "rubric.py", "container_harness.py"):
+    for name in (
+        "graders.py",
+        "swebench_graders.py",
+        "rubric.py",
+        "container_harness.py",
+    ):
         path = KIT_ROOT / name
         if path.is_file():
             digest.update(b"\0" + name.encode("utf-8") + b"\0")
@@ -516,7 +526,9 @@ async def main() -> int:
         # never be mistaken for "unchanged".
         code_fingerprint=f"agentic_v2:{runtime_fingerprint() or 'unknown'}",
         environment_fingerprint=f"graders:{grader_fingerprint()}",
-        selection=DatasetSelection(limit=args.limit) if args.limit else DatasetSelection(),
+        selection=(
+            DatasetSelection(limit=args.limit) if args.limit else DatasetSelection()
+        ),
         sampling=SamplingPolicy(attempts=args.attempts, temperature=0.0, seed=20260827),
         attempts=args.attempts,
         timeout_seconds=args.timeout,

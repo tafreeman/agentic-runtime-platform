@@ -1,6 +1,6 @@
-"""Tests for ledger.stats: Wilson, McNemar, bootstrap, Cochran's Q (with
-its hand-implemented chi-square tail), Holm correction, and the paired
-sign-flip permutation test.
+"""Tests for ledger.stats: Wilson, McNemar, bootstrap, Cochran's Q (with its hand-
+implemented chi-square tail), Holm correction, and the paired sign-flip permutation
+test.
 
 No database involved -- every function under test is pure.
 """

@@ -1274,8 +1274,8 @@ class TestCostLaneCeilingIntegration:
     @pytest.fixture(autouse=True)
     def _no_ambient_ollama_key(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """An ambient OLLAMA_API_KEY would make cost_lane_for downgrade
-        ollama:gemma4:31b to "free" instead of "local" unless the daemon
-        happens to have it pulled (ADR-051) -- irrelevant here, keep it out."""
+        ollama:gemma4:31b to "free" instead of "local" unless the daemon happens to have
+        it pulled (ADR-051) -- irrelevant here, keep it out."""
         monkeypatch.delenv("OLLAMA_API_KEY", raising=False)
 
     async def test_free_ceiling_never_constructs_a_paid_backend(
@@ -1391,9 +1391,7 @@ class TestCostLaneCeilingIntegration:
                 "to_lane": "paid",
             }
         ]
-        assert any(
-            "more expensive cost lane" in r.message for r in caplog.records
-        )
+        assert any("more expensive cost lane" in r.message for r in caplog.records)
 
 
 class TestUnparsedOutputFailover:

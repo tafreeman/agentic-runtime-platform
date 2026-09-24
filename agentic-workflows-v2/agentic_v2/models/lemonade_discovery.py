@@ -120,8 +120,9 @@ def _parse_models(data: dict[str, Any]) -> list[LemonadeModelInfo]:
 def discover_lemonade_models() -> list[LemonadeModelInfo]:
     """Discover models the local Lemonade server currently reports (best-effort).
 
-    Returns an empty list when Lemonade is unreachable, misconfigured, or its
-    response does not match the shapes this parser tolerates. Never raises.
+    Returns an empty list when Lemonade is unreachable, misconfigured,
+    or its response does not match the shapes this parser tolerates.
+    Never raises.
     """
     data = _get_json(f"{_base_url()}{_MODELS_PATH}")
     if not data:

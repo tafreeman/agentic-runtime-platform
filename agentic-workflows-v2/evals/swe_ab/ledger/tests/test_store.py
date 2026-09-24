@@ -1,5 +1,5 @@
-"""Tests for ledger.store: connection setup, register/append semantics,
-cross-row validation, and JSONL export/import.
+"""Tests for ledger.store: connection setup, register/append semantics, cross-row
+validation, and JSONL export/import.
 
 Row builders here are named with an `mk_` prefix (rather than
 `test_schema.py`'s `make_*`) precisely so nothing here can be confused
@@ -546,10 +546,9 @@ def test_open_ledger_schema_version_mismatch_raises(tmp_path: Path) -> None:
 def test_open_ledger_closes_connection_on_schema_version_mismatch(
     tmp_path: Path,
 ) -> None:
-    """A failed `open_ledger` must not strand an open connection: the file
-    handle it briefly opened to check `schema_version` has to be closed
-    before it re-raises, or every failed open leaks one.
-    """
+    """A failed `open_ledger` must not strand an open connection: the file handle it
+    briefly opened to check `schema_version` has to be closed before it re-raises, or
+    every failed open leaks one."""
     db_path = tmp_path / "stale2.db"
     seed_conn = open_ledger(db_path)
     seed_conn.execute(
@@ -647,10 +646,11 @@ def test_append_trial_duplicate_identity_raises_ledger_integrity_error(
 def test_append_trial_same_cell_new_trial_id_without_supersedes_raises(
     ledger_store: LedgerStore,
 ) -> None:
-    """A second, non-correcting trial claiming the same design cell (same
-    wave_id/arm_id/task_id/run_idx) must still be rejected even with a
-    distinct trial_id -- `idx_trial_active_cell` covers what the old
-    composite PRIMARY KEY used to."""
+    """A second, non-correcting trial claiming the same design cell (same.
+
+    wave_id/arm_id/task_id/run_idx) must still be rejected even with a distinct trial_id
+    -- `idx_trial_active_cell` covers what the old composite PRIMARY KEY used to.
+    """
     fixture = seed_wave_fixture(ledger_store)
     ledger_store.append_trial(
         mk_trial(
@@ -672,9 +672,9 @@ def test_append_trial_same_cell_new_trial_id_without_supersedes_raises(
 def test_append_trial_correction_via_supersedes_succeeds(
     ledger_store: LedgerStore,
 ) -> None:
-    """A correction -- new trial_id, `supersedes` pointing at the row it
-    replaces, same design cell -- must be insertable; this is the whole
-    reason `trial.supersedes` exists."""
+    """A correction -- new trial_id, `supersedes` pointing at the row it replaces, same
+    design cell -- must be insertable; this is the whole reason `trial.supersedes`
+    exists."""
     fixture = seed_wave_fixture(ledger_store)
     ledger_store.append_trial(
         mk_trial(
@@ -789,10 +789,8 @@ def _seed_judge_wave(
     wave_opened_at: str = "2026-02-01T00:00:00Z",
     with_calibration: bool = True,
 ) -> str:
-    """Seed a wave whose substrate uses a fresh judge-kind grader, plus
-    (unless `with_calibration` is False) one calibration row for it, and
-    return the wave_id.
-    """
+    """Seed a wave whose substrate uses a fresh judge-kind grader, plus (unless
+    `with_calibration` is False) one calibration row for it, and return the wave_id."""
     grader_id = f"grd_judge_{suffix}"
     substrate_id = f"sub_judge_{suffix}"
     wave_id = f"wav_judge_{suffix}"

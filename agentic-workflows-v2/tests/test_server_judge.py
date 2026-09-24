@@ -167,15 +167,15 @@ def test_judge_logs_model_version():
 
 
 def test_default_prompt_version_matches_qualified_fingerprint_shape():
-    """Default (unset) prompt_version is 'judge-v1@<8-hex>', not the bare
-    'judge-v1' literal."""
+    """Default (unset) prompt_version is 'judge-v1@<8-hex>', not the bare 'judge-v1'
+    literal."""
     judge = LLMJudge()
     assert re.fullmatch(r"judge-v1@[0-9a-f]{8}", judge.prompt_version)
 
 
 def test_default_prompt_version_equals_registry_qualified_version():
-    """Default prompt_version equals the judge prompt registry's
-    qualified_version exactly (not just its shape)."""
+    """Default prompt_version equals the judge prompt registry's qualified_version
+    exactly (not just its shape)."""
     judge = LLMJudge()
     assert judge.prompt_version == _DEFAULT_JUDGE_PROMPT_VERSION
 
@@ -204,8 +204,8 @@ def test_default_prompt_version_flows_into_payload():
 
 
 def test_explicit_prompt_version_override_still_verbatim():
-    """An explicitly-passed prompt_version is emitted verbatim, unchanged
-    by the registry default (back-compat with pre-ADR-056 callers)."""
+    """An explicitly-passed prompt_version is emitted verbatim, unchanged by the
+    registry default (back-compat with pre-ADR-056 callers)."""
     judge = LLMJudge(
         prompt_version="judge-v1",
         response_provider=lambda **_: {
@@ -216,9 +216,9 @@ def test_explicit_prompt_version_override_still_verbatim():
 
 
 def test_judge_prompt_template_self_consistency():
-    """The registry-recorded hash matches an independent recomputation
-    over JUDGE_PROMPT_TEMPLATE -- proves the registered content is the
-    literal template, not a stale or transformed copy."""
+    """The registry-recorded hash matches an independent recomputation over
+    JUDGE_PROMPT_TEMPLATE -- proves the registered content is the literal template, not
+    a stale or transformed copy."""
     declared, short_hash = _DEFAULT_JUDGE_PROMPT_VERSION.split("@")
     assert declared == "judge-v1"
     assert short_hash == compute_content_hash(JUDGE_PROMPT_TEMPLATE)[:8]
@@ -387,8 +387,9 @@ def test_validate_reports_missing_expected_criteria():
 def test_validate_matches_expected_criteria_ignoring_whitespace():
     """Padding on either side of the name comparison is not a missing criterion.
 
-    The response name and the expected name are canonicalized by the same
-    rule, so a padded rubric entry or a padded judge echo still matches.
+    The response name and the expected name are canonicalized by the
+    same rule, so a padded rubric entry or a padded judge echo still
+    matches.
     """
     payload = {
         "criteria": [
@@ -849,8 +850,9 @@ def test_calibration_outside_tolerance():
 def test_calibration_matches_human_scores_ignoring_whitespace():
     """A padded human-score key still pairs with its rubric criterion.
 
-    An unmatched key contributes no delta, so a padded fixture label would
-    silently report MAE 0.0 — a calibration check that always passes.
+    An unmatched key contributes no delta, so a padded fixture label
+    would silently report MAE 0.0 — a calibration check that always
+    passes.
     """
 
     def _provider(*, prompt: str, model: str, temperature: float):

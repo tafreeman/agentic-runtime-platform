@@ -1,11 +1,11 @@
 """Deterministic, content-addressed identifiers for ledger entities.
 
-Every id is derived from the fields that define that entity's identity: the
-same fields always produce the same id, regardless of process, machine, or
-the key order in which the fields were supplied. This makes ids safe to
-compute independently in multiple places (e.g. a writer and a reader) and
-guarantees natural deduplication — two logically identical entities collide
-on the same row instead of being inserted twice.
+Every id is derived from the fields that define that entity's identity:
+the same fields always produce the same id, regardless of process,
+machine, or the key order in which the fields were supplied. This makes
+ids safe to compute independently in multiple places (e.g. a writer and
+a reader) and guarantees natural deduplication — two logically identical
+entities collide on the same row instead of being inserted twice.
 
 Standard library only. Do not add third-party imports here.
 """
@@ -67,8 +67,9 @@ def image_digest_set(digests: Iterable[str]) -> str:
 
     Used to fold the set of container image digests that make up a
     substrate into one stable, comparable value. The input is sorted and
-    deduplicated before hashing, so the result depends only on the set of
-    distinct digest strings supplied, not their order or multiplicity.
+    deduplicated before hashing, so the result depends only on the set
+    of distinct digest strings supplied, not their order or
+    multiplicity.
     """
     unique_sorted = sorted(set(digests))
     joined = "\n".join(unique_sorted)

@@ -120,9 +120,10 @@ class TestPathInputValidation:
     def test_leading_whitespace_is_preserved(self, tmp_path: Path) -> None:
         """Whitespace can be legal in a filename — validation must not strip it.
 
-        Only a *leading* space is asserted: Windows silently drops trailing
-        spaces when creating a file, so a trailing-space assertion would be
-        testing the filesystem rather than this module.
+        Only a *leading* space is asserted: Windows silently drops
+        trailing spaces when creating a file, so a trailing-space
+        assertion would be testing the filesystem rather than this
+        module.
         """
         spaced = tmp_path / " padded.txt"
         try:

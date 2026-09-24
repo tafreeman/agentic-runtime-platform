@@ -264,8 +264,9 @@ async def test_run_with_invalid_ambient_pack_dropped(
 
     Bindings that predate submit-time validation (or drifted invalid via
     capability overrides) are dropped for the run — the same rule the
-    adapter guard uses for ambient packs — so the run record shows default
-    routing instead of claiming an unenforced pack governed the run.
+    adapter guard uses for ambient packs — so the run record shows
+    default routing instead of claiming an unenforced pack governed the
+    run.
     """
     _patch_run_route_happy_path(monkeypatch, tmp_path)
     empty_pack = ModelPack(id="empty-pack", name="Empty pack")

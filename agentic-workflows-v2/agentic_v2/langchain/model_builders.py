@@ -230,8 +230,8 @@ def _nvidia_thinking_disabled() -> bool:
 def _nim_extra_body() -> dict[str, Any]:
     """Request extras that disable NIM's internal reasoning phase.
 
-    Returned fresh per call so the caller owns the dict rather than sharing
-    module-level mutable state with every other NIM model.
+    Returned fresh per call so the caller owns the dict rather than
+    sharing module-level mutable state with every other NIM model.
     """
     return {"chat_template_kwargs": {"thinking": False}}
 

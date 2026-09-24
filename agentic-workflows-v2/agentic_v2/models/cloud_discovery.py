@@ -402,9 +402,10 @@ def _openrouter_text_chat_id(entry: Any) -> str | None:
 def _parse_openrouter_ids(payload: Any) -> list[str] | None:
     """Return every chat-compatible id, or ``None`` for an invalid payload.
 
-    The API request asks for every output modality. The playground currently
-    consumes text streams, so image/audio-only and obvious non-chat models are
-    excluded while multimodal models that can output text remain available.
+    The API request asks for every output modality. The playground
+    currently consumes text streams, so image/audio-only and obvious
+    non-chat models are excluded while multimodal models that can output
+    text remain available.
     """
     if not isinstance(payload, dict) or not isinstance(payload.get("data"), list):
         return None
@@ -454,11 +455,11 @@ def discover_openrouter_models() -> list[CloudModelInfo]:
 def discover_cloud_models() -> list[CloudModelInfo]:
     """Aggregate live cloud-provider listings (best-effort).
 
-    Providers without a configured key make no network call and contribute
-    nothing, except OpenRouter's public catalog. The probes run concurrently so
-    worst-case latency is a
-    single timeout (~8s) rather than the sum of all probes; provider
-    order is preserved. Never raises.
+    Providers without a configured key make no network call and
+    contribute nothing, except OpenRouter's public catalog. The probes
+    run concurrently so worst-case latency is a single timeout (~8s)
+    rather than the sum of all probes; provider order is preserved.
+    Never raises.
     """
     probes = (
         discover_openai_models,

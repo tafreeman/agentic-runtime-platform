@@ -98,9 +98,10 @@ def _parse_models(data: dict[str, Any]) -> list[DockerModelRunnerInfo]:
 def discover_docker_model_runner_models() -> list[DockerModelRunnerInfo]:
     """Discover models Docker Model Runner currently lists (best-effort).
 
-    Returns an empty list when the engine is unreachable, misconfigured, or
-    its response does not match the shapes this parser tolerates. A listed
-    model is not proven to load -- see the module docstring. Never raises.
+    Returns an empty list when the engine is unreachable, misconfigured,
+    or its response does not match the shapes this parser tolerates. A
+    listed model is not proven to load -- see the module docstring.
+    Never raises.
     """
     data = _get_json(f"{_base_url()}{_MODELS_PATH}")
     if not data:

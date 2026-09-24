@@ -141,8 +141,8 @@ def test_cost_lane_for_ollama_stays_local_when_actually_pulled(
 
 
 def test_cost_lane_for_ollama_stays_local_without_a_key():
-    """No OLLAMA_API_KEY means build_ollama_model never reroutes (ADR-051),
-    so the curated value is trusted without a local-daemon lookup."""
+    """No OLLAMA_API_KEY means build_ollama_model never reroutes (ADR-051), so the
+    curated value is trusted without a local-daemon lookup."""
     assert mr.cost_lane_for("ollama:qwen3-coder:30b") == "local"
 
 
@@ -179,9 +179,11 @@ def test_ollama_base_is_loopback_false_for_a_remote_host(
     ],
 )
 def test_is_loopback_url(url: str, expected: bool):
-    """The provider-agnostic check every "is this genuinely local" decision
-    across the model layer shares (Ollama, LM Studio, Lemonade, Docker Model
-    Runner, Foundry Local -- ARP-IMPROVEMENTS F2 review)."""
+    """The provider-agnostic check every "is this genuinely local" decision across the.
+
+    model layer shares (Ollama, LM Studio, Lemonade, Docker Model Runner, Foundry Local
+    -- ARP-IMPROVEMENTS F2 review).
+    """
     assert mr.is_loopback_url(url) is expected
 
 
@@ -197,9 +199,9 @@ def test_cost_lane_for_ollama_downgrades_to_free_for_a_remote_base_url_no_key(
 def test_cost_lane_for_ollama_downgrades_to_free_for_a_remote_base_url_even_keyed(
     monkeypatch: pytest.MonkeyPatch,
 ):
-    """The loopback check must win even when OLLAMA_API_KEY is set and the
-    model happens to be listed at that remote host -- is_served_locally()
-    only proves "listed at OLLAMA_BASE_URL", not "on this machine"."""
+    """The loopback check must win even when OLLAMA_API_KEY is set and the model happens
+    to be listed at that remote host -- is_served_locally() only proves "listed at
+    OLLAMA_BASE_URL", not "on this machine"."""
     monkeypatch.setenv("OLLAMA_BASE_URL", "http://ollama-box.internal:11434")
     monkeypatch.setenv("OLLAMA_API_KEY", "fake-key-for-test")
     monkeypatch.setattr(
@@ -210,8 +212,10 @@ def test_cost_lane_for_ollama_downgrades_to_free_for_a_remote_base_url_even_keye
 
 
 def test_cost_lane_rank_ordering():
-    assert mr.cost_lane_rank("local") < mr.cost_lane_rank("free") < mr.cost_lane_rank(
-        "paid"
+    assert (
+        mr.cost_lane_rank("local")
+        < mr.cost_lane_rank("free")
+        < mr.cost_lane_rank("paid")
     )
 
 

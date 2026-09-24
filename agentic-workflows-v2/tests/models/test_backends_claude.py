@@ -92,7 +92,9 @@ def rate_limit(status: str) -> RateLimitEvent:
     )
 
 
-def patch_query(monkeypatch: pytest.MonkeyPatch, *messages: Any) -> list[dict[str, Any]]:
+def patch_query(
+    monkeypatch: pytest.MonkeyPatch, *messages: Any
+) -> list[dict[str, Any]]:
     """Swap the lazily-loaded SDK for one whose ``query`` replays *messages*.
 
     The module resolves SDK names through ``_load_sdk()`` rather than importing
@@ -139,9 +141,9 @@ USER = [{"role": "user", "content": "hi"}]
 def test_subscription_env_blanks_both_credential_vars() -> None:
     """Blank, not absent: ClaudeAgentOptions.env merges over os.environ.
 
-    The SDK spawns the CLI with ``{**os.environ, **options.env}``, so an entry
-    can override a value but can never remove the key. An empty value is what
-    the CLI treats as absent.
+    The SDK spawns the CLI with ``{**os.environ, **options.env}``, so an
+    entry can override a value but can never remove the key. An empty
+    value is what the CLI treats as absent.
     """
     env = subscription_env()
     assert env == {"ANTHROPIC_API_KEY": "", "ANTHROPIC_AUTH_TOKEN": ""}
@@ -343,7 +345,8 @@ async def test_warning_rate_limit_does_not_raise(
 
 
 @pytest.mark.parametrize(
-    "error", ["authentication_failed", "billing_error", "invalid_request", "server_error"]
+    "error",
+    ["authentication_failed", "billing_error", "invalid_request", "server_error"],
 )
 async def test_assistant_errors_raise(
     monkeypatch: pytest.MonkeyPatch, error: str

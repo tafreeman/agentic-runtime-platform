@@ -1,8 +1,8 @@
 """Shared loading and execution for adapter-owned workflow definitions.
 
-Adapters own their definition format, input validation and output resolution.
-Entry points pass the loaded object through unchanged and keep workflow data
-separate from execution controls.
+Adapters own their definition format, input validation and output
+resolution. Entry points pass the loaded object through unchanged and
+keep workflow data separate from execution controls.
 """
 
 from __future__ import annotations

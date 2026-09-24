@@ -1,5 +1,5 @@
-"""Tests for ledger.queries: pass rates, paired outcomes, omnibus,
-repeat aggregation, cost, completeness, substrate grouping, and verdict.
+"""Tests for ledger.queries: pass rates, paired outcomes, omnibus, repeat aggregation,
+cost, completeness, substrate grouping, and verdict.
 
 `seed_wave` below is this file's own row-seeding helper (test_schema.py
 owns a similar one for its DDL/trigger tests, but this file is a
@@ -593,11 +593,9 @@ def test_arm_pass_rates_with_only_clean_passes_and_fails(
 def _supersede_the_grade(
     conn: sqlite3.Connection, *, trial_id: str, new_outcome: str
 ) -> None:
-    """Insert a correction grade for `trial_id`'s existing grade, with
-    `supersedes` set to the row it replaces -- the one shape `make_grade`
-    cannot build (it always sets `outcome = status = result` on a single,
-    unlinked row).
-    """
+    """Insert a correction grade for `trial_id`'s existing grade, with `supersedes` set
+    to the row it replaces -- the one shape `make_grade` cannot build (it always sets
+    `outcome = status = result` on a single, unlinked row)."""
     old = conn.execute(
         "SELECT grade_id, grader_id FROM grade WHERE trial_id = ?", (trial_id,)
     ).fetchone()
@@ -885,9 +883,10 @@ def _insert_ok_no_verdict_trial(
     trial_id: str,
     substrate_id: str,
 ) -> None:
-    """A trial that ran cleanly (`op_status='ok'`) but whose grader gave no
-    pass/fail verdict (`status='error'`, `outcome=NULL`) -- the case
-    `make_grade` cannot express, since it always sets `outcome = status`.
+    """A trial that ran cleanly (`op_status='ok'`) but whose grader gave no pass/fail
+    verdict (`status='error'`, `outcome=NULL`) -- the case `make_grade` cannot express,
+    since it always sets `outcome = status`.
+
     Not an operational failure (the schema would refuse a grade row on one
     of those); a real gap `_instance_statuses` and its consumers must
     treat as "no verdict", not as "ok, therefore comparable".

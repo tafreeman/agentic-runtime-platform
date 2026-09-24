@@ -26,11 +26,12 @@ from agentic_v2.models.discovery_snapshot import discover_all_models
 def _stub_all_sources_empty(monkeypatch: pytest.MonkeyPatch):
     """Default every source to empty so each test only wires what it needs.
 
-    Also clears every configurable-host env var discover_all_models reads
-    directly (OLLAMA_API_KEY/OLLAMA_BASE_URL, LMSTUDIO_HOST,
-    LEMONADE_BASE_URL, DOCKER_MODEL_RUNNER_BASE_URL, FOUNDRY_LOCAL_BASE_URL):
-    an ambient key or non-loopback host on whatever machine runs the suite
-    would silently change which branch a test actually exercises.
+    Also clears every configurable-host env var discover_all_models
+    reads directly (OLLAMA_API_KEY/OLLAMA_BASE_URL, LMSTUDIO_HOST,
+    LEMONADE_BASE_URL, DOCKER_MODEL_RUNNER_BASE_URL,
+    FOUNDRY_LOCAL_BASE_URL): an ambient key or non-loopback host on
+    whatever machine runs the suite would silently change which branch a
+    test actually exercises.
     """
     monkeypatch.delenv("OLLAMA_API_KEY", raising=False)
     monkeypatch.delenv("OLLAMA_BASE_URL", raising=False)
@@ -64,8 +65,8 @@ def test_no_sources_returns_empty_list() -> None:
 
 @pytest.mark.unit
 def test_verify_true_is_not_implemented() -> None:
-    """F3 (real completion calls) is deferred; the schema/signature exist, the
-    behavior does not -- this must raise, not silently do a partial job."""
+    """F3 (real completion calls) is deferred; the schema/signature exist, the behavior
+    does not -- this must raise, not silently do a partial job."""
     with pytest.raises(NotImplementedError, match="F3"):
         discover_all_models(verify=True)
 
@@ -77,7 +78,9 @@ def test_local_lane_providers_are_all_local(
     monkeypatch.setattr(
         lemonade_discovery,
         "discover_lemonade_models",
-        lambda: [lemonade_discovery.LemonadeModelInfo(id="lemonade:phi-4", name="phi-4")],
+        lambda: [
+            lemonade_discovery.LemonadeModelInfo(id="lemonade:phi-4", name="phi-4")
+        ],
     )
     monkeypatch.setattr(
         docker_model_runner_discovery,
@@ -93,7 +96,9 @@ def test_local_lane_providers_are_all_local(
         "discover_foundry_local_models",
         lambda: [
             foundry_local_discovery.FoundryLocalModelInfo(
-                id="foundry-local:qwen2.5-coder-7b", name="qwen2.5-coder-7b", device="NPU"
+                id="foundry-local:qwen2.5-coder-7b",
+                name="qwen2.5-coder-7b",
+                device="NPU",
             )
         ],
     )
@@ -118,14 +123,14 @@ def test_lemonade_docker_model_runner_foundry_local_downgrade_for_remote_hosts(
     provider name alone (matches the Ollama fix applied to the same
     facade)."""
     monkeypatch.setenv("LEMONADE_BASE_URL", "http://lemonade-box.internal:13305")
-    monkeypatch.setenv(
-        "DOCKER_MODEL_RUNNER_BASE_URL", "http://dmr-box.internal:12434"
-    )
+    monkeypatch.setenv("DOCKER_MODEL_RUNNER_BASE_URL", "http://dmr-box.internal:12434")
     monkeypatch.setenv("FOUNDRY_LOCAL_BASE_URL", "http://foundry-box.internal:60160")
     monkeypatch.setattr(
         lemonade_discovery,
         "discover_lemonade_models",
-        lambda: [lemonade_discovery.LemonadeModelInfo(id="lemonade:phi-4", name="phi-4")],
+        lambda: [
+            lemonade_discovery.LemonadeModelInfo(id="lemonade:phi-4", name="phi-4")
+        ],
     )
     monkeypatch.setattr(
         docker_model_runner_discovery,
@@ -141,7 +146,9 @@ def test_lemonade_docker_model_runner_foundry_local_downgrade_for_remote_hosts(
         "discover_foundry_local_models",
         lambda: [
             foundry_local_discovery.FoundryLocalModelInfo(
-                id="foundry-local:qwen2.5-coder-7b", name="qwen2.5-coder-7b", device="NPU"
+                id="foundry-local:qwen2.5-coder-7b",
+                name="qwen2.5-coder-7b",
+                device="NPU",
             )
         ],
     )
@@ -192,10 +199,9 @@ def _stub_ollama(
 def test_ollama_no_key_stays_local_regardless_of_cloud_classification(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Without OLLAMA_API_KEY, build_ollama_model never reroutes (ADR-051) --
-    so even a cloud=True record (e.g. a locally-listed :cloud-suffixed name
-    with no remote_host stamp) stays at the local endpoint and "free" lane,
-    not "paid"/CLOUD_HOST."""
+    """Without OLLAMA_API_KEY, build_ollama_model never reroutes (ADR-051) -- so even a
+    cloud=True record (e.g. a locally-listed :cloud-suffixed name with no remote_host
+    stamp) stays at the local endpoint and "free" lane, not "paid"/CLOUD_HOST."""
     _stub_ollama(
         monkeypatch,
         [
@@ -257,13 +263,11 @@ def test_ollama_keyed_and_locally_listed_stays_local_despite_cloud_flag(
 def test_ollama_keyed_and_not_locally_listed_reroutes_to_cloud_host(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """A model genuinely absent from the local listing, with a key set, is
-    the one case build_ollama_model actually reroutes -- endpoint must be
-    CLOUD_HOST, not the local/configured one."""
+    """A model genuinely absent from the local listing, with a key set, is the one case
+    build_ollama_model actually reroutes -- endpoint must be CLOUD_HOST, not the
+    local/configured one."""
     monkeypatch.setenv("OLLAMA_API_KEY", "fake-key-for-test")
-    monkeypatch.setattr(
-        ollama_discovery, "local_model_names", lambda: frozenset()
-    )
+    monkeypatch.setattr(ollama_discovery, "local_model_names", lambda: frozenset())
     _stub_ollama(
         monkeypatch,
         [
@@ -285,9 +289,9 @@ def test_ollama_keyed_and_not_locally_listed_reroutes_to_cloud_host(
 def test_ollama_remote_base_url_downgrades_lane_even_without_cloud_markers(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """A non-loopback OLLAMA_BASE_URL means every call already leaves this
-    machine, regardless of key presence or the cloud classification --
-    matching cost_lane_for's own downgrade for the curated-registry path."""
+    """A non-loopback OLLAMA_BASE_URL means every call already leaves this machine,
+    regardless of key presence or the cloud classification -- matching cost_lane_for's
+    own downgrade for the curated-registry path."""
     monkeypatch.setenv("OLLAMA_BASE_URL", "http://ollama-box.internal:11434")
     _stub_ollama(
         monkeypatch,
@@ -307,10 +311,10 @@ def test_ollama_remote_base_url_downgrades_lane_even_without_cloud_markers(
 def test_nim_curated_free_endpoint_is_free_uncurated_id_fails_closed_to_paid(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """A NIM id curated in model_registry.yaml as a free-endpoint entry
-    (``tiers: []``, ``cost_lane: free``) reports "free"; an id with no
-    registry entry at all fails closed to "paid" -- both via the same
-    model_registry.cost_lane_for the facade uses for every cloud provider."""
+    """A NIM id curated in model_registry.yaml as a free-endpoint entry (``tiers: []``,
+    ``cost_lane: free``) reports "free"; an id with no registry entry at all fails
+    closed to "paid" -- both via the same model_registry.cost_lane_for the facade uses
+    for every cloud provider."""
     monkeypatch.setattr(
         cloud_discovery,
         "discover_cloud_models",

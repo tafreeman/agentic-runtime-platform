@@ -220,7 +220,11 @@ class SourceSanityGrader:
         now = datetime.now(UTC)
         if execution.status is not ExecutionStatus.COMPLETED:
             return self._result(
-                sample, now, GradeStatus.UNAVAILABLE, None, False,
+                sample,
+                now,
+                GradeStatus.UNAVAILABLE,
+                None,
+                False,
                 {"reason": "execution did not complete"},
             )
         output = execution.output or {}
@@ -231,7 +235,11 @@ class SourceSanityGrader:
             oracle = load_oracle(sample.sample_id)
         except OSError as error:
             return self._result(
-                sample, now, GradeStatus.UNAVAILABLE, None, False,
+                sample,
+                now,
+                GradeStatus.UNAVAILABLE,
+                None,
+                False,
                 {"reason": f"case unreadable: {error}"},
             )
 
@@ -389,9 +397,7 @@ class MutationGrader:
     * harness ran        -> PASS or FAIL on what the tests said
     """
 
-    def __init__(
-        self, *, harness: Any, name: str = "swe-fix-composite@1"
-    ) -> None:
+    def __init__(self, *, harness: Any, name: str = "swe-fix-composite@1") -> None:
         self._sanity = SourceSanityGrader()
         self._harness = harness
         self._name = name

@@ -84,7 +84,9 @@ def main() -> int:
     parser.add_argument("--repo", default="django/django")
     parser.add_argument("--max-patch-lines", type=int, default=25)
     parser.add_argument("--difficulty", default="<15 min fix")
-    parser.add_argument("--out", default=str(KIT_ROOT / "dataset" / "cases.swebench.jsonl"))
+    parser.add_argument(
+        "--out", default=str(KIT_ROOT / "dataset" / "cases.swebench.jsonl")
+    )
     parser.add_argument("--offset", type=int, default=0)
     args = parser.parse_args()
 
@@ -111,7 +113,11 @@ def main() -> int:
     # instances the first hand-built set already used. Skipping what exists
     # makes non-overlap a property of the data on disk rather than of
     # bookkeeping nobody will maintain.
-    already = {d.name for d in CASES_DIR.iterdir() if d.is_dir()} if CASES_DIR.is_dir() else set()
+    already = (
+        {d.name for d in CASES_DIR.iterdir() if d.is_dir()}
+        if CASES_DIR.is_dir()
+        else set()
+    )
     if already:
         print(f"skipping {len(already)} instances already built")
     # The case tree is gitignored, so it alone cannot protect a fresh checkout
