@@ -24,27 +24,28 @@ from typing import Any
 import pytest
 
 # ExecutionKit value types + error tree (ADR-023 Option A′) + Phase 5a provider
-# — guard so the suite skips gracefully when ExecutionKit / httpx is absent.
-try:
-    import httpx
-    from executionkit.errors import (
-        PermanentError,
-        ProviderError,
-        RateLimitError,
-    )
-    from executionkit.provider import LLMResponse
+# — skip gracefully when ExecutionKit / httpx is absent, and only then: once
+# both import, an ImportError below is an EK rename and must fail collection.
+_SKIP_REASON = (
+    "executionkit / httpx not installed (ADR-023 dependency); "
+    "Phase 5a provider suite skipped in this environment."
+)
+pytest.importorskip("httpx", reason=_SKIP_REASON)
+pytest.importorskip("executionkit", reason=_SKIP_REASON)
 
-    from agentic_v2.models.backends_base import LLMBackend
-    from agentic_v2.models.ek_provider import SmartRouterProvider
-    from agentic_v2.models.router import FallbackChain, ModelTier
-    from agentic_v2.models.smart_router import SmartModelRouter
-    from agentic_v2.settings import get_settings
-except ImportError:  # pragma: no cover — guarded for isolated environments
-    pytest.skip(
-        "executionkit / httpx not installed (ADR-023 dependency); "
-        "Phase 5a provider suite skipped in this environment.",
-        allow_module_level=True,
-    )
+import httpx
+from executionkit.errors import (
+    PermanentError,
+    ProviderError,
+    RateLimitError,
+)
+from executionkit.provider import LLMResponse
+
+from agentic_v2.models.backends_base import LLMBackend
+from agentic_v2.models.ek_provider import SmartRouterProvider
+from agentic_v2.models.router import FallbackChain, ModelTier
+from agentic_v2.models.smart_router import SmartModelRouter
+from agentic_v2.settings import get_settings
 
 
 @pytest.fixture(autouse=True, scope="module")

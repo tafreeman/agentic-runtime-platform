@@ -29,44 +29,22 @@ from typing import Any
 
 import pytest
 
-try:
-    from executionkit.cost import CostTracker
-    from executionkit.provider import BudgetExhaustedError
+# Skip only when the optional ``ek`` extra is absent. Once executionkit imports,
+# an ImportError below is a consumer break (an EK rename) and must fail
+# collection. This module used to wrap all its imports in one
+# ``except ImportError`` skip, which turned exactly that break into a green
+# "executionkit not installed" skip inside the ``ek-delegation-tests`` job.
+pytest.importorskip(
+    "executionkit",
+    reason="executionkit not installed "
+    "(ADR-023 dependency); Phase 6 step-delegation suite skipped.",
+)
 
-    from agentic_v2.contracts import ReviewStatus, StepStatus
-    from agentic_v2.engine.context import ExecutionContext
-    from agentic_v2.engine.ek_step_delegation import (
-        BudgetEnforcingProvider,
-        complete_turn_via_ek,
-        structured_via_ek,
-    )
-    from agentic_v2.engine.step import (
-        RetryConfig,
-        RetryStrategy,
-        StepDefinition,
-        StepExecutor,
-    )
-    from agentic_v2.engine.tool_execution import complete_chat_with_fallback
-    from agentic_v2.models.backends_base import LLMBackend
-    from agentic_v2.models.client import LLMClientWrapper, TokenBudget
-    from agentic_v2.models.router import FallbackChain, ModelTier
-    from agentic_v2.models.smart_router import SmartModelRouter
-    from agentic_v2.settings import get_settings
-except ImportError:  # pragma: no cover — guarded for isolated environments
-    pytest.skip(
-        "executionkit not installed "
-        "(ADR-023 dependency); Phase 6 step-delegation suite skipped.",
-        allow_module_level=True,
-    )
-
-# Imported OUTSIDE the skip boundary above, deliberately. `_TrackedProvider` is a
+# Checked BEFORE the ARP imports below, deliberately. `_TrackedProvider` is a
 # private, unexported ExecutionKit symbol that
 # `agentic_v2.engine.ek_step_delegation` imports at module scope, and this suite
-# exists to catch its removal. Inside that block a rename would raise ImportError,
-# be swallowed by the module-level skip, and report green for precisely the break
-# it is meant to detect — while ARP would fail at import time in production. The
-# `ek-delegation-tests` job's own guard only checks `import executionkit`, so it
-# would not catch it either.
+# exists to catch its removal. If EK renamed it, importing that module would fail
+# first with a bare ImportError; checking the symbol here names the coupling.
 try:
     from executionkit.patterns.base import _TrackedProvider
 except ImportError as exc:  # pragma: no cover
@@ -76,6 +54,29 @@ except ImportError as exc:  # pragma: no cover
         "agentic_v2.engine.ek_step_delegation imports. Failing loudly rather "
         "than skipping: this is the consumer break the suite exists to detect."
     ) from exc
+
+from executionkit.cost import CostTracker
+from executionkit.provider import BudgetExhaustedError
+
+from agentic_v2.contracts import ReviewStatus, StepStatus
+from agentic_v2.engine.context import ExecutionContext
+from agentic_v2.engine.ek_step_delegation import (
+    BudgetEnforcingProvider,
+    complete_turn_via_ek,
+    structured_via_ek,
+)
+from agentic_v2.engine.step import (
+    RetryConfig,
+    RetryStrategy,
+    StepDefinition,
+    StepExecutor,
+)
+from agentic_v2.engine.tool_execution import complete_chat_with_fallback
+from agentic_v2.models.backends_base import LLMBackend
+from agentic_v2.models.client import LLMClientWrapper, TokenBudget
+from agentic_v2.models.router import FallbackChain, ModelTier
+from agentic_v2.models.smart_router import SmartModelRouter
+from agentic_v2.settings import get_settings
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -123,9 +124,34 @@ def test_ek_tracked_provider_interface() -> None:
         )
 
     # Must have a ``complete`` method (the async method we call)
-    assert hasattr(_TrackedProvider, "complete"), (
-        "_TrackedProvider is missing the ``complete`` method"
-    )
+    assert hasattr(
+        _TrackedProvider, "complete"
+    ), "_TrackedProvider is missing the ``complete`` method"
+
+    # ``complete_turn_via_ek`` passes the first three arguments positionally, so
+    # their order matters as much as their names: swapping tracker and metadata
+    # would still pass the name check above. Bind ARP's exact call shapes
+    # without calling anything.
+    assert params[1:4] == [
+        "provider",
+        "tracker",
+        "metadata",
+    ], f"_TrackedProvider.__init__ positional order changed; got {params}"
+    try:
+        inspect.signature(_TrackedProvider).bind(
+            object(), object(), {}, budget=None, retry=None, context="step"
+        )
+        inspect.signature(_TrackedProvider.complete).bind(
+            object(), [], max_tokens=1, tools=None
+        )
+    except TypeError as exc:
+        pytest.fail(
+            "ARP's _TrackedProvider call shape "
+            f"(ek_step_delegation.complete_turn_via_ek) no longer binds: {exc}"
+        )
+    assert inspect.iscoroutinefunction(
+        _TrackedProvider.complete
+    ), "_TrackedProvider.complete is no longer async; ARP awaits it"
 
 
 _TIER = ModelTier.TIER_2

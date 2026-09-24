@@ -19,27 +19,26 @@ from typing import Any
 import pytest
 
 # ExecutionKit value types + error tree (ADR-023 Option A′: single package).
-# Guard the import (and the downstream ``ek_adapters`` import, which itself
-# depends on ``executionkit``) so this conformance suite skips gracefully when
-# run in an environment where ExecutionKit is not installed.
-try:
-    from executionkit.errors import (
-        PermanentError,
-        ProviderError,
-        RateLimitError,
-    )
+# Skip gracefully when ExecutionKit is not installed, and only then: once it
+# imports, an ImportError below (here or in ``ek_adapters``, which itself
+# depends on ``executionkit``) is an EK rename and must fail collection.
+pytest.importorskip(
+    "executionkit",
+    reason="executionkit not installed (ADR-023 dependency); "
+    "Phase 4 conformance suite is skipped in this environment.",
+)
 
-    from agentic_v2.models.ek_adapters import (
-        dict_to_llm_response,
-        llm_response_to_dict,
-        map_http_error,
-    )
-except ImportError:  # pragma: no cover - guarded for isolated environments
-    pytest.skip(
-        "executionkit not installed (ADR-023 dependency); "
-        "Phase 4 conformance suite is skipped in this environment.",
-        allow_module_level=True,
-    )
+from executionkit.errors import (
+    PermanentError,
+    ProviderError,
+    RateLimitError,
+)
+
+from agentic_v2.models.ek_adapters import (
+    dict_to_llm_response,
+    llm_response_to_dict,
+    map_http_error,
+)
 
 FIXTURE_DIR = Path(__file__).parent.parent / "fixtures" / "backend_responses"
 
