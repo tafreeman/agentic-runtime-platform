@@ -142,11 +142,14 @@ def unlockDownstream (p : Plan) (s : State) (i : Nat) : State :=
     { s with degree := put s.degree j d
              ready := if d == 0 then s.ready ++ [j] else s.ready }) s
 
--- Mirrors _record_task_exception: notably no lifecycle update or end event.
+-- Mirrors _record_task_exception: the step ends like any failed step, with a
+-- FAILED result and lifecycle, an end event, and a cascade skip.
 def recordTaskException (p : Plan) (s : State) (i : Nat) : State :=
   cascadeSkip p
     { s with running := s.running.filter (· != i)
              results := put s.results i (some ⟨.failed, .none⟩)
+             life := put s.life i .failed
+             ends := s.ends ++ [i]
              failed := true } i .upstream
 
 -- Mirrors _process_done_task for an ordinary Exception or returned StepResult.
@@ -196,12 +199,12 @@ def schedulingLoop (p : Plan) (limit : Int) : List Action → State → State
 -- Mirrors the final-status logic in _run_dag (mark_complete preserves this).
 def finalStatus (s : State) : Status := if s.failed then .failed else .success
 
-/-- Defect witness (a single concrete plan, not a general theorem): when the
-only step raises, the model, like `_record_task_exception`, records a FAILED
-result but leaves the step's lifecycle RUNNING. -/
+/-- Former defect, now fixed: when the only step raises, it ends FAILED in its
+lifecycle and emits its end event, like any other failed step. -/
 theorem exception_root_lifecycle :
-    (processDoneTask [⟨[], .exception⟩]
-      (scheduleReadySteps 1 1 (initial [⟨[], .exception⟩])) 0).life 0 = .running := by
+    let p : Plan := [⟨[], .exception⟩]
+    let s := processDoneTask p (scheduleReadySteps 1 1 (initial p)) 0
+    s.life 0 = .failed ∧ s.ends = [0] := by
   decide
 
 /-- Former defect, now fixed: a two-node chain whose first step returns
@@ -407,6 +410,19 @@ theorem nonterminal_fails_closed (p : Plan) (s : State) (i : Nat) (st : Status)
   apply cascade_keeps_failed
   simp [FailedAt, transitionOutcomeState, put]
 
+/-- For every plan, state and node, a step that raises is recorded FAILED in
+its result and lifecycle, and the run's failure flag is set. -/
+theorem exception_fails_closed (p : Plan) (s : State) (i : Nat)
+    (ho : (p[i]!).outcome = .exception) :
+    (processDoneTask p s i).results i = some ⟨.failed, .none⟩ ∧
+      (processDoneTask p s i).life i = .failed ∧
+      (processDoneTask p s i).failed = true := by
+  show FailedAt i (processDoneTask p s i)
+  unfold processDoneTask recordTaskException cascadeSkip
+  rw [ho]
+  apply cascade_keeps_failed
+  simp [FailedAt, put]
+
 private theorem unlock_capacity (p : Plan) (l : Int) (s : State) (i : Nat)
     (h : Cap l s) : Cap l (unlockDownstream p s i) := by
   apply fold_invariant _ (Cap l)
@@ -540,6 +556,8 @@ runs axiom-audit over every declaration in the library. -/
 #guard_msgs in #print axioms pending_dependency_fails_closed
 /-- info: 'ARP.nonterminal_fails_closed' depends on axioms: [propext] -/
 #guard_msgs in #print axioms nonterminal_fails_closed
+/-- info: 'ARP.exception_fails_closed' depends on axioms: [propext] -/
+#guard_msgs in #print axioms exception_fails_closed
 /-- info: 'ARP.zero_limit_is_failed' depends on axioms: [propext] -/
 #guard_msgs in #print axioms zero_limit_is_failed
 /-- info: 'ARP.nonpositive_schedules_nothing' depends on axioms: [propext, Quot.sound] -/
