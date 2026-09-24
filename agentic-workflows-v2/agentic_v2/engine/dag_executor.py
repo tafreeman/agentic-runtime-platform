@@ -9,8 +9,9 @@ Key design decisions:
   an upstream finishes, rather than waiting for an entire "wave" to complete.
 - **Cascade skip** via BFS: when a step fails, all transitive dependents are
   marked SKIPPED so the executor can still finish cleanly.
-- **Deadlock detection**: if no tasks are running and steps remain, unmet
-  dependencies are flagged and the remaining steps are skipped.
+- **Deadlock detection**: if no tasks are running and steps remain, the
+  remaining steps are skipped and the run fails. This cannot happen for a
+  validated DAG with ``max_concurrency >= 1``; the check is a backstop.
 """
 
 from __future__ import annotations
@@ -288,12 +289,23 @@ async def _scheduling_loop(state: _RunState) -> None:
         _schedule_ready_steps(state)
 
         # 2. Deadlock detection
-        # If no tasks are running but we aren't done, some steps are
-        # unreachable.
+        # Unreachable for a validated DAG with max_concurrency >= 1: an
+        # unfinished step whose dependencies have all finished is always
+        # queued, running, or cascade-skipped. If scheduling ever stalls
+        # anyway, fail the run rather than drop the steps and report success.
         if not state.tasks:
             remaining = set(state.dag.steps.keys()) - state.completed - state.skipped
             for step_name in remaining:
-                _mark_skipped(state, step_name, "unmet dependencies")
+                _mark_skipped(state, step_name, "scheduler deadlock")
+            state.result.overall_status = StepStatus.FAILED
+            state.result.metadata["error"] = (
+                f"Scheduler deadlock: {len(remaining)} step(s) could not be scheduled."
+            )
+            logger.error(
+                "DAG scheduler deadlock: workflow=%r unscheduled=%s",
+                state.dag.name,
+                sorted(remaining),
+            )
             break
 
         # 3. Wait for the next task to complete
@@ -393,7 +405,8 @@ class DAGExecutor:
         Execution proceeds in a tight loop:
 
         1. **Schedule** — pop ready steps (in-degree 0) up to *max_concurrency*.
-        2. **Deadlock check** — if no tasks running and steps remain, skip them.
+        2. **Deadlock check** — if no tasks running and steps remain, skip them
+           and fail the run.
         3. **Await** — ``asyncio.wait(FIRST_COMPLETED)`` for the next result.
         4. **Handle outcome** — on success, decrement downstream in-degrees;
            on failure, cascade-skip all transitive dependents.
@@ -424,7 +437,8 @@ class DAGExecutor:
 
             **kwargs: Engine-specific options.  Supported:
                 - ``max_concurrency`` (int, default 10): Upper bound on
-                  simultaneously running steps.
+                  simultaneously running steps.  Must be an integer >= 1;
+                  anything else raises :class:`ValueError`.
                 - ``timeout`` (float | None): Alias for the *timeout*
                   positional keyword argument above.
 
@@ -437,7 +451,18 @@ class DAGExecutor:
                 f"DAGExecutor expects a DAG, got {type(workflow).__name__}"
             )
         dag: DAG = workflow
-        max_concurrency: int = kwargs.get("max_concurrency", 10)
+        raw_concurrency = kwargs.get("max_concurrency", 10)
+        # A limit below 1 schedules nothing, which used to skip every step and
+        # still report SUCCESS. bool is excluded because it is an int subclass.
+        if (
+            isinstance(raw_concurrency, bool)
+            or not isinstance(raw_concurrency, int)
+            or raw_concurrency < 1
+        ):
+            raise ValueError(
+                f"max_concurrency must be an integer >= 1, got {raw_concurrency!r}"
+            )
+        max_concurrency: int = raw_concurrency
         # Accept timeout via **kwargs as documented — explicit param wins.
         effective_timeout: float | None = (
             timeout if timeout is not None else kwargs.get("timeout")

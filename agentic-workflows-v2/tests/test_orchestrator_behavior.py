@@ -11,6 +11,8 @@ OrchestratorAgent.register_agent().
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from agentic_v2.agents.capabilities import (
@@ -605,3 +607,209 @@ class TestRecordBatchResultsResilience:
         (only_id,) = results
         assert "no batch metadata" in results[only_id]["error"]
         assert only_id in executed
+
+
+# ---------------------------------------------------------------------------
+# Plan scheduling follows the same rules as DAGExecutor
+# ---------------------------------------------------------------------------
+
+
+def _make_unsuccessful_stub(
+    name: str, capabilities: CapabilitySet, call_log: list[str]
+):
+    """A stub agent that returns an output with ``success=False`` instead of raising."""
+    stub = _make_stub(name, capabilities, call_log=call_log)
+
+    async def _run_unsuccessful(task):
+        call_log.append(name)
+        return _MinimalOutput(success=False, error="could not extract code")
+
+    stub.run = _run_unsuccessful
+    return stub
+
+
+def _plan_json(*subtasks: tuple[str, list[str]]) -> str:
+    """An LLM plan whose subtasks all need code generation."""
+    return json.dumps(
+        {
+            "subtasks": [
+                {
+                    "id": task_id,
+                    "description": f"Generate the code for subtask {task_id}",
+                    "capabilities": [CapabilityType.CODE_GENERATION.value],
+                    "dependencies": dependencies,
+                }
+                for task_id, dependencies in subtasks
+            ]
+        }
+    )
+
+
+class TestPlanSchedulingRules:
+    """The orchestrator refuses plans it cannot finish and never reports a
+    partial run as a success."""
+
+    def test_max_parallel_below_one_is_rejected(self):
+        from pydantic import ValidationError
+
+        from agentic_v2.agents.orchestrator import OrchestratorInput
+
+        with pytest.raises(ValidationError):
+            OrchestratorInput(task="t", max_parallel=0)
+
+    @pytest.mark.asyncio
+    async def test_zero_limit_raises_instead_of_spinning(self):
+        """A limit of 0 used to loop forever without yielding to the event loop."""
+        from agentic_v2.agents.orchestrator import OrchestratorInput
+
+        orch = OrchestratorAgent()
+        _populate_subtask(orch, "only", [CapabilityType.CODE_GENERATION])
+        unchecked = OrchestratorInput.model_construct(task="t", max_parallel=0)
+
+        with pytest.raises(ValueError, match="max_parallel"):
+            await orch._execute_plan(unchecked)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("plan", "expected"),
+        [
+            ((("a", ["b"]), ("b", ["a"])), "cycle"),
+            ((("a", ["ghost"]),), "ghost"),
+        ],
+    )
+    async def test_invalid_plan_fails_before_any_subtask_runs(self, plan, expected):
+        """A cyclic plan, or one naming a subtask that does not exist, used to
+        stop silently and report success."""
+        from agentic_v2.agents.orchestrator import OrchestratorInput
+
+        call_log: list[str] = []
+        cap = CapabilitySet.from_types(CapabilityType.CODE_GENERATION)
+        coder = _make_stub("coder", cap, call_log=call_log)
+        orch = _build_orchestrator_with_stubs([("coder", coder)])
+
+        output = await orch._parse_output(
+            OrchestratorInput(task="t"), _plan_json(*plan)
+        )
+
+        assert output.success is False
+        assert expected in (output.error or "").lower()
+        assert call_log == []
+
+    @pytest.mark.asyncio
+    async def test_dependents_of_a_failed_subtask_are_skipped(self):
+        """A failed subtask used to let its dependents run anyway."""
+        from agentic_v2.agents.orchestrator import OrchestratorInput
+
+        call_log: list[str] = []
+        cap = CapabilitySet.from_types(CapabilityType.CODE_GENERATION)
+        orch = OrchestratorAgent()
+        for name, raises in (("fail_agent", True), ("ok_agent", False)):
+            orch._agents[name] = _make_stub(name, cap, raises=raises, call_log=call_log)
+            orch._agent_capabilities[name] = cap
+        code_gen = [CapabilityType.CODE_GENERATION]
+        upstream = _populate_subtask(orch, "upstream", code_gen)
+        downstream = _populate_subtask(orch, "downstream", code_gen, ["upstream"])
+        leaf = _populate_subtask(orch, "leaf", code_gen, ["downstream"])
+        upstream.assigned_agent = "fail_agent"
+        downstream.assigned_agent = "ok_agent"
+        leaf.assigned_agent = "ok_agent"
+        orch._fallback_chains.update({"upstream": [], "downstream": [], "leaf": []})
+
+        results = await orch._execute_plan(OrchestratorInput(task="t", max_parallel=5))
+
+        assert call_log == ["fail_agent"]
+        assert upstream.status == StepStatus.FAILED
+        assert downstream.status == StepStatus.SKIPPED
+        assert leaf.status == StepStatus.SKIPPED
+        assert results["downstream"] == {
+            "skipped": True,
+            "reason": "dependency failed",
+            "dependency": "upstream",
+        }
+        assert results["leaf"]["dependency"] == "downstream"
+
+    @pytest.mark.asyncio
+    async def test_invalid_plan_is_refused_even_without_agents(self):
+        """With no agents registered nothing runs, but an invalid plan used to
+        skip validation and report success."""
+        from agentic_v2.agents.orchestrator import OrchestratorInput
+
+        orch = OrchestratorAgent()
+
+        output = await orch._parse_output(
+            OrchestratorInput(task="t"), _plan_json(("a", ["b"]), ("b", ["a"]))
+        )
+
+        assert output.success is False
+        assert "cycle" in (output.error or "").lower()
+
+    @pytest.mark.asyncio
+    async def test_unsuccessful_agent_output_fails_the_subtask(self):
+        """An agent that returns success=False (a coder that could not extract
+        code, say) used to mark its subtask SUCCESS, so dependents ran."""
+        from agentic_v2.agents.orchestrator import OrchestratorInput
+
+        call_log: list[str] = []
+        cap = CapabilitySet.from_types(CapabilityType.CODE_GENERATION)
+        orch = OrchestratorAgent()
+        stubs = {
+            "soft_fail": _make_unsuccessful_stub("soft_fail", cap, call_log),
+            "ok_agent": _make_stub("ok_agent", cap, call_log=call_log),
+        }
+        for name, stub in stubs.items():
+            orch._agents[name] = stub
+            orch._agent_capabilities[name] = cap
+        code_gen = [CapabilityType.CODE_GENERATION]
+        upstream = _populate_subtask(orch, "upstream", code_gen)
+        downstream = _populate_subtask(orch, "downstream", code_gen, ["upstream"])
+        upstream.assigned_agent = "soft_fail"
+        downstream.assigned_agent = "ok_agent"
+        orch._fallback_chains.update({"upstream": [], "downstream": []})
+
+        results = await orch._execute_plan(OrchestratorInput(task="t", max_parallel=5))
+
+        assert call_log == ["soft_fail"]
+        assert upstream.status == StepStatus.FAILED
+        assert results["upstream"].get("handoff") is True
+        assert downstream.status == StepStatus.SKIPPED
+
+    @pytest.mark.asyncio
+    async def test_unsuccessful_agent_output_falls_back(self):
+        """An unsuccessful output moves on to the next agent in the fallback chain."""
+        from agentic_v2.agents.orchestrator import OrchestratorInput
+
+        call_log: list[str] = []
+        cap = CapabilitySet.from_types(CapabilityType.CODE_GENERATION)
+        orch = OrchestratorAgent()
+        stubs = {
+            "soft_fail": _make_unsuccessful_stub("soft_fail", cap, call_log),
+            "backup": _make_stub("backup", cap, call_log=call_log),
+        }
+        for name, stub in stubs.items():
+            orch._agents[name] = stub
+            orch._agent_capabilities[name] = cap
+        only = _populate_subtask(orch, "only", [CapabilityType.CODE_GENERATION])
+        only.assigned_agent = "soft_fail"
+        orch._fallback_chains["only"] = ["backup"]
+
+        results = await orch._execute_plan(OrchestratorInput(task="t", max_parallel=5))
+
+        assert call_log == ["soft_fail", "backup"]
+        assert only.status == StepStatus.SUCCESS
+        assert results["only"].success is True
+
+    @pytest.mark.asyncio
+    async def test_failed_subtask_fails_the_run(self):
+        """A plan with a failed subtask used to report success=True."""
+        from agentic_v2.agents.orchestrator import OrchestratorInput
+
+        cap = CapabilitySet.from_types(CapabilityType.CODE_GENERATION)
+        coder = _make_stub("coder", cap, raises=True)
+        orch = _build_orchestrator_with_stubs([("coder", coder)])
+
+        output = await orch._parse_output(
+            OrchestratorInput(task="t"), _plan_json(("build_api", []))
+        )
+
+        assert output.success is False
+        assert "build_api" in (output.error or "")

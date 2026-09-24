@@ -100,7 +100,7 @@ class OrchestratorInput(TaskInput):
     available_agents: list[str] = Field(
         default_factory=list, description="Available agent names"
     )
-    max_parallel: int = Field(default=3, description="Max parallel tasks")
+    max_parallel: int = Field(default=3, ge=1, description="Max parallel tasks")
     require_review: bool = Field(default=True, description="Whether review is required")
 
 

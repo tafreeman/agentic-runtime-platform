@@ -21,8 +21,16 @@ import json
 import logging
 from typing import Any, Callable
 
-from ..contracts import StepStatus, WorkflowResult
-from ..engine import DAG, ExecutionContext, PipelineBuilder, run_pipeline
+from ..contracts import StepStatus, TaskOutput, WorkflowResult
+from ..engine import (
+    DAG,
+    CycleDetectedError,
+    ExecutionContext,
+    MissingDependencyError,
+    PipelineBuilder,
+    StepDefinition,
+    run_pipeline,
+)
 from ..engine.protocol import ExecutionEngine
 from ..models import ModelTier
 from .base import AgentConfig, BaseAgent, agent_to_step
@@ -205,6 +213,19 @@ class OrchestratorAgent(
                 }
             )
 
+        # Validate the plan whether or not agents are registered to run it, so an
+        # invalid plan is never reported as a success.
+        try:
+            self._validate_plan()
+        except (CycleDetectedError, MissingDependencyError) as exc:
+            return OrchestratorOutput(
+                success=False,
+                error=f"Invalid execution plan: {exc}",
+                subtasks=subtasks,
+                execution_trace=self._execution_trace,
+                confidence=0.0,
+            )
+
         # Assign agents
         assignments = await self._assign_agents()
 
@@ -213,8 +234,14 @@ class OrchestratorAgent(
         if self._agents:
             final_result = await self._execute_plan(task)
 
+        unfinished = self._unfinished_subtasks()
         return OrchestratorOutput(
-            success=True,
+            success=not unfinished,
+            error=(
+                f"Subtasks did not complete: {', '.join(unfinished)}"
+                if unfinished
+                else None
+            ),
             subtasks=subtasks,
             agent_assignments=assignments,
             final_result=final_result,
@@ -327,9 +354,6 @@ class OrchestratorAgent(
             try:
                 task_input = self._resolve_task_input(st.description, agent)
                 result = await agent.run(task_input)
-                st.status = StepStatus.SUCCESS
-                st.result = result
-                return st.id, result
             except Exception as e:
                 logger.warning(
                     "Agent %s failed for subtask %s: %s, trying fallback",
@@ -339,6 +363,21 @@ class OrchestratorAgent(
                 )
                 partial_results[agent_name] = f"{type(e).__name__}: {e}"
                 continue
+            # An agent can report failure without raising (a coder that could
+            # not extract code returns success=False); treat it as a failure.
+            if isinstance(result, TaskOutput) and not result.success:
+                logger.warning(
+                    "Agent %s returned an unsuccessful result for subtask %s: %s, "
+                    "trying fallback",
+                    agent_name,
+                    st.id,
+                    result.error,
+                )
+                partial_results[agent_name] = f"unsuccessful result: {result.error}"
+                continue
+            st.status = StepStatus.SUCCESS
+            st.result = result
+            return st.id, result
 
         st.status = StepStatus.FAILED
         handoff = await self._emit_escalation_handoff(st, attempted, partial_results)
@@ -389,6 +428,8 @@ class OrchestratorAgent(
                     failed_id,
                     item,
                 )
+                if index < len(positions):
+                    positions[index].status = StepStatus.FAILED
                 results[failed_id] = {"error": str(item)}
                 executed.add(failed_id)
                 self._execution_trace.append(
@@ -399,6 +440,8 @@ class OrchestratorAgent(
             task_id, result = item
             if isinstance(result, Exception):
                 results[task_id] = {"error": str(result)}
+                if task_id in self._subtasks:
+                    self._subtasks[task_id].status = StepStatus.FAILED
             else:
                 results[task_id] = result
             executed.add(task_id)
@@ -408,15 +451,32 @@ class OrchestratorAgent(
             )
 
     async def _execute_plan(self, task: OrchestratorInput) -> Any:
-        """Execute the decomposed plan with fallback chain support."""
-        # Group by dependencies for parallel execution
+        """Execute the decomposed plan with fallback chain support.
+
+        Follows the same rules as :class:`~agentic_v2.engine.dag_executor.DAGExecutor`:
+        the plan is validated before anything runs, at most ``max_parallel``
+        subtasks run at once, and a failed subtask's dependents are skipped
+        rather than run.
+
+        Raises:
+            ValueError: ``max_parallel`` is below 1.
+            MissingDependencyError: A subtask depends on one the plan lacks.
+            CycleDetectedError: The plan's dependencies form a cycle.
+        """
+        if task.max_parallel < 1:
+            raise ValueError(f"max_parallel must be >= 1, got {task.max_parallel}")
+        if not self._subtasks:
+            return {}
+        self._validate_plan()
+
         executed: set[str] = set()
         results: dict[str, Any] = {}
 
         while len(executed) < len(self._subtasks):
+            self._skip_blocked_subtasks(executed, results)
             ready = self._find_ready_subtasks(executed)
             if not ready:
-                break  # No progress possible
+                break
 
             # Execute ready tasks (limited parallelism)
             batch = ready[: task.max_parallel]
@@ -427,7 +487,69 @@ class OrchestratorAgent(
 
             self._record_batch_results(batch_results, results, executed, batch)
 
+        # Validation and the skip pass leave nothing unscheduled, so a leftover
+        # subtask here is a scheduling bug: record it as failed, never as done.
+        for task_id, st in self._subtasks.items():
+            if task_id not in executed:
+                st.status = StepStatus.FAILED
+                results[task_id] = {"error": "subtask was never scheduled"}
+
         return results
+
+    def _validate_plan(self) -> None:
+        """Reject a plan with a missing dependency or a cycle before it runs.
+
+        Reuses :meth:`DAG.validate`, so an LLM-written plan is held to the
+        same rules as a YAML workflow. An empty plan has nothing to validate.
+        """
+        if not self._subtasks:
+            return
+        dag = DAG(name="orchestrator-plan")
+        for st in self._subtasks.values():
+            dag.add(StepDefinition(name=st.id, depends_on=list(st.dependencies)))
+        dag.validate()
+
+    def _skip_blocked_subtasks(
+        self, executed: set[str], results: dict[str, Any]
+    ) -> None:
+        """Skip every unrun subtask whose dependency failed or was skipped.
+
+        Repeats until nothing changes, so the skip reaches every transitive
+        dependent, as :class:`DAGExecutor`'s cascade skip does.
+        """
+        blocking = (StepStatus.FAILED, StepStatus.SKIPPED)
+        changed = True
+        while changed:
+            changed = False
+            for task_id, st in self._subtasks.items():
+                if task_id in executed:
+                    continue
+                blocked_by = next(
+                    (
+                        dep
+                        for dep in st.dependencies
+                        if self._subtasks[dep].status in blocking
+                    ),
+                    None,
+                )
+                if blocked_by is None:
+                    continue
+                st.status = StepStatus.SKIPPED
+                results[task_id] = {
+                    "skipped": True,
+                    "reason": "dependency failed",
+                    "dependency": blocked_by,
+                }
+                executed.add(task_id)
+                changed = True
+
+    def _unfinished_subtasks(self) -> list[str]:
+        """Ids of subtasks that failed or were skipped, in plan order."""
+        return [
+            task_id
+            for task_id, st in self._subtasks.items()
+            if st.status in (StepStatus.FAILED, StepStatus.SKIPPED)
+        ]
 
     async def decompose_task(self, task: str) -> list[dict[str, Any]]:
         """Decompose a task into subtasks."""
@@ -627,8 +749,14 @@ class OrchestratorAgent(
                 confidence=0.0,
             )
 
+        unfinished = self._unfinished_subtasks()
         return OrchestratorOutput(
-            success=True,
+            success=not unfinished,
+            error=(
+                f"Subtasks did not complete: {', '.join(unfinished)}"
+                if unfinished
+                else None
+            ),
             subtasks=subtasks_view,
             agent_assignments=assignments,
             final_result=final_result,
