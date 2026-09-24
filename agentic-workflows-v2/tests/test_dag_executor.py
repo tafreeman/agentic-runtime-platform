@@ -317,3 +317,42 @@ class TestDAGExecutorResult:
         result = await executor.execute(dag, ctx=ctx)
 
         assert result.final_output.get("test_var") == "test_value"
+
+
+class TestDAGExecutorSchedulerGuards:
+    """The scheduler never reports success for a run that did not do its work."""
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("limit", [0, -1, 1.5, True])
+    async def test_rejects_max_concurrency_that_is_not_a_positive_int(self, limit):
+        """A limit below 1 schedules nothing, so every step used to be skipped
+        and the run reported SUCCESS. It must be refused before anything runs."""
+        dag = DAG(name="guarded")
+        dag.add(make_step("only"))
+        mock_step_executor = MagicMock(spec=StepExecutor)
+        mock_step_executor.execute = AsyncMock()
+
+        executor = DAGExecutor(step_executor=mock_step_executor)
+        with pytest.raises(ValueError, match="max_concurrency"):
+            await executor.execute(dag, max_concurrency=limit)
+        mock_step_executor.execute.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_scheduler_deadlock_fails_the_run(self, monkeypatch):
+        """If scheduling ever stalls with steps left, the run fails; it does
+        not drop the steps and report SUCCESS."""
+        from agentic_v2.engine import dag_executor
+
+        monkeypatch.setattr(dag_executor, "_schedule_ready_steps", lambda state: None)
+        dag = DAG(name="stalled")
+        dag.add(make_step("first"))
+        dag.add(make_step("second", ["first"]))
+        mock_step_executor = MagicMock(spec=StepExecutor)
+        mock_step_executor.execute = AsyncMock()
+
+        result = await DAGExecutor(step_executor=mock_step_executor).execute(dag)
+
+        assert result.overall_status == StepStatus.FAILED
+        assert {step.step_name for step in result.steps} == {"first", "second"}
+        assert all(step.status == StepStatus.SKIPPED for step in result.steps)
+        assert "deadlock" in result.metadata["error"]
