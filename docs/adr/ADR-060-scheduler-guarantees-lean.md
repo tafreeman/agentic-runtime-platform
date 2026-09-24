@@ -116,6 +116,18 @@ and no lockfile change.
   state is the orchestrator running on `execute_as_dag`, keeping its agent
   fallback chains and escalation handoffs.
 
+## Implementation status
+
+`proofs/README.md` is the living status. As of 2026-09-24: part 1 shipped in
+#334. Part 3 is done: the replay compares the executor with the recursive spec
+and replays each recorded completion order, timeouts included, through the
+operational model. Of part 2, bounded parallelism and honest status are proved;
+safety, no duplicate starts and completeness are open. Modelling found four
+executor defects, each fixed with a regression test before the proofs
+continued (#337 to #340): non-terminal results reported success, a raised step
+kept a RUNNING lifecycle with no `step_end`, cancellation escaped or orphaned
+step tasks, and observer exceptions changed the run.
+
 ## Alternatives considered
 
 - **More example-based tests only.** Cheap, but tests sample schedules. This

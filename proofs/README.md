@@ -53,9 +53,9 @@ the real Python executor with the Lean spec, not a handwritten Python oracle.
 For each of 32 seeds, a random plan of 2 to 12 steps gets dependencies,
 sometimes with a duplicated edge, and scripted outcomes. Odd seeds use SUCCESS,
 SKIPPED, FAILED, an exception and a cancelled task; even seeds also use PENDING,
-RUNNING and RETRYING. Each plan runs at concurrency limits 1, 2 and plan size + 3, three
-times per limit, each time with a shuffled insertion order and random
-cooperative delays. Every run's per-step status, skip category and overall
+RUNNING and RETRYING. Each plan runs at concurrency limits 1, 2 and
+plan size + 3, three times per limit, each time with a shuffled insertion
+order and random cooperative delays. Every run's per-step status, skip category and overall
 status must equal the spec's. During each run the test also checks that no step
 starts twice, that a step starts only after its dependencies emitted `step_end`
 and each of them succeeded or was skipped, and that no more steps run at once
@@ -88,6 +88,18 @@ order.
 nodes, results, lifecycle states, and start/end events. A batch is processed in
 full before the next scheduling call.
 
+Status of the four ADR-060 guarantees:
+
+| Guarantee | Status |
+|---|---|
+| 1. Safety: a step starts only after its dependencies finished, none failed | not proved |
+| 2a. No step starts twice | not proved |
+| 2b. Bounded parallelism | proved: `scheduler_capacity` |
+| 3. Completeness; deadlock unreachable | not proved |
+| 4. Honest status: SUCCESS only if nothing failed or was skipped for a cause | proved: `success_only_if_nothing_failed` |
+
+1, 2a and 3 need the global invariant described under outstanding obligations.
+
 The substantive universal results currently proved are:
 
 - `scheduler_capacity`: every finite modeled trace preserves the concurrency
@@ -100,11 +112,16 @@ The substantive universal results currently proved are:
 - `nonterminal_fails_closed` and `exception_fails_closed`: a step that returns
   PENDING, RUNNING or RETRYING, or raises, is recorded FAILED in result and
   lifecycle and sets the run's failure flag, for every plan and state.
+- `success_only_if_nothing_failed`: from the initial state, for every plan,
+  limit and finite sequence of completion batches and timeouts (legal or not),
+  a SUCCESS final status means every result is SUCCESS or a condition skip.
+  The converse, FAILED only if some step failed or was skipped for a cause, is
+  not proved.
 
 There are also local finalization lemmas and executable witnesses: a PENDING
 chain fails closed, a raised root ends FAILED with an end event, and the
-internal zero-limit failure result. Each theorem's axioms are pinned; only `propext` and
-`Quot.sound` occur, and no `sorry` or additional axiom is used.
+internal zero-limit failure result. Each theorem's axioms are pinned; only
+`propext` and `Quot.sound` occur, and no `sorry` or additional axiom is used.
 
 ## Executor defects
 
@@ -134,18 +151,24 @@ the path):
 ## Outstanding proof obligations
 
 The global graph/counter/ready-queue invariant, absence of duplicate starts,
-dependency safety, normal-run termination, unreachable deadlock, skip provenance,
-and operational-executor refinement to the recursive spec are **not proved**.
+dependency safety, normal-run termination, unreachable deadlock, skip
+provenance, and operational-executor refinement to the recursive spec are
+**not proved**. They share one invariant over legal traces of a validated plan:
+an unfinished step's counter equals its dependency edges whose source has not
+finished SUCCESS or condition-skipped; ready and running steps are unfinished
+and unstarted or started exactly once; every running step's dependencies
+finished non-blocking; and no unfinished step has a blocking dependency, which
+needs the cascade's `node_count + 1` fuel to be shown adequate.
 The recursive uniqueness theorem does not discharge refinement: one must still
 show that operational results satisfy its defining equation. Seeded replay shows
 that the Python executor agrees with the model and the spec on sampled traces;
-it proves nothing about unsampled ones. The `DAG.validate` and topological ordering
-stretch goals are also unproved.
+it proves nothing about unsampled ones. The `DAG.validate` and topological
+ordering stretch goals are also unproved.
 
 Nonterminal results now fail closed, so ADR-060's safety theorem needs no
-terminal-outcome precondition. Public `execute` now rejects nonpositive limits, and the deadlock
-fallback fails the run; the historical zero-limit SUCCESS counterexample does
-not describe this revision. `DAG.validate` rejects the empty graph, so
+terminal-outcome precondition. Public `execute` now rejects nonpositive
+limits, and the deadlock fallback fails the run; the historical zero-limit
+SUCCESS counterexample does not describe this revision. `DAG.validate` rejects the empty graph, so
 no-missing-dependencies/no-cycles alone is not its exact acceptance criterion.
 
 ## Abstraction limits
