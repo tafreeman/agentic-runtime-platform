@@ -36,7 +36,7 @@ version: 2
 # bump EXCEPT `executionkit` and `agentic-evalkit`. Both are pre-1.0 packages
 # whose private internals ARP reaches into directly (see the `ek` / `eval`
 # extras in agentic-workflows-v2/pyproject.toml and ADR-023); their tight
-# `>=0.3.0,<0.4.0` upper-bound pins are a deliberate compatibility contract,
+# upper-bound pins (below the next minor) are a deliberate compatibility contract,
 # not neglect, and widening them must stay a conscious manual edit, never a
 # Dependabot suggestion. They show up in two places — root, via the transitive
 # pins ci-constraints.txt exports for the whole workspace, and

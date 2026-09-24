@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased - ExecutionKit 0.4 and EvalKit 0.4.1
+
+- The `ek` extra now pins `executionkit>=0.4.0,<0.5.0` and the `eval` extra
+  `agentic-evalkit>=0.4.1,<0.5.0`; both were `>=0.3.0,<0.4.0`. `uv.lock` and
+  `ci-constraints.txt` resolve ExecutionKit 0.4.0 and EvalKit 0.4.1, so the
+  `ek-delegation-tests` and `evalkit-bridge-tests` jobs now exercise those
+  releases.
+- EvalKit 0.4.1 redacts run manifests and resolved dataset metadata the way it
+  already redacted results. Under 0.3.0 an installed EvalKit could write
+  unredacted policy and dataset metadata into reports. The new floor means the
+  `eval` extra can no longer resolve to a version without the fix.
+- ExecutionKit 0.4.0 counts `RetryConfig.max_retries` as retries after the
+  first call. The EK completion path (`AGENTIC_EK_PROVIDER`) passes
+  `retry=None` and so uses EK's default, which now makes up to four attempts
+  per call on a retryable error instead of three.
+
 ## Unreleased - LangGraph response redaction
 
 - The LangGraph engine now masks secrets in each step's final model response

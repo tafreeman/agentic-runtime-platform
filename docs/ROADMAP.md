@@ -123,7 +123,7 @@ June's work landed as a run of accepted ADRs rather than a named epic; the [ADR 
 
 **Accepted, partially implemented:**
 [ADR-042](adr/ADR-042-agentic-evalkit-adoption.md) records the sliced migration
-decision. `agentic-evalkit>=0.3.0,<0.4.0` is available through the runtime's
+decision. `agentic-evalkit>=0.4.1,<0.5.0` is available through the runtime's
 optional `eval` extra, and the additive `evalkit_bridge` module has landed. The
 pin tracks the published PyPI release, and CI installs the extra in the
 `evalkit-bridge-tests` job, so the bridge is exercised rather than skipped.
