@@ -215,6 +215,7 @@ async def test_dag_executor_nonterminal_result_records_why() -> None:
     assert (
         step.error == "step finished with non-terminal status 'retrying': rate limited"
     )
+    assert step.error_type == "NonTerminalStatus"
     assert step.metadata["nonterminal_status"] == "retrying"
     assert step.end_time is not None
 

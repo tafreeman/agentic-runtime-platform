@@ -265,6 +265,7 @@ def _fail_nonterminal(step_result: StepResult) -> StepResult:
         update={
             "status": StepStatus.FAILED,
             "error": f"{reason}: {step_result.error}" if step_result.error else reason,
+            "error_type": "NonTerminalStatus",
             "end_time": step_result.end_time or datetime.now(UTC),
             "metadata": {
                 **step_result.metadata,
