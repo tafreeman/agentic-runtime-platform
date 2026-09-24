@@ -78,7 +78,7 @@ colorama==0.4.6 ; sys_platform == 'win32'
     #   pytest
     #   tqdm
     #   uvicorn
-coverage==7.16.1
+coverage==7.13.5
     # via pytest-cov
 cryptography==50.0.1
     # via
@@ -98,7 +98,7 @@ docstring-parser==0.18.0
     # via anthropic
 executionkit==0.4.0
     # via agentic-workflows-v2
-fakeredis==2.38.0
+fakeredis==2.35.1
     # via agentic-workflows-v2
 fastapi==0.136.0
     # via agentic-workflows-v2
@@ -530,7 +530,7 @@ typer==0.24.1
     #   agentic-evalkit
     #   agentic-workflows-v2
     #   huggingface-hub
-types-pyyaml==6.0.12.20260906
+types-pyyaml==6.0.12.20260408
     # via agentic-v2-eval
 typing-extensions==4.15.0
     # via
