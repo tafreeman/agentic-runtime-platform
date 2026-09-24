@@ -2,6 +2,10 @@ name = "arp_scheduler"
 version = "0.1.0"
 defaultTargets = ["Scheduler", "replay"]
 
+# `sorry` is only a warning by default; ADR-060 requires the build to fail on it.
+[leanOptions]
+warningAsError = true
+
 [[lean_lib]]
 name = "Scheduler"
 

@@ -1,7 +1,14 @@
 name: Lean scheduler model and replay
 
+# ADR-060: builds the Lean model of DAGExecutor in proofs/ and replays the
+# real executor against its compiled spec. The build fails on `sorry`
+# (warningAsError in proofs/lakefile.toml) or on a changed axiom set (the
+# #guard_msgs pins in proofs/Scheduler.lean); axiom-audit below also checks
+# every declaration in the library, pinned or not.
+
 on:
   push:
+    branches: [main, agenticv2]
     paths:
       - 'proofs/**'
       - 'agentic-workflows-v2/agentic_v2/engine/dag*.py'
@@ -11,6 +18,7 @@ on:
       - 'agentic-workflows-v2/tests/engine/test_dag_executor_lean_replay.py'
       - '.github/workflows/lean-proofs.yml'
   pull_request:
+    branches: [main, agenticv2]
     paths:
       - 'proofs/**'
       - 'agentic-workflows-v2/agentic_v2/engine/dag*.py'
@@ -36,6 +44,9 @@ jobs:
         with:
           lake-package-directory: proofs
           leanchecker: 'true'
+          axiom-audit: 'true'
+          axiom-audit-allow: 'propext,Quot.sound'
+          axiom-audit-root: 'Scheduler'
       - uses: actions/setup-python@v7
         with:
           python-version: '3.11'

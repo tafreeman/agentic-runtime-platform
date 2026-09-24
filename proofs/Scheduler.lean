@@ -188,16 +188,17 @@ def schedulingLoop (p : Plan) (limit : Int) : List Action → State → State
 -- Mirrors the final-status logic in _run_dag (mark_complete preserves this).
 def finalStatus (s : State) : Status := if s.failed then .failed else .success
 
-/-- For any plan/state, a task exception leaves the failing task's lifecycle
-unchanged, provided cascade traversal cannot return to that task. The concrete
-root case below needs no graph assumptions. -/
+/-- Defect witness (a single concrete plan, not a general theorem): when the
+only step raises, the model, like `_record_task_exception`, records a FAILED
+result but leaves the step's lifecycle RUNNING. -/
 theorem exception_root_lifecycle :
     (processDoneTask [⟨[], .exception⟩]
       (scheduleReadySteps 1 1 (initial [⟨[], .exception⟩])) 0).life 0 = .running := by
   decide
 
-/-- A two-node chain returning PENDING then SUCCESS starts its dependent and
-reports SUCCESS, refuting dependency-success safety for arbitrary StepStatus. -/
+/-- Defect witness: a two-node chain whose first step returns PENDING still
+starts its dependent and reports SUCCESS, so ADR-060's safety and honest-status
+guarantees fail for nonterminal results. -/
 theorem pending_dependency_counterexample :
     let p : Plan := [⟨[], .returned .pending⟩, ⟨[0], .returned .success⟩]
     let s := schedulingLoop p 1 [.batch [0], .batch [1]] (initial p)
@@ -454,23 +455,36 @@ theorem recursive_solution_unique
   have h2 := recursive_solution_matches_spec p rank b edges hb (rank i + 1) i node hn (by omega)
   exact Option.some.inj (h1.symm.trans h2)
 
-#print axioms recursive_solution_matches_spec
-#print axioms scheduler_capacity
-#print axioms timeout_has_all_results
-#print axioms recursive_solution_unique
-#print axioms exception_root_lifecycle
-#print axioms pending_dependency_counterexample
-#print axioms zero_limit_is_failed
-#print axioms nonpositive_schedules_nothing
-#print axioms schedule_capacity
-#print axioms final_success_iff
-#print axioms condition_does_not_block
-#print axioms exception_blocks
+/-! ## Axiom pins
+
+Each pin fails the build if that theorem's axioms change, for example when a
+`sorry` (`sorryAx`) or `native_decide` (`Lean.ofReduceBool`) reaches it.
+`warningAsError` in `lakefile.toml` rejects any `sorry` outright, and CI also
+runs axiom-audit over every declaration in the library. -/
+
+/-- info: 'ARP.recursive_solution_matches_spec' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms recursive_solution_matches_spec
+/-- info: 'ARP.scheduler_capacity' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms scheduler_capacity
+/-- info: 'ARP.timeout_has_all_results' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms timeout_has_all_results
+/-- info: 'ARP.recursive_solution_unique' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms recursive_solution_unique
+/-- info: 'ARP.exception_root_lifecycle' depends on axioms: [propext] -/
+#guard_msgs in #print axioms exception_root_lifecycle
+/-- info: 'ARP.pending_dependency_counterexample' depends on axioms: [propext] -/
+#guard_msgs in #print axioms pending_dependency_counterexample
+/-- info: 'ARP.zero_limit_is_failed' depends on axioms: [propext] -/
+#guard_msgs in #print axioms zero_limit_is_failed
+/-- info: 'ARP.nonpositive_schedules_nothing' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms nonpositive_schedules_nothing
+/-- info: 'ARP.schedule_capacity' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms schedule_capacity
+/-- info: 'ARP.final_success_iff' depends on axioms: [propext] -/
+#guard_msgs in #print axioms final_success_iff
+/-- info: 'ARP.condition_does_not_block' depends on axioms: [propext] -/
+#guard_msgs in #print axioms condition_does_not_block
+/-- info: 'ARP.exception_blocks' depends on axioms: [propext] -/
+#guard_msgs in #print axioms exception_blocks
 
 end ARP
-
-
-
-
-
-
