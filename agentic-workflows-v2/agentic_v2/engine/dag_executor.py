@@ -177,10 +177,14 @@ def _schedule_ready_steps(state: _RunState) -> None:
         )
 
 
-def _record_task_exception(
+async def _record_task_exception(
     state: _RunState, task: asyncio.Task, exc: Exception
 ) -> None:
-    """Record an unhandled run_step exception as a FAILED step result."""
+    """Record an unhandled run_step exception as a FAILED step.
+
+    The step ends like any other failed step: a FAILED result and
+    lifecycle, a ``step_end`` event, and its dependents cascade-skipped.
+    """
     # Retrieve the step name from the task (set via name= in create_task).
     failed_name = task.get_name()
     logger.error(
@@ -192,10 +196,15 @@ def _record_task_exception(
     state.running.discard(failed_name)
     step_result = StepResult(step_name=failed_name, status=StepStatus.FAILED)
     step_result.error = str(exc)
+    step_result.error_type = type(exc).__name__
     step_result.end_time = datetime.now(UTC)
     state.results[failed_name] = step_result
     state.result.add_step(step_result)
     state.completed.add(failed_name)
+    await _emit_step_end(state, failed_name, step_result)
+    # set_state, as in _handle_timeout: the task may have failed before its
+    # lifecycle reached RUNNING, and READY -> FAILED is not a transition.
+    state.state_manager.set_state(failed_name, StepState.FAILED)
     state.result.overall_status = StepStatus.FAILED
     _cascade_skip(state, failed_name, "unhandled exception")
 
@@ -283,7 +292,7 @@ async def _process_done_task(state: _RunState, task: asyncio.Task) -> None:
     except asyncio.CancelledError:
         raise
     except Exception as exc:
-        _record_task_exception(state, task, exc)
+        await _record_task_exception(state, task, exc)
         return
 
     step_result = _fail_nonterminal(raw_result)
