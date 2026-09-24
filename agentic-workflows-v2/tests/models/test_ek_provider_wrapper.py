@@ -39,29 +39,31 @@ from typing import Any
 import pytest
 
 # ExecutionKit value types + patterns (ADR-023 Option A′) + Phase 5a/5b wiring.
-# Skip the whole module if the executionkit/httpx stack is not present.
-try:
-    import httpx
-    from executionkit.errors import (
-        PermanentError,
-        ProviderError,
-        RateLimitError,
-    )
-    from executionkit.patterns import react_loop
+# Skip the whole module if the executionkit/httpx stack is not present, and
+# only then: once both import, an ImportError below is an EK rename and must
+# fail collection.
+_SKIP_REASON = (
+    "executionkit / httpx not installed "
+    "(ADR-023 dependency); Phase 5b wrapper suite skipped."
+)
+pytest.importorskip("httpx", reason=_SKIP_REASON)
+pytest.importorskip("executionkit", reason=_SKIP_REASON)
 
-    from agentic_v2.models.backends_base import LLMBackend
-    from agentic_v2.models.client import LLMClientWrapper, TokenBudget
-    from agentic_v2.models.ek_provider import SmartRouterProvider
-    from agentic_v2.models.model_stats import CircuitState
-    from agentic_v2.models.router import FallbackChain, ModelTier
-    from agentic_v2.models.smart_router import SmartModelRouter
-    from agentic_v2.settings import get_settings
-except ImportError:  # pragma: no cover — guarded for isolated environments
-    pytest.skip(
-        "executionkit / httpx not installed "
-        "(ADR-023 dependency); Phase 5b wrapper suite skipped.",
-        allow_module_level=True,
-    )
+import httpx
+from executionkit.errors import (
+    PermanentError,
+    ProviderError,
+    RateLimitError,
+)
+from executionkit.patterns import react_loop
+
+from agentic_v2.models.backends_base import LLMBackend
+from agentic_v2.models.client import LLMClientWrapper, TokenBudget
+from agentic_v2.models.ek_provider import SmartRouterProvider
+from agentic_v2.models.model_stats import CircuitState
+from agentic_v2.models.router import FallbackChain, ModelTier
+from agentic_v2.models.smart_router import SmartModelRouter
+from agentic_v2.settings import get_settings
 
 
 @pytest.fixture(autouse=True, scope="module")

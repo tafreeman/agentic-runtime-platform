@@ -33,23 +33,25 @@ from typing import Any
 
 import pytest
 
-try:
-    from agentic_v2.engine.ek_step_delegation import (
-        run_tool_loop_via_ek,
-        wrap_runtime_tool,
-    )
-    from agentic_v2.models.backends_base import LLMBackend
-    from agentic_v2.models.client import LLMClientWrapper, TokenBudget
-    from agentic_v2.models.router import FallbackChain, ModelTier
-    from agentic_v2.models.smart_router import SmartModelRouter
-    from agentic_v2.settings import get_settings
-    from agentic_v2.tools.base import ToolResult
-except ImportError:  # pragma: no cover — guarded for isolated environments
-    pytest.skip(
-        "executionkit not installed "
-        "(ADR-023 dependency); Phase 6b tool-path suite skipped.",
-        allow_module_level=True,
-    )
+# Skip only when the optional ``ek`` extra is absent; once executionkit imports,
+# an ImportError below is an EK rename and must fail collection rather than
+# skip. See the matching comment in ``test_step_ek_delegation.py``.
+pytest.importorskip(
+    "executionkit",
+    reason="executionkit not installed "
+    "(ADR-023 dependency); Phase 6b tool-path suite skipped.",
+)
+
+from agentic_v2.engine.ek_step_delegation import (
+    run_tool_loop_via_ek,
+    wrap_runtime_tool,
+)
+from agentic_v2.models.backends_base import LLMBackend
+from agentic_v2.models.client import LLMClientWrapper, TokenBudget
+from agentic_v2.models.router import FallbackChain, ModelTier
+from agentic_v2.models.smart_router import SmartModelRouter
+from agentic_v2.settings import get_settings
+from agentic_v2.tools.base import ToolResult
 
 
 @pytest.fixture(autouse=True, scope="module")
