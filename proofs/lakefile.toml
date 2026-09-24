@@ -1,0 +1,10 @@
+name = "arp_scheduler"
+version = "0.1.0"
+defaultTargets = ["Scheduler", "replay"]
+
+[[lean_lib]]
+name = "Scheduler"
+
+[[lean_exe]]
+name = "replay"
+root = "Main"
