@@ -162,23 +162,31 @@ test.describe('run detail', () => {
 
     let [first] = runs;
     if (!first) {
-      // No history to deep-link: fall back to the list's empty placeholder.
-      // A prior spec's background execution can persist a record between the
-      // cold API check above and this page load (observed in CI, where the
-      // suite starts with an empty runs dir) — re-check once and, if history
-      // appeared, run the full deep-link flow against it instead.
+      // A prior spec can persist a run after the API check. Wait for the
+      // page's actual result instead of treating another API snapshot as proof
+      // that the empty placeholder will render.
       await page.goto('/runs');
+      const emptyHistory = page.getByText(/no runs yet/i);
+      const firstRunLink = page.getByRole('link', { name: /^Open run / }).first();
+      await expect(emptyHistory.or(firstRunLink).first()).toBeVisible({
+        timeout: 30_000,
+      });
+      if (await emptyHistory.isVisible()) return;
+
+      // A visible row proves history exists; use it for the cold navigation
+      // below, which starts a new document and discards the list's query cache.
       const recheck = await request.get('/api/runs?limit=1');
       expect(recheck.ok(), `GET /api/runs?limit=1 -> ${recheck.status()}`).toBe(
         true,
       );
       const freshRuns = (await recheck.json()) as typeof runs;
-      if (freshRuns.length === 0) {
-        await expect(page.getByText(/no runs yet/i)).toBeVisible({
-          timeout: 30_000,
-        });
-        return;
-      }
+      expect(Array.isArray(freshRuns), 'GET /api/runs must return an array').toBe(
+        true,
+      );
+      expect(
+        freshRuns.length,
+        'a visible run must exist in persisted history',
+      ).toBeGreaterThan(0);
       [first] = freshRuns;
     }
 
