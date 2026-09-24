@@ -1,8 +1,9 @@
 # DAG scheduler model and replay (partial proof)
 
-This is **not a completed proof of ARP scheduler correctness**. It is ADR-060
-steps 2 and 3, in progress. The model follows `dag_executor.py` in the same
-commit and uses Lean 4.34.0 core and its standard library only; there are no Batteries or Mathlib dependencies.
+This is **not a completed proof of ARP scheduler correctness**. ADR-060 step 3,
+the replay, is complete; step 2, the proofs, is in progress. The model follows
+`dag_executor.py` in the same commit and uses Lean 4.34.0 core and its standard
+library only; there are no Batteries or Mathlib dependencies.
 
 ## Run
 
@@ -23,11 +24,16 @@ The executable accepts one JSON line on stdin:
 
 Dependencies are integer indices into the plan, including repeated indices.
 Outcomes are `success`, `skipped`, `failed`, `pending`, `running`, `retrying`,
-`exception`, or `cancelled` (a step task that ends cancelled; the model treats
-it as `exception`). Invalid input exits nonzero. Output contains `steps` (each with
-`status` and `skip`) and `overall`. Skip categories distinguish a step's own
-condition from upstream failure. The executable computes the recursive spec,
-not the operational scheduler model.
+`exception`, `cancelled` (a step task that ends cancelled; the model treats it
+as `exception`), or `hang` (never completes; only a timeout ends it). Invalid
+input exits nonzero. Output always contains the recursive spec's `steps` (each
+with `status` and `skip`) and `overall`. Skip categories distinguish a step's
+own condition from upstream failure, timeout and deadlock.
+
+Add `"batches"` (completion batches, each a list of node indices in processing
+order) and optionally `"timeout": true` to also get `model`: the operational
+`schedulingLoop` run under that completion order, reporting `starts`, `ends`,
+`results`, `life`, `overall`, `timed_out`, `deadlocked` and `complete`.
 
 From the repository root in PowerShell:
 
@@ -46,20 +52,34 @@ the real Python executor with the Lean spec, not a handwritten Python oracle.
 
 For each of 32 seeds, a random plan of 2 to 12 steps gets dependencies,
 sometimes with a duplicated edge, and scripted outcomes. Odd seeds use SUCCESS,
-SKIPPED, FAILED and an exception; even seeds also use PENDING, RUNNING and
-RETRYING. Each plan runs at concurrency limits 1, 2 and plan size + 3, three
+SKIPPED, FAILED, an exception and a cancelled task; even seeds also use PENDING,
+RUNNING and RETRYING. Each plan runs at concurrency limits 1, 2 and plan size + 3, three
 times per limit, each time with a shuffled insertion order and random
 cooperative delays. Every run's per-step status, skip category and overall
 status must equal the spec's. During each run the test also checks that no step
 starts twice, that a step starts only after its dependencies emitted `step_end`
-and each of them succeeded or was skipped, and that no more steps run at once than the
-limit allows.
+and each of them succeeded or was skipped, and that no more steps run at once
+than the limit allows.
 
-The replay does **not** yet check the operational model: start order,
-lifecycle states and completion batches are compared with nothing. ADR-060
-section 3 calls for replaying the recorded completion order through the model;
-that is still to be built. Timeouts are not replayed at all, so
-`timeout_has_all_results` is their only coverage.
+The operational replay is ADR-060 section 3. For the same 32 plans, at the same
+three limits, two runs per limit record every step start and every
+FIRST_COMPLETED batch in processing order. A stand-in for `asyncio` inside
+`dag_executor` does the recording, without changing the engine. Nodes are
+relabelled by insertion position, which makes the model's ready queue and
+adjacency follow `DAG.add` order. Lean drives `schedulingLoop` with those
+batches, and the start order, `step_end` order, results, lifecycle states,
+overall status and timeout/deadlock flags must equal the model's exactly. On
+each trace the model must also end in the spec's results, a sampled check of
+the unproved refinement. Eight more plans make their first step hang under a
+0.2 s timeout. The test's observer never suspends, so the executor can only be
+interrupted at its FIRST_COMPLETED wait, right after a scheduling pass, which
+is where the model applies the timeout. An observer that suspends can be
+interrupted mid-batch, which the model does not cover (see abstraction limits).
+
+The fixed seeds produce multi-step batches and timeouts that land after
+processed batches. Making the ready queue LIFO passes every spec-replay case
+but fails operational ones, so the operational replay is what pins scheduling
+order.
 
 ## What is proved
 
@@ -118,8 +138,8 @@ dependency safety, normal-run termination, unreachable deadlock, skip provenance
 and operational-executor refinement to the recursive spec are **not proved**.
 The recursive uniqueness theorem does not discharge refinement: one must still
 show that operational results satisfy its defining equation. Seeded replay shows
-that the Python executor agrees with the spec on sampled runs; it says nothing
-about the operational model. The `DAG.validate` and topological ordering
+that the Python executor agrees with the model and the spec on sampled traces;
+it proves nothing about unsampled ones. The `DAG.validate` and topological ordering
 stretch goals are also unproved.
 
 Nonterminal results now fail closed, so ADR-060's safety theorem needs no
@@ -133,9 +153,9 @@ no-missing-dependencies/no-cycles alone is not its exact acceptance criterion.
 - Numeric identifiers replace strings. Graph and outcomes are immutable, with
   well-formed step names. Context variables, hooks, output values, retries,
   verification, logging, tracing, and real time are outside the model.
-- Insertion order is fixed: the model's ready queue and adjacency follow plan
-  index order, while Python follows `DAG.add` order. The replay shuffles
-  insertion order but compares only with the order-independent spec.
+- The model's ready queue and adjacency follow plan index order, while Python
+  follows `DAG.add` order. The operational replay relabels nodes by insertion
+  position so the two orders coincide.
 - A step task that raises an `Exception` or ends cancelled is the `exception`
   outcome. Cancelling `execute()` itself ends the run without a result, after
   cancelling and awaiting every step task; that path and runtime resource
@@ -146,7 +166,9 @@ no-missing-dependencies/no-cycles alone is not its exact acceptance criterion.
 - The model retains running IDs after timeout, like Python's bookkeeping. It
   does not simulate task cancellation, cleanup awaits, or cancellation resistance.
 - Legal completion batches must be nonempty, contain distinct running IDs, and
-  contain no other IDs. The interpreter does not enforce this prerequisite.
+  contain no other IDs. The interpreter does not enforce this; recorded batches
+  satisfy it by construction, since each is a FIRST_COMPLETED set of running
+  tasks.
 - A finite action list can end at an intermediate state; exhaustion does not
   prove termination. `finalStatus` is meaningful as a run result only after exit.
 - Cascade traversal uses `node_count + 1` fuel. Its adequacy for every valid

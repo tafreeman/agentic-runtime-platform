@@ -1,7 +1,9 @@
-"""Replay deterministic adversaries against the independent Lean specification.
+"""Replay deterministic adversaries against the Lean model of DAGExecutor.
 
-Build with ``cd proofs && lake build``. Tests that need the compiled spec skip
-unless ARP_LEAN_REPLAY=1. The executor defect regression tests need no Lean and
+Two comparisons: final results against the independent recursive spec, and
+each recorded completion order against the operational scheduling loop
+(ADR-060 section 3). Build with ``cd proofs && lake build``. Tests that need
+the compiled model skip unless ARP_LEAN_REPLAY=1. The executor defect regression tests need no Lean and
 run in every suite. Import errors are deliberately never converted into skips.
 """
 
@@ -26,6 +28,14 @@ from agentic_v2.engine.step_state import StepState, StepStateManager
 
 ROOT = Path(__file__).resolve().parents[3]
 OUTCOMES = [status.value for status in StepStatus] + ["exception", "cancelled"]
+TERMINAL = ["success", "skipped", "failed", "exception", "cancelled"]
+SKIP_CATEGORIES = {
+    "conditions not met": "condition",
+    "dependency failed": "upstream",
+    "unhandled exception": "upstream",
+    "workflow timeout": "timeout",
+    "scheduler deadlock": "deadlock",
+}
 
 
 @pytest.fixture
@@ -40,11 +50,18 @@ def lean_binary() -> Path:
     return binary
 
 
-def oracle(binary: Path, plan: list[dict[str, Any]], limit: int) -> dict[str, Any]:
-    """Obtain all expected statuses from Lean, without a Python copy of spec."""
+def oracle(
+    binary: Path, plan: list[dict[str, Any]], limit: int, **trace: Any
+) -> dict[str, Any]:
+    """Ask Lean for the expected outcome; no Python copy of the model exists.
+
+    With ``batches`` (and ``timeout``) in *trace*, the answer also carries
+    the operational model's run under that completion order as ``model``.
+    """
+    request = {"plan": plan, "max_concurrency": limit, **trace}
     process = subprocess.run(
         [str(binary)],
-        input=json.dumps({"plan": plan, "max_concurrency": limit}) + "\n",
+        input=json.dumps(request) + "\n",
         text=True,
         capture_output=True,
         timeout=30,
@@ -68,8 +85,10 @@ class ScriptedRunner(StepExecutor):
         index = int(step_def.name)
         for _ in range(self.delays[index]):
             await asyncio.sleep(0)
-        self.finished.add(index)
         outcome = self.plan[index]["outcome"]
+        if outcome == "hang":
+            await asyncio.Event().wait()
+        self.finished.add(index)
         if outcome == "exception":
             raise RuntimeError("scripted exception")
         if outcome == "cancelled":
@@ -148,18 +167,22 @@ async def run_case(
     }
 
 
-@pytest.mark.parametrize("seed", range(32))
-async def test_dag_executor_lean_seeded_replay(lean_binary: Path, seed: int) -> None:
-    """Check randomized DAGs, duplicate edges, outcomes and completion orders."""
-    rng = random.Random(seed)
-    terminal = ["success", "skipped", "failed", "exception", "cancelled"]
-    choices = terminal if seed % 2 else OUTCOMES
+def random_plan(rng: random.Random, choices: list[str]) -> list[dict[str, Any]]:
+    """Draw 2 to 12 steps with random edges, some duplicated, and outcomes."""
     plan = []
     for index in range(rng.randint(2, 12)):
         deps = [d for d in range(index) if rng.random() < 0.3]
         if deps and rng.random() < 0.5:
             deps.append(rng.choice(deps))
         plan.append({"depends_on": deps, "outcome": rng.choice(choices)})
+    return plan
+
+
+@pytest.mark.parametrize("seed", range(32))
+async def test_dag_executor_lean_seeded_replay(lean_binary: Path, seed: int) -> None:
+    """Check randomized DAGs, duplicate edges, outcomes and completion orders."""
+    rng = random.Random(seed)
+    plan = random_plan(rng, TERMINAL if seed % 2 else OUTCOMES)
     for limit in (1, 2, len(plan) + 3):
         expected = oracle(lean_binary, plan, limit)
         for _ in range(3):
@@ -361,3 +384,159 @@ async def test_dag_executor_observer_failure_does_not_change_the_run(
     assert result.metadata["observer_errors"] == (1 if once else 3)
     assert seen.count("step_end") == 3
     assert seen[-1] == "workflow_end"
+
+
+class RecordingAsyncio:
+    """Stand-in for ``asyncio`` inside dag_executor that records its schedule.
+
+    Everything is forwarded to asyncio. ``create_task`` records each step as
+    it is started, and ``wait`` records each FIRST_COMPLETED batch in the order
+    the executor processes it: the executor iterates the same unmodified set.
+    """
+
+    def __init__(self) -> None:
+        self.created: list[str] = []
+        self.batches: list[list[str]] = []
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(asyncio, name)
+
+    def create_task(self, coro: Any, *, name: str | None = None) -> asyncio.Task[Any]:
+        self.created.append(str(name))
+        return asyncio.create_task(coro, name=name)
+
+    async def wait(self, tasks: Any, **kwargs: Any) -> tuple[set[Any], set[Any]]:
+        done, pending = await asyncio.wait(tasks, **kwargs)
+        self.batches.append([task.get_name() for task in done])
+        return done, pending
+
+
+async def run_traced(
+    plan: list[dict[str, Any]],
+    limit: int,
+    delays: list[int],
+    order: list[int],
+    timeout: float | None = None,
+) -> tuple[list[dict[str, Any]], dict[str, Any], list[list[int]]]:
+    """Run the executor and return its plan, end state and batches, relabelled.
+
+    The model's ready queue and adjacency follow plan order and Python's
+    follow ``DAG.add`` order, so node k of the returned plan is the k-th step
+    added. Under that relabelling the model can predict the exact start order.
+    """
+    position = {index: k for k, index in enumerate(order)}
+    relabelled = [
+        {
+            "depends_on": [position[d] for d in plan[index]["depends_on"]],
+            "outcome": plan[index]["outcome"],
+        }
+        for index in order
+    ]
+    dag = DAG(name="lean-trace")
+    for index in order:
+        dag.add(
+            StepDefinition(
+                name=str(index), depends_on=[str(d) for d in plan[index]["depends_on"]]
+            )
+        )
+    recorder = RecordingAsyncio()
+    manager = StepStateManager()
+    ends: list[str] = []
+
+    async def on_update(event: dict[str, Any]) -> None:
+        if event["type"] == "step_end":
+            ends.append(event["step"])
+
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr("agentic_v2.engine.dag_executor.asyncio", recorder)
+        patch.setattr(
+            "agentic_v2.engine.dag_executor.StepStateManager", lambda: manager
+        )
+        result = await DAGExecutor(step_executor=ScriptedRunner(plan, delays)).execute(
+            dag,
+            ctx=ExecutionContext(),
+            max_concurrency=limit,
+            on_update=on_update,
+            timeout=timeout,
+        )
+
+    def at(names: list[str]) -> list[int]:
+        return [position[int(name)] for name in names]
+
+    by_name = {step.step_name: step for step in result.steps}
+    results: list[dict[str, str] | None] = []
+    for index in order:
+        step = by_name.get(str(index))
+        if step is None:
+            results.append(None)
+            continue
+        skip = "none"
+        if step.status == StepStatus.SKIPPED:
+            skip = SKIP_CATEGORIES[step.metadata["skip_reason"]]
+        results.append({"status": step.status.value, "skip": skip})
+    end_state = {
+        "starts": at(recorder.created),
+        "ends": at(ends),
+        "results": results,
+        "life": [manager.get_state(str(index)).value for index in order],
+        "overall": result.overall_status.value,
+        "timed_out": bool(result.metadata.get("timeout_exceeded")),
+        "deadlocked": str(result.metadata.get("error", "")).startswith(
+            "Scheduler deadlock"
+        ),
+    }
+    return relabelled, end_state, [at(batch) for batch in recorder.batches]
+
+
+@pytest.mark.parametrize("seed", range(32))
+async def test_dag_executor_matches_operational_model(
+    lean_binary: Path, seed: int
+) -> None:
+    """Replay each recorded completion order through the Lean scheduling loop.
+
+    Start order, end events, results, lifecycle states and flags must
+    all be the model's. On the same trace the model must also end in the
+    recursive spec's results, a sampled check of the unproved
+    refinement.
+    """
+    rng = random.Random(seed)
+    plan = random_plan(rng, TERMINAL if seed % 2 else OUTCOMES)
+    for limit in (1, 2, len(plan) + 3):
+        for _ in range(2):
+            order = list(range(len(plan)))
+            rng.shuffle(order)
+            delays = [rng.randrange(8) for _ in plan]
+            relabelled, end_state, batches = await run_traced(
+                plan, limit, delays, order
+            )
+            answer = oracle(lean_binary, relabelled, limit, batches=batches)
+            case = (seed, limit, delays, order, batches)
+            assert answer["model"] == {**end_state, "complete": True}, case
+            assert answer["model"]["results"] == answer["steps"], case
+            assert answer["model"]["overall"] == answer["overall"], case
+
+
+@pytest.mark.parametrize("seed", range(8))
+async def test_dag_executor_timeout_matches_operational_model(
+    lean_binary: Path, seed: int
+) -> None:
+    """A workflow timeout lands at the same scheduling boundary in the model.
+
+    The first step never completes, so every run times out. The timeout
+    can only interrupt the executor at its FIRST_COMPLETED wait, which
+    follows a scheduling pass, and that is where the model applies it.
+    """
+    rng = random.Random(seed)
+    plan = random_plan(rng, TERMINAL)
+    plan[0]["outcome"] = "hang"
+    for limit in (1, len(plan) + 3):
+        order = list(range(len(plan)))
+        rng.shuffle(order)
+        delays = [rng.randrange(8) for _ in plan]
+        relabelled, end_state, batches = await run_traced(
+            plan, limit, delays, order, timeout=0.2
+        )
+        assert end_state["timed_out"]
+        answer = oracle(lean_binary, relabelled, limit, batches=batches, timeout=True)
+        case = (seed, limit, delays, order, batches)
+        assert answer["model"] == {**end_state, "complete": True}, case
