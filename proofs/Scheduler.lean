@@ -163,7 +163,7 @@ def processDoneTask (p : Plan) (s : State) (i : Nat) : State :=
       { s with running := s.running.filter (· != i)
                results := put s.results i (some r)
                ends := s.ends ++ [i] } i r.status
-    if r.status == .failed then cascadeSkip p { s' with failed := true } i .upstream
+    if r.status = .failed then cascadeSkip p { s' with failed := true } i .upstream
     else unlockDownstream p s' i
 
 -- Mirrors _handle_timeout at scheduler boundaries, not within awaited callbacks.
@@ -535,6 +535,122 @@ theorem recursive_solution_unique
   have h2 := recursive_solution_matches_spec p rank b edges hb (rank i + 1) i node hn (by omega)
   exact Option.some.inj (h1.symm.trans h2)
 
+/-! ## Honest status (ADR-060 theorem 4) -/
+
+/-- A result compatible with a successful run: none yet, SUCCESS, or SKIPPED by
+the step's own condition. Everything else is a failure or a skip caused by a
+failure, a deadlock or a timeout. -/
+def benign : Option Result → Bool
+  | none => true
+  | some ⟨.success, .none⟩ => true
+  | some ⟨.skipped, .condition⟩ => true
+  | _ => false
+
+private def Honest (s : State) : Prop :=
+  s.failed = false → ∀ i, benign (s.results i) = true
+
+private theorem schedule_keeps (limit : Int) (fuel : Nat) (s : State) :
+    (scheduleReadySteps limit fuel s).results = s.results ∧
+      (scheduleReadySteps limit fuel s).failed = s.failed := by
+  induction fuel generalizing s with
+  | zero => exact ⟨rfl, rfl⟩
+  | succ fuel ih =>
+    simp only [scheduleReadySteps]
+    split
+    · exact ⟨rfl, rfl⟩
+    · split
+      · split
+        · exact ih _
+        · exact ih _
+      · exact ⟨rfl, rfl⟩
+
+private theorem unlock_keeps (p : Plan) (s : State) (i : Nat) :
+    (unlockDownstream p s i).results = s.results ∧
+      (unlockDownstream p s i).failed = s.failed := by
+  unfold unlockDownstream
+  exact fold_invariant _ (fun t : State => t.results = s.results ∧ t.failed = s.failed)
+    (fun acc j hacc => by dsimp only; split <;> exact hacc) _ _ ⟨rfl, rfl⟩
+
+private theorem cascade_keeps_flag (p : Plan) (why : Skip) (fuel : Nat)
+    (queue : List Nat) (s : State) :
+    (cascadeQueue p why fuel queue s).failed = s.failed :=
+  cascade_invariant p why (fun t => t.failed = s.failed)
+    (fun t j ht => by unfold markSkipped; split <;> exact ht) fuel queue s rfl
+
+private theorem own_benign (o : Outcome) (h : (ownResult o).status ≠ .failed) :
+    benign (some (ownResult o)) = true := by
+  cases o with
+  | exception => exact absurd rfl h
+  | returned st => cases st <;> first | rfl | exact absurd rfl h
+
+private theorem process_honest (p : Plan) (s : State) (i : Nat) (h : Honest s) :
+    Honest (processDoneTask p s i) := by
+  cases ho : (p[i]!).outcome with
+  | exception =>
+    intro hf
+    rw [(exception_fails_closed p s i ho).2.2] at hf
+    cases hf
+  | returned st =>
+    unfold processDoneTask
+    rw [ho]
+    dsimp only
+    split
+    · intro hf
+      simp only [cascadeSkip, cascade_keeps_flag] at hf
+      cases hf
+    · rename_i hok
+      intro hf j
+      obtain ⟨hr, hflag⟩ := unlock_keeps p
+        (transitionOutcomeState
+          { s with running := s.running.filter (· != i)
+                   results := put s.results i (some (ownResult (.returned st)))
+                   ends := s.ends ++ [i] } i (ownResult (.returned st)).status) i
+      rw [hflag] at hf
+      rw [hr]
+      simp only [transitionOutcomeState, put]
+      split
+      · exact own_benign _ hok
+      · exact h hf j
+
+private theorem honest_loop (p : Plan) (limit : Int) (actions : List Action)
+    (s : State) (h : Honest s) : Honest (schedulingLoop p limit actions s) := by
+  induction actions generalizing s with
+  | nil => exact h
+  | cons action rest ih =>
+    unfold schedulingLoop
+    split
+    · exact h
+    · have hs : Honest (scheduleReadySteps limit s.ready.length s) := by
+        obtain ⟨hr, hflag⟩ := schedule_keeps limit s.ready.length s
+        intro hf j
+        rw [hflag] at hf
+        rw [hr]
+        exact h hf j
+      dsimp only
+      split
+      · intro hf
+        cases hf
+      · cases action with
+        | timeout =>
+          intro hf
+          unfold handleTimeout at hf
+          cases hf
+        | batch done =>
+          exact ih _ (fold_invariant _ Honest (process_honest p) done _ hs)
+
+/-- ADR-060 theorem 4, honest status: a run reports SUCCESS only if no step
+failed and none was skipped by a cascade, a deadlock or a timeout. It holds for
+every plan, every limit and every finite sequence of completion batches and
+timeouts from the initial state, legal or not, so no graph or trace assumption
+is needed. The converse (FAILED only if some step failed or was skipped for a
+cause) is not proved. -/
+theorem success_only_if_nothing_failed (p : Plan) (limit : Int)
+    (actions : List Action) (i : Nat)
+    (h : finalStatus (schedulingLoop p limit actions (initial p)) = .success) :
+    benign ((schedulingLoop p limit actions (initial p)).results i) = true :=
+  honest_loop p limit actions (initial p) (fun _ _ => rfl)
+    ((final_success_iff _).mp h) i
+
 /-! ## Axiom pins
 
 Each pin fails the build if that theorem's axioms change, for example when a
@@ -558,6 +674,8 @@ runs axiom-audit over every declaration in the library. -/
 #guard_msgs in #print axioms nonterminal_fails_closed
 /-- info: 'ARP.exception_fails_closed' depends on axioms: [propext] -/
 #guard_msgs in #print axioms exception_fails_closed
+/-- info: 'ARP.success_only_if_nothing_failed' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms success_only_if_nothing_failed
 /-- info: 'ARP.zero_limit_is_failed' depends on axioms: [propext] -/
 #guard_msgs in #print axioms zero_limit_is_failed
 /-- info: 'ARP.nonpositive_schedules_nothing' depends on axioms: [propext, Quot.sound] -/
