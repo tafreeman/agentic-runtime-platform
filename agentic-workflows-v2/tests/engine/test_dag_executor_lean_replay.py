@@ -25,7 +25,7 @@ from agentic_v2.engine.step import StepDefinition, StepExecutor
 from agentic_v2.engine.step_state import StepState, StepStateManager
 
 ROOT = Path(__file__).resolve().parents[3]
-OUTCOMES = [status.value for status in StepStatus] + ["exception"]
+OUTCOMES = [status.value for status in StepStatus] + ["exception", "cancelled"]
 
 
 @pytest.fixture
@@ -72,6 +72,8 @@ class ScriptedRunner(StepExecutor):
         outcome = self.plan[index]["outcome"]
         if outcome == "exception":
             raise RuntimeError("scripted exception")
+        if outcome == "cancelled":
+            raise asyncio.CancelledError
         result = StepResult(step_name=step_def.name, status=StepStatus(outcome))
         if result.status == StepStatus.SKIPPED:
             result.metadata["skip_reason"] = "conditions not met"
@@ -139,7 +141,8 @@ async def run_case(
 async def test_dag_executor_lean_seeded_replay(lean_binary: Path, seed: int) -> None:
     """Check randomized DAGs, duplicate edges, outcomes and completion orders."""
     rng = random.Random(seed)
-    choices = ["success", "skipped", "failed", "exception"] if seed % 2 else OUTCOMES
+    terminal = ["success", "skipped", "failed", "exception", "cancelled"]
+    choices = terminal if seed % 2 else OUTCOMES
     plan = []
     for index in range(rng.randint(2, 12)):
         deps = [d for d in range(index) if rng.random() < 0.3]
@@ -252,3 +255,58 @@ async def test_dag_executor_lean_rejects_nonpositive_limit(
         await DAGExecutor(step_executor=ScriptedRunner(plan, [0])).execute(
             dag, ctx=ExecutionContext(), max_concurrency=limit
         )
+
+
+async def test_dag_executor_cancelled_step_fails_without_escaping() -> None:
+    """A step task that ends cancelled is a failed step; the run still returns."""
+    plan = [
+        {"depends_on": [], "outcome": "cancelled"},
+        {"depends_on": [0], "outcome": "success"},
+        {"depends_on": [], "outcome": "success"},
+    ]
+    dag = DAG(name="cancelled-step")
+    for index, node in enumerate(plan):
+        dag.add(
+            StepDefinition(
+                name=str(index), depends_on=[str(d) for d in node["depends_on"]]
+            )
+        )
+    result = await DAGExecutor(step_executor=ScriptedRunner(plan, [0, 0, 4])).execute(
+        dag, ctx=ExecutionContext()
+    )
+    by_name = {step.step_name: step for step in result.steps}
+    assert result.overall_status == StepStatus.FAILED
+    assert by_name["0"].status == StepStatus.FAILED
+    assert by_name["0"].error_type == "CancelledError"
+    assert by_name["1"].status == StepStatus.SKIPPED
+    assert by_name["2"].status == StepStatus.SUCCESS
+
+
+async def test_dag_executor_cancel_cancels_running_steps() -> None:
+    """Cancelling execute() cancels and awaits its step tasks, then propagates."""
+    started = asyncio.Event()
+    cancelled: set[str] = set()
+
+    class BlockingRunner(StepExecutor):
+        async def execute(
+            self, step_def: StepDefinition, ctx: ExecutionContext
+        ) -> StepResult:
+            if step_def.name == "b":
+                started.set()
+            try:
+                await asyncio.Event().wait()
+            except asyncio.CancelledError:
+                cancelled.add(step_def.name)
+                raise
+            raise AssertionError("unreachable")
+
+    dag = DAG(name="outer-cancel")
+    dag.add(StepDefinition(name="a")).add(StepDefinition(name="b"))
+    run = asyncio.create_task(
+        DAGExecutor(step_executor=BlockingRunner()).execute(dag, ctx=ExecutionContext())
+    )
+    await started.wait()
+    run.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await run
+    assert cancelled == {"a", "b"}
