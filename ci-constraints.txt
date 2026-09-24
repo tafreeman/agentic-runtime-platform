@@ -22,7 +22,7 @@ annotated-doc==0.0.4
     #   typer
 annotated-types==0.7.0
     # via pydantic
-anthropic==1.7.0
+anthropic==1.8.0
     # via
     #   agentic-tools
     #   agentic-workflows-v2
@@ -33,6 +33,7 @@ anyio==4.14.2
     #   claude-agent-sdk
     #   google-genai
     #   httpx
+    #   httpx2
     #   langsmith
     #   mcp
     #   openai
@@ -56,6 +57,7 @@ certifi==2026.5.20
     # via
     #   httpcore
     #   httpx
+    #   langchain-openai
     #   requests
 cffi==2.0.0
     # via
@@ -65,7 +67,7 @@ cfgv==3.5.0
     # via pre-commit
 charset-normalizer==3.4.7
     # via requests
-claude-agent-sdk==0.2.157
+claude-agent-sdk==0.2.101
     # via agentic-workflows-v2
 click==8.4.2
     # via
@@ -90,10 +92,8 @@ distlib==0.4.0
     # via virtualenv
 distro==1.9.0
     # via
-    #   anthropic
     #   google-genai
     #   langsmith
-    #   openai
 docstring-parser==0.18.0
     # via anthropic
 executionkit==0.4.0
@@ -118,7 +118,7 @@ fsspec==2026.3.0
     # via huggingface-hub
 google-auth==2.49.2
     # via google-genai
-google-genai==2.24.0
+google-genai==2.7.0
     # via langchain-google-genai
 googleapis-common-protos==1.74.0
     # via
@@ -129,6 +129,7 @@ grpcio==1.80.0
 h11==0.16.0
     # via
     #   httpcore
+    #   httpcore2
     #   uvicorn
 hf-xet==1.4.3 ; platform_machine == 'AMD64' or platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'arm64' or platform_machine == 'x86_64'
     # via huggingface-hub
@@ -136,13 +137,14 @@ hiredis==3.3.1
     # via redis
 httpcore==1.0.9
     # via httpx
+httpcore2==2.13.1 ; sys_platform != 'emscripten'
+    # via httpx2
 httptools==0.7.1
     # via uvicorn
 httpx==0.28.1
     # via
     #   agentic-evalkit
     #   agentic-workflows-v2
-    #   anthropic
     #   google-genai
     #   huggingface-hub
     #   langchain-core
@@ -150,9 +152,14 @@ httpx==0.28.1
     #   langsmith
     #   mcp
     #   ollama
-    #   openai
 httpx-sse==0.4.3
     # via mcp
+httpx2==2.13.1
+    # via
+    #   anthropic
+    #   openai
+httpx2-jsfetch==1.0 ; python_full_version >= '3.12' and sys_platform == 'emscripten'
+    # via httpx2
 huggingface-hub==1.10.2
     # via agentic-evalkit
 identify==2.6.18
@@ -161,6 +168,7 @@ idna==3.18
     # via
     #   anyio
     #   httpx
+    #   httpx2
     #   requests
     #   yarl
 importlib-metadata==8.7.1
@@ -171,7 +179,7 @@ jinja2==3.1.6
     # via
     #   agentic-evalkit
     #   agentic-workflows-v2
-jiter==0.14.0
+jiter==0.17.0
     # via
     #   anthropic
     #   openai
@@ -187,11 +195,11 @@ jsonschema==4.26.0
     #   mcp
 jsonschema-specifications==2025.9.1
     # via jsonschema
-langchain==1.4.2
+langchain==1.3.11
     # via agentic-workflows-v2
-langchain-anthropic==1.7.2
+langchain-anthropic==1.7.4
     # via agentic-workflows-v2
-langchain-core==1.6.3
+langchain-core==1.6.4
     # via
     #   agentic-tools
     #   agentic-workflows-v2
@@ -204,34 +212,34 @@ langchain-core==1.6.3
     #   langgraph-checkpoint
     #   langgraph-prebuilt
     #   langgraph-sdk
-langchain-google-genai==4.4.0
+langchain-google-genai==4.2.4
     # via agentic-workflows-v2
 langchain-ollama==1.1.0
     # via agentic-workflows-v2
-langchain-openai==1.6.2
+langchain-openai==1.6.6
     # via agentic-workflows-v2
 langchain-protocol==0.0.19
     # via
     #   langchain-core
     #   langgraph-sdk
-langgraph==1.2.11
+langgraph==1.2.9
     # via
     #   agentic-workflows-v2
     #   langchain
-langgraph-checkpoint==4.2.0
+langgraph-checkpoint==4.1.1
     # via
     #   agentic-workflows-v2
     #   langgraph
     #   langgraph-checkpoint-postgres
     #   langgraph-checkpoint-sqlite
     #   langgraph-prebuilt
-langgraph-checkpoint-postgres==3.1.2
+langgraph-checkpoint-postgres==3.1.1
     # via agentic-workflows-v2
 langgraph-checkpoint-sqlite==3.1.1
     # via agentic-workflows-v2
 langgraph-prebuilt==1.1.0
     # via langgraph
-langgraph-sdk==0.4.4
+langgraph-sdk==0.4.2
     # via langgraph
 langsmith==0.10.3
     # via
@@ -247,7 +255,7 @@ markdown-it-py==4.0.0
     # via rich
 markupsafe==3.0.3
     # via jinja2
-mcp==2.2.0
+mcp==1.29.0
     # via claude-agent-sdk
 mdurl==0.1.2
     # via markdown-it-py
@@ -277,7 +285,7 @@ ollama==0.6.1
     # via
     #   agentic-workflows-v2
     #   langchain-ollama
-openai==3.16.2
+openai==3.19.2
     # via
     #   agentic-tools
     #   langchain-openai
@@ -517,14 +525,16 @@ tenacity==9.1.4
     # via
     #   google-genai
     #   langchain-core
-tiktoken==0.14.0
+tiktoken==0.12.0
     # via langchain-openai
 tomli==2.4.1 ; python_full_version <= '3.11'
     # via coverage
 tqdm==4.67.3
+    # via huggingface-hub
+truststore==0.10.4 ; sys_platform != 'emscripten'
     # via
-    #   huggingface-hub
-    #   openai
+    #   httpcore2
+    #   httpx2
 typer==0.24.1
     # via
     #   agentic-evalkit
@@ -541,6 +551,7 @@ typing-extensions==4.15.0
     #   fastapi
     #   google-genai
     #   grpcio
+    #   httpx2
     #   huggingface-hub
     #   langchain-core
     #   langchain-protocol
