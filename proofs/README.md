@@ -105,6 +105,11 @@ the path):
   step task before propagating
   (`test_dag_executor_cancelled_step_fails_without_escaping`,
   `test_dag_executor_cancel_cancels_running_steps`).
+- An exception from the `on_update` observer escaped `execute()` mid-batch,
+  orphaning running steps, or, on `step_start`, failed a step whose work never
+  ran. `_notify` now logs it and counts it in `metadata["observer_errors"]`;
+  the run is unaffected
+  (`test_dag_executor_observer_failure_does_not_change_the_run`).
 
 ## Outstanding proof obligations
 
@@ -133,8 +138,9 @@ no-missing-dependencies/no-cycles alone is not its exact acceptance criterion.
   insertion order but compares only with the order-independent spec.
 - A step task that raises an `Exception` or ends cancelled is the `exception`
   outcome. Cancelling `execute()` itself ends the run without a result, after
-  cancelling and awaiting every step task; that path, callback failures, and
-  runtime resource failures are outside the model.
+  cancelling and awaiting every step task; that path and runtime resource
+  failures are outside the model. Observer callbacks are omitted: their
+  exceptions cannot affect scheduling.
 - Scheduling and READY-to-RUNNING are atomic. Timeouts are modeled at scheduling
   boundaries, **not every await point** within callbacks or a completion batch.
 - The model retains running IDs after timeout, like Python's bookkeeping. It
