@@ -103,9 +103,8 @@ async def run_case(
             assert index not in starts, "a step started twice"
             for dep in plan[index]["depends_on"]:
                 assert dep in ends, "dependency did not emit step_end before start"
-                # This is the actual weaker contract: nonterminal statuses also
-                # unblock. Terminal-only assignments check theorem 1 exactly.
-                assert plan[dep]["outcome"] not in {"failed", "exception"}
+                # ADR-060 safety: only a SUCCESS or SKIPPED dependency unblocks.
+                assert plan[dep]["outcome"] in {"success", "skipped"}
             starts.add(index)
             # Exceptions emit no step_end. Use runner evidence to close those
             # intervals explicitly, rather than claiming event-only coverage.
@@ -172,15 +171,6 @@ async def test_dag_executor_lean_failure_propagation(lean_binary: Path) -> None:
     assert await run_case(plan, 2, [0, 0, 0], [0, 1, 2]) == oracle(lean_binary, plan, 2)
 
 
-@pytest.mark.xfail(
-    raises=AssertionError,
-    strict=True,
-    reason=(
-        "Known defect: a PENDING, RUNNING or RETRYING result unblocks dependents "
-        "and the run still reports SUCCESS, breaking ADR-060 safety and honest "
-        "status. Remove this marker in the fix."
-    ),
-)
 @pytest.mark.parametrize("outcome", ["pending", "running", "retrying"])
 async def test_dag_executor_nonterminal_outcome_fails_closed(
     monkeypatch: pytest.MonkeyPatch, outcome: str
@@ -202,6 +192,31 @@ async def test_dag_executor_nonterminal_outcome_fails_closed(
         "overall": "failed",
     }
     assert manager.get_state("0") == StepState.FAILED
+
+
+async def test_dag_executor_nonterminal_result_records_why() -> None:
+    """The FAILED copy names the original status and keeps the step's error."""
+    plan = [{"depends_on": [], "outcome": "retrying"}]
+
+    class ErroredRunner(ScriptedRunner):
+        async def execute(
+            self, step_def: StepDefinition, ctx: ExecutionContext
+        ) -> StepResult:
+            result = await super().execute(step_def, ctx)
+            result.error = "rate limited"
+            return result
+
+    dag = DAG(name="nonterminal-why").add(StepDefinition(name="0"))
+    result = await DAGExecutor(step_executor=ErroredRunner(plan, [0])).execute(
+        dag, ctx=ExecutionContext()
+    )
+    [step] = result.steps
+    assert step.status == StepStatus.FAILED
+    assert (
+        step.error == "step finished with non-terminal status 'retrying': rate limited"
+    )
+    assert step.metadata["nonterminal_status"] == "retrying"
+    assert step.end_time is not None
 
 
 @pytest.mark.xfail(

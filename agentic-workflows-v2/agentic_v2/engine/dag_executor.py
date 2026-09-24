@@ -32,6 +32,11 @@ from .step_state import StepState, StepStateManager
 
 logger = logging.getLogger(__name__)
 
+# The only statuses a step may finish with. See _fail_nonterminal.
+_TERMINAL_STATUSES = frozenset(
+    {StepStatus.SUCCESS, StepStatus.FAILED, StepStatus.SKIPPED}
+)
+
 # OpenTelemetry status APIs — optional (bundled in the `tracing` extra).
 # Guarded so the engine imports cleanly without OTel installed.
 try:
@@ -245,16 +250,42 @@ def _unlock_downstream(state: _RunState, step_name: str) -> None:
             state.ready.append(dependent)
 
 
+def _fail_nonterminal(step_result: StepResult) -> StepResult:
+    """Return *step_result*, or a FAILED copy if its status is not terminal.
+
+    A step executor must finish with SUCCESS, FAILED or SKIPPED. A
+    PENDING, RUNNING or RETRYING result used to unblock its dependents
+    and let the run report SUCCESS; ADR-060 requires such a step to fail
+    closed.
+    """
+    if step_result.status in _TERMINAL_STATUSES:
+        return step_result
+    reason = f"step finished with non-terminal status {step_result.status.value!r}"
+    failed: StepResult = step_result.model_copy(
+        update={
+            "status": StepStatus.FAILED,
+            "error": f"{reason}: {step_result.error}" if step_result.error else reason,
+            "end_time": step_result.end_time or datetime.now(UTC),
+            "metadata": {
+                **step_result.metadata,
+                "nonterminal_status": step_result.status.value,
+            },
+        }
+    )
+    return failed
+
+
 async def _process_done_task(state: _RunState, task: asyncio.Task) -> None:
     """Handle a single completed task: record result and propagate."""
     try:
-        step_name, step_result = task.result()
+        step_name, raw_result = task.result()
     except asyncio.CancelledError:
         raise
     except Exception as exc:
         _record_task_exception(state, task, exc)
         return
 
+    step_result = _fail_nonterminal(raw_result)
     state.running.discard(step_name)
     state.results[step_name] = step_result
     state.result.add_step(step_result)
