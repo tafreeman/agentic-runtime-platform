@@ -21,7 +21,7 @@ import json
 import logging
 from typing import Any, Callable
 
-from ..contracts import StepStatus, WorkflowResult
+from ..contracts import StepStatus, TaskOutput, WorkflowResult
 from ..engine import (
     DAG,
     CycleDetectedError,
@@ -213,23 +213,26 @@ class OrchestratorAgent(
                 }
             )
 
+        # Validate the plan whether or not agents are registered to run it, so an
+        # invalid plan is never reported as a success.
+        try:
+            self._validate_plan()
+        except (CycleDetectedError, MissingDependencyError) as exc:
+            return OrchestratorOutput(
+                success=False,
+                error=f"Invalid execution plan: {exc}",
+                subtasks=subtasks,
+                execution_trace=self._execution_trace,
+                confidence=0.0,
+            )
+
         # Assign agents
         assignments = await self._assign_agents()
 
         # Execute (if agents available)
         final_result = None
         if self._agents:
-            try:
-                final_result = await self._execute_plan(task)
-            except (CycleDetectedError, MissingDependencyError) as exc:
-                return OrchestratorOutput(
-                    success=False,
-                    error=f"Invalid execution plan: {exc}",
-                    subtasks=subtasks,
-                    agent_assignments=assignments,
-                    execution_trace=self._execution_trace,
-                    confidence=0.0,
-                )
+            final_result = await self._execute_plan(task)
 
         unfinished = self._unfinished_subtasks()
         return OrchestratorOutput(
@@ -351,9 +354,6 @@ class OrchestratorAgent(
             try:
                 task_input = self._resolve_task_input(st.description, agent)
                 result = await agent.run(task_input)
-                st.status = StepStatus.SUCCESS
-                st.result = result
-                return st.id, result
             except Exception as e:
                 logger.warning(
                     "Agent %s failed for subtask %s: %s, trying fallback",
@@ -363,6 +363,21 @@ class OrchestratorAgent(
                 )
                 partial_results[agent_name] = f"{type(e).__name__}: {e}"
                 continue
+            # An agent can report failure without raising (a coder that could
+            # not extract code returns success=False); treat it as a failure.
+            if isinstance(result, TaskOutput) and not result.success:
+                logger.warning(
+                    "Agent %s returned an unsuccessful result for subtask %s: %s, "
+                    "trying fallback",
+                    agent_name,
+                    st.id,
+                    result.error,
+                )
+                partial_results[agent_name] = f"unsuccessful result: {result.error}"
+                continue
+            st.status = StepStatus.SUCCESS
+            st.result = result
+            return st.id, result
 
         st.status = StepStatus.FAILED
         handoff = await self._emit_escalation_handoff(st, attempted, partial_results)
@@ -485,8 +500,10 @@ class OrchestratorAgent(
         """Reject a plan with a missing dependency or a cycle before it runs.
 
         Reuses :meth:`DAG.validate`, so an LLM-written plan is held to the
-        same rules as a YAML workflow.
+        same rules as a YAML workflow. An empty plan has nothing to validate.
         """
+        if not self._subtasks:
+            return
         dag = DAG(name="orchestrator-plan")
         for st in self._subtasks.values():
             dag.add(StepDefinition(name=st.id, depends_on=list(st.dependencies)))
