@@ -10,13 +10,9 @@
       
       
       
-        <link rel="canonical" href="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-INDEX/">
+        <link rel="canonical" href="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-060-scheduler-guarantees-lean/">
       
       
-        <link rel="prev" href="../../CHANGELOG/">
-      
-      
-        <link rel="next" href="../../CONTRIBUTING/">
       
       
         
@@ -27,7 +23,7 @@
     
     
       
-        <title>ADRs - Agentic Runtime Platform</title>
+        <title>ADR-060: One Set of Scheduling Rules, Proved in Lean 4 - Agentic Runtime Platform</title>
       
     
     
@@ -67,17 +63,17 @@
     
   
 <meta property="og:type" content="website" />
-<meta property="og:title" content="ADRs - Agentic Runtime Platform" />
+<meta property="og:title" content="ADR-060: One Set of Scheduling Rules, Proved in Lean 4 - Agentic Runtime Platform" />
 <meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
-<meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-INDEX.png" />
+<meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-060-scheduler-guarantees-lean.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
-<meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-INDEX/" />
+<meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-060-scheduler-guarantees-lean/" />
 <meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:title" content="ADRs - Agentic Runtime Platform" />
+<meta property="twitter:title" content="ADR-060: One Set of Scheduling Rules, Proved in Lean 4 - Agentic Runtime Platform" />
 <meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
-<meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-INDEX.png" />
+<meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-060-scheduler-guarantees-lean.png" />
 </head>
   
   
@@ -95,7 +91,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adr-index-agentic-runtime-platform" class="md-skip">
+        <a href="#adr-060-one-set-of-scheduling-rules-proved-in-lean-4" class="md-skip">
           Skip to content
         </a>
       
@@ -129,7 +125,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ADRs
+              ADR-060: One Set of Scheduling Rules, Proved in Lean 4
             
           </span>
         </div>
@@ -436,12 +432,10 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
+      <li class="md-tabs__item">
         <a href="../../project-overview/" class="md-tabs__link">
           
   
@@ -2543,10 +2537,8 @@
       
   
   
-    
   
   
-  
     
     
       
@@ -2570,22 +2562,19 @@
     
     
       
-        
-        
-      
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
         
           
-          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
             
   
   
@@ -2603,7 +2592,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_11">
             <span class="md-nav__icon md-icon"></span>
             
@@ -2758,37 +2747,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADRs
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../ADR-INDEX/" class="md-nav__link">
         
   
   
@@ -2804,70 +2766,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#quick-access-deck" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick-access deck
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#lineage-chains" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Lineage chains
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#implementation-status" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Implementation status
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#supporting-documents" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Supporting documents
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -2963,10 +2861,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#quick-access-deck" class="md-nav__link">
+  <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick-access deck
+        Context
       
     </span>
   </a>
@@ -2974,32 +2872,110 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#lineage-chains" class="md-nav__link">
+  <a href="#decision" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Lineage chains
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-one-set-of-scheduling-rules-enforced-in-code-this-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. One set of scheduling rules, enforced in code (this change)
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#implementation-status" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#2-a-lean-4-model-of-dagexecutor-with-proofs-next-change" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Implementation status
+        2. A Lean 4 model of DAGExecutor, with proofs (next change)
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#supporting-documents" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#3-a-replay-test-that-ties-the-model-to-the-code-with-the-proofs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Supporting documents
+        3. A replay test that ties the model to the code (with the proofs)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative-trade-offs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative / trade-offs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#constraints-imposed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Constraints imposed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternatives considered
       
     </span>
   </a>
@@ -3023,7 +2999,7 @@
 
 
   
-    <a href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/adr/ADR-INDEX.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/adr/ADR-060-scheduler-guarantees-lean.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -3032,664 +3008,156 @@
     
       
     
-    <a href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/adr/ADR-INDEX.md" title="View source of this page" class="md-content__button md-icon">
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/adr/ADR-060-scheduler-guarantees-lean.md" title="View source of this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
     </a>
   
 
 
-<h1 id="adr-index-agentic-runtime-platform">ADR index — Agentic Runtime Platform<a class="headerlink" href="#adr-index-agentic-runtime-platform" title="Permanent link">&para;</a></h1>
-<p>Architecture Decision Records capture the load-bearing choices behind the
-Agentic Runtime Platform — what was decided, what alternatives were rejected,
-and what it costs. Every decision is enumerated in the deck below, each with its
-own status (004–006 and 013 are intentionally unused number gaps). If you read
-only five:</p>
+<h1 id="adr-060-one-set-of-scheduling-rules-proved-in-lean-4">ADR-060: One Set of Scheduling Rules, Proved in Lean 4<a class="headerlink" href="#adr-060-one-set-of-scheduling-rules-proved-in-lean-4" title="Permanent link">&para;</a></h1>
+<p><strong>Status:</strong> Accepted
+<strong>Date:</strong> 2026-09-24
+<strong>Related:</strong> <code>agentic_v2/engine/dag_executor.py</code> (<code>DAGExecutor.execute</code>,
+<code>_scheduling_loop</code>), <code>agentic_v2/engine/dag.py</code> (<code>DAG.validate</code>),
+<code>agentic_v2/agents/orchestrator.py</code> (<code>_execute_plan</code>, <code>_validate_plan</code>,
+<code>_skip_blocked_subtasks</code>, <code>_unfinished_subtasks</code>),
+<code>agentic_v2/agents/orchestrator_models.py</code> (<code>OrchestratorInput.max_parallel</code>).
+Builds on ADR-001 (the native Kahn's-DAG executor).</p>
+<hr />
+<h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
+<p>Runtime-generated workflows run on the native engine's <code>DAGExecutor</code>. What the
+scheduler guarantees had never been written down, and two guarantees callers
+reasonably assume did not hold:</p>
+<ol>
+<li><strong>A parallel limit below 1 reported success for a run that did nothing.</strong>
+   <code>DAGExecutor.execute</code> read <code>max_concurrency</code> without a check. With 0,
+   <code>_schedule_ready_steps</code> scheduled nothing; the deadlock branch marked every
+   step SKIPPED ("unmet dependencies") and left the loop without failing the
+   run; the final block then turned RUNNING into SUCCESS.</li>
+<li><strong>The orchestrator's own scheduler followed different rules.</strong>
+   <code>OrchestratorAgent._execute_plan</code>, used by <code>_parse_output</code> and
+   <code>run_adaptive</code>:</li>
+<li>stopped silently when an LLM-written plan had a dependency cycle or named
+     a subtask that did not exist, dropping the stuck subtasks and still
+     returning <code>success=True</code>;</li>
+<li>let a failed subtask's dependents run, where <code>DAGExecutor</code> skips them;</li>
+<li>looped forever with <code>max_parallel=0</code> without yielding to the event loop,
+     so nothing else could run and no timeout could fire.</li>
+</ol>
+<p>Only library callers can reach these today: <code>agentic orchestrate</code> is a stub
+that exits 1, and no server route constructs the orchestrator. They surfaced
+while working out what a machine-checked proof of the scheduler would have to
+assume. "Every step of a valid workflow runs, fails, or is skipped for a stated
+reason" cannot be proved without a limit of at least 1, and "a run reports
+success only if nothing failed" was false on the deadlock path.</p>
+<p>Tests sample schedules. The scheduler's job is to be right for every order in
+which steps can finish and every result they can return, which is the kind of
+claim a proof covers and a test suite cannot.</p>
+<h2 id="decision">Decision<a class="headerlink" href="#decision" title="Permanent link">&para;</a></h2>
+<h3 id="1-one-set-of-scheduling-rules-enforced-in-code-this-change">1. One set of scheduling rules, enforced in code (this change)<a class="headerlink" href="#1-one-set-of-scheduling-rules-enforced-in-code-this-change" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th><code>DAGExecutor</code></th>
+<th>Orchestrator <code>_execute_plan</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The parallel limit is an integer of at least 1</td>
+<td><code>execute()</code> raises <code>ValueError</code> otherwise; <code>bool</code> is rejected</td>
+<td><code>OrchestratorInput.max_parallel</code> is <code>Field(ge=1)</code>; <code>_execute_plan</code> raises <code>ValueError</code> if that is bypassed</td>
+</tr>
+<tr>
+<td>A plan is validated before anything runs</td>
+<td><code>dag.validate()</code>, as before</td>
+<td><code>_validate_plan()</code> builds a <code>DAG</code> from the subtasks and calls <code>DAG.validate()</code>, so a cycle or a missing dependency raises; <code>_parse_output</code> returns <code>success=False</code> with the reason</td>
+</tr>
+<tr>
+<td>A failed step's dependents are skipped, transitively, with a recorded reason</td>
+<td>cascade skip, as before</td>
+<td><code>_skip_blocked_subtasks()</code> marks them SKIPPED and records <code>{"skipped": true, "reason": "dependency failed", "dependency": …}</code></td>
+</tr>
+<tr>
+<td>A run succeeds only if nothing failed and nothing was dropped</td>
+<td>the deadlock branch now fails the run, skipping the remaining steps as "scheduler deadlock" and setting <code>metadata["error"]</code></td>
+<td><code>success</code> is false and <code>error</code> names the unfinished subtasks when any failed or was skipped; a subtask left unscheduled is recorded as failed</td>
+</tr>
+</tbody>
+</table>
+<p>The orchestrator keeps its own loop for now. It owns agent fallback chains and
+escalation handoffs that <code>DAGExecutor</code> does not model.</p>
+<h3 id="2-a-lean-4-model-of-dagexecutor-with-proofs-next-change">2. A Lean 4 model of <code>DAGExecutor</code>, with proofs (next change)<a class="headerlink" href="#2-a-lean-4-model-of-dagexecutor-with-proofs-next-change" title="Permanent link">&para;</a></h3>
+<p>A Lake package in <code>proofs/</code> models the scheduling loop, treating each step as a
+black box that can finish in any order with any result. For every validated DAG
+and every <code>max_concurrency</code> of at least 1, it proves:</p>
+<ol>
+<li><strong>Safety.</strong> A step starts only after all of its dependencies have finished
+   and none of them failed.</li>
+<li><strong>No duplicates, bounded parallelism.</strong> No step starts twice, and no more
+   than <code>max_concurrency</code> steps run at once.</li>
+<li><strong>Completeness.</strong> Once its running steps finish, every run ends with each
+   step SUCCESS, FAILED, or SKIPPED with a recorded reason. The deadlock branch
+   is unreachable.</li>
+<li><strong>Honest status.</strong> A run reports SUCCESS only if no step failed and none was
+   skipped by a cascade or a deadlock.</li>
+</ol>
+<p>Lean runs in CI only, in its own job. Nothing is added to the runtime.</p>
+<h3 id="3-a-replay-test-that-ties-the-model-to-the-code-with-the-proofs">3. A replay test that ties the model to the code (with the proofs)<a class="headerlink" href="#3-a-replay-test-that-ties-the-model-to-the-code-with-the-proofs" title="Permanent link">&para;</a></h3>
+<p>The proofs cover the model; this test checks that the model is the code. It
+runs <code>DAGExecutor</code> with a fake step executor that returns scripted results after
+seeded random delays, records the order in which steps finish, replays that
+order through the compiled Lean model, and asserts that both end in the same
+state. It uses a seeded <code>random</code>, not Hypothesis, so there is no new dependency
+and no lockfile change.</p>
+<h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
+<h3 id="positive">Positive<a class="headerlink" href="#positive" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong><a href="../ADR-001-002-003-architecture-decisions/">ADR-001</a></strong> — the dual execution engine (LangGraph adapter alongside the native Kahn's-DAG executor).</li>
-<li><strong><a href="../ADR-001-002-003-architecture-decisions/">ADR-002</a></strong> — SmartModelRouter circuit-breaker hardening (three-state breaker, adaptive cooldowns, bulkheads).</li>
-<li><strong><a href="../ADR-014-pydantic-wire-format/">ADR-014</a></strong> — the Pydantic discriminated-union wire format that every event contract and the drift CI gate build on.</li>
-<li><strong><a href="../ADR-023-executionkit-runtime-contract-relationship/">ADR-023</a></strong> — how the runtime relates to the external ExecutionKit kernel (single <code>executionkit</code> package).</li>
-<li><strong><a href="../ADR-042-agentic-evalkit-adoption/">ADR-042</a></strong> — the accepted sliced migration from in-tree <code>agentic-v2-eval</code> to the external <code>agentic-evalkit</code> framework; dependency, bridge, and scoring-cutover slices (A-C) are implemented.</li>
+<li>The misreported success, the orchestrator's silent drops, its runs of a
+  failed subtask's dependents, and its busy loop are fixed, each with a test
+  shown to fail before the fix.</li>
+<li>LLM-written plans are validated like YAML workflows before anything runs.</li>
+<li>The scheduler's guarantees become written, checked statements rather than
+  behaviour inferred from tests.</li>
 </ul>
-<hr />
-<h2 id="quick-access-deck">Quick-access deck<a class="headerlink" href="#quick-access-deck" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>ADR</th>
-<th>Title</th>
-<th>Status</th>
-<th>File</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>001</strong></td>
-<td>Dual Execution Engine (LangGraph vs. Kahn's DAG)</td>
-<td>Accepted</td>
-<td><a href="../ADR-001-002-003-architecture-decisions/">ADR-001-002-003</a></td>
-</tr>
-<tr>
-<td><strong>002</strong></td>
-<td>SmartModelRouter Circuit-Breaker Hardening</td>
-<td>Accepted</td>
-<td><a href="../ADR-001-002-003-architecture-decisions/">ADR-001-002-003</a></td>
-</tr>
-<tr>
-<td><strong>003</strong></td>
-<td>Deep Research Supervisor / CI Gating</td>
-<td>Superseded → 007</td>
-<td><a href="../ADR-001-002-003-architecture-decisions/">ADR-001-002-003</a></td>
-</tr>
-<tr>
-<td><strong>007</strong></td>
-<td>Multidimensional Classification Matrix &amp; Stop Policy</td>
-<td>Proposed</td>
-<td><a href="../ADR-007-classification-matrix-stop-policy/">ADR-007</a></td>
-</tr>
-<tr>
-<td><strong>008</strong></td>
-<td>Testing Approach Overhaul (Value Taxonomy)</td>
-<td>Accepted</td>
-<td><a href="../ADR-008-testing-approach-overhaul/">ADR-008</a></td>
-</tr>
-<tr>
-<td><strong>009</strong></td>
-<td>Scoring Enhancements (Exponential Decay, Lexicographic)</td>
-<td>Accepted</td>
-<td><a href="../ADR-009-scoring-enhancements/">ADR-009</a></td>
-</tr>
-<tr>
-<td><strong>010</strong></td>
-<td>Commit-Driven A/B Eval Harness Methodology</td>
-<td>Proposed</td>
-<td><a href="../ADR-010-eval-harness-methodology/">ADR-010</a></td>
-</tr>
-<tr>
-<td><strong>011</strong></td>
-<td>Eval Harness API &amp; Interface Design</td>
-<td>Proposed</td>
-<td><a href="../ADR-011-eval-harness-api-interface/">ADR-011</a></td>
-</tr>
-<tr>
-<td><strong>012</strong></td>
-<td>UI Evaluation Hub &amp; A/B Comparison</td>
-<td>Proposed</td>
-<td><a href="../ADR-012-ui-evaluation-hub/">ADR-012</a></td>
-</tr>
-<tr>
-<td><strong>014</strong></td>
-<td>Pydantic Discriminated Union as Execution Event Wire Format</td>
-<td>Accepted</td>
-<td><a href="../ADR-014-pydantic-wire-format/">ADR-014</a></td>
-</tr>
-<tr>
-<td><strong>015</strong></td>
-<td>SLO Rolling Window Stored in Git</td>
-<td>Accepted</td>
-<td><a href="../ADR-015-slo-in-git-rolling-window/">ADR-015</a></td>
-</tr>
-<tr>
-<td><strong>016</strong></td>
-<td>GitHub Models via <code>GITHUB_TOKEN</code> as Default E2E LLM Provider (retired upstream 2026-07-30; no CI path still defaults to it)</td>
-<td>Superseded</td>
-<td><a href="../ADR-016-github-token-as-default-e2e-llm/">ADR-016</a></td>
-</tr>
-<tr>
-<td><strong>017</strong></td>
-<td>Dataset Identifiers as Query Parameters, Not Path Segments</td>
-<td>Accepted</td>
-<td><a href="../ADR-017-dataset-id-query-params/">ADR-017</a></td>
-</tr>
-<tr>
-<td><strong>018</strong></td>
-<td>API Rate Limiting and Per-IP Auth Throttle</td>
-<td>Accepted</td>
-<td><a href="../ADR-018-api-rate-limiting-and-auth-throttle/">ADR-018</a></td>
-</tr>
-<tr>
-<td><strong>019</strong></td>
-<td>DAG Executor Top-Level Timeout Watchdog</td>
-<td>Accepted</td>
-<td><a href="../ADR-019-dag-executor-top-level-timeout/">ADR-019</a></td>
-</tr>
-<tr>
-<td><strong>020</strong></td>
-<td>LangChain Adapter Eager Validation at FastAPI Startup</td>
-<td>Accepted</td>
-<td><a href="../ADR-020-langchain-adapter-eager-validation/">ADR-020</a></td>
-</tr>
-<tr>
-<td><strong>021</strong></td>
-<td>JWT OIDC Authentication for API Routes</td>
-<td>Accepted</td>
-<td><a href="../ADR-021-jwt-oidc-authentication/">ADR-021</a></td>
-</tr>
-<tr>
-<td><strong>022</strong></td>
-<td>Tenant-Scoped Run and Dataset Isolation</td>
-<td>Accepted</td>
-<td><a href="../ADR-022-tenant-isolation/">ADR-022</a></td>
-</tr>
-<tr>
-<td><strong>023</strong></td>
-<td>ExecutionKit ↔ Runtime Execution-Contract Relationship (Option A′: single <code>executionkit</code> package)</td>
-<td>Accepted</td>
-<td><a href="../ADR-023-executionkit-runtime-contract-relationship/">ADR-023</a> · <a href="../drafts/">working notes</a></td>
-</tr>
-<tr>
-<td><strong>024</strong></td>
-<td>Expression Evaluation via AST Interpreter (eliminate <code>eval()</code>)</td>
-<td>Accepted</td>
-<td><a href="../ADR-024-expression-evaluator-ast-sandbox/">ADR-024</a></td>
-</tr>
-<tr>
-<td><strong>025</strong></td>
-<td>SDK <code>Task</code>-Tool Orchestration (counterpart to the asyncio orchestrator)</td>
-<td>Accepted</td>
-<td><a href="../ADR-025-sdk-task-orchestration/">ADR-025</a></td>
-</tr>
-<tr>
-<td><strong>026</strong></td>
-<td><code>--resume</code> / <code>fork_session</code> and the summary-seeded-session tradeoff</td>
-<td>Accepted</td>
-<td><a href="../ADR-026-resume-vs-summary-session/">ADR-026</a></td>
-</tr>
-<tr>
-<td><strong>027</strong></td>
-<td>Forced / <code>any</code> / <code>auto</code> <code>tool_choice</code> and cross-role <code>verify_fact</code></td>
-<td>Accepted</td>
-<td><a href="../ADR-027-forced-tool-choice/">ADR-027</a></td>
-</tr>
-<tr>
-<td><strong>028</strong></td>
-<td>Tool descriptions are the primary tool-selection mechanism</td>
-<td>Accepted</td>
-<td><a href="../ADR-028-tool-descriptions-as-selection-mechanism/">ADR-028</a></td>
-</tr>
-<tr>
-<td><strong>029</strong></td>
-<td>Adaptive decomposition (investigate → per-file → cross-file)</td>
-<td>Accepted</td>
-<td><a href="../ADR-029-adaptive-decomposition/">ADR-029</a></td>
-</tr>
-<tr>
-<td><strong>030</strong></td>
-<td>SSRF guard pins the connection target in both modes (opt-out too)</td>
-<td>Accepted</td>
-<td><a href="../ADR-030-unconditional-connection-pinning/">ADR-030</a></td>
-</tr>
-<tr>
-<td><strong>031</strong></td>
-<td>Native DAG as Single Supported Execution Engine (salvaged from <code>agentic-systems-lab</code>; single-engine proposal NOT adopted — the LangGraph adapter is retained)</td>
-<td>Superseded</td>
-<td><a href="../ADR-031-native-dag-single-engine/">ADR-031</a></td>
-</tr>
-<tr>
-<td><strong>032</strong></td>
-<td>Extract Scoring/Judge Domain into <code>agentic_v2.scoring</code> (break the server "god package", fix dependency direction)</td>
-<td>Accepted</td>
-<td><a href="../ADR-032-extract-scoring-package/">ADR-032</a></td>
-</tr>
-<tr>
-<td><strong>033</strong></td>
-<td>Defensive Import-Time Project-Root Resolution in Scoring Eval-Config Loader</td>
-<td>Accepted</td>
-<td><a href="../ADR-033-eval-config-project-root-resolution/">ADR-033</a></td>
-</tr>
-<tr>
-<td><strong>034</strong></td>
-<td>Path-First File I/O Contracts for Multi-Step Workflows</td>
-<td>Proposed</td>
-<td><a href="../ADR-034-path-first-workflow-io-contracts/">ADR-034</a></td>
-</tr>
-<tr>
-<td><strong>035</strong></td>
-<td>RAG Pipeline Architecture (LanceDB + Voyage 4 Hybrid Search)</td>
-<td>Superseded → 057</td>
-<td><a href="../ADR-035-rag-pipeline-architecture/">ADR-035</a></td>
-</tr>
-<tr>
-<td><strong>036</strong></td>
-<td><code>OllamaBackend</code> uses the official <code>ollama</code> client (contained SDK swap)</td>
-<td>Accepted</td>
-<td><a href="../ADR-036-ollama-sdk-backend/">ADR-036</a></td>
-</tr>
-<tr>
-<td><strong>037</strong></td>
-<td>Live Ollama model discovery via the raw REST API (<code>/api/tags</code>+<code>/api/ps</code>, cloud via <code>remote_host</code>)</td>
-<td>Accepted</td>
-<td><a href="../ADR-037-live-ollama-model-discovery/">ADR-037</a></td>
-</tr>
-<tr>
-<td><strong>038</strong></td>
-<td>Live discovery for LM Studio (native <code>/api/v1/models</code>, legacy fallbacks, multi-port) and ONNX (multi-root <code>genai_config.json</code>) local models</td>
-<td>Accepted</td>
-<td><a href="../ADR-038-lmstudio-onnx-discovery/">ADR-038</a></td>
-</tr>
-<tr>
-<td><strong>039</strong></td>
-<td>Live model discovery for keyed cloud providers (OpenAI / Anthropic / Gemini / GitHub Models)</td>
-<td>Accepted</td>
-<td><a href="../ADR-039-cloud-model-discovery/">ADR-039</a></td>
-</tr>
-<tr>
-<td><strong>040</strong></td>
-<td>Curated single-source model registry (one YAML + loader feeds both engines; reconciles divergent tier chains)</td>
-<td>Accepted</td>
-<td><a href="../ADR-040-curated-model-registry/">ADR-040</a></td>
-</tr>
-<tr>
-<td><strong>041</strong></td>
-<td>Bounded human-approval gate timeout — a hung ApprovalProvider fails closed (DENIED) within a configurable bound (default 30 min) instead of blocking the gated tool indefinitely</td>
-<td>Accepted</td>
-<td><a href="../ADR-041-approval-gate-timeout/">ADR-041</a></td>
-</tr>
-<tr>
-<td><strong>042</strong></td>
-<td>Adopt <code>agentic-evalkit</code> as ARP's evaluation framework via a sliced migration; dependency, bridge, and scoring-cutover slices (A-C) shipped, in-tree package removal (D/E) sequenced behind repointing <code>scripts/eval_gate.py</code> off its required-check dependency on the legacy package</td>
-<td>Accepted</td>
-<td><a href="../ADR-042-agentic-evalkit-adoption/">ADR-042</a></td>
-</tr>
-<tr>
-<td><strong>043</strong></td>
-<td>Configurable workflow UI: per-step node config (model params / persona / observers) in the YAML schema, a JSON UI-settings store for provider endpoints + tier reranks (below env-var pins in routing precedence), self-describing DAG edges, and replay-based run comparison (<code>POST /api/eval/compare</code>)</td>
-<td>Accepted</td>
-<td><a href="../ADR-043-configurable-workflow-ui/">ADR-043</a></td>
-</tr>
-<tr>
-<td><strong>044</strong></td>
-<td>Evaluation scoring visibility (issue #172): loader-side <code>golden_output_path</code> resolution inlined as <code>golden_output_text</code>, loud+typed judge skips (<code>judge_skipped</code>/<code>judge_skip_reason</code>/<code>judge_skip_code</code>, <code>expected_text_present</code>, opt-in <code>judge_required</code> → <code>JudgeRequiredError</code> scoped to the evaluation), replay sample rehydration with task_id verification, and a config-backed efficiency SLO band</td>
-<td>Accepted</td>
-<td><a href="../ADR-044-evaluation-scoring-visibility/">ADR-044</a></td>
-</tr>
-<tr>
-<td><strong>045</strong></td>
-<td><code>BuildAppTool</code> requires human approval — the <code>build_app</code> install/build/test shell tool joins the fail-closed HITL gate (it was ungated, contradicting the shell-approval claim)</td>
-<td>Accepted</td>
-<td><a href="../ADR-045-build-app-approval-gate/">ADR-045</a></td>
-</tr>
-<tr>
-<td><strong>046</strong></td>
-<td>Response-path masking of high-entropy-only secrets — an opaque token matching no named pattern is now masked + classified REDACTED outbound (was CLEAN + unmasked); measured FP surface keeps structured hex/UUIDs below threshold</td>
-<td>Accepted</td>
-<td><a href="../ADR-046-response-entropy-masking/">ADR-046</a></td>
-</tr>
-<tr>
-<td><strong>047</strong></td>
-<td>Tool approval gate enforced structurally in <code>BaseTool.execute</code> via <code>__init_subclass__</code> (was per-dispatch-site convention, bypassable by a direct <code>.execute()</code>/<code>__call__</code>/registry call); 4 pre-gates removed for a single gate; the separate LangChain <code>@tool</code> system keeps its manual gate</td>
-<td>Accepted</td>
-<td><a href="../ADR-047-structural-tool-approval-gate/">ADR-047</a></td>
-</tr>
-<tr>
-<td><strong>048</strong></td>
-<td>Process-wide token budget on the shared LLM client — <code>AGENTIC_TOKEN_BUDGET</code> now arms <code>LLMClientWrapper.set_budget()</code> on <code>get_client()</code>'s singleton (previously a dead setter with zero production callers); cumulative across the process, not per-run; skipped under <code>AGENTIC_NO_LLM</code></td>
-<td>Accepted</td>
-<td><a href="../ADR-048-process-wide-token-budget/">ADR-048</a></td>
-</tr>
-<tr>
-<td><strong>050</strong></td>
-<td>SSE chat playground endpoint (<code>POST /api/chat</code>, discriminated-union <code>ChatStreamEvent</code>) and OpenRouter as a first-class provider — joins the ADR-014 drift pipeline; rides <code>StreamingResponse</code> not <code>/ws</code>; always HTTP 200 with in-stream classified errors; bypasses <code>SmartModelRouter</code>/tier selection by design; OpenRouter gets cached (300s TTL) full-catalog discovery with no <code>model_registry.yaml</code> tier-chain entry</td>
-<td>Accepted</td>
-<td><a href="../ADR-050-chat-playground-sse-and-openrouter-provider/">ADR-050</a></td>
-</tr>
-<tr>
-<td><strong>051</strong></td>
-<td>Local-first Ollama cloud execution routing — <code>build_ollama_model</code> serves models present in the local daemon's <code>/api/tags</code> from <code>OLLAMA_BASE_URL</code> and routes models absent locally to <code>ollama.com</code> with Bearer <code>OLLAMA_API_KEY</code> (no key → unchanged local-only), closing ADR-037's listing-vs-execution gap; registry rungs repointed at ids providers actually list (<code>openai:gpt-4o*</code> → <code>nvidia:*</code> since <code>OPENAI_BASE_URL</code> is NIM-aliased in this deployment; dated sonnet → undated alias; local tails → models actually pulled)</td>
-<td>Accepted</td>
-<td><a href="../ADR-051-ollama-cloud-execution-routing/">ADR-051</a></td>
-</tr>
-<tr>
-<td><strong>052</strong></td>
-<td>Optional typed step artifact contracts shared by both engines; <code>code_artifact</code> validates file maps/sentinel payloads, promotes only independently valid legacy aliases, and makes fullstack backend handoffs fail closed without changing <code>coalesce()</code></td>
-<td>Accepted</td>
-<td><a href="../ADR-052-typed-step-artifact-contracts/">ADR-052</a></td>
-</tr>
-<tr>
-<td><strong>054</strong></td>
-<td>Evidence Ledger UI and immutable versioned model packs — warm-paper owned shadcn foundation, route splitting, Model Router consolidation, context-local pack routing, and recorded pack/model/provider provenance</td>
-<td>Accepted</td>
-<td><a href="../ADR-054-evidence-ledger-ui-and-model-packs/">ADR-054</a></td>
-</tr>
-<tr>
-<td><strong>055</strong></td>
-<td>File-size exception register — extends ADR-032's documented-exception precedent to the 12 other files over the 800-line guide (dated 2026-07-17 line counts + per-file cohesion rationale + split trigger), after the 2026-07-01 mechanical-split attempt (ARP-7, revert recorded in PR #145) caused regressions; <code>docs/CODING_STANDARDS.md</code> now points here instead of silently tolerating the gap</td>
-<td>Accepted</td>
-<td><a href="../ADR-055-file-size-exception-register/">ADR-055</a></td>
-</tr>
-<tr>
-<td><strong>056</strong></td>
-<td>Prompt-versioning registry — <code>PromptRecord</code>/<code>PromptRegistry</code> (LF-normalize then SHA-256, <code>{declared_version}@{short_hash}</code> fingerprint) backs <code>load_prompt</code> (back-compat), the engine's role-based persona lookup, and the judge's default <code>prompt_version</code> (was a hardcoded <code>"judge-v1"</code> literal that never changed); drift caught by a golden fingerprint test, not runtime warn/raise</td>
-<td>Accepted</td>
-<td><a href="../ADR-056-prompt-versioning-registry/">ADR-056</a></td>
-</tr>
-<tr>
-<td><strong>057</strong></td>
-<td>Remove the <code>agentic_v2.rag</code> package outright (17 modules, the <code>agentic rag</code> CLI group, 14 dedicated test files, the <code>[rag]</code> extra, <code>docs/rag/</code>, the non-blocking <code>rag-extra-tests</code> CI job) — zero non-test consumers, no deprecation shim; superseded by the standalone groundkit repo (groundkit ADR-0001, no cherry-pick back)</td>
-<td>Accepted</td>
-<td><a href="../ADR-057-remove-rag-package/">ADR-057</a></td>
-</tr>
-<tr>
-<td><strong>058</strong></td>
-<td>Claude subscription backend — <code>ClaudeSubscriptionBackend</code> behind a new <code>claude:</code> prefix, registered by <em>capability</em> (<code>claude-agent-sdk</code> importable) rather than by API key, so a subscription-only operator finally gets a Claude backend instead of an Ollama-only fallback; <code>subscription_env()</code> blanks <code>ANTHROPIC_API_KEY</code>/<code>ANTHROPIC_AUTH_TOKEN</code> in the CLI subprocess because <code>agentic_v2.models.secrets</code> puts them in <code>os.environ</code> and the child would otherwise silently bill the API account; also repairs <code>ClaudeSDKAgent</code>, which raised <code>AttributeError</code> on every run (<code>message.type</code> on dataclasses that have no <code>.type</code>)</td>
-<td>Accepted</td>
-<td><a href="../ADR-058-claude-subscription-backend/">ADR-058</a></td>
-</tr>
-<tr>
-<td><strong>059</strong></td>
-<td>Curated cost lane + fail-closed failover ceiling — <code>cost_lane</code> (<code>local</code>/<code>free</code>/<code>paid</code>) added to every registry entry; <code>AGENTIC_MAX_COST_LANE</code> filters (not reorders) <code>get_model_candidates_for_tier</code>'s full candidate list including a pinned <code>model_override</code>, raising <code>CostLaneCeilingExceededError</code> rather than falling through unfiltered when every candidate is filtered out; <code>_invoke_with_failover</code> logs + records a <code>lane_crossings</code> run event whenever failover moves into a strictly more expensive lane. Closes the gap the SWE-fix A/B campaign hit reaching Anthropic on a run meant to spend nothing</td>
-<td>Accepted</td>
-<td><a href="../ADR-059-model-cost-lane-ceiling/">ADR-059</a></td>
-</tr>
-<tr>
-<td><strong>060</strong></td>
-<td>One set of scheduling rules, proved in Lean 4 — <code>DAGExecutor</code> and the orchestrator's <code>_execute_plan</code> share one rule set: a parallel limit of at least 1, plans validated before anything runs (LLM-written plans included), a failed step's dependents skipped with a recorded reason, and success only when nothing failed or was dropped (the deadlock branch now fails the run). Next: a Lean model of <code>DAGExecutor</code> in <code>proofs/</code> (CI-only) proving safety, bounded parallelism, completeness and honest status, plus a replay test tying the model to the code</td>
-<td>Accepted</td>
-<td><a href="../ADR-060-scheduler-guarantees-lean/">ADR-060</a></td>
-</tr>
-<tr>
-<td><strong>Note:</strong> ADRs 004-006 and 013 were never created or were withdrawn; those numbering gaps are intentional and should not be reclaimed. ADR-049 and ADR-053 are claimed by parked or in-flight work (ADR-049 by a noncompensatory-gates draft in a stashed working set; ADR-053 by the memoryctl branch behind PR #205) — do not reclaim those numbers either. (The decision once numbered ADR-013 in the <code>agentic-systems-lab</code> fork was salvaged into this repo as <strong>ADR-031</strong>, not as 013.) ADR-023 working notes (migration plan, phase tracker, finish plan, divergence audit, preservation matrix) were moved to <a href="../drafts/"><code>drafts/</code></a> on 2026-06-17 to resolve a naming collision; the canonical decision record remains at ADR-023.</td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="lineage-chains">Lineage chains<a class="headerlink" href="#lineage-chains" title="Permanent link">&para;</a></h2>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Engine Domain:
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  ADR-001 (Dual Engine) ─── standalone
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>Models Domain:
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  ADR-002 (Circuit Breaker) ─── standalone
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  ADR-016 (GitHub Models default) ─── Superseded 2026-07-29 (upstream retirement; judge default moved to nvidia: in PR #240)
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>Research Domain:
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>  ADR-003 (CI Gating) ──superseded-by──&gt; ADR-007 (Classification Matrix)
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>                                              └──extended-by──&gt; ADR-009 (Scoring Enhancements)
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>Testing Domain:
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>  ADR-008 (Test Value Taxonomy) ─── standalone
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>Evaluation Domain:
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>  ADR-010 (Harness Methodology) ──extended-by──&gt; ADR-011 (API Interface)
-</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>                                                      └──extended-by──&gt; ADR-012 (UI Hub)
-</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
-</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>Observability Domain:
-</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>  ADR-014 (Event Wire Format) ─── standalone
-</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>  ADR-015 (SLO Rolling Window) ─── standalone
-</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>
-</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>Evaluation Surface Domain:
-</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>  ADR-017 (Dataset ID Query Params) ─── standalone (ratification)
-</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>
-</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>Security / Reliability Domain (Sprint 1):
-</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>  ADR-018 (Rate Limiting + Auth Throttle) ─── standalone; cluster mode deferred to Sprint 2
-</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>  ADR-019 (DAG Top-Level Timeout) ─── standalone; composes additively with step-level timeouts
-</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>  ADR-020 (Adapter Eager Validation) ─── standalone; narrows ADR-001 startup behavior
-</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>  ADR-021 (JWT OIDC Auth) ─── extends ADR-018 auth boundary; preserves API-key fallback
-</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>  ADR-022 (Tenant Isolation) ─── extends ADR-021 identity boundary with data scoping
-</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>  ADR-024 (AST Expression Interpreter) ─── standalone; eliminates eval() in the engine condition evaluator
-</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>
-</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>Execution Kernel Domain:
-</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>  ADR-023 (EK as OpenAI-message-format kernel, Option A′) ─── builds on ADR-002 (router) + ADR-014 (additive-only wire format); single `executionkit` package; `executionkit-contracts` retired; aligns runtime LLMBackend onto EK LLMProvider via ek_adapters bridge
-</span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>
-</span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a>Workflow I/O Domain:
-</span><span id="__span-0-38"><a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a>  ADR-034 (Path-First I/O Contracts) ─── extends ADR-014 wire-format discipline to file artifact handoffs
-</span><span id="__span-0-39"><a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a>
-</span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a>RAG / Retrieval Domain:
-</span><span id="__span-0-41"><a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a>  ADR-035 (RAG Pipeline Architecture) ──superseded-by──&gt; ADR-057 (Remove agentic_v2.rag Package)
-</span><span id="__span-0-42"><a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a>    (originally built on ADR-014 (Pydantic contracts) + ADR-002 (SmartModelRouter) +
-</span><span id="__span-0-43"><a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a>     ADR-019 (DAG timeout); promoted from RAG-pipeline-blueprint.md)
-</span><span id="__span-0-44"><a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a>  ADR-057 (Remove agentic_v2.rag Package) ─── zero non-test consumers, no shim;
-</span><span id="__span-0-45"><a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a>    supersedes ADR-035; superseded-by relationship is one-way — RAG functionality
-</span><span id="__span-0-46"><a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a>    moves to the standalone groundkit repo (groundkit ADR-0001), not to a new ARP ADR
-</span><span id="__span-0-47"><a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a>
-</span><span id="__span-0-48"><a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a>Eval / Scoring Domain:
-</span><span id="__span-0-49"><a id="__codelineno-0-49" name="__codelineno-0-49" href="#__codelineno-0-49"></a>  ADR-032 (Extract Scoring Package) ─── standalone; removes server "god package" coupling
-</span><span id="__span-0-50"><a id="__codelineno-0-50" name="__codelineno-0-50" href="#__codelineno-0-50"></a>  ADR-033 (Eval-Config Project-Root Resolution) ─── extends ADR-032; import-time path fix
-</span><span id="__span-0-51"><a id="__codelineno-0-51" name="__codelineno-0-51" href="#__codelineno-0-51"></a>  ADR-042 (Adopt agentic-evalkit, sliced migration) ─── supersedes agentic-v2-eval;
-</span><span id="__span-0-52"><a id="__codelineno-0-52" name="__codelineno-0-52" href="#__codelineno-0-52"></a>    builds on ADR-032's scoring package as the landing site for the new bridge module;
-</span><span id="__span-0-53"><a id="__codelineno-0-53" name="__codelineno-0-53" href="#__codelineno-0-53"></a>    follows the external-package precedent set by ADR-023 (ExecutionKit)
-</span></code></pre></div>
-<hr />
-<h2 id="implementation-status">Implementation status<a class="headerlink" href="#implementation-status" title="Permanent link">&para;</a></h2>
-<blockquote>
-<p><strong>Scope note:</strong> This table covers the ADRs that have received a formal
-implementation audit: 001–024, 032–038, and 042. ADRs 025–031 and 039–041
-have not yet been audited and are intentionally absent — their absence is
-not a statement about implementation state.</p>
-</blockquote>
-<table>
-<thead>
-<tr>
-<th>ADR</th>
-<th style="text-align: center;">Decision</th>
-<th style="text-align: center;">Implemented</th>
-<th style="text-align: center;">Tests</th>
-<th>Last Audit</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>001</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">~65%</td>
-<td style="text-align: center;">Protocol + adapter tests</td>
-<td>2026-03-17</td>
-</tr>
-<tr>
-<td>002</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">~80%</td>
-<td style="text-align: center;">Extensive router/rate-limit tests</td>
-<td>2026-03-17</td>
-</tr>
-<tr>
-<td>003</td>
-<td style="text-align: center;">Superseded</td>
-<td style="text-align: center;">Legacy fragments only</td>
-<td style="text-align: center;">Legacy scoring tests</td>
-<td>2026-03-17</td>
-</tr>
-<tr>
-<td>007</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">~50%</td>
-<td style="text-align: center;">Unit + wiring tests</td>
-<td>2026-03-17</td>
-</tr>
-<tr>
-<td>008</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">~90%</td>
-<td style="text-align: center;">Phase 0-3 complete: cleanup (-23), +539 new tests</td>
-<td>2026-03-17</td>
-</tr>
-<tr>
-<td>009</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">~85%</td>
-<td style="text-align: center;">CI + multidimensional scoring tests</td>
-<td>2026-03-17</td>
-</tr>
-<tr>
-<td>010</td>
-<td style="text-align: center;">Proposed</td>
-<td style="text-align: center;">~10% (primitives only)</td>
-<td style="text-align: center;">Reused primitives only</td>
-<td>2026-03-17</td>
-</tr>
-<tr>
-<td>011</td>
-<td style="text-align: center;">Proposed</td>
-<td style="text-align: center;">~15% (partial eval infra)</td>
-<td style="text-align: center;">Adjacent route/UI helpers only</td>
-<td>2026-03-17</td>
-</tr>
-<tr>
-<td>012</td>
-<td style="text-align: center;">Proposed</td>
-<td style="text-align: center;">~10% (existing evaluations table only)</td>
-<td style="text-align: center;">None specific</td>
-<td>2026-03-17</td>
-</tr>
-<tr>
-<td>014</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (contracts + schema-drift gate)</td>
-<td style="text-align: center;">test_schemas.py, golden output</td>
-<td>2026-04-22</td>
-</tr>
-<tr>
-<td>015</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (rolling windows, nightly gate)</td>
-<td style="text-align: center;">slo measurement tests</td>
-<td>2026-04-22</td>
-</tr>
-<tr>
-<td>016</td>
-<td style="text-align: center;">Superseded</td>
-<td style="text-align: center;">GITHUB_TOKEN wiring/fork-skip guards remain in code but no CI-executed path defaults to <code>gh:*</code>; upstream retired 2026-07-30</td>
-<td style="text-align: center;">CI workflow invariants (stale)</td>
-<td>2026-07-29</td>
-</tr>
-<tr>
-<td>017</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (shape already live; ADR ratifies)</td>
-<td style="text-align: center;">Sample-list route tests in <code>tests/server/</code></td>
-<td>2026-04-22</td>
-</tr>
-<tr>
-<td>018</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (slowapi middleware + AuthThrottle)</td>
-<td style="text-align: center;">Rate-limit + throttle unit tests</td>
-<td>2026-05-14</td>
-</tr>
-<tr>
-<td>019</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (asyncio.timeout + BFS cascade)</td>
-<td style="text-align: center;">DAG executor timeout tests</td>
-<td>2026-05-14</td>
-</tr>
-<tr>
-<td>020</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (validate_selected + lifespan hook)</td>
-<td style="text-align: center;">Adapter registry startup tests</td>
-<td>2026-05-14</td>
-</tr>
-<tr>
-<td>021</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (OIDC JWT middleware + API-key fallback)</td>
-<td style="text-align: center;">OIDC auth middleware tests</td>
-<td>2026-05-18</td>
-</tr>
-<tr>
-<td>022</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (tenant context + scoped runs/datasets)</td>
-<td style="text-align: center;">Tenant isolation + OIDC claim tests</td>
-<td>2026-05-18</td>
-</tr>
-<tr>
-<td>023</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">F0–F5 landed (Option A′: single <code>executionkit</code> package; <code>executionkit-contracts</code> retired; B-1/B-2 fixed; <code>AGENTIC_EK_PROVIDER</code> opt-in)</td>
-<td style="text-align: center;">81 EK bridge tests green; flag-OFF floor held</td>
-<td>2026-06-01</td>
-</tr>
-<tr>
-<td>024</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (AST interpreter replaces eval() in the engine condition evaluator)</td>
-<td style="text-align: center;">test_expressions.py (128 cases incl. dunder/DoS vectors)</td>
-<td>2026-06-13</td>
-</tr>
-<tr>
-<td>032</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (<code>agentic_v2/scoring/</code> package live)</td>
-<td style="text-align: center;">scoring unit tests</td>
-<td>2026-06-17</td>
-</tr>
-<tr>
-<td>033</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (import-time root resolution in eval_config.py)</td>
-<td style="text-align: center;">scoring eval-config tests</td>
-<td>2026-06-17</td>
-</tr>
-<tr>
-<td>034</td>
-<td style="text-align: center;">Proposed</td>
-<td style="text-align: center;">0% (pilot on fullstack_generation workflow pending)</td>
-<td style="text-align: center;">—</td>
-<td>2026-06-17</td>
-</tr>
-<tr>
-<td>035</td>
-<td style="text-align: center;">Superseded</td>
-<td style="text-align: center;"><code>agentic_v2/rag/</code> removed 2026-08-10 (ADR-057); package no longer exists in the tree</td>
-<td style="text-align: center;">rag/ tests removed with the package</td>
-<td>2026-08-10</td>
-</tr>
-<tr>
-<td>036</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (<code>OllamaBackend</code> on <code>ollama.AsyncClient</code>; <code>ollama</code> promoted to core dep)</td>
-<td style="text-align: center;">test_ollama_canonical.py (SDK-stubbed)</td>
-<td>2026-06-21</td>
-</tr>
-<tr>
-<td>037</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (<code>models/ollama_discovery.py</code> raw probe; merged into <code>enumerate_known_models</code>; UI badges)</td>
-<td style="text-align: center;">test_ollama_discovery.py, test_langchain_models_unit.py, ModelFinderPage.test.tsx</td>
-<td>2026-06-21</td>
-</tr>
-<tr>
-<td>038</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (<code>models/local_discovery.py</code> LM Studio <code>/api/v1/models</code> + compatibility fallbacks and ONNX <code>genai_config.json</code>; merged into <code>enumerate_known_models</code>)</td>
-<td style="text-align: center;">test_local_discovery.py, test_langchain_models_unit.py</td>
-<td>2026-07-14</td>
-</tr>
-<tr>
-<td>042</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">Slices A-C: <code>scoring/step_scoring.py</code> scores through <code>scoring/evalkit_bridge.py</code> against runtime-owned rubrics in <code>scoring/rubrics/</code>; no legacy imports remain under <code>agentic_v2/scoring/</code>; unavailable evidence carries no numeric score. D/E pending — <code>scripts/eval_gate.py</code>, <code>models/llm.py</code>, and the bridge's parity tests still import <code>agentic_v2_eval</code>.</td>
-<td style="text-align: center;">test_evalkit_bridge.py; test_step_scoring_additional.py (fresh-interpreter legacy-import block + package AST scan)</td>
-<td>2026-09-10</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="supporting-documents">Supporting documents<a class="headerlink" href="#supporting-documents" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Document</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a href="../RAG-pipeline-blueprint/">RAG-pipeline-blueprint.md</a></td>
-<td>Research blueprint and full implementation rationale for ADR-035. Retained alongside the formal ADR for deep reference.</td>
-</tr>
-<tr>
-<td><a href="../drafts/">drafts/</a></td>
-<td>Superseded ADR-023 working notes (migration plan, phase tracker, finish plan, divergence audit, preservation matrix). Not formal ADRs; retained for historical reference.</td>
-</tr>
-</tbody>
-</table>
-<p><em>Previously listed supporting audit files were removed during the 2026-04-22 docs cleanup because they had fallen out of sync with the ADRs themselves. This index is now the canonical source.</em></p>
+<h3 id="negative-trade-offs">Negative / trade-offs<a class="headerlink" href="#negative-trade-offs" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Behaviour changes for library callers: a <code>max_concurrency</code> below 1 or not an
+  integer now raises; <code>OrchestratorInput(max_parallel=0)</code> raises
+  <code>ValidationError</code>; orchestrator results report <code>success=False</code> when any
+  subtask failed or was skipped, where they used to report <code>True</code>.</li>
+<li>Two schedulers remain until the orchestrator moves onto <code>DAGExecutor</code>, and the
+  proofs cover only <code>DAGExecutor</code>.</li>
+<li>CI gains a Lean toolchain download (about 590 MB, cacheable) and build, and
+  the repository gains a second language.</li>
+<li>The proofs rest on the model matching the code. The replay test checks that
+  on sampled schedules, not on all of them.</li>
+</ul>
+<h3 id="constraints-imposed">Constraints imposed<a class="headerlink" href="#constraints-imposed" title="Permanent link">&para;</a></h3>
+<ul>
+<li>A change to scheduling behaviour in <code>dag_executor.py</code> must update the Lean
+  model and keep every theorem proved. CI fails on <code>sorry</code> or a new axiom.</li>
+<li>The orchestrator must not drift further from these rules. The intended end
+  state is the orchestrator running on <code>execute_as_dag</code>, keeping its agent
+  fallback chains and escalation handoffs.</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives considered<a class="headerlink" href="#alternatives-considered" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>More example-based tests only.</strong> Cheap, but tests sample schedules. This
+  bug class, a stated invariant that one input value silently breaks, is what a
+  proof exposes and a sample misses.</li>
+<li><strong>Property-based testing with Hypothesis.</strong> Better sampling, but still
+  sampling, and it adds a dependency and a lockfile change. The replay test
+  gives the model-to-code link without either.</li>
+<li><strong>Model checking with TLA+.</strong> Exhaustive within a bounded state space and a
+  natural fit for concurrency, but it cannot cover DAGs of any size, and Lean
+  also compiles the model into the replay test's oracle.</li>
+<li><strong>Move the orchestrator onto <code>DAGExecutor</code> now.</strong> This removes the second
+  scheduler, but the agent fallback chains and escalation handoffs have to come
+  across first. Deferred rather than bundled into a fix.</li>
+</ul>
 
 
 
@@ -3722,7 +3190,7 @@ not a statement about implementation state.</p>
     <span class="md-icon" title="Created">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="September 24, 2026 10:04:06 UTC">September 24, 2026</span>
   </span>
 
     
@@ -3752,44 +3220,6 @@ not a statement about implementation state.</p>
       
         <footer class="md-footer">
   
-    
-      
-      <nav class="md-footer__inner md-grid" aria-label="Footer" >
-        
-          
-          <a href="../../CHANGELOG/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Changelog">
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
-            </div>
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Previous
-              </span>
-              <div class="md-ellipsis">
-                Changelog
-              </div>
-            </div>
-          </a>
-        
-        
-          
-          <a href="../../CONTRIBUTING/" class="md-footer__link md-footer__link--next" aria-label="Next: Contributing">
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              <div class="md-ellipsis">
-                Contributing
-              </div>
-            </div>
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
-            </div>
-          </a>
-        
-      </nav>
     
   
   <div class="md-footer-meta md-typeset">
