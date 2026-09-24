@@ -190,7 +190,11 @@ async def test_dag_executor_nonterminal_outcome_fails_closed(
 
 
 async def test_dag_executor_nonterminal_result_records_why() -> None:
-    """The FAILED copy names the original status and keeps the step's error."""
+    """The FAILED copy names the original status and keeps the step's error.
+
+    The context agrees: the step is failed, and a completion the executor
+    recorded before returning the non-terminal status is dropped.
+    """
     plan = [{"depends_on": [], "outcome": "retrying"}]
 
     class ErroredRunner(ScriptedRunner):
@@ -198,12 +202,14 @@ async def test_dag_executor_nonterminal_result_records_why() -> None:
             self, step_def: StepDefinition, ctx: ExecutionContext
         ) -> StepResult:
             result = await super().execute(step_def, ctx)
+            await ctx.mark_step_complete(step_def.name)
             result.error = "rate limited"
             return result
 
     dag = DAG(name="nonterminal-why").add(StepDefinition(name="0"))
+    ctx = ExecutionContext()
     result = await DAGExecutor(step_executor=ErroredRunner(plan, [0])).execute(
-        dag, ctx=ExecutionContext()
+        dag, ctx=ctx
     )
     [step] = result.steps
     assert step.status == StepStatus.FAILED
@@ -213,6 +219,8 @@ async def test_dag_executor_nonterminal_result_records_why() -> None:
     assert step.error_type == "NonTerminalStatus"
     assert step.metadata["nonterminal_status"] == "retrying"
     assert step.end_time is not None
+    assert ctx.is_step_failed("0")
+    assert not ctx.is_step_complete("0")
 
 
 async def test_dag_executor_exception_ends_step_lifecycle(

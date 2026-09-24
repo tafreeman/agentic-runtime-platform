@@ -285,6 +285,19 @@ def _fail_nonterminal(step_result: StepResult) -> StepResult:
     return failed
 
 
+async def _mark_context_failed(
+    ctx: ExecutionContext, step_name: str, error: str
+) -> None:
+    """Record *step_name* as failed in *ctx*, dropping any stale completion.
+
+    An executor can mark a step complete before its result is settled
+    FAILED; the context must agree with the result it is saved beside.
+    """
+    if step_name in ctx.completed_steps:
+        ctx.completed_steps.remove(step_name)
+    await ctx.mark_step_failed(step_name, error)
+
+
 async def _process_done_task(state: _RunState, task: asyncio.Task) -> None:
     """Handle a single completed task: record result and propagate."""
     try:
@@ -300,6 +313,8 @@ async def _process_done_task(state: _RunState, task: asyncio.Task) -> None:
     state.results[step_name] = step_result
     state.result.add_step(step_result)
     state.completed.add(step_name)
+    if step_result is not raw_result:
+        await _mark_context_failed(state.ctx, step_name, step_result.error or "")
 
     await _emit_step_end(state, step_name, step_result)
     _transition_outcome_state(state, step_name, step_result)
