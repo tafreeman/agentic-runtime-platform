@@ -244,7 +244,7 @@ requires-dist = [
     { name = "executionkit", marker = "extra == 'ek'", specifier = ">=0.4.0,<0.5.0" },
     { name = "fakeredis", extras = ["lua"], marker = "extra == 'dev'", specifier = ">=2.21,<3" },
     { name = "fastapi", marker = "extra == 'server'", specifier = ">=0.100,<1" },
-    { name = "filelock", specifier = ">=3.0,<4" },
+    { name = "filelock", specifier = ">=3.0,<5" },
     { name = "httpx", specifier = ">=0.25,<1" },
     { name = "jinja2", specifier = ">=3.0,<4" },
     { name = "jmespath", specifier = ">=1.0,<2" },
