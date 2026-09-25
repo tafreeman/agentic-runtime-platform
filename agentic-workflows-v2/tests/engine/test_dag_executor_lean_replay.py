@@ -428,6 +428,147 @@ async def test_dag_executor_observer_failure_does_not_change_the_run(
     assert seen[-1] == "workflow_end"
 
 
+def _masking_observer() -> tuple[Any, asyncio.Event]:
+    """Observer that blocks on the first step_end and masks its cancellation."""
+    blocked = asyncio.Event()
+
+    async def on_update(event: dict[str, Any]) -> None:
+        if event["type"] != "step_end" or blocked.is_set():
+            return
+        blocked.set()
+        try:
+            await asyncio.Event().wait()
+        except asyncio.CancelledError:
+            raise OSError("observer cleanup failed") from None
+
+    return on_update, blocked
+
+
+def _chain_dag(name: str) -> DAG:
+    dag = DAG(name=name)
+    dag.add(StepDefinition(name="0")).add(StepDefinition(name="1", depends_on=["0"]))
+    return dag
+
+
+async def test_dag_executor_timeout_survives_an_observer_masking_it() -> None:
+    """A timeout that an observer turns into another exception still ends the run."""
+    plan = [
+        {"depends_on": [], "outcome": "success"},
+        {"depends_on": [0], "outcome": "success"},
+    ]
+    runner = ScriptedRunner(plan, [0, 0])
+    on_update, _ = _masking_observer()
+    result = await DAGExecutor(step_executor=runner).execute(
+        _chain_dag("observer-masks-timeout"),
+        ctx=ExecutionContext(),
+        on_update=on_update,
+        timeout=0.2,
+    )
+    by_name = {step.step_name: step for step in result.steps}
+    assert result.metadata["timeout_exceeded"] is True
+    assert result.overall_status == StepStatus.FAILED
+    assert by_name["1"].status == StepStatus.SKIPPED
+    assert runner.finished == {0}
+    assert "observer_errors" not in result.metadata
+
+
+async def test_dag_executor_cancel_survives_an_observer_masking_it() -> None:
+    """Caller cancellation that an observer turns into another exception propagates."""
+    plan = [
+        {"depends_on": [], "outcome": "success"},
+        {"depends_on": [0], "outcome": "success"},
+    ]
+    runner = ScriptedRunner(plan, [0, 0])
+    on_update, blocked = _masking_observer()
+    run = asyncio.create_task(
+        DAGExecutor(step_executor=runner).execute(
+            _chain_dag("observer-masks-cancel"),
+            ctx=ExecutionContext(),
+            on_update=on_update,
+        )
+    )
+    await blocked.wait()
+    run.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await run
+    assert runner.finished == {0}
+
+
+async def test_dag_executor_pending_cancel_survives_an_observer_masking_it() -> None:
+    """A cancel requested before execute(), delivered inside the observer.
+
+    The request is already in ``Task.cancelling()`` when the observer is
+    entered, so the count does not rise; the masking exception's context is
+    what shows the cancel was swallowed.
+    """
+    plan = [
+        {"depends_on": [], "outcome": "success"},
+        {"depends_on": [0], "outcome": "success"},
+    ]
+    runner = ScriptedRunner(plan, [0, 0])
+
+    async def on_update(event: dict[str, Any]) -> None:
+        if event["type"] != "workflow_start":
+            return
+        try:
+            await asyncio.sleep(0)
+        except asyncio.CancelledError:
+            raise OSError("observer cleanup failed") from None
+
+    async def caller() -> Any:
+        task = asyncio.current_task()
+        assert task is not None
+        task.cancel()
+        return await DAGExecutor(step_executor=runner).execute(
+            _chain_dag("observer-masks-pending-cancel"),
+            ctx=ExecutionContext(),
+            on_update=on_update,
+        )
+
+    with pytest.raises(asyncio.CancelledError):
+        await asyncio.create_task(caller())
+    assert runner.finished == set()
+
+
+async def test_dag_executor_stale_cancel_count_keeps_observer_errors() -> None:
+    """A cancel the caller swallowed earlier does not turn observer errors into one.
+
+    Catching ``CancelledError`` without ``uncancel()`` leaves
+    ``Task.cancelling()`` nonzero for the rest of the task. Only a cancel
+    requested while the observer was awaiting may be re-raised.
+    """
+    plan = [
+        {"depends_on": [], "outcome": "success"},
+        {"depends_on": [0], "outcome": "success"},
+    ]
+    runner = ScriptedRunner(plan, [0, 0])
+
+    async def on_update(event: dict[str, Any]) -> None:
+        if event["type"] == "step_end":
+            raise RuntimeError("observer failed")
+
+    async def caller() -> Any:
+        try:
+            await asyncio.sleep(3600)
+        except asyncio.CancelledError:
+            pass  # swallowed without uncancel(): cancelling() stays at 1
+        task = asyncio.current_task()
+        assert task is not None and task.cancelling() == 1
+        return await DAGExecutor(step_executor=runner).execute(
+            _chain_dag("stale-cancel-count"),
+            ctx=ExecutionContext(),
+            on_update=on_update,
+        )
+
+    run = asyncio.create_task(caller())
+    await asyncio.sleep(0)
+    run.cancel()
+    result = await run
+    assert result.overall_status == StepStatus.SUCCESS
+    assert runner.finished == {0, 1}
+    assert result.metadata["observer_errors"] == 2
+
+
 class RecordingAsyncio:
     """Stand-in for ``asyncio`` inside dag_executor that records its schedule.
 

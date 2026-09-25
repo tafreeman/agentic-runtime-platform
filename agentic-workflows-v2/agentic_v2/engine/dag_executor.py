@@ -114,6 +114,21 @@ class _RunState:
     tasks: set[asyncio.Task] = field(default_factory=set)
 
 
+def _raised_while_cancelled(exc: BaseException) -> bool:
+    """Whether *exc* was raised while a ``CancelledError`` was being handled."""
+    pending: list[BaseException] = [exc]
+    seen: set[int] = set()
+    while pending:
+        link = pending.pop()
+        if id(link) in seen:
+            continue
+        seen.add(id(link))
+        if isinstance(link, asyncio.CancelledError):
+            return True
+        pending.extend(e for e in (link.__cause__, link.__context__) if e is not None)
+    return False
+
+
 async def _notify(state: _RunState, event: dict[str, Any]) -> None:
     """Send *event* to the ``on_update`` observer, if there is one.
 
@@ -121,13 +136,37 @@ async def _notify(state: _RunState, event: dict[str, Any]) -> None:
     the run. An exception from it used to escape ``execute()`` mid-batch,
     leaving running steps orphaned, or fail a step whose work never ran.
     It is logged and counted in ``metadata["observer_errors"]`` instead;
-    cancellation still propagates.
+    cancellation still propagates, including one the observer masked.
+
+    One case is out of reach: an observer that catches the cancel *and*
+    calls ``uncancel()`` has used asyncio's own way of declaring it handled,
+    and leaves no count behind. Detecting that would mean running observers
+    in a task of their own, which adds a suspension point to every event
+    and changes the scheduling the Lean replay pins. Observers must not
+    call ``uncancel()`` on the executor's task.
     """
     if state.on_update is None:
         return
+    task = asyncio.current_task()
+    # A caller that swallowed an earlier CancelledError without uncancel()
+    # leaves cancelling() nonzero, so a nonzero count alone does not mean this
+    # observer masked a cancel. It did if the count rose while it awaited, or
+    # if its exception was raised while handling a CancelledError: a cancel
+    # requested before entry, but not yet delivered, is already in the count
+    # and is delivered at the observer's first await.
+    cancels_before = task.cancelling() if task is not None else 0
     try:
         await state.on_update(event)
-    except Exception:
+    except Exception as exc:
+        cancels_now = task.cancelling() if task is not None else 0
+        if cancels_now > cancels_before or (
+            cancels_now and _raised_while_cancelled(exc)
+        ):
+            # A timeout or the caller's cancel reached the observer, and its
+            # cleanup replaced the CancelledError with an ordinary exception.
+            # Swallowing that would let asyncio.timeout() uncancel the task
+            # and the run carry on past its deadline.
+            raise asyncio.CancelledError from exc
         errors = state.result.metadata.get("observer_errors", 0)
         state.result.metadata["observer_errors"] = errors + 1
         logger.warning(
