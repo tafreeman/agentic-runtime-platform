@@ -215,6 +215,37 @@ class TestNativeEngineCheckpoint:
         assert rows["a"]["status"] == "success"
         assert rows["b"]["status"] == "success"
 
+    async def test_checkpoints_survive_a_failing_observer(self, tmp_path: Path) -> None:
+        """A caller callback that raises on step_end does not cost a checkpoint.
+
+        The executor logs observer errors and keeps running, so a
+        skipped checkpoint would make a resumed thread rerun a
+        successful step.
+        """
+        db_path = tmp_path / "ckpt.db"
+        dag = _make_dag("linear", [_make_step("a"), _make_step("b", depends_on=["a"])])
+        mock_step_exec = MagicMock(spec=StepExecutor)
+
+        async def _mock_execute(step_def: Any, ctx: Any) -> StepResult:
+            return _success_result(step_def.name, {"result": step_def.name})
+
+        mock_step_exec.execute = AsyncMock(side_effect=_mock_execute)
+
+        async def failing_observer(event: dict[str, Any]) -> None:
+            if event["type"] == "step_end":
+                raise RuntimeError("observer down")
+
+        engine = NativeEngine(checkpoint_db_path=db_path)
+        engine._dag_executor = DAGExecutor(step_executor=mock_step_exec)
+        result = await engine.execute(
+            dag, thread_id="thread-obs", on_update=failing_observer
+        )
+
+        assert result.overall_status == StepStatus.SUCCESS
+        assert result.metadata["observer_errors"] == 2
+        rows = await CheckpointStore(db_path).read("thread-obs")
+        assert set(rows) == {"a", "b"}
+
     async def test_execute_without_thread_id_skips_checkpoint(
         self,
         tmp_path: Path,
