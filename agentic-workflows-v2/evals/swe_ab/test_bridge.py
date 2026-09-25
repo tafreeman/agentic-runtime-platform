@@ -18,7 +18,7 @@ KIT_ROOT = Path(__file__).resolve().parent
 if str(KIT_ROOT) not in sys.path:
     sys.path.insert(0, str(KIT_ROOT))
 
-import bridge  # noqa: E402
+import bridge
 
 #: Curated ``cost_lane: free`` in model_registry.yaml, verified twice on
 #: 2026-09-07 by live completions returning ``usage.cost == 0``. Deliberately
@@ -34,7 +34,9 @@ CURATED_FREE = "openrouter:cohere/north-mini-code:free"
 CAMPAIGN_MODEL = "ollama:deepseek-v4-flash:0731-cloud"
 
 
-def test_curated_free_model_passes_under_the_ceiling(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_curated_free_model_passes_under_the_ceiling(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setenv("AGENTIC_MAX_COST_LANE", "free")
 
     bridge._require_model_within_cost_lane(CURATED_FREE)  # must not raise
@@ -45,9 +47,10 @@ def test_uncurated_model_is_refused_before_the_run_starts(
 ) -> None:
     """cost_lane_for fails closed, so an uncurated id would be filtered out.
 
-    The filter does not raise on its own -- the registry's local Ollama tail
-    survives it -- so without this check the wave would run to completion on a
-    different model and be rejected sample by sample afterwards.
+    The filter does not raise on its own -- the registry's local Ollama
+    tail survives it -- so without this check the wave would run to
+    completion on a different model and be rejected sample by sample
+    afterwards.
     """
     monkeypatch.setenv("AGENTIC_MAX_COST_LANE", "free")
 
@@ -60,7 +63,9 @@ def test_uncurated_model_is_refused_before_the_run_starts(
     assert "model_registry.yaml" in message
 
 
-def test_paid_model_is_refused_under_a_free_ceiling(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_paid_model_is_refused_under_a_free_ceiling(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setenv("AGENTIC_MAX_COST_LANE", "free")
 
     with pytest.raises(SystemExit) as excinfo:
@@ -69,7 +74,9 @@ def test_paid_model_is_refused_under_a_free_ceiling(monkeypatch: pytest.MonkeyPa
     assert excinfo.value.code == 6
 
 
-def test_ollama_cloud_is_refused_because_it_is_metered(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_ollama_cloud_is_refused_because_it_is_metered(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Ollama Cloud bills per token; the ``-cloud`` suffix is not a free tier.
 
     This is the case the ceiling exists for and the one the campaign got
