@@ -381,6 +381,26 @@ def build_child_env(
     return env
 
 
+def preflight_cost_lane(env: dict[str, str]) -> subprocess.CompletedProcess[str]:
+    """Run bridge.py's cost-lane check once, in the child's exact environment.
+
+    bridge.py also checks at the start of every sample, but inside a
+    ``SubprocessTarget`` its exit 6 is only that sample's execution error:
+    EvalRunner records it and moves on, so a refused model used to produce a
+    report of nothing but errors, exit 0, after every grading worktree was
+    prepared. Asked once here, the refusal stops the wave before any of that.
+    It runs under ``ARP_PYTHON`` because the check imports ``agentic_v2``,
+    which this EvalKit-side process cannot.
+    """
+    return subprocess.run(
+        [str(ARP_PYTHON), str(KIT_ROOT / "bridge.py"), "--preflight"],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
 def mined_revisions(cases_path: Path) -> dict[str, set[str | None]]:
     """Per source repo, the revisions its cases were mined at.
 
@@ -588,6 +608,16 @@ async def main() -> int:
     args = parser.parse_args()
 
     workflow, run_name = ARMS[args.arm]
+    child_env = build_child_env(workflow, args.model, args.timeout, args.max_cost_lane)
+    preflight = preflight_cost_lane(child_env)
+    if preflight.returncode != 0:
+        print(
+            preflight.stderr.strip()
+            or f"cost-lane preflight failed with exit {preflight.returncode}",
+            file=sys.stderr,
+        )
+        return preflight.returncode
+
     cases_path = Path(args.cases)
     report_name = run_name + args.suffix
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -597,7 +627,7 @@ async def main() -> int:
 
     target = SubprocessTarget(
         command=(str(ARP_PYTHON), str(KIT_ROOT / "bridge.py")),
-        env=build_child_env(workflow, args.model, args.timeout, args.max_cost_lane),
+        env=child_env,
         max_output_bytes=4 * 1024 * 1024,
     )
 
