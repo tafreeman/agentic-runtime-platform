@@ -130,6 +130,9 @@ no-missing-dependencies/no-cycles alone is not its exact acceptance criterion.
   `BaseException` exits, callback failures, and runtime resource failures are not.
 - Scheduling and READY-to-RUNNING are atomic. Timeouts are modeled at scheduling
   boundaries, **not every await point** within callbacks or a completion batch.
+  Python records each completion in full before awaiting its callbacks, so a
+  timeout there loses nothing for that step; later completions in the same
+  batch stay unprocessed, which the model does not represent.
 - The model retains running IDs after timeout, like Python's bookkeeping. It
   does not simulate task cancellation, cleanup awaits, or cancellation resistance.
 - Legal completion batches must be nonempty, contain distinct running IDs, and

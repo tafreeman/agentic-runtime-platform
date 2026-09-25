@@ -247,6 +247,40 @@ async def test_dag_executor_exception_ends_step_lifecycle(
     assert [e["status"] for e in step_ends] == ["failed"]
 
 
+@pytest.mark.parametrize("outcome", ["success", "exception"])
+async def test_dag_executor_timeout_during_step_end_keeps_bookkeeping(
+    monkeypatch: pytest.MonkeyPatch, outcome: str
+) -> None:
+    """A timeout that interrupts the step_end callback finds the step recorded.
+
+    Timeout recovery skips completed steps, so the lifecycle, result and
+    propagation must all happen before the callback is awaited.
+    """
+    manager = StepStateManager()
+    monkeypatch.setattr(
+        "agentic_v2.engine.dag_executor.StepStateManager", lambda: manager
+    )
+
+    async def on_update(event: dict[str, Any]) -> None:
+        if event["type"] == "step_end":
+            await asyncio.sleep(5)
+
+    plan = [
+        {"depends_on": [], "outcome": outcome},
+        {"depends_on": [0], "outcome": "success"},
+    ]
+    dag = DAG(name="timeout-in-callback")
+    dag.add(StepDefinition(name="0")).add(StepDefinition(name="1", depends_on=["0"]))
+    result = await DAGExecutor(step_executor=ScriptedRunner(plan, [0, 0])).execute(
+        dag, ctx=ExecutionContext(), on_update=on_update, timeout=0.2
+    )
+    assert result.metadata["timeout_exceeded"]
+    finished = StepState.SUCCESS if outcome == "success" else StepState.FAILED
+    assert manager.get_state("0") == finished
+    assert manager.get_state("1") == StepState.SKIPPED
+    assert [step.status for step in result.steps][1] == StepStatus.SKIPPED
+
+
 @pytest.mark.parametrize("limit", [-1, 0])
 async def test_dag_executor_lean_rejects_nonpositive_limit(
     lean_binary: Path, limit: int

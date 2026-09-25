@@ -10,6 +10,13 @@
   report SUCCESS. The execution context marks the step failed and drops any
   completion recorded for it. Only injected step executors can return these
   statuses; the built-in `StepExecutor` always finishes terminal.
+- A step whose task raises now ends like any other failed step: a FAILED
+  lifecycle, a `step_end` event, `error_type` set to the exception class, and
+  the step marked failed in the execution context. Previously its lifecycle
+  stayed RUNNING and observers never saw it finish. Each completion is now
+  fully recorded (lifecycle, result, dependents skipped or unlocked) before
+  its callbacks are awaited, so a workflow timeout during `step_end` no longer
+  leaves a finished step RUNNING.
 
 ## Unreleased - ExecutionKit 0.4 and EvalKit 0.4.1
 
