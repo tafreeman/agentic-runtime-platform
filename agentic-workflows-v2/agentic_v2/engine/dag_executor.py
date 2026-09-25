@@ -178,9 +178,9 @@ def _schedule_ready_steps(state: _RunState) -> None:
 
 
 async def _record_task_exception(
-    state: _RunState, task: asyncio.Task, exc: Exception
+    state: _RunState, task: asyncio.Task, exc: BaseException
 ) -> None:
-    """Record an unhandled run_step exception as a FAILED step.
+    """Record a step task that raised, or ended cancelled, as a FAILED step.
 
     The step ends like any other failed step: a FAILED result, lifecycle
     and context entry, its dependents cascade-skipped, and a ``step_end``
@@ -306,9 +306,10 @@ async def _process_done_task(state: _RunState, task: asyncio.Task) -> None:
     """Handle a single completed task: record result and propagate."""
     try:
         step_name, raw_result = task.result()
-    except asyncio.CancelledError:
-        raise
-    except Exception as exc:
+    except (Exception, asyncio.CancelledError) as exc:
+        # A step task that was cancelled, or raised CancelledError itself, is
+        # a failed step. Cancellation of execute() itself never surfaces here;
+        # it is raised at the scheduler's own await points (see _run_dag).
         await _record_task_exception(state, task, exc)
         return
 
@@ -380,6 +381,22 @@ async def _scheduling_loop(state: _RunState) -> None:
             await _process_done_task(state, task)
 
 
+async def _cancel_in_flight(state: _RunState) -> None:
+    """Cancel every in-flight step task and wait for each one to finish.
+
+    Awaiting them prevents "Task was destroyed but it is pending"
+    warnings and guarantees no step keeps running after the scheduler
+    has stopped. A step that suppresses its cancellation delays this
+    indefinitely.
+    """
+    if not state.tasks:
+        return
+    for task in state.tasks:
+        task.cancel()
+    await asyncio.gather(*state.tasks, return_exceptions=True)
+    state.tasks.clear()
+
+
 async def _handle_timeout(state: _RunState) -> None:
     """Recover from a workflow-level timeout: cancel, fail, skip."""
     timeout_msg = (
@@ -401,13 +418,8 @@ async def _handle_timeout(state: _RunState) -> None:
         state.timeout,
     )
 
-    # 2. Cancel every in-flight asyncio task and await cleanup to
-    #    prevent "Task was destroyed but it is pending" warnings.
-    if state.tasks:
-        for t in state.tasks:
-            t.cancel()
-        await asyncio.gather(*state.tasks, return_exceptions=True)
-        state.tasks.clear()
+    # 2. Cancel every in-flight asyncio task and await its cleanup.
+    await _cancel_in_flight(state)
 
     # 3. Transition every step still in RUNNING state to FAILED and
     #    record a StepResult for it.
@@ -604,6 +616,11 @@ class DAGExecutor:
                 await _scheduling_loop(state)
         except TimeoutError:
             await _handle_timeout(state)
+        except BaseException:
+            # execute() itself was cancelled, or the loop raised: never leave
+            # step tasks running with nothing left to await them.
+            await _cancel_in_flight(state)
+            raise
 
         if result.overall_status == StepStatus.RUNNING:
             result.overall_status = StepStatus.SUCCESS

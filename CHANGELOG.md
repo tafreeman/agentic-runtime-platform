@@ -17,6 +17,13 @@
   fully recorded (lifecycle, result, dependents skipped or unlocked) before
   its callbacks are awaited, so a workflow timeout during `step_end` no longer
   leaves a finished step RUNNING.
+- Cancellation has a defined contract. A step task that ends cancelled (its
+  own code cancelled it or raised `CancelledError`) is a failed step with
+  `error_type` `CancelledError`: `execute()` returns a `WorkflowResult` and
+  skips its dependents, where it used to raise `CancelledError` and lose the
+  result. Cancelling `execute()` itself still raises `CancelledError`, but
+  first cancels and awaits every in-flight step task, which used to keep
+  running unobserved.
 
 ## Unreleased - ExecutionKit 0.4 and EvalKit 0.4.1
 

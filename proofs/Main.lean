@@ -11,6 +11,7 @@ def parseStatus (s : String) : Except String Outcome :=
   | "running" => .ok (.returned .running)
   | "retrying" => .ok (.returned .retrying)
   | "exception" => .ok .exception
+  | "cancelled" => .ok .exception
   | _ => .error s!"unknown outcome: {s}"
 
 def statusString : Status → String
