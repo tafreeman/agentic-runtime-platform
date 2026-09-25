@@ -40,6 +40,11 @@ if str(ARP_ROOT) not in sys.path:
     sys.path.insert(0, str(ARP_ROOT))
 
 
+#: ``bridge.py --preflight`` checks the model under test against the cost-lane
+#: ceiling and exits (0, or 6 when refused) without reading a request.
+PREFLIGHT_FLAG = "--preflight"
+
+
 def _fail(message: str, code: int = 1) -> None:
     print(message, file=sys.stderr, flush=True)
     raise SystemExit(code)
@@ -142,9 +147,10 @@ def _require_model_within_cost_lane(model: str) -> None:
     substitution check in ``_run`` would then reject every sample, one wave's
     worth of compute after the fact.
 
-    Failing here instead costs one sample and names the actual fix: curate the
-    model ``cost_lane: free`` in ``model_registry.yaml`` (ADR-059), or drop
-    the ceiling for this run.
+    Failing here instead names the actual fix: curate the model
+    ``cost_lane: free`` in ``model_registry.yaml`` (ADR-059), or drop the
+    ceiling for this run. run_ab.py runs it once through ``--preflight``
+    before any sample, so a refused model stops the wave before it starts.
     """
     from agentic_v2.models.model_registry import (
         CostLaneCeilingExceededError,
@@ -166,12 +172,16 @@ def _require_model_within_cost_lane(model: str) -> None:
         )
 
 
+def _model_under_test() -> str:
+    return os.environ.get("AB_MODEL", "ollama:deepseek-v4-flash:0731-cloud")
+
+
 async def _run(request: dict[str, Any]) -> dict[str, Any]:
     _pin_model_candidates_exclusively()
     from agentic_v2.langchain.runner import WorkflowRunner
 
     workflow = os.environ.get("AB_WORKFLOW", "swe_fix_direct")
-    model = os.environ.get("AB_MODEL", "ollama:deepseek-v4-flash:0731-cloud")
+    model = _model_under_test()
     _require_model_within_cost_lane(model)
     sample_id = str(request.get("sample_id", "unknown"))
     payload = request.get("input") or {}
@@ -249,6 +259,13 @@ async def _run(request: dict[str, Any]) -> dict[str, Any]:
 
 
 def main() -> int:
+    if sys.argv[1:] == [PREFLIGHT_FLAG]:
+        # run_ab.py calls this once before scheduling any sample. Inside a
+        # wave, the per-sample check in _run can only fail one sample at a
+        # time, which EvalKit records as an execution error and moves past.
+        _require_model_within_cost_lane(_model_under_test())
+        return 0
+
     raw = sys.stdin.readline()
     if not raw.strip():
         _fail("no request line on stdin")

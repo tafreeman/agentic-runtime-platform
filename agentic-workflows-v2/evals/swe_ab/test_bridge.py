@@ -9,6 +9,7 @@ share a pytest run with ``test_run_ab.py``:
 
 from __future__ import annotations
 
+import io
 import sys
 from pathlib import Path
 
@@ -97,3 +98,29 @@ def test_no_ceiling_is_a_no_op(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("AGENTIC_MAX_COST_LANE", raising=False)
 
     bridge._require_model_within_cost_lane("anthropic:claude-haiku-4-5-20251001")
+
+
+def test_preflight_mode_refuses_without_reading_a_request(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Exit 6, not exit 1: an empty stdin would fail with 1 if it were read."""
+    monkeypatch.setenv("AGENTIC_MAX_COST_LANE", "free")
+    monkeypatch.setenv("AB_MODEL", CAMPAIGN_MODEL)
+    monkeypatch.setattr(sys, "argv", ["bridge.py", bridge.PREFLIGHT_FLAG])
+    monkeypatch.setattr(sys, "stdin", io.StringIO(""))
+
+    with pytest.raises(SystemExit) as excinfo:
+        bridge.main()
+
+    assert excinfo.value.code == 6
+
+
+def test_preflight_mode_passes_a_curated_model(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("AGENTIC_MAX_COST_LANE", "free")
+    monkeypatch.setenv("AB_MODEL", CURATED_FREE)
+    monkeypatch.setattr(sys, "argv", ["bridge.py", bridge.PREFLIGHT_FLAG])
+    monkeypatch.setattr(sys, "stdin", io.StringIO(""))
+
+    assert bridge.main() == 0
