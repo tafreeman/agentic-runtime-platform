@@ -1,9 +1,8 @@
 """Replay deterministic adversaries against the independent Lean specification.
 
 Build with ``cd proofs && lake build``. Tests that need the compiled spec skip
-unless ARP_LEAN_REPLAY=1. The strict-xfail tests pin known executor defects;
-they need no Lean and run in every suite. Import errors are deliberately never
-converted into skips.
+unless ARP_LEAN_REPLAY=1. The executor defect regression tests need no Lean and
+run in every suite. Import errors are deliberately never converted into skips.
 """
 
 from __future__ import annotations
@@ -62,7 +61,6 @@ class ScriptedRunner(StepExecutor):
         self.plan = plan
         self.delays = delays
         self.finished: set[int] = set()
-        self.raised: set[int] = set()
 
     async def execute(
         self, step_def: StepDefinition, ctx: ExecutionContext
@@ -73,7 +71,6 @@ class ScriptedRunner(StepExecutor):
         self.finished.add(index)
         outcome = self.plan[index]["outcome"]
         if outcome == "exception":
-            self.raised.add(index)
             raise RuntimeError("scripted exception")
         result = StepResult(step_name=step_def.name, status=StepStatus(outcome))
         if result.status == StepStatus.SKIPPED:
@@ -106,9 +103,6 @@ async def run_case(
                 # ADR-060 safety: only a SUCCESS or SKIPPED dependency unblocks.
                 assert plan[dep]["outcome"] in {"success", "skipped"}
             starts.add(index)
-            # Exceptions emit no step_end. Use runner evidence to close those
-            # intervals explicitly, rather than claiming event-only coverage.
-            active.difference_update(runner.raised)
             active.add(index)
             assert len(active) <= limit, "concurrency exceeded"
         elif event["type"] == "step_end":
@@ -121,7 +115,8 @@ async def run_case(
         dag, ctx=ExecutionContext(), max_concurrency=limit, on_update=on_update
     )
     assert starts == runner.finished
-    assert starts - ends == runner.raised
+    # Every started step, raised or not, emits exactly one step_end.
+    assert starts == ends
     steps = {}
     for step in result.steps:
         category = "none"
@@ -228,15 +223,6 @@ async def test_dag_executor_nonterminal_result_records_why() -> None:
     assert not ctx.is_step_complete("0")
 
 
-@pytest.mark.xfail(
-    raises=AssertionError,
-    strict=True,
-    reason=(
-        "Known defect: _record_task_exception records FAILED but leaves the "
-        "step's lifecycle RUNNING and emits no step_end. Remove this marker "
-        "in the fix."
-    ),
-)
 async def test_dag_executor_exception_ends_step_lifecycle(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -259,6 +245,40 @@ async def test_dag_executor_exception_ends_step_lifecycle(
     assert manager.get_state("0") == StepState.FAILED
     step_ends = [e for e in events if e["type"] == "step_end" and e["step"] == "0"]
     assert [e["status"] for e in step_ends] == ["failed"]
+
+
+@pytest.mark.parametrize("outcome", ["success", "exception"])
+async def test_dag_executor_timeout_during_step_end_keeps_bookkeeping(
+    monkeypatch: pytest.MonkeyPatch, outcome: str
+) -> None:
+    """A timeout that interrupts the step_end callback finds the step recorded.
+
+    Timeout recovery skips completed steps, so the lifecycle, result and
+    propagation must all happen before the callback is awaited.
+    """
+    manager = StepStateManager()
+    monkeypatch.setattr(
+        "agentic_v2.engine.dag_executor.StepStateManager", lambda: manager
+    )
+
+    async def on_update(event: dict[str, Any]) -> None:
+        if event["type"] == "step_end":
+            await asyncio.sleep(5)
+
+    plan = [
+        {"depends_on": [], "outcome": outcome},
+        {"depends_on": [0], "outcome": "success"},
+    ]
+    dag = DAG(name="timeout-in-callback")
+    dag.add(StepDefinition(name="0")).add(StepDefinition(name="1", depends_on=["0"]))
+    result = await DAGExecutor(step_executor=ScriptedRunner(plan, [0, 0])).execute(
+        dag, ctx=ExecutionContext(), on_update=on_update, timeout=0.2
+    )
+    assert result.metadata["timeout_exceeded"]
+    finished = StepState.SUCCESS if outcome == "success" else StepState.FAILED
+    assert manager.get_state("0") == finished
+    assert manager.get_state("1") == StepState.SKIPPED
+    assert [step.status for step in result.steps][1] == StepStatus.SKIPPED
 
 
 @pytest.mark.parametrize("limit", [-1, 0])

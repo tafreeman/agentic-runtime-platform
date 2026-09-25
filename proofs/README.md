@@ -37,7 +37,7 @@ $env:AGENTIC_NO_LLM = "1"
 ```
 
 Without opt-in the replay tests skip, and with opt-in a missing binary is an
-error. The strict-xfail defect tests below need no Lean and run in every suite.
+error. The defect regression tests need no Lean and run in every suite.
 The tests use no providers or additional Python dependencies, and they compare
 the real Python executor with the Lean spec, not a handwritten Python oracle.
 
@@ -76,28 +76,26 @@ The substantive universal results currently proved are:
 - `recursive_solution_matches_spec` and `recursive_solution_unique`: on a graph
   ranked along dependencies, the recursive failure rule has a unique solution.
 - `nonpositive_schedules_nothing`: a nonpositive limit starts nothing.
-- `nonterminal_fails_closed`: a PENDING, RUNNING or RETRYING result is recorded
-  FAILED in result and lifecycle, sets the run's failure flag and takes the
-  cascade-skip branch, for every plan and state.
+- `nonterminal_fails_closed` and `exception_fails_closed`: a step that returns
+  PENDING, RUNNING or RETRYING, or raises, is recorded FAILED in result and
+  lifecycle and sets the run's failure flag, for every plan and state.
 
 There are also local finalization lemmas and executable witnesses: a PENDING
-chain fails closed, exception lifecycle drift, and the internal zero-limit
-failure result. Each theorem's axioms are pinned; only `propext` and
+chain fails closed, a raised root ends FAILED with an end event, and the
+internal zero-limit failure result. Each theorem's axioms are pinned; only `propext` and
 `Quot.sound` occur, and no `sorry` or additional axiom is used.
 
 ## Executor defects
 
-Fixed: a step that returned PENDING, RUNNING or RETRYING unblocked its
-dependents and the run reported SUCCESS. `_fail_nonterminal` now records it
-FAILED (`nonterminal_fails_closed`,
-`test_dag_executor_nonterminal_outcome_fails_closed`).
+Fixed, each with a Lean theorem and a regression test:
 
-Still open. The model reproduces this one, and the replay test pins it with a
-strict xfail that the fix must remove:
-
-- A step that raises gets a FAILED result, but its lifecycle stays RUNNING and
-  no `step_end` is emitted (`exception_root_lifecycle`,
-  `test_dag_executor_exception_ends_step_lifecycle`).
+- A step that returned PENDING, RUNNING or RETRYING unblocked its dependents
+  and the run reported SUCCESS. `_fail_nonterminal` now records it FAILED
+  (`nonterminal_fails_closed`,
+  `test_dag_executor_nonterminal_outcome_fails_closed`).
+- A step that raised got a FAILED result, but its lifecycle stayed RUNNING and
+  no `step_end` was emitted. It now ends like any failed step
+  (`exception_fails_closed`, `test_dag_executor_exception_ends_step_lifecycle`).
 
 A third defect is outside the model: a `CancelledError` from a step task escapes
 `execute()` without a `WorkflowResult`, and cancelling `execute()` itself
@@ -132,6 +130,9 @@ no-missing-dependencies/no-cycles alone is not its exact acceptance criterion.
   `BaseException` exits, callback failures, and runtime resource failures are not.
 - Scheduling and READY-to-RUNNING are atomic. Timeouts are modeled at scheduling
   boundaries, **not every await point** within callbacks or a completion batch.
+  Python records each completion in full before awaiting its callbacks, so a
+  timeout there loses nothing for that step; later completions in the same
+  batch stay unprocessed, which the model does not represent.
 - The model retains running IDs after timeout, like Python's bookkeeping. It
   does not simulate task cancellation, cleanup awaits, or cancellation resistance.
 - Legal completion batches must be nonempty, contain distinct running IDs, and
@@ -148,6 +149,3 @@ no-missing-dependencies/no-cycles alone is not its exact acceptance criterion.
 - Exact upstream skip strings are combined into one category. When a failed
   node and an exception share a descendant, the first processed failure chooses
   the string. This affects diagnostics, not the status or skip category.
-- Raised tasks have no `step_end` event in Python. Replay uses fake-runner
-  evidence to close those intervals and explicitly checks this event gap;
-  event-only concurrency validation is not possible for those cases.
