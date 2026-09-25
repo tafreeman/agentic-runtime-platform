@@ -663,7 +663,8 @@ condition. Ready steps are unfinished, unstarted and at zero, and every such
 step is ready. Running and started steps are duplicate-free, and every started
 step's dependencies cleared and ended. No unfinished step has a blocking
 dependency. Every result is the step's own outcome after it started, or an
-upstream skip with a blocking dependency.
+upstream skip with a blocking dependency, and the run's failure flag is set
+exactly when some step has failed.
 
 Safety and no duplicate starts need no graph assumption. Completeness and
 refinement assume `Ranked`: every dependency exists and a rank decreases along
@@ -769,6 +770,7 @@ structure Bookkeeping (p : Plan) (s : State) : Prop where
     (r = ownResult (p[j]!).outcome ∧ j ∈ s.starts)
   not_timed_out : s.timedOut = false
   not_deadlocked : s.deadlocked = false
+  failed_flag : s.failed = true ↔ ∃ j, s.results j = some ⟨.failed, .none⟩
 
 /-- No unfinished step has a dependency that failed or was skipped upstream. -/
 def Unblocked (p : Plan) (s : State) : Prop :=
@@ -792,7 +794,7 @@ private theorem finished_kind (p : Plan) (s : State) (h : Bookkeeping p s) (j : 
       · exact Or.inr hk
 
 theorem initial_invariant (p : Plan) : Invariant p (initial p) := by
-  refine ⟨⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩, ?_⟩
+  refine ⟨⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩, ?_⟩
   · intro j h; simp [finished, initial] at h
   · intro j _
     simp [initial, cleared]
@@ -814,6 +816,7 @@ theorem initial_invariant (p : Plan) : Invariant p (initial p) := by
   · intro j r hr; simp [initial] at hr
   · rfl
   · rfl
+  · exact ⟨fun h => (by cases h), fun ⟨j, hj⟩ => (by simp [initial] at hj)⟩
   · intro j _ d _; rfl
 
 /-- Starting the head of the ready queue preserves the invariant. -/
@@ -822,7 +825,8 @@ private theorem start_inv (p : Plan) (s t : State) (i : Nat) (rest : List Nat)
     (h_ready : t.ready = rest) (h_running : t.running = i :: s.running)
     (h_starts : t.starts = s.starts ++ [i]) (h_results : t.results = s.results)
     (h_degree : t.degree = s.degree) (h_ends : t.ends = s.ends)
-    (h_timed : t.timedOut = s.timedOut) (h_dead : t.deadlocked = s.deadlocked) :
+    (h_timed : t.timedOut = s.timedOut) (h_dead : t.deadlocked = s.deadlocked)
+    (h_failed : t.failed = s.failed) :
     Invariant p t := by
   obtain ⟨c, hu⟩ := h
   have hf : ∀ j, finished t j = finished s j := by
@@ -832,7 +836,7 @@ private theorem start_inv (p : Plan) (s t : State) (i : Nat) (rest : List Nat)
   have hnd := c.ready_nodup
   rw [hr, List.nodup_cons] at hnd
   have hirun : i ∉ s.running := fun hm => hist (c.running_mem i hm).1
-  refine ⟨⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩, ?_⟩
+  refine ⟨⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩, ?_⟩
   · intro j hj; rw [hf] at hj; exact c.in_range j hj
   · intro j hj; rw [hf] at hj; rw [h_degree, h_results]; exact c.degree j hj
   · rw [h_ready]; exact hnd.2
@@ -893,6 +897,7 @@ private theorem start_inv (p : Plan) (s t : State) (i : Nat) (rest : List Nat)
     · exact Or.inr ⟨a, Or.inl b⟩
   · rw [h_timed]; exact c.not_timed_out
   · rw [h_dead]; exact c.not_deadlocked
+  · rw [h_failed, h_results]; exact c.failed_flag
   · intro j hj d hd; rw [hf] at hj; rw [h_results]; exact hu j hj d hd
 
 /-- Every scheduling pass preserves the invariant, whatever the limit and fuel. -/
@@ -910,7 +915,7 @@ theorem schedule_inv (p : Plan) (limit : Int) (fuel : Nat) (s : State)
         · rename_i hfin
           have := (h.books.ready_mem i (by rw [hr]; exact List.mem_cons_self)).2.1
           rw [this] at hfin; cases hfin
-        · exact ih _ (start_inv p s _ i rest h hr rfl rfl rfl rfl rfl rfl rfl rfl)
+        · exact ih _ (start_inv p s _ i rest h hr rfl rfl rfl rfl rfl rfl rfl rfl rfl)
       · exact h
 
 /-- The unlock step, exactly as `unlockDownstream` folds it. -/
@@ -1133,7 +1138,8 @@ private theorem success_inv (p : Plan) (s t : State) (i : Nat) (r : Result)
     (h_ready : t.ready = s.ready) (h_running : t.running = s.running.filter (· != i))
     (h_starts : t.starts = s.starts) (h_results : t.results = put s.results i (some r))
     (h_degree : t.degree = s.degree) (h_ends : t.ends = s.ends ++ [i])
-    (h_timed : t.timedOut = s.timedOut) (h_dead : t.deadlocked = s.deadlocked) :
+    (h_timed : t.timedOut = s.timedOut) (h_dead : t.deadlocked = s.deadlocked)
+    (h_failed : t.failed = s.failed) :
     Invariant p (unlockDownstream p t i) := by
   obtain ⟨c, hu⟩ := h
   obtain ⟨his, hifin⟩ := c.running_mem i hi
@@ -1179,13 +1185,16 @@ private theorem success_inv (p : Plan) (s t : State) (i : Nat) (r : Result)
   have hnd : t.ready.Nodup := by rw [h_ready]; exact c.ready_nodup
   obtain ⟨v1, v2, v3, v4, v5, v6, v7, v8, v9⟩ :=
     unlock_fold (adjacency p i) t hdeg hrd hnd
+  have vf : ((adjacency p i).foldl unlockStep t).failed = t.failed :=
+    fold_invariant unlockStep (fun u => u.failed = t.failed)
+      (fun u k hu => by simp only [unlockStep]; split <;> exact hu) _ _ rfl
   rw [unlockDownstream_eq]
-  generalize hv : (adjacency p i).foldl unlockStep t = v at v1 v2 v3 v4 v5 v6 v7 v8 v9
+  generalize hv : (adjacency p i).foldl unlockStep t = v at v1 v2 v3 v4 v5 v6 v7 v8 v9 vf
   have hfv : ∀ j, finished v j = finished t j := by
     intro j; unfold finished; rw [v1]
   have hi_not_blocking : ∀ d, blocking (s.results d) = true → d ≠ i := by
     intro d hd he; subst he; rw [hnone] at hd; cases hd
-  refine ⟨⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩, ?_⟩
+  refine ⟨⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩, ?_⟩
   · intro j hj
     rw [hfv, hft] at hj
     by_cases hji : j = i
@@ -1277,6 +1286,22 @@ private theorem success_inv (p : Plan) (s t : State) (i : Nat) (r : Result)
       · exact Or.inr b
   · rw [v5, h_timed]; exact c.not_timed_out
   · rw [v6, h_dead]; exact c.not_deadlocked
+  · rw [vf, h_failed, v1]
+    constructor
+    · intro hf
+      obtain ⟨j, hj⟩ := c.failed_flag.mp hf
+      refine ⟨j, ?_⟩
+      rw [hres, ite_eq_right (fun he => by subst he; rw [hnone] at hj; cases hj)]
+      exact hj
+    · rintro ⟨j, hj⟩
+      rw [hres] at hj
+      apply c.failed_flag.mpr
+      by_cases hji : j = i
+      · rw [ite_eq_left hji] at hj
+        injection hj with hj
+        subst hj
+        cases hc
+      · rw [ite_eq_right hji] at hj; exact ⟨j, hj⟩
   · intro j hj d hd
     rw [hfv] at hj
     rw [v1, hres]
@@ -1344,10 +1369,10 @@ private theorem mark_core (p : Plan) (s : State) (j : Nat) (hc : Bookkeeping p s
     rw [cleared_not_blocking _ this] at hwb; cases hwb
   have hfield : t.degree = s.degree ∧ t.ready = s.ready ∧ t.running = s.running ∧
       t.starts = s.starts ∧ t.ends = s.ends ∧ t.timedOut = s.timedOut ∧
-      t.deadlocked = s.deadlocked := by
-    rw [← ht]; exact ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
-  obtain ⟨e1, e2, e3, e4, e5, e6, e7⟩ := hfield
-  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+      t.deadlocked = s.deadlocked ∧ t.failed = s.failed := by
+    rw [← ht]; exact ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
+  obtain ⟨e1, e2, e3, e4, e5, e6, e7, e8⟩ := hfield
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · intro k hk; rw [hft] at hk
     by_cases hkj : k = j
     · subst hkj; exact hj
@@ -1399,6 +1424,20 @@ private theorem mark_core (p : Plan) (s : State) (j : Nat) (hc : Bookkeeping p s
       · exact Or.inr b
   · rw [e6]; exact hc.not_timed_out
   · rw [e7]; exact hc.not_deadlocked
+  · rw [e8]
+    constructor
+    · intro hf
+      obtain ⟨k, hk⟩ := hc.failed_flag.mp hf
+      refine ⟨k, ?_⟩
+      rw [hres, ite_eq_right (fun he => by
+        subst he; unfold finished at hjf; rw [hk] at hjf; cases hjf)]
+      exact hk
+    · rintro ⟨k, hk⟩
+      rw [hres] at hk
+      apply hc.failed_flag.mpr
+      by_cases hkj : k = j
+      · rw [ite_eq_left hkj] at hk; cases hk
+      · rw [ite_eq_right hkj] at hk; exact ⟨k, hk⟩
 
 /-- One step of the cascade's fold over a node's dependents. -/
 private abbrev cascadeStep (why : Skip) (acc : State × List Nat) (j : Nat) : State × List Nat :=
@@ -1563,7 +1602,8 @@ private theorem failure_inv (p : Plan) (s t : State) (i : Nat)
     (h_starts : t.starts = s.starts)
     (h_results : t.results = put s.results i (some ⟨.failed, .none⟩))
     (h_degree : t.degree = s.degree) (h_ends : t.ends = s.ends ++ [i])
-    (h_timed : t.timedOut = s.timedOut) (h_dead : t.deadlocked = s.deadlocked) :
+    (h_timed : t.timedOut = s.timedOut) (h_dead : t.deadlocked = s.deadlocked)
+    (h_failed : t.failed = true) :
     Invariant p (cascadeSkip p t i .upstream) := by
   obtain ⟨c, hu⟩ := h
   obtain ⟨his, hifin⟩ := c.running_mem i hi
@@ -1590,7 +1630,7 @@ private theorem failure_inv (p : Plan) (s t : State) (i : Nat)
   have hbl : ∀ d, blocking (s.results d) = true → blocking (t.results d) = true := by
     intro d hd; rw [hres, ite_eq_right (not_finished_of_blocking s d i hd hifin)]; exact hd
   have hct : Bookkeeping p t := by
-    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
     · intro j hj; rw [hft] at hj
       by_cases hji : j = i
       · subst hji; exact hin
@@ -1640,6 +1680,8 @@ private theorem failure_inv (p : Plan) (s t : State) (i : Nat)
         · exact Or.inr b
     · rw [h_timed]; exact c.not_timed_out
     · rw [h_dead]; exact c.not_deadlocked
+    · rw [h_failed]
+      exact ⟨fun _ => ⟨i, by rw [hres, ite_eq_left rfl]⟩, fun _ => rfl⟩
   apply cascade_inv p (p.length + 1) [i] t hct
   · intro x hx
     rw [List.mem_singleton] at hx; subst hx
@@ -1672,17 +1714,17 @@ theorem process_inv (p : Plan) (s : State) (i : Nat) (h : Invariant p s) (hi : i
   · rename_i hout
     unfold recordTaskException
     exact failure_inv p s _ i h hi (by rw [hout]; rfl)
-      rfl rfl rfl rfl rfl rfl rfl rfl
+      rfl rfl rfl rfl rfl rfl rfl rfl rfl
   · rename_i st hout
     dsimp only
     split
     · rename_i hf
       have hr := ownResult_status_failed st hf
       exact failure_inv p s _ i h hi (by rw [hout, hr])
-        rfl rfl rfl (by simp only [transitionOutcomeState]; rw [hr]) rfl rfl rfl rfl
+        rfl rfl rfl (by simp only [transitionOutcomeState]; rw [hr]) rfl rfl rfl rfl rfl
     · rename_i hf
       exact success_inv p s _ i (ownResult (.returned st)) h hi (by rw [hout])
-        (ownResult_cleared st hf) rfl rfl rfl rfl rfl rfl rfl rfl
+        (ownResult_cleared st hf) rfl rfl rfl rfl rfl rfl rfl rfl rfl
 
 private theorem process_running (p : Plan) (s : State) (i : Nat) :
     (processDoneTask p s i).running = s.running.filter (· != i) := by
@@ -2286,6 +2328,95 @@ theorem legal_run_refines_spec (p : Plan) (rank : Nat → Nat) (hp : Ranked p ra
     Reachable.start h (Nat.le_trans (unfinishedCount_le p _) hn)
   exact complete_refines_spec p rank hp limit _ hr hc fuel i hi hf
 
+/-- Any rank can be compressed below the plan length: a step's new rank is the
+number of steps whose old rank is smaller. -/
+private theorem compress_rank (p : Plan) (rank : Nat → Nat) (hp : Ranked p rank) :
+    Ranked p (fun i => (List.range p.length).countP fun j => decide (rank j < rank i)) ∧
+    ∀ i < p.length,
+      (List.range p.length).countP (fun j => decide (rank j < rank i)) < p.length := by
+  refine ⟨fun i hi d hd => ?_, fun i hi => ?_⟩
+  · obtain ⟨hdn, hr⟩ := hp i hi d hd
+    refine ⟨hdn, countP_lt _ _ _ (fun x hx => ?_) d (List.mem_range.mpr hdn)
+      (decide_eq_true hr) (decide_eq_false (Nat.lt_irrefl _))⟩
+    exact decide_eq_true (Nat.lt_trans (of_decide_eq_true hx) hr)
+  · have h := countP_lt (List.range p.length) (fun _ => true)
+      (fun j => decide (rank j < rank i)) (fun _ _ => rfl) i (List.mem_range.mpr hi) rfl
+      (decide_eq_false (Nat.lt_irrefl _))
+    rwa [List.countP_true, List.length_range] at h
+
+/-- The per-step results a run reports, in plan order, as the replay reads them. -/
+def reported (p : Plan) (s : State) : List Result :=
+  (List.range p.length).map fun i => (s.results i).getD default
+
+private theorem some_getD (o : Option Result) (h : o.isSome = true) :
+    o = some (o.getD default) := by
+  cases o with
+  | none => cases h
+  | some _ => rfl
+
+private theorem ownResult_failed (o : Outcome) (h : (ownResult o).status = .failed) :
+    ownResult o = ⟨.failed, .none⟩ := by
+  cases o with
+  | exception => rfl
+  | returned st => exact ownResult_status_failed st h
+
+private theorem status_beq_failed (st : Status) (h : (st == .failed) = true) :
+    st = .failed := by
+  cases st <;> first | rfl | cases h
+
+/-- Converse of honest status on a complete legal run: the run reports FAILED
+exactly when the spec's overall status does, so exactly when some step failed. -/
+private theorem complete_overall (p : Plan) (limit : Int) (s : State)
+    (hs : Reachable p limit s) (hc : ∀ i < p.length, finished s i = true) :
+    finalStatus s = overall (reported p s) := by
+  have h := (reachable_inv p limit s hs).books
+  unfold finalStatus overall reported
+  cases hf : s.failed with
+  | false =>
+    have hany : ((List.range p.length).map fun i => (s.results i).getD default).any
+        (fun r => r.status == .failed) = false := by
+      apply List.any_eq_false.mpr
+      intro r hr hrf
+      obtain ⟨i, hi, rfl⟩ := List.mem_map.mp hr
+      have hsome := some_getD _ (hc i (List.mem_range.mp hi))
+      have hst := status_beq_failed _ hrf
+      rcases h.provenance i _ hsome with ⟨hup, _⟩ | ⟨hown, _⟩
+      · rw [hup] at hst; cases hst
+      · rw [hown] at hst hsome
+        rw [ownResult_failed _ hst] at hsome
+        rw [h.failed_flag.mpr ⟨i, hsome⟩] at hf; cases hf
+    rw [hany]
+  | true =>
+    obtain ⟨j, hj⟩ := h.failed_flag.mp hf
+    have hjn : j < p.length := h.in_range j (by unfold finished; rw [hj]; rfl)
+    have hany : ((List.range p.length).map fun i => (s.results i).getD default).any
+        (fun r => r.status == .failed) = true :=
+      List.any_eq_true.mpr ⟨⟨.failed, .none⟩,
+        List.mem_map.mpr ⟨j, List.mem_range.mpr hjn, by rw [hj]; rfl⟩, rfl⟩
+    rw [hany]
+
+/-- Refinement exactly as the replay checks it: for a validated plan and a limit
+of at least 1, every legal run of at least `p.length` completion batches reports
+the recursive spec's per-step results, at the spec's own graph-size depth, and
+its overall status. -/
+theorem legal_run_matches_spec (p : Plan) (rank : Nat → Nat) (hp : Ranked p rank)
+    (limit : Int) (hl : 1 ≤ limit) (batches : List (List Nat))
+    (h : Legal p limit (batches.map Action.batch) (initial p))
+    (hn : p.length ≤ batches.length) :
+    spec p = some (reported p (schedulingLoop p limit (batches.map Action.batch) (initial p))) ∧
+      finalStatus (schedulingLoop p limit (batches.map Action.batch) (initial p)) =
+        overall (reported p (schedulingLoop p limit (batches.map Action.batch) (initial p))) := by
+  obtain ⟨hr, hc⟩ := legal_batches_complete p rank hp limit hl batches (initial p)
+    Reachable.start h (Nat.le_trans (unfinishedCount_le p _) hn)
+  obtain ⟨hp', hlt⟩ := compress_rank p rank hp
+  refine ⟨?_, complete_overall p limit _ hr hc⟩
+  unfold spec reported
+  apply mapM_some
+  intro i hi
+  rw [List.mem_range] at hi
+  rw [complete_refines_spec p _ hp' limit _ hr hc p.length i hi (hlt i hi)]
+  exact some_getD _ (hc i hi)
+
 /-! ## Axiom pins
 
 Each pin fails the build if that theorem's axioms change, for example when a
@@ -2355,5 +2486,7 @@ runs axiom-audit over every declaration in the library. -/
 #guard_msgs in #print axioms legal_run_refines_spec
 /-- info: 'ARP.checkLegal_sound' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in #print axioms checkLegal_sound
+/-- info: 'ARP.legal_run_matches_spec' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms legal_run_matches_spec
 
 end ARP
