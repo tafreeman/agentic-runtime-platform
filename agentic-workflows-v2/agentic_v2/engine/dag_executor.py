@@ -114,6 +114,21 @@ class _RunState:
     tasks: set[asyncio.Task] = field(default_factory=set)
 
 
+def _raised_while_cancelled(exc: BaseException) -> bool:
+    """Whether *exc* was raised while a ``CancelledError`` was being handled."""
+    pending: list[BaseException] = [exc]
+    seen: set[int] = set()
+    while pending:
+        link = pending.pop()
+        if id(link) in seen:
+            continue
+        seen.add(id(link))
+        if isinstance(link, asyncio.CancelledError):
+            return True
+        pending.extend(e for e in (link.__cause__, link.__context__) if e is not None)
+    return False
+
+
 async def _notify(state: _RunState, event: dict[str, Any]) -> None:
     """Send *event* to the ``on_update`` observer, if there is one.
 
@@ -126,18 +141,24 @@ async def _notify(state: _RunState, event: dict[str, Any]) -> None:
     if state.on_update is None:
         return
     task = asyncio.current_task()
-    # Compare against the count on entry: a caller that swallowed an earlier
-    # CancelledError without uncancel() leaves cancelling() nonzero, and that
-    # stale count must not turn an ordinary observer failure into a cancel.
+    # A caller that swallowed an earlier CancelledError without uncancel()
+    # leaves cancelling() nonzero, so a nonzero count alone does not mean this
+    # observer masked a cancel. It did if the count rose while it awaited, or
+    # if its exception was raised while handling a CancelledError: a cancel
+    # requested before entry, but not yet delivered, is already in the count
+    # and is delivered at the observer's first await.
     cancels_before = task.cancelling() if task is not None else 0
     try:
         await state.on_update(event)
     except Exception as exc:
-        if task is not None and task.cancelling() > cancels_before:
-            # A timeout or the caller's cancel landed while the observer was
-            # awaiting, and its cleanup replaced the CancelledError with an
-            # ordinary exception. Swallowing that would let asyncio.timeout()
-            # uncancel the task and the run carry on past its deadline.
+        cancels_now = task.cancelling() if task is not None else 0
+        if cancels_now > cancels_before or (
+            cancels_now and _raised_while_cancelled(exc)
+        ):
+            # A timeout or the caller's cancel reached the observer, and its
+            # cleanup replaced the CancelledError with an ordinary exception.
+            # Swallowing that would let asyncio.timeout() uncancel the task
+            # and the run carry on past its deadline.
             raise asyncio.CancelledError from exc
         errors = state.result.metadata.get("observer_errors", 0)
         state.result.metadata["observer_errors"] = errors + 1

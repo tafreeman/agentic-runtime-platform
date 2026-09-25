@@ -494,6 +494,42 @@ async def test_dag_executor_cancel_survives_an_observer_masking_it() -> None:
     assert runner.finished == {0}
 
 
+async def test_dag_executor_pending_cancel_survives_an_observer_masking_it() -> None:
+    """A cancel requested before execute(), delivered inside the observer.
+
+    The request is already in ``Task.cancelling()`` when the observer is
+    entered, so the count does not rise; the masking exception's context is
+    what shows the cancel was swallowed.
+    """
+    plan = [
+        {"depends_on": [], "outcome": "success"},
+        {"depends_on": [0], "outcome": "success"},
+    ]
+    runner = ScriptedRunner(plan, [0, 0])
+
+    async def on_update(event: dict[str, Any]) -> None:
+        if event["type"] != "workflow_start":
+            return
+        try:
+            await asyncio.sleep(0)
+        except asyncio.CancelledError:
+            raise OSError("observer cleanup failed") from None
+
+    async def caller() -> Any:
+        task = asyncio.current_task()
+        assert task is not None
+        task.cancel()
+        return await DAGExecutor(step_executor=runner).execute(
+            _chain_dag("observer-masks-pending-cancel"),
+            ctx=ExecutionContext(),
+            on_update=on_update,
+        )
+
+    with pytest.raises(asyncio.CancelledError):
+        await asyncio.create_task(caller())
+    assert runner.finished == set()
+
+
 async def test_dag_executor_stale_cancel_count_keeps_observer_errors() -> None:
     """A cancel the caller swallowed earlier does not turn observer errors into one.
 
