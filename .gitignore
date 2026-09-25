@@ -506,3 +506,6 @@ tools/llm/filename.json
 
 # UI-managed settings store (runtime artifact; see ADR-043)
 .agentic_ui_settings.json
+
+# Lean build products
+proofs/.lake/
