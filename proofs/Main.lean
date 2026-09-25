@@ -58,7 +58,8 @@ that is a no-op exactly when the run is complete. -/
 def operational (p : Plan) (limit : Int) (batches : List (List Nat))
     (timeout : Bool) : Json :=
   let last := if timeout then Action.timeout else Action.batch []
-  let s := schedulingLoop p limit (batches.map Action.batch ++ [last]) (initial p)
+  let actions := batches.map Action.batch ++ [last]
+  let s := schedulingLoop p limit actions (initial p)
   let ids := List.range p.length
   Json.mkObj [
     ("starts", toJson s.starts),
@@ -68,7 +69,8 @@ def operational (p : Plan) (limit : Int) (batches : List (List Nat))
     ("overall", toJson (statusString (finalStatus s))),
     ("timed_out", toJson s.timedOut),
     ("deadlocked", toJson s.deadlocked),
-    ("complete", toJson (ids.all (finished s)))]
+    ("complete", toJson (ids.all (finished s))),
+    ("legal", toJson (checkLegal p limit actions (initial p)))]
 
 def replay (j : Json) : Except String Json := do
   let limit ← (← j.getObjVal? "max_concurrency").getInt?

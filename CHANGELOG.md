@@ -58,6 +58,14 @@
   the finished result (on `workflow_end`). With checkpointing enabled,
   `NativeEngine` still writes a successful step's checkpoint when the caller's
   callback raises on its `step_end`.
+- The Lean model in `proofs/` now proves the rest of ADR-060's guarantees for
+  every legal completion order. A step starts only after its dependencies
+  ended with SUCCESS or a condition skip, and no step starts twice, for any
+  plan. For a validated plan with `max_concurrency >= 1` the deadlock branch is
+  unreachable and every run finishes. Such a run reports exactly the recursive
+  spec's per-step results and overall status, which the replay previously only
+  sampled. The replay also checks that each recorded completion order meets
+  the theorems' legality hypothesis. No runtime code changed.
 
 ## Unreleased - ExecutionKit 0.4 and EvalKit 0.4.1
 

@@ -36,6 +36,10 @@ SKIP_CATEGORIES = {
     "workflow timeout": "timeout",
     "scheduler deadlock": "deadlock",
 }
+# Every replayed run finishes, and its recorded batches satisfy the Lean
+# theorems' hypothesis: each consumed batch is a nonempty, duplicate-free set of
+# running steps (``checkLegal``). The theorems then cover the recorded trace.
+FINISHED_LEGALLY = {"complete": True, "legal": True}
 
 
 @pytest.fixture
@@ -678,9 +682,12 @@ async def test_dag_executor_matches_operational_model(
     """Replay each recorded completion order through the Lean scheduling loop.
 
     Start order, end events, results, lifecycle states and flags must
-    all be the model's. On the same trace the model must also end in the
-    recursive spec's results, a sampled check of the unproved
-    refinement.
+    all be the model's, and the recorded batches must be legal, so the
+    Lean theorems apply to the trace. On it the model must also end in
+    the recursive spec's results and overall status, which
+    ``legal_run_matches_spec`` proves for every legal trace of a
+    validated plan that finishes every step: the ``legal`` and
+    ``complete`` flags asserted here are its premises.
     """
     rng = random.Random(seed)
     plan = random_plan(rng, TERMINAL if seed % 2 else OUTCOMES)
@@ -694,7 +701,7 @@ async def test_dag_executor_matches_operational_model(
             )
             answer = oracle(lean_binary, relabelled, limit, batches=batches)
             case = (seed, limit, delays, order, batches)
-            assert answer["model"] == {**end_state, "complete": True}, case
+            assert answer["model"] == {**end_state, **FINISHED_LEGALLY}, case
             assert answer["model"]["results"] == answer["steps"], case
             assert answer["model"]["overall"] == answer["overall"], case
 
@@ -722,7 +729,24 @@ async def test_dag_executor_timeout_matches_operational_model(
         assert end_state["timed_out"]
         answer = oracle(lean_binary, relabelled, limit, batches=batches, timeout=True)
         case = (seed, limit, delays, order, batches)
-        assert answer["model"] == {**end_state, "complete": True}, case
+        assert answer["model"] == {**end_state, **FINISHED_LEGALLY}, case
+
+
+@pytest.mark.parametrize(
+    ("batches", "legal"),
+    [([[0], [1]], True), ([[1]], False), ([[0, 0]], False), ([[], [0]], False)],
+    ids=["legal", "not-running", "duplicate", "empty"],
+)
+def test_lean_replay_checks_batch_legality(
+    lean_binary: Path, batches: list[list[int]], legal: bool
+) -> None:
+    """``legal`` rejects batches that no FIRST_COMPLETED wait could return."""
+    plan = [
+        {"depends_on": [], "outcome": "success"},
+        {"depends_on": [0], "outcome": "success"},
+    ]
+    answer = oracle(lean_binary, plan, 1, batches=batches)
+    assert answer["model"]["legal"] is legal
 
 
 @pytest.mark.parametrize(
