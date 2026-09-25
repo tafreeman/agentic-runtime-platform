@@ -2395,19 +2395,55 @@ private theorem complete_overall (p : Plan) (limit : Int) (s : State)
         List.mem_map.mpr ⟨j, List.mem_range.mpr hjn, by rw [hj]; rfl⟩, rfl⟩
     rw [hany]
 
+/-- Every legal run of completion batches alone, however short, ends in a
+reachable state: it never times out, and for a ranked plan and a limit of at
+least 1 it never takes the deadlock branch. -/
+private theorem legal_batches_reachable (p : Plan) (rank : Nat → Nat)
+    (hp : Ranked p rank) (limit : Int) (hl : 1 ≤ limit) :
+    ∀ (batches : List (List Nat)) (s : State),
+    Reachable p limit s → Legal p limit (batches.map Action.batch) s →
+    Reachable p limit (schedulingLoop p limit (batches.map Action.batch) s) := by
+  intro batches
+  induction batches with
+  | nil => intro s hs _; exact hs
+  | cons b rest ih =>
+    intro s hs hleg
+    simp only [List.map_cons] at hleg ⊢
+    unfold schedulingLoop
+    split
+    · exact hs
+    · rename_i hall
+      have hall' : (List.range p.length).all (finished s) = false := by
+        cases h : (List.range p.length).all (finished s)
+        · rfl
+        · exact absurd h hall
+      obtain ⟨i, hi, hu⟩ := all_false_exists hall'
+      have hrun := deadlock_unreachable p rank hp limit hl s hs i (List.mem_range.mp hi) hu
+      have hemp : (scheduleReadySteps limit s.ready.length s).running.isEmpty = false := by
+        cases h : (scheduleReadySteps limit s.ready.length s).running
+        · exact absurd h hrun
+        · rfl
+      dsimp only
+      rw [hemp]
+      simp only [Bool.false_eq_true, ite_false]
+      obtain ⟨⟨h1, h2, h3⟩, h4⟩ := hleg hall' hemp
+      exact ih _ (Reachable.batch s b hs h1 h2 h3) h4
+
 /-- Refinement exactly as the replay checks it: for a validated plan and a limit
-of at least 1, every legal run of at least `p.length` completion batches reports
-the recursive spec's per-step results, at the spec's own graph-size depth, and
-its overall status. -/
+of at least 1, every legal run of completion batches that finishes every step
+reports the recursive spec's per-step results, at the spec's own graph-size
+depth, and its overall status. The replay's `legal` and `complete` flags are
+the two run premises, and `legal_run_completes` shows `p.length` legal batches
+always finish every step. -/
 theorem legal_run_matches_spec (p : Plan) (rank : Nat → Nat) (hp : Ranked p rank)
     (limit : Int) (hl : 1 ≤ limit) (batches : List (List Nat))
     (h : Legal p limit (batches.map Action.batch) (initial p))
-    (hn : p.length ≤ batches.length) :
+    (hc : ∀ i < p.length,
+      finished (schedulingLoop p limit (batches.map Action.batch) (initial p)) i = true) :
     spec p = some (reported p (schedulingLoop p limit (batches.map Action.batch) (initial p))) ∧
       finalStatus (schedulingLoop p limit (batches.map Action.batch) (initial p)) =
         overall (reported p (schedulingLoop p limit (batches.map Action.batch) (initial p))) := by
-  obtain ⟨hr, hc⟩ := legal_batches_complete p rank hp limit hl batches (initial p)
-    Reachable.start h (Nat.le_trans (unfinishedCount_le p _) hn)
+  have hr := legal_batches_reachable p rank hp limit hl batches (initial p) Reachable.start h
   obtain ⟨hp', hlt⟩ := compress_rank p rank hp
   refine ⟨?_, complete_overall p limit _ hr hc⟩
   unfold spec reported

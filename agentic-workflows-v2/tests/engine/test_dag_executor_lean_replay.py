@@ -686,7 +686,8 @@ async def test_dag_executor_matches_operational_model(
     Lean theorems apply to the trace. On it the model must also end in
     the recursive spec's results and overall status, which
     ``legal_run_matches_spec`` proves for every legal trace of a
-    validated plan.
+    validated plan that finishes every step: the ``legal`` and
+    ``complete`` flags asserted here are its premises.
     """
     rng = random.Random(seed)
     plan = random_plan(rng, TERMINAL if seed % 2 else OUTCOMES)

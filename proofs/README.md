@@ -76,11 +76,12 @@ relabelled by insertion position, which makes the model's ready queue and
 adjacency follow `DAG.add` order. Lean drives `schedulingLoop` with those
 batches, and the start order, `step_end` order, results, lifecycle states,
 overall status and timeout/deadlock flags must equal the model's exactly. Each
-recorded trace must also be legal, so the theorems below cover it, and the
-model must end in the spec's results, as `legal_run_matches_spec` proves it
-does on every legal trace. Eight more plans make their first step hang under a
-0.2 s timeout. The test's observer never suspends, so the executor can only be
-interrupted at its FIRST_COMPLETED wait, right after a scheduling pass, which
+recorded trace must also be legal and finish every step. Those are the run
+premises of `legal_run_matches_spec`, so the model's agreement with the spec's
+results and overall status on these traces follows from that theorem; the
+replay still checks it against the compiled binary. Eight more plans make their
+first step hang under a 0.2 s timeout. The test's observer never suspends, so the
+executor can only be interrupted at its FIRST_COMPLETED wait, right after a scheduling pass, which
 is where the model applies the timeout. An observer that suspends can be
 interrupted mid-batch, which the model does not cover (see abstraction limits).
 A separate test confirms `legal` rejects a batch naming a step that is not
@@ -143,8 +144,9 @@ The substantive universal results are:
   scheduling, so a legal batch always exists; `legal_run_never_deadlocks` and
   `legal_run_completes`: no legal run takes the deadlock branch, and every
   legal run of at least `p.length` batches finishes every step.
-- `legal_run_matches_spec`: such a run reports exactly the recursive spec's
-  per-step results, at the spec's own graph-size depth, and its overall status.
+- `legal_run_matches_spec`: every legal run that finishes every step, however
+  few batches it took, reports exactly the recursive spec's per-step results,
+  at the spec's own graph-size depth, and its overall status.
   `complete_refines_spec` and `legal_run_refines_spec` state the per-step
   equality for any depth above a step's rank.
 - `no_counter_underflow`: processing a running step never decrements a counter
