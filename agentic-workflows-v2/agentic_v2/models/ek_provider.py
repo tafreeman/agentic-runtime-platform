@@ -36,6 +36,16 @@ Hard constraints (ADR-023 functionality-preservation + accepted decisions):
   reflects the inner route/backend capability (False for Gemini routes), never
   a hardcoded ``Literal[True]``. ``react_loop`` must therefore REFUSE to run
   tool-calling against a Gemini route rather than silently dropping tools.
+* **Physical-attempt reporting.** Because this provider owns the routing /
+  fallback loop, EK's trace events (one ``llm_call_start`` per EK-level
+  attempt) cannot see the individual models a single ``complete()`` fell
+  through. The optional ``attempt_callback`` constructor argument receives a
+  :class:`ProviderAttempt` for every *actual wire call* — each fallback hop
+  and each retry — so a study harness can attribute attempts, latencies, and
+  failures to the physical model that served them. Candidates skipped by the
+  bulkhead shed gate make no wire call and produce NO record; no ids or token
+  counts are ever synthesized here (usage belongs to the EK layer, which marks
+  it explicitly when a provider does not report it).
 
 Budget precedence (ACCEPTED) and the EK ``react_loop`` vs ``native`` tool-path
 selection are layered in Phase 5b at the ``LLMClientWrapper`` seam, NOT here:
@@ -44,9 +54,11 @@ this provider is a thin, reliability-preserving ``complete`` shim.
 
 from __future__ import annotations
 
+import logging
 import time
 import weakref
-from collections.abc import AsyncGenerator, AsyncIterator, Sequence
+from collections.abc import AsyncGenerator, AsyncIterator, Callable, Sequence
+from dataclasses import dataclass
 from typing import Any
 
 from executionkit.errors import ProviderError
@@ -71,7 +83,11 @@ except ImportError:  # pragma: no cover — optional dependency
     _httpx = None  # type: ignore[assignment]
     _HTTPX_AVAILABLE = False
 
+logger = logging.getLogger(__name__)
+
 __all__ = [
+    "AttemptCallback",
+    "ProviderAttempt",
     "SmartRouterProvider",
     "get_provider",
     "reset_provider_cache",
@@ -90,6 +106,33 @@ _MAX_FALLBACK_TRIES = 6
 _NO_TOOL_PROVIDERS = frozenset({"gemini"})
 
 
+@dataclass(frozen=True, slots=True)
+class ProviderAttempt:
+    """One physical wire attempt owned by the router fallback loop.
+
+    Emitted to the optional ``attempt_callback`` exactly once per real backend
+    call — retries and cross-model fallbacks each produce their own record,
+    and candidates skipped by the bulkhead shed gate (no wire call) produce
+    none. ``error_type`` is the exception class name only, never the message
+    (provider error text can echo credentials). No trace ids and no token
+    counts are synthesized: correlation belongs to the EK trace layer above,
+    and usage is reported there — explicitly marked missing when a provider
+    returns none.
+    """
+
+    model: str
+    latency_ms: float
+    ok: bool
+    error_type: str | None
+    streaming: bool
+
+
+# Observer for physical attempts. Synchronous by design: it is invoked on the
+# routing hot path (including error paths) where an awaitable would complicate
+# the exactly-once bookkeeping; observers must be cheap and non-blocking.
+AttemptCallback = Callable[[ProviderAttempt], None]
+
+
 class SmartRouterProvider:
     """EK ``LLMProvider`` / ``ToolCallingProvider`` backed by the runtime router.
 
@@ -103,6 +146,9 @@ class SmartRouterProvider:
             bulkhead, rate-limit cooldown, cross-tier fallback, Redis CAS).
         backend: Concrete :class:`LLMBackend` (typically a ``MultiBackend``).
         tier: The :class:`ModelTier` this provider routes to.
+        attempt_callback: Optional observer invoked exactly once per physical
+            wire attempt with a :class:`ProviderAttempt`. Observer exceptions
+            are logged and swallowed — telemetry must never break routing.
     """
 
     def __init__(
@@ -110,10 +156,27 @@ class SmartRouterProvider:
         router: SmartModelRouter,
         backend: LLMBackend,
         tier: ModelTier,
+        attempt_callback: AttemptCallback | None = None,
     ) -> None:
         self.router = router
         self.backend = backend
         self.tier = tier
+        self._attempt_callback = attempt_callback
+
+    def _report_attempt(self, attempt: ProviderAttempt) -> None:
+        """Notify the attempt observer, isolating its failures.
+
+        A telemetry observer that raises must never alter routing behaviour,
+        so exceptions are logged and swallowed (``asyncio.CancelledError``, a
+        ``BaseException``, still propagates).
+        """
+        callback = self._attempt_callback
+        if callback is None:
+            return
+        try:
+            callback(attempt)
+        except Exception:
+            logger.warning("attempt_callback raised; continuing", exc_info=True)
 
     # ------------------------------------------------------------------
     # Capability delegation (F-04): never hardcode Literal[True].
@@ -184,6 +247,9 @@ class SmartRouterProvider:
            (once), translate ``httpx.HTTPStatusError`` to an EK error class via
            ``ek_adapters.map_http_error`` and raise it so EK's RetryConfig can
            classify; loop to the next candidate otherwise.
+
+        Every physical wire attempt (step 3, success or failure) is reported
+        to the optional ``attempt_callback`` exactly once.
         """
         chat_messages = list(messages)
         tool_list = list(tools) if tools else None
@@ -227,6 +293,8 @@ class SmartRouterProvider:
             # "let execute_with_bulkhead queue": that would invert shed->queue
             # and diverge from the legacy loop. (Probe serialisation is still
             # owned by ``execute_with_bulkhead`` regardless of this gate.)
+            # A shed candidate makes NO wire call, so it is deliberately NOT
+            # reported to ``attempt_callback`` — only physical attempts are.
             if not self.router._is_model_ready_for_attempt(current_model):
                 continue
 
@@ -245,6 +313,15 @@ class SmartRouterProvider:
                 # physical call (rate-limit headers, cooldown, permanent
                 # marking all happen here).
                 self.router._classify_and_record_error(current_model, exc)
+                self._report_attempt(
+                    ProviderAttempt(
+                        model=current_model,
+                        latency_ms=(time.monotonic() - start_mono) * 1000.0,
+                        ok=False,
+                        error_type=type(exc).__name__,
+                        streaming=False,
+                    )
+                )
                 last_error = exc
                 translated = self._translate_error(exc)
                 if translated is not None:
@@ -259,6 +336,15 @@ class SmartRouterProvider:
             latency_ms = (time.monotonic() - start_mono) * 1000.0
             # Success bookkeeping fires EXACTLY once for this physical call.
             self.router.record_success(current_model, latency_ms)
+            self._report_attempt(
+                ProviderAttempt(
+                    model=current_model,
+                    latency_ms=latency_ms,
+                    ok=True,
+                    error_type=None,
+                    streaming=False,
+                )
+            )
             return ek_adapters.dict_to_llm_response(raw)
 
         raise ProviderError(
@@ -336,10 +422,28 @@ class SmartRouterProvider:
                     yield chunk
         except Exception as exc:
             self.router._classify_and_record_error(model, exc)
+            self._report_attempt(
+                ProviderAttempt(
+                    model=model,
+                    latency_ms=(time.monotonic() - start_mono) * 1000.0,
+                    ok=False,
+                    error_type=type(exc).__name__,
+                    streaming=True,
+                )
+            )
             raise
 
         latency_ms = (time.monotonic() - start_mono) * 1000.0
         self.router.record_success(model, latency_ms)
+        self._report_attempt(
+            ProviderAttempt(
+                model=model,
+                latency_ms=latency_ms,
+                ok=True,
+                error_type=None,
+                streaming=True,
+            )
+        )
         if usage_sink is not None:
             usage_sink.append(
                 LLMResponse(content="".join(chunks), raw={"model": model})
@@ -437,6 +541,10 @@ class SmartRouterProvider:
 #     A dead-ref or identity mismatch evicts the stale entry and rebuilds.
 # This makes id()-reuse impossible to observe: a recycled id never passes the
 # identity re-check, so a fresh provider is always built for a new object.
+#
+# Observability note: cached providers are built WITHOUT an ``attempt_callback``
+# — observers attach via direct construction (as ``engine.ek_step_delegation``
+# does), so the cached ``LLMClientWrapper`` seam reports no physical attempts.
 # ---------------------------------------------------------------------------
 
 _ProviderCacheKey = tuple[int, int, ModelTier]

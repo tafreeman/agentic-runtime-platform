@@ -24,6 +24,8 @@ import json
 import os
 import subprocess
 import sys
+import time
+from collections import Counter
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -31,9 +33,15 @@ KIT_ROOT = Path(__file__).resolve().parent
 if str(KIT_ROOT) not in sys.path:
     sys.path.insert(0, str(KIT_ROOT))
 
-from agentic_evalkit.artifacts import ArtifactStore  # noqa: E402
-from agentic_evalkit.datasets.local import LocalDatasetProvider  # noqa: E402
-from agentic_evalkit.models import (  # noqa: E402
+from agentic_evalkit.artifacts import ArtifactStore
+from agentic_evalkit.datasets.local import LocalDatasetProvider
+from agentic_evalkit.events import (
+    ExecutionCompleted,
+    GradeCompleted,
+    RunCompleted,
+    SampleCompleted,
+)
+from agentic_evalkit.models import (
     DatasetRef,
     DatasetSelection,
     EvalRunManifest,
@@ -43,10 +51,10 @@ from agentic_evalkit.models import (  # noqa: E402
     SamplingPolicy,
     SourceRecord,
 )
-from agentic_evalkit.reporters.json import JsonReporter  # noqa: E402
-from agentic_evalkit.runner import EvalRunner  # noqa: E402
-from agentic_evalkit.targets.subprocess import SubprocessTarget  # noqa: E402
-from graders import (  # noqa: E402
+from agentic_evalkit.reporters.json import JsonReporter
+from agentic_evalkit.runner import EvalRunner
+from agentic_evalkit.targets.subprocess import SubprocessTarget
+from graders import (
     build_grader,
     cleanup_worktree,
     load_oracle,
@@ -56,9 +64,13 @@ from graders import (  # noqa: E402
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
 
+    from agentic_evalkit.events import RunEvent
+
 CASES_JSONL = KIT_ROOT / "dataset" / "cases.jsonl"
 REPORTS_DIR = KIT_ROOT / "reports"
-ARP_PYTHON = Path("C:/Users/tandf/source/agentic-runtime-platform/.venv/Scripts/python.exe")
+ARP_PYTHON = Path(
+    "C:/Users/tandf/source/agentic-runtime-platform/.venv/Scripts/python.exe"
+)
 SCRATCH = Path(
     "C:/Users/tandf/AppData/Local/Temp/claude/"
     "C--Users-tandf-source-agentic-evalkit/98683646-eaf6-4196-85d4-372846e7317f/scratchpad"
@@ -128,7 +140,10 @@ PAID_CREDENTIALS = (
 
 
 class SweCaseAdapter:
-    """Projects one mined case into an ``EvalSample``. Pure projection, no I/O."""
+    """Projects one mined case into an ``EvalSample``.
+
+    Pure projection, no I/O.
+    """
 
     api_version = "1"
     name = ADAPTER_NAME
@@ -287,7 +302,12 @@ def grader_fingerprint() -> str:
     surely as a model change does, so it belongs in the union identity.
     """
     digest = hashlib.sha256()
-    for name in ("graders.py", "swebench_graders.py", "rubric.py", "container_harness.py"):
+    for name in (
+        "graders.py",
+        "swebench_graders.py",
+        "rubric.py",
+        "container_harness.py",
+    ):
         path = KIT_ROOT / name
         if path.is_file():
             digest.update(b"\0" + name.encode("utf-8") + b"\0")
@@ -308,7 +328,9 @@ _OWN_CREDENTIALS_BY_PREFIX = {
 }
 
 
-def build_child_env(workflow: str, model: str, timeout: float) -> dict[str, str]:
+def build_child_env(
+    workflow: str, model: str, timeout: float, max_cost_lane: str = "free"
+) -> dict[str, str]:
     # Blank, never delete -- see PAID_CREDENTIALS for why deleting is defeated
     # by the child re-reading ARP's .env.
     env = dict(os.environ)
@@ -324,11 +346,37 @@ def build_child_env(workflow: str, model: str, timeout: float) -> dict[str, str]
     for tier in range(0, 6):
         env[f"AGENTIC_MODEL_TIER_{tier}"] = model
     # AGENTIC_MODEL_TIER_* only reorders candidates -- get_model_candidates_for_tier
-    # still appends the registry's fallback chain after the pin (see bridge.py's
-    # monkeypatch of that function for why, and why a cost-lane ceiling can't fix
-    # it: deepseek-v4-flash:0731-cloud itself resolves to "paid" -- it isn't
-    # curated in the registry at all, so a ceiling that excludes paid fallbacks
-    # excludes the model under test too).
+    # still appends the registry's fallback chain after the pin, so a step that
+    # fails its output contract continues down a chain that includes every paid
+    # provider (see bridge.py's monkeypatch of that function).
+    #
+    # ADR-059's ceiling filters that chain instead of reordering it. It is
+    # layered *on top of* PAID_CREDENTIALS, not a replacement: ADR-059's own
+    # Consequences keep the strip, and the two catch different things.
+    #
+    # Blanking cannot cover every paid path, and two of them matter here:
+    # the Claude Code CLI backend authenticates with no key at all, and
+    # Ollama Cloud -- which this campaign ran on -- holds its credential in
+    # the local daemon rather than the environment (verified 2026-09-07: a
+    # completion on deepseek-v4-flash:0731-cloud returned 200 with
+    # OLLAMA_API_KEY unset). Only the ceiling closes those.
+    #
+    # Defaults to "free"; --max-cost-lane paid is the deliberate opt-in for a
+    # run that may draw on a metered plan. That opt-in exists because "paid"
+    # is not always an invoice: Ollama Cloud bills against a subscription
+    # allowance, so spending there is a prepaid drawdown the operator may well
+    # intend. Making it an argument keeps the choice recorded. What must never
+    # happen is curating a metered model `free` to get past the ceiling.
+    #
+    # Consequence with the default: Ollama Cloud is curated `paid`, so a `free`
+    # ceiling REFUSES the campaign's historical --model default and bridge.py
+    # fails the run immediately, saying so.
+    #
+    # What the ceiling does NOT do: collapse the chain to one model. Curated
+    # `local` ids rank below `free`, so a local Ollama model survives the
+    # filter and remains a silent-substitution risk -- that stays bridge.py's
+    # job, which refuses to grade any sample another model answered.
+    env["AGENTIC_MAX_COST_LANE"] = max_cost_lane
     env["PYTHONIOENCODING"] = "utf-8"
     return env
 
@@ -415,6 +463,81 @@ def prepare_grading_worktrees(cases_path: Path) -> dict[str, tuple[Path, Path]]:
     return prepared
 
 
+def case_count(cases_path: Path) -> int:
+    """Rows in the case index, for the progress denominator only.
+
+    Nothing downstream depends on this: it is a display total, so a
+    miscount would show a wrong denominator and change no verdict.
+    """
+    return sum(
+        1
+        for line in cases_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    )
+
+
+class WaveProgress:
+    """One line per finished sample, so a multi-hour wave shows it is alive.
+
+    ``EvalRunner`` already emits these events; an ``event_sink`` only
+    observes them. Nothing here can change what runs, what is graded, or
+    what the report records -- a progress printer that could would be a
+    validity problem rather than a convenience, which is why this keeps its
+    own counters instead of touching the result.
+
+    Lines go to stderr, flushed one at a time. stdout carries the report
+    path and the summary line a wave script parses, and an unflushed buffer
+    is exactly what goes missing when a long run is killed rather than
+    allowed to finish -- which is the case this exists for.
+    """
+
+    def __init__(self, total: int | None) -> None:
+        self._total = total
+        self._started = time.monotonic()
+        self._done = 0
+        self._tally: Counter[str] = Counter()
+        self._executions: dict[tuple[str, int], str] = {}
+        self._grades: dict[tuple[str, int], str] = {}
+
+    def __call__(self, event: RunEvent) -> None:
+        if isinstance(event, ExecutionCompleted):
+            self._executions[(event.sample_id, event.attempt)] = event.status.value
+        elif isinstance(event, GradeCompleted):
+            self._grades[(event.sample_id, event.attempt)] = event.status.value
+        elif isinstance(event, SampleCompleted):
+            self._emit(event.sample_id, event.attempt)
+        elif isinstance(event, RunCompleted):
+            self._write(f"run finished after {self._elapsed()}")
+
+    def _emit(self, sample_id: str, attempt: int) -> None:
+        key = (sample_id, attempt)
+        # Popped rather than read: over a 200-sample wave these dicts would
+        # otherwise retain every sample's status for the life of the run.
+        executed = self._executions.pop(key, "?")
+        # A sample whose execution never produced a response is never graded,
+        # so a missing grade here is the normal path for a failed call, not a
+        # dropped event.
+        graded = self._grades.pop(key, "-")
+        self._done += 1
+        self._tally[graded] += 1
+        running = " ".join(
+            f"{status}={count}" for status, count in sorted(self._tally.items())
+        )
+        total = str(self._total) if self._total else "?"
+        self._write(
+            f"[{self._done:>4}/{total}] {sample_id} exec={executed} grade={graded} "
+            f"| {running} | {self._elapsed()}"
+        )
+
+    def _elapsed(self) -> str:
+        seconds = int(time.monotonic() - self._started)
+        return f"{seconds // 3600}:{seconds // 60 % 60:02d}:{seconds % 60:02d}"
+
+    @staticmethod
+    def _write(text: str) -> None:
+        print(text, file=sys.stderr, flush=True)
+
+
 async def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--arm", choices=sorted(ARMS), required=True)
@@ -448,6 +571,20 @@ async def main() -> int:
         help="remove the grading worktree afterwards (off by default: it is reused "
         "across arms and its venv costs minutes to rebuild)",
     )
+    parser.add_argument(
+        "--max-cost-lane",
+        choices=("local", "free", "paid"),
+        default="free",
+        help="ADR-059 ceiling for the child run (default: free). 'paid' permits "
+        "metered models -- including Ollama Cloud, which bills against a plan "
+        "allowance -- and is the deliberate opt-in for spending on a wave.",
+    )
+    parser.add_argument(
+        "--no-progress",
+        action="store_true",
+        help="suppress the per-sample progress lines on stderr (on by default: a "
+        "wave runs for hours and is otherwise silent until it finishes)",
+    )
     args = parser.parse_args()
 
     workflow, run_name = ARMS[args.arm]
@@ -460,7 +597,7 @@ async def main() -> int:
 
     target = SubprocessTarget(
         command=(str(ARP_PYTHON), str(KIT_ROOT / "bridge.py")),
-        env=build_child_env(workflow, args.model, args.timeout),
+        env=build_child_env(workflow, args.model, args.timeout, args.max_cost_lane),
         max_output_bytes=4 * 1024 * 1024,
     )
 
@@ -516,15 +653,25 @@ async def main() -> int:
         # never be mistaken for "unchanged".
         code_fingerprint=f"agentic_v2:{runtime_fingerprint() or 'unknown'}",
         environment_fingerprint=f"graders:{grader_fingerprint()}",
-        selection=DatasetSelection(limit=args.limit) if args.limit else DatasetSelection(),
+        selection=(
+            DatasetSelection(limit=args.limit) if args.limit else DatasetSelection()
+        ),
         sampling=SamplingPolicy(attempts=args.attempts, temperature=0.0, seed=20260827),
         attempts=args.attempts,
         timeout_seconds=args.timeout,
         concurrency=args.concurrency,
     )
 
+    progress: WaveProgress | None = None
+    if not args.no_progress:
+        # --limit caps the samples drawn; without it every row in the index
+        # runs. Either way each sample is attempted `attempts` times, and the
+        # runner emits one SampleCompleted per attempt.
+        drawn = args.limit if args.limit else case_count(cases_path)
+        progress = WaveProgress(drawn * args.attempts)
+
     try:
-        result = await runner.run(manifest)
+        result = await runner.run(manifest, event_sink=progress)
     finally:
         if args.cleanup_worktree:
             # Remove the *registered* checkout root, not the grading

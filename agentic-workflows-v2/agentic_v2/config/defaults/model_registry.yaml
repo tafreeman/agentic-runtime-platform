@@ -292,6 +292,98 @@ models:
     price_out: 0.0
     context_window: null
 
+  # --- Eval-campaign models (SWE-fix A/B; ADR-059) ---
+  # tiers: [] for the same reason as the NIM block above -- curating a cost
+  # lane is not promoting a model into routing (ADR-040). Every lane below was
+  # verified against the live provider on 2026-09-07, not inferred from a name.
+  #
+  # ollama: Cloud is METERED as of 2026-09-07. ollama.com/pricing bills per
+  # million tokens (deepseek-v4-flash $0.22 in / $0.66 out, doubling to
+  # $0.44/$1.32 at peak, Mon-Fri 12:00-18:00 UTC; glm-5.3 $1.40/$4.40), drawn
+  # against a plan allowance -- this operator's subscription is $20/month
+  # including $60 of credits. A prepaid drawdown is still a charge, and `free`
+  # here means no charge, so these are curated `paid`.
+  #
+  # Ollama's cloud lineup and terms changed shortly after this campaign's waves
+  # ran, so treat the lane as a point-in-time judgment: re-verify against
+  # ollama.com/pricing before a new campaign rather than trusting this comment's
+  # date, the same discipline the NIM block above already states for model ids.
+  #
+  # Two things make this worth stating in the registry rather than assuming:
+  #   - `-cloud`/`:cloud` ids appear in the LOCAL daemon's /api/tags with size
+  #     0 B. They are cloud proxies, not local weights, and calling one bills.
+  #   - Auth for them lives in the ollama daemon (CLI login), NOT in the
+  #     environment. Verified 2026-09-07: a chat completion on
+  #     deepseek-v4-flash:0731-cloud returned 200 with OLLAMA_API_KEY unset.
+  #     run_ab.py's PAID_CREDENTIALS strip therefore CANNOT reach this path --
+  #     the cost-lane ceiling is the only control that stops it.
+  - id: ollama:deepseek-v4-flash:0731-cloud
+    provider: ollama
+    tiers: []
+    status: active
+    cost_lane: paid
+    price_in: 0.22
+    price_out: 0.66
+    context_window: null
+  - id: ollama:glm-5.3:cloud
+    provider: ollama
+    tiers: []
+    status: active
+    cost_lane: paid
+    price_in: 1.40
+    price_out: 4.40
+    context_window: null
+  # openrouter: the ":free" suffix is a distinct id for the zero-price variant,
+  # not a flag on the metered one -- minimax/minimax-m3 is $0.30/$1.20 and stays
+  # uncurated (therefore `paid` by the fail-closed default). Each ":free" id
+  # below was confirmed by a live completion returning usage.cost == 0; the id
+  # list alone is not evidence, since several advertised ":free" ids do not
+  # serve (nvidia/nemotron-*:free -> 404 "0 endpoints available matching your
+  # guardrail", thinkingmachines/inkling:free -> 403 "only available on agentic
+  # harnesses", google/gemma-4-31b-it:free -> upstream 429).
+  #
+  # A free id can also stop being free between two checks on the same day. Both
+  # minimax ":free" ids answered with usage.cost == 0 at ~10:00 on 2026-09-07
+  # and were gone from /v1/models entirely by ~11:30, returning 404 "This model
+  # is unavailable for free. The paid version is available now". They are kept
+  # here as `deprecated` rather than deleted so the next reader sees that this
+  # happened rather than wondering why the ids vanished -- `deprecated` keeps
+  # them out of routing while the `paid` lane keeps a ceiling from admitting
+  # them if they ever come back under the old id.
+  - id: openrouter:minimax/minimax-m3:free
+    provider: openrouter
+    tiers: []
+    status: deprecated
+    cost_lane: paid
+    price_in: null
+    price_out: null
+    context_window: 1048576
+  - id: openrouter:minimax/minimax-m2.7:free
+    provider: openrouter
+    tiers: []
+    status: deprecated
+    cost_lane: paid
+    price_in: null
+    price_out: null
+    context_window: 196608
+  # Verified twice on 2026-09-07 (~10:00 and ~11:30), both times usage.cost == 0.
+  - id: openrouter:cohere/north-mini-code:free
+    provider: openrouter
+    tiers: []
+    status: active
+    cost_lane: free
+    price_in: 0.0
+    price_out: 0.0
+    context_window: 256000
+  - id: openrouter:inclusionai/ling-3.0-flash-fin:free
+    provider: openrouter
+    tiers: []
+    status: active
+    cost_lane: free
+    price_in: 0.0
+    price_out: 0.0
+    context_window: 262144
+
 # Ordered fallback chains per tier. Reconciled from the previously divergent
 # router.DEFAULT_CHAINS (escalating, cloud-only) and langchain._TIER_FALLBACK_CHAINS
 # (flat, +local). Resolution = cloud-capability-first then a local Ollama tail;

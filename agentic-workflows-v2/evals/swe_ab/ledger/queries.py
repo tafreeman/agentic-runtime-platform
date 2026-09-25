@@ -127,6 +127,25 @@ _ACTIVE_GRADE = """(
     )
 )"""
 
+#: The same trap as `_ACTIVE_GRADE`, one level down: `trial` now allows a
+#: correction too (`trial.supersedes REFERENCES trial (trial_id)`, with
+#: `idx_trial_active_cell` enforcing at most one active row per
+#: `(wave_id, arm_id, task_id, run_idx)` cell -- schema.sql's own
+#: composite primary key used to make a correcting trial impossible to
+#: insert at all, so a bare `trial` read was safe by construction until
+#: that constraint moved onto `trial_id`). A plain `FROM trial` now joins
+#: a corrected cell's original AND correcting row: `n_trials` counts
+#: double, an operational-failure count can include a since-corrected
+#: `op_status`, and a per-instance read can pick either row
+#: nondeterministically. Every read of `trial` below that is scoped by
+#: `wave_id`/`arm_id` uses this in place of the bare table name.
+_ACTIVE_TRIAL = """(
+    SELECT * FROM trial
+    WHERE trial_id NOT IN (
+        SELECT supersedes FROM trial WHERE supersedes IS NOT NULL
+    )
+)"""
+
 
 def _instance_statuses(
     conn: sqlite3.Connection, wave_id: str, arm_id: str
@@ -141,12 +160,12 @@ def _instance_statuses(
     None`.
     """
     rows = conn.execute(
-        """
+        f"""
         SELECT t.task_id, t.run_idx, t.op_status, g.outcome
-        FROM trial t
-        LEFT JOIN {active_grade} g ON g.trial_id = t.trial_id
+        FROM {_ACTIVE_TRIAL} t
+        LEFT JOIN {_ACTIVE_GRADE} g ON g.trial_id = t.trial_id
         WHERE t.wave_id = ? AND t.arm_id = ?
-        """.format(active_grade=_ACTIVE_GRADE),  # noqa: S608, UP032 -- active_grade is a fixed module constant; an f-string here would retrigger S608 on the interpolation
+        """,  # noqa: S608 - constant subquery; values are bound
         (wave_id, arm_id),
     ).fetchall()
     result: dict[tuple[str, int], tuple[str, str | None]] = {}
@@ -189,10 +208,10 @@ class ArmPassRate:
 
 
 def arm_pass_rates(conn: sqlite3.Connection, wave_id: str) -> tuple[ArmPassRate, ...]:
-    """Per-arm pass rate, reported both ways at once (see module
-    docstring): over verdicts only, and over every trial including
-    operational failures. Never just one -- that is the whole point of
-    this ledger.
+    """Per-arm pass rate, reported both ways at once (see module docstring): over.
+
+    verdicts only, and over every trial including operational failures. Never just one
+    -- that is the whole point of this ledger.
 
     "Verdict" here means `grade.outcome IS NOT NULL` -- a trial that ran
     fine (`op_status='ok'`) but whose grader reported `abstain`/
@@ -202,32 +221,34 @@ def arm_pass_rates(conn: sqlite3.Connection, wave_id: str) -> tuple[ArmPassRate,
     results: list[ArmPassRate] = []
     for arm_id, arm_key in _arms_in_wave(conn, wave_id):
         trial_row = conn.execute(
-            "SELECT COUNT(*) AS n FROM trial WHERE wave_id = ? AND arm_id = ?",
+            f"""
+            SELECT COUNT(*) AS n FROM {_ACTIVE_TRIAL} WHERE wave_id = ? AND arm_id = ?
+            """,  # noqa: S608 - constant subquery; values are bound
             (wave_id, arm_id),
         ).fetchone()
         n_trials: int = trial_row["n"]
 
         verdict_row = conn.execute(
-            """
+            f"""
             SELECT COUNT(*) AS n_verdicts,
                    SUM(CASE WHEN g.outcome = 'pass' THEN 1 ELSE 0 END) AS n_pass
-            FROM trial t
-            JOIN {active_grade} g ON g.trial_id = t.trial_id
+            FROM {_ACTIVE_TRIAL} t
+            JOIN {_ACTIVE_GRADE} g ON g.trial_id = t.trial_id
             WHERE t.wave_id = ? AND t.arm_id = ? AND g.outcome IS NOT NULL
-            """.format(active_grade=_ACTIVE_GRADE),  # noqa: S608, UP032 -- active_grade is a fixed module constant; an f-string here would retrigger S608 on the interpolation
+            """,  # noqa: S608 - constant subquery; values are bound
             (wave_id, arm_id),
         ).fetchone()
         n_verdicts: int = verdict_row["n_verdicts"]
         n_pass: int = verdict_row["n_pass"] or 0
 
         failure_rows = conn.execute(
-            """
+            f"""
             SELECT op_status, COUNT(*) AS n
-            FROM trial
+            FROM {_ACTIVE_TRIAL}
             WHERE wave_id = ? AND arm_id = ? AND op_status <> 'ok'
             GROUP BY op_status
             ORDER BY op_status
-            """,
+            """,  # noqa: S608 - constant subquery; values are bound
             (wave_id, arm_id),
         ).fetchall()
         failures = tuple(
@@ -304,8 +325,8 @@ def _exclusion_label(op_status: str, outcome: str | None, has_verdict: bool) -> 
 def paired_outcomes(
     conn: sqlite3.Connection, wave_id: str, arm_a: str, arm_b: str
 ) -> PairedResult:
-    """McNemar + bootstrap over instances where BOTH `arm_a` and `arm_b`
-    produced a verdict at the same `(task_id, run_idx)`.
+    """McNemar + bootstrap over instances where BOTH `arm_a` and `arm_b` produced a
+    verdict at the same `(task_id, run_idx)`.
 
     An instance where either side has no trial at all, has a trial whose
     `op_status != 'ok'`, or ran fine but got no pass/fail grade (grader
@@ -396,8 +417,8 @@ class OmnibusResult:
 
 
 def omnibus(conn: sqlite3.Connection, wave_id: str) -> OmnibusResult:
-    """Cochran's Q across every arm in the wave, then pairwise McNemar
-    with Holm correction as a post-hoc follow-up.
+    """Cochran's Q across every arm in the wave, then pairwise McNemar with Holm
+    correction as a post-hoc follow-up.
 
     Both the omnibus Q and every pairwise test below it are computed on
     the SAME subset: instances where every arm in the wave produced a
@@ -510,17 +531,17 @@ def repeat_aggregate(
     aggregate.
     """
     rows = conn.execute(
-        """
+        f"""
         SELECT a.arm_id, a.arm_key, t.task_id,
                COUNT(*) FILTER (WHERE g.outcome IS NOT NULL) AS n_verdict,
                SUM(CASE WHEN g.outcome = 'pass' THEN 1 ELSE 0 END) AS n_pass
-        FROM trial t
+        FROM {_ACTIVE_TRIAL} t
         JOIN arm a ON a.arm_id = t.arm_id
-        LEFT JOIN {active_grade} g ON g.trial_id = t.trial_id
+        LEFT JOIN {_ACTIVE_GRADE} g ON g.trial_id = t.trial_id
         WHERE t.wave_id = ?
         GROUP BY a.arm_id, t.task_id
         ORDER BY a.arm_key, t.task_id
-        """.format(active_grade=_ACTIVE_GRADE),  # noqa: S608, UP032 -- active_grade is a fixed module constant; an f-string here would retrigger S608 on the interpolation
+        """,  # noqa: S608 - constant subquery; values are bound
         (wave_id,),
     ).fetchall()
 
@@ -590,7 +611,7 @@ class ArmCost:
 #: than one `spend` row over time; the correlated subquery below picks
 #: the most-recently-`computed_at` row per trial (ties broken by
 #: `spend_id`) so a re-computed cost is used once, not summed twice.
-_COST_SQL = """
+_COST_SQL = f"""
     SELECT
         COUNT(*) AS n_trials,
         COUNT(g.trial_id) AS n_verdicts,
@@ -614,8 +635,8 @@ _COST_SQL = """
         COUNT(sp.gpu_seconds) AS cov_gpu_seconds,
         SUM(sp.gpu_seconds) FILTER (WHERE g.trial_id IS NOT NULL) AS v_sum_gpu_seconds,
         COUNT(sp.gpu_seconds) FILTER (WHERE g.trial_id IS NOT NULL) AS v_cov_gpu_seconds
-    FROM trial t
-    LEFT JOIN {active_grade} g ON g.trial_id = t.trial_id
+    FROM {_ACTIVE_TRIAL} t
+    LEFT JOIN {_ACTIVE_GRADE} g ON g.trial_id = t.trial_id
     LEFT JOIN (
         SELECT s1.trial_id, s1.cost_usd, s1.gpu_seconds
         FROM spend s1
@@ -627,7 +648,7 @@ _COST_SQL = """
         )
     ) sp ON sp.trial_id = t.trial_id
     WHERE t.wave_id = ? AND t.arm_id = ?
-""".format(active_grade=_ACTIVE_GRADE)  # noqa: S608, UP032 -- active_grade is a fixed module constant; an f-string here would retrigger S608 on the interpolation
+"""  # noqa: S608 -- active_trial/active_grade are fixed module constants; an f-string here would retrigger S608 on the interpolation
 
 
 def _sum_field(row: sqlite3.Row, col: str) -> float | None:
@@ -721,11 +742,10 @@ class StepCost:
 
 
 def step_cost_by_arm(conn: sqlite3.Connection, wave_id: str) -> tuple[StepCost, ...]:
-    """Token totals grouped by `(arm, step_name)` -- which step burned
-    the extra tokens, not just which arm.
-    """
+    """Token totals grouped by `(arm, step_name)` -- which step burned the extra tokens,
+    not just which arm."""
     rows = conn.execute(
-        """
+        f"""
         SELECT a.arm_id, a.arm_key, su.step_name,
                COUNT(*) AS n_occurrences,
                SUM(su.tokens_in) AS sum_tokens_in,
@@ -733,12 +753,12 @@ def step_cost_by_arm(conn: sqlite3.Connection, wave_id: str) -> tuple[StepCost, 
                SUM(su.tokens_out) AS sum_tokens_out,
                COUNT(su.tokens_out) AS cov_tokens_out
         FROM step_usage su
-        JOIN trial t ON t.trial_id = su.trial_id
+        JOIN {_ACTIVE_TRIAL} t ON t.trial_id = su.trial_id
         JOIN arm a ON a.arm_id = t.arm_id
         WHERE t.wave_id = ?
         GROUP BY a.arm_id, su.step_name
         ORDER BY a.arm_key, su.step_name
-        """,
+        """,  # noqa: S608 - constant subquery; values are bound
         (wave_id,),
     ).fetchall()
     return tuple(
@@ -806,17 +826,19 @@ def completeness(conn: sqlite3.Connection, wave_id: str) -> Completeness:
         planned_cells = {(r["task_id"], r["run_idx"]) for r in planned_rows}
 
         trial_rows = conn.execute(
-            "SELECT task_id, run_idx FROM trial WHERE wave_id = ? AND arm_id = ?",
+            f"""
+            SELECT task_id, run_idx FROM {_ACTIVE_TRIAL} WHERE wave_id = ? AND arm_id = ?
+            """,  # noqa: S608 - constant subquery; values are bound
             (wave_id, arm_id),
         ).fetchall()
         trial_cells = {(r["task_id"], r["run_idx"]) for r in trial_rows}
 
         verdict_row = conn.execute(
-            """
-            SELECT COUNT(*) AS n_verdicts FROM trial t
-            JOIN {active_grade} g ON g.trial_id = t.trial_id
+            f"""
+            SELECT COUNT(*) AS n_verdicts FROM {_ACTIVE_TRIAL} t
+            JOIN {_ACTIVE_GRADE} g ON g.trial_id = t.trial_id
             WHERE t.wave_id = ? AND t.arm_id = ? AND g.outcome IS NOT NULL
-            """.format(active_grade=_ACTIVE_GRADE),  # noqa: S608, UP032 -- active_grade is a fixed module constant; an f-string here would retrigger S608 on the interpolation
+            """,  # noqa: S608 - constant subquery; values are bound
             (wave_id, arm_id),
         ).fetchone()
         n_verdicts: int = verdict_row["n_verdicts"]
@@ -943,9 +965,8 @@ class Verdict:
 def verdict(
     conn: sqlite3.Connection, wave_id: str, *, alpha: float = DEFAULT_ALPHA
 ) -> Verdict:
-    """The wave's bottom line: pass rates, the appropriate significance
-    test for the arm count, cost, completeness, and a plain-language
-    summary.
+    """The wave's bottom line: pass rates, the appropriate significance test for the arm
+    count, cost, completeness, and a plain-language summary.
 
     `is_sound` is False whenever the wave is incomplete (some arm is
     missing planned cells) or unbalanced (arms do not cover the same
@@ -1039,11 +1060,10 @@ def _summarize(
     ]
 
     if not is_sound:
-        return (
-            "CAUTION -- "
-            + "; ".join(caveats)
-            + ". A significance result was computed but is NOT a sound read "
-            "until the wave is complete and balanced.\n" + "\n".join(lines)
+        return "CAUTION -- " + "; ".join(
+            caveats
+        ) + ". A significance result was computed but is NOT a sound read " "until the wave is complete and balanced.\n" + "\n".join(
+            lines
         )
 
     if paired is not None:

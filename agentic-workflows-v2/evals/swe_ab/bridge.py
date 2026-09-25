@@ -48,10 +48,10 @@ def _fail(message: str, code: int = 1) -> None:
 def _coerce_text(value: Any) -> str:
     """Flatten whatever a step returned into text.
 
-    A step's declared output is normally a string, but a model that answers in
-    JSON can leave a dict or list here. Anything non-string is serialised
-    rather than dropped, so the grader sees what actually came back instead of
-    an empty field.
+    A step's declared output is normally a string, but a model that
+    answers in JSON can leave a dict or list here. Anything non-string
+    is serialised rather than dropped, so the grader sees what actually
+    came back instead of an empty field.
     """
     if value is None:
         return ""
@@ -93,9 +93,20 @@ def _pin_model_candidates_exclusively() -> None:
     for the Claude Code CLI backend it is the operator's own subscription quota,
     which ``PAID_CREDENTIALS`` cannot touch since that backend is built to
     authenticate with no key present at all (backends_claude.subscription_env).
-    A cost-lane ceiling can't fix this either: deepseek-v4-flash:0731-cloud
-    is not curated in the registry and so resolves to "paid" by the fail-closed
-    default, same as everything this is meant to exclude.
+    ADR-059's cost-lane ceiling removes the *paid* entries from that chain --
+    run_ab.py sets ``AGENTIC_MAX_COST_LANE=free``. It does not remove the need
+    for this patch: curated ``local`` ids rank below ``free`` and survive the
+    filter, so a local Ollama model is still a candidate behind the pin. The
+    ceiling bounds what a substitution can *cost*; only this patch and the
+    substitution check below bound what it can *be*.
+
+    Note the ceiling is not redundant with ``PAID_CREDENTIALS`` for this
+    campaign's own model. Ollama Cloud is metered (ollama.com/pricing), and
+    its auth lives in the local ollama daemon rather than the environment --
+    verified 2026-09-07: a completion on ``deepseek-v4-flash:0731-cloud``
+    returned 200 with ``OLLAMA_API_KEY`` unset. Blanking a credential cannot
+    close a path that never reads one; the ceiling is the only control that
+    does, which is why ``_require_model_within_cost_lane`` refuses that model.
 
     Patched at ``agentic_v2.langchain.models`` before any other module does
     ``from .models import get_model_candidates_for_tier`` and binds its own
@@ -104,14 +115,55 @@ def _pin_model_candidates_exclusively() -> None:
     """
     from agentic_v2.langchain import models as _models
 
-    def _exclusive(tier: int, model_override: str | None = None, **_kwargs: Any) -> list[str]:
+    def _exclusive(
+        tier: int, model_override: str | None = None, **_kwargs: Any
+    ) -> list[str]:
         if model_override:
             return [_models.resolve_model_override(model_override)]
-        return _models._real_get_model_candidates_for_tier(tier, model_override, **_kwargs)
+        return _models._real_get_model_candidates_for_tier(
+            tier, model_override, **_kwargs
+        )
 
     if not hasattr(_models, "_real_get_model_candidates_for_tier"):
-        _models._real_get_model_candidates_for_tier = _models.get_model_candidates_for_tier
+        _models._real_get_model_candidates_for_tier = (
+            _models.get_model_candidates_for_tier
+        )
     _models.get_model_candidates_for_tier = _exclusive
+
+
+def _require_model_within_cost_lane(model: str) -> None:
+    """Refuse to start when the model under test is above the cost-lane ceiling.
+
+    Under ``AGENTIC_MAX_COST_LANE`` an uncurated model resolves to ``"paid"``
+    (``cost_lane_for`` fails closed) and is filtered out of every tier's
+    candidate list. That does not raise on its own: the filter only raises
+    when it empties a list, and the registry's ``local`` Ollama tail survives
+    it -- so the run would quietly proceed on a *different* model. The
+    substitution check in ``_run`` would then reject every sample, one wave's
+    worth of compute after the fact.
+
+    Failing here instead costs one sample and names the actual fix: curate the
+    model ``cost_lane: free`` in ``model_registry.yaml`` (ADR-059), or drop
+    the ceiling for this run.
+    """
+    from agentic_v2.models.model_registry import (
+        CostLaneCeilingExceededError,
+        cost_lane_for,
+        enforce_cost_lane_ceiling,
+        max_cost_lane_ceiling,
+    )
+
+    try:
+        enforce_cost_lane_ceiling(model)
+    except CostLaneCeilingExceededError:
+        _fail(
+            f"model under test {model!r} resolves to cost lane "
+            f"{cost_lane_for(model)!r}, above AGENTIC_MAX_COST_LANE="
+            f"{max_cost_lane_ceiling()!r}; it would be filtered out of every "
+            f"tier and the run would continue on a different model. Curate it "
+            f"in model_registry.yaml (ADR-059) or unset the ceiling.",
+            code=6,
+        )
 
 
 async def _run(request: dict[str, Any]) -> dict[str, Any]:
@@ -120,6 +172,7 @@ async def _run(request: dict[str, Any]) -> dict[str, Any]:
 
     workflow = os.environ.get("AB_WORKFLOW", "swe_fix_direct")
     model = os.environ.get("AB_MODEL", "ollama:deepseek-v4-flash:0731-cloud")
+    _require_model_within_cost_lane(model)
     sample_id = str(request.get("sample_id", "unknown"))
     payload = request.get("input") or {}
 

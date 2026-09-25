@@ -6,11 +6,15 @@ Phase 6:
 
 * **6a** — the inner plain-completion turn of an LLM-backed step
   (``engine.tool_execution.complete_chat_with_fallback``) routes through EK
-  ``_TrackedProvider`` / ``checked_complete`` over a ``SmartRouterProvider`` when
-  ``settings.agentic_ek_provider`` is ON.
+  ``checked_complete`` (+ ``_note_truncation``) over a ``SmartRouterProvider``
+  when ``settings.agentic_ek_provider`` is ON.
 * **6c** — structured JSON extraction routes through EK ``structured()``; the
   runtime ``ReviewStatus.normalize`` STILL runs at the DAG/gating layer
   afterward (asserted unchanged).
+* **observability** — the optional ``trace`` / ``attempt_callback`` observers
+  are threaded onto every delegation path: EK-level events mark the logical
+  call (and its EK retries), while ``ProviderAttempt`` records mark the
+  *physical* wire attempts the router's fallback loop makes inside one call.
 
 Critically, ``StepExecutor`` keeps ALL DAG-level lifecycle: ``should_run`` /
 ``when`` / ``unless``, ``RetryConfig`` / backoff, ``loop_until``, pre/post/error
@@ -40,17 +44,17 @@ pytest.importorskip(
     "(ADR-023 dependency); Phase 6 step-delegation suite skipped.",
 )
 
-# Checked BEFORE the ARP imports below, deliberately. `_TrackedProvider` is a
+# Checked BEFORE the ARP imports below, deliberately. ``_note_truncation`` is a
 # private, unexported ExecutionKit symbol that
 # `agentic_v2.engine.ek_step_delegation` imports at module scope, and this suite
 # exists to catch its removal. If EK renamed it, importing that module would fail
 # first with a bare ImportError; checking the symbol here names the coupling.
 try:
-    from executionkit.patterns.base import _TrackedProvider
+    from executionkit.patterns.base import _note_truncation, checked_complete
 except ImportError as exc:  # pragma: no cover
     raise AssertionError(
         "executionkit is importable but no longer exposes "
-        "executionkit.patterns.base._TrackedProvider, which "
+        "executionkit.patterns.base.checked_complete / ._note_truncation, which "
         "agentic_v2.engine.ek_step_delegation imports. Failing loudly rather "
         "than skipping: this is the consumer break the suite exists to detect."
     ) from exc
@@ -101,57 +105,54 @@ def _force_no_llm_env() -> Any:
         get_settings.cache_clear()
 
 
-# ── Consumer contract: EK _TrackedProvider ────────────────────────────
-# ARP imports ``executionkit.patterns.base._TrackedProvider`` — a private,
-# unexported symbol.  EK could rename it without semver signal, breaking ARP
-# at import time.  This test asserts the symbol exists and has the interface
-# we depend on, so a rename is caught the next time this suite runs (the
-# ``ek-delegation-tests`` CI job).
+# ── Consumer contract: EK checked_complete / _note_truncation ───────────────
+# ARP imports ``executionkit.patterns.base._note_truncation`` — a private,
+# unexported symbol — and drives the public ``checked_complete`` with a
+# ``trace=`` keyword. EK could rename the private one without semver signal,
+# breaking ARP at import time. This test asserts both symbols exist with the
+# interface we depend on, so a rename is caught the next time this suite runs
+# (the ``ek-delegation-tests`` CI job).
 
 
-def test_ek_tracked_provider_interface() -> None:
-    """Assert that ``_TrackedProvider`` has the interface ARP depends on."""
+def test_ek_checked_call_interface() -> None:
+    """Assert that ``checked_complete`` / ``_note_truncation`` keep our interface."""
     # Existence: the import at module level already validates this.
-    assert _TrackedProvider is not None
+    assert checked_complete is not None
+    assert callable(_note_truncation)
 
-    # Constructor signature: (provider, tracker, metadata, budget, retry, context)
-    sig = inspect.signature(_TrackedProvider.__init__)
+    # Signature: (provider, messages, tracker, budget, retry, trace=None, ...)
+    sig = inspect.signature(checked_complete)
     params = list(sig.parameters.keys())
-    for expected in ("provider", "tracker", "metadata", "budget", "retry", "context"):
+    for expected in ("provider", "messages", "tracker", "budget", "retry", "trace"):
         assert expected in params, (
-            f"_TrackedProvider.__init__ missing expected parameter {expected!r}; "
+            f"checked_complete missing expected parameter {expected!r}; "
             f"got {params}"
         )
 
-    # Must have a ``complete`` method (the async method we call)
-    assert hasattr(
-        _TrackedProvider, "complete"
-    ), "_TrackedProvider is missing the ``complete`` method"
-
-    # ``complete_turn_via_ek`` passes the first three arguments positionally, so
-    # their order matters as much as their names: swapping tracker and metadata
+    # ``complete_turn_via_ek`` passes the first five arguments positionally, so
+    # their order matters as much as their names: swapping tracker and budget
     # would still pass the name check above. Bind ARP's exact call shapes
     # without calling anything.
-    assert params[1:4] == [
+    assert params[:5] == [
         "provider",
+        "messages",
         "tracker",
-        "metadata",
-    ], f"_TrackedProvider.__init__ positional order changed; got {params}"
+        "budget",
+        "retry",
+    ], f"checked_complete positional order changed; got {params}"
     try:
-        inspect.signature(_TrackedProvider).bind(
-            object(), object(), {}, budget=None, retry=None, context="step"
+        sig.bind(
+            object(), [], object(), None, None, trace=None, max_tokens=1, tools=None
         )
-        inspect.signature(_TrackedProvider.complete).bind(
-            object(), [], max_tokens=1, tools=None
-        )
+        inspect.signature(_note_truncation).bind(object(), {}, "step.complete_turn")
     except TypeError as exc:
         pytest.fail(
-            "ARP's _TrackedProvider call shape "
+            "ARP's checked_complete / _note_truncation call shape "
             f"(ek_step_delegation.complete_turn_via_ek) no longer binds: {exc}"
         )
     assert inspect.iscoroutinefunction(
-        _TrackedProvider.complete
-    ), "_TrackedProvider.complete is no longer async; ARP awaits it"
+        checked_complete
+    ), "checked_complete is no longer async; ARP awaits it"
 
 
 _TIER = ModelTier.TIER_2
@@ -340,6 +341,133 @@ async def test_6a_budget_enforcing_provider_delegates_supports_tools() -> None:
         SmartRouterProvider(router, backend, _TIER), budget=None
     )
     assert provider.supports_tools is False
+
+
+# ===========================================================================
+# Observability: trace + physical-attempt observers on the delegation paths
+# ===========================================================================
+
+
+async def test_6a_trace_callback_receives_llm_events(ek_flag_on: None) -> None:
+    """The optional trace callback sees the turn's llm_call_* events."""
+    router = _router_single_tier((_MODEL,))
+    backend = _FakeBackend([_answer("ok")])
+    events: list[Any] = []
+
+    await complete_turn_via_ek(
+        router=router,
+        backend=backend,
+        tier=_TIER,
+        messages=[{"role": "user", "content": "hi"}],
+        max_tokens=128,
+        tools=None,
+        budget=None,
+        tracker=CostTracker(),
+        metadata={},
+        trace=lambda event: events.append(event),
+    )
+
+    kinds = [event.kind for event in events]
+    # One logical call: one start, one end (present in every payload schema).
+    assert kinds == ["llm_call_start", "llm_call_end"]
+    assert "cost" in events[-1].payload
+
+
+async def test_6a_attempt_callback_reports_physical_fallback_attempts(
+    ek_flag_on: None,
+) -> None:
+    """Router fallback inside ONE complete() reports each physical wire attempt.
+
+    EK-level trace events see one logical call (one attempt — the
+    provider never raised, so no EK retry); the attempt observer sees
+    the two physical calls the fallback loop actually made. This is the
+    distinction the study telemetry needs.
+    """
+    from agentic_v2.models.ek_provider import ProviderAttempt
+
+    chain = ("openai:gpt-4o-mini", "anthropic:claude-3-5-haiku-20241022")
+    router = _router_single_tier(chain)
+    backend = _FakeBackend(
+        [
+            TimeoutError("connection timeout"),  # model A: transport failure
+            _answer("recovered", model=chain[1]),  # model B: succeeds
+        ]
+    )
+    attempts: list[ProviderAttempt] = []
+    events: list[Any] = []
+
+    response_dict, model_used, tokens = await complete_turn_via_ek(
+        router=router,
+        backend=backend,
+        tier=_TIER,
+        messages=[{"role": "user", "content": "hi"}],
+        max_tokens=128,
+        tools=None,
+        budget=None,
+        tracker=CostTracker(),
+        metadata={},
+        trace=lambda event: events.append(event),
+        attempt_callback=attempts.append,
+    )
+
+    assert response_dict["content"] == "recovered"
+    assert tokens == 18
+    # One LOGICAL call at the EK layer (no EK retry fired)…
+    assert [event.kind for event in events] == ["llm_call_start", "llm_call_end"]
+    # …but TWO physical wire attempts, reported in order with outcomes.
+    assert [a.model for a in attempts] == list(chain)
+    assert attempts[0].ok is False
+    assert attempts[0].error_type == "TimeoutError"
+    assert attempts[1].ok is True
+    assert attempts[1].error_type is None
+    assert all(a.latency_ms >= 0.0 for a in attempts)
+    assert all(not a.streaming for a in attempts)
+
+
+async def test_6a_attempt_callback_observer_fault_does_not_break_routing(
+    ek_flag_on: None,
+) -> None:
+    """A raising observer is logged and swallowed; the call still succeeds."""
+    router = _router_single_tier((_MODEL,))
+    backend = _FakeBackend([_answer("ok")])
+
+    def _broken(_attempt: Any) -> None:
+        raise ValueError("observer bug")
+
+    response_dict, _, _ = await complete_turn_via_ek(
+        router=router,
+        backend=backend,
+        tier=_TIER,
+        messages=[{"role": "user", "content": "hi"}],
+        max_tokens=128,
+        tools=None,
+        budget=None,
+        tracker=CostTracker(),
+        metadata={},
+        attempt_callback=_broken,
+    )
+    assert response_dict["content"] == "ok"
+
+
+async def test_6c_trace_callback_receives_llm_events(ek_flag_on: None) -> None:
+    """The structured path forwards its trace callback to EK structured()."""
+    router = _router_single_tier((_MODEL,))
+    backend = _FakeBackend([_answer('{"x": 1}')])
+    events: list[Any] = []
+
+    value, _ = await structured_via_ek(
+        router=router,
+        backend=backend,
+        tier=_TIER,
+        prompt="emit json",
+        budget=None,
+        tracker=CostTracker(),
+        max_tokens=256,
+        trace=lambda event: events.append(event),
+    )
+
+    assert value == {"x": 1}
+    assert any(event.kind == "llm_call_end" for event in events)
 
 
 # ===========================================================================
