@@ -44,7 +44,9 @@ def _wheel_metadata(path: Path) -> tuple[str, str]:
     return metadata["Name"], metadata["Version"]
 
 
-def _validate_manifest(manifest_path: Path) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+def _validate_manifest(
+    manifest_path: Path,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     manifest = _load_toml(manifest_path)
     release = manifest.get("release", {})
     components = manifest.get("components", [])

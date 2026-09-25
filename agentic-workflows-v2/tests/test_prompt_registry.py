@@ -64,14 +64,20 @@ def test_crlf_and_lf_variants_normalize_to_same_text():
 
 
 def test_hash_stable_across_line_endings():
-    """Hash is identical for CRLF vs. LF versions of the same content."""
+    """Hash is identical for CRLF vs.
+
+    LF versions of the same content.
+    """
     lf_text = "Title\n\nBody line.\n"
     crlf_text = "Title\r\n\r\nBody line.\r\n"
     assert compute_content_hash(lf_text) == compute_content_hash(crlf_text)
 
 
 def test_hash_stable_across_bare_cr():
-    """Hash is identical for bare-CR vs. LF versions of the same content."""
+    """Hash is identical for bare-CR vs.
+
+    LF versions of the same content.
+    """
     lf_text = "Title\nBody.\n"
     cr_text = "Title\rBody.\r"
     assert compute_content_hash(lf_text) == compute_content_hash(cr_text)
@@ -185,7 +191,7 @@ def test_register_file_normalizes_crlf_on_disk(tmp_path):
 
 
 def test_get_raises_key_error_for_unregistered_name():
-    """get() raises KeyError for a name that was never registered."""
+    """Get() raises KeyError for a name that was never registered."""
     registry = PromptRegistry()
     with pytest.raises(KeyError):
         registry.get("nonexistent")
@@ -207,14 +213,14 @@ def test_get_or_none_returns_record_for_registered_name():
 
 
 def test_text_returns_content():
-    """text() returns the same string as get(name).content."""
+    """Text() returns the same string as get(name).content."""
     registry = PromptRegistry()
     registry.register_inline("judge", "line one\r\n", declared_version="v1")
     assert registry.text("judge") == registry.get("judge").content == "line one\n"
 
 
 def test_records_returns_immutable_tuple_snapshot():
-    """records() returns a tuple; registering afterward does not mutate it."""
+    """Records() returns a tuple; registering afterward does not mutate it."""
     registry = PromptRegistry()
     registry.register_inline("a", "text a", declared_version="v1")
     snapshot = registry.records()
@@ -227,7 +233,7 @@ def test_records_returns_immutable_tuple_snapshot():
 
 
 def test_names_lists_all_registered_names():
-    """names() lists every registered prompt name."""
+    """Names() lists every registered prompt name."""
     registry = PromptRegistry()
     registry.register_inline("a", "text a", declared_version="v1")
     registry.register_inline("b", "text b", declared_version="v1")
@@ -300,8 +306,8 @@ def test_load_prompt_accepts_md_suffix():
 
 
 def test_load_prompt_raises_for_unknown_name():
-    """load_prompt raises FileNotFoundError for a name with no registry entry
-    and no file on disk."""
+    """load_prompt raises FileNotFoundError for a name with no registry entry and no
+    file on disk."""
     with pytest.raises(FileNotFoundError):
         load_prompt("does_not_exist_anywhere")
 

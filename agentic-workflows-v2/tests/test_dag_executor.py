@@ -325,8 +325,11 @@ class TestDAGExecutorSchedulerGuards:
     @pytest.mark.asyncio
     @pytest.mark.parametrize("limit", [0, -1, 1.5, True])
     async def test_rejects_max_concurrency_that_is_not_a_positive_int(self, limit):
-        """A limit below 1 schedules nothing, so every step used to be skipped
-        and the run reported SUCCESS. It must be refused before anything runs."""
+        """A limit below 1 schedules nothing, so every step used to be skipped and the
+        run reported SUCCESS.
+
+        It must be refused before anything runs.
+        """
         dag = DAG(name="guarded")
         dag.add(make_step("only"))
         mock_step_executor = MagicMock(spec=StepExecutor)
@@ -339,8 +342,8 @@ class TestDAGExecutorSchedulerGuards:
 
     @pytest.mark.asyncio
     async def test_scheduler_deadlock_fails_the_run(self, monkeypatch):
-        """If scheduling ever stalls with steps left, the run fails; it does
-        not drop the steps and report SUCCESS."""
+        """If scheduling ever stalls with steps left, the run fails; it does not drop
+        the steps and report SUCCESS."""
         from agentic_v2.engine import dag_executor
 
         monkeypatch.setattr(dag_executor, "_schedule_ready_steps", lambda state: None)

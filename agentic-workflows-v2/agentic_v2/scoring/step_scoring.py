@@ -64,7 +64,8 @@ class ScoreStatus(StrEnum):
 class CriterionEvidence:
     """Trusted deterministic check result, never parsed from agent output.
 
-    Model judges require a separate calibration/authority policy before adoption.
+    Model judges require a separate calibration/authority policy before
+    adoption.
     """
 
     score: float
@@ -116,8 +117,9 @@ def score_step(
 ) -> StepScore:
     """Aggregate evidence via EVK only when every positive-weight criterion is measured.
 
-    The bridge preserves legacy missing-as-zero arithmetic for existing callers;
-    runtime scoring deliberately refuses to treat absent evidence as a zero.
+    The bridge preserves legacy missing-as-zero arithmetic for existing
+    callers; runtime scoring deliberately refuses to treat absent
+    evidence as a zero.
     """
     rubric_name = _rubric_for_agent(agent_type)
 
@@ -186,8 +188,9 @@ def score_step(
 class StepScoringListener:
     """Collect observations with a trusted grader; ignore scores in event/output data.
 
-    Missing graders/dependencies produce unavailable diagnostics. These results
-    do not authorize tools or route execution; gates must explicitly require SCORED.
+    Missing graders/dependencies produce unavailable diagnostics. These
+    results do not authorize tools or route execution; gates must
+    explicitly require SCORED.
     """
 
     enabled: bool = True

@@ -155,10 +155,11 @@ def plan_arms(
 ) -> tuple[list[str], list[Path], list[Path]]:
     """Decide which arms a rerun of *wave* may run without overwriting evidence.
 
-    Returns ``(to_run, preserved, blocking)``: arms with no report yet, the
-    complete reports a rerun keeps untouched, and reports that exist but do
-    not cover the manifest -- those block the rerun rather than being
-    replaced, because run_ab.py would write over them (WAVE-RUNBOOK rule 3).
+    Returns ``(to_run, preserved, blocking)``: arms with no report yet,
+    the complete reports a rerun keeps untouched, and reports that exist
+    but do not cover the manifest -- those block the rerun rather than
+    being replaced, because run_ab.py would write over them (WAVE-
+    RUNBOOK rule 3).
     """
     to_run: list[str] = []
     preserved: list[Path] = []
@@ -179,9 +180,9 @@ def scale_mix(
 ) -> list[tuple[str, str, int, str]]:
     """Scale *mix* to *size* proportionally, keeping every slice represented.
 
-    A wave that dropped whole repos would sample a different population from
-    its siblings and could not be unioned with them, so every slice keeps at
-    least one target row.
+    A wave that dropped whole repos would sample a different population
+    from its siblings and could not be unioned with them, so every slice
+    keeps at least one target row.
     """
     nominal = sum(count for _, _, count, _ in mix)
     scale = size / nominal
@@ -409,9 +410,9 @@ def run_arms(
 ) -> int:
     """Run *arms* over *rows*, then prune images if asked.
 
-    Split out of main so a rerun can reuse an existing wave case file and
-    take exactly this path, rather than re-mining a different sample set.
-    A rerun passes only the arms that still lack a complete report.
+    Split out of main so a rerun can reuse an existing wave case file
+    and take exactly this path, rather than re-mining a different sample
+    set. A rerun passes only the arms that still lack a complete report.
     """
     timeouts = {"a": CAMPAIGN["timeout_a"], "b": CAMPAIGN["timeout_b"]}
     for arm, timeout in ((arm, timeouts[arm]) for arm in arms):

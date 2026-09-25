@@ -1,12 +1,12 @@
 """Model-pack validation shared by the settings routes and run submission.
 
-Intrinsic checks — empty pack or tier, unknown capability tags, unprefixed
-models, provider-allowlist violations, unsatisfiable capability
-requirements — depend only on the pack and settings, so run submission and
-workflow binding gate on them exactly like global activation does.
-Provider-availability warnings depend on the process environment and are
-emitted only when the caller supplies the available-provider set; they are
-advisory and never gate anything.
+Intrinsic checks — empty pack or tier, unknown capability tags,
+unprefixed models, provider-allowlist violations, unsatisfiable
+capability requirements — depend only on the pack and settings, so run
+submission and workflow binding gate on them exactly like global
+activation does. Provider-availability warnings depend on the process
+environment and are emitted only when the caller supplies the available-
+provider set; they are advisory and never gate anything.
 """
 
 from __future__ import annotations
@@ -18,12 +18,13 @@ from .models_settings import ModelPackIssue
 def _capability_issues(pack: ModelPack, settings: UiSettings) -> list[ModelPackIssue]:
     """Cross-check tier capability requirements against the tier's chain.
 
-    Each chain model's effective capabilities follow the existing precedence:
-    pack-level override, then the global settings override, then the registry
-    default (``[model.capability]``). A model absent from all three sources
-    satisfies nothing. A tier where no candidate satisfies every required tag
-    is an error (activation blocks); candidates that satisfy only part of the
-    requirements get a warning, since fallback routing may still pick them.
+    Each chain model's effective capabilities follow the existing
+    precedence: pack-level override, then the global settings override,
+    then the registry default (``[model.capability]``). A model absent
+    from all three sources satisfies nothing. A tier where no candidate
+    satisfies every required tag is an error (activation blocks);
+    candidates that satisfy only part of the requirements get a warning,
+    since fallback routing may still pick them.
     """
     from ..models.model_registry import load_registry
 

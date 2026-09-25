@@ -86,8 +86,8 @@ def test_prompt_file_override_bypasses_registry():
 
 
 def test_unregistered_role_falls_back_to_direct_file_read(tmp_path, monkeypatch):
-    """A role with no registry entry falls back to the pre-existing direct
-    file read from the prompts directory."""
+    """A role with no registry entry falls back to the pre-existing direct file read
+    from the prompts directory."""
     (tmp_path / "madeuprole.md").write_text(
         "Direct-read fallback content.", encoding="utf-8"
     )

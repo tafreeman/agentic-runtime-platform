@@ -79,9 +79,9 @@ class TestDatasetLoading:
         for name, info in summary.items():
             assert info["file_exists"], f"{name} fixture file missing"
             expected = expected_counts.get(name, 20)
-            assert info["sample_count"] == expected, (
-                f"{name} expected {expected} samples, got {info['sample_count']}"
-            )
+            assert (
+                info["sample_count"] == expected
+            ), f"{name} expected {expected} samples, got {info['sample_count']}"
 
 
 # ---------------------------------------------------------------------------

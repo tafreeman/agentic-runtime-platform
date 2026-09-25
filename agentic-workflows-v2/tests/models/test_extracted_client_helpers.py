@@ -360,7 +360,9 @@ class TestRunWithFallback:
         monkeypatch.setenv("AGENTIC_MAX_COST_LANE", "free")
         router = SmartModelRouter()
         router.get_model_for_tier = MagicMock(
-            side_effect=AssertionError("router must not be consulted for an explicit model")
+            side_effect=AssertionError(
+                "router must not be consulted for an explicit model"
+            )
         )
 
         with pytest.raises(CostLaneCeilingExceededError, match="free"):

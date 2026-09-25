@@ -148,8 +148,8 @@ class PendingBlob:
 
 
 class PendingBlobChannel:
-    """Every blob digest a report referenced that this migration could not
-    read real bytes for.
+    """Every blob digest a report referenced that this migration could not read real
+    bytes for.
 
     A trial whose `answer_blob` points at such a digest still needs a `blob`
     row to satisfy the foreign key -- `tombstone_row()` gives it one that is
@@ -183,9 +183,12 @@ class PendingBlobChannel:
         )
 
     def flush_to(self, path: Path) -> int:
-        """Write every pending entry as one JSON object per line and return
-        the count written. Overwrites `path` -- this channel is rebuilt
-        fresh on every migration run, not accumulated across runs."""
+        """Write every pending entry as one JSON object per line and return the count
+        written.
+
+        Overwrites `path` -- this channel is rebuilt
+        fresh on every migration run, not accumulated across runs.
+        """
         path.parent.mkdir(parents=True, exist_ok=True)
         ordered = sorted(self._items, key=lambda item: (item.digest, item.seen_at))
         with path.open("w", encoding="utf-8", newline="\n") as handle:
@@ -202,8 +205,9 @@ def make_output_resolver(
     ledger_store: LedgerStore,
     pending: PendingBlobChannel,
 ) -> Callable[[str], Mapping[str, Any] | None]:
-    """Build the `resolve_output` callback `load_report` calls for a spilled
-    sample. Looks for `<hex digest>.bin` under `artifacts/` (the shape
+    """Build the `resolve_output` callback `load_report` calls for a spilled sample.
+
+    Looks for `<hex digest>.bin` under `artifacts/` (the shape
     `agentic_evalkit.artifacts.ArtifactStore` writes); on any failure to
     locate, verify or parse it, records a `PendingBlob` and registers a
     tombstone so the trial referencing this digest can still be inserted.
@@ -260,11 +264,10 @@ def _sidecar_media_type(hex_part: str) -> str | None:
 
 
 def _parse_spilled_payload(data: bytes) -> Mapping[str, Any] | None:
-    """`ArtifactStore` sidecars claim `application/json`, but at least one
-    payload observed on disk is a Python `repr()` of a dict (single-quoted,
-    not valid JSON) -- so JSON is tried first and a literal-eval fallback
-    second, rather than trusting the declared media type.
-    """
+    """`ArtifactStore` sidecars claim `application/json`, but at least one payload
+    observed on disk is a Python `repr()` of a dict (single-quoted, not valid JSON) --
+    so JSON is tried first and a literal-eval fallback second, rather than trusting the
+    declared media type."""
     text = data.decode("utf-8", errors="strict") if _is_utf8(data) else None
     if text is None:
         return None
@@ -373,7 +376,8 @@ def _oracle_json(instance_id: str) -> dict[str, Any]:
 def register_task_set_and_tasks(
     store: LedgerStore, instance_ids: Sequence[str], image_id: str
 ) -> tuple[str, dict[str, str]]:
-    """Register one `TaskSet` covering every instance this migration touches
+    """Register one `TaskSet` covering every instance this migration touches.
+
     plus one `Task` row per instance, and return `(task_set_id, {instance_id
     -> task_id})`.
     """
@@ -781,8 +785,8 @@ def migrate_wave(
     blob_store: BlobStore,
     pending: PendingBlobChannel,
 ) -> WaveMigrationResult:
-    """Load every arm's report for one wave, confirm they share a substrate,
-    then register the wave and append every trial/grade in one pass per arm.
+    """Load every arm's report for one wave, confirm they share a substrate, then
+    register the wave and append every trial/grade in one pass per arm.
 
     Two passes over the arms: `load_report` runs first for every arm (it is
     pure -- it does not touch the store except indirectly through

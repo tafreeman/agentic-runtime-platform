@@ -557,13 +557,14 @@ class TestSmartModelRouter:
 class TestSmartModelRouterCostLaneCeiling:
     """AGENTIC_MAX_COST_LANE enforcement in SmartModelRouter (ARP-IMPROVEMENTS F1).
 
-    _find_candidates_in_tier excludes above-ceiling models silently (same
-    treatment as its existing quarantine/availability/circuit/cooldown/
-    max_cost exclusions) rather than raising -- it is also used per-tier
-    during multi-tier cross-tier search, where an empty single-tier result
-    is expected and must not abort the sweep. get_model_for_tier's existing
-    NoProviderConfiguredError already covers "nothing anywhere," ceiling-
-    excluded or not.
+    _find_candidates_in_tier excludes above-ceiling models silently
+    (same treatment as its existing
+    quarantine/availability/circuit/cooldown/ max_cost exclusions)
+    rather than raising -- it is also used per-tier during multi-tier
+    cross-tier search, where an empty single-tier result is expected and
+    must not abort the sweep. get_model_for_tier's existing
+    NoProviderConfiguredError already covers "nothing anywhere,"
+    ceiling- excluded or not.
     """
 
     _PAID = "anthropic:claude-haiku-4-5-20251001"
@@ -603,9 +604,9 @@ class TestSmartModelRouterCostLaneCeiling:
     def test_get_model_for_tier_single_tier_miss_returns_none_not_a_paid_model(
         self, monkeypatch: pytest.MonkeyPatch
     ):
-        """allow_cross_tier=False returns None on a miss (documented backward-
-        compat contract) -- the point here is it never returns the paid
-        candidate, not which exact "nothing found" signal is used."""
+        """allow_cross_tier=False returns None on a miss (documented backward- compat
+        contract) -- the point here is it never returns the paid candidate, not which
+        exact "nothing found" signal is used."""
         monkeypatch.setenv("AGENTIC_MAX_COST_LANE", "free")
         router = SmartModelRouter()
         router.register_chain(ModelTier.TIER_2, FallbackChain((self._PAID,), "test"))

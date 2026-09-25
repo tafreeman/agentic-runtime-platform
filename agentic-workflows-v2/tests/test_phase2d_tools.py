@@ -85,8 +85,8 @@ async def test_git_tool_status():
 
     No AGENTIC_FILE_BASE_DIR is scoped here, so this fails closed (ARP#2
     containment — see tests/tools/test_git_ops_containment.py for the
-    sandbox-scoped success/failure cases); it still must return a well-formed
-    ToolResult rather than raising.
+    sandbox-scoped success/failure cases); it still must return a well-
+    formed ToolResult rather than raising.
     """
     tool = GitTool()
     result = await tool.execute(command="status")

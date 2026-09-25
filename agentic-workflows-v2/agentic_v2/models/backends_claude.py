@@ -102,6 +102,7 @@ def _load_sdk() -> Any:
         _SDK = claude_agent_sdk
     return _SDK
 
+
 CLAUDE_PREFIX = "claude:"
 DEFAULT_CLAUDE_MODEL = "claude-opus-5"
 
@@ -132,9 +133,10 @@ _API_KEY_ENV_VARS = ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN")
 def subscription_env(overrides: dict[str, str] | None = None) -> dict[str, str]:
     """Build the child-process env that pins the CLI to subscription auth.
 
-    Caller *overrides* are applied last, so an operator who deliberately wants
-    API-key billing in this process can still say so explicitly -- but they have
-    to say it, rather than getting it by accident from an inherited variable.
+    Caller *overrides* are applied last, so an operator who deliberately
+    wants API-key billing in this process can still say so explicitly --
+    but they have to say it, rather than getting it by accident from an
+    inherited variable.
     """
     env = dict.fromkeys(_API_KEY_ENV_VARS, "")
     if overrides:
@@ -309,9 +311,10 @@ class ClaudeSubscriptionBackend(LLMBackend):
     def _note_ignored_sampling(self, temperature: float) -> None:
         """Log once that ``temperature`` has no Agent SDK equivalent.
 
-        MultiBackend always passes a temperature, so raising would make this
-        backend undispatchable. Logging once per instance keeps a fan-out from
-        emitting one line per sample while still leaving the fact in the record.
+        MultiBackend always passes a temperature, so raising would make
+        this backend undispatchable. Logging once per instance keeps a
+        fan-out from emitting one line per sample while still leaving
+        the fact in the record.
         """
         if not self._warned_temperature:
             self._warned_temperature = True

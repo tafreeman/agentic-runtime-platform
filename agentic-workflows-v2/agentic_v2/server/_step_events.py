@@ -33,7 +33,8 @@ _stream_dict_ref: Callable[..., dict[str, Any]] | None = None
 
 
 def set_stream_dict_materializer(fn: Callable[..., dict[str, Any]]) -> None:
-    """Register the stream-dict materializer, called once by execution.py at import time."""
+    """Register the stream-dict materializer, called once by execution.py at import
+    time."""
     global _stream_dict_ref
     _stream_dict_ref = fn
 

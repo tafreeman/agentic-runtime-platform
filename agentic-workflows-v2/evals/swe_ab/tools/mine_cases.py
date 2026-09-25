@@ -21,8 +21,8 @@ import json
 import random
 import shutil
 import subprocess
-import time
 import sys
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -76,14 +76,18 @@ class _Mutator(ast.NodeTransformer):
         if len(node.ops) == 1 and type(node.ops[0]) in _CMP_FLIPS:
             original = type(node.ops[0])
             replacement = _CMP_FLIPS[original]
-            if self._take(node, "compare", original.__name__ + " -> " + replacement.__name__):
+            if self._take(
+                node, "compare", original.__name__ + " -> " + replacement.__name__
+            ):
                 node.ops = [replacement()]
         return node
 
     def visit_BoolOp(self, node: ast.BoolOp) -> ast.AST:
         self.generic_visit(node)
         flipped = ast.Or if isinstance(node.op, ast.And) else ast.And
-        if self._take(node, "boolop", type(node.op).__name__ + " -> " + flipped.__name__):
+        if self._take(
+            node, "boolop", type(node.op).__name__ + " -> " + flipped.__name__
+        ):
             node.op = flipped()
         return node
 
@@ -155,7 +159,9 @@ def covering_test_file(repo: RepoSpec, module: Path) -> Path | None:
     return matches[0] if matches else None
 
 
-def run_pytest(repo: RepoSpec, test_file: Path, timeout: int | None = None) -> tuple[int, str]:
+def run_pytest(
+    repo: RepoSpec, test_file: Path, timeout: int | None = None
+) -> tuple[int, str]:
     command = [*repo.test_command, test_file.relative_to(repo.path).as_posix()]
     try:
         proc = subprocess.run(
@@ -185,8 +191,8 @@ def failing_test_ids(output: str) -> list[str]:
 def symptom_excerpt(output: str, limit: int = 1800) -> str:
     """The failing-test evidence the agent is allowed to see.
 
-    Deliberately the assertion and traceback, never the mutation description:
-    an agent told what was broken is not solving the task.
+    Deliberately the assertion and traceback, never the mutation
+    description: an agent told what was broken is not solving the task.
     """
     marker = output.find("=========================== FAILURES")
     body = output[marker:] if marker != -1 else output
@@ -242,16 +248,20 @@ def emit_case(
         "test_command": repo.test_command,
         "failing_tests": failing,
         "max_changed_lines": 40,
-        "mutation": None
-        if mutation is None
-        else {
-            "line": mutation.lineno,
-            "kind": mutation.kind,
-            "what": mutation.description,
-        },
+        "mutation": (
+            None
+            if mutation is None
+            else {
+                "line": mutation.lineno,
+                "kind": mutation.kind,
+                "what": mutation.description,
+            }
+        ),
         "contamination_risk": "medium",
     }
-    (case_dir / "oracle.json").write_text(json.dumps(oracle, indent=2), encoding="utf-8")
+    (case_dir / "oracle.json").write_text(
+        json.dumps(oracle, indent=2), encoding="utf-8"
+    )
     (case_dir / "failure.txt").write_text(symptom_excerpt(output), encoding="utf-8")
     return {
         "sample_id": case_id,
@@ -375,7 +385,9 @@ def mine_mutations(
             continue
         # A mutation that hangs the suite is not a usable oracle at any
         # length, so bound it by what this file just proved it needs.
-        mutation_timeout = max(30, min(repo.test_timeout, int(baseline_seconds * 10) + 20))
+        mutation_timeout = max(
+            30, min(repo.test_timeout, int(baseline_seconds * 10) + 20)
+        )
         for ordinal in rng.sample(range(sites), min(sites, 4)):
             if len(rows) >= wanted:
                 break
@@ -465,20 +477,35 @@ REPOS = {
         # an unmutated import can never make a green test go red.
         test_command=[
             "C:/Users/tandf/source/executionkit/.venv/Scripts/python.exe",
-            "-m", "pytest", "-x", "-q", "--no-cov", "-m", "not live",
-            "-p", "no:cacheprovider",
+            "-m",
+            "pytest",
+            "-x",
+            "-q",
+            "--no-cov",
+            "-m",
+            "not live",
+            "-p",
+            "no:cacheprovider",
         ],
         skip=("_mock.py", "claude_sdk.py"),
         test_timeout=150,
     ),
     "arp": RepoSpec(
         name="arp",
-        path=Path("C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2"),
+        path=Path(
+            "C:/Users/tandf/source/agentic-runtime-platform/agentic-workflows-v2"
+        ),
         package_root="agentic_v2",
         test_root="tests",
         test_command=[
             "C:/Users/tandf/source/agentic-runtime-platform/.venv/Scripts/python.exe",
-            "-m", "pytest", "-x", "-q", "--no-cov", "-p", "no:cacheprovider",
+            "-m",
+            "pytest",
+            "-x",
+            "-q",
+            "--no-cov",
+            "-p",
+            "no:cacheprovider",
         ],
         # Anything that reaches a provider, a container, or the network is not
         # a deterministic oracle, so it cannot host a case.
@@ -494,7 +521,12 @@ REPOS = {
         # PATH of whoever runs the command, and the grader runs under
         # `uv run`, whose managed interpreter has no pytest at all.
         test_command=[
-            "C:/Python313/python.exe", "-m", "pytest", "-x", "-q", "--no-cov",
+            "C:/Python313/python.exe",
+            "-m",
+            "pytest",
+            "-x",
+            "-q",
+            "--no-cov",
         ],
     ),
 }
@@ -505,7 +537,9 @@ def main() -> int:
     parser.add_argument("--repo", default="evk", choices=sorted(REPOS))
     parser.add_argument("--count", type=int, default=50)
     parser.add_argument("--out", default=str(KIT_ROOT / "dataset" / "cases.jsonl"))
-    parser.add_argument("--fresh", action="store_true", help="delete existing cases first")
+    parser.add_argument(
+        "--fresh", action="store_true", help="delete existing cases first"
+    )
     parser.add_argument("--path", default=None, help="mine from this checkout instead")
     parser.add_argument(
         "--append",

@@ -123,11 +123,16 @@ class SwebenchSanityGrader:
         now = datetime.now(UTC)
         if execution.status is not ExecutionStatus.COMPLETED:
             return self._result(
-                sample, now, GradeStatus.UNAVAILABLE, None,
+                sample,
+                now,
+                GradeStatus.UNAVAILABLE,
+                None,
                 {"reason": "execution did not complete"},
             )
         patched = str((execution.output or {}).get("patched_source") or "")
-        original = (CASES_DIR / sample.sample_id / "broken.py").read_text(encoding="utf-8")
+        original = (CASES_DIR / sample.sample_id / "broken.py").read_text(
+            encoding="utf-8"
+        )
         oracle = load_oracle(sample.sample_id)
 
         checks = {
@@ -237,8 +242,9 @@ class SwebenchGrader:
 def build_swebench_grader(*, executor: Any | None = None) -> SwebenchGrader:
     """The grader for the SWE-bench arm.
 
-    A machine without a working harness scores *nothing* here, not zero, and
-    not one -- ADR-0008's distinction between an operational failure and a task
-    failure, applied to the one component that can actually decide.
+    A machine without a working harness scores *nothing* here, not zero,
+    and not one -- ADR-0008's distinction between an operational failure
+    and a task failure, applied to the one component that can actually
+    decide.
     """
     return SwebenchGrader(executor=executor or SweBenchDockerHarnessExecutor())

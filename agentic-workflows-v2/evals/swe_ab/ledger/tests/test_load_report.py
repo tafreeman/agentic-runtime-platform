@@ -102,9 +102,9 @@ def _trial_for(result: LoadedBatch, task_id: str) -> Any:
 
 def _grade_for(result: LoadedBatch, trial_id: str) -> Any:
     matches = [g for g in result.grades if g.trial_id == trial_id]
-    assert len(matches) <= 1, (
-        f"expected at most one grade for {trial_id}, got {matches}"
-    )
+    assert (
+        len(matches) <= 1
+    ), f"expected at most one grade for {trial_id}, got {matches}"
     return matches[0] if matches else None
 
 

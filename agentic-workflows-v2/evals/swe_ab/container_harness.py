@@ -41,8 +41,14 @@ def container_preflight() -> str | None:
     try:
         code, out = _run(
             [
-                "docker", "run", "--rm", "-v", DOCKER_SOCKET, RUNNER_IMAGE,
-                "python", "-c",
+                "docker",
+                "run",
+                "--rm",
+                "-v",
+                DOCKER_SOCKET,
+                RUNNER_IMAGE,
+                "python",
+                "-c",
                 "import swebench.harness.run_evaluation, docker; "
                 "docker.from_env().ping(); print('READY')",
             ],
@@ -71,30 +77,43 @@ def container_evaluator(request: Any) -> dict[str, Any]:
 
     with tempfile.TemporaryDirectory(prefix="swebench-work-") as tmp:
         work = Path(tmp)
-        (work / "preds.json").write_text(
-            json.dumps([prediction]), encoding="utf-8"
-        )
+        (work / "preds.json").write_text(json.dumps([prediction]), encoding="utf-8")
         code, out = _run(
             [
-                "docker", "run", "--rm",
-                "-v", DOCKER_SOCKET,
-                "-v", f"{work.as_posix()}:/work",
+                "docker",
+                "run",
+                "--rm",
+                "-v",
+                DOCKER_SOCKET,
+                "-v",
+                f"{work.as_posix()}:/work",
                 RUNNER_IMAGE,
-                "python", "-m", "swebench.harness.run_evaluation",
-                "--dataset_name", DATASET,
-                "--predictions_path", "/work/preds.json",
-                "--max_workers", "1",
-                "--run_id", run_id,
-                "--instance_ids", instance_id,
-                "--cache_level", "instance",
-                "--timeout", "1800",
+                "python",
+                "-m",
+                "swebench.harness.run_evaluation",
+                "--dataset_name",
+                DATASET,
+                "--predictions_path",
+                "/work/preds.json",
+                "--max_workers",
+                "1",
+                "--run_id",
+                run_id,
+                "--instance_ids",
+                instance_id,
+                "--cache_level",
+                "instance",
+                "--timeout",
+                "1800",
             ],
             timeout=int(request.timeout_seconds) + 600,
         )
 
         reports = sorted(work.rglob("report.json"))
         if not reports:
-            reports = [p for p in sorted(work.rglob("*.json")) if p.name != "preds.json"]
+            reports = [
+                p for p in sorted(work.rglob("*.json")) if p.name != "preds.json"
+            ]
         if not reports:
             raise RuntimeError(
                 f"the harness produced no report for {instance_id} (exit {code}); "

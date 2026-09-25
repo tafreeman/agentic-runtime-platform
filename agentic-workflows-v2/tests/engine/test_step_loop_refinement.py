@@ -223,8 +223,8 @@ async def test_native_loop_max_expression_bounds_iteration() -> None:
 
 
 async def test_resolve_loop_max_falls_back_when_expression_unresolvable() -> None:
-    """A sentinel-0 step whose expression cannot resolve to an int uses the
-    parsed default (3), never the sentinel 0."""
+    """A sentinel-0 step whose expression cannot resolve to an int uses the parsed
+    default (3), never the sentinel 0."""
     ctx = ExecutionContext()  # no "inputs" seeded → ${inputs.*} resolves to None
     step = StepDefinition(
         name="refine_loop",

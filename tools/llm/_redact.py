@@ -63,9 +63,7 @@ def redact_inventory(data: dict[str, Any], _depth: int = 0) -> dict[str, Any]:
     """
     out: dict[str, Any] = {}
     for k, v in data.items():
-        if _is_sensitive(k):
-            out[k] = REDACTED
-        elif _depth >= _MAX_DEPTH:
+        if _is_sensitive(k) or _depth >= _MAX_DEPTH:
             out[k] = REDACTED
         elif isinstance(v, dict):
             out[k] = redact_inventory(v, _depth + 1)

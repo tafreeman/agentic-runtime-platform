@@ -60,8 +60,8 @@ class UnicodeSanitizer:
     def sanitize_sync(self, text: str) -> tuple[str, Sequence[Finding]]:
         """Synchronous form of :meth:`sanitize`, for callers with no event loop.
 
-        The work is pure CPU (Unicode normalization), so the async method is a
-        thin wrapper over this one and the two cannot drift.
+        The work is pure CPU (Unicode normalization), so the async
+        method is a thin wrapper over this one and the two cannot drift.
         """
         findings: list[Finding] = []
         current = text

@@ -41,7 +41,9 @@ from agentic_evalkit.graders.judge import (
     JudgeResponseStatus,
 )
 
-DEFAULT_BASE_URL: Final[str] = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
+DEFAULT_BASE_URL: Final[str] = os.environ.get(
+    "OLLAMA_BASE_URL", "http://localhost:11434"
+)
 DEFAULT_MODEL: Final[str] = os.environ.get("AB_JUDGE_MODEL", "nemotron-3-ultra:cloud")
 
 _PROMPT_VERSION: Final[str] = "swe-fix-advisory-judge-v1"
@@ -78,10 +80,10 @@ class OllamaRubricJudge:
     """A ``JudgeClient`` over any OpenAI-compatible / Ollama chat endpoint.
 
     The fingerprint binds model id *and* prompt version, because a
-    calibration measured on one prompt says nothing about another. Editing
-    the instructions above changes the fingerprint and invalidates any
-    calibration that referenced it -- which is the intended behaviour, not an
-    inconvenience.
+    calibration measured on one prompt says nothing about another.
+    Editing the instructions above changes the fingerprint and
+    invalidates any calibration that referenced it -- which is the
+    intended behaviour, not an inconvenience.
     """
 
     def __init__(

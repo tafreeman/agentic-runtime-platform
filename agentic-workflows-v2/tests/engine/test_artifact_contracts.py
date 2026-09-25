@@ -407,11 +407,10 @@ async def test_native_alias_promoted_into_context_before_invocation() -> None:
 
 
 async def test_normalized_away_alias_not_visible_to_step() -> None:
-    """An alias dropped by input normalization must not leak into the child
-    context — native LLM steps build their prompt from ``ctx.all_variables()``,
-    so a placeholder alias set before validation would still reach the model
-    even though ``result.input_data`` shows only canonical inputs.
-    """
+    """An alias dropped by input normalization must not leak into the child context —
+    native LLM steps build their prompt from ``ctx.all_variables()``, so a placeholder
+    alias set before validation would still reach the model even though
+    ``result.input_data`` shows only canonical inputs."""
     backend = {"Program.cs": "var app = builder.Build();"}
     seen: dict[str, object] = {}
 
@@ -470,8 +469,8 @@ async def test_inherited_alias_masked_from_child_view() -> None:
 
 
 async def test_mask_inherited_context_semantics() -> None:
-    """mask_inherited hides a parent key from every read path of the child
-    until a local set overrides it; the parent is never mutated."""
+    """mask_inherited hides a parent key from every read path of the child until a local
+    set overrides it; the parent is never mutated."""
     parent = ExecutionContext()
     await parent.set("legacy", "placeholder")
     child = parent.child("step")
@@ -494,9 +493,9 @@ async def test_null_warning_skipped_when_alias_resolves_none_canonical(
 ) -> None:
     """A None canonical resolved via a valid alias is not a null input.
 
-    The null-input warning must be derived from the validated inputs, not the
-    pre-normalization mapping, or every alias-resolved step logs a false
-    "will run with null input" warning.
+    The null-input warning must be derived from the validated inputs,
+    not the pre-normalization mapping, or every alias-resolved step logs
+    a false "will run with null input" warning.
     """
     backend = {"Program.cs": "var app = builder.Build();"}
 

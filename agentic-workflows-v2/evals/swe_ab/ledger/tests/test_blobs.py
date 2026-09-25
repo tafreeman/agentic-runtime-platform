@@ -1,6 +1,5 @@
-"""Tests for ledger.blobs.BlobStore: content addressing, atomic writes,
-verify-on-read, and pruning.
-"""
+"""Tests for ledger.blobs.BlobStore: content addressing, atomic writes, verify-on-read,
+and pruning."""
 
 from __future__ import annotations
 

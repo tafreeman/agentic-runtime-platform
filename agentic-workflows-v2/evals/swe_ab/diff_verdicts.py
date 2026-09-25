@@ -82,9 +82,8 @@ class WaveDiff:
     def bootstrap_close(self) -> bool:
         low_l, high_l = self.bootstrap_ledger
         low_a, high_a = self.bootstrap_analyze
-        return (
-            math.isclose(low_l, low_a, abs_tol=BOOTSTRAP_TOLERANCE)
-            and math.isclose(high_l, high_a, abs_tol=BOOTSTRAP_TOLERANCE)
+        return math.isclose(low_l, low_a, abs_tol=BOOTSTRAP_TOLERANCE) and math.isclose(
+            high_l, high_a, abs_tol=BOOTSTRAP_TOLERANCE
         )
 
     @property
@@ -129,9 +128,8 @@ def diff_one_wave(
     campaign_name: str,
     wave_plan: "mr.WavePlan",
 ) -> WaveDiff | str:
-    """Return a `WaveDiff`, or a `str` explaining why this wave was skipped
-    (not a two-arm wave, or no report gave both arms a verdict on anything).
-    """
+    """Return a `WaveDiff`, or a `str` explaining why this wave was skipped (not a two-
+    arm wave, or no report gave both arms a verdict on anything)."""
     if set(wave_plan.arms) != {"arm-a-direct", "arm-b-review-loop"}:
         return "not a two-arm (arm-a-direct, arm-b-review-loop) wave"
 

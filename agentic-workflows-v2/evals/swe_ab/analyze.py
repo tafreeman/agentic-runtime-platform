@@ -133,6 +133,7 @@ def check_arms_comparable(
     implementation that contributed is named, so the verdict is never
     presented as the output of one system when it was not.
     """
+
     def values(reports: list[dict[str, Any]], field: str) -> list[Any]:
         return [(r.get("manifest") or {}).get(field) for r in reports]
 
@@ -140,16 +141,27 @@ def check_arms_comparable(
     drifting: list[tuple[str, Any, Any]] = []
     for field in CROSS_ARM_FIELDS:
         left_values, right_values = values(left, field), values(right, field)
-        distinct = {json.dumps(v, sort_keys=True, default=str) for v in left_values + right_values}
+        distinct = {
+            json.dumps(v, sort_keys=True, default=str)
+            for v in left_values + right_values
+        }
         if len(distinct) > 1:
-            entry = (field, sorted(set(map(str, left_values))), sorted(set(map(str, right_values))))
+            entry = (
+                field,
+                sorted(set(map(str, left_values))),
+                sorted(set(map(str, right_values))),
+            )
             (drifting if field in RUNTIME_DRIFT_FIELDS else differing).append(entry)
 
     left_models = {_fingerprint_model(v) for v in values(left, "target_fingerprint")}
     right_models = {_fingerprint_model(v) for v in values(right, "target_fingerprint")}
     if left_models != right_models:
         differing.append(
-            ("model (from target_fingerprint)", sorted(map(str, left_models)), sorted(map(str, right_models)))
+            (
+                "model (from target_fingerprint)",
+                sorted(map(str, left_models)),
+                sorted(map(str, right_models)),
+            )
         )
 
     if drifting and allow_runtime_drift and not differing:
@@ -293,9 +305,9 @@ def wilson(successes: int, total: int) -> tuple[float, float]:
 def mcnemar_exact(b: int, c: int) -> float:
     """Two-sided exact McNemar p-value on the discordant pairs.
 
-    *b* = cases only arm A solved, *c* = cases only arm B solved. Concordant
-    pairs carry no information about which arm is better and are excluded --
-    that exclusion is the whole point of a paired test.
+    *b* = cases only arm A solved, *c* = cases only arm B solved.
+    Concordant pairs carry no information about which arm is better and
+    are excluded -- that exclusion is the whole point of a paired test.
     """
     n = b + c
     if n == 0:
@@ -314,9 +326,7 @@ def paired_bootstrap(
     size = len(deltas)
     means = []
     for _ in range(samples):
-        means.append(
-            statistics.fmean(deltas[rng.randrange(size)] for _ in range(size))
-        )
+        means.append(statistics.fmean(deltas[rng.randrange(size)] for _ in range(size)))
     means.sort()
     return (means[int(0.025 * samples)], means[int(0.975 * samples)])
 
@@ -386,7 +396,9 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    left_paths = [Path(p) for p in (args.left or [str(REPORTS_DIR / "arm-a-direct.json")])]
+    left_paths = [
+        Path(p) for p in (args.left or [str(REPORTS_DIR / "arm-a-direct.json")])
+    ]
     right_paths = [
         Path(p) for p in (args.right or [str(REPORTS_DIR / "arm-b-review-loop.json")])
     ]
@@ -399,7 +411,9 @@ def main() -> int:
     left_report, right_report = load(left_path), load(right_path)
     try:
         left = merge_outcomes(left_paths, allow_runtime_drift=args.allow_runtime_drift)
-        right = merge_outcomes(right_paths, allow_runtime_drift=args.allow_runtime_drift)
+        right = merge_outcomes(
+            right_paths, allow_runtime_drift=args.allow_runtime_drift
+        )
         # Each union above only proves an arm is internally consistent. The
         # paired verdict also needs the two arms to differ in exactly one
         # thing, so check that before any statistic is computed -- over every
@@ -442,9 +456,7 @@ def main() -> int:
     print(f"  only B solved ........ {only_b}")
     print(f"  neither solved ....... {neither}")
 
-    deltas = [
-        int(right[s]["passed"]) - int(left[s]["passed"]) for s in shared
-    ]
+    deltas = [int(right[s]["passed"]) - int(left[s]["passed"]) for s in shared]
     observed = statistics.fmean(deltas) if deltas else 0.0
     low, high = paired_bootstrap(deltas)
     p_value = mcnemar_exact(only_a, only_b)
@@ -454,10 +466,14 @@ def main() -> int:
     # here for reasons that have nothing to do with repair quality. The
     # experiment's verdict is decided on the verdict-only set below; this
     # read stays visible so nothing is hidden, but it does not conclude.
-    print("\nDifference (B - A), all shared cases -- operational context, not the verdict")
+    print(
+        "\nDifference (B - A), all shared cases -- operational context, not the verdict"
+    )
     print(f"  observed ............. {observed:+.1%}")
     print(f"  95% bootstrap CI ..... [{low:+.1%}, {high:+.1%}]")
-    print(f"  McNemar exact p ...... {p_value:.4f}  (discordant pairs: {only_a + only_b})")
+    print(
+        f"  McNemar exact p ...... {p_value:.4f}  (discordant pairs: {only_a + only_b})"
+    )
     if p_value < 0.05 and observed != 0:
         leader = "B (review loop)" if observed > 0 else "A (direct)"
         print(
@@ -473,18 +489,26 @@ def main() -> int:
     # actual verdict; the raw read above stays visible so nothing is hidden.
     verdicted = [s for s in shared if left[s]["verdict"] and right[s]["verdict"]]
     if verdicted:
-        v_only_a = sum(1 for s in verdicted if left[s]["passed"] and not right[s]["passed"])
-        v_only_b = sum(1 for s in verdicted if right[s]["passed"] and not left[s]["passed"])
+        v_only_a = sum(
+            1 for s in verdicted if left[s]["passed"] and not right[s]["passed"]
+        )
+        v_only_b = sum(
+            1 for s in verdicted if right[s]["passed"] and not left[s]["passed"]
+        )
         va = sum(1 for s in verdicted if left[s]["passed"])
         vb = sum(1 for s in verdicted if right[s]["passed"])
-        v_deltas = [
-            int(right[s]["passed"]) - int(left[s]["passed"]) for s in verdicted
-        ]
+        v_deltas = [int(right[s]["passed"]) - int(left[s]["passed"]) for s in verdicted]
         v_observed = statistics.fmean(v_deltas)
         v_p = mcnemar_exact(v_only_a, v_only_b)
-        print(f"\nAccuracy on the {len(verdicted)} cases where both arms gave a verdict")
-        print(f"  A solved ............. {va}/{len(verdicted)} = {va / len(verdicted):.1%}")
-        print(f"  B solved ............. {vb}/{len(verdicted)} = {vb / len(verdicted):.1%}")
+        print(
+            f"\nAccuracy on the {len(verdicted)} cases where both arms gave a verdict"
+        )
+        print(
+            f"  A solved ............. {va}/{len(verdicted)} = {va / len(verdicted):.1%}"
+        )
+        print(
+            f"  B solved ............. {vb}/{len(verdicted)} = {vb / len(verdicted):.1%}"
+        )
         print(f"  discordant ........... A-only {v_only_a}, B-only {v_only_b}")
         print(f"  McNemar exact p ...... {v_p:.4f}")
         dropped = len(shared) - len(verdicted)

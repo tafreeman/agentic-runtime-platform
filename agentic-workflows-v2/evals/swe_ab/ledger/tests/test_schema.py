@@ -1,7 +1,8 @@
 """Tests for schema.sql: DDL, FK enforcement, and the ledger's triggers.
 
-The triggers are the point of this schema (append-only history, substrate
-consistency, no grading a failed trial) so they get the most coverage.
+The triggers are the point of this schema (append-only history,
+substrate consistency, no grading a failed trial) so they get the most
+coverage.
 """
 
 from __future__ import annotations
@@ -425,9 +426,10 @@ def make_grade(
 
 
 def insert_base_chain(conn: sqlite3.Connection) -> None:
-    """Insert one valid row into every reference/design table up through
-    plan_cell, using the builders' defaults. Tests build on top of this
-    with their own trial/grade rows.
+    """Insert one valid row into every reference/design table up through plan_cell,
+    using the builders' defaults.
+
+    Tests build on top of this with their own trial/grade rows.
     """
     _insert(conn, "blob", make_blob().to_row())
     _insert(conn, "model", make_model().to_row())

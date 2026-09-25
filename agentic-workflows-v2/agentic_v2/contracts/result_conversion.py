@@ -1,8 +1,9 @@
 """Convert external step evidence into the shared result contract.
 
-Recorded metadata takes precedence over supplemental token/model mappings.
-Missing or unrecognized statuses fail closed. Conversion never mutates its
-inputs and never derives a successful status from the presence of output.
+Recorded metadata takes precedence over supplemental token/model
+mappings. Missing or unrecognized statuses fail closed. Conversion never
+mutates its inputs and never derives a successful status from the
+presence of output.
 """
 
 from __future__ import annotations

@@ -1,13 +1,14 @@
 """LangGraph-path response sanitization.
 
 The native engine masks secrets in model responses inside the shared LLM
-client. The LangGraph engine, the default for named YAML workflows, never
-calls that client, so a secret a model echoed there reached step outputs,
-context, traces and run results unmasked (2026-09-22 audit, finding H5).
+client. The LangGraph engine, the default for named YAML workflows,
+never calls that client, so a secret a model echoed there reached step
+outputs, context, traces and run results unmasked (2026-09-22 audit,
+finding H5).
 
 These tests plant a secret in a LangGraph agent's response and follow it
-through a real step node into everything the step records. All offline: the
-agent is a stand-in, and no model or network is involved.
+through a real step node into everything the step records. All offline:
+the agent is a stand-in, and no model or network is involved.
 """
 
 from __future__ import annotations

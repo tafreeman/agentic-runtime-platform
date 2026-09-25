@@ -109,14 +109,14 @@ class LedgerError(Exception):
 
 
 class SchemaVersionMismatch(LedgerError):
-    """The database's `schema_meta.schema_version` does not match the
-    version this code expects (`EXPECTED_SCHEMA_VERSION`), or the database
-    has no readable `schema_meta` table at all."""
+    """The database's `schema_meta.schema_version` does not match the version this code
+    expects (`EXPECTED_SCHEMA_VERSION`), or the database has no readable `schema_meta`
+    table at all."""
 
 
 class LedgerIntegrityError(LedgerError):
-    """A write violated a database integrity constraint (foreign key,
-    CHECK, UNIQUE, or one of schema.sql's invariant triggers).
+    """A write violated a database integrity constraint (foreign key, CHECK, UNIQUE, or
+    one of schema.sql's invariant triggers).
 
     Wraps the underlying `sqlite3.IntegrityError` so callers of this
     module's API never need to import `sqlite3` themselves, or pattern
@@ -126,9 +126,11 @@ class LedgerIntegrityError(LedgerError):
 
 
 class AppendOnlyViolation(LedgerIntegrityError):
-    """Raised when schema.sql's append-only triggers reject a write to
-    `trial`, `step_usage`, `spend`, or `grade` — i.e. an UPDATE or DELETE
-    against one of those tables. `LedgerStore`'s own API never issues
+    """Raised when schema.sql's append-only triggers reject a write to `trial`,
+    `step_usage`, `spend`, or `grade` — i.e. an UPDATE or DELETE against one of those
+    tables.
+
+    `LedgerStore`'s own API never issues
     UPDATE/DELETE (only append-only INSERTs), so this is reachable only
     by writing directly against the connection returned by `open_ledger`;
     a duplicate append through `LedgerStore` instead raises the more
@@ -137,15 +139,15 @@ class AppendOnlyViolation(LedgerIntegrityError):
 
 
 class JudgeNotCalibrated(LedgerError):
-    """A wave's substrate uses a `kind='judge'` grader with no
-    `judge_calibration` row clearing `JUDGE_TNR_FLOOR` / `JUDGE_TPR_FLOOR`
-    and unexpired as of the wave's `opened_at`."""
+    """A wave's substrate uses a `kind='judge'` grader with no `judge_calibration` row
+    clearing `JUDGE_TNR_FLOOR` / `JUDGE_TPR_FLOOR` and unexpired as of the wave's
+    `opened_at`."""
 
 
 class ArmsUnbalanced(LedgerError):
-    """The set of `(task_id, run_idx)` pairs carrying at least one `ok`
-    trial differs between two or more arms in the same wave, which would
-    break paired statistics computed across those arms."""
+    """The set of `(task_id, run_idx)` pairs carrying at least one `ok` trial differs
+    between two or more arms in the same wave, which would break paired statistics
+    computed across those arms."""
 
 
 class UnknownWave(LedgerError):
@@ -153,19 +155,24 @@ class UnknownWave(LedgerError):
 
 
 class BlobMissing(LedgerError):
-    """No blob is stored for the requested digest. Shared with
-    `ledger.blobs.BlobStore` so callers only need one exception type."""
+    """No blob is stored for the requested digest.
+
+    Shared with
+    `ledger.blobs.BlobStore` so callers only need one exception type.
+    """
 
 
 class BlobCorrupt(LedgerError):
-    """The bytes stored at a digest's on-disk path do not hash back to
-    that digest. Shared with `ledger.blobs.BlobStore`."""
+    """The bytes stored at a digest's on-disk path do not hash back to that digest.
+
+    Shared with `ledger.blobs.BlobStore`.
+    """
 
 
 def _wrap_integrity_error(exc: sqlite3.IntegrityError) -> LedgerIntegrityError:
-    """Translate a raw `sqlite3.IntegrityError` into a `LedgerError`
-    subclass so callers of this module's insert paths never have to
-    import `sqlite3` themselves to catch a predictable type.
+    """Translate a raw `sqlite3.IntegrityError` into a `LedgerError` subclass so callers
+    of this module's insert paths never have to import `sqlite3` themselves to catch a
+    predictable type.
 
     `AppendOnlyViolation` is reserved for the literal message schema.sql's
     `trg_*_no_update` / `trg_*_no_delete` triggers raise. This module never
@@ -440,8 +447,8 @@ class LedgerStore:
     # -- Reference/design entities -------------------------------------
 
     def register(self, obj: RegisterableEntity) -> str:
-        """Insert a content-addressed reference/design row if it is not
-        already present, and return its primary key.
+        """Insert a content-addressed reference/design row if it is not already present,
+        and return its primary key.
 
         Idempotent by construction *when the caller supplies the same
         primary key for the same logical entity* — true automatically for
@@ -536,10 +543,11 @@ class LedgerStore:
     # -- Validation the schema cannot express ---------------------------
 
     def check_judge_gating(self, wave_id: str) -> None:
-        """Raise `JudgeNotCalibrated` if `wave_id`'s substrate uses a
-        `kind='judge'` grader with no calibration clearing
-        `JUDGE_TNR_FLOOR` / `JUDGE_TPR_FLOOR`, unexpired as of the wave's
-        `opened_at`. A non-judge grader always passes. Raises
+        """Raise `JudgeNotCalibrated` if `wave_id`'s substrate uses a `kind='judge'`
+        grader with no calibration clearing `JUDGE_TNR_FLOOR` / `JUDGE_TPR_FLOOR`,
+        unexpired as of the wave's `opened_at`.
+
+        A non-judge grader always passes. Raises
         `UnknownWave` if the wave does not exist.
         """
         wave_row = self._conn.execute(
@@ -585,9 +593,11 @@ class LedgerStore:
             )
 
     def check_wave_complete(self, wave_id: str) -> WaveCompleteness:
-        """Report `plan_cell` planned/done/missing counts for `wave_id`,
-        overall and per arm. Never raises — an unknown or empty wave just
-        reports all-zero counts; this is a report, not a gate.
+        """Report `plan_cell` planned/done/missing counts for `wave_id`, overall and per
+        arm.
+
+        Never raises — an unknown or empty wave just reports all-zero
+        counts; this is a report, not a gate.
         """
         rows = self._conn.execute(
             "SELECT arm_id, status, COUNT(*) AS n FROM plan_cell "
@@ -622,9 +632,10 @@ class LedgerStore:
         )
 
     def check_arm_balance(self, wave_id: str) -> None:
-        """Raise `ArmsUnbalanced` if the set of `(task_id, run_idx)` pairs
-        with at least one `ok` trial differs between arms planned into
-        `wave_id`. An arm with zero `ok` trials still participates in the
+        """Raise `ArmsUnbalanced` if the set of `(task_id, run_idx)` pairs with at least
+        one `ok` trial differs between arms planned into `wave_id`.
+
+        An arm with zero `ok` trials still participates in the
         comparison (as the empty set), so a wholly-missing arm is caught
         too. Raises `UnknownWave` if the wave does not exist.
         """
@@ -670,10 +681,8 @@ class LedgerStore:
     # -- Export / import --------------------------------------------------
 
     def export_jsonl(self, out_dir: Path) -> dict[str, int]:
-        """Write one `<table>.jsonl` file per table under `out_dir`, rows
-        sorted by primary key so output is diff-stable, and return
-        table -> row count.
-        """
+        """Write one `<table>.jsonl` file per table under `out_dir`, rows sorted by
+        primary key so output is diff-stable, and return table -> row count."""
         out_dir = Path(out_dir)
         out_dir.mkdir(parents=True, exist_ok=True)
         counts: dict[str, int] = {}
@@ -691,8 +700,7 @@ class LedgerStore:
                     # iterating a Row directly (`for key in row`) yields
                     # column *values*, not names, unlike a real dict.
                     record: dict[str, Any] = {
-                        key: row[key]
-                        for key in row.keys()  # noqa: SIM118
+                        key: row[key] for key in row.keys()  # noqa: SIM118
                     }
                     handle.write(canonical_json(record))
                     handle.write("\n")
@@ -700,9 +708,10 @@ class LedgerStore:
         return counts
 
     def import_jsonl(self, in_dir: Path) -> dict[str, int]:
-        """Load `<table>.jsonl` files from `in_dir` in `TABLE_ORDER` so
-        foreign keys resolve, in one transaction, and return table -> row
-        count. A missing file is treated as zero rows for that table.
+        """Load `<table>.jsonl` files from `in_dir` in `TABLE_ORDER` so foreign keys
+        resolve, in one transaction, and return table -> row count.
+
+        A missing file is treated as zero rows for that table.
         """
         in_dir = Path(in_dir)
         counts: dict[str, int] = {}
