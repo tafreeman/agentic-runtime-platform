@@ -1,4 +1,5 @@
 import Lean
+import Scheduler.Validate
 
 /-! Scheduler model of `agentic_v2/engine/dag_executor.py` in the same commit.
 Node identifiers are indices; dependencies are lists, NOT sets.
@@ -77,9 +78,6 @@ structure State where
   failed : Bool := false
   timedOut : Bool := false
   deadlocked : Bool := false
-
-def put (f : Nat → α) (i : Nat) (v : α) : Nat → α :=
-  fun j => if j = i then v else f j
 
 def adjacency (p : Plan) (i : Nat) : List Nat :=
   (List.range p.length).flatMap fun j =>
@@ -667,8 +665,10 @@ upstream skip with a blocking dependency, and the run's failure flag is set
 exactly when some step has failed.
 
 Safety and no duplicate starts need no graph assumption. Completeness and
-refinement assume `Ranked`: every dependency exists and a rank decreases along
-each edge, which is what `DAG.validate` establishes (its DFS is not modelled).
+refinement assume `Ranked`: every dependency exists and a rank increases along
+each edge. `validate_iff_ranked` shows that `DAG.validate` accepts exactly the
+nonempty ranked plans, and the `validated_` theorems restate the whole-run
+results for them.
 Core lemmas whose proofs use `Classical.choice` are replaced here, because the
 axiom audit allows only `propext` and `Quot.sound`. -/
 
@@ -744,8 +744,8 @@ private theorem own_kind (o : Outcome) :
   | returned st => cases st <;> first | exact Or.inl rfl | exact Or.inr rfl
 
 /-- What `DAG.validate` establishes, as the proofs use it: every dependency is a
-step of the plan, and a rank strictly decreases along every dependency edge,
-so the plan has no cycle. -/
+step of the plan, and a rank strictly increases from each dependency to its
+dependent, so the plan has no cycle (`validate_iff_ranked`). -/
 def Ranked (p : Plan) (rank : Nat → Nat) : Prop :=
   ∀ i < p.length, ∀ d ∈ (p[i]!).deps, d < p.length ∧ rank d < rank i
 
@@ -2453,6 +2453,77 @@ theorem legal_run_matches_spec (p : Plan) (rank : Nat → Nat) (hp : Ranked p ra
   rw [complete_refines_spec p _ hp' limit _ hr hc p.length i hi (hlt i hi)]
   exact some_getD _ (hc i hi)
 
+/-! ## Validated plans
+
+`DAG.execute` calls `DAG.validate` before it schedules anything, so the plans
+the executor runs are exactly those `validate` accepts. -/
+
+private theorem map_deps_get (p : Plan) (i : Nat) (hi : i < p.length) :
+    (p.map Node.deps)[i]! = (p[i]!).deps := by
+  rw [List.getElem!_eq_getElem?_getD, List.getElem!_eq_getElem?_getD, List.getElem?_map,
+    List.getElem?_eq_getElem hi]
+  rfl
+
+theorem ranked_iff (p : Plan) (rank : Nat → Nat) :
+    Ranked p rank ↔ RankedDeps (p.map Node.deps) rank := by
+  unfold Ranked RankedDeps
+  rw [List.length_map]
+  constructor
+  · intro h i hi d hd
+    rw [map_deps_get p i hi] at hd
+    exact h i hi d hd
+  · intro h i hi d hd
+    rw [← map_deps_get p i hi] at hd
+    exact h i hi d hd
+
+/-- `DAG.validate` accepts a plan exactly when the plan is nonempty and ranked:
+every dependency exists and the plan has no cycle. -/
+theorem validate_iff_ranked (p : Plan) :
+    validate (p.map Node.deps) = .ok ↔ p ≠ [] ∧ ∃ rank, Ranked p rank := by
+  rw [validate_ok_iff]
+  constructor
+  · rintro ⟨hne, rank, hr⟩
+    exact ⟨fun he => hne (by rw [he]; rfl), rank, (ranked_iff p rank).mpr hr⟩
+  · rintro ⟨hne, rank, hr⟩
+    refine ⟨fun he => hne ?_, rank, (ranked_iff p rank).mp hr⟩
+    cases p with
+    | nil => rfl
+    | cons _ _ => cases he
+
+/-- ADR-060 theorem 3 for every plan `DAG.validate` accepts: with a limit of at
+least 1, no legal run takes the deadlock branch. -/
+theorem validated_run_never_deadlocks (p : Plan) (hv : validate (p.map Node.deps) = .ok)
+    (limit : Int) (hl : 1 ≤ limit) (actions : List Action)
+    (h : Legal p limit actions (initial p)) :
+    (schedulingLoop p limit actions (initial p)).deadlocked = false := by
+  obtain ⟨_, rank, hp⟩ := (validate_iff_ranked p).mp hv
+  exact legal_run_never_deadlocks p rank hp limit hl actions h
+
+/-- ADR-060 theorem 3 for every plan `DAG.validate` accepts: every legal run of
+at least `p.length` batches finishes every step. -/
+theorem validated_run_completes (p : Plan) (hv : validate (p.map Node.deps) = .ok)
+    (limit : Int) (hl : 1 ≤ limit) (batches : List (List Nat))
+    (h : Legal p limit (batches.map Action.batch) (initial p))
+    (hn : p.length ≤ batches.length) :
+    ∀ i < p.length,
+      finished (schedulingLoop p limit (batches.map Action.batch) (initial p)) i = true := by
+  obtain ⟨_, rank, hp⟩ := (validate_iff_ranked p).mp hv
+  exact legal_run_completes p rank hp limit hl batches h hn
+
+/-- `legal_run_matches_spec` for every plan `DAG.validate` accepts: a legal run
+that finishes every step reports the recursive spec's results and overall
+status. -/
+theorem validated_run_matches_spec (p : Plan) (hv : validate (p.map Node.deps) = .ok)
+    (limit : Int) (hl : 1 ≤ limit) (batches : List (List Nat))
+    (h : Legal p limit (batches.map Action.batch) (initial p))
+    (hc : ∀ i < p.length,
+      finished (schedulingLoop p limit (batches.map Action.batch) (initial p)) i = true) :
+    spec p = some (reported p (schedulingLoop p limit (batches.map Action.batch) (initial p))) ∧
+      finalStatus (schedulingLoop p limit (batches.map Action.batch) (initial p)) =
+        overall (reported p (schedulingLoop p limit (batches.map Action.batch) (initial p))) := by
+  obtain ⟨_, rank, hp⟩ := (validate_iff_ranked p).mp hv
+  exact legal_run_matches_spec p rank hp limit hl batches h hc
+
 /-! ## Axiom pins
 
 Each pin fails the build if that theorem's axioms change, for example when a
@@ -2524,5 +2595,17 @@ runs axiom-audit over every declaration in the library. -/
 #guard_msgs in #print axioms checkLegal_sound
 /-- info: 'ARP.legal_run_matches_spec' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in #print axioms legal_run_matches_spec
+/-- info: 'ARP.validate_ok_iff' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms validate_ok_iff
+/-- info: 'ARP.validate_never_exhausts' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms validate_never_exhausts
+/-- info: 'ARP.validate_iff_ranked' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms validate_iff_ranked
+/-- info: 'ARP.validated_run_never_deadlocks' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms validated_run_never_deadlocks
+/-- info: 'ARP.validated_run_completes' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms validated_run_completes
+/-- info: 'ARP.validated_run_matches_spec' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms validated_run_matches_spec
 
 end ARP
