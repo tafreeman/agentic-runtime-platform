@@ -1,6 +1,6 @@
 import Lean
 
-/-! Scheduler model for d71971981e7d2b2124f59e61684e5d527f38c8fb.
+/-! Scheduler model of `agentic_v2/engine/dag_executor.py` in the same commit.
 Node identifiers are indices; dependencies are lists, NOT sets.
 Fuel makes the interpreter total, including for invalid inputs. Exhaustion is
 observable and must never be confused with a completed execution.
@@ -32,10 +32,16 @@ structure Node where
 
 abbrev Plan := List Node
 
+-- Mirrors _fail_nonterminal: PENDING, RUNNING and RETRYING are recorded FAILED.
+def settle : Status → Status
+  | .success => .success
+  | .skipped => .skipped
+  | _ => .failed
+
 def ownResult : Outcome → Result
   | .exception => ⟨.failed, .none⟩
   | .returned .skipped => ⟨.skipped, .condition⟩
-  | .returned s => ⟨s, .none⟩
+  | .returned s => ⟨settle s, .none⟩
 
 def blocks (r : Result) : Bool := r.status == .failed || r.skip == .upstream
 
@@ -121,7 +127,7 @@ def scheduleReadySteps (limit : Int) : Nat → State → State
                     life := put s.life i .running }
       else s
 
--- Mirrors _transition_outcome_state, including nonterminal→FAILED mismatch.
+-- Mirrors _transition_outcome_state; its input is already settled.
 def transitionOutcomeState (s : State) (i : Nat) (status : Status) : State :=
   { s with life := put s.life i (match status with
     | .success => .success
@@ -144,15 +150,17 @@ def recordTaskException (p : Plan) (s : State) (i : Nat) : State :=
              failed := true } i .upstream
 
 -- Mirrors _process_done_task for an ordinary Exception or returned StepResult.
+-- The recorded result is the settled one, so a nonterminal status fails.
 def processDoneTask (p : Plan) (s : State) (i : Nat) : State :=
   match (p[i]!).outcome with
   | .exception => recordTaskException p s i
   | .returned status =>
+    let r := ownResult (.returned status)
     let s' := transitionOutcomeState
       { s with running := s.running.filter (· != i)
-               results := put s.results i (some (ownResult (.returned status)))
-               ends := s.ends ++ [i] } i status
-    if status == .failed then cascadeSkip p { s' with failed := true } i .upstream
+               results := put s.results i (some r)
+               ends := s.ends ++ [i] } i r.status
+    if r.status == .failed then cascadeSkip p { s' with failed := true } i .upstream
     else unlockDownstream p s' i
 
 -- Mirrors _handle_timeout at scheduler boundaries, not within awaited callbacks.
@@ -196,14 +204,13 @@ theorem exception_root_lifecycle :
       (scheduleReadySteps 1 1 (initial [⟨[], .exception⟩])) 0).life 0 = .running := by
   decide
 
-/-- Defect witness: a two-node chain whose first step returns PENDING still
-starts its dependent and reports SUCCESS, so ADR-060's safety and honest-status
-guarantees fail for nonterminal results. -/
-theorem pending_dependency_counterexample :
+/-- Former defect, now fixed: a two-node chain whose first step returns
+PENDING fails that step, never starts its dependent, and reports FAILED. -/
+theorem pending_dependency_fails_closed :
     let p : Plan := [⟨[], .returned .pending⟩, ⟨[0], .returned .success⟩]
-    let s := schedulingLoop p 1 [.batch [0], .batch [1]] (initial p)
-    s.starts = [0, 1] ∧ s.results 0 = some ⟨.pending, .none⟩ ∧
-      s.life 0 = .failed ∧ finalStatus s = .success := by
+    let s := schedulingLoop p 1 [.batch [0]] (initial p)
+    s.starts = [0] ∧ s.results 0 = some ⟨.failed, .none⟩ ∧ s.life 0 = .failed ∧
+      s.results 1 = some ⟨.skipped, .upstream⟩ ∧ finalStatus s = .failed := by
   decide
 
 /-- At the checked-out revision, an internal zero-limit run skips the root
@@ -326,9 +333,12 @@ private theorem mark_capacity (l : Int) (s : State) (i : Nat) (why : Skip)
   unfold markSkipped
   split <;> exact h
 
-private theorem cascade_capacity (p : Plan) (l : Int) (why : Skip)
-    (fuel : Nat) (queue : List Nat) (s : State) (h : Cap l s) :
-    Cap l (cascadeQueue p why fuel queue s) := by
+/-- Any state property that every skip-marking preserves survives a cascade,
+whatever the fuel and queue. -/
+private theorem cascade_invariant (p : Plan) (why : Skip) (inv : State → Prop)
+    (hmark : ∀ s j, inv s → inv (markSkipped s j why))
+    (fuel : Nat) (queue : List Nat) (s : State) (h : inv s) :
+    inv (cascadeQueue p why fuel queue s) := by
   induction fuel generalizing queue s with
   | zero => exact h
   | succ fuel ih =>
@@ -336,13 +346,66 @@ private theorem cascade_capacity (p : Plan) (l : Int) (why : Skip)
     | nil => exact h
     | cons i queue =>
       apply ih
-      apply fold_invariant _ (fun pair : State × List Nat => Cap l pair.1)
+      apply fold_invariant _ (fun pair : State × List Nat => inv pair.1)
       · intro pair j hp
         dsimp
         split
         · exact hp
-        · exact mark_capacity l _ j why hp
+        · exact hmark _ j hp
       · exact h
+
+private theorem cascade_capacity (p : Plan) (l : Int) (why : Skip)
+    (fuel : Nat) (queue : List Nat) (s : State) (h : Cap l s) :
+    Cap l (cascadeQueue p why fuel queue s) :=
+  cascade_invariant p why (Cap l) (fun s j hs => mark_capacity l s j why hs) fuel queue s h
+
+/-- Marking another node skipped leaves a finished node's result, lifecycle
+and the run's failure flag untouched. -/
+private theorem mark_keeps (s : State) (i j : Nat) (why : Skip)
+    (h : finished s i = true) :
+    (markSkipped s j why).results i = s.results i ∧
+      (markSkipped s j why).life i = s.life i ∧
+      (markSkipped s j why).failed = s.failed := by
+  unfold markSkipped
+  split
+  · exact ⟨rfl, rfl, rfl⟩
+  · rename_i hj
+    have hne : i ≠ j := by
+      intro he
+      subst he
+      exact hj h
+    simp [put, hne]
+
+private def FailedAt (i : Nat) (s : State) : Prop :=
+  s.results i = some ⟨.failed, .none⟩ ∧ s.life i = .failed ∧ s.failed = true
+
+private theorem cascade_keeps_failed (p : Plan) (why : Skip) (i fuel : Nat)
+    (queue : List Nat) (s : State) (h : FailedAt i s) :
+    FailedAt i (cascadeQueue p why fuel queue s) := by
+  apply cascade_invariant p why (FailedAt i) _ fuel queue s h
+  intro s j ⟨hr, hl, hf⟩
+  have hfin : finished s i = true := by simp [finished, hr]
+  obtain ⟨kr, kl, kf⟩ := mark_keeps s i j why hfin
+  exact ⟨kr.trans hr, kl.trans hl, kf.trans hf⟩
+
+/-- For every plan, state and node, a step that returns PENDING, RUNNING or
+RETRYING is recorded FAILED in its result and lifecycle, and the run's failure
+flag is set. The branch taken is the cascade skip, so its dependents are never
+unlocked by it. -/
+theorem nonterminal_fails_closed (p : Plan) (s : State) (i : Nat) (st : Status)
+    (hs : st ≠ .success) (hk : st ≠ .skipped)
+    (ho : (p[i]!).outcome = .returned st) :
+    (processDoneTask p s i).results i = some ⟨.failed, .none⟩ ∧
+      (processDoneTask p s i).life i = .failed ∧
+      (processDoneTask p s i).failed = true := by
+  have hr : ownResult (.returned st) = ⟨.failed, .none⟩ := by
+    cases st <;> first | rfl | contradiction
+  show FailedAt i (processDoneTask p s i)
+  unfold processDoneTask
+  rw [ho]
+  simp only [hr]
+  apply cascade_keeps_failed
+  simp [FailedAt, transitionOutcomeState, put]
 
 private theorem unlock_capacity (p : Plan) (l : Int) (s : State) (i : Nat)
     (h : Cap l s) : Cap l (unlockDownstream p s i) := by
@@ -361,7 +424,8 @@ private theorem process_capacity (p : Plan) (l : Int) (s : State) (i : Nat)
   unfold processDoneTask
   split
   · exact cascade_capacity p l .upstream _ _ _ hf
-  · split
+  · dsimp only
+    split
     · exact cascade_capacity p l .upstream _ _ _ hf
     · exact unlock_capacity p l _ i hf
 
@@ -472,8 +536,10 @@ runs axiom-audit over every declaration in the library. -/
 #guard_msgs in #print axioms recursive_solution_unique
 /-- info: 'ARP.exception_root_lifecycle' depends on axioms: [propext] -/
 #guard_msgs in #print axioms exception_root_lifecycle
-/-- info: 'ARP.pending_dependency_counterexample' depends on axioms: [propext] -/
-#guard_msgs in #print axioms pending_dependency_counterexample
+/-- info: 'ARP.pending_dependency_fails_closed' depends on axioms: [propext] -/
+#guard_msgs in #print axioms pending_dependency_fails_closed
+/-- info: 'ARP.nonterminal_fails_closed' depends on axioms: [propext] -/
+#guard_msgs in #print axioms nonterminal_fails_closed
 /-- info: 'ARP.zero_limit_is_failed' depends on axioms: [propext] -/
 #guard_msgs in #print axioms zero_limit_is_failed
 /-- info: 'ARP.nonpositive_schedules_nothing' depends on axioms: [propext, Quot.sound] -/

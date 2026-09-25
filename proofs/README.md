@@ -1,9 +1,8 @@
 # DAG scheduler model and replay (partial proof)
 
 This is **not a completed proof of ARP scheduler correctness**. It is ADR-060
-steps 2 and 3, in progress. The model follows `DAGExecutor` as of
-`d71971981e7d2b2124f59e61684e5d527f38c8fb` and uses Lean 4.34.0 core and its
-standard library only; there are no Batteries or Mathlib dependencies.
+steps 2 and 3, in progress. The model follows `dag_executor.py` in the same
+commit and uses Lean 4.34.0 core and its standard library only; there are no Batteries or Mathlib dependencies.
 
 ## Run
 
@@ -52,7 +51,7 @@ times per limit, each time with a shuffled insertion order and random
 cooperative delays. Every run's per-step status, skip category and overall
 status must equal the spec's. During each run the test also checks that no step
 starts twice, that a step starts only after its dependencies emitted `step_end`
-and none of them failed or raised, and that no more steps run at once than the
+and each of them succeeded or was skipped, and that no more steps run at once than the
 limit allows.
 
 The replay does **not** yet check the operational model: start order,
@@ -77,21 +76,25 @@ The substantive universal results currently proved are:
 - `recursive_solution_matches_spec` and `recursive_solution_unique`: on a graph
   ranked along dependencies, the recursive failure rule has a unique solution.
 - `nonpositive_schedules_nothing`: a nonpositive limit starts nothing.
+- `nonterminal_fails_closed`: a PENDING, RUNNING or RETRYING result is recorded
+  FAILED in result and lifecycle, sets the run's failure flag and takes the
+  cascade-skip branch, for every plan and state.
 
-There are also local finalization lemmas and executable counterexample proofs
-for nonterminal outcomes, exception lifecycle drift, and the current internal
-zero-limit failure result. Each theorem's axioms are pinned; only `propext` and
+There are also local finalization lemmas and executable witnesses: a PENDING
+chain fails closed, exception lifecycle drift, and the internal zero-limit
+failure result. Each theorem's axioms are pinned; only `propext` and
 `Quot.sound` occur, and no `sorry` or additional axiom is used.
 
-## Known executor defects
+## Executor defects
 
-The model reproduces these, and the replay test pins each with a strict xfail
-that the fix must remove:
+Fixed: a step that returned PENDING, RUNNING or RETRYING unblocked its
+dependents and the run reported SUCCESS. `_fail_nonterminal` now records it
+FAILED (`nonterminal_fails_closed`,
+`test_dag_executor_nonterminal_outcome_fails_closed`).
 
-- A step that returns PENDING, RUNNING or RETRYING gets a FAILED lifecycle, yet
-  its dependents still run and the run reports SUCCESS
-  (`pending_dependency_counterexample`,
-  `test_dag_executor_nonterminal_outcome_fails_closed`).
+Still open. The model reproduces this one, and the replay test pins it with a
+strict xfail that the fix must remove:
+
 - A step that raises gets a FAILED result, but its lifecycle stays RUNNING and
   no `step_end` is emitted (`exception_root_lifecycle`,
   `test_dag_executor_exception_ends_step_lifecycle`).
@@ -111,10 +114,8 @@ that the Python executor agrees with the spec on sampled runs; it says nothing
 about the operational model. The `DAG.validate` and topological ordering
 stretch goals are also unproved.
 
-ADR-060's safety claim is false for arbitrary statuses today: PENDING, RUNNING,
-and RETRYING results all unblock dependencies (see the defects above). Either
-the executor fails such results closed, or the theorem needs a terminal-outcome
-precondition. Public `execute` now rejects nonpositive limits, and the deadlock
+Nonterminal results now fail closed, so ADR-060's safety theorem needs no
+terminal-outcome precondition. Public `execute` now rejects nonpositive limits, and the deadlock
 fallback fails the run; the historical zero-limit SUCCESS counterexample does
 not describe this revision. `DAG.validate` rejects the empty graph, so
 no-missing-dependencies/no-cycles alone is not its exact acceptance criterion.
