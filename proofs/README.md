@@ -22,8 +22,9 @@ The executable accepts one JSON line on stdin:
 ```
 
 Dependencies are integer indices into the plan, including repeated indices.
-Outcomes are `success`, `skipped`, `failed`, `pending`, `running`, `retrying`, or
-`exception`. Invalid input exits nonzero. Output contains `steps` (each with
+Outcomes are `success`, `skipped`, `failed`, `pending`, `running`, `retrying`,
+`exception`, or `cancelled` (a step task that ends cancelled; the model treats
+it as `exception`). Invalid input exits nonzero. Output contains `steps` (each with
 `status` and `skip`) and `overall`. Skip categories distinguish a step's own
 condition from upstream failure. The executable computes the recursive spec,
 not the operational scheduler model.
@@ -87,7 +88,8 @@ internal zero-limit failure result. Each theorem's axioms are pinned; only `prop
 
 ## Executor defects
 
-Fixed, each with a Lean theorem and a regression test:
+Fixed, each with a regression test (and a Lean theorem where the model covers
+the path):
 
 - A step that returned PENDING, RUNNING or RETRYING unblocked its dependents
   and the run reported SUCCESS. `_fail_nonterminal` now records it FAILED
@@ -96,10 +98,13 @@ Fixed, each with a Lean theorem and a regression test:
 - A step that raised got a FAILED result, but its lifecycle stayed RUNNING and
   no `step_end` was emitted. It now ends like any failed step
   (`exception_fails_closed`, `test_dag_executor_exception_ends_step_lifecycle`).
-
-A third defect is outside the model: a `CancelledError` from a step task escapes
-`execute()` without a `WorkflowResult`, and cancelling `execute()` itself
-leaves the step tasks running.
+- A step task that ended cancelled raised `CancelledError` out of `execute()`,
+  losing the `WorkflowResult`, and cancelling `execute()` itself left its step
+  tasks running. A cancelled step task is now a failed step (the model's
+  `exception` outcome), and cancelling `execute()` cancels and awaits every
+  step task before propagating
+  (`test_dag_executor_cancelled_step_fails_without_escaping`,
+  `test_dag_executor_cancel_cancels_running_steps`).
 
 ## Outstanding proof obligations
 
@@ -126,8 +131,10 @@ no-missing-dependencies/no-cycles alone is not its exact acceptance criterion.
 - Insertion order is fixed: the model's ready queue and adjacency follow plan
   index order, while Python follows `DAG.add` order. The replay shuffles
   insertion order but compares only with the order-independent spec.
-- Only ordinary `Exception` is modeled. `CancelledError` and other
-  `BaseException` exits, callback failures, and runtime resource failures are not.
+- A step task that raises an `Exception` or ends cancelled is the `exception`
+  outcome. Cancelling `execute()` itself ends the run without a result, after
+  cancelling and awaiting every step task; that path, callback failures, and
+  runtime resource failures are outside the model.
 - Scheduling and READY-to-RUNNING are atomic. Timeouts are modeled at scheduling
   boundaries, **not every await point** within callbacks or a completion batch.
   Python records each completion in full before awaiting its callbacks, so a
