@@ -1,9 +1,12 @@
-# DAG scheduler model and replay (partial proof)
+# DAG scheduler model and replay
 
-This is **not a completed proof of ARP scheduler correctness**. ADR-060 step 3,
-the replay, is complete; step 2, the proofs, is in progress. The model follows
-`dag_executor.py` in the same commit and uses Lean 4.34.0 core and its standard
-library only; there are no Batteries or Mathlib dependencies.
+The four ADR-060 guarantees are proved **for the Lean model** of
+`dag_executor.py`, over every legal completion order. This is not a proof
+about the Python code. The model follows `dag_executor.py` in the same commit,
+and the replay ties the two together on sampled schedules only. What remains
+unproved is listed under outstanding obligations. The package uses Lean 4.34.0
+core and its standard library only; there are no Batteries or Mathlib
+dependencies.
 
 ## Run
 
@@ -35,7 +38,9 @@ own condition from upstream failure, timeout and deadlock.
 Add `"batches"` (completion batches, each a list of node indices in processing
 order) and optionally `"timeout": true` to also get `model`: the operational
 `schedulingLoop` run under that completion order, reporting `starts`, `ends`,
-`results`, `life`, `overall`, `timed_out`, `deadlocked` and `complete`.
+`results`, `life`, `overall`, `timed_out`, `deadlocked`, `complete` and
+`legal`. `legal` is `checkLegal`, which decides the theorems' `Legal`
+hypothesis for that trace and is proved sound (`checkLegal_sound`).
 
 From the repository root in PowerShell:
 
@@ -70,13 +75,16 @@ FIRST_COMPLETED batch in processing order. A stand-in for `asyncio` inside
 relabelled by insertion position, which makes the model's ready queue and
 adjacency follow `DAG.add` order. Lean drives `schedulingLoop` with those
 batches, and the start order, `step_end` order, results, lifecycle states,
-overall status and timeout/deadlock flags must equal the model's exactly. On
-each trace the model must also end in the spec's results, a sampled check of
-the unproved refinement. Eight more plans make their first step hang under a
+overall status and timeout/deadlock flags must equal the model's exactly. Each
+recorded trace must also be legal, so the theorems below cover it, and the
+model must end in the spec's results, as `legal_run_matches_spec` proves it
+does on every legal trace. Eight more plans make their first step hang under a
 0.2 s timeout. The test's observer never suspends, so the executor can only be
 interrupted at its FIRST_COMPLETED wait, right after a scheduling pass, which
 is where the model applies the timeout. An observer that suspends can be
 interrupted mid-batch, which the model does not cover (see abstraction limits).
+A separate test confirms `legal` rejects a batch naming a step that is not
+running, a duplicate, and an empty batch.
 
 The fixed seeds produce multi-step batches and timeouts that land after
 processed batches. Making the ready queue LIFO passes every spec-replay case
@@ -94,16 +102,54 @@ Status of the four ADR-060 guarantees:
 
 | Guarantee | Status |
 |---|---|
-| 1. Safety: a step starts only after its dependencies finished, none failed | not proved |
-| 2a. No step starts twice | not proved |
+| 1. Safety: a step starts only after its dependencies finished, none failed | proved: `start_after_dependencies`, `pass_starts_after_dependencies` |
+| 2a. No step starts twice | proved: `no_duplicate_starts`, `pass_no_duplicate_starts` |
 | 2b. Bounded parallelism | proved: `scheduler_capacity` |
-| 3. Completeness; deadlock unreachable | not proved |
-| 4. Honest status: SUCCESS only if nothing failed or was skipped for a cause | proved: `success_only_if_nothing_failed` |
+| 3. Completeness; deadlock unreachable | proved: `deadlock_unreachable`, `legal_run_never_deadlocks`, `legal_run_completes` |
+| 4. Honest status: SUCCESS only if nothing failed or was skipped for a cause | proved: `success_only_if_nothing_failed`; the converse for complete legal runs via `legal_run_matches_spec` |
 
-1, 2a and 3 need the global invariant described under outstanding obligations.
+The theorems quantify over legal traces. A trace is legal when every
+completion batch the loop consumes is nonempty, duplicate-free and drawn from
+the running steps (`Legal`, `Reachable`), which every FIRST_COMPLETED batch is.
+Safety and no duplicate starts hold for every plan and every limit. Completeness
+and refinement also assume a limit of at least 1 and a validated plan: every
+dependency exists and a rank strictly decreases along each edge (`Ranked`).
+Bounded parallelism and SUCCESS-only-if-nothing-failed hold for every trace,
+legal or not.
 
-The substantive universal results currently proved are:
+All of 1, 2a and 3 rest on one invariant, `Invariant`, which holds at the top
+of the loop, after each scheduling pass and after each processed completion of
+every legal trace (`reachable_inv`, `schedule_inv`, `process_inv`):
 
+- an unfinished step's counter equals its dependency edges whose source has not
+  cleared (finished SUCCESS or skipped by its own condition);
+- ready steps are unfinished, unstarted, at zero and listed once, and every
+  such step is ready;
+- running and started steps are listed once, and every started step's
+  dependencies cleared and emitted their end event;
+- no unfinished step has a failed or upstream-skipped dependency;
+- every result is the step's own outcome after it started, or an upstream skip
+  with a blocking dependency; the run's failure flag is set exactly when some
+  step failed.
+
+The substantive universal results are:
+
+- `start_after_dependencies` and `no_duplicate_starts`: on every legal trace,
+  including one that times out, every started step's dependencies ended with
+  SUCCESS or a condition skip, and no step starts twice. The `pass_` forms say
+  the dependencies had ended before the scheduling pass that started the step.
+- `deadlock_unreachable`: for a validated plan and a limit of at least 1, a
+  reachable state with an unfinished step always has a running step after
+  scheduling, so a legal batch always exists; `legal_run_never_deadlocks` and
+  `legal_run_completes`: no legal run takes the deadlock branch, and every
+  legal run of at least `p.length` batches finishes every step.
+- `legal_run_matches_spec`: such a run reports exactly the recursive spec's
+  per-step results, at the spec's own graph-size depth, and its overall status.
+  `complete_refines_spec` and `legal_run_refines_spec` state the per-step
+  equality for any depth above a step's rank.
+- `no_counter_underflow`: processing a running step never decrements a counter
+  below zero, so the model's saturating subtraction agrees with Python's
+  integers. `cascade_inv`: the cascade's `node_count + 1` fuel always suffices.
 - `scheduler_capacity`: every finite modeled trace preserves the concurrency
   bound, given an initially bounded running set.
 - `timeout_has_all_results`: modeled timeout cleanup supplies every node with a
@@ -117,13 +163,15 @@ The substantive universal results currently proved are:
 - `success_only_if_nothing_failed`: from the initial state, for every plan,
   limit and finite sequence of completion batches and timeouts (legal or not),
   a SUCCESS final status means every result is SUCCESS or a condition skip.
-  The converse, FAILED only if some step failed or was skipped for a cause, is
-  not proved.
 
 There are also local finalization lemmas and executable witnesses: a PENDING
 chain fails closed, a raised root ends FAILED with an end event, and the
-internal zero-limit failure result. Each theorem's axioms are pinned; only
-`propext` and `Quot.sound` occur, and no `sorry` or additional axiom is used.
+internal zero-limit failure result. Each public theorem's axioms are pinned;
+only `propext` and `Quot.sound` occur, and no `sorry` or additional axiom is
+used. Several core list lemmas (`List.nodup_range`, `List.countP_eq_zero`,
+`List.all_eq_false`) and `beq_self_eq_true` on `Nat` depend on
+`Classical.choice`, which the axiom audit rejects, so the proofs use
+constructive replacements.
 
 ## Executor defects
 
@@ -150,28 +198,33 @@ the path):
   the run is unaffected
   (`test_dag_executor_observer_failure_does_not_change_the_run`).
 
+Proving the invariant found no further executor defect. It did confirm that
+the `finished` guard in `_schedule_ready_steps` never fires on a legal trace,
+since the ready queue only ever holds unfinished steps.
+
 ## Outstanding proof obligations
 
-The global graph/counter/ready-queue invariant, absence of duplicate starts,
-dependency safety, normal-run termination, unreachable deadlock, skip
-provenance, and operational-executor refinement to the recursive spec are
-**not proved**. They share one invariant over legal traces of a validated plan:
-an unfinished step's counter equals its dependency edges whose source has not
-finished SUCCESS or condition-skipped; ready and running steps are unfinished
-and unstarted or started exactly once; every running step's dependencies
-finished non-blocking; and no unfinished step has a blocking dependency, which
-needs the cascade's `node_count + 1` fuel to be shown adequate.
-The recursive uniqueness theorem does not discharge refinement: one must still
-show that operational results satisfy its defining equation. Seeded replay shows
-that the Python executor agrees with the model and the spec on sampled traces;
-it proves nothing about unsampled ones. The `DAG.validate` and topological
-ordering stretch goals are also unproved.
+- `DAG.validate` is not modelled. The completeness and refinement theorems
+  assume `Ranked`, which holds exactly for plans whose dependencies exist and
+  that have no cycle. That `validate`'s depth-first search accepts only such
+  plans, and the topological-ordering stretch goal, are unproved. `validate`
+  also rejects the empty graph, so no-missing-dependencies/no-cycles alone is
+  not its exact acceptance criterion.
+- Legality is an asyncio property. That every FIRST_COMPLETED batch is a
+  nonempty, duplicate-free set of running tasks is checked on each replayed
+  trace (`checkLegal`), not proved about asyncio.
+- The model is linked to the code by seeded replay, which shows the Python
+  executor agrees with the model on sampled traces and proves nothing about
+  unsampled ones. The paths listed under abstraction limits are outside it.
+- The converse of honest status is proved for complete legal runs. For a run
+  that times out, the model always reports FAILED with timeout results, but no
+  theorem states it.
+- The orchestrator's own scheduling loop (`_execute_plan`) is not modelled.
 
-Nonterminal results now fail closed, so ADR-060's safety theorem needs no
-terminal-outcome precondition. Public `execute` now rejects nonpositive
-limits, and the deadlock fallback fails the run; the historical zero-limit
-SUCCESS counterexample does not describe this revision. `DAG.validate` rejects the empty graph, so
-no-missing-dependencies/no-cycles alone is not its exact acceptance criterion.
+Nonterminal results fail closed, so ADR-060's safety theorem needs no
+terminal-outcome precondition. Public `execute` rejects nonpositive limits,
+and the deadlock fallback fails the run; the historical zero-limit SUCCESS
+counterexample does not describe this revision.
 
 ## Abstraction limits
 
@@ -193,19 +246,16 @@ no-missing-dependencies/no-cycles alone is not its exact acceptance criterion.
   batch stay unprocessed, which the model does not represent.
 - The model retains running IDs after timeout, like Python's bookkeeping. It
   does not simulate task cancellation, cleanup awaits, or cancellation resistance.
-- Legal completion batches must be nonempty, contain distinct running IDs, and
-  contain no other IDs. The interpreter does not enforce this; recorded batches
-  satisfy it by construction, since each is a FIRST_COMPLETED set of running
-  tasks.
-- A finite action list can end at an intermediate state; exhaustion does not
-  prove termination. `finalStatus` is meaningful as a run result only after exit.
-- Cascade traversal uses `node_count + 1` fuel. Its adequacy for every valid
-  reachable state remains part of the outstanding invariant proof. Degree uses
-  saturating natural subtraction; equivalence to Python's integers requires
-  proving counters never underflow on legal traces.
+- The interpreter does not enforce legal batches; the theorems assume them and
+  the replay checks each recorded trace with `checkLegal`.
+- A finite action list can end at an intermediate state; exhaustion alone does
+  not prove termination. `legal_run_completes` shows `p.length` legal batches
+  always suffice. `finalStatus` is meaningful as a run result only after exit.
+- Degree uses saturating natural subtraction; `no_counter_underflow` shows it
+  never saturates on a legal trace.
 - The independent spec uses graph-size recursion depth. Missing dependencies,
-  cycles, or insufficient depth yield `none`. Completeness of this bound for all
-  Python-validated plans remains unproved.
+  cycles, or insufficient depth yield `none`; for a ranked plan the depth
+  always suffices (`legal_run_matches_spec`).
 - Exact upstream skip strings are combined into one category. When a failed
   node and an exception share a descendant, the first processed failure chooses
   the string. This affects diagnostics, not the status or skip category.
