@@ -182,8 +182,9 @@ async def _record_task_exception(
 ) -> None:
     """Record a step task that raised, or ended cancelled, as a FAILED step.
 
-    The step ends like any other failed step: a FAILED result and
-    lifecycle, a ``step_end`` event, and its dependents cascade-skipped.
+    The step ends like any other failed step: a FAILED result, lifecycle
+    and context entry, its dependents cascade-skipped, and a ``step_end``
+    event, which is awaited only after all of that is recorded.
     """
     # Retrieve the step name from the task (set via name= in create_task).
     failed_name = task.get_name()
@@ -201,12 +202,15 @@ async def _record_task_exception(
     state.results[failed_name] = step_result
     state.result.add_step(step_result)
     state.completed.add(failed_name)
-    await _emit_step_end(state, failed_name, step_result)
     # set_state, as in _handle_timeout: the task may have failed before its
     # lifecycle reached RUNNING, and READY -> FAILED is not a transition.
     state.state_manager.set_state(failed_name, StepState.FAILED)
     state.result.overall_status = StepStatus.FAILED
     _cascade_skip(state, failed_name, "unhandled exception")
+    # Awaits come last: a workflow timeout that interrupts them must find the
+    # step fully recorded, because timeout recovery skips completed steps.
+    await _mark_context_failed(state.ctx, failed_name, step_result.error)
+    await _emit_step_end(state, failed_name, step_result)
 
 
 async def _emit_step_end(
@@ -285,6 +289,19 @@ def _fail_nonterminal(step_result: StepResult) -> StepResult:
     return failed
 
 
+async def _mark_context_failed(
+    ctx: ExecutionContext, step_name: str, error: str
+) -> None:
+    """Record *step_name* as failed in *ctx*, dropping any stale completion.
+
+    An executor can mark a step complete before its result is settled
+    FAILED; the context must agree with the result it is saved beside.
+    """
+    if step_name in ctx.completed_steps:
+        ctx.completed_steps.remove(step_name)
+    await ctx.mark_step_failed(step_name, error)
+
+
 async def _process_done_task(state: _RunState, task: asyncio.Task) -> None:
     """Handle a single completed task: record result and propagate."""
     try:
@@ -301,17 +318,19 @@ async def _process_done_task(state: _RunState, task: asyncio.Task) -> None:
     state.results[step_name] = step_result
     state.result.add_step(step_result)
     state.completed.add(step_name)
-
-    await _emit_step_end(state, step_name, step_result)
     _transition_outcome_state(state, step_name, step_result)
-
-    # Failure propagation: skip all steps that depend on a failed step.
     if step_result.is_failed:
+        # Failure propagation: skip all steps that depend on a failed step.
         state.result.overall_status = StepStatus.FAILED
         _cascade_skip(state, step_name, "dependency failed")
-        return
+    else:
+        _unlock_downstream(state, step_name)
 
-    _unlock_downstream(state, step_name)
+    # Awaits come last: a workflow timeout that interrupts them must find the
+    # step fully recorded, because timeout recovery skips completed steps.
+    if step_result is not raw_result:
+        await _mark_context_failed(state.ctx, step_name, step_result.error or "")
+    await _emit_step_end(state, step_name, step_result)
 
 
 async def _scheduling_loop(state: _RunState) -> None:

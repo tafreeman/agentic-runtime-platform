@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased - DAG executor fails closed (ADR-060)
+
+- `DAGExecutor` records a step that finishes with a non-terminal status
+  (PENDING, RUNNING or RETRYING) as FAILED, with `error_type`
+  `NonTerminalStatus` and the original status in
+  `metadata["nonterminal_status"]`; its dependents are skipped and the run
+  fails. Previously such a step unlocked its dependents and the run could
+  report SUCCESS. The execution context marks the step failed and drops any
+  completion recorded for it. Only injected step executors can return these
+  statuses; the built-in `StepExecutor` always finishes terminal.
+- A step whose task raises now ends like any other failed step: a FAILED
+  lifecycle, a `step_end` event, `error_type` set to the exception class, and
+  the step marked failed in the execution context. Previously its lifecycle
+  stayed RUNNING and observers never saw it finish. Each completion is now
+  fully recorded (lifecycle, result, dependents skipped or unlocked) before
+  its callbacks are awaited, so a workflow timeout during `step_end` no longer
+  leaves a finished step RUNNING.
+
 ## Unreleased - ExecutionKit 0.4 and EvalKit 0.4.1
 
 - The `ek` extra now pins `executionkit>=0.4.0,<0.5.0` and the `eval` extra

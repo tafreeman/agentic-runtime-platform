@@ -193,7 +193,11 @@ async def test_dag_executor_nonterminal_outcome_fails_closed(
 
 
 async def test_dag_executor_nonterminal_result_records_why() -> None:
-    """The FAILED copy names the original status and keeps the step's error."""
+    """The FAILED copy names the original status and keeps the step's error.
+
+    The context agrees: the step is failed, and a completion the executor
+    recorded before returning the non-terminal status is dropped.
+    """
     plan = [{"depends_on": [], "outcome": "retrying"}]
 
     class ErroredRunner(ScriptedRunner):
@@ -201,12 +205,14 @@ async def test_dag_executor_nonterminal_result_records_why() -> None:
             self, step_def: StepDefinition, ctx: ExecutionContext
         ) -> StepResult:
             result = await super().execute(step_def, ctx)
+            await ctx.mark_step_complete(step_def.name)
             result.error = "rate limited"
             return result
 
     dag = DAG(name="nonterminal-why").add(StepDefinition(name="0"))
+    ctx = ExecutionContext()
     result = await DAGExecutor(step_executor=ErroredRunner(plan, [0])).execute(
-        dag, ctx=ExecutionContext()
+        dag, ctx=ctx
     )
     [step] = result.steps
     assert step.status == StepStatus.FAILED
@@ -216,6 +222,8 @@ async def test_dag_executor_nonterminal_result_records_why() -> None:
     assert step.error_type == "NonTerminalStatus"
     assert step.metadata["nonterminal_status"] == "retrying"
     assert step.end_time is not None
+    assert ctx.is_step_failed("0")
+    assert not ctx.is_step_complete("0")
 
 
 async def test_dag_executor_exception_ends_step_lifecycle(
@@ -240,6 +248,40 @@ async def test_dag_executor_exception_ends_step_lifecycle(
     assert manager.get_state("0") == StepState.FAILED
     step_ends = [e for e in events if e["type"] == "step_end" and e["step"] == "0"]
     assert [e["status"] for e in step_ends] == ["failed"]
+
+
+@pytest.mark.parametrize("outcome", ["success", "exception"])
+async def test_dag_executor_timeout_during_step_end_keeps_bookkeeping(
+    monkeypatch: pytest.MonkeyPatch, outcome: str
+) -> None:
+    """A timeout that interrupts the step_end callback finds the step recorded.
+
+    Timeout recovery skips completed steps, so the lifecycle, result and
+    propagation must all happen before the callback is awaited.
+    """
+    manager = StepStateManager()
+    monkeypatch.setattr(
+        "agentic_v2.engine.dag_executor.StepStateManager", lambda: manager
+    )
+
+    async def on_update(event: dict[str, Any]) -> None:
+        if event["type"] == "step_end":
+            await asyncio.sleep(5)
+
+    plan = [
+        {"depends_on": [], "outcome": outcome},
+        {"depends_on": [0], "outcome": "success"},
+    ]
+    dag = DAG(name="timeout-in-callback")
+    dag.add(StepDefinition(name="0")).add(StepDefinition(name="1", depends_on=["0"]))
+    result = await DAGExecutor(step_executor=ScriptedRunner(plan, [0, 0])).execute(
+        dag, ctx=ExecutionContext(), on_update=on_update, timeout=0.2
+    )
+    assert result.metadata["timeout_exceeded"]
+    finished = StepState.SUCCESS if outcome == "success" else StepState.FAILED
+    assert manager.get_state("0") == finished
+    assert manager.get_state("1") == StepState.SKIPPED
+    assert [step.status for step in result.steps][1] == StepStatus.SKIPPED
 
 
 @pytest.mark.parametrize("limit", [-1, 0])
