@@ -177,10 +177,15 @@ def _schedule_ready_steps(state: _RunState) -> None:
         )
 
 
-def _record_task_exception(
+async def _record_task_exception(
     state: _RunState, task: asyncio.Task, exc: Exception
 ) -> None:
-    """Record an unhandled run_step exception as a FAILED step result."""
+    """Record an unhandled run_step exception as a FAILED step.
+
+    The step ends like any other failed step: a FAILED result, lifecycle
+    and context entry, its dependents cascade-skipped, and a ``step_end``
+    event, which is awaited only after all of that is recorded.
+    """
     # Retrieve the step name from the task (set via name= in create_task).
     failed_name = task.get_name()
     logger.error(
@@ -192,12 +197,20 @@ def _record_task_exception(
     state.running.discard(failed_name)
     step_result = StepResult(step_name=failed_name, status=StepStatus.FAILED)
     step_result.error = str(exc)
+    step_result.error_type = type(exc).__name__
     step_result.end_time = datetime.now(UTC)
     state.results[failed_name] = step_result
     state.result.add_step(step_result)
     state.completed.add(failed_name)
+    # set_state, as in _handle_timeout: the task may have failed before its
+    # lifecycle reached RUNNING, and READY -> FAILED is not a transition.
+    state.state_manager.set_state(failed_name, StepState.FAILED)
     state.result.overall_status = StepStatus.FAILED
     _cascade_skip(state, failed_name, "unhandled exception")
+    # Awaits come last: a workflow timeout that interrupts them must find the
+    # step fully recorded, because timeout recovery skips completed steps.
+    await _mark_context_failed(state.ctx, failed_name, step_result.error)
+    await _emit_step_end(state, failed_name, step_result)
 
 
 async def _emit_step_end(
@@ -296,7 +309,7 @@ async def _process_done_task(state: _RunState, task: asyncio.Task) -> None:
     except asyncio.CancelledError:
         raise
     except Exception as exc:
-        _record_task_exception(state, task, exc)
+        await _record_task_exception(state, task, exc)
         return
 
     step_result = _fail_nonterminal(raw_result)
@@ -304,19 +317,19 @@ async def _process_done_task(state: _RunState, task: asyncio.Task) -> None:
     state.results[step_name] = step_result
     state.result.add_step(step_result)
     state.completed.add(step_name)
-    if step_result is not raw_result:
-        await _mark_context_failed(state.ctx, step_name, step_result.error or "")
-
-    await _emit_step_end(state, step_name, step_result)
     _transition_outcome_state(state, step_name, step_result)
-
-    # Failure propagation: skip all steps that depend on a failed step.
     if step_result.is_failed:
+        # Failure propagation: skip all steps that depend on a failed step.
         state.result.overall_status = StepStatus.FAILED
         _cascade_skip(state, step_name, "dependency failed")
-        return
+    else:
+        _unlock_downstream(state, step_name)
 
-    _unlock_downstream(state, step_name)
+    # Awaits come last: a workflow timeout that interrupts them must find the
+    # step fully recorded, because timeout recovery skips completed steps.
+    if step_result is not raw_result:
+        await _mark_context_failed(state.ctx, step_name, step_result.error or "")
+    await _emit_step_end(state, step_name, step_result)
 
 
 async def _scheduling_loop(state: _RunState) -> None:
