@@ -5,7 +5,7 @@
 # `agentic-evalkit` (the `eval` extra), each capped below its next minor
 # release — see agentic-workflows-v2/pyproject.toml. That is deliberate: both packages
 # are pre-1.0 and ARP imports private/internal symbols from each
-# (`executionkit.patterns.base._TrackedProvider`, and the
+# (`executionkit.patterns.base._note_truncation`, and the
 # Rubric/RubricCriterion/CallableTarget adaptation in
 # `agentic_v2/scoring/evalkit_bridge.py`) with no consumer contract test on
 # the upstream side. A tight pin protects TODAY's build.

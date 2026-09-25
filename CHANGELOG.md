@@ -1,5 +1,26 @@
 # Changelog
 
+## Unreleased - study telemetry and SWE-AB ledger
+
+- `SmartRouterProvider` takes an optional `attempt_callback` that receives a
+  `ProviderAttempt` (model, latency, ok, exception class name, streaming) for
+  every real backend call, including each fallback hop and retry. Candidates
+  the bulkhead sheds make no call and produce no record. Observer exceptions
+  are logged and swallowed. The EK step-delegation entry points
+  (`complete_turn_via_ek`, `structured_via_ek`, `run_tool_loop_via_ek`)
+  forward it, plus an EK `trace` callback. Both default to `None` and no
+  runtime caller attaches one yet.
+- The EK plain-completion turn calls `checked_complete` and
+  `_note_truncation` directly instead of `_TrackedProvider`, which cannot
+  forward `trace` (ExecutionKit 0.4.0 included). ARP's private-symbol
+  dependency moves from `_TrackedProvider` to `_note_truncation`, and the
+  consumer contract test binds the new call shapes.
+- SWE-AB ledger queries read only active trials. Since a trial can be
+  superseded (#297), a bare `FROM trial` counted a corrected cell twice.
+- `evals/swe_ab/run_ab.py` enforces ADR-059's cost-lane ceiling
+  (`--max-cost-lane`, default `free`), refuses to start on a model the
+  registry has not curated, and prints one progress line per finished sample.
+
 ## Unreleased - DAG executor fails closed (ADR-060)
 
 - `DAGExecutor` records a step that finishes with a non-terminal status

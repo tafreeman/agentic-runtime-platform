@@ -6,16 +6,28 @@ provider shim, Phase 6 re-points the **chat-completion turn** that lives inside 
 LLM-backed step (``engine.agent_resolver._make_llm_step`` ->
 ``engine.tool_execution.complete_chat_with_fallback``) onto EK pattern primitives:
 
-* **6a — plain completion** flows through EK ``_TrackedProvider`` /
-  ``checked_complete`` over a :class:`~agentic_v2.models.ek_provider.SmartRouterProvider`.
-  The TrackedProvider is budget-checked (EK ``CostTracker`` two-phase
-  ``reserve_call()`` / ``record_without_call()``), retry-wrapped (EK
-  ``RetryConfig``), and truncation-tracked, sharing **one** ``CostTracker`` per
-  step so multi-turn tool loops accumulate against a single ledger.
+* **6a — plain completion** flows through EK ``checked_complete`` over a
+  :class:`~agentic_v2.models.ek_provider.SmartRouterProvider`, followed by EK's
+  ``_note_truncation`` bookkeeping (the exact pair the EK-internal
+  ``_TrackedProvider`` performs). The call is budget-checked (EK
+  ``CostTracker`` two-phase ``reserve_call()`` / ``record_without_call()``),
+  retry-wrapped (EK ``RetryConfig``), and truncation-tracked, sharing **one**
+  ``CostTracker`` per step so multi-turn tool loops accumulate against a
+  single ledger.
 * **6c — structured/JSON extraction** flows through EK ``structured()``
   (``extract_json`` 3-strategy). The runtime ``ReviewStatus.normalize`` STILL
   runs at the DAG/gating layer (``engine.step`` / ``engine.llm_output_parsing``)
   *after* this — it is intentionally NOT performed here.
+
+Observability (study telemetry): each entry point accepts an optional EK
+``trace`` callback (forwarded to ``checked_complete`` / ``structured()`` /
+``react_loop`` — all present since ExecutionKit 0.3.0, below the 0.4.x pin, so no
+version gate is needed) and an optional
+:class:`~agentic_v2.models.ek_provider.AttemptCallback`, forwarded to the
+:class:`SmartRouterProvider` so the routing/fallback loop reports every
+*physical* wire attempt (EK-level trace events cannot see fallback hops
+inside one ``complete()``). Both default to ``None``, preserving the existing
+behaviour byte-for-byte when no observer is attached.
 
 Hard constraints (ADR-023 functionality-preservation + accepted decisions):
 
@@ -62,7 +74,8 @@ import json
 from typing import TYPE_CHECKING, Any
 
 from executionkit.cost import CostTracker
-from executionkit.patterns.base import _TrackedProvider
+from executionkit.observability import TraceCallback
+from executionkit.patterns.base import _note_truncation, checked_complete
 from executionkit.patterns.react_loop import react_loop as ek_react_loop
 from executionkit.patterns.structured import structured as ek_structured
 from executionkit.provider import BudgetExhaustedError
@@ -70,7 +83,7 @@ from executionkit.provider import LLMResponse as EKProviderResponse
 from executionkit.types import Tool as EKTool
 
 from ..models import ek_adapters
-from ..models.ek_provider import SmartRouterProvider
+from ..models.ek_provider import AttemptCallback, SmartRouterProvider
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -134,7 +147,7 @@ class BudgetEnforcingProvider:
         """
         # ``SmartRouterProvider.complete`` returns
         # ``executionkit.provider.LLMResponse`` — the SAME value type EK's
-        # ``LLMProvider`` protocol (consumed by ``_TrackedProvider`` /
+        # ``LLMProvider`` protocol (consumed by ``checked_complete`` /
         # ``structured`` / ``react_loop``) is typed to. Under ADR-023 Option A′
         # there is a single value-type set, so no boundary cast is needed.
         response = await self._inner.complete(
@@ -163,21 +176,35 @@ async def complete_turn_via_ek(
     budget: TokenBudget | None,
     tracker: CostTracker,
     metadata: dict[str, Any],
+    trace: TraceCallback | None = None,
+    attempt_callback: AttemptCallback | None = None,
 ) -> tuple[dict[str, Any], str, int]:
-    """Run ONE plain-completion turn through EK ``_TrackedProvider``.
+    """Run ONE plain-completion turn through EK ``checked_complete``.
 
     Phase 6a inner-mechanics delegation. The provider stack is:
 
         BudgetEnforcingProvider(SmartRouterProvider(router, backend, tier))
 
-    wrapped by EK ``_TrackedProvider`` so the call is budget-checked (call
-    dimension), retry-wrapped, and truncation-tracked while sharing the
-    caller-supplied ``tracker`` and ``metadata`` across the step's turns.
+    driven through EK ``checked_complete`` directly so the call is
+    budget-checked (call dimension), retry-wrapped, and truncation-tracked
+    (via ``_note_truncation``) while sharing the caller-supplied ``tracker``
+    and ``metadata`` across the step's turns. This is exactly the pair of
+    operations EK's internal ``_TrackedProvider`` performs; calling them
+    directly threads the optional ``trace`` callback, which ExecutionKit's
+    ``_TrackedProvider`` cannot forward (still true in 0.4.0).
 
     The runtime ``TokenBudget`` (token-sum ceiling) is enforced inside
     :class:`BudgetEnforcingProvider` BEFORE EK records the response on
     ``tracker`` — preserving the ACCEPTED budget precedence and EK's
     ``reserve_call()`` / ``record_without_call()`` ordering.
+
+    Args:
+        trace: Optional EK trace callback receiving ``llm_call_*`` events for
+            this turn. ``None`` (default) emits nothing.
+        attempt_callback: Optional observer receiving a
+            :class:`~agentic_v2.models.ek_provider.ProviderAttempt` for every
+            physical wire attempt the router's fallback loop makes inside this
+            turn. ``None`` (default) reports nothing.
 
     Returns:
         A ``(response_dict, model_name, tokens_used)`` triple matching the
@@ -193,27 +220,29 @@ async def complete_turn_via_ek(
             PermanentError / ProviderError) so the caller can map them onto
             ``StepResult.error`` after passing through the error hooks.
     """
-    inner = SmartRouterProvider(router, backend, tier)
-    budgeted = BudgetEnforcingProvider(inner, budget)
-    tracked = _TrackedProvider(
-        budgeted,
-        tracker,
-        metadata,
-        budget=None,  # EK call-budget is None here; runtime owns token ceiling.
-        retry=None,  # EK DEFAULT_RETRY inside checked_complete.
-        context="step.complete_turn",
+    inner = SmartRouterProvider(
+        router, backend, tier, attempt_callback=attempt_callback
     )
+    budgeted = BudgetEnforcingProvider(inner, budget)
 
-    # ``_TrackedProvider.complete`` returns ``executionkit.provider.LLMResponse``
-    # and forwards the wrapped provider's return verbatim. Under ADR-023
-    # Option A′ that is the SAME value type ``ek_adapters.llm_response_to_dict``
-    # consumes (``SmartRouterProvider`` -> ``dict_to_llm_response`` produced it),
-    # so no boundary cast is needed.
-    response = await tracked.complete(
+    # ``checked_complete`` returns ``executionkit.provider.LLMResponse`` and
+    # forwards the wrapped provider's return verbatim. Under ADR-023 Option A′
+    # that is the SAME value type ``ek_adapters.llm_response_to_dict``
+    # consumes (``SmartRouterProvider`` -> ``dict_to_llm_response`` produced
+    # it), so no boundary cast is needed. EK call-budget and retry config are
+    # None here; the runtime owns the token ceiling and EK's DEFAULT_RETRY
+    # applies inside checked_complete.
+    response = await checked_complete(
+        budgeted,
         messages,
+        tracker,
+        None,
+        None,
+        trace=trace,
         max_tokens=max_tokens,
         tools=tools,
     )
+    _note_truncation(response, metadata, "step.complete_turn")
 
     response_dict = ek_adapters.llm_response_to_dict(response)
 
@@ -241,6 +270,8 @@ async def structured_via_ek(
     tracker: CostTracker,
     max_tokens: int,
     max_retries: int = 3,
+    trace: TraceCallback | None = None,
+    attempt_callback: AttemptCallback | None = None,
 ) -> tuple[dict[str, Any] | list[Any], int]:
     """Extract structured JSON via EK ``structured()`` (6c, 3-strategy).
 
@@ -259,6 +290,12 @@ async def structured_via_ek(
     usage into the caller's shared ``tracker`` via ``add_usage`` so the step's
     cumulative ledger stays accurate.
 
+    Args:
+        trace: Optional EK trace callback forwarded to ``structured()`` (the
+            parameter exists since ExecutionKit 0.3.0).
+        attempt_callback: Optional physical-attempt observer forwarded to the
+            :class:`SmartRouterProvider`.
+
     Returns:
         A ``(value, tokens_used)`` tuple where ``value`` is the parsed JSON
         object/array.
@@ -268,13 +305,15 @@ async def structured_via_ek(
         PatternError: When EK could not produce valid structured output.
     """
     provider = BudgetEnforcingProvider(
-        SmartRouterProvider(router, backend, tier), budget=budget
+        SmartRouterProvider(router, backend, tier, attempt_callback=attempt_callback),
+        budget=budget,
     )
     result = await ek_structured(
         provider,
         prompt,
         max_retries=max_retries,
         max_tokens=max_tokens,
+        trace=trace,
     )
     tokens_used = result.cost.input_tokens + result.cost.output_tokens
     tracker.add_usage(result.cost)
@@ -394,6 +433,8 @@ async def run_tool_loop_via_ek(
     budget: TokenBudget | None,
     max_rounds: int = 8,
     max_observation_chars: int = 12000,
+    trace: TraceCallback | None = None,
+    attempt_callback: AttemptCallback | None = None,
 ) -> tuple[str, str, int, int]:
     """Drive a step's multi-turn tool loop through EK ``react_loop`` (6b default).
 
@@ -423,6 +464,9 @@ async def run_tool_loop_via_ek(
         max_rounds: Max think-act-observe cycles (8, matching the native loop).
         max_observation_chars: Per-tool-result truncation (12000, matching the
             native loop's ``MAX_TOOL_RESULT_CHARS``).
+        trace: Optional EK trace callback forwarded to ``react_loop()``.
+        attempt_callback: Optional physical-attempt observer forwarded to the
+            :class:`SmartRouterProvider`.
 
     Returns:
         A ``(final_text, model_used, tokens_used, tool_calls_made)`` tuple. The
@@ -436,7 +480,7 @@ async def run_tool_loop_via_ek(
         MaxIterationsError / ExecutionKitError: Surfaced from ``react_loop``.
     """
     provider = BudgetEnforcingProvider(
-        SmartRouterProvider(router, backend, tier),
+        SmartRouterProvider(router, backend, tier, attempt_callback=attempt_callback),
         budget,
     )
     ek_tools = _ek_tools_from_contracts(tool_schemas, bound_tools)
@@ -453,6 +497,7 @@ async def run_tool_loop_via_ek(
         max_rounds=max_rounds,
         max_observation_chars=max_observation_chars,
         max_tokens=max_tokens,
+        trace=trace,
     )
 
     cost = result.cost
