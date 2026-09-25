@@ -816,7 +816,6 @@ theorem initial_invariant (p : Plan) : Invariant p (initial p) := by
   · rfl
   · intro j _ d _; rfl
 
-
 /-- Starting the head of the ready queue preserves the invariant. -/
 private theorem start_inv (p : Plan) (s t : State) (i : Nat) (rest : List Nat)
     (h : Invariant p s) (hr : s.ready = i :: rest)
@@ -913,7 +912,6 @@ theorem schedule_inv (p : Plan) (limit : Int) (fuel : Nat) (s : State)
           rw [this] at hfin; cases hfin
         · exact ih _ (start_inv p s _ i rest h hr rfl rfl rfl rfl rfl rfl rfl rfl)
       · exact h
-
 
 /-- The unlock step, exactly as `unlockDownstream` folds it. -/
 private abbrev unlockStep (s : State) (j : Nat) : State :=
@@ -1286,7 +1284,6 @@ private theorem success_inv (p : Plan) (s t : State) (i : Nat) (r : Result)
     · exact cleared_not_blocking _ hc
     · exact hu j (hunf j hj).2 d hd
 
-
 /-- Steps not yet finished, among the plan's nodes. -/
 def unfinishedCount (p : Plan) (s : State) : Nat :=
   (List.range p.length).countP (fun j => !finished s j)
@@ -1403,7 +1400,6 @@ private theorem mark_core (p : Plan) (s : State) (j : Nat) (hc : Bookkeeping p s
   · rw [e6]; exact hc.not_timed_out
   · rw [e7]; exact hc.not_deadlocked
 
-
 /-- One step of the cascade's fold over a node's dependents. -/
 private abbrev cascadeStep (why : Skip) (acc : State × List Nat) (j : Nat) : State × List Nat :=
   if finished acc.1 j then acc else (markSkipped acc.1 j why, acc.2 ++ [j])
@@ -1413,7 +1409,6 @@ private theorem cascadeQueue_cons (p : Plan) (why : Skip) (fuel c : Nat) (q : Li
     cascadeQueue p why (fuel + 1) (c :: q) s =
       cascadeQueue p why fuel ((adjacency p c).foldl (cascadeStep why) (s, q)).2
         ((adjacency p c).foldl (cascadeStep why) (s, q)).1 := rfl
-
 
 private theorem mark_results (s : State) (a : Nat) (why : Skip) (ha : finished s a = false) (k : Nat) :
     (markSkipped s a why).results k =
@@ -1558,7 +1553,6 @@ theorem cascade_inv (p : Plan) (fuel : Nat) : ∀ (queue : List Nat) (s : State)
           · rw [deps_out_of_range p j hjn] at hd; cases hd
         · exact h
       · simp only [List.length_cons] at h4; omega
-
 
 /-- Recording a FAILED result for a running step and cascading preserves the
 invariant; the cascade's `node_count + 1` fuel is enough. -/
@@ -1743,7 +1737,6 @@ private theorem batch_inv (p : Plan) : ∀ (done : List Nat) (s : State), Invari
     have : x ≠ i := fun he => hnd.1 (he ▸ hx)
     simpa using this
 
-
 /-- The states a legal run reaches at the top of its loop: the initial state,
 then each state after scheduling and processing one legal FIRST_COMPLETED
 batch, which is nonempty, duplicate-free and drawn from the running steps. -/
@@ -1878,7 +1871,6 @@ theorem deadlock_unreachable (p : Plan) (rank : Nat → Nat) (hp : Ranked p rank
         (by rw [hrun]; simp only [List.length_nil]; omega) hjf
       rw [he] at this; cases this
 
-
 /-- A legal action list for `schedulingLoop`: every batch the loop consumes is
 a legal FIRST_COMPLETED set, nonempty, duplicate-free and drawn from the
 running steps. Actions the loop never consumes are unconstrained. -/
@@ -1894,6 +1886,41 @@ def Legal (p : Plan) (limit : Int) : List Action → State → Prop
         ∀ i ∈ done, i ∈ (scheduleReadySteps limit s.ready.length s).running) ∧
       Legal p limit rest
         (done.foldl (processDoneTask p) (scheduleReadySteps limit s.ready.length s))
+
+/-- Decides `Legal` for a concrete trace, so the replay can confirm that each
+recorded completion order satisfies the theorems' hypothesis. -/
+def checkLegal (p : Plan) (limit : Int) : List Action → State → Bool
+  | [], _ => true
+  | action :: rest, s =>
+    if (List.range p.length).all (finished s) then true else
+    let s' := scheduleReadySteps limit s.ready.length s
+    if s'.running.isEmpty then true else
+    match action with
+    | .timeout => true
+    | .batch done =>
+      !done.isEmpty && decide done.Nodup && done.all (fun i => s'.running.contains i) &&
+        checkLegal p limit rest (done.foldl (processDoneTask p) s')
+
+theorem checkLegal_sound (p : Plan) (limit : Int) : ∀ (actions : List Action) (s : State),
+    checkLegal p limit actions s = true → Legal p limit actions s := by
+  intro actions
+  induction actions with
+  | nil => intro _ _; trivial
+  | cons action rest ih =>
+    intro s h hall hemp
+    unfold checkLegal at h
+    rw [hall, ite_eq_right Bool.false_ne_true] at h
+    dsimp only at h
+    rw [hemp, ite_eq_right Bool.false_ne_true] at h
+    cases action with
+    | timeout => trivial
+    | batch done =>
+      rw [Bool.and_eq_true, Bool.and_eq_true, Bool.and_eq_true] at h
+      obtain ⟨⟨⟨hne, hnd⟩, hall'⟩, hrest⟩ := h
+      refine ⟨⟨?_, of_decide_eq_true hnd, ?_⟩, ih _ hrest⟩
+      · intro he; rw [he] at hne; cases hne
+      · intro i hi
+        exact List.contains_iff_mem.mp (List.all_eq_true.mp hall' i hi)
 
 /-- `t` keeps `s`'s start and end events and every result `s` had recorded. -/
 private def Keeps (s t : State) : Prop :=
@@ -2054,7 +2081,6 @@ theorem legal_run_never_deadlocks (p : Plan) (rank : Nat → Nat) (hp : Ranked p
   · obtain ⟨i, hi, hu⟩ := all_false_exists hall
     rw [List.mem_range] at hi
     exact absurd hemp (deadlock_unreachable p rank hp limit hl r hr i hi hu)
-
 
 private theorem put_finished (s t : State) (i j : Nat) (r : Result)
     (ht : t.results = put s.results i (some r)) (h : j = i ∨ finished s j = true) :
@@ -2327,5 +2353,7 @@ runs axiom-audit over every declaration in the library. -/
 #guard_msgs in #print axioms complete_refines_spec
 /-- info: 'ARP.legal_run_refines_spec' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in #print axioms legal_run_refines_spec
+/-- info: 'ARP.checkLegal_sound' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms checkLegal_sound
 
 end ARP
