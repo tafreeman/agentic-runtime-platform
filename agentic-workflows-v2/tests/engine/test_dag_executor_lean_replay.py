@@ -95,8 +95,9 @@ async def run_case(
     starts: set[int] = set()
     ends: set[int] = set()
     active: set[int] = set()
+    violations: list[str] = []
 
-    async def on_update(event: dict[str, Any]) -> None:
+    def check(event: dict[str, Any]) -> None:
         if event["type"] == "step_start":
             index = int(event["step"])
             assert index not in starts, "a step started twice"
@@ -113,9 +114,19 @@ async def run_case(
             ends.add(index)
             active.remove(index)
 
+    async def on_update(event: dict[str, Any]) -> None:
+        # The executor logs and swallows observer exceptions, so record each
+        # violation and assert on the list after the run.
+        try:
+            check(event)
+        except AssertionError as error:
+            violations.append(f"{event['type']} {event.get('step')}: {error}")
+
     result = await DAGExecutor(step_executor=runner).execute(
         dag, ctx=ExecutionContext(), max_concurrency=limit, on_update=on_update
     )
+    assert not violations, violations
+    assert "observer_errors" not in result.metadata
     assert starts == runner.finished
     # Every started step, raised or not, emits exactly one step_end.
     assert starts == ends
@@ -352,3 +363,43 @@ async def test_dag_executor_cancel_cancels_running_steps() -> None:
     with pytest.raises(asyncio.CancelledError):
         await run
     assert cancelled == {"a", "b"}
+
+
+@pytest.mark.parametrize(
+    "event_type", ["workflow_start", "step_start", "step_end", "workflow_end"]
+)
+async def test_dag_executor_observer_failure_does_not_change_the_run(
+    event_type: str,
+) -> None:
+    """An on_update exception is logged and counted; scheduling carries on."""
+    plan = [
+        {"depends_on": [], "outcome": "success"},
+        {"depends_on": [0], "outcome": "success"},
+        {"depends_on": [], "outcome": "success"},
+    ]
+    # Step 2 is still running when step 0's step_end fires.
+    runner = ScriptedRunner(plan, [0, 0, 6])
+    seen: list[str] = []
+
+    async def on_update(event: dict[str, Any]) -> None:
+        seen.append(event["type"])
+        if event["type"] == event_type:
+            raise RuntimeError(f"observer failed on {event_type}")
+
+    dag = DAG(name="observer-failure")
+    for index, node in enumerate(plan):
+        dag.add(
+            StepDefinition(
+                name=str(index), depends_on=[str(d) for d in node["depends_on"]]
+            )
+        )
+    result = await DAGExecutor(step_executor=runner).execute(
+        dag, ctx=ExecutionContext(), on_update=on_update
+    )
+    assert result.overall_status == StepStatus.SUCCESS
+    assert [step.status for step in result.steps] == [StepStatus.SUCCESS] * 3
+    assert runner.finished == {0, 1, 2}
+    once = event_type in {"workflow_start", "workflow_end"}
+    assert result.metadata["observer_errors"] == (1 if once else 3)
+    assert seen.count("step_end") == 3
+    assert seen[-1] == "workflow_end"

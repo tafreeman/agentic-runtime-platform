@@ -24,6 +24,14 @@
   result. Cancelling `execute()` itself still raises `CancelledError`, but
   first cancels and awaits every in-flight step task, which used to keep
   running unobserved.
+- An exception raised by the `on_update` observer no longer changes the run.
+  It is logged with its traceback and counted in the new
+  `WorkflowResult.metadata["observer_errors"]`; cancellation still
+  propagates. Previously it escaped `execute()` mid-run and orphaned running
+  steps, failed a step whose work never ran (on `step_start`), or discarded
+  the finished result (on `workflow_end`). With checkpointing enabled,
+  `NativeEngine` still writes a successful step's checkpoint when the caller's
+  callback raises on its `step_end`.
 
 ## Unreleased - ExecutionKit 0.4 and EvalKit 0.4.1
 
