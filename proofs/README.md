@@ -25,9 +25,11 @@ The executable accepts one JSON line on stdin:
 Dependencies are integer indices into the plan, including repeated indices.
 Outcomes are `success`, `skipped`, `failed`, `pending`, `running`, `retrying`,
 `exception`, `cancelled` (a step task that ends cancelled; the model treats it
-as `exception`), or `hang` (never completes; only a timeout ends it). Invalid
-input exits nonzero. Output always contains the recursive spec's `steps` (each
-with `status` and `skip`) and `overall`. Skip categories distinguish a step's
+as `exception`), or `hang` (never completes; only a timeout ends it). `hang`
+is accepted only with `"timeout": true` and never inside a batch, so no answer
+counts it as a completion. Invalid input exits nonzero. Output contains the
+recursive spec's `steps` (each with `status` and `skip`) and `overall`, except
+for a plan with a hanging step, which the spec cannot describe. Skip categories distinguish a step's
 own condition from upstream failure, timeout and deadlock.
 
 Add `"batches"` (completion batches, each a list of node indices in processing

@@ -12,9 +12,13 @@ def parseStatus (s : String) : Except String Outcome :=
   | "retrying" => .ok (.returned .retrying)
   | "exception" => .ok .exception
   | "cancelled" => .ok .exception
-  -- Never completes, so only a timeout ends it and its outcome is never read.
-  | "hang" => .ok (.returned .success)
   | _ => .error s!"unknown outcome: {s}"
+
+/-- `hang` marks a step that never completes, so only a timeout can end it. It
+is kept apart from real outcomes so the replay can reject any request in which
+it would count as a completion. -/
+def parseOutcome (s : String) : Except String (Option Outcome) :=
+  if s == "hang" then .ok none else some <$> parseStatus s
 
 def statusString : Status → String
   | .pending => "pending"
@@ -71,22 +75,36 @@ def replay (j : Json) : Except String Json := do
   if limit < 1 then throw "max_concurrency must be an integer >= 1"
   let nodes ← (← j.getObjVal? "plan").getArr?
   if nodes.isEmpty then throw "empty plan"
-  let p ← nodes.toList.mapM fun node => do
+  let parsed ← nodes.toList.mapM fun node => do
     let deps ← (← (← node.getObjVal? "depends_on").getArr?).toList.mapM Json.getNat?
-    let outcome ← parseStatus (← (← node.getObjVal? "outcome").getStr?)
-    pure (Node.mk deps outcome)
+    let outcome ← parseOutcome (← (← node.getObjVal? "outcome").getStr?)
+    pure (deps, outcome)
+  let hangs := (List.range parsed.length).filter fun i => (parsed[i]!).2.isNone
+  -- A hanging step's outcome is never read: the checks below guarantee no
+  -- batch completes it, so the placeholder only fills the node.
+  let p := parsed.map fun (deps, outcome) =>
+    Node.mk deps (outcome.getD (.returned .success))
   let some rs := spec p | throw "cyclic plan or missing dependency"
   let base := [
     ("steps", toJson (rs.map resultJson)),
     ("overall", toJson (statusString (overall rs)))]
   match j.getObjValD "batches" with
-  | .null => pure (Json.mkObj base)
+  | .null =>
+    unless hangs.isEmpty do throw "hang is only valid in a timeout replay"
+    pure (Json.mkObj base)
   | b =>
     let batches ← parseBatches b
     let timeout ← match j.getObjValD "timeout" with
       | .null => pure false
       | t => t.getBool?
-    pure (Json.mkObj (base ++ [("model", operational p limit batches timeout)]))
+    unless hangs.isEmpty do
+      unless timeout do throw "hang is only valid in a timeout replay"
+      if batches.any fun batch => batch.any fun i => hangs.contains i then
+        throw "a hanging step cannot complete in a batch"
+    -- The spec treats every step as completing, so it says nothing about a
+    -- plan with a hanging step; only the model's run is reported for one.
+    let specFields := if hangs.isEmpty then base else []
+    pure (Json.mkObj (specFields ++ [("model", operational p limit batches timeout)]))
 
 def main : IO UInt32 := do
   let stdin ← IO.getStdin

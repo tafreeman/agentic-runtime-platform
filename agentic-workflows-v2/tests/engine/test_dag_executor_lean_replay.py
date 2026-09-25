@@ -582,3 +582,35 @@ async def test_dag_executor_timeout_matches_operational_model(
         answer = oracle(lean_binary, relabelled, limit, batches=batches, timeout=True)
         case = (seed, limit, delays, order, batches)
         assert answer["model"] == {**end_state, "complete": True}, case
+
+
+@pytest.mark.parametrize(
+    "trace",
+    [{}, {"batches": [], "timeout": False}, {"batches": [[0]], "timeout": True}],
+    ids=["no-batches", "not-a-timeout", "hang-in-a-batch"],
+)
+def test_lean_replay_rejects_hang_that_could_complete(
+    lean_binary: Path, trace: dict[str, Any]
+) -> None:
+    """``hang`` never completes, so no answer may treat it as a completion."""
+    plan = [{"depends_on": [], "outcome": "hang"}]
+    with pytest.raises(subprocess.CalledProcessError):
+        oracle(lean_binary, plan, 1, **trace)
+
+
+def test_lean_replay_reports_only_the_model_for_a_hanging_plan(
+    lean_binary: Path,
+) -> None:
+    """The spec assumes every step completes, so it is omitted for ``hang``."""
+    plan = [
+        {"depends_on": [], "outcome": "hang"},
+        {"depends_on": [0], "outcome": "success"},
+    ]
+    answer = oracle(lean_binary, plan, 1, batches=[], timeout=True)
+    assert "steps" not in answer
+    assert "overall" not in answer
+    assert answer["model"]["timed_out"] is True
+    assert answer["model"]["results"] == [
+        {"status": "failed", "skip": "none"},
+        {"status": "skipped", "skip": "timeout"},
+    ]
