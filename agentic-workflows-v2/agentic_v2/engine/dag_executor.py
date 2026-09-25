@@ -137,6 +137,13 @@ async def _notify(state: _RunState, event: dict[str, Any]) -> None:
     leaving running steps orphaned, or fail a step whose work never ran.
     It is logged and counted in ``metadata["observer_errors"]`` instead;
     cancellation still propagates, including one the observer masked.
+
+    One case is out of reach: an observer that catches the cancel *and*
+    calls ``uncancel()`` has used asyncio's own way of declaring it handled,
+    and leaves no count behind. Detecting that would mean running observers
+    in a task of their own, which adds a suspension point to every event
+    and changes the scheduling the Lean replay pins. Observers must not
+    call ``uncancel()`` on the executor's task.
     """
     if state.on_update is None:
         return
