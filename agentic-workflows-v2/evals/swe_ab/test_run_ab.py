@@ -11,6 +11,8 @@ other when run directly.
 
 from __future__ import annotations
 
+import subprocess
+import sys
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
@@ -240,3 +242,54 @@ def test_child_env_ceiling_can_be_opted_out_of() -> None:
     )
 
     assert env["AGENTIC_MAX_COST_LANE"] == "paid"
+
+
+def test_preflight_runs_the_bridge_once_in_the_child_environment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[tuple[list[str], dict[str, object]]] = []
+
+    def fake_run(cmd: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        calls.append((cmd, kwargs))
+        return subprocess.CompletedProcess(cmd, 0, "", "")
+
+    monkeypatch.setattr(run_ab.subprocess, "run", fake_run)
+    env = {"AB_MODEL": "openrouter:cohere/north-mini-code:free"}
+
+    assert run_ab.preflight_cost_lane(env).returncode == 0
+    [(cmd, kwargs)] = calls
+    assert cmd == [
+        str(run_ab.ARP_PYTHON),
+        str(run_ab.KIT_ROOT / "bridge.py"),
+        "--preflight",
+    ]
+    assert kwargs["env"] is env
+
+
+async def test_refused_preflight_stops_the_wave_before_any_sample(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Exit 6 inside a sample is only that sample's error; it must stop the run.
+
+    Without the preflight, EvalRunner recorded every sample's refusal as
+    an execution error and main() returned 0 after preparing the
+    worktrees.
+    """
+    seen: dict[str, str] = {}
+
+    def refuse(env: dict[str, str]) -> subprocess.CompletedProcess[str]:
+        seen.update(env)
+        return subprocess.CompletedProcess([], 6, "", "model refused: paid lane")
+
+    def must_not_run(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("the wave started after a refused preflight")
+
+    monkeypatch.setattr(sys, "argv", ["run_ab.py", "--arm", "a"])
+    monkeypatch.setattr(run_ab, "preflight_cost_lane", refuse)
+    monkeypatch.setattr(run_ab, "prepare_grading_worktrees", must_not_run)
+    monkeypatch.setattr(run_ab, "EvalRunner", must_not_run)
+
+    assert await run_ab.main() == 6
+    assert "model refused: paid lane" in capsys.readouterr().err
+    assert seen["AB_MODEL"] == "ollama:deepseek-v4-flash:0731-cloud"
+    assert seen["AGENTIC_MAX_COST_LANE"] == "free"

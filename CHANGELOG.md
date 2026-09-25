@@ -5,8 +5,10 @@
 - `SmartRouterProvider` takes an optional `attempt_callback` that receives a
   `ProviderAttempt` (model, latency, ok, exception class name, streaming) for
   every real backend call, including each fallback hop and retry. Candidates
-  the bulkhead sheds make no call and produce no record. Observer exceptions
-  are logged and swallowed. The EK step-delegation entry points
+  the bulkhead sheds make no call and produce no record. A call cut short by
+  cancellation, or a stream closed early, is still reported (`ok=False`) but
+  not charged to the circuit breaker. Observer exceptions are logged and
+  swallowed. The EK step-delegation entry points
   (`complete_turn_via_ek`, `structured_via_ek`, `run_tool_loop_via_ek`)
   forward it, plus an EK `trace` callback. Both default to `None` and no
   runtime caller attaches one yet.
@@ -18,8 +20,11 @@
 - SWE-AB ledger queries read only active trials. Since a trial can be
   superseded (#297), a bare `FROM trial` counted a corrected cell twice.
 - `evals/swe_ab/run_ab.py` enforces ADR-059's cost-lane ceiling
-  (`--max-cost-lane`, default `free`), refuses to start on a model the
-  registry has not curated, and prints one progress line per finished sample.
+  (`--max-cost-lane`, default `free`), and prints one progress line per
+  finished sample. A model above the ceiling, or one the registry has not
+  curated, is refused once through `bridge.py --preflight` before any
+  worktree is prepared or sample runs; the run exits 6 instead of reporting
+  every sample as an execution error.
 
 ## Unreleased - DAG executor fails closed (ADR-060)
 
