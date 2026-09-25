@@ -121,13 +121,20 @@ async def _notify(state: _RunState, event: dict[str, Any]) -> None:
     the run. An exception from it used to escape ``execute()`` mid-batch,
     leaving running steps orphaned, or fail a step whose work never ran.
     It is logged and counted in ``metadata["observer_errors"]`` instead;
-    cancellation still propagates.
+    cancellation still propagates, including one the observer masked.
     """
     if state.on_update is None:
         return
     try:
         await state.on_update(event)
-    except Exception:
+    except Exception as exc:
+        task = asyncio.current_task()
+        if task is not None and task.cancelling():
+            # A timeout or the caller's cancel landed while the observer was
+            # awaiting, and its cleanup replaced the CancelledError with an
+            # ordinary exception. Swallowing that would let asyncio.timeout()
+            # uncancel the task and the run carry on past its deadline.
+            raise asyncio.CancelledError from exc
         errors = state.result.metadata.get("observer_errors", 0)
         state.result.metadata["observer_errors"] = errors + 1
         logger.warning(
