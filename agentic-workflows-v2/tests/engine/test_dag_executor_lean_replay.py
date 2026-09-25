@@ -494,6 +494,45 @@ async def test_dag_executor_cancel_survives_an_observer_masking_it() -> None:
     assert runner.finished == {0}
 
 
+async def test_dag_executor_stale_cancel_count_keeps_observer_errors() -> None:
+    """A cancel the caller swallowed earlier does not turn observer errors into one.
+
+    Catching ``CancelledError`` without ``uncancel()`` leaves
+    ``Task.cancelling()`` nonzero for the rest of the task. Only a cancel
+    requested while the observer was awaiting may be re-raised.
+    """
+    plan = [
+        {"depends_on": [], "outcome": "success"},
+        {"depends_on": [0], "outcome": "success"},
+    ]
+    runner = ScriptedRunner(plan, [0, 0])
+
+    async def on_update(event: dict[str, Any]) -> None:
+        if event["type"] == "step_end":
+            raise RuntimeError("observer failed")
+
+    async def caller() -> Any:
+        try:
+            await asyncio.sleep(3600)
+        except asyncio.CancelledError:
+            pass  # swallowed without uncancel(): cancelling() stays at 1
+        task = asyncio.current_task()
+        assert task is not None and task.cancelling() == 1
+        return await DAGExecutor(step_executor=runner).execute(
+            _chain_dag("stale-cancel-count"),
+            ctx=ExecutionContext(),
+            on_update=on_update,
+        )
+
+    run = asyncio.create_task(caller())
+    await asyncio.sleep(0)
+    run.cancel()
+    result = await run
+    assert result.overall_status == StepStatus.SUCCESS
+    assert runner.finished == {0, 1}
+    assert result.metadata["observer_errors"] == 2
+
+
 class RecordingAsyncio:
     """Stand-in for ``asyncio`` inside dag_executor that records its schedule.
 

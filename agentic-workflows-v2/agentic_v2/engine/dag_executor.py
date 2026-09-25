@@ -125,11 +125,15 @@ async def _notify(state: _RunState, event: dict[str, Any]) -> None:
     """
     if state.on_update is None:
         return
+    task = asyncio.current_task()
+    # Compare against the count on entry: a caller that swallowed an earlier
+    # CancelledError without uncancel() leaves cancelling() nonzero, and that
+    # stale count must not turn an ordinary observer failure into a cancel.
+    cancels_before = task.cancelling() if task is not None else 0
     try:
         await state.on_update(event)
     except Exception as exc:
-        task = asyncio.current_task()
-        if task is not None and task.cancelling():
+        if task is not None and task.cancelling() > cancels_before:
             # A timeout or the caller's cancel landed while the observer was
             # awaiting, and its cleanup replaced the CancelledError with an
             # ordinary exception. Swallowing that would let asyncio.timeout()
