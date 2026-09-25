@@ -20,6 +20,7 @@ Runs offline under ``AGENTIC_NO_LLM=1`` — no live keys, no network.
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 import pytest
@@ -228,3 +229,90 @@ async def test_attempt_callback_reports_streaming_attempts() -> None:
     assert fail_attempts[0].ok is False
     assert fail_attempts[0].error_type == "RuntimeError"
     assert fail_attempts[0].streaming is True
+
+
+class _HangingBackend(_FakeBackend):
+    """Starts a wire call (or a stream, after one chunk) that never finishes."""
+
+    def __init__(self) -> None:
+        super().__init__([])
+        self.started = asyncio.Event()
+
+    async def complete_chat(
+        self,
+        model: str,
+        messages: list[dict[str, Any]],
+        max_tokens: int = 4096,
+        temperature: float = 0.7,
+        tools: list[dict[str, Any]] | None = None,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        self.calls.append({"model": model})
+        self.started.set()
+        await asyncio.Event().wait()
+        raise AssertionError("unreachable")
+
+    async def complete_stream(self, model: str, prompt: str, **kwargs: Any) -> Any:
+        yield "partial"
+        self.started.set()
+        await asyncio.Event().wait()
+
+
+async def test_attempt_callback_reports_a_cancelled_call() -> None:
+    """A cancelled wire call is still a physical attempt and gets one record."""
+    router = _router_with(("openai:gpt-4o-mini",))
+    backend = _HangingBackend()
+    attempts: list[ProviderAttempt] = []
+    provider = SmartRouterProvider(
+        router, backend, _TIER, attempt_callback=attempts.append
+    )
+
+    call = asyncio.create_task(provider.complete(_MESSAGES))
+    await backend.started.wait()
+    call.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await call
+
+    assert [(a.model, a.ok, a.error_type) for a in attempts] == [
+        ("openai:gpt-4o-mini", False, "CancelledError")
+    ]
+    assert attempts[0].streaming is False
+
+
+async def test_attempt_callback_reports_a_stream_closed_early() -> None:
+    router = _router_with(("openai:gpt-4o-mini",))
+    attempts: list[ProviderAttempt] = []
+    provider = SmartRouterProvider(
+        router, _StreamBackend(["he", "llo"]), _TIER, attempt_callback=attempts.append
+    )
+
+    stream = provider.stream(_MESSAGES)
+    assert await anext(stream) == "he"
+    await stream.aclose()
+
+    assert [(a.ok, a.error_type, a.streaming) for a in attempts] == [
+        (False, "GeneratorExit", True)
+    ]
+
+
+async def test_attempt_callback_reports_a_cancelled_stream() -> None:
+    router = _router_with(("openai:gpt-4o-mini",))
+    backend = _HangingBackend()
+    attempts: list[ProviderAttempt] = []
+    provider = SmartRouterProvider(
+        router, backend, _TIER, attempt_callback=attempts.append
+    )
+
+    async def consume() -> None:
+        async for _delta in provider.stream(_MESSAGES):
+            pass
+
+    task = asyncio.create_task(consume())
+    await backend.started.wait()
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+    assert [(a.ok, a.error_type, a.streaming) for a in attempts] == [
+        (False, "CancelledError", True)
+    ]
