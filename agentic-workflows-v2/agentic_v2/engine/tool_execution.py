@@ -483,7 +483,7 @@ async def complete_chat_with_fallback(
     # ``executionkit`` package is absent, the call delegates to
     # ``client.complete_chat`` (router-based fallback + budget tracking) exactly
     # as before. When on, the plain-completion turn is routed through EK
-    # ``_TrackedProvider`` / ``checked_complete`` over a ``SmartRouterProvider``
+    # ``checked_complete`` + ``_note_truncation`` over a ``SmartRouterProvider``
     # (budget-checked, retry-wrapped, truncation-tracked), with the runtime
     # ``TokenBudget`` token-sum ceiling enforced FIRST. The
     # ``(response_dict, model, tokens)`` contract is preserved so the caller's
