@@ -32,7 +32,9 @@ NOW = datetime(2026, 9, 6, 12, 0, tzinfo=UTC)
 RUN_ID = "run-1"
 
 
-def _executed(sample_id: str, status: ExecutionStatus, attempt: int = 1) -> ExecutionCompleted:
+def _executed(
+    sample_id: str, status: ExecutionStatus, attempt: int = 1
+) -> ExecutionCompleted:
     return ExecutionCompleted(
         run_id=RUN_ID,
         sample_id=sample_id,
@@ -53,7 +55,9 @@ def _graded(sample_id: str, status: GradeStatus, attempt: int = 1) -> GradeCompl
 
 
 def _completed(sample_id: str, attempt: int = 1) -> SampleCompleted:
-    return SampleCompleted(run_id=RUN_ID, sample_id=sample_id, attempt=attempt, completed_at=NOW)
+    return SampleCompleted(
+        run_id=RUN_ID, sample_id=sample_id, attempt=attempt, completed_at=NOW
+    )
 
 
 def _lines(capsys: pytest.CaptureFixture[str]) -> list[str]:
@@ -63,10 +67,15 @@ def _lines(capsys: pytest.CaptureFixture[str]) -> list[str]:
     return [line for line in captured.err.splitlines() if line]
 
 
-def test_reports_one_line_per_completed_sample(capsys: pytest.CaptureFixture[str]) -> None:
+def test_reports_one_line_per_completed_sample(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     progress = run_ab.WaveProgress(total=2)
 
-    for sample_id, grade in (("EVK-MUT-001", GradeStatus.PASS), ("EVK-MUT-002", GradeStatus.FAIL)):
+    for sample_id, grade in (
+        ("EVK-MUT-001", GradeStatus.PASS),
+        ("EVK-MUT-002", GradeStatus.FAIL),
+    ):
         progress(_executed(sample_id, ExecutionStatus.COMPLETED))
         progress(_graded(sample_id, grade))
         progress(_completed(sample_id))
@@ -84,8 +93,8 @@ def test_ungraded_sample_is_not_counted_as_a_verdict(
 ) -> None:
     """A failed execution is never graded, so no GradeCompleted arrives for it.
 
-    That has to read as "no verdict", never as a pass -- the same distinction
-    ADR-0008 draws between operational and task outcomes.
+    That has to read as "no verdict", never as a pass -- the same
+    distinction ADR-0008 draws between operational and task outcomes.
     """
     progress = run_ab.WaveProgress(total=1)
 
@@ -98,7 +107,9 @@ def test_ungraded_sample_is_not_counted_as_a_verdict(
     assert "pass" not in line
 
 
-def test_unknown_total_renders_a_placeholder(capsys: pytest.CaptureFixture[str]) -> None:
+def test_unknown_total_renders_a_placeholder(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     progress = run_ab.WaveProgress(total=None)
 
     progress(_executed("EVK-MUT-004", ExecutionStatus.COMPLETED))
@@ -112,7 +123,8 @@ def test_unknown_total_renders_a_placeholder(capsys: pytest.CaptureFixture[str])
 def test_attempts_of_one_sample_are_tracked_separately(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """The runner emits one work item per (sample, attempt), so attempt is part of the key."""
+    """The runner emits one work item per (sample, attempt), so attempt is part of the
+    key."""
     progress = run_ab.WaveProgress(total=2)
 
     progress(_executed("EVK-MUT-005", ExecutionStatus.COMPLETED, attempt=1))
@@ -149,20 +161,28 @@ def test_run_completed_reports_elapsed_time(capsys: pytest.CaptureFixture[str]) 
 
 def test_case_count_ignores_blank_lines(tmp_path: Path) -> None:
     cases = tmp_path / "cases.jsonl"
-    cases.write_text('{"sample_id": "a"}\n\n{"sample_id": "b"}\n   \n', encoding="utf-8")
+    cases.write_text(
+        '{"sample_id": "a"}\n\n{"sample_id": "b"}\n   \n', encoding="utf-8"
+    )
 
     assert run_ab.case_count(cases) == 2
 
 
-def test_child_env_sets_the_free_cost_lane_ceiling(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_child_env_sets_the_free_cost_lane_ceiling(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.delenv("AGENTIC_MAX_COST_LANE", raising=False)
 
-    env = run_ab.build_child_env("swe_fix_direct", "openrouter:cohere/north-mini-code:free", 300.0)
+    env = run_ab.build_child_env(
+        "swe_fix_direct", "openrouter:cohere/north-mini-code:free", 300.0
+    )
 
     assert env["AGENTIC_MAX_COST_LANE"] == "free"
 
 
-def test_child_env_still_blanks_paid_credentials(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_child_env_still_blanks_paid_credentials(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """The ceiling is layered on the credential strip, never a replacement.
 
     ADR-059's own Consequences keep the strip: the two controls catch
@@ -175,7 +195,9 @@ def test_child_env_still_blanks_paid_credentials(monkeypatch: pytest.MonkeyPatch
     # An `ollama:` model deliberately: that prefix has no entry in
     # _OWN_CREDENTIALS_BY_PREFIX, so nothing is exempted and every listed
     # credential must be blanked. (See the next test for the exemption path.)
-    env = run_ab.build_child_env("swe_fix_direct", "ollama:deepseek-v4-flash:0731-cloud", 300.0)
+    env = run_ab.build_child_env(
+        "swe_fix_direct", "ollama:deepseek-v4-flash:0731-cloud", 300.0
+    )
 
     # Blanked, not deleted -- a deleted name is re-hydrated by load_dotenv.
     assert env["ANTHROPIC_API_KEY"] == ""
@@ -189,14 +211,18 @@ def test_child_env_exempts_the_model_under_test_own_credential(
     monkeypatch.setenv("OPENROUTER_API_KEY", "or-real-key")
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-real-key")
 
-    env = run_ab.build_child_env("swe_fix_direct", "openrouter:cohere/north-mini-code:free", 300.0)
+    env = run_ab.build_child_env(
+        "swe_fix_direct", "openrouter:cohere/north-mini-code:free", 300.0
+    )
 
-    assert env["OPENROUTER_API_KEY"] == "or-real-key"
+    assert env["OPENROUTER_API_KEY"] == "or-real-key"  # pragma: allowlist secret
     assert env["ANTHROPIC_API_KEY"] == ""
 
 
 def test_child_env_ceiling_defaults_to_free() -> None:
-    env = run_ab.build_child_env("swe_fix_direct", "openrouter:cohere/north-mini-code:free", 300.0)
+    env = run_ab.build_child_env(
+        "swe_fix_direct", "openrouter:cohere/north-mini-code:free", 300.0
+    )
 
     assert env["AGENTIC_MAX_COST_LANE"] == "free"
 

@@ -48,10 +48,10 @@ def _fail(message: str, code: int = 1) -> None:
 def _coerce_text(value: Any) -> str:
     """Flatten whatever a step returned into text.
 
-    A step's declared output is normally a string, but a model that answers in
-    JSON can leave a dict or list here. Anything non-string is serialised
-    rather than dropped, so the grader sees what actually came back instead of
-    an empty field.
+    A step's declared output is normally a string, but a model that
+    answers in JSON can leave a dict or list here. Anything non-string
+    is serialised rather than dropped, so the grader sees what actually
+    came back instead of an empty field.
     """
     if value is None:
         return ""
@@ -115,13 +115,19 @@ def _pin_model_candidates_exclusively() -> None:
     """
     from agentic_v2.langchain import models as _models
 
-    def _exclusive(tier: int, model_override: str | None = None, **_kwargs: Any) -> list[str]:
+    def _exclusive(
+        tier: int, model_override: str | None = None, **_kwargs: Any
+    ) -> list[str]:
         if model_override:
             return [_models.resolve_model_override(model_override)]
-        return _models._real_get_model_candidates_for_tier(tier, model_override, **_kwargs)
+        return _models._real_get_model_candidates_for_tier(
+            tier, model_override, **_kwargs
+        )
 
     if not hasattr(_models, "_real_get_model_candidates_for_tier"):
-        _models._real_get_model_candidates_for_tier = _models.get_model_candidates_for_tier
+        _models._real_get_model_candidates_for_tier = (
+            _models.get_model_candidates_for_tier
+        )
     _models.get_model_candidates_for_tier = _exclusive
 
 
