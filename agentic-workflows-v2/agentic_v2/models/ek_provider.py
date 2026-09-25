@@ -114,7 +114,10 @@ class ProviderAttempt:
     call — retries and cross-model fallbacks each produce their own record,
     and candidates skipped by the bulkhead shed gate (no wire call) produce
     none. ``error_type`` is the exception class name only, never the message
-    (provider error text can echo credentials). No trace ids and no token
+    (provider error text can echo credentials). A call cut short by
+    cancellation, or a stream the consumer closed early, is still reported
+    (``ok=False``, ``CancelledError`` / ``GeneratorExit``) but is not charged
+    to the circuit breaker. No trace ids and no token
     counts are synthesized: correlation belongs to the EK trace layer above,
     and usage is reported there — explicitly marked missing when a provider
     returns none.
@@ -332,6 +335,19 @@ class SmartRouterProvider:
                 # Non-HTTP error (transport, timeout, etc.) — already recorded;
                 # try the next fallback candidate.
                 continue
+            except BaseException as exc:
+                # Cancellation ends a wire call the provider did not fail: no
+                # breaker bookkeeping, but the attempt happened and is reported.
+                self._report_attempt(
+                    ProviderAttempt(
+                        model=current_model,
+                        latency_ms=(time.monotonic() - start_mono) * 1000.0,
+                        ok=False,
+                        error_type=type(exc).__name__,
+                        streaming=False,
+                    )
+                )
+                raise
 
             latency_ms = (time.monotonic() - start_mono) * 1000.0
             # Success bookkeeping fires EXACTLY once for this physical call.
@@ -422,6 +438,20 @@ class SmartRouterProvider:
                     yield chunk
         except Exception as exc:
             self.router._classify_and_record_error(model, exc)
+            self._report_attempt(
+                ProviderAttempt(
+                    model=model,
+                    latency_ms=(time.monotonic() - start_mono) * 1000.0,
+                    ok=False,
+                    error_type=type(exc).__name__,
+                    streaming=True,
+                )
+            )
+            raise
+        except BaseException as exc:
+            # Cancellation, or GeneratorExit when the consumer closes the
+            # stream early, ends a wire call the provider did not fail: no
+            # breaker bookkeeping, but the attempt happened and is reported.
             self._report_attempt(
                 ProviderAttempt(
                     model=model,
