@@ -296,6 +296,7 @@ jobs:
             tests/engine/test_step_tool_path.py \
             tests/models/test_ek_adapters.py \
             tests/models/test_ek_provider.py \
+            tests/models/test_ek_provider_attempts.py \
             tests/models/test_ek_provider_wrapper.py \
             -q --timeout=120
 

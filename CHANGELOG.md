@@ -1,5 +1,59 @@
 # Changelog
 
+## Unreleased - study telemetry and SWE-AB ledger
+
+- `SmartRouterProvider` takes an optional `attempt_callback` that receives a
+  `ProviderAttempt` (model, latency, ok, exception class name, streaming) for
+  every real backend call, including each fallback hop and retry. Candidates
+  the bulkhead sheds make no call and produce no record. Observer exceptions
+  are logged and swallowed. The EK step-delegation entry points
+  (`complete_turn_via_ek`, `structured_via_ek`, `run_tool_loop_via_ek`)
+  forward it, plus an EK `trace` callback. Both default to `None` and no
+  runtime caller attaches one yet.
+- The EK plain-completion turn calls `checked_complete` and
+  `_note_truncation` directly instead of `_TrackedProvider`, which cannot
+  forward `trace` (ExecutionKit 0.4.0 included). ARP's private-symbol
+  dependency moves from `_TrackedProvider` to `_note_truncation`, and the
+  consumer contract test binds the new call shapes.
+- SWE-AB ledger queries read only active trials. Since a trial can be
+  superseded (#297), a bare `FROM trial` counted a corrected cell twice.
+- `evals/swe_ab/run_ab.py` enforces ADR-059's cost-lane ceiling
+  (`--max-cost-lane`, default `free`), refuses to start on a model the
+  registry has not curated, and prints one progress line per finished sample.
+
+## Unreleased - DAG executor fails closed (ADR-060)
+
+- `DAGExecutor` records a step that finishes with a non-terminal status
+  (PENDING, RUNNING or RETRYING) as FAILED, with `error_type`
+  `NonTerminalStatus` and the original status in
+  `metadata["nonterminal_status"]`; its dependents are skipped and the run
+  fails. Previously such a step unlocked its dependents and the run could
+  report SUCCESS. The execution context marks the step failed and drops any
+  completion recorded for it. Only injected step executors can return these
+  statuses; the built-in `StepExecutor` always finishes terminal.
+- A step whose task raises now ends like any other failed step: a FAILED
+  lifecycle, a `step_end` event, `error_type` set to the exception class, and
+  the step marked failed in the execution context. Previously its lifecycle
+  stayed RUNNING and observers never saw it finish. Each completion is now
+  fully recorded (lifecycle, result, dependents skipped or unlocked) before
+  its callbacks are awaited, so a workflow timeout during `step_end` no longer
+  leaves a finished step RUNNING.
+- Cancellation has a defined contract. A step task that ends cancelled (its
+  own code cancelled it or raised `CancelledError`) is a failed step with
+  `error_type` `CancelledError`: `execute()` returns a `WorkflowResult` and
+  skips its dependents, where it used to raise `CancelledError` and lose the
+  result. Cancelling `execute()` itself still raises `CancelledError`, but
+  first cancels and awaits every in-flight step task, which used to keep
+  running unobserved.
+- An exception raised by the `on_update` observer no longer changes the run.
+  It is logged with its traceback and counted in the new
+  `WorkflowResult.metadata["observer_errors"]`; cancellation still
+  propagates. Previously it escaped `execute()` mid-run and orphaned running
+  steps, failed a step whose work never ran (on `step_start`), or discarded
+  the finished result (on `workflow_end`). With checkpointing enabled,
+  `NativeEngine` still writes a successful step's checkpoint when the caller's
+  callback raises on its `step_end`.
+
 ## Unreleased - ExecutionKit 0.4 and EvalKit 0.4.1
 
 - The `ek` extra now pins `executionkit>=0.4.0,<0.5.0` and the `eval` extra

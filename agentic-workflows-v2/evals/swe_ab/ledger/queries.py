@@ -127,6 +127,25 @@ _ACTIVE_GRADE = """(
     )
 )"""
 
+#: The same trap as `_ACTIVE_GRADE`, one level down: `trial` now allows a
+#: correction too (`trial.supersedes REFERENCES trial (trial_id)`, with
+#: `idx_trial_active_cell` enforcing at most one active row per
+#: `(wave_id, arm_id, task_id, run_idx)` cell -- schema.sql's own
+#: composite primary key used to make a correcting trial impossible to
+#: insert at all, so a bare `trial` read was safe by construction until
+#: that constraint moved onto `trial_id`). A plain `FROM trial` now joins
+#: a corrected cell's original AND correcting row: `n_trials` counts
+#: double, an operational-failure count can include a since-corrected
+#: `op_status`, and a per-instance read can pick either row
+#: nondeterministically. Every read of `trial` below that is scoped by
+#: `wave_id`/`arm_id` uses this in place of the bare table name.
+_ACTIVE_TRIAL = """(
+    SELECT * FROM trial
+    WHERE trial_id NOT IN (
+        SELECT supersedes FROM trial WHERE supersedes IS NOT NULL
+    )
+)"""
+
 
 def _instance_statuses(
     conn: sqlite3.Connection, wave_id: str, arm_id: str
@@ -143,7 +162,7 @@ def _instance_statuses(
     rows = conn.execute(
         f"""
         SELECT t.task_id, t.run_idx, t.op_status, g.outcome
-        FROM trial t
+        FROM {_ACTIVE_TRIAL} t
         LEFT JOIN {_ACTIVE_GRADE} g ON g.trial_id = t.trial_id
         WHERE t.wave_id = ? AND t.arm_id = ?
         """,  # noqa: S608 - constant subquery; values are bound
@@ -202,7 +221,9 @@ def arm_pass_rates(conn: sqlite3.Connection, wave_id: str) -> tuple[ArmPassRate,
     results: list[ArmPassRate] = []
     for arm_id, arm_key in _arms_in_wave(conn, wave_id):
         trial_row = conn.execute(
-            "SELECT COUNT(*) AS n FROM trial WHERE wave_id = ? AND arm_id = ?",
+            f"""
+            SELECT COUNT(*) AS n FROM {_ACTIVE_TRIAL} WHERE wave_id = ? AND arm_id = ?
+            """,  # noqa: S608 - constant subquery; values are bound
             (wave_id, arm_id),
         ).fetchone()
         n_trials: int = trial_row["n"]
@@ -211,7 +232,7 @@ def arm_pass_rates(conn: sqlite3.Connection, wave_id: str) -> tuple[ArmPassRate,
             f"""
             SELECT COUNT(*) AS n_verdicts,
                    SUM(CASE WHEN g.outcome = 'pass' THEN 1 ELSE 0 END) AS n_pass
-            FROM trial t
+            FROM {_ACTIVE_TRIAL} t
             JOIN {_ACTIVE_GRADE} g ON g.trial_id = t.trial_id
             WHERE t.wave_id = ? AND t.arm_id = ? AND g.outcome IS NOT NULL
             """,  # noqa: S608 - constant subquery; values are bound
@@ -221,13 +242,13 @@ def arm_pass_rates(conn: sqlite3.Connection, wave_id: str) -> tuple[ArmPassRate,
         n_pass: int = verdict_row["n_pass"] or 0
 
         failure_rows = conn.execute(
-            """
+            f"""
             SELECT op_status, COUNT(*) AS n
-            FROM trial
+            FROM {_ACTIVE_TRIAL}
             WHERE wave_id = ? AND arm_id = ? AND op_status <> 'ok'
             GROUP BY op_status
             ORDER BY op_status
-            """,
+            """,  # noqa: S608 - constant subquery; values are bound
             (wave_id, arm_id),
         ).fetchall()
         failures = tuple(
@@ -514,7 +535,7 @@ def repeat_aggregate(
         SELECT a.arm_id, a.arm_key, t.task_id,
                COUNT(*) FILTER (WHERE g.outcome IS NOT NULL) AS n_verdict,
                SUM(CASE WHEN g.outcome = 'pass' THEN 1 ELSE 0 END) AS n_pass
-        FROM trial t
+        FROM {_ACTIVE_TRIAL} t
         JOIN arm a ON a.arm_id = t.arm_id
         LEFT JOIN {_ACTIVE_GRADE} g ON g.trial_id = t.trial_id
         WHERE t.wave_id = ?
@@ -614,7 +635,7 @@ _COST_SQL = f"""
         COUNT(sp.gpu_seconds) AS cov_gpu_seconds,
         SUM(sp.gpu_seconds) FILTER (WHERE g.trial_id IS NOT NULL) AS v_sum_gpu_seconds,
         COUNT(sp.gpu_seconds) FILTER (WHERE g.trial_id IS NOT NULL) AS v_cov_gpu_seconds
-    FROM trial t
+    FROM {_ACTIVE_TRIAL} t
     LEFT JOIN {_ACTIVE_GRADE} g ON g.trial_id = t.trial_id
     LEFT JOIN (
         SELECT s1.trial_id, s1.cost_usd, s1.gpu_seconds
@@ -627,7 +648,7 @@ _COST_SQL = f"""
         )
     ) sp ON sp.trial_id = t.trial_id
     WHERE t.wave_id = ? AND t.arm_id = ?
-"""  # noqa: S608 -- active_grade is a fixed module constant; an f-string here would retrigger S608 on the interpolation
+"""  # noqa: S608 -- active_trial/active_grade are fixed module constants; an f-string here would retrigger S608 on the interpolation
 
 
 def _sum_field(row: sqlite3.Row, col: str) -> float | None:
@@ -724,7 +745,7 @@ def step_cost_by_arm(conn: sqlite3.Connection, wave_id: str) -> tuple[StepCost, 
     """Token totals grouped by `(arm, step_name)` -- which step burned the extra tokens,
     not just which arm."""
     rows = conn.execute(
-        """
+        f"""
         SELECT a.arm_id, a.arm_key, su.step_name,
                COUNT(*) AS n_occurrences,
                SUM(su.tokens_in) AS sum_tokens_in,
@@ -732,12 +753,12 @@ def step_cost_by_arm(conn: sqlite3.Connection, wave_id: str) -> tuple[StepCost, 
                SUM(su.tokens_out) AS sum_tokens_out,
                COUNT(su.tokens_out) AS cov_tokens_out
         FROM step_usage su
-        JOIN trial t ON t.trial_id = su.trial_id
+        JOIN {_ACTIVE_TRIAL} t ON t.trial_id = su.trial_id
         JOIN arm a ON a.arm_id = t.arm_id
         WHERE t.wave_id = ?
         GROUP BY a.arm_id, su.step_name
         ORDER BY a.arm_key, su.step_name
-        """,
+        """,  # noqa: S608 - constant subquery; values are bound
         (wave_id,),
     ).fetchall()
     return tuple(
@@ -805,14 +826,16 @@ def completeness(conn: sqlite3.Connection, wave_id: str) -> Completeness:
         planned_cells = {(r["task_id"], r["run_idx"]) for r in planned_rows}
 
         trial_rows = conn.execute(
-            "SELECT task_id, run_idx FROM trial WHERE wave_id = ? AND arm_id = ?",
+            f"""
+            SELECT task_id, run_idx FROM {_ACTIVE_TRIAL} WHERE wave_id = ? AND arm_id = ?
+            """,  # noqa: S608 - constant subquery; values are bound
             (wave_id, arm_id),
         ).fetchall()
         trial_cells = {(r["task_id"], r["run_idx"]) for r in trial_rows}
 
         verdict_row = conn.execute(
             f"""
-            SELECT COUNT(*) AS n_verdicts FROM trial t
+            SELECT COUNT(*) AS n_verdicts FROM {_ACTIVE_TRIAL} t
             JOIN {_ACTIVE_GRADE} g ON g.trial_id = t.trial_id
             WHERE t.wave_id = ? AND t.arm_id = ? AND g.outcome IS NOT NULL
             """,  # noqa: S608 - constant subquery; values are bound

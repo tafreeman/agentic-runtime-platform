@@ -338,27 +338,31 @@ class NativeEngine:
         workflow_name = getattr(workflow, "name", "unknown")
 
         async def _on_update(event: dict[str, Any]) -> None:
-            # Forward to the original callback first
-            if original_callback is not None:
-                await original_callback(event)
-
-            # Persist checkpoint on successful step completion
-            if (
-                store is not None
-                and thread_id is not None
-                and event.get("type") == "step_end"
-                and event.get("status") == StepStatus.SUCCESS.value
-            ):
-                step_name = event.get("step", "")
-                output_data = event.get("output", {}) or {}
-                self._schedule_checkpoint_write(
-                    store.write(
-                        thread_id=thread_id,
-                        workflow_name=workflow_name,
-                        step_name=step_name,
-                        status=StepStatus.SUCCESS.value,
-                        output_data=output_data,
+            # Forward to the original callback first. The checkpoint is
+            # scheduled in `finally`: the executor logs a failing observer and
+            # keeps running, so a skipped checkpoint would make a resumed
+            # thread rerun a step that already succeeded.
+            try:
+                if original_callback is not None:
+                    await original_callback(event)
+            finally:
+                # Persist checkpoint on successful step completion
+                if (
+                    store is not None
+                    and thread_id is not None
+                    and event.get("type") == "step_end"
+                    and event.get("status") == StepStatus.SUCCESS.value
+                ):
+                    step_name = event.get("step", "")
+                    output_data = event.get("output", {}) or {}
+                    self._schedule_checkpoint_write(
+                        store.write(
+                            thread_id=thread_id,
+                            workflow_name=workflow_name,
+                            step_name=step_name,
+                            status=StepStatus.SUCCESS.value,
+                            output_data=output_data,
+                        )
                     )
-                )
 
         return _on_update
