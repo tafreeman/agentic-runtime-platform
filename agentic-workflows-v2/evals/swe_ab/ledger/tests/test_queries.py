@@ -1,5 +1,5 @@
-"""Tests for ledger.queries: pass rates, paired outcomes, omnibus,
-repeat aggregation, cost, completeness, substrate grouping, and verdict.
+"""Tests for ledger.queries: pass rates, paired outcomes, omnibus, repeat aggregation,
+cost, completeness, substrate grouping, and verdict.
 
 `seed_wave` below is this file's own row-seeding helper (test_schema.py
 owns a similar one for its DDL/trigger tests, but this file is a
@@ -593,11 +593,9 @@ def test_arm_pass_rates_with_only_clean_passes_and_fails(
 def _supersede_the_grade(
     conn: sqlite3.Connection, *, trial_id: str, new_outcome: str
 ) -> None:
-    """Insert a correction grade for `trial_id`'s existing grade, with
-    `supersedes` set to the row it replaces -- the one shape `make_grade`
-    cannot build (it always sets `outcome = status = result` on a single,
-    unlinked row).
-    """
+    """Insert a correction grade for `trial_id`'s existing grade, with `supersedes` set
+    to the row it replaces -- the one shape `make_grade` cannot build (it always sets
+    `outcome = status = result` on a single, unlinked row)."""
     old = conn.execute(
         "SELECT grade_id, grader_id FROM grade WHERE trial_id = ?", (trial_id,)
     ).fetchone()
@@ -617,6 +615,97 @@ def _supersede_the_grade(
             supersedes=old["grade_id"],
         ).to_row(),
     )
+
+
+def _supersede_the_trial(
+    conn: sqlite3.Connection,
+    *,
+    trial_id: str,
+    new_trial_id: str,
+    new_op_status: str,
+) -> None:
+    """Insert a correction trial for `trial_id`, with `supersedes` set to the row it
+    replaces -- the one shape `make_trial` cannot build (it always sets
+    `supersedes=None` on a single, unlinked row).
+
+    Reuses the
+    superseded row's cell identity (`wave_id`/`arm_id`/`task_id`/
+    `run_idx`) and provenance columns so `idx_trial_active_cell` and
+    `trg_trial_substrate_match` both accept it.
+    """
+    old = conn.execute("SELECT * FROM trial WHERE trial_id = ?", (trial_id,)).fetchone()
+    _insert(
+        conn,
+        "trial",
+        Trial(
+            wave_id=old["wave_id"],
+            arm_id=old["arm_id"],
+            task_id=old["task_id"],
+            run_idx=old["run_idx"],
+            trial_id=new_trial_id,
+            batch_id=old["batch_id"],
+            substrate_id=old["substrate_id"],
+            arm_config_id=old["arm_config_id"],
+            model_id=old["model_id"],
+            models_answered=old["models_answered"],
+            started_at="2026-01-02T00:00:00Z",
+            finished_at="2026-01-02T00:01:00Z" if new_op_status == "ok" else None,
+            wall_seconds=old["wall_seconds"],
+            op_status=new_op_status,
+            error_kind=None if new_op_status == "ok" else new_op_status,
+            error_blob=None,
+            tokens_in=old["tokens_in"],
+            tokens_out=old["tokens_out"],
+            trace_id=f"trace_{new_trial_id}",
+            transcript_blob=None,
+            answer_blob=None,
+            supersedes=trial_id,
+        ).to_row(),
+    )
+
+
+def test_arm_pass_rates_counts_only_the_correction_not_the_superseded_trial(
+    ledger_conn: sqlite3.Connection,
+) -> None:
+    # arm_a's only trial originally errored operationally; a full re-run
+    # later corrects it to a clean pass. `idx_trial_active_cell` allows
+    # this now that trial_id (not the (wave, arm, task, run) tuple) is
+    # the primary key -- arm_pass_rates must read only the active
+    # (correcting) row, not fold the superseded 'error' row back in.
+    seeded = seed_wave(
+        ledger_conn,
+        n_tasks=1,
+        arm_keys=("arm_a",),
+        cells={("arm_a", 1, 1): "error"},
+    )
+    original_trial_id = ledger_conn.execute(
+        "SELECT trial_id FROM trial WHERE wave_id = ?", (seeded.wave_id,)
+    ).fetchone()["trial_id"]
+    correcting_trial_id = f"{original_trial_id}_corrected"
+    _supersede_the_trial(
+        ledger_conn,
+        trial_id=original_trial_id,
+        new_trial_id=correcting_trial_id,
+        new_op_status="ok",
+    )
+    _insert(
+        ledger_conn,
+        "grade",
+        make_grade(f"{correcting_trial_id}_gra", correcting_trial_id, "pass").to_row(),
+    )
+
+    rates = arm_pass_rates(ledger_conn, seeded.wave_id)
+    assert len(rates) == 1
+    a = rates[0]
+    # Two trial rows exist in this cell's history, but only one is active:
+    # n_trials must not double-count the superseded row, and the
+    # since-corrected 'error' must not still show up as an operational
+    # failure now that the correction replaced it with a clean pass.
+    assert a.n_trials == 1
+    assert a.n_verdicts == 1
+    assert a.n_pass == 1
+    assert a.n_operational_failures == 0
+    assert a.operational_failures == ()
 
 
 def test_arm_pass_rates_counts_only_the_correction_not_the_superseded_grade(
@@ -885,9 +974,10 @@ def _insert_ok_no_verdict_trial(
     trial_id: str,
     substrate_id: str,
 ) -> None:
-    """A trial that ran cleanly (`op_status='ok'`) but whose grader gave no
-    pass/fail verdict (`status='error'`, `outcome=NULL`) -- the case
-    `make_grade` cannot express, since it always sets `outcome = status`.
+    """A trial that ran cleanly (`op_status='ok'`) but whose grader gave no pass/fail
+    verdict (`status='error'`, `outcome=NULL`) -- the case `make_grade` cannot express,
+    since it always sets `outcome = status`.
+
     Not an operational failure (the schema would refuse a grade row on one
     of those); a real gap `_instance_statuses` and its consumers must
     treat as "no verdict", not as "ok, therefore comparable".
