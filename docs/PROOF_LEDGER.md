@@ -25,7 +25,7 @@ The current model already proves all four ADR guarantees. PRs #347, #351 and
 
 | ID | Statement | Status | Dependencies | Implementation and independent evidence |
 |---|---|---|---|---|
-| T1 | `finalStatus (handleTimeout p s) = .failed`, for every plan and state | Proved locally; delivery pending | Definitions only | `agentic-workflows-v2/agentic_v2/engine/dag_executor.py:463` `_handle_timeout`, final FAILED assignment at line 507; `DAGExecutor.execute` docstring at line 562; existing timeout replay at `agentic-workflows-v2/tests/engine/test_dag_executor_lean_replay.py:710` |
+| T1 | `finalStatus (handleTimeout p s) = .failed`, for every plan and state | Proved; PR #354 open | Definitions only | `agentic-workflows-v2/agentic_v2/engine/dag_executor.py:463` `_handle_timeout`, final FAILED assignment at line 507; `DAGExecutor.execute` docstring at line 562; existing timeout replay at `agentic-workflows-v2/tests/engine/test_dag_executor_lean_replay.py:710` |
 | Existing | Safety, unique starts, capacity, completeness, honest status, validation equivalence | Merged in #347/#351/#352 | See `proofs/README.md` and axiom pins in `proofs/Scheduler.lean` | ADR-060:65–74; executor replay and validation replay in the same test module |
 
 T1 concerns completed timeout cleanup, not cancellation-resistant tasks or a
@@ -84,8 +84,9 @@ one-test count increment. Full suite passed: runtime 4,332 passed / 108 skipped 
 Review: local inspection checked the narrow cleanup premise, independent FAILED
 assertions (not only model equality), legal/complete replay flags, hanging-root
 construction, fixture isolation and dependency lock changes. No runtime code
-changed. No PR yet. Rebase merge is enabled (verified through GitHub); scratch
-rebase remains pending until a commit passes all gates.
+changed. PR #354 is open: https://github.com/tafreeman/agentic-runtime-platform/pull/354.
+Rebase merge is enabled. A detached scratch worktree at `.proof-rebase-check`
+successfully ran `git rebase origin/main` against c07974c. CI/review pending.
 
 The local `.claude/settings.json` now invokes `.claude/scope_guard.py` with an
 absolute path and Windows `python`. Both are ignored local configuration.

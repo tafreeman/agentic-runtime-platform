@@ -25,7 +25,9 @@ for source/evidence citations and validation logs under `proofs/`.
 ## In-flight work and blocker
 
 Branch: `feature/proof-timeout-fails-closed-20260926`, based on origin/main c07974c.
-Validation gates passed; preparing the theorem commit and PR. Baseline exposed
+PR #354 is open: https://github.com/tafreeman/agentic-runtime-platform/pull/354.
+Commit 2aa9edb contains the proof. Local gates passed; CI/review pending.
+Scratch rebase at `.proof-rebase-check` passed against origin/main c07974c. Baseline exposed
 an outdated installed EvalKit and then the known pytest MCP import collision.
 EvalKit is now the pinned 0.4.1; the full suite passed with importlib mode.
 Human authorization is required separately for merging any eventual PR.
@@ -50,7 +52,7 @@ Read ~/proofs/SCOPE_LOCK.md first and work only in its locked ARP path. Skip
 Phase 0. Read docs/PROOF_LEDGER.md and this handoff; inspect git status and current
 origin/main before changing anything. Preserve the uncommitted T1 proof,
 Hypothesis replay, dependency locks and docs. Inspect proofs/* validation logs.
-Complete required gates before committing. Open one PR for T1, wait for CI and
+Complete required gates before committing. Continue PR #354, wait for CI and
 address review findings; test rebase in a scratch worktree inside the locked
 repository. Do not merge without separate authorization. Update ledger/handoff.
 Stop when the SOLID queue is empty; do not inspect another repository.
