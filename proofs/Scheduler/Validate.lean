@@ -79,7 +79,8 @@ def finish (u : Nat) : Walk → Walk
   | .done s => .done (leave s u)
   | w => w
 
-/-- Mirrors `visit` in `_detect_cycles`. `fuel` bounds the recursion depth. -/
+/-- Mirrors one frame of `_detect_cycles`'s explicit stack, from `enter` until
+the step's dependents run out. `fuel` bounds the recursion depth. -/
 def visit (adj : Nat → List Nat) : Nat → Nat → Dfs → Walk
   | 0, _, _ => .exhausted
   | fuel + 1, u, s =>
