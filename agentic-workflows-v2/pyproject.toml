@@ -59,6 +59,7 @@ eval = [
 swe-ab = ["pandas>=3.0.5,<4"]
 dev = [
     "pytest>=7.0",
+    "hypothesis>=6,<7",
     "pytest-asyncio>=0.21",
     "pytest-cov>=4.0",
     "pytest-mock>=3.12",

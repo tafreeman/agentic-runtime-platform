@@ -176,6 +176,9 @@ The substantive universal results are:
   bound, given an initially bounded running set.
 - `timeout_has_all_results`: modeled timeout cleanup supplies every node with a
   result.
+- `timeout_fails_closed`: completed timeout cleanup reports FAILED for every
+  plan and state, using only `propext`. This assumes cleanup returns; it makes no
+  liveness claim about cancellation-resistant Python tasks.
 - `recursive_solution_matches_spec` and `recursive_solution_unique`: on a graph
   ranked along dependencies, the recursive failure rule has a unique solution.
 - `nonpositive_schedules_nothing`: a nonpositive limit starts nothing.
@@ -246,9 +249,9 @@ since the ready queue only ever holds unfinished steps.
   executor and `DAG.validate` agree with them on sampled inputs and proves
   nothing about unsampled ones. The paths listed under abstraction limits are
   outside it.
-- The converse of honest status is proved for complete legal runs. For a run
-  that times out, the model always reports FAILED with timeout results, but no
-  theorem states it.
+- The converse of honest status is proved for complete legal runs. Timeout
+  cleanup reports FAILED (`timeout_fails_closed`), but placing an unconsumed
+  timeout in a trace does not force an already completed run to fail.
 - The orchestrator's own scheduling loop (`_execute_plan`) is not modelled.
 
 Nonterminal results fail closed, so ADR-060's safety theorem needs no

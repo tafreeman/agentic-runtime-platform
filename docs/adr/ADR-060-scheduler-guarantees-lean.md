@@ -81,8 +81,10 @@ The proofs cover the model; this test checks that the model is the code. It
 runs `DAGExecutor` with a fake step executor that returns scripted results after
 seeded random delays, records the order in which steps finish, replays that
 order through the compiled Lean model, and asserts that both end in the same
-state. It uses a seeded `random`, not Hypothesis, so there is no new dependency
-and no lockfile change.
+state. The original replay uses seeded `random`. The timeout-finalization proof
+also has a Hypothesis differential test (a development dependency), generating
+concurrency limits, independent/dependent nodes and terminal outcomes while
+a hanging root guarantees the timeout is consumed.
 
 ## Consequences
 
