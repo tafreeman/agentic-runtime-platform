@@ -118,7 +118,7 @@ and no lockfile change.
 
 ## Implementation status
 
-`proofs/README.md` is the living status. As of 2026-09-25: part 1 shipped in
+`proofs/README.md` is the living status. As of 2026-09-26: part 1 shipped in
 #334. Part 3 is done: the replay compares the executor with the recursive spec
 and replays each recorded completion order, timeouts included, through the
 operational model, and it checks that each recorded order is legal. Part 2 is
@@ -137,8 +137,10 @@ results reported success, a raised step kept a RUNNING lifecycle with no
 exceptions changed the run. Review found a fifth in a path the model omits:
 an observer that masked a cancellation let the run continue past its timeout
 (#348). Proving the invariant found no further defect. Modelling `validate`
-found one it does not fix: its cycle check recurses once per step on a
-dependency path, so a chain of about 1,000 steps raises `RecursionError`.
+found one in it: its cycle check recursed once per step on a dependency path,
+so a chain of about 1,000 steps raised `RecursionError`. #353 made the check
+iterative, with the same visit order and cycle path, and added a regression
+test on a 5,000-step chain.
 
 ## Alternatives considered
 

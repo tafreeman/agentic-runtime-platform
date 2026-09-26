@@ -293,7 +293,3 @@ counterexample does not describe this revision.
   out `DAG.add`'s duplicate-name check. Its DFS state adds `time` and `clock`,
   which number steps as they turn black for the proofs and never change the
   verdict.
-- `_detect_cycles` recurses once per step on a dependency path, so on a chain
-  of about 1,000 steps (Python's default recursion limit) `DAG.validate`
-  raises `RecursionError` instead of returning. The model has no stack limit
-  and accepts such a plan; the replay's plans are far shorter.
