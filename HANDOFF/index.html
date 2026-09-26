@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-060-scheduler-guarantees-lean/">
+        <link rel="canonical" href="https://tafreeman.github.io/agentic-runtime-platform/HANDOFF/">
       
       
       
@@ -18,19 +18,19 @@
         
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
-        <title>ADR-060: One Set of Scheduling Rules, Proved in Lean 4 - Agentic Runtime Platform</title>
+        <title>Proof handoff — 2026-09-26 - Agentic Runtime Platform</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -49,13 +49,13 @@
       
     
     
-      <link rel="stylesheet" href="../../stylesheets/tokens.css">
+      <link rel="stylesheet" href="../stylesheets/tokens.css">
     
-      <link rel="stylesheet" href="../../stylesheets/console.css">
+      <link rel="stylesheet" href="../stylesheets/console.css">
     
-      <link rel="stylesheet" href="../../stylesheets/landing.css">
+      <link rel="stylesheet" href="../stylesheets/landing.css">
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -63,17 +63,17 @@
     
   
 <meta property="og:type" content="website" />
-<meta property="og:title" content="ADR-060: One Set of Scheduling Rules, Proved in Lean 4 - Agentic Runtime Platform" />
+<meta property="og:title" content="Proof handoff — 2026-09-26 - Agentic Runtime Platform" />
 <meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
-<meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-060-scheduler-guarantees-lean.png" />
+<meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/HANDOFF.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
-<meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-060-scheduler-guarantees-lean/" />
+<meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/HANDOFF/" />
 <meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:title" content="ADR-060: One Set of Scheduling Rules, Proved in Lean 4 - Agentic Runtime Platform" />
+<meta property="twitter:title" content="Proof handoff — 2026-09-26 - Agentic Runtime Platform" />
 <meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
-<meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-060-scheduler-guarantees-lean.png" />
+<meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/HANDOFF.png" />
 </head>
   
   
@@ -91,7 +91,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adr-060-one-set-of-scheduling-rules-proved-in-lean-4" class="md-skip">
+        <a href="#proof-handoff-2026-09-26" class="md-skip">
           Skip to content
         </a>
       
@@ -105,7 +105,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="Agentic Runtime Platform" class="md-header__button md-logo" aria-label="Agentic Runtime Platform" data-md-component="logo">
+    <a href=".." title="Agentic Runtime Platform" class="md-header__button md-logo" aria-label="Agentic Runtime Platform" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -125,7 +125,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ADR-060: One Set of Scheduling Rules, Proved in Lean 4
+              Proof handoff — 2026-09-26
             
           </span>
         </div>
@@ -217,7 +217,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../.." class="md-tabs__link">
+      <a href=".." class="md-tabs__link">
         
   
   
@@ -238,7 +238,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../getting-started/" class="md-tabs__link">
+        <a href="../getting-started/" class="md-tabs__link">
           
   
   
@@ -260,7 +260,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../ARCHITECTURE/" class="md-tabs__link">
+        <a href="../ARCHITECTURE/" class="md-tabs__link">
           
   
   
@@ -282,7 +282,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../deep-dive-server/" class="md-tabs__link">
+        <a href="../deep-dive-server/" class="md-tabs__link">
           
   
   
@@ -304,7 +304,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../cli-reference/" class="md-tabs__link">
+        <a href="../cli-reference/" class="md-tabs__link">
           
   
   
@@ -326,7 +326,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../WORKFLOW_AUTHORING/" class="md-tabs__link">
+        <a href="../WORKFLOW_AUTHORING/" class="md-tabs__link">
           
   
   
@@ -348,7 +348,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../architecture-eval/" class="md-tabs__link">
+        <a href="../architecture-eval/" class="md-tabs__link">
           
   
   
@@ -370,7 +370,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../tools/" class="md-tabs__link">
+        <a href="../tools/" class="md-tabs__link">
           
   
   
@@ -392,7 +392,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../operations/" class="md-tabs__link">
+        <a href="../operations/" class="md-tabs__link">
           
   
   
@@ -414,7 +414,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../configuration/" class="md-tabs__link">
+        <a href="../configuration/" class="md-tabs__link">
           
   
   
@@ -436,7 +436,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../project-overview/" class="md-tabs__link">
+        <a href="../project-overview/" class="md-tabs__link">
           
   
   
@@ -472,7 +472,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Agentic Runtime Platform" class="md-nav__button md-logo" aria-label="Agentic Runtime Platform" data-md-component="logo">
+    <a href=".." title="Agentic Runtime Platform" class="md-nav__button md-logo" aria-label="Agentic Runtime Platform" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -502,7 +502,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         
   
   
@@ -564,7 +564,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../getting-started/" class="md-nav__link ">
+            <a href="../getting-started/" class="md-nav__link ">
               
   
   
@@ -608,7 +608,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/installation/" class="md-nav__link">
+      <a href="../getting-started/installation/" class="md-nav__link">
         
   
   
@@ -636,7 +636,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/quickstart/" class="md-nav__link">
+      <a href="../getting-started/quickstart/" class="md-nav__link">
         
   
   
@@ -664,7 +664,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/first-workflow/" class="md-nav__link">
+      <a href="../getting-started/first-workflow/" class="md-nav__link">
         
   
   
@@ -692,7 +692,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development-guide/" class="md-nav__link">
+      <a href="../development-guide/" class="md-nav__link">
         
   
   
@@ -720,7 +720,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../NO_LLM_MODE/" class="md-nav__link">
+      <a href="../NO_LLM_MODE/" class="md-nav__link">
         
   
   
@@ -748,7 +748,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ONBOARDING/" class="md-nav__link">
+      <a href="../ONBOARDING/" class="md-nav__link">
         
   
   
@@ -849,7 +849,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ARCHITECTURE/" class="md-nav__link">
+      <a href="../ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -877,7 +877,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture-runtime/" class="md-nav__link">
+      <a href="../architecture-runtime/" class="md-nav__link">
         
   
   
@@ -905,7 +905,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture-ui/" class="md-nav__link">
+      <a href="../architecture-ui/" class="md-nav__link">
         
   
   
@@ -933,7 +933,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture-eval/" class="md-nav__link">
+      <a href="../architecture-eval/" class="md-nav__link">
         
   
   
@@ -961,7 +961,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture-tools/" class="md-nav__link">
+      <a href="../architecture-tools/" class="md-nav__link">
         
   
   
@@ -989,7 +989,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../integration-architecture/" class="md-nav__link">
+      <a href="../integration-architecture/" class="md-nav__link">
         
   
   
@@ -1084,7 +1084,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../deep-dive-server/" class="md-nav__link">
+      <a href="../deep-dive-server/" class="md-nav__link">
         
   
   
@@ -1112,7 +1112,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../deep-dive-agents/" class="md-nav__link">
+      <a href="../deep-dive-agents/" class="md-nav__link">
         
   
   
@@ -1140,7 +1140,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../deep-dive-agentic-v2-eval/" class="md-nav__link">
+      <a href="../deep-dive-agentic-v2-eval/" class="md-nav__link">
         
   
   
@@ -1241,7 +1241,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli-reference/" class="md-nav__link">
+      <a href="../cli-reference/" class="md-nav__link">
         
   
   
@@ -1269,7 +1269,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api-contracts-runtime/" class="md-nav__link">
+      <a href="../api-contracts-runtime/" class="md-nav__link">
         
   
   
@@ -1297,7 +1297,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../data-models-runtime/" class="md-nav__link">
+      <a href="../data-models-runtime/" class="md-nav__link">
         
   
   
@@ -1325,7 +1325,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../component-inventory-ui/" class="md-nav__link">
+      <a href="../component-inventory-ui/" class="md-nav__link">
         
   
   
@@ -1353,7 +1353,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ui/pages/" class="md-nav__link">
+      <a href="../ui/pages/" class="md-nav__link">
         
   
   
@@ -1381,7 +1381,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ui/api-integration/" class="md-nav__link">
+      <a href="../ui/api-integration/" class="md-nav__link">
         
   
   
@@ -1443,7 +1443,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../workflows/" class="md-nav__link ">
+            <a href="../workflows/" class="md-nav__link ">
               
   
   
@@ -1485,7 +1485,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../WORKFLOW_AUTHORING/" class="md-nav__link">
+      <a href="../WORKFLOW_AUTHORING/" class="md-nav__link">
         
   
   
@@ -1513,7 +1513,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../PATTERN_CATALOG/" class="md-nav__link">
+      <a href="../PATTERN_CATALOG/" class="md-nav__link">
         
   
   
@@ -1616,7 +1616,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture-eval/" class="md-nav__link">
+      <a href="../architecture-eval/" class="md-nav__link">
         
   
   
@@ -1644,7 +1644,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../evaluation/rubrics/" class="md-nav__link">
+      <a href="../evaluation/rubrics/" class="md-nav__link">
         
   
   
@@ -1672,7 +1672,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../evaluation/judge/" class="md-nav__link">
+      <a href="../evaluation/judge/" class="md-nav__link">
         
   
   
@@ -1700,7 +1700,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../evaluation/gating/" class="md-nav__link">
+      <a href="../evaluation/gating/" class="md-nav__link">
         
   
   
@@ -1728,7 +1728,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../evaluation/runners/" class="md-nav__link">
+      <a href="../evaluation/runners/" class="md-nav__link">
         
   
   
@@ -1756,7 +1756,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../evaluation/datasets/" class="md-nav__link">
+      <a href="../evaluation/datasets/" class="md-nav__link">
         
   
   
@@ -1828,7 +1828,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../tools/" class="md-nav__link ">
+            <a href="../tools/" class="md-nav__link ">
               
   
   
@@ -1872,7 +1872,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture-tools/" class="md-nav__link">
+      <a href="../architecture-tools/" class="md-nav__link">
         
   
   
@@ -1900,7 +1900,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tools/llm-client/" class="md-nav__link">
+      <a href="../tools/llm-client/" class="md-nav__link">
         
   
   
@@ -1928,7 +1928,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tools/local-models/" class="md-nav__link">
+      <a href="../tools/local-models/" class="md-nav__link">
         
   
   
@@ -1956,7 +1956,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tools/windows-ai/" class="md-nav__link">
+      <a href="../tools/windows-ai/" class="md-nav__link">
         
   
   
@@ -1984,7 +1984,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tools/model-probing/" class="md-nav__link">
+      <a href="../tools/model-probing/" class="md-nav__link">
         
   
   
@@ -2012,7 +2012,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tools/provider-limits/" class="md-nav__link">
+      <a href="../tools/provider-limits/" class="md-nav__link">
         
   
   
@@ -2040,7 +2040,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tools/benchmarks/" class="md-nav__link">
+      <a href="../tools/benchmarks/" class="md-nav__link">
         
   
   
@@ -2108,7 +2108,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../operations/" class="md-nav__link ">
+            <a href="../operations/" class="md-nav__link ">
               
   
   
@@ -2152,7 +2152,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../deployment-guide/" class="md-nav__link">
+      <a href="../deployment-guide/" class="md-nav__link">
         
   
   
@@ -2180,7 +2180,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../operations/security-hardening/" class="md-nav__link">
+      <a href="../operations/security-hardening/" class="md-nav__link">
         
   
   
@@ -2208,7 +2208,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../SUPPLY_CHAIN/" class="md-nav__link">
+      <a href="../SUPPLY_CHAIN/" class="md-nav__link">
         
   
   
@@ -2236,7 +2236,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../load-report/" class="md-nav__link">
+      <a href="../load-report/" class="md-nav__link">
         
   
   
@@ -2264,7 +2264,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../operations/troubleshooting/" class="md-nav__link">
+      <a href="../operations/troubleshooting/" class="md-nav__link">
         
   
   
@@ -2365,7 +2365,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration/" class="md-nav__link">
+      <a href="../configuration/" class="md-nav__link">
         
   
   
@@ -2393,7 +2393,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../GLOSSARY/" class="md-nav__link">
+      <a href="../GLOSSARY/" class="md-nav__link">
         
   
   
@@ -2421,7 +2421,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../CODING_STANDARDS/" class="md-nav__link">
+      <a href="../CODING_STANDARDS/" class="md-nav__link">
         
   
   
@@ -2449,7 +2449,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../KNOWN_LIMITATIONS/" class="md-nav__link">
+      <a href="../KNOWN_LIMITATIONS/" class="md-nav__link">
         
   
   
@@ -2477,7 +2477,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../AI_RISK_MANAGEMENT/" class="md-nav__link">
+      <a href="../AI_RISK_MANAGEMENT/" class="md-nav__link">
         
   
   
@@ -2505,7 +2505,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../MIGRATIONS/" class="md-nav__link">
+      <a href="../MIGRATIONS/" class="md-nav__link">
         
   
   
@@ -2610,7 +2610,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../project-overview/" class="md-nav__link">
+      <a href="../project-overview/" class="md-nav__link">
         
   
   
@@ -2638,7 +2638,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../flagship/" class="md-nav__link">
+      <a href="../flagship/" class="md-nav__link">
         
   
   
@@ -2666,7 +2666,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../project-context/" class="md-nav__link">
+      <a href="../project-context/" class="md-nav__link">
         
   
   
@@ -2694,7 +2694,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ROADMAP/" class="md-nav__link">
+      <a href="../ROADMAP/" class="md-nav__link">
         
   
   
@@ -2722,7 +2722,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../CHANGELOG/" class="md-nav__link">
+      <a href="../CHANGELOG/" class="md-nav__link">
         
   
   
@@ -2750,7 +2750,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-INDEX/" class="md-nav__link">
+      <a href="../adr/ADR-INDEX/" class="md-nav__link">
         
   
   
@@ -2778,7 +2778,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../CONTRIBUTING/" class="md-nav__link">
+      <a href="../CONTRIBUTING/" class="md-nav__link">
         
   
   
@@ -2806,7 +2806,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../DEMO/" class="md-nav__link">
+      <a href="../DEMO/" class="md-nav__link">
         
   
   
@@ -2861,121 +2861,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#context" class="md-nav__link">
+  <a href="#scope-lock" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Context
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#decision" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Decision
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Decision">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-one-set-of-scheduling-rules-enforced-in-code-this-change" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. One set of scheduling rules, enforced in code (this change)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-a-lean-4-model-of-dagexecutor-with-proofs-next-change" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. A Lean 4 model of DAGExecutor, with proofs (next change)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-a-replay-test-that-ties-the-model-to-the-code-with-the-proofs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. A replay test that ties the model to the code (with the proofs)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#consequences" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Consequences
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Consequences">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#positive" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Positive
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#negative-trade-offs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Negative / trade-offs
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#constraints-imposed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Constraints imposed
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#implementation-status" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Implementation status
+        Scope lock
       
     </span>
   </a>
@@ -2999,7 +2888,7 @@
 
 
   
-    <a href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/adr/ADR-060-scheduler-guarantees-lean.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/HANDOFF.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -3008,182 +2897,65 @@
     
       
     
-    <a href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/adr/ADR-060-scheduler-guarantees-lean.md" title="View source of this page" class="md-content__button md-icon">
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/HANDOFF.md" title="View source of this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
     </a>
   
 
 
-<h1 id="adr-060-one-set-of-scheduling-rules-proved-in-lean-4">ADR-060: One Set of Scheduling Rules, Proved in Lean 4<a class="headerlink" href="#adr-060-one-set-of-scheduling-rules-proved-in-lean-4" title="Permanent link">&para;</a></h1>
-<p><strong>Status:</strong> Accepted
-<strong>Date:</strong> 2026-09-24
-<strong>Related:</strong> <code>agentic_v2/engine/dag_executor.py</code> (<code>DAGExecutor.execute</code>,
-<code>_scheduling_loop</code>), <code>agentic_v2/engine/dag.py</code> (<code>DAG.validate</code>),
-<code>agentic_v2/agents/orchestrator.py</code> (<code>_execute_plan</code>, <code>_validate_plan</code>,
-<code>_skip_blocked_subtasks</code>, <code>_unfinished_subtasks</code>),
-<code>agentic_v2/agents/orchestrator_models.py</code> (<code>OrchestratorInput.max_parallel</code>).
-Builds on ADR-001 (the native Kahn's-DAG executor).</p>
-<hr />
-<h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
-<p>Runtime-generated workflows run on the native engine's <code>DAGExecutor</code>. What the
-scheduler guarantees had never been written down, and two guarantees callers
-reasonably assume did not hold:</p>
-<ol>
-<li><strong>A parallel limit below 1 reported success for a run that did nothing.</strong>
-   <code>DAGExecutor.execute</code> read <code>max_concurrency</code> without a check. With 0,
-   <code>_schedule_ready_steps</code> scheduled nothing; the deadlock branch marked every
-   step SKIPPED ("unmet dependencies") and left the loop without failing the
-   run; the final block then turned RUNNING into SUCCESS.</li>
-<li><strong>The orchestrator's own scheduler followed different rules.</strong>
-   <code>OrchestratorAgent._execute_plan</code>, used by <code>_parse_output</code> and
-   <code>run_adaptive</code>:</li>
-<li>stopped silently when an LLM-written plan had a dependency cycle or named
-     a subtask that did not exist, dropping the stuck subtasks and still
-     returning <code>success=True</code>;</li>
-<li>let a failed subtask's dependents run, where <code>DAGExecutor</code> skips them;</li>
-<li>looped forever with <code>max_parallel=0</code> without yielding to the event loop,
-     so nothing else could run and no timeout could fire.</li>
-</ol>
-<p>Only library callers can reach these today: <code>agentic orchestrate</code> is a stub
-that exits 1, and no server route constructs the orchestrator. They surfaced
-while working out what a machine-checked proof of the scheduler would have to
-assume. "Every step of a valid workflow runs, fails, or is skipped for a stated
-reason" cannot be proved without a limit of at least 1, and "a run reports
-success only if nothing failed" was false on the deadlock path.</p>
-<p>Tests sample schedules. The scheduler's job is to be right for every order in
-which steps can finish and every result they can return, which is the kind of
-claim a proof covers and a test suite cannot.</p>
-<h2 id="decision">Decision<a class="headerlink" href="#decision" title="Permanent link">&para;</a></h2>
-<h3 id="1-one-set-of-scheduling-rules-enforced-in-code-this-change">1. One set of scheduling rules, enforced in code (this change)<a class="headerlink" href="#1-one-set-of-scheduling-rules-enforced-in-code-this-change" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Rule</th>
-<th><code>DAGExecutor</code></th>
-<th>Orchestrator <code>_execute_plan</code></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>The parallel limit is an integer of at least 1</td>
-<td><code>execute()</code> raises <code>ValueError</code> otherwise; <code>bool</code> is rejected</td>
-<td><code>OrchestratorInput.max_parallel</code> is <code>Field(ge=1)</code>; <code>_execute_plan</code> raises <code>ValueError</code> if that is bypassed</td>
-</tr>
-<tr>
-<td>A plan is validated before anything runs</td>
-<td><code>dag.validate()</code>, as before</td>
-<td><code>_validate_plan()</code> builds a <code>DAG</code> from the subtasks and calls <code>DAG.validate()</code>, so a cycle or a missing dependency raises; <code>_parse_output</code> returns <code>success=False</code> with the reason</td>
-</tr>
-<tr>
-<td>A failed step's dependents are skipped, transitively, with a recorded reason</td>
-<td>cascade skip, as before</td>
-<td><code>_skip_blocked_subtasks()</code> marks them SKIPPED and records <code>{"skipped": true, "reason": "dependency failed", "dependency": …}</code></td>
-</tr>
-<tr>
-<td>A run succeeds only if nothing failed and nothing was dropped</td>
-<td>the deadlock branch now fails the run, skipping the remaining steps as "scheduler deadlock" and setting <code>metadata["error"]</code></td>
-<td><code>success</code> is false and <code>error</code> names the unfinished subtasks when any failed or was skipped; a subtask left unscheduled is recorded as failed</td>
-</tr>
-</tbody>
-</table>
-<p>The orchestrator keeps its own loop for now. It owns agent fallback chains and
-escalation handoffs that <code>DAGExecutor</code> does not model.</p>
-<h3 id="2-a-lean-4-model-of-dagexecutor-with-proofs-next-change">2. A Lean 4 model of <code>DAGExecutor</code>, with proofs (next change)<a class="headerlink" href="#2-a-lean-4-model-of-dagexecutor-with-proofs-next-change" title="Permanent link">&para;</a></h3>
-<p>A Lake package in <code>proofs/</code> models the scheduling loop, treating each step as a
-black box that can finish in any order with any result. For every validated DAG
-and every <code>max_concurrency</code> of at least 1, it proves:</p>
-<ol>
-<li><strong>Safety.</strong> A step starts only after all of its dependencies have finished
-   and none of them failed.</li>
-<li><strong>No duplicates, bounded parallelism.</strong> No step starts twice, and no more
-   than <code>max_concurrency</code> steps run at once.</li>
-<li><strong>Completeness.</strong> Once its running steps finish, every run ends with each
-   step SUCCESS, FAILED, or SKIPPED with a recorded reason. The deadlock branch
-   is unreachable.</li>
-<li><strong>Honest status.</strong> A run reports SUCCESS only if no step failed and none was
-   skipped by a cascade or a deadlock.</li>
-</ol>
-<p>Lean runs in CI only, in its own job. Nothing is added to the runtime.</p>
-<h3 id="3-a-replay-test-that-ties-the-model-to-the-code-with-the-proofs">3. A replay test that ties the model to the code (with the proofs)<a class="headerlink" href="#3-a-replay-test-that-ties-the-model-to-the-code-with-the-proofs" title="Permanent link">&para;</a></h3>
-<p>The proofs cover the model; this test checks that the model is the code. It
-runs <code>DAGExecutor</code> with a fake step executor that returns scripted results after
-seeded random delays, records the order in which steps finish, replays that
-order through the compiled Lean model, and asserts that both end in the same
-state. The original replay uses seeded <code>random</code>. The timeout-finalization proof
-also has a Hypothesis differential test (a development dependency), generating
-concurrency limits, independent/dependent nodes and terminal outcomes while
-a hanging root guarantees the timeout is consumed.</p>
-<h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
-<h3 id="positive">Positive<a class="headerlink" href="#positive" title="Permanent link">&para;</a></h3>
+<h1 id="proof-handoff-2026-09-26">Proof handoff — 2026-09-26<a class="headerlink" href="#proof-handoff-2026-09-26" title="Permanent link">&para;</a></h1>
+<h2 id="scope-lock">Scope lock<a class="headerlink" href="#scope-lock" title="Permanent link">&para;</a></h2>
+<h1 id="scope-lock_1">Scope lock<a class="headerlink" href="#scope-lock_1" title="Permanent link">&para;</a></h1>
 <ul>
-<li>The misreported success, the orchestrator's silent drops, its runs of a
-  failed subtask's dependents, and its busy loop are fixed, each with a test
-  shown to fail before the fix.</li>
-<li>LLM-written plans are validated like YAML workflows before anything runs.</li>
-<li>The scheduler's guarantees become written, checked statements rather than
-  behaviour inferred from tests.</li>
+<li>Repository: agentic-runtime-platform</li>
+<li>Absolute local path: C:/Users/tandf/source/agentic-runtime-platform</li>
+<li>Component: DAGExecutor scheduling model and replay legality under ADR-060</li>
+<li>Locked: 2026-09-26</li>
+<li>Reason: modelability 5/5, executable oracle 5/5, existing evidence 5/5; total 23/25, highest ranked candidate, continuing existing Lean work.</li>
 </ul>
-<h3 id="negative-trade-offs">Negative / trade-offs<a class="headerlink" href="#negative-trade-offs" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Behaviour changes for library callers: a <code>max_concurrency</code> below 1 or not an
-  integer now raises; <code>OrchestratorInput(max_parallel=0)</code> raises
-  <code>ValidationError</code>; orchestrator results report <code>success=False</code> when any
-  subtask failed or was skipped, where they used to report <code>True</code>.</li>
-<li>Two schedulers remain until the orchestrator moves onto <code>DAGExecutor</code>, and the
-  proofs cover only <code>DAGExecutor</code>.</li>
-<li>CI gains a Lean toolchain download (about 590 MB, cacheable) and build, and
-  the repository gains a second language.</li>
-<li>The proofs rest on the model matching the code. The replay test checks that
-  on sampled schedules, not on all of them.</li>
-</ul>
-<h3 id="constraints-imposed">Constraints imposed<a class="headerlink" href="#constraints-imposed" title="Permanent link">&para;</a></h3>
-<ul>
-<li>A change to scheduling behaviour in <code>dag_executor.py</code> must update the Lean
-  model and keep every theorem proved. CI fails on <code>sorry</code> or a new axiom.</li>
-<li>The orchestrator must not drift further from these rules. The intended end
-  state is the orchestrator running on <code>execute_as_dag</code>, keeping its agent
-  fallback chains and escalation handoffs.</li>
-</ul>
-<h2 id="implementation-status">Implementation status<a class="headerlink" href="#implementation-status" title="Permanent link">&para;</a></h2>
-<p><code>proofs/README.md</code> is the living status. As of 2026-09-26: part 1 shipped in</p>
-<h1 id="334-part-3-is-done-the-replay-compares-the-executor-with-the-recursive-spec">334. Part 3 is done: the replay compares the executor with the recursive spec<a class="headerlink" href="#334-part-3-is-done-the-replay-compares-the-executor-with-the-recursive-spec" title="Permanent link">&para;</a></h1>
-<p>and replays each recorded completion order, timeouts included, through the
-operational model, and it checks that each recorded order is legal. Part 2 is
-done for the model. All four guarantees are proved over legal completion
-orders, those in which every batch is a nonempty, duplicate-free set of running
-steps. Legal runs also provably report the recursive spec's per-step results
-and overall status. Completeness and refinement assume a validated plan,
-stated as a rank that increases along every dependency edge. A model of
-<code>DAG.validate</code> is proved to accept exactly the nonempty plans with such a rank,
-so these theorems also hold for every plan it accepts, and a replay compares
-its verdicts with the real <code>validate</code>. The models are still tied to the code
-only by sampled replay. Modelling found four executor defects, each fixed with a
-regression test before the proofs continued (#337 to #340): non-terminal
-results reported success, a raised step kept a RUNNING lifecycle with no
-<code>step_end</code>, cancellation escaped or orphaned step tasks, and observer
-exceptions changed the run. Review found a fifth in a path the model omits:
-an observer that masked a cancellation let the run continue past its timeout
-(#348). Proving the invariant found no further defect. Modelling <code>validate</code>
-found one in it: its cycle check recursed once per step on a dependency path,
-so a chain of about 1,000 steps raised <code>RecursionError</code>. #353 made the check
-iterative, with the same visit order and cycle path, and added a regression
-test on a 5,000-step chain.</p>
-<h2 id="alternatives-considered">Alternatives considered<a class="headerlink" href="#alternatives-considered" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>More example-based tests only.</strong> Cheap, but tests sample schedules. This
-  bug class, a stated invariant that one input value silently breaks, is what a
-  proof exposes and a sample misses.</li>
-<li><strong>Property-based testing with Hypothesis.</strong> Better sampling, but still
-  sampling, and it adds a dependency and a lockfile change. The replay test
-  gives the model-to-code link without either.</li>
-<li><strong>Model checking with TLA+.</strong> Exhaustive within a bounded state space and a
-  natural fit for concurrency, but it cannot cover DAGs of any size, and Lean
-  also compiles the model into the replay test's oracle.</li>
-<li><strong>Move the orchestrator onto <code>DAGExecutor</code> now.</strong> This removes the second
-  scheduler, but the agent fallback chains and escalation handoffs have to come
-  across first. Deferred rather than bundled into a fix.</li>
-</ul>
+<p>All work is confined to this repo until a human deletes this file.</p>
+<p>Proof bookkeeping in C:/Users/tandf/proofs is permitted. All repository reads, edits, branches and PRs remain in the named repository. Future sessions skip portfolio discovery.</p>
+<h2 id="current-ledger-snapshot">Current ledger snapshot<a class="headerlink" href="#current-ledger-snapshot" title="Permanent link">&para;</a></h2>
+<p>T1 (<code>ARP.timeout_fails_closed</code>) is proved locally with <code>[propext]</code> only.
+<code>lake build</code>, kernel check, 109 replay tests, lint, CI mypy, UI build and docs
+checks pass. Full suite passed: runtime 4,332 passed / 108 skipped / 2 xfailed; eval 273 passed; cross-package 18 passed; UI 446 passed. UI coverage passed. All pre-commit hooks passed. The original
+four ADR-060 guarantees already merged in #347/#351/#352. See PROOF_LEDGER.md
+for source/evidence citations and validation logs under <code>proofs/</code>.</p>
+<h2 id="in-flight-work-and-blocker">In-flight work and blocker<a class="headerlink" href="#in-flight-work-and-blocker" title="Permanent link">&para;</a></h2>
+<p>Branch: <code>feature/proof-timeout-fails-closed-20260926</code>, based on origin/main c07974c.
+PR #354 is open: https://github.com/tafreeman/agentic-runtime-platform/pull/354.
+Commit 2aa9edb contains the proof. Local gates passed; CI/review pending.
+Scratch rebase at <code>.proof-rebase-check</code> passed against origin/main c07974c. Baseline exposed
+an outdated installed EvalKit and then the known pytest MCP import collision.
+EvalKit is now the pinned 0.4.1; the full suite passed with importlib mode.
+Human authorization is required separately for merging any eventual PR.</p>
+<h2 id="exact-next-theorem">Exact next theorem<a class="headerlink" href="#exact-next-theorem" title="Permanent link">&para;</a></h2>
+<p>Finish delivery of T1, <code>finalStatus (handleTimeout p s) = .failed</code>.
+No further unproved SOLID theorem is queued. Do not expand scope once T1 is done.</p>
+<h2 id="questions-and-dependencies">Questions and dependencies<a class="headerlink" href="#questions-and-dependencies" title="Permanent link">&para;</a></h2>
+<p>UNCLEAR: a consumed-timeout whole-trace statement; topological ordering outside
+DAGExecutor; fairness/cancellation assumptions for arbitrary asyncio awaits.
+No dependency requiring changes in another repository is identified.
+REJECTED: an unconsumed timeout forces failure; exhausted traces imply completion.
+Bug candidate already known: recursive DAG validation overflows on long chains;
+open PR #353 owns its fix. Do not duplicate that work.</p>
+<h2 id="resume-prompt">Resume prompt<a class="headerlink" href="#resume-prompt" title="Permanent link">&para;</a></h2>
+<p>Read ~/proofs/SCOPE_LOCK.md first and work only in its locked ARP path. Skip
+Phase 0. Read docs/PROOF_LEDGER.md and this handoff; inspect git status and current
+origin/main before changing anything. Preserve the uncommitted T1 proof,
+Hypothesis replay, dependency locks and docs. Inspect proofs/* validation logs.
+Complete required gates before committing. Continue PR #354, wait for CI and
+address review findings; test rebase in a scratch worktree inside the locked
+repository. Do not merge without separate authorization. Update ledger/handoff.
+Stop when the SOLID queue is empty; do not inspect another repository.</p>
+<h2 id="branches">Branches<a class="headerlink" href="#branches" title="Permanent link">&para;</a></h2>
+<p>No branches deleted. At this snapshot doc-audit-alignment-20260916,
+docs/readme-overview-20260926, fix/scoring-gate-retirement and
+tafreeman-fuzzy-eureka are ancestors of origin/main but checked out in other
+worktrees: do not delete them. No branch is certified safe to delete without
+checking its worktree ownership and any uncommitted work. Keep main and this
+in-flight proof branch.</p>
 
 
 
@@ -3216,7 +2988,7 @@ test on a 5,000-step chain.</p>
     <span class="md-icon" title="Created">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="September 24, 2026 10:04:06 UTC">September 24, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="September 26, 2026 23:38:24 UTC">September 26, 2026</span>
   </span>
 
     
@@ -3281,10 +3053,10 @@ test on a 5,000-step chain.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.instant", "navigation.tracking", "navigation.indexes", "navigation.footer", "toc.follow", "search.highlight", "search.suggest", "search.share", "content.code.copy", "content.code.annotate", "content.tooltips", "content.action.edit", "content.action.view"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": {"Architecture": "architecture", "Evaluation": "evaluation", "Tooling": "tooling", "Workflow": "workflow"}, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.instant", "navigation.tracking", "navigation.indexes", "navigation.footer", "toc.follow", "search.highlight", "search.suggest", "search.share", "content.code.copy", "content.code.annotate", "content.tooltips", "content.action.edit", "content.action.view"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": {"Architecture": "architecture", "Evaluation": "evaluation", "Tooling": "tooling", "Workflow": "workflow"}, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
