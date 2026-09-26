@@ -126,15 +126,19 @@ done for the model. All four guarantees are proved over legal completion
 orders, those in which every batch is a nonempty, duplicate-free set of running
 steps. Legal runs also provably report the recursive spec's per-step results
 and overall status. Completeness and refinement assume a validated plan,
-stated as a rank that decreases along every edge. That `DAG.validate`
-establishes this is not proved, and the model is still tied to the code only by
-sampled replay. Modelling found four executor defects, each fixed with a
+stated as a rank that increases along every dependency edge. A model of
+`DAG.validate` is proved to accept exactly the nonempty plans with such a rank,
+so these theorems also hold for every plan it accepts, and a replay compares
+its verdicts with the real `validate`. The models are still tied to the code
+only by sampled replay. Modelling found four executor defects, each fixed with a
 regression test before the proofs continued (#337 to #340): non-terminal
 results reported success, a raised step kept a RUNNING lifecycle with no
 `step_end`, cancellation escaped or orphaned step tasks, and observer
 exceptions changed the run. Review found a fifth in a path the model omits:
 an observer that masked a cancellation let the run continue past its timeout
-(#348). Proving the invariant found no further defect.
+(#348). Proving the invariant found no further defect. Modelling `validate`
+found one it does not fix: its cycle check recurses once per step on a
+dependency path, so a chain of about 1,000 steps raises `RecursionError`.
 
 ## Alternatives considered
 

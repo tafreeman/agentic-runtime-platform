@@ -3,7 +3,9 @@
 The four ADR-060 guarantees are proved **for the Lean model** of
 `dag_executor.py`, over every legal completion order. This is not a proof
 about the Python code. The model follows `dag_executor.py` in the same commit,
-and the replay ties the two together on sampled schedules only. What remains
+and the replay ties the two together on sampled schedules only. A model of
+`DAG.validate`, which `execute` calls before scheduling anything, is proved to
+accept exactly the plans the completeness theorems assume. What remains
 unproved is listed under outstanding obligations. The package uses Lean 4.34.0
 core and its standard library only; there are no Batteries or Mathlib
 dependencies.
@@ -15,8 +17,8 @@ reads `lean-toolchain`. From this directory, `lake build` checks every theorem
 and builds `.lake/build/bin/replay` (`replay.exe` on Windows). The build fails
 if any declaration uses `sorry` (`warningAsError` in `lakefile.toml`) or if a
 theorem's axioms differ from its `#guard_msgs` pin at the end of
-`Scheduler.lean`. `lake env leanchecker Scheduler` re-checks the compiled
-declarations in the kernel. CI runs both, plus axiom-audit over every
+`Scheduler.lean`. `lake env leanchecker Scheduler Scheduler.Validate`
+re-checks the compiled declarations in the kernel. CI runs both, plus axiom-audit over every
 declaration in the library (`.github/workflows/lean-proofs.yml`).
 
 The executable accepts one JSON line on stdin:
@@ -41,6 +43,12 @@ order) and optionally `"timeout": true` to also get `model`: the operational
 `results`, `life`, `overall`, `timed_out`, `deadlocked`, `complete` and
 `legal`. `legal` is `checkLegal`, which decides the theorems' `Legal`
 hypothesis for that trace and is proved sound (`checkLegal_sound`).
+
+A request of the form `{"validate":[[[],[0]],[[1],[0]]]}` instead asks for the
+`validate` model's verdict on each plan, given as dependency index lists. The
+answer is `{"verdicts":[...]}`, each `{"verdict":"ok"}`, `"empty"`,
+`"missing"` with `step` and `dependency`, or `"cycle"` with `path`, which are
+the Python exceptions and the data they carry.
 
 From the repository root in PowerShell:
 
@@ -92,6 +100,15 @@ processed batches. Making the ready queue LIFO passes every spec-replay case
 but fails operational ones, so the operational replay is what pins scheduling
 order.
 
+The validate replay sends 512 random plans of 0 to 8 steps to the `validate`
+model in one request. Most edges point back to an earlier step, some repeat,
+and about one step in ten also depends on any step, itself, or one past the
+end, which can close a cycle or name a missing step. `DAG.validate` must give
+the same verdict for each, with the same missing pair and the same cycle path,
+and all four verdicts must occur. Named cases cover each verdict and the check
+order: a missing dependency is reported before a cycle. Visiting a step's
+dependents in reverse order fails the random replay.
+
 ## What is proved
 
 `Scheduler.lean` contains a function corresponding to each scheduling helper in
@@ -106,7 +123,7 @@ Status of the four ADR-060 guarantees:
 | 1. Safety: a step starts only after its dependencies finished, none failed | proved: `start_after_dependencies`, `pass_starts_after_dependencies` |
 | 2a. No step starts twice | proved: `no_duplicate_starts`, `pass_no_duplicate_starts` |
 | 2b. Bounded parallelism | proved: `scheduler_capacity` |
-| 3. Completeness; deadlock unreachable | proved: `deadlock_unreachable`, `legal_run_never_deadlocks`, `legal_run_completes` |
+| 3. Completeness; deadlock unreachable | proved: `deadlock_unreachable`, `legal_run_never_deadlocks`, `legal_run_completes`; for every plan `DAG.validate` accepts: `validated_run_never_deadlocks`, `validated_run_completes` |
 | 4. Honest status: SUCCESS only if nothing failed or was skipped for a cause | proved: `success_only_if_nothing_failed`; the converse for complete legal runs via `legal_run_matches_spec` |
 
 The theorems quantify over legal traces. A trace is legal when every
@@ -114,8 +131,11 @@ completion batch the loop consumes is nonempty, duplicate-free and drawn from
 the running steps (`Legal`, `Reachable`), which every FIRST_COMPLETED batch is.
 Safety and no duplicate starts hold for every plan and every limit. Completeness
 and refinement also assume a limit of at least 1 and a validated plan: every
-dependency exists and a rank strictly decreases along each edge (`Ranked`).
-Bounded parallelism and SUCCESS-only-if-nothing-failed hold for every trace,
+dependency exists and a rank strictly increases from each dependency to its
+dependent (`Ranked`). `validate_iff_ranked` shows these are exactly the
+nonempty plans `DAG.validate` accepts, and the `validated_` theorems restate
+completeness and refinement with that acceptance as the hypothesis. Bounded
+parallelism and SUCCESS-only-if-nothing-failed hold for every trace,
 legal or not.
 
 All of 1, 2a and 3 rest on one invariant, `Invariant`, which holds at the top
@@ -165,6 +185,17 @@ The substantive universal results are:
 - `success_only_if_nothing_failed`: from the initial state, for every plan,
   limit and finite sequence of completion batches and timeouts (legal or not),
   a SUCCESS final status means every result is SUCCESS or a condition skip.
+- `validate_ok_iff` (in `Scheduler/Validate.lean`) and `validate_iff_ranked`:
+  the model of `DAG.validate` (the empty check, `_check_missing_dependencies`,
+  and `_detect_cycles`'s three-color DFS over `_build_adjacency_list`)
+  accepts a plan exactly when it is nonempty and some rank orders every
+  dependency edge. Acceptance gives the rank, the reverse of the order in
+  which steps turn black; a rank rules out a back edge, because every gray step ranks at most
+  the step being visited. `validate_never_exhausts`: the DFS's recursion fuel,
+  the plan length, always suffices, for every plan including cyclic ones.
+- `validated_run_never_deadlocks`, `validated_run_completes` and
+  `validated_run_matches_spec`: theorem 3 and refinement for every plan
+  `DAG.validate` accepts, with no rank in the statement.
 
 There are also local finalization lemmas and executable witnesses: a PENDING
 chain fails closed, a raised root ends FAILED with an end event, and the
@@ -206,18 +237,15 @@ since the ready queue only ever holds unfinished steps.
 
 ## Outstanding proof obligations
 
-- `DAG.validate` is not modelled. The completeness and refinement theorems
-  assume `Ranked`, which holds exactly for plans whose dependencies exist and
-  that have no cycle. That `validate`'s depth-first search accepts only such
-  plans, and the topological-ordering stretch goal, are unproved. `validate`
-  also rejects the empty graph, so no-missing-dependencies/no-cycles alone is
-  not its exact acceptance criterion.
+- `DAG.get_execution_order` (Kahn's algorithm) is not modelled, so the
+  topological-ordering stretch goal is unproved. `DAGExecutor` does not call it.
 - Legality is an asyncio property. That every FIRST_COMPLETED batch is a
   nonempty, duplicate-free set of running tasks is checked on each replayed
   trace (`checkLegal`), not proved about asyncio.
-- The model is linked to the code by seeded replay, which shows the Python
-  executor agrees with the model on sampled traces and proves nothing about
-  unsampled ones. The paths listed under abstraction limits are outside it.
+- The models are linked to the code by seeded replay, which shows the Python
+  executor and `DAG.validate` agree with them on sampled inputs and proves
+  nothing about unsampled ones. The paths listed under abstraction limits are
+  outside it.
 - The converse of honest status is proved for complete legal runs. For a run
   that times out, the model always reports FAILED with timeout results, but no
   theorem states it.
@@ -261,3 +289,11 @@ counterexample does not describe this revision.
 - Exact upstream skip strings are combined into one category. When a failed
   node and an exception share a descendant, the first processed failure chooses
   the string. This affects diagnostics, not the status or skip category.
+- The `validate` model reduces each exception to the data it carries and leaves
+  out `DAG.add`'s duplicate-name check. Its DFS state adds `time` and `clock`,
+  which number steps as they turn black for the proofs and never change the
+  verdict.
+- `_detect_cycles` recurses once per step on a dependency path, so on a chain
+  of about 1,000 steps (Python's default recursion limit) `DAG.validate`
+  raises `RecursionError` instead of returning. The model has no stack limit
+  and accepts such a plan; the replay's plans are far shorter.

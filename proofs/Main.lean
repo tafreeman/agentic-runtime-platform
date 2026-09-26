@@ -72,7 +72,24 @@ def operational (p : Plan) (limit : Int) (batches : List (List Nat))
     ("complete", toJson (ids.all (finished s))),
     ("legal", toJson (checkLegal p limit actions (initial p)))]
 
+def verdictJson : Verdict → Json
+  | .ok => Json.mkObj [("verdict", "ok")]
+  | .empty => Json.mkObj [("verdict", "empty")]
+  | .missing step dep =>
+    Json.mkObj [("verdict", "missing"), ("step", toJson step), ("dependency", toJson dep)]
+  | .cycle path => Json.mkObj [("verdict", "cycle"), ("path", toJson path)]
+  | .exhausted => Json.mkObj [("verdict", "exhausted")]
+
+/-- `DAG.validate`'s verdict for each plan, given as dependency index lists. -/
+def validateRequest (plans : Json) : Except String Json := do
+  let verdicts ← (← plans.getArr?).toList.mapM fun plan => do
+    let deps ← (← plan.getArr?).toList.mapM fun step => do
+      (← step.getArr?).toList.mapM Json.getNat?
+    pure (verdictJson (validate deps))
+  pure (Json.mkObj [("verdicts", toJson verdicts)])
+
 def replay (j : Json) : Except String Json := do
+  if let .ok plans := j.getObjVal? "validate" then return ← validateRequest plans
   let limit ← (← j.getObjVal? "max_concurrency").getInt?
   if limit < 1 then throw "max_concurrency must be an integer >= 1"
   let nodes ← (← j.getObjVal? "plan").getArr?

@@ -1,8 +1,8 @@
 """Replay deterministic adversaries against the Lean model of DAGExecutor.
 
-Two comparisons: final results against the independent recursive spec, and
-each recorded completion order against the operational scheduling loop
-(ADR-060 section 3). Build with ``cd proofs && lake build``. Tests that need
+Three comparisons: final results against the independent recursive spec, each
+recorded completion order against the operational scheduling loop (ADR-060
+section 3), and ``DAG.validate``'s verdict against the Lean model of it. Build with ``cd proofs && lake build``. Tests that need
 the compiled model skip unless ARP_LEAN_REPLAY=1. The executor defect regression tests need no Lean and
 run in every suite. Import errors are deliberately never converted into skips.
 """
@@ -21,7 +21,7 @@ import pytest
 
 from agentic_v2.contracts import StepResult, StepStatus
 from agentic_v2.engine.context import ExecutionContext
-from agentic_v2.engine.dag import DAG
+from agentic_v2.engine.dag import DAG, CycleDetectedError, MissingDependencyError
 from agentic_v2.engine.dag_executor import DAGExecutor
 from agentic_v2.engine.step import StepDefinition, StepExecutor
 from agentic_v2.engine.step_state import StepState, StepStateManager
@@ -779,3 +779,99 @@ def test_lean_replay_reports_only_the_model_for_a_hanging_plan(
         {"status": "failed", "skip": "none"},
         {"status": "skipped", "skip": "timeout"},
     ]
+
+
+def lean_verdicts(binary: Path, plans: list[list[list[int]]]) -> list[dict[str, Any]]:
+    """Ask Lean for ``DAG.validate``'s verdict on each plan, in one process."""
+    process = subprocess.run(
+        [str(binary)],
+        input=json.dumps({"validate": plans}) + "\n",
+        text=True,
+        capture_output=True,
+        timeout=30,
+        check=True,
+    )
+    verdicts: list[dict[str, Any]] = json.loads(process.stdout)["verdicts"]
+    return verdicts
+
+
+def python_verdict(deps: list[list[int]]) -> dict[str, Any]:
+    """Run the real ``DAG.validate`` on steps added in plan order."""
+    dag = DAG(name="lean-validate")
+    for index, step_deps in enumerate(deps):
+        dag.add(StepDefinition(name=str(index), depends_on=[str(d) for d in step_deps]))
+    try:
+        dag.validate()
+    except MissingDependencyError as error:
+        return {
+            "verdict": "missing",
+            "step": int(error.step),
+            "dependency": int(error.missing_dep),
+        }
+    except CycleDetectedError as error:
+        return {"verdict": "cycle", "path": [int(name) for name in error.cycle_path]}
+    except ValueError as error:
+        assert "has no steps" in str(error)
+        return {"verdict": "empty"}
+    return {"verdict": "ok"}
+
+
+def random_graph(rng: random.Random) -> list[list[int]]:
+    """Draw 0 to 8 steps with backward edges, some repeated, and a few edges to any
+    step, itself or one past the plan, which can close a cycle or name a missing
+    step."""
+    size = rng.randint(0, 8)
+    deps = []
+    for index in range(size):
+        step = [d for d in range(index) if rng.random() < 0.3]
+        if rng.random() < 0.1:
+            step.append(rng.randrange(size + 1))
+        if step and rng.random() < 0.3:
+            step.append(rng.choice(step))
+        deps.append(step)
+    return deps
+
+
+@pytest.mark.parametrize(
+    ("deps", "verdict"),
+    [
+        ([], {"verdict": "empty"}),
+        ([[]], {"verdict": "ok"}),
+        ([[], [0, 0], [1, 0]], {"verdict": "ok"}),
+        ([[0]], {"verdict": "cycle", "path": [0, 0]}),
+        ([[2], [0], [1]], {"verdict": "cycle", "path": [0, 1, 2, 0]}),
+        ([[], [2]], {"verdict": "missing", "step": 1, "dependency": 2}),
+        ([[1], [0], [3]], {"verdict": "missing", "step": 2, "dependency": 3}),
+    ],
+    ids=[
+        "empty",
+        "single",
+        "duplicate-edge",
+        "self",
+        "three-cycle",
+        "missing",
+        "missing-before-cycle",
+    ],
+)
+def test_dag_validate_matches_lean_model_cases(
+    lean_binary: Path, deps: list[list[int]], verdict: dict[str, Any]
+) -> None:
+    """Each ``DAG.validate`` outcome, with its data, equals the Lean model's."""
+    assert lean_verdicts(lean_binary, [deps]) == [verdict]
+    assert python_verdict(deps) == verdict
+
+
+def test_dag_validate_matches_lean_model(lean_binary: Path) -> None:
+    """Random plans get the same verdict, cycle path and missing pair from
+    ``DAG.validate`` as from the Lean model, and every verdict occurs."""
+    rng = random.Random(0)
+    plans = [random_graph(rng) for _ in range(512)]
+    expected = lean_verdicts(lean_binary, plans)
+    for deps, verdict in zip(plans, expected, strict=True):
+        assert python_verdict(deps) == verdict, deps
+    assert {verdict["verdict"] for verdict in expected} == {
+        "ok",
+        "empty",
+        "missing",
+        "cycle",
+    }

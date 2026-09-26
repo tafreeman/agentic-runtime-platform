@@ -46,7 +46,7 @@ jobs:
           leanchecker: 'true'
           # Without module names leanchecker guesses one from the package
           # name (Arp_scheduler) and fails to find any oleans.
-          leanchecker-args: 'Scheduler Main'
+          leanchecker-args: 'Scheduler Scheduler.Validate Main'
           axiom-audit: 'true'
           axiom-audit-allow: 'propext,Quot.sound'
           axiom-audit-root: 'Scheduler'
