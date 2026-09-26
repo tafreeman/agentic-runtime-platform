@@ -18,6 +18,8 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from hypothesis import HealthCheck, given, settings
+from hypothesis import strategies as st
 
 from agentic_v2.contracts import StepResult, StepStatus
 from agentic_v2.engine.context import ExecutionContext
@@ -730,6 +732,41 @@ async def test_dag_executor_timeout_matches_operational_model(
         answer = oracle(lean_binary, relabelled, limit, batches=batches, timeout=True)
         case = (seed, limit, delays, order, batches)
         assert answer["model"] == {**end_state, **FINISHED_LEGALLY}, case
+
+
+@settings(
+    max_examples=20,
+    deadline=None,
+    derandomize=True,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
+@given(
+    outcomes=st.lists(st.sampled_from(TERMINAL), min_size=0, max_size=6),
+    limit=st.integers(min_value=1, max_value=8),
+    dependent=st.booleans(),
+)
+async def test_timeout_fails_closed_differential(
+    lean_binary: Path, outcomes: list[str], limit: int, dependent: bool
+) -> None:
+    """Compare completed timeout cleanup with the Lean timeout theorem.
+
+    The hanging root guarantees that the timeout is consumed. Other
+    steps either depend on it or compete independently, including
+    failure outcomes. This samples boundary timeouts, not arbitrary
+    callback interleavings.
+    """
+    plan = [{"depends_on": [], "outcome": "hang"}] + [
+        {"depends_on": [0] if dependent else [], "outcome": outcome}
+        for outcome in outcomes
+    ]
+    relabelled, end_state, batches = await run_traced(
+        plan, limit, [0] * len(plan), list(range(len(plan))), timeout=0.05
+    )
+    answer = oracle(lean_binary, relabelled, limit, batches=batches, timeout=True)
+    assert end_state["timed_out"] is True
+    assert end_state["overall"] == "failed"
+    assert answer["model"]["overall"] == "failed"
+    assert answer["model"] == {**end_state, **FINISHED_LEGALLY}
 
 
 @pytest.mark.parametrize(

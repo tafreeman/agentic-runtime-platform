@@ -260,6 +260,13 @@ theorem final_success_iff (s : State) :
     finalStatus s = .success ↔ s.failed = false := by
   cases h : s.failed <;> simp [finalStatus, h]
 
+/-- Completed timeout cleanup always reports FAILED, for every plan and state.
+This does not assert that cancellation-resistant tasks finish cleanup, or that
+an unconsumed timeout action changes an already completed run. -/
+theorem timeout_fails_closed (p : Plan) (s : State) :
+    finalStatus (handleTimeout p s) = .failed := by
+  rfl
+
 /-- A SKIPPED result caused by the step's own condition does not block a
 dependent in the recursive specification. No graph assumptions are needed. -/
 theorem condition_does_not_block : blocks (ownResult (.returned .skipped)) = false := by
@@ -2557,6 +2564,8 @@ runs axiom-audit over every declaration in the library. -/
 #guard_msgs in #print axioms schedule_capacity
 /-- info: 'ARP.final_success_iff' depends on axioms: [propext] -/
 #guard_msgs in #print axioms final_success_iff
+/-- info: 'ARP.timeout_fails_closed' depends on axioms: [propext] -/
+#guard_msgs in #print axioms timeout_fails_closed
 /-- info: 'ARP.condition_does_not_block' depends on axioms: [propext] -/
 #guard_msgs in #print axioms condition_does_not_block
 /-- info: 'ARP.exception_blocks' depends on axioms: [propext] -/
