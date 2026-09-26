@@ -9,7 +9,6 @@ from __future__ import annotations
 import asyncio
 
 import pytest
-
 from agentic_v2.contracts import StepStatus
 from agentic_v2.engine import StepExecutor
 from agentic_v2.workflows.runner import WorkflowRunner
