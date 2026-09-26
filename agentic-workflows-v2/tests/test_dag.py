@@ -95,6 +95,41 @@ def test_cycle_detection():
         dag.validate()
 
 
+def _long_chain(closing_dep: str | None = None) -> DAG:
+    """Build steps ``s0`` to ``s4999``, each depending on the one before.
+
+    The chain is five times Python's default recursion limit. With
+    *closing_dep*, ``s1`` also depends on it.
+    """
+    dag = DAG("long-chain")
+    dag.add(StepDefinition(name="s0"))
+    for index in range(1, 5000):
+        deps = [f"s{index - 1}"]
+        if index == 1 and closing_dep is not None:
+            deps.append(closing_dep)
+        dag.add(StepDefinition(name=f"s{index}", depends_on=deps))
+    return dag
+
+
+def test_validate_accepts_a_chain_past_the_recursion_limit():
+    """A dependency chain deeper than the Python stack validates."""
+    _long_chain().validate()
+
+
+def test_validate_reports_a_long_cycle_path():
+    """A long chain closed into a cycle reports the whole cycle.
+
+    The path starts at ``s1``, the step the back edge reaches, not at the DFS
+    root ``s0``.
+    """
+    dag = _long_chain(closing_dep="s4999")
+
+    with pytest.raises(CycleDetectedError) as caught:
+        dag.validate()
+
+    assert caught.value.cycle_path == [f"s{i}" for i in range(1, 5000)] + ["s1"]
+
+
 def test_missing_dependency_error():
     """Missing dependency raises error."""
     dag = DAG("missing")

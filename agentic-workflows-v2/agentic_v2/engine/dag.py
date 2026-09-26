@@ -11,7 +11,7 @@ Provides:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Iterable
+from typing import Iterable, Iterator
 
 from .step import StepDefinition
 
@@ -155,6 +155,12 @@ class DAG:
         A back-edge (encountering a gray node) means the path from
         that gray node to the current node forms a cycle.
 
+        The DFS is iterative, so a dependency path longer than Python's
+        recursion limit validates like any other. Each stack frame is a gray
+        node and the iterator over its remaining dependents, and the visit
+        order is that of the recursive DFS the Lean model in
+        ``proofs/Scheduler/Validate.lean`` describes.
+
         Args:
             adjacency: Forward adjacency list ``{node: [dependents]}``.
 
@@ -163,27 +169,29 @@ class DAG:
                 back to itself (e.g. ``["A", "B", "C", "A"]``).
         """
         color: dict[str, str] = {name: "white" for name in self.steps}
-        stack: list[str] = []
+        stack: list[tuple[str, Iterator[str]]] = []
 
-        def visit(node: str) -> None:
+        def enter(node: str) -> None:
             color[node] = "gray"
-            stack.append(node)
+            stack.append((node, iter(adjacency.get(node, []))))
 
-            for neighbor in adjacency.get(node, []):
-                if color[neighbor] == "gray":
+        for root in self.steps:
+            if color[root] != "white":
+                continue
+            enter(root)
+            while stack:
+                node, dependents = stack[-1]
+                neighbor = next(dependents, None)
+                if neighbor is None:
+                    stack.pop()
+                    color[node] = "black"
+                elif color[neighbor] == "gray":
                     # Back-edge found — extract the cycle path
-                    cycle_start = stack.index(neighbor)
-                    cycle_path = stack[cycle_start:] + [neighbor]
-                    raise CycleDetectedError(cycle_path)
-                if color[neighbor] == "white":
-                    visit(neighbor)
-
-            stack.pop()
-            color[node] = "black"
-
-        for node in self.steps:
-            if color[node] == "white":
-                visit(node)
+                    path = [gray for gray, _ in stack]
+                    cycle_start = path.index(neighbor)
+                    raise CycleDetectedError(path[cycle_start:] + [neighbor])
+                elif color[neighbor] == "white":
+                    enter(neighbor)
 
     def get_execution_order(self) -> list[str]:
         """Return a topologically sorted list of step names via Kahn's algorithm.
