@@ -130,7 +130,7 @@ export default function Sidebar() {
             data-testid={`nav-${link.testid}`}
             style={radSm}
             className={({ isActive }) =>
-              `relative flex items-center gap-2.5 px-[11px] py-2.5 text-[12.5px] transition-colors focus:outline-none focus:ring-1 focus:ring-b-clay/50 ${
+              `relative flex items-center gap-2.5 px-[11px] py-2.5 text-[12.5px] transition-colors focus:outline-hidden focus:ring-1 focus:ring-b-clay/50 ${
                 isActive
                   ? "bg-b-clay-soft text-b-clay"
                   : "text-b-text-dim hover:bg-b-bg2 hover:text-b-text"
@@ -239,7 +239,7 @@ export default function Sidebar() {
           onClick={() => setTheme(nextTheme)}
           aria-pressed={theme === "paper"}
           title={`switch to ${nextTheme} theme`}
-          className="flex w-full items-center gap-2.5 bg-transparent px-2.5 py-[7px] text-left text-[11px] text-b-text-dim transition-colors hover:text-b-text focus:outline-none focus:ring-1 focus:ring-b-clay/50"
+          className="flex w-full items-center gap-2.5 bg-transparent px-2.5 py-[7px] text-left text-[11px] text-b-text-dim transition-colors hover:text-b-text focus:outline-hidden focus:ring-1 focus:ring-b-clay/50"
           style={radSm}
         >
           <svg
@@ -265,7 +265,7 @@ export default function Sidebar() {
           aria-pressed={collapsed}
           aria-label={collapsed ? "expand sidebar" : "collapse sidebar"}
           title={collapsed ? "expand sidebar" : "collapse sidebar"}
-          className="mt-1 flex w-full items-center gap-2.5 border border-b-line bg-b-bg1 px-2.5 py-2 text-left text-[11px] text-b-text-dim transition-colors hover:text-b-text focus:outline-none focus:ring-1 focus:ring-b-clay/50"
+          className="mt-1 flex w-full items-center gap-2.5 border border-b-line bg-b-bg1 px-2.5 py-2 text-left text-[11px] text-b-text-dim transition-colors hover:text-b-text focus:outline-hidden focus:ring-1 focus:ring-b-clay/50"
           style={{ ...radSm, ...hardBorder }}
         >
           <span className="w-4 flex-none text-center text-[13px]" aria-hidden="true">

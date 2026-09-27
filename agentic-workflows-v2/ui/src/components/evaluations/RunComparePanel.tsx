@@ -318,7 +318,7 @@ export default function RunComparePanel({
               onChange={(event) => setRubricId(event.target.value)}
               placeholder="default rubric"
               style={{ borderRadius: "var(--b-rad-sm)" }}
-              className="w-full border border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text placeholder:text-b-text-faint focus:border-b-clay focus:outline-none"
+              className="w-full border border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text placeholder:text-b-text-faint focus:border-b-clay focus:outline-hidden"
             />
           </label>
           <button

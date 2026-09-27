@@ -392,7 +392,7 @@ export default function WorkflowEditorPage() {
             </button>
             <Link
               to={`/workflows/${encodeURIComponent(name ?? "")}`}
-              className="inline-flex items-center gap-1.5 bg-b-clay px-3.5 py-[7px] font-mono text-[11px] font-semibold text-b-ink transition-colors hover:bg-b-clay/90 focus:outline-none focus:ring-1 focus:ring-b-clay/50"
+              className="inline-flex items-center gap-1.5 bg-b-clay px-3.5 py-[7px] font-mono text-[11px] font-semibold text-b-ink transition-colors hover:bg-b-clay/90 focus:outline-hidden focus:ring-1 focus:ring-b-clay/50"
               style={{ borderRadius: "var(--b-rad-sm)" }}
             >
               run config →
@@ -574,7 +574,7 @@ export default function WorkflowEditorPage() {
                       onChange={(event) => setDraftSource(event.target.value)}
                       spellCheck={false}
                       readOnly={isReadOnly}
-                      className="h-[430px] w-full resize-none border border-b-line bg-b-bg0 p-3 font-mono text-[11.5px] leading-[1.55] text-b-text focus:border-b-clay focus:outline-none focus:ring-1 focus:ring-b-clay/50"
+                      className="h-[430px] w-full resize-none border border-b-line bg-b-bg0 p-3 font-mono text-[11.5px] leading-[1.55] text-b-text focus:border-b-clay focus:outline-hidden focus:ring-1 focus:ring-b-clay/50"
                       style={{ borderRadius: "var(--b-rad-sm)" }}
                       aria-label="Workflow source"
                     />

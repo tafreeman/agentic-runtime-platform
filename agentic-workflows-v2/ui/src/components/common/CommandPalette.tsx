@@ -237,7 +237,7 @@ export default function CommandPalette() {
             aria-label="Search commands"
             autoComplete="off"
             spellCheck={false}
-            className="h-11 min-w-0 flex-1 bg-transparent text-[13px] text-b-text placeholder:text-b-text-faint focus:outline-none"
+            className="h-11 min-w-0 flex-1 bg-transparent text-[13px] text-b-text placeholder:text-b-text-faint focus:outline-hidden"
           />
           <span className="flex flex-none items-center gap-1 text-b-text-faint">
             <Command size={12} aria-hidden="true" />
@@ -247,7 +247,7 @@ export default function CommandPalette() {
             type="button"
             onClick={close}
             aria-label="Close command palette"
-            className="flex flex-none items-center justify-center p-1 text-b-text-dim hover:text-b-text focus:outline-none focus:ring-1 focus:ring-b-clay/50"
+            className="flex flex-none items-center justify-center p-1 text-b-text-dim hover:text-b-text focus:outline-hidden focus:ring-1 focus:ring-b-clay/50"
           >
             <X size={14} aria-hidden="true" />
           </button>
@@ -271,9 +271,9 @@ export default function CommandPalette() {
                   aria-selected={active}
                   onClick={() => command.run()}
                   onMouseEnter={() => setActiveIndex(index)}
-                  className={`flex w-full items-center gap-3 px-3.5 py-2.5 text-left text-[13px] transition-colors focus:outline-none ${
+                  className={`flex w-full items-center gap-3 px-3.5 py-2.5 text-left text-[13px] transition-colors focus:outline-hidden ${
                     active
-                      ? "bg-b-bg2 text-b-clay shadow-[inset_3px_0_0_theme(colors.b.clay)]"
+                      ? "bg-b-bg2 text-b-clay shadow-[inset_3px_0_0_var(--color-b-clay)]"
                       : "text-b-text-mid hover:bg-b-bg2"
                   }`}
                 >
@@ -300,22 +300,22 @@ export default function CommandPalette() {
         {/* Footer hints */}
         <div className="flex items-center gap-4 border-t border-b-line px-3.5 py-2 text-[10px] text-b-text-faint">
           <span className="flex items-center gap-1.5">
-            <kbd className="border border-b-line bg-b-bg2 px-1.5 py-[1px] text-b-text-dim">
+            <kbd className="border border-b-line bg-b-bg2 px-1.5 py-px text-b-text-dim">
               ↑
             </kbd>
-            <kbd className="border border-b-line bg-b-bg2 px-1.5 py-[1px] text-b-text-dim">
+            <kbd className="border border-b-line bg-b-bg2 px-1.5 py-px text-b-text-dim">
               ↓
             </kbd>
             move
           </span>
           <span className="flex items-center gap-1.5">
-            <kbd className="flex items-center border border-b-line bg-b-bg2 px-1.5 py-[1px] text-b-text-dim">
+            <kbd className="flex items-center border border-b-line bg-b-bg2 px-1.5 py-px text-b-text-dim">
               <CornerDownLeft size={10} aria-hidden="true" />
             </kbd>
             open
           </span>
           <span className="flex items-center gap-1.5">
-            <kbd className="border border-b-line bg-b-bg2 px-1.5 py-[1px] text-b-text-dim">
+            <kbd className="border border-b-line bg-b-bg2 px-1.5 py-px text-b-text-dim">
               esc
             </kbd>
             close

@@ -401,7 +401,7 @@ export default function ProviderProbeList({
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="filter models by id or provider…"
-            className="w-full max-w-[340px] border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text placeholder:text-b-text-faint focus:border-b-clay focus:outline-none"
+            className="w-full max-w-[340px] border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text placeholder:text-b-text-faint focus:border-b-clay focus:outline-hidden"
             style={{ borderRadius: "var(--b-rad-sm)" }}
           />
           <span
@@ -469,7 +469,7 @@ export default function ProviderProbeList({
                   setOpenProvider(isOpen && !searchActive ? null : provider.name)
                 }
                 aria-expanded={isOpen}
-                className="flex w-full items-center gap-3 px-[18px] py-[11px] text-left font-mono text-[11px] transition-colors hover:bg-b-bg2/50 focus:outline-none focus:ring-1 focus:ring-inset focus:ring-b-clay/50"
+                className="flex w-full items-center gap-3 px-[18px] py-[11px] text-left font-mono text-[11px] transition-colors hover:bg-b-bg2/50 focus:outline-hidden focus:ring-1 focus:ring-inset focus:ring-b-clay/50"
               >
                 <span className="w-2.5 flex-none text-[10px] text-b-text-faint">
                   {isOpen ? "▾" : "▸"}

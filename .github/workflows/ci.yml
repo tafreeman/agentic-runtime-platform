@@ -52,7 +52,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
           cache-dependency-path: agentic-workflows-v2/ui/package-lock.json
       - name: Install and build UI
@@ -71,7 +71,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
           cache-dependency-path: agentic-workflows-v2/ui/package-lock.json
       - name: Install UI dependencies
@@ -366,7 +366,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
           cache-dependency-path: agentic-workflows-v2/ui/package-lock.json
       - name: Install backend
@@ -429,7 +429,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
           cache-dependency-path: agentic-workflows-v2/ui/package-lock.json
       - name: Install backend (server extra)

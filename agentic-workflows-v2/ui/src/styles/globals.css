@@ -1,9 +1,171 @@
-@import "./tokens.css";
-@import "@fontsource-variable/geist";
+@import './tokens.css' layer(base);
+@import '@fontsource-variable/geist' layer(base);
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@theme {
+  --color-background: rgb(var(--el-canvas));
+  --color-foreground: rgb(var(--el-ink));
+
+  --color-card: rgb(var(--el-surface));
+  --color-card-foreground: rgb(var(--el-ink));
+
+  --color-popover: rgb(var(--el-surface-raised));
+  --color-popover-foreground: rgb(var(--el-ink));
+
+  --color-primary: rgb(var(--el-action));
+  --color-primary-foreground: rgb(var(--el-action-ink));
+
+  --color-secondary: rgb(var(--el-surface-subtle));
+  --color-secondary-foreground: rgb(var(--el-ink-secondary));
+
+  --color-muted: rgb(var(--el-surface-subtle));
+  --color-muted-foreground: rgb(var(--el-ink-muted));
+
+  --color-accent-blue: rgb(var(--b-blue));
+  --color-accent-green: rgb(var(--b-green));
+  --color-accent-red: rgb(var(--b-red));
+  --color-accent-amber: rgb(var(--b-amber));
+  --color-accent-purple: rgb(var(--b-purple));
+  --color-accent-clay: rgb(var(--b-clay));
+
+  --color-destructive: rgb(var(--el-danger));
+  --color-destructive-foreground: rgb(var(--el-surface-raised));
+
+  --color-border: rgb(var(--el-divider));
+  --color-input: rgb(var(--el-divider));
+  --color-ring: rgb(var(--el-focus));
+
+  --color-el-canvas: rgb(var(--el-canvas));
+  --color-el-surface: rgb(var(--el-surface));
+  --color-el-raised: rgb(var(--el-surface-raised));
+  --color-el-subtle: rgb(var(--el-surface-subtle));
+  --color-el-hover: rgb(var(--el-surface-hover));
+  --color-el-ink: rgb(var(--el-ink));
+  --color-el-secondary: rgb(var(--el-ink-secondary));
+  --color-el-muted: rgb(var(--el-ink-muted));
+  --color-el-faint: rgb(var(--el-ink-faint));
+  --color-el-divider: rgb(var(--el-divider));
+  --color-el-divider-soft: rgb(var(--el-divider-soft));
+  --color-el-action: rgb(var(--el-action));
+  --color-el-accent: rgb(var(--el-accent));
+  --color-el-accent-strong: rgb(var(--el-accent-strong));
+  --color-el-accent-soft: rgb(var(--el-accent-soft));
+  --color-el-success: rgb(var(--el-success));
+  --color-el-warning: rgb(var(--el-warning));
+  --color-el-danger: rgb(var(--el-danger));
+  --color-el-info: rgb(var(--el-info));
+
+  --color-b-bg0: rgb(var(--b-bg0));
+  --color-b-bg1: rgb(var(--b-bg1));
+  --color-b-bg2: rgb(var(--b-bg2));
+  --color-b-bg3: rgb(var(--b-bg3));
+  --color-b-line: rgb(var(--b-line));
+  --color-b-line-soft: rgb(var(--b-line-soft));
+  --color-b-text: rgb(var(--b-text));
+  --color-b-text-mid: rgb(var(--b-text-mid));
+  --color-b-text-dim: rgb(var(--b-text-dim));
+  --color-b-text-faint: rgb(var(--b-text-faint));
+  --color-b-clay: rgb(var(--b-clay));
+  --color-b-clay-soft: var(--b-clay-soft);
+  --color-b-green: rgb(var(--b-green));
+  --color-b-amber: rgb(var(--b-amber));
+  --color-b-blue: rgb(var(--b-blue));
+  --color-b-red: rgb(var(--b-red));
+  --color-b-purple: rgb(var(--b-purple));
+
+  --color-surface-0: rgb(var(--b-bg0));
+  --color-surface-1: rgb(var(--b-bg1));
+  --color-surface-2: rgb(var(--b-bg2));
+  --color-surface-3: rgb(var(--b-bg3));
+
+  --font-sans: var(--el-font-sans);
+  --font-display: var(--el-font-display);
+  --font-mono: var(--b-font-mono);
+  --font-heading: var(--b-font-heading);
+
+  --radius-sm: var(--el-radius-sm);
+  --radius-md: var(--el-radius-md);
+  --radius-lg: var(--el-radius-lg);
+  --radius-b-lg: var(--b-rad-lg);
+  --radius-b-sm: var(--b-rad-sm);
+
+  --border-width-b: var(--b-bw);
+
+  --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-dash-flow: b-dash-flow 0.5s linear infinite;
+  --animate-b-pulse: b-pulse-slow 2s ease-in-out infinite;
+  --animate-b-blink: b-blink 1s step-end infinite;
+
+  @keyframes b-dash-flow {
+    to {
+      stroke-dashoffset: -20;
+    }
+  }
+  @keyframes b-pulse-slow {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.4;
+    }
+  }
+  @keyframes b-blink {
+    0%,
+    50% {
+      opacity: 1;
+    }
+    51%,
+    100% {
+      opacity: 0;
+    }
+  }
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@utility card {
+  @apply border-b border-b-line bg-b-bg1 p-4;
+  border-radius: var(--b-rad-lg);
+}
+
+@utility card-hover {
+  @apply card transition-colors duration-150 hover:border-b-clay/40 hover:bg-b-bg2;
+}
+
+@utility btn {
+  @apply inline-flex items-center gap-1.5 px-3 py-1.5 font-mono text-[11px] transition-colors duration-150 focus:outline-hidden focus:ring-1 focus:ring-b-clay/50;
+  border-radius: var(--b-rad-sm);
+}
+
+@utility btn-primary {
+  @apply btn bg-b-clay;
+  color: var(--b-btn-primary-ink);
+  &:hover {
+    opacity: 0.85;
+  }
+}
+
+@utility btn-ghost {
+  @apply btn border-b border-b-line text-b-text-dim hover:bg-b-bg2 hover:text-b-text;
+}
 
 @layer base {
   * {
@@ -50,47 +212,21 @@
   }
 }
 
-.el-app {
-  min-height: 100svh;
-  background: rgb(var(--el-canvas));
-  color: rgb(var(--el-ink));
-}
-
-.el-app :where(button, a, input, select, textarea, [tabindex]):focus-visible {
-  outline: 2px solid rgb(var(--el-focus));
-  outline-offset: 2px;
-}
-
-.el-app :where(input, select, textarea) {
-  min-height: 40px;
-  border-radius: var(--el-radius-md);
-}
-
-@layer components {
-  .card {
-    @apply border-b border-b-line bg-b-bg1 p-4;
-    border-radius: var(--b-rad-lg);
+@layer utilities {
+  .el-app {
+    min-height: 100svh;
+    background: rgb(var(--el-canvas));
+    color: rgb(var(--el-ink));
   }
 
-  .card-hover {
-    @apply card transition-colors duration-150 hover:border-b-clay/40 hover:bg-b-bg2;
+  .el-app :where(button, a, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid rgb(var(--el-focus));
+    outline-offset: 2px;
   }
 
-  .btn {
-    @apply inline-flex items-center gap-1.5 px-3 py-1.5 font-mono text-[11px] transition-colors duration-150 focus:outline-none focus:ring-1 focus:ring-b-clay/50;
-    border-radius: var(--b-rad-sm);
-  }
-
-  .btn-primary {
-    @apply btn bg-b-clay;
-    color: var(--b-btn-primary-ink);
-  }
-  .btn-primary:hover {
-    opacity: 0.85;
-  }
-
-  .btn-ghost {
-    @apply btn border-b border-b-line text-b-text-dim hover:bg-b-bg2 hover:text-b-text;
+  .el-app :where(input, select, textarea) {
+    min-height: 40px;
+    border-radius: var(--el-radius-md);
   }
 }
 

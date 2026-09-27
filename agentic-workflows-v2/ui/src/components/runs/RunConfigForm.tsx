@@ -481,7 +481,7 @@ export default function RunConfigForm({
           {inputs.map((input) => {
             const id = `workflow-input-${input.name}`;
             const fieldClass =
-              "w-full border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text placeholder:text-b-text-faint focus:border-b-clay focus:outline-none";
+              "w-full border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text placeholder:text-b-text-faint focus:border-b-clay focus:outline-hidden";
 
             return (
               <label key={input.name} htmlFor={id} className="block">

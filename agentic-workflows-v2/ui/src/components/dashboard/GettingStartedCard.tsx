@@ -139,7 +139,7 @@ export default function GettingStartedCard({
             </div>
             <button
               onClick={handleDismiss}
-              className="text-b-text-dim transition-colors hover:text-b-text focus:outline-none focus:ring-1 focus:ring-b-clay"
+              className="text-b-text-dim transition-colors hover:text-b-text focus:outline-hidden focus:ring-1 focus:ring-b-clay"
               aria-label="Dismiss"
             >
               <X className="h-4 w-4" />

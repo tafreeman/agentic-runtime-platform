@@ -26,7 +26,7 @@ import {
 const CARD_STYLE = { borderWidth: "var(--b-bw)", borderRadius: "var(--b-rad-lg)" } as const;
 const CONTROL_STYLE = { borderWidth: "var(--b-bw)", borderRadius: "var(--b-rad-sm)" } as const;
 const FIELD_CLASS =
-  "w-full border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text placeholder:text-b-text-faint focus:border-b-clay focus:outline-none";
+  "w-full border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text placeholder:text-b-text-faint focus:border-b-clay focus:outline-hidden";
 const PULSE_DOT =
   "animate-b-pulse inline-block h-[5px] w-[5px] rounded-full bg-b-green";
 
@@ -227,7 +227,7 @@ function ChatMessageRow({
         {streaming && <span aria-hidden="true" className={PULSE_DOT} />}
       </div>
       {message.content && (
-        <div className="whitespace-pre-wrap break-words text-[14px] leading-6 text-el-secondary">
+        <div className="whitespace-pre-wrap wrap-break-word text-[14px] leading-6 text-el-secondary">
           {message.content}
         </div>
       )}
@@ -618,12 +618,12 @@ export default function ChatPlaygroundPanel({
               {error.category}
             </span>
           )}
-          <span className="min-w-0 break-words">{error.message}</span>
+          <span className="min-w-0 wrap-break-word">{error.message}</span>
         </div>
       )}
 
       <section
-        className="border border-el-divider bg-el-raised p-3 shadow-[var(--el-shadow-raised)]"
+        className="border border-el-divider bg-el-raised p-3 shadow-(--el-shadow-raised)"
         style={{ borderRadius: "var(--el-radius-lg)" }}
         aria-label="Message composer"
       >
@@ -671,7 +671,7 @@ export default function ChatPlaygroundPanel({
           onChange={(event) => setInput(event.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Ask a question or describe what to inspect in the attached image…"
-          className="min-h-[88px] w-full resize-y border-0 bg-transparent px-2 py-2 text-[14px] leading-6 text-el-ink placeholder:text-el-faint focus:outline-none"
+          className="min-h-[88px] w-full resize-y border-0 bg-transparent px-2 py-2 text-[14px] leading-6 text-el-ink placeholder:text-el-faint focus:outline-hidden"
         />
         <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-el-divider-soft pt-3">
           <input

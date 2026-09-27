@@ -374,7 +374,7 @@ export default function ModelFinderPage() {
                 onChange={(event) =>
                   setCategory(event.target.value as ModelTaskCategory | "all")
                 }
-                className="border border-b-line bg-b-bg1 px-2 py-1 font-mono text-[11px] text-b-text focus:outline-none focus:ring-1 focus:ring-b-clay/50"
+                className="border border-b-line bg-b-bg1 px-2 py-1 font-mono text-[11px] text-b-text focus:outline-hidden focus:ring-1 focus:ring-b-clay/50"
                 style={CHIP_STYLE}
                 aria-label="Model category"
               >
@@ -387,7 +387,7 @@ export default function ModelFinderPage() {
               <select
                 value={sortBy}
                 onChange={(event) => setSortBy(event.target.value as ModelSortField)}
-                className="border border-b-line bg-b-bg1 px-2 py-1 font-mono text-[11px] text-b-text focus:outline-none focus:ring-1 focus:ring-b-clay/50"
+                className="border border-b-line bg-b-bg1 px-2 py-1 font-mono text-[11px] text-b-text focus:outline-hidden focus:ring-1 focus:ring-b-clay/50"
                 style={CHIP_STYLE}
                 aria-label="Sort models by"
               >
