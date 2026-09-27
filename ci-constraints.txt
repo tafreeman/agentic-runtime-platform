@@ -33,6 +33,7 @@ anyio==4.15.1
     #   claude-agent-sdk
     #   google-genai
     #   httpx
+    #   httpx2
     #   langsmith
     #   mcp
     #   openai
@@ -57,10 +58,8 @@ certifi==2026.7.22
     #   httpcore
     #   httpx
     #   requests
-cffi==2.1.1
-    # via
-    #   cryptography
-    #   zstandard
+cffi==2.1.1 ; platform_python_implementation != 'PyPy'
+    # via cryptography
 cfgv==3.5.0
     # via pre-commit
 charset-normalizer==3.5.1
@@ -70,14 +69,13 @@ claude-agent-sdk==0.2.101
 click==8.5.0
     # via
     #   black
-    #   typer
+    #   huggingface-hub
     #   uvicorn
 colorama==0.4.6 ; sys_platform == 'win32'
     # via
-    #   click
     #   pytest
     #   tqdm
-    #   uvicorn
+    #   typer
 coverage==7.13.5
     # via pytest-cov
 cryptography==50.0.1
@@ -102,7 +100,7 @@ fakeredis==2.35.1
     # via agentic-workflows-v2
 fastapi==0.141.1
     # via agentic-workflows-v2
-filelock==4.0.3
+filelock==4.0.4
     # via
     #   agentic-workflows-v2
     #   huggingface-hub
@@ -116,11 +114,11 @@ frozenlist==1.8.0
     #   aiosignal
 fsspec==2026.9.0
     # via huggingface-hub
-google-auth==2.58.0
+google-auth==2.58.1
     # via google-genai
 google-genai==2.7.0
     # via langchain-google-genai
-googleapis-common-protos==1.75.3
+googleapis-common-protos==1.75.4
     # via
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
@@ -129,6 +127,7 @@ grpcio==1.84.0
 h11==0.16.0
     # via
     #   httpcore
+    #   httpcore2
     #   uvicorn
 hf-xet==1.6.0 ; platform_machine == 'AMD64' or platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'arm64' or platform_machine == 'x86_64'
     # via huggingface-hub
@@ -136,6 +135,8 @@ hiredis==3.4.2
     # via redis
 httpcore==1.0.9
     # via httpx
+httpcore2==2.13.1 ; sys_platform != 'emscripten'
+    # via httpx2
 httptools==0.8.0
     # via uvicorn
 httpx==0.28.1
@@ -147,26 +148,28 @@ httpx==0.28.1
     #   huggingface-hub
     #   langchain-core
     #   langgraph-sdk
-    #   langsmith
     #   mcp
     #   ollama
     #   openai
 httpx-sse==0.4.3
     # via mcp
-huggingface-hub==1.32.0
+httpx2==2.13.1
+    # via langsmith
+httpx2-jsfetch==1.0 ; python_full_version >= '3.12' and sys_platform == 'emscripten'
+    # via httpx2
+huggingface-hub==1.33.0
     # via agentic-evalkit
 hypothesis==6.168.1
     # via agentic-workflows-v2
-identify==2.6.19
+identify==2.6.20
     # via pre-commit
 idna==3.20
     # via
     #   anyio
     #   httpx
+    #   httpx2
     #   requests
     #   yarl
-importlib-metadata==9.0.1
-    # via opentelemetry-api
 iniconfig==2.3.0
     # via pytest
 jinja2==3.1.6
@@ -233,9 +236,9 @@ langgraph-checkpoint-sqlite==3.1.1
     # via agentic-workflows-v2
 langgraph-prebuilt==1.1.0
     # via langgraph
-langgraph-sdk==0.4.2
+langgraph-sdk==0.4.5
     # via langgraph
-langsmith==0.14.0
+langsmith==0.14.1
     # via
     #   agentic-workflows-v2
     #   langchain-core
@@ -283,35 +286,43 @@ openai==2.54.0
     # via
     #   agentic-tools
     #   langchain-openai
-opentelemetry-api==1.44.0
+opentelemetry-api==1.45.0
     # via
+    #   opentelemetry-exporter-http-transport
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
     #   opentelemetry-exporter-prometheus
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
-opentelemetry-exporter-otlp-proto-common==1.44.0
+opentelemetry-exporter-http-transport==0.66b0
+    # via opentelemetry-exporter-otlp-proto-http
+opentelemetry-exporter-otlp-common==0.66b0
     # via
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
-opentelemetry-exporter-otlp-proto-grpc==1.44.0
+opentelemetry-exporter-otlp-proto-common==1.45.0
+    # via
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   opentelemetry-exporter-otlp-proto-http
+opentelemetry-exporter-otlp-proto-grpc==1.45.0
     # via agentic-workflows-v2
-opentelemetry-exporter-otlp-proto-http==1.44.0
+opentelemetry-exporter-otlp-proto-http==1.45.0
     # via agentic-workflows-v2
-opentelemetry-exporter-prometheus==0.65b0
+opentelemetry-exporter-prometheus==0.66b0
     # via agentic-workflows-v2
-opentelemetry-proto==1.44.0
+opentelemetry-proto==1.45.0
     # via
     #   opentelemetry-exporter-otlp-proto-common
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
-opentelemetry-sdk==1.44.0
+opentelemetry-sdk==1.45.0
     # via
     #   agentic-workflows-v2
+    #   opentelemetry-exporter-otlp-common
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
     #   opentelemetry-exporter-prometheus
-opentelemetry-semantic-conventions==0.65b0
+opentelemetry-semantic-conventions==0.66b0
     # via opentelemetry-sdk
 orjson==3.12.0
     # via
@@ -334,10 +345,9 @@ pathspec==1.1.1
     # via
     #   black
     #   mypy
-platformdirs==4.11.12
+platformdirs==4.12.0
     # via
     #   black
-    #   python-discovery
     #   virtualenv
 pluggy==1.6.0
     # via
@@ -370,7 +380,7 @@ pyasn1==0.6.4
     # via pyasn1-modules
 pyasn1-modules==0.4.2
     # via google-auth
-pycparser==3.0 ; implementation_name != 'PyPy'
+pycparser==3.0 ; implementation_name != 'PyPy' and platform_python_implementation != 'PyPy'
     # via cffi
 pydantic==2.13.5
     # via
@@ -390,7 +400,7 @@ pydantic==2.13.5
     #   ollama
     #   openai
     #   pydantic-settings
-pydantic-core==2.49.0
+pydantic-core==2.46.5
     # via pydantic
 pydantic-settings==2.15.0
     # via
@@ -406,7 +416,6 @@ pyjwt==2.15.0
     # via
     #   agentic-workflows-v2
     #   mcp
-    #   redis
 pytest==9.1.1
     # via
     #   agentic-tools
@@ -471,7 +480,6 @@ requests==2.34.2
     #   google-auth
     #   google-genai
     #   langsmith
-    #   opentelemetry-exporter-otlp-proto-http
     #   requests-toolbelt
     #   tiktoken
 requests-toolbelt==1.0.0
@@ -529,11 +537,14 @@ tqdm==4.70.1
     # via
     #   huggingface-hub
     #   openai
+truststore==0.10.4 ; sys_platform != 'emscripten'
+    # via
+    #   httpcore2
+    #   httpx2
 typer==0.27.2
     # via
     #   agentic-evalkit
     #   agentic-workflows-v2
-    #   huggingface-hub
 types-pyyaml==6.0.12.20260408
     # via agentic-v2-eval
 typing-extensions==4.16.0
@@ -545,6 +556,7 @@ typing-extensions==4.16.0
     #   fastapi
     #   google-genai
     #   grpcio
+    #   httpx2
     #   huggingface-hub
     #   langchain-core
     #   langchain-protocol
@@ -577,22 +589,24 @@ tzdata==2026.4 ; sys_platform == 'emscripten' or sys_platform == 'win32'
     #   pandas
     #   psycopg
 urllib3==2.8.0
-    # via requests
-uuid-utils==1.0.0
+    # via
+    #   opentelemetry-exporter-http-transport
+    #   requests
+uuid-utils==0.17.1
     # via
     #   langchain-core
     #   langsmith
-uvicorn==0.53.0
+uvicorn==0.54.0
     # via
     #   agentic-workflows-v2
     #   mcp
 uvloop==0.22.1 ; platform_python_implementation != 'PyPy' and sys_platform != 'cygwin' and sys_platform != 'win32'
     # via uvicorn
-virtualenv==21.11.1
+virtualenv==21.13.0
     # via pre-commit
 watchfiles==1.3.0
     # via uvicorn
-websockets==17.1
+websockets==16.1.1
     # via
     #   agentic-workflows-v2
     #   google-genai
@@ -607,7 +621,5 @@ xxhash==4.0.1
     #   langsmith
 yarl==1.25.1
     # via aiohttp
-zipp==4.1.0
-    # via importlib-metadata
 zstandard==0.25.0
     # via langsmith
