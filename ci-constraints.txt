@@ -493,7 +493,7 @@ rpds-py==2026.6.3
     # via
     #   jsonschema
     #   referencing
-ruff==0.16.5
+ruff==0.16.8
     # via
     #   agentic-v2-eval
     #   agentic-workflows-v2
