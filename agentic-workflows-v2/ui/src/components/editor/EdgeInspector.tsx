@@ -5,7 +5,7 @@ const FIELD_LABEL_CLASS =
   "mb-1.5 block font-mono text-[9px] uppercase tracking-[0.8px] text-b-text-dim";
 
 const INPUT_CLASS =
-  "w-full border border-b-line bg-b-bg0 px-2.5 py-1.5 font-mono text-[11.5px] text-b-text focus:border-b-clay focus:outline-none focus:ring-1 focus:ring-b-clay/50";
+  "w-full border border-b-line bg-b-bg0 px-2.5 py-1.5 font-mono text-[11.5px] text-b-text focus:border-b-clay focus:outline-hidden focus:ring-1 focus:ring-b-clay/50";
 
 export interface EdgeInspectorProps {
   edge: EdgeInfo;

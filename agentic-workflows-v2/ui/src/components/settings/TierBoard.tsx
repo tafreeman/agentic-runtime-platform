@@ -73,7 +73,7 @@ function ModelChipRow({
         aria-label={`Edit capabilities for ${modelId} in tier ${tier}`}
         aria-expanded={expanded}
         onClick={onToggleEditor}
-        className={`flex min-w-0 flex-1 items-center gap-2 border px-2.5 py-1.5 text-left font-mono text-[11px] transition-colors hover:text-b-text focus:outline-none focus:ring-1 focus:ring-b-clay/50 ${
+        className={`flex min-w-0 flex-1 items-center gap-2 border px-2.5 py-1.5 text-left font-mono text-[11px] transition-colors hover:text-b-text focus:outline-hidden focus:ring-1 focus:ring-b-clay/50 ${
           isWinner
             ? "border-b-clay bg-b-clay-soft text-b-text"
             : "border-b-line bg-b-bg2 text-b-text-mid"

@@ -58,7 +58,7 @@ describe("BDagMini", () => {
     expect(screen.getByText("this-is-a-ver…")).toBeInTheDocument();
   });
 
-  it("applies a uniform hairline outline to nodes by default", () => {
+  it("applies a uniform hairline outline-solid to nodes by default", () => {
     const { container } = render(
       <BDagMini nodes={[node("classify", [], "T4")]} edges={[]} />,
     );

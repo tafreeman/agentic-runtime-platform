@@ -81,7 +81,7 @@ const selectStyle = {
 } as const;
 
 const selectClass =
-  "border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text focus:outline-none focus:ring-1 focus:ring-b-clay/50";
+  "border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text focus:outline-hidden focus:ring-1 focus:ring-b-clay/50";
 
 export default function RunsPage() {
   const [liveTail, setLiveTail] = useState(true);
@@ -341,7 +341,7 @@ export default function RunsPage() {
                 placeholder="search by workflow or run id…"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="flex-1 bg-transparent font-mono text-[11px] text-b-text placeholder:text-b-text-faint focus:outline-none"
+                className="flex-1 bg-transparent font-mono text-[11px] text-b-text placeholder:text-b-text-faint focus:outline-hidden"
               />
               {query && (
                 <span className="font-mono text-[10px] text-b-text-dim">
@@ -433,7 +433,7 @@ export default function RunsPage() {
                             selectRun(r, index);
                           }
                         }}
-                        className={`relative grid cursor-pointer ${gridCols} items-center gap-3 border-b border-solid border-b-line-soft px-[18px] py-[13px] font-mono text-[11.5px] transition-colors last:border-b-0 hover:bg-b-bg2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-b-clay ${
+                        className={`relative grid cursor-pointer ${gridCols} items-center gap-3 border-b border-solid border-b-line-soft px-[18px] py-[13px] font-mono text-[11.5px] transition-colors last:border-b-0 hover:bg-b-bg2 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-b-clay ${
                           isSelected ? "bg-b-bg1" : ""
                         }`}
                       >

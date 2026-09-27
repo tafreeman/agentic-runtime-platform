@@ -598,7 +598,7 @@ function ActiveStepCard({
       </div>
 
       <div
-        className="mt-[14px] min-h-[96px] whitespace-pre-wrap break-words border border-b-line-soft bg-b-bg0 p-[12px_13px] font-mono text-[11px] leading-[1.6] text-b-text-mid"
+        className="mt-[14px] min-h-[96px] whitespace-pre-wrap wrap-break-word border border-b-line-soft bg-b-bg0 p-[12px_13px] font-mono text-[11px] leading-[1.6] text-b-text-mid"
         style={{ borderRadius: "var(--b-rad-sm)" }}
       >
         {streamingText}
@@ -627,7 +627,7 @@ function CriterionRow({
     <div>
       <div className="flex items-center justify-between font-mono text-[11px]">
         <span className="truncate text-b-text-mid">{c.criterion}</span>
-        <span className="ml-2 flex-shrink-0 tabular-nums text-b-text-dim">
+        <span className="ml-2 shrink-0 tabular-nums text-b-text-dim">
           {c.score}/{c.max_score}
           {c.weight !== 1 && (
             <span className="ml-0.5 text-b-text-dim">×{c.weight}</span>
@@ -730,7 +730,7 @@ function EvaluationCard({
             <button
               type="button"
               onClick={() => setExpanded((prev) => !prev)}
-              className="mt-[3px] flex items-center gap-1 font-mono text-[9.5px] text-b-text-dim transition-colors hover:text-b-text focus:outline-none focus:ring-1 focus:ring-b-clay/50"
+              className="mt-[3px] flex items-center gap-1 font-mono text-[9.5px] text-b-text-dim transition-colors hover:text-b-text focus:outline-hidden focus:ring-1 focus:ring-b-clay/50"
             >
               {expanded ? (
                 <ChevronDown className="h-3 w-3" />
@@ -744,7 +744,7 @@ function EvaluationCard({
         <button
           type="button"
           onClick={onOpenScorecard}
-          className="ml-auto flex-none self-center bg-transparent px-[9px] py-[5px] font-mono text-[10px] text-b-clay transition-colors hover:bg-b-clay-soft focus:outline-none focus:ring-1 focus:ring-b-clay/50"
+          className="ml-auto flex-none self-center bg-transparent px-[9px] py-[5px] font-mono text-[10px] text-b-clay transition-colors hover:bg-b-clay-soft focus:outline-hidden focus:ring-1 focus:ring-b-clay/50"
           style={CHIP_STYLE}
         >
           scorecard →

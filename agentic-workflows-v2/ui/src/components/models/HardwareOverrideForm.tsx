@@ -20,7 +20,7 @@ const CARD_STYLE = {
   borderRadius: "var(--b-rad-lg)",
 } as const;
 const FIELD_CLASS =
-  "w-full border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text placeholder:text-b-text-faint focus:border-b-clay focus:outline-none";
+  "w-full border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text placeholder:text-b-text-faint focus:border-b-clay focus:outline-hidden";
 const FIELD_STYLE = { borderRadius: "var(--b-rad-sm)" } as const;
 const CAPTION_LABEL =
   "mb-1 block font-mono text-[9px] uppercase tracking-[1.2px] text-b-text-faint";

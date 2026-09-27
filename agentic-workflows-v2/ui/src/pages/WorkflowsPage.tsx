@@ -113,7 +113,7 @@ export default function WorkflowsPage() {
               placeholder="filter by name, tag…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="flex-1 bg-transparent font-mono text-[11px] text-b-text placeholder:text-b-text-faint focus:outline-none focus:ring-0"
+              className="flex-1 bg-transparent font-mono text-[11px] text-b-text placeholder:text-b-text-faint focus:outline-hidden focus:ring-0"
             />
             {query && (
               <span className="font-mono text-[10px] text-b-text-dim">
@@ -190,7 +190,7 @@ export default function WorkflowsPage() {
                     <Link
                       to={`/workflows/${name}`}
                       data-testid={`workflow-link-${name}`}
-                      className="flex min-w-0 flex-1 items-center gap-3 px-3 py-[14px] focus:outline-none"
+                      className="flex min-w-0 flex-1 items-center gap-3 px-3 py-[14px] focus:outline-hidden"
                     >
                       <span className="font-mono text-[14px] text-b-blue">
                         ▣
@@ -218,7 +218,7 @@ export default function WorkflowsPage() {
                         to={`/workflows/${name}/edit`}
                         aria-label={`Edit ${name} workflow`}
                         data-testid={`workflow-edit-${name}`}
-                        className="relative z-10 flex w-[74px] shrink-0 flex-col items-center justify-center gap-1 border-l border-b-line font-mono text-[9px] uppercase tracking-[0.8px] text-b-text-dim transition-colors hover:bg-b-clay/10 hover:text-b-clay focus:outline-none focus:ring-1 focus:ring-inset focus:ring-b-clay/60"
+                        className="relative z-10 flex w-[74px] shrink-0 flex-col items-center justify-center gap-1 border-l border-b-line font-mono text-[9px] uppercase tracking-[0.8px] text-b-text-dim transition-colors hover:bg-b-clay/10 hover:text-b-clay focus:outline-hidden focus:ring-1 focus:ring-inset focus:ring-b-clay/60"
                       >
                         <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
                         edit

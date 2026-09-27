@@ -439,7 +439,7 @@ export default function RunDetailPanel({
               {routing.resolved_steps.length > 0 && (
                 <div className="overflow-x-auto border-t border-b-line-soft pt-3">
                   <table className="w-full text-left">
-                    <thead className="text-[10px] uppercase tracking-[0.1em] text-b-text-faint">
+                    <thead className="text-[10px] uppercase tracking-widest text-b-text-faint">
                       <tr><th className="pb-2 pr-4">Step</th><th className="pb-2 pr-4">Tier</th><th className="pb-2 pr-4">Provider</th><th className="pb-2">Resolved model</th></tr>
                     </thead>
                     <tbody className="font-mono text-[11px] text-b-text-mid">

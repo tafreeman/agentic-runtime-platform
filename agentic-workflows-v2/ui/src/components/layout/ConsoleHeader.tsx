@@ -39,7 +39,7 @@ export default function ConsoleHeader() {
     >
       <Link
         to="/"
-        className="flex flex-none items-baseline gap-2 focus:outline-none focus:ring-1 focus:ring-b-clay/50"
+        className="flex flex-none items-baseline gap-2 focus:outline-hidden focus:ring-1 focus:ring-b-clay/50"
         aria-label="console home"
       >
         <span
@@ -62,7 +62,7 @@ export default function ConsoleHeader() {
         type="button"
         onClick={openPalette}
         aria-label="Jump to page on mobile"
-        className="ml-auto grid h-8 w-8 place-items-center rounded-[2px] border border-b-line bg-b-bg0 text-b-text-dim focus:outline-none focus:ring-2 focus:ring-b-clay/40 sm:hidden"
+        className="ml-auto grid h-8 w-8 place-items-center rounded-[2px] border border-b-line bg-b-bg0 text-b-text-dim focus:outline-hidden focus:ring-2 focus:ring-b-clay/40 sm:hidden"
       >
         <Search size={15} aria-hidden="true" />
       </button>
@@ -74,7 +74,7 @@ export default function ConsoleHeader() {
         type="button"
         onClick={openPalette}
         aria-label="Jump to page (search runs, workflows, actions)"
-        className="mx-auto hidden h-7 w-full max-w-md flex-none items-center gap-2 border border-b-line bg-b-bg0 px-2.5 font-mono text-[11px] text-b-text-dim transition-colors hover:border-b-clay/50 hover:text-b-text focus:outline-none focus:ring-1 focus:ring-b-clay/50 sm:flex"
+        className="mx-auto hidden h-7 w-full max-w-md flex-none items-center gap-2 border border-b-line bg-b-bg0 px-2.5 font-mono text-[11px] text-b-text-dim transition-colors hover:border-b-clay/50 hover:text-b-text focus:outline-hidden focus:ring-1 focus:ring-b-clay/50 sm:flex"
         style={{ borderRadius: "var(--b-rad-sm)", borderWidth: "var(--b-bw)" }}
       >
         <Search size={12} aria-hidden="true" className="flex-none" />

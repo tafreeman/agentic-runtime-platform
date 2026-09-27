@@ -120,7 +120,7 @@ remain in the page near their cause.
 |---|---|
 | `styles/tokens.css` | Canonical light/dark semantic values and temporary aliases |
 | `styles/globals.css` | Typography, page canvas, focus, base browser behavior |
-| `tailwind.config.js` | Semantic utility bridge for shadcn and application code |
+| `styles/globals.css` `@theme` | Tailwind v4 semantic utility bridge for shadcn and application code |
 | route/component CSS | Specialized graph/layout mechanics only |
 
 New product code should use `el-*` or shadcn semantic classes. `b-*` is a

@@ -25,7 +25,7 @@ const FIELD_LABEL_CLASS =
   "mb-1.5 block font-mono text-[9px] uppercase tracking-[0.8px] text-b-text-dim";
 
 const INPUT_CLASS =
-  "w-full px-2 py-1.5 font-mono text-[11px] text-b-text placeholder:text-b-text-faint focus:outline-none focus:ring-1 focus:ring-b-clay/50";
+  "w-full px-2 py-1.5 font-mono text-[11px] text-b-text placeholder:text-b-text-faint focus:outline-hidden focus:ring-1 focus:ring-b-clay/50";
 
 /** Valid provider id: lowercase slug, must start alphanumeric. */
 const ID_PATTERN = /^[a-z0-9][a-z0-9_-]*$/;

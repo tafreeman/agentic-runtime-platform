@@ -26,7 +26,7 @@ export default function InlineError({ message, onRetry }: Readonly<InlineErrorPr
         <button
           type="button"
           onClick={onRetry}
-          className="border border-b-red/40 px-2 py-0.5 transition-colors hover:bg-b-red/20 focus:outline-none focus:ring-1 focus:ring-b-red/50"
+          className="border border-b-red/40 px-2 py-0.5 transition-colors hover:bg-b-red/20 focus:outline-hidden focus:ring-1 focus:ring-b-red/50"
           style={{ borderRadius: "var(--b-rad-sm)" }}
         >
           retry

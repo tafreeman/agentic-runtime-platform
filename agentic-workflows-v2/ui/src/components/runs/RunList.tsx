@@ -176,7 +176,7 @@ export default function RunList({ runs, isLoading }: RunListProps) {
                     navigate(target);
                   }
                 }}
-                className="grid cursor-pointer grid-cols-[80px_1.5fr_78px_50px_72px] items-center gap-2.5 border-b border-solid border-b-line-soft px-3 py-2 font-mono text-[11px] transition-colors last:border-b-0 hover:bg-b-bg2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-b-clay"
+                className="grid cursor-pointer grid-cols-[80px_1.5fr_78px_50px_72px] items-center gap-2.5 border-b border-solid border-b-line-soft px-3 py-2 font-mono text-[11px] transition-colors last:border-b-0 hover:bg-b-bg2 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-b-clay"
               >
                 <span
                   className="text-[9px] tracking-[0.5px]"

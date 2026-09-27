@@ -102,7 +102,7 @@ function StatCard({
       type="button"
       onClick={onClick}
       style={CARD_STYLE}
-      className="flex flex-col gap-[14px] bg-b-bg1 p-[22px] text-left transition-colors hover:border-b-clay focus:outline-none focus:ring-1 focus:ring-b-clay"
+      className="flex flex-col gap-[14px] bg-b-bg1 p-[22px] text-left transition-colors hover:border-b-clay focus:outline-hidden focus:ring-1 focus:ring-b-clay"
     >
       <div className="flex items-center justify-between">
         <span className="font-mono text-[10.5px] uppercase tracking-[1.5px] text-b-text-faint">
@@ -131,7 +131,7 @@ function TokensCard({
       type="button"
       onClick={onClick}
       style={CLAY_CARD_STYLE}
-      className="relative flex flex-col gap-[14px] overflow-hidden bg-b-bg1 p-[22px] text-left transition-colors hover:border-b-clay focus:outline-none focus:ring-1 focus:ring-b-clay"
+      className="relative flex flex-col gap-[14px] overflow-hidden bg-b-bg1 p-[22px] text-left transition-colors hover:border-b-clay focus:outline-hidden focus:ring-1 focus:ring-b-clay"
     >
       <div className="absolute left-0 right-0 top-0 h-[3px] bg-b-clay" />
       <div className="flex items-center justify-between">
@@ -252,7 +252,7 @@ export default function DashboardPage() {
           onKeyDown={(e) => e.key === "Escape" && clearFilter()}
           placeholder="[f] filter runs…"
           aria-label="Filter runs"
-          className="hidden h-5 w-36 bg-transparent font-mono text-[11px] text-b-text placeholder:text-b-text-dim focus:outline-none focus:placeholder:text-b-text-faint focus:ring-0 sm:block"
+          className="hidden h-5 w-36 bg-transparent font-mono text-[11px] text-b-text placeholder:text-b-text-dim focus:outline-hidden focus:placeholder:text-b-text-faint focus:ring-0 sm:block"
         />
         <button
           type="button"
@@ -305,7 +305,7 @@ export default function DashboardPage() {
                     summaryQuery.refetch();
                     workflowsQuery.refetch();
                   }}
-                  className="rounded-none border border-b-amber/40 px-2 py-0.5 transition-colors hover:bg-b-amber/10 focus:outline-none focus:ring-1 focus:ring-b-amber/50"
+                  className="rounded-none border border-b-amber/40 px-2 py-0.5 transition-colors hover:bg-b-amber/10 focus:outline-hidden focus:ring-1 focus:ring-b-amber/50"
                 >
                   retry
                 </button>

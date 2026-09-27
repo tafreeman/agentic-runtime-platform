@@ -137,7 +137,7 @@ export default function NodeConfigOverlay({
       {/* Backdrop */}
       <button
         type="button"
-        className="absolute inset-0 cursor-default border-0 bg-black/30 backdrop-blur-sm"
+        className="absolute inset-0 cursor-default border-0 bg-black/30 backdrop-blur-xs"
         aria-label="Close configuration overlay"
         onClick={onClose}
       />
@@ -152,7 +152,7 @@ export default function NodeConfigOverlay({
         style={{ borderLeft: "var(--b-bw) solid rgb(var(--b-clay))" }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-b-line bg-b-bg2 px-6 py-4 flex-shrink-0">
+        <div className="flex items-center justify-between border-b border-b-line bg-b-bg2 px-6 py-4 shrink-0">
           <div className="flex items-center gap-3">
             <Settings2 className="h-5 w-5 text-b-clay" />
             <div>
@@ -364,7 +364,7 @@ export default function NodeConfigOverlay({
         </div>
 
         {/* Footer / Actions */}
-        <div className="flex-shrink-0 border-t border-b-line bg-b-bg2 px-6 py-4 flex items-center justify-between">
+        <div className="shrink-0 border-t border-b-line bg-b-bg2 px-6 py-4 flex items-center justify-between">
           <button
             onClick={handleReset}
             type="button"

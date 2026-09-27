@@ -65,7 +65,7 @@ export default function App() {
       {/* Skip-to-main-content: visually hidden until focused via keyboard Tab */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-none focus:bg-b-bg1 focus:px-3 focus:py-1.5 focus:font-mono focus:text-[11px] focus:text-b-clay focus:ring-1 focus:ring-b-clay/50 focus:outline-none"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-none focus:bg-b-bg1 focus:px-3 focus:py-1.5 focus:font-mono focus:text-[11px] focus:text-b-clay focus:ring-1 focus:ring-b-clay/50 focus:outline-hidden"
       >
         skip to main content
       </a>
@@ -75,7 +75,7 @@ export default function App() {
       <main
         ref={mainRef}
         id="main-content"
-        className="flex-1 overflow-hidden pb-14 focus:outline-none md:pb-0"
+        className="flex-1 overflow-hidden pb-14 focus:outline-hidden md:pb-0"
         tabIndex={-1}
       >
         <Suspense fallback={<RouteFallback />}>
