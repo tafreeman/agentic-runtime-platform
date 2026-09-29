@@ -17,6 +17,7 @@ explains every definition in more detail.
 | `consensus_review` | Collect three independent verdicts and require a configurable level of agreement | `code_file`, `min_agreement` |
 | `fullstack_generation` | Generate API, frontend, migration, and test artifacts in parallel, then review and package them | `feature_spec`, `tech_stack` |
 | `iterative_review` | Repeat review and rework up to a configured limit | `feature_spec`, `max_review_rounds` |
+| `plan_tribunal` | Have five persona judges research proposed plans and alternatives, vote on a first candidate and its approval, then synthesize a ranked report | `plan_paths`, `focus`, `min_agreement` |
 | `test_deterministic` | Check the executor with two tier-0 agents and placeholder output in no-LLM mode | `input_text` |
 | `test_workflow` | Provide a zero-input placeholder fixture for server and evaluation tests | `input_text` is optional |
 
