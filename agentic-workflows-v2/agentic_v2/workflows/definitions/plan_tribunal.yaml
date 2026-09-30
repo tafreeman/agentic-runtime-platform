@@ -25,6 +25,13 @@ inputs:
       Comma-separated absolute paths of the documents containing the proposed
       implementations (read with file_read by the brief step).
     required: true
+  grounding_paths:
+    type: string
+    description: >-
+      Optional comma-separated absolute paths of repo files that describe the
+      current verified state (for example proofs/README.md and the ADR). The
+      brief step reads them instead of searching for them.
+    default: ""
   focus:
     type: string
     description: Optional extra steer for the judges (constraints, exclusions)
@@ -39,15 +46,17 @@ steps:
     agent: tier2_analyst
     model_override: env:TRIBUNAL_MODEL_BRIEF|gemini:gemini-2.5-flash
     description: >-
-      Read every document in plan_paths. Emit `candidate_slate`: a deduplicated
+      Read every document in plan_paths, and every file in grounding_paths when
+      given. Use at most 8 tool calls. Emit `candidate_slate`: a deduplicated
       list of proposals with stable IDs P1..Pn (component, exact property,
       technique, effort S/M/L, what it does not cover). Emit `domain_brief`: a
-      short grounded summary of the current verified state (read
-      proofs/README.md and docs/adr/ADR-060* in the ARP repo) and the trust
-      boundary. Flag claims in the documents you could not verify.
+      short grounded summary of the current verified state taken from the
+      grounding files and the trust boundary. Flag claims in the documents you
+      could not verify.
     tools: [file_read, file_list, search_files]
     inputs:
       plan_paths: ${inputs.plan_paths}
+      grounding_paths: ${inputs.grounding_paths}
       focus: ${inputs.focus}
     outputs:
       candidate_slate: slate
@@ -59,8 +68,8 @@ steps:
     description: >-
       Verification Engineer: research each candidate in the slate against the repo and the
       web, and identify 1-3 alternative options the slate missed (mark each
-      NEW). Emit `findings` with evidence and sources; say "not verified"
-      where you could not confirm a claim.
+      NEW). Use at most 8 tool calls. Emit `findings` with evidence and
+      sources; say "not verified" where you could not confirm a claim.
     depends_on: [brief]
     tools: [file_read, search_files, web_search, http_get]
     inputs:
@@ -100,8 +109,8 @@ steps:
     description: >-
       Concurrency and Runtime Skeptic: research each candidate in the slate against the repo and the
       web, and identify 1-3 alternative options the slate missed (mark each
-      NEW). Emit `findings` with evidence and sources; say "not verified"
-      where you could not confirm a claim.
+      NEW). Use at most 8 tool calls. Emit `findings` with evidence and
+      sources; say "not verified" where you could not confirm a claim.
     depends_on: [brief]
     tools: [file_read, search_files, web_search, http_get]
     inputs:
@@ -141,8 +150,8 @@ steps:
     description: >-
       Cost and Effort Pragmatist: research each candidate in the slate against the repo and the
       web, and identify 1-3 alternative options the slate missed (mark each
-      NEW). Emit `findings` with evidence and sources; say "not verified"
-      where you could not confirm a claim.
+      NEW). Use at most 8 tool calls. Emit `findings` with evidence and
+      sources; say "not verified" where you could not confirm a claim.
     depends_on: [brief]
     tools: [file_read, search_files, web_search, http_get]
     inputs:
@@ -182,8 +191,8 @@ steps:
     description: >-
       Governance and Evals Analyst: research each candidate in the slate against the repo and the
       web, and identify 1-3 alternative options the slate missed (mark each
-      NEW). Emit `findings` with evidence and sources; say "not verified"
-      where you could not confirm a claim.
+      NEW). Use at most 8 tool calls. Emit `findings` with evidence and
+      sources; say "not verified" where you could not confirm a claim.
     depends_on: [brief]
     tools: [file_read, search_files, web_search, http_get]
     inputs:
@@ -223,8 +232,8 @@ steps:
     description: >-
       Adversarial Reviewer: research each candidate in the slate against the repo and the
       web, and identify 1-3 alternative options the slate missed (mark each
-      NEW). Emit `findings` with evidence and sources; say "not verified"
-      where you could not confirm a claim.
+      NEW). Use at most 8 tool calls. Emit `findings` with evidence and
+      sources; say "not verified" where you could not confirm a claim.
     depends_on: [brief]
     tools: [file_read, search_files, web_search, http_get]
     inputs:
