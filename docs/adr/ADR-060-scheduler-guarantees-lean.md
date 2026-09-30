@@ -107,8 +107,10 @@ a hanging root guarantees the timeout is consumed.
   proofs cover only `DAGExecutor`.
 - CI gains a Lean toolchain download (about 590 MB, cacheable) and build, and
   the repository gains a second language.
-- The proofs rest on the model matching the code. The replay test checks that
-  on sampled schedules, not on all of them.
+- The proofs rest on the model matching the code. The seeded replay test checks
+  that on sampled schedules. A second, exhaustive replay covers every plan of up
+  to 3 steps against every legal completion order (4 steps nightly), so the
+  link is complete within that bound and sampled above it.
 
 ### Constraints imposed
 
