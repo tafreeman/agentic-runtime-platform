@@ -310,10 +310,10 @@ async def test_executor_matches_lean_on_every_legal_schedule(
 ) -> None:
     """Every outcome assignment and legal batch sequence of one graph and limit.
 
-    Start order, end events, results, lifecycle states and flags must equal the
-    Lean operational model's, the batches must be legal and the run complete (so
-    the Lean theorems apply to the trace), and the model must end in the
-    recursive spec's results and overall status.
+    Start order, end events, results, lifecycle states and flags must
+    equal the Lean operational model's, the batches must be legal and
+    the run complete (so the Lean theorems apply to the trace), and the
+    model must end in the recursive spec's results and overall status.
     """
     size = len(deps)
     cases: list[tuple[tuple[str, ...], dict[str, Any], Batches]] = []
