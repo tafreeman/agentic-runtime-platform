@@ -10,6 +10,10 @@ description: >-
   vote clears ``min_agreement``.
 version: "1.0"
 
+# Per-role models come from TRIBUNAL_MODEL_* env vars (see model_override below);
+# unset vars fall back to the tier-2 default. Diversifying judge models across
+# providers is the point of a panel, so each judge reads its own variable.
+
 capabilities:
   inputs: [plan_paths]
   outputs: [first_candidate, agreement, approval, report]
@@ -33,6 +37,7 @@ inputs:
 steps:
   - name: brief
     agent: tier2_analyst
+    model_override: env:TRIBUNAL_MODEL_BRIEF|gemini:gemini-2.5-flash
     description: >-
       Read every document in plan_paths. Emit `candidate_slate`: a deduplicated
       list of proposals with stable IDs P1..Pn (component, exact property,
@@ -49,6 +54,7 @@ steps:
       domain_brief: brief_text
   - name: research_verification
     agent: tier2_researcher
+    model_override: env:TRIBUNAL_MODEL_VERIFICATION|gemini:gemini-2.5-flash
     prompt_file: judges/plan_judge_verification.md
     description: >-
       Verification Engineer: research each candidate in the slate against the repo and the
@@ -66,6 +72,7 @@ steps:
 
   - name: verdict_verification
     agent: tier2_reviewer
+    model_override: env:TRIBUNAL_MODEL_VERIFICATION|gemini:gemini-2.5-flash
     prompt_file: judges/plan_judge_verification.md
     description: >-
       Verification Engineer: from your findings, judge the slate. Emit `first_pick` (exactly
@@ -88,6 +95,7 @@ steps:
       dissent: dissent_verification
   - name: research_concurrency
     agent: tier2_researcher
+    model_override: env:TRIBUNAL_MODEL_CONCURRENCY|gemini:gemini-2.5-flash
     prompt_file: judges/plan_judge_concurrency.md
     description: >-
       Concurrency and Runtime Skeptic: research each candidate in the slate against the repo and the
@@ -105,6 +113,7 @@ steps:
 
   - name: verdict_concurrency
     agent: tier2_reviewer
+    model_override: env:TRIBUNAL_MODEL_CONCURRENCY|gemini:gemini-2.5-flash
     prompt_file: judges/plan_judge_concurrency.md
     description: >-
       Concurrency and Runtime Skeptic: from your findings, judge the slate. Emit `first_pick` (exactly
@@ -127,6 +136,7 @@ steps:
       dissent: dissent_concurrency
   - name: research_pragmatist
     agent: tier2_researcher
+    model_override: env:TRIBUNAL_MODEL_PRAGMATIST|gemini:gemini-2.5-flash
     prompt_file: judges/plan_judge_pragmatist.md
     description: >-
       Cost and Effort Pragmatist: research each candidate in the slate against the repo and the
@@ -144,6 +154,7 @@ steps:
 
   - name: verdict_pragmatist
     agent: tier2_reviewer
+    model_override: env:TRIBUNAL_MODEL_PRAGMATIST|gemini:gemini-2.5-flash
     prompt_file: judges/plan_judge_pragmatist.md
     description: >-
       Cost and Effort Pragmatist: from your findings, judge the slate. Emit `first_pick` (exactly
@@ -166,6 +177,7 @@ steps:
       dissent: dissent_pragmatist
   - name: research_governance
     agent: tier2_researcher
+    model_override: env:TRIBUNAL_MODEL_GOVERNANCE|gemini:gemini-2.5-flash
     prompt_file: judges/plan_judge_governance.md
     description: >-
       Governance and Evals Analyst: research each candidate in the slate against the repo and the
@@ -183,6 +195,7 @@ steps:
 
   - name: verdict_governance
     agent: tier2_reviewer
+    model_override: env:TRIBUNAL_MODEL_GOVERNANCE|gemini:gemini-2.5-flash
     prompt_file: judges/plan_judge_governance.md
     description: >-
       Governance and Evals Analyst: from your findings, judge the slate. Emit `first_pick` (exactly
@@ -205,6 +218,7 @@ steps:
       dissent: dissent_governance
   - name: research_adversary
     agent: tier2_researcher
+    model_override: env:TRIBUNAL_MODEL_ADVERSARY|gemini:gemini-2.5-flash
     prompt_file: judges/plan_judge_adversary.md
     description: >-
       Adversarial Reviewer: research each candidate in the slate against the repo and the
@@ -222,6 +236,7 @@ steps:
 
   - name: verdict_adversary
     agent: tier2_reviewer
+    model_override: env:TRIBUNAL_MODEL_ADVERSARY|gemini:gemini-2.5-flash
     prompt_file: judges/plan_judge_adversary.md
     description: >-
       Adversarial Reviewer: from your findings, judge the slate. Emit `first_pick` (exactly
@@ -280,6 +295,7 @@ steps:
 
   - name: synthesis
     agent: tier3_synthesizer
+    model_override: env:TRIBUNAL_MODEL_SYNTHESIS|gemini:gemini-2.5-flash
     description: >-
       Merge the five verdicts into a report: ranked slate (value, effort, risk,
       votes, dissent), the deduplicated alternatives with how many judges
