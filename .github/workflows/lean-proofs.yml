@@ -17,6 +17,8 @@ on:
       - 'agentic-workflows-v2/agentic_v2/contracts/messages.py'
       - 'agentic-workflows-v2/tests/engine/test_dag_executor_lean_replay.py'
       - 'agentic-workflows-v2/tests/engine/test_dag_executor_lean_exhaustive.py'
+      - 'agentic-workflows-v2/tests/test_orchestrator_dag_differential.py'
+      - 'agentic-workflows-v2/agentic_v2/agents/orchestrator*.py'
       - '.github/workflows/lean-proofs.yml'
   pull_request:
     branches: [main, agenticv2]
@@ -28,6 +30,8 @@ on:
       - 'agentic-workflows-v2/agentic_v2/contracts/messages.py'
       - 'agentic-workflows-v2/tests/engine/test_dag_executor_lean_replay.py'
       - 'agentic-workflows-v2/tests/engine/test_dag_executor_lean_exhaustive.py'
+      - 'agentic-workflows-v2/tests/test_orchestrator_dag_differential.py'
+      - 'agentic-workflows-v2/agentic_v2/agents/orchestrator*.py'
       - '.github/workflows/lean-proofs.yml'
 
   # The n=4 exhaustive tier is too long for a PR; it runs nightly and on demand.
@@ -73,6 +77,11 @@ jobs:
       - name: Replay every legal schedule of small plans against Lean
         working-directory: agentic-workflows-v2
         run: python -m pytest tests/engine/test_dag_executor_lean_exhaustive.py -q --timeout=120
+      # Includes the orchestrator-versus-Lean validate cross-check, which skips
+      # without ARP_LEAN_REPLAY.
+      - name: Check the orchestrator's scheduler against DAGExecutor and Lean
+        working-directory: agentic-workflows-v2
+        run: python -m pytest tests/test_orchestrator_dag_differential.py -q --timeout=120
       - name: Replay every legal schedule of 4-step plans (nightly)
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         working-directory: agentic-workflows-v2
