@@ -24,6 +24,7 @@ reference.
 | [`iterative_review`](#iterative_review) | Bounded loop with rework gate | 5 | 4 | Review/rework until quality gate passes or loop_max trips |
 | [`conditional_branching`](#conditional_branching) | Conditional fan-out with assembly | 6 | 4 | Branch on requirements; only execute the gates that matter |
 | [`consensus_review`](#consensus_review) | Ensemble with majority vote | 5 | 3 | Three independent reviewers vote; summarize only on agreement |
+| [`plan_tribunal`](#plan_tribunal) | Persona judges, research, two votes | 20 | 5 | Five judges research proposed plans, vote on a first candidate, rule on it and synthesize a ranked report |
 | [`test_deterministic`](#test_deterministic) | Tier-0 placeholder path | 2 | 2 | Smoke test for the executor; no external provider needed in no-LLM mode |
 | [`test_workflow`](#test_workflow) | Tier-0 placeholder path | 2 | 2 | Fixture for server and evaluation tests |
 
@@ -131,6 +132,40 @@ the vote meets the `min_agreement` threshold, which defaults to `0.66`.
   producing a summary
 
 [View YAML →](https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/agentic_v2/workflows/definitions/consensus_review.yaml){ .md-button }
+
+## `plan_tribunal`
+
+Five persona judges (verification, concurrency, pragmatist, governance,
+adversary) review proposed implementation plans. A `brief` step reads the plan
+documents and emits a candidate slate plus a shared domain brief. Each judge
+then researches the slate against the repo and the web and proposes alternatives
+the plans missed. An `extend_slate` step merges equivalent alternatives into
+shared `ALT-` ids, and each judge names a first candidate from that extended
+slate. A tier-0 vote picks the panel's
+first candidate; when it meets `min_agreement`, every judge rules APPROVE,
+REVISE or REJECT on that one candidate, a second tier-0 vote tallies the
+rulings, and a synthesis step writes the ranked report with dissent. A split
+ruling is reported with `approval_met` false, never as a decision.
+
+- **Pattern:** Persona judges, research, two votes
+- **Steps:** `brief` → `research_*` ×5 → `extend_slate` → `verdict_*` ×5 →
+  `vote_pick` → `ratify_*` ×5 → `vote_stance` → `synthesis` (the last three
+  gated on `meets_threshold`)
+- **Agents:** `tier0_consensus`, `tier2_analyst`, `tier2_researcher`,
+  `tier2_reviewer`, `tier3_synthesizer`
+- **Inputs:** `plan_paths`, `grounding_paths`, `focus`, `min_agreement`
+- **Outputs:** `first_candidate`, `agreement`, `approval` (optional),
+  `approval_met` (optional), `report` (optional)
+- **Models:** each role reads `TRIBUNAL_MODEL_<ROLE>` (`BRIEF`, `SYNTHESIS`,
+  `VERIFICATION`, `CONCURRENCY`, `PRAGMATIST`, `GOVERNANCE`, `ADVERSARY`);
+  an unset variable uses normal tier routing
+- **Adapter:** run it with the default langchain adapter. The native adapter
+  ignores `model_override` and lacks the `search_files` and `web_search` tools
+  the research steps use
+- **Use it for:** a multi-perspective, evidence-backed ranking of competing
+  plans before committing to one
+
+[View YAML →](https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/agentic_v2/workflows/definitions/plan_tribunal.yaml){ .md-button }
 
 ## `test_deterministic`
 
