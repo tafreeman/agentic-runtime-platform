@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased - plan_tribunal workflow
+
+- New bundled workflow `plan_tribunal`: five persona judges research proposed
+  plans and alternatives, vote on a first candidate, rule on it, and a
+  synthesis step writes a ranked report with dissent. Per-role models come from
+  `TRIBUNAL_MODEL_<ROLE>` variables. It needs the default langchain adapter:
+  the native adapter ignores `model_override` and lacks `search_files` and
+  `web_search`.
+- A step `model_override` of the form `env:VAR|` (an empty inline fallback) is
+  now an optional override: when the variable is unset the step uses normal
+  tier routing instead of raising. `env:VAR` and `env:VAR|fallback` are
+  unchanged.
+- Tests only: an exhaustive replay of every plan of up to 3 steps (4 steps
+  nightly) against the Lean model, and a differential test that pins the
+  orchestrator's scheduler to `DAGExecutor` (#361, #362).
+
 ## Unreleased - study telemetry and SWE-AB ledger
 
 - `SmartRouterProvider` takes an optional `attempt_callback` that receives a
