@@ -122,6 +122,7 @@ Production examples in `agentic_v2/workflows/definitions/`:
 | `consensus_review` | Combine multiple review perspectives |
 | `fullstack_generation` | Coordinate backend and frontend generation |
 | `iterative_review` | Repeat a review step until an exit condition |
+| `plan_tribunal` | Multi-judge research and vote over proposed plans |
 
 `test_deterministic` and `test_workflow` are test fixtures. They are useful for
 smoke tests but are not production examples.

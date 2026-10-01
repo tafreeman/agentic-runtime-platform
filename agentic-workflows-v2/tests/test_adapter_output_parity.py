@@ -82,6 +82,7 @@ _PARITY_CASES = {
     "iterative_review": _ParityCase(
         inputs={"feature_spec": "Add a health endpoint", "max_review_rounds": 2},
     ),
+    "plan_tribunal": _ParityCase(inputs={"plan_paths": _SOURCE_FILE}),
     "test_deterministic": _ParityCase(
         inputs={"input_text": "Hello World"},
         expected_outputs={"processed_text": "Hello World", "step_count": 11},

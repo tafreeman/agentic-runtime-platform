@@ -1,0 +1,354 @@
+name: plan_tribunal
+description: >-
+  Multi-judge review of proposed implementation plans. A brief step distils the
+  source documents into a candidate slate (P1..Pn) plus a shared domain brief;
+  five persona judges (verification, concurrency, pragmatist, governance,
+  adversary) each research the plans AND alternatives the plans missed, then
+  vote. Two deterministic tier-0 votes decide the panel's first candidate and
+  whether the judges approve it; a synthesis step ranks the slate, merges the
+  alternatives and records dissent. Synthesis only runs when the first-candidate
+  vote clears ``min_agreement``.
+version: "1.0"
+
+# Per-role models come from TRIBUNAL_MODEL_* env vars (see model_override below);
+# unset vars fall back to the tier-2 default. Diversifying judge models across
+# providers is the point of a panel, so each judge reads its own variable.
+
+capabilities:
+  inputs: [plan_paths]
+  outputs: [first_candidate, agreement, approval, report]
+
+inputs:
+  plan_paths:
+    type: string
+    description: >-
+      Comma-separated absolute paths of the documents containing the proposed
+      implementations (read with file_read by the brief step).
+    required: true
+  grounding_paths:
+    type: string
+    description: >-
+      Optional comma-separated absolute paths of repo files that describe the
+      current verified state (for example proofs/README.md and the ADR). The
+      brief step reads them instead of searching for them.
+    default: ""
+  focus:
+    type: string
+    description: Optional extra steer for the judges (constraints, exclusions)
+    default: ""
+  min_agreement:
+    type: string
+    description: Minimum fraction of judges that must name the same first candidate (0..1)
+    default: "0.6"
+
+steps:
+  - name: brief
+    agent: tier2_analyst
+    model_override: env:TRIBUNAL_MODEL_BRIEF|gemini:gemini-2.5-flash
+    description: >-
+      Read every document in plan_paths, and every file in grounding_paths when
+      given. Use at most 8 tool calls. Emit `candidate_slate`: a deduplicated
+      list of proposals with stable IDs P1..Pn (component, exact property,
+      technique, effort S/M/L, what it does not cover). Emit `domain_brief`: a
+      short grounded summary of the current verified state taken from the
+      grounding files and the trust boundary. Flag claims in the documents you
+      could not verify.
+    tools: [file_read, file_list, search_files]
+    inputs:
+      plan_paths: ${inputs.plan_paths}
+      grounding_paths: ${inputs.grounding_paths}
+      focus: ${inputs.focus}
+    outputs:
+      candidate_slate: slate
+      domain_brief: brief_text
+  - name: research_verification
+    agent: tier2_researcher
+    model_override: env:TRIBUNAL_MODEL_VERIFICATION|gemini:gemini-2.5-flash
+    prompt_file: judges/plan_judge_verification.md
+    description: >-
+      Verification Engineer: research each candidate in the slate against the repo and the
+      web, and identify 1-3 alternative options the slate missed (mark each
+      NEW). Use at most 8 tool calls. Emit `findings` with evidence and
+      sources; say "not verified" where you could not confirm a claim.
+    depends_on: [brief]
+    tools: [file_read, search_files, web_search, http_get]
+    inputs:
+      candidate_slate: ${steps.brief.outputs.candidate_slate}
+      domain_brief: ${steps.brief.outputs.domain_brief}
+      focus: ${inputs.focus}
+    outputs:
+      findings: findings_verification
+
+  - name: verdict_verification
+    agent: tier2_reviewer
+    model_override: env:TRIBUNAL_MODEL_VERIFICATION|gemini:gemini-2.5-flash
+    prompt_file: judges/plan_judge_verification.md
+    description: >-
+      Verification Engineer: from your findings, judge the slate. Emit `first_pick` (exactly
+      one candidate ID, e.g. P3, or NEW-1 for a new alternative), `stance` (exactly
+      one of APPROVE, REVISE, REJECT on your own first pick), `ranking` (all
+      candidates best to worst with a one-line reason each), `alternatives`
+      (new options worth adding), `rationale` and `dissent` (what you expect
+      the other judges to get wrong).
+    depends_on: [research_verification]
+    tools: []
+    inputs:
+      candidate_slate: ${steps.brief.outputs.candidate_slate}
+      findings: ${steps.research_verification.outputs.findings}
+    outputs:
+      first_pick: pick_verification
+      stance: stance_verification
+      ranking: ranking_verification
+      alternatives: alternatives_verification
+      rationale: rationale_verification
+      dissent: dissent_verification
+  - name: research_concurrency
+    agent: tier2_researcher
+    model_override: env:TRIBUNAL_MODEL_CONCURRENCY|gemini:gemini-2.5-flash
+    prompt_file: judges/plan_judge_concurrency.md
+    description: >-
+      Concurrency and Runtime Skeptic: research each candidate in the slate against the repo and the
+      web, and identify 1-3 alternative options the slate missed (mark each
+      NEW). Use at most 8 tool calls. Emit `findings` with evidence and
+      sources; say "not verified" where you could not confirm a claim.
+    depends_on: [brief]
+    tools: [file_read, search_files, web_search, http_get]
+    inputs:
+      candidate_slate: ${steps.brief.outputs.candidate_slate}
+      domain_brief: ${steps.brief.outputs.domain_brief}
+      focus: ${inputs.focus}
+    outputs:
+      findings: findings_concurrency
+
+  - name: verdict_concurrency
+    agent: tier2_reviewer
+    model_override: env:TRIBUNAL_MODEL_CONCURRENCY|gemini:gemini-2.5-flash
+    prompt_file: judges/plan_judge_concurrency.md
+    description: >-
+      Concurrency and Runtime Skeptic: from your findings, judge the slate. Emit `first_pick` (exactly
+      one candidate ID, e.g. P3, or NEW-1 for a new alternative), `stance` (exactly
+      one of APPROVE, REVISE, REJECT on your own first pick), `ranking` (all
+      candidates best to worst with a one-line reason each), `alternatives`
+      (new options worth adding), `rationale` and `dissent` (what you expect
+      the other judges to get wrong).
+    depends_on: [research_concurrency]
+    tools: []
+    inputs:
+      candidate_slate: ${steps.brief.outputs.candidate_slate}
+      findings: ${steps.research_concurrency.outputs.findings}
+    outputs:
+      first_pick: pick_concurrency
+      stance: stance_concurrency
+      ranking: ranking_concurrency
+      alternatives: alternatives_concurrency
+      rationale: rationale_concurrency
+      dissent: dissent_concurrency
+  - name: research_pragmatist
+    agent: tier2_researcher
+    model_override: env:TRIBUNAL_MODEL_PRAGMATIST|gemini:gemini-2.5-flash
+    prompt_file: judges/plan_judge_pragmatist.md
+    description: >-
+      Cost and Effort Pragmatist: research each candidate in the slate against the repo and the
+      web, and identify 1-3 alternative options the slate missed (mark each
+      NEW). Use at most 8 tool calls. Emit `findings` with evidence and
+      sources; say "not verified" where you could not confirm a claim.
+    depends_on: [brief]
+    tools: [file_read, search_files, web_search, http_get]
+    inputs:
+      candidate_slate: ${steps.brief.outputs.candidate_slate}
+      domain_brief: ${steps.brief.outputs.domain_brief}
+      focus: ${inputs.focus}
+    outputs:
+      findings: findings_pragmatist
+
+  - name: verdict_pragmatist
+    agent: tier2_reviewer
+    model_override: env:TRIBUNAL_MODEL_PRAGMATIST|gemini:gemini-2.5-flash
+    prompt_file: judges/plan_judge_pragmatist.md
+    description: >-
+      Cost and Effort Pragmatist: from your findings, judge the slate. Emit `first_pick` (exactly
+      one candidate ID, e.g. P3, or NEW-1 for a new alternative), `stance` (exactly
+      one of APPROVE, REVISE, REJECT on your own first pick), `ranking` (all
+      candidates best to worst with a one-line reason each), `alternatives`
+      (new options worth adding), `rationale` and `dissent` (what you expect
+      the other judges to get wrong).
+    depends_on: [research_pragmatist]
+    tools: []
+    inputs:
+      candidate_slate: ${steps.brief.outputs.candidate_slate}
+      findings: ${steps.research_pragmatist.outputs.findings}
+    outputs:
+      first_pick: pick_pragmatist
+      stance: stance_pragmatist
+      ranking: ranking_pragmatist
+      alternatives: alternatives_pragmatist
+      rationale: rationale_pragmatist
+      dissent: dissent_pragmatist
+  - name: research_governance
+    agent: tier2_researcher
+    model_override: env:TRIBUNAL_MODEL_GOVERNANCE|gemini:gemini-2.5-flash
+    prompt_file: judges/plan_judge_governance.md
+    description: >-
+      Governance and Evals Analyst: research each candidate in the slate against the repo and the
+      web, and identify 1-3 alternative options the slate missed (mark each
+      NEW). Use at most 8 tool calls. Emit `findings` with evidence and
+      sources; say "not verified" where you could not confirm a claim.
+    depends_on: [brief]
+    tools: [file_read, search_files, web_search, http_get]
+    inputs:
+      candidate_slate: ${steps.brief.outputs.candidate_slate}
+      domain_brief: ${steps.brief.outputs.domain_brief}
+      focus: ${inputs.focus}
+    outputs:
+      findings: findings_governance
+
+  - name: verdict_governance
+    agent: tier2_reviewer
+    model_override: env:TRIBUNAL_MODEL_GOVERNANCE|gemini:gemini-2.5-flash
+    prompt_file: judges/plan_judge_governance.md
+    description: >-
+      Governance and Evals Analyst: from your findings, judge the slate. Emit `first_pick` (exactly
+      one candidate ID, e.g. P3, or NEW-1 for a new alternative), `stance` (exactly
+      one of APPROVE, REVISE, REJECT on your own first pick), `ranking` (all
+      candidates best to worst with a one-line reason each), `alternatives`
+      (new options worth adding), `rationale` and `dissent` (what you expect
+      the other judges to get wrong).
+    depends_on: [research_governance]
+    tools: []
+    inputs:
+      candidate_slate: ${steps.brief.outputs.candidate_slate}
+      findings: ${steps.research_governance.outputs.findings}
+    outputs:
+      first_pick: pick_governance
+      stance: stance_governance
+      ranking: ranking_governance
+      alternatives: alternatives_governance
+      rationale: rationale_governance
+      dissent: dissent_governance
+  - name: research_adversary
+    agent: tier2_researcher
+    model_override: env:TRIBUNAL_MODEL_ADVERSARY|gemini:gemini-2.5-flash
+    prompt_file: judges/plan_judge_adversary.md
+    description: >-
+      Adversarial Reviewer: research each candidate in the slate against the repo and the
+      web, and identify 1-3 alternative options the slate missed (mark each
+      NEW). Use at most 8 tool calls. Emit `findings` with evidence and
+      sources; say "not verified" where you could not confirm a claim.
+    depends_on: [brief]
+    tools: [file_read, search_files, web_search, http_get]
+    inputs:
+      candidate_slate: ${steps.brief.outputs.candidate_slate}
+      domain_brief: ${steps.brief.outputs.domain_brief}
+      focus: ${inputs.focus}
+    outputs:
+      findings: findings_adversary
+
+  - name: verdict_adversary
+    agent: tier2_reviewer
+    model_override: env:TRIBUNAL_MODEL_ADVERSARY|gemini:gemini-2.5-flash
+    prompt_file: judges/plan_judge_adversary.md
+    description: >-
+      Adversarial Reviewer: from your findings, judge the slate. Emit `first_pick` (exactly
+      one candidate ID, e.g. P3, or NEW-1 for a new alternative), `stance` (exactly
+      one of APPROVE, REVISE, REJECT on your own first pick), `ranking` (all
+      candidates best to worst with a one-line reason each), `alternatives`
+      (new options worth adding), `rationale` and `dissent` (what you expect
+      the other judges to get wrong).
+    depends_on: [research_adversary]
+    tools: []
+    inputs:
+      candidate_slate: ${steps.brief.outputs.candidate_slate}
+      findings: ${steps.research_adversary.outputs.findings}
+    outputs:
+      first_pick: pick_adversary
+      stance: stance_adversary
+      ranking: ranking_adversary
+      alternatives: alternatives_adversary
+      rationale: rationale_adversary
+      dissent: dissent_adversary
+  - name: vote_pick
+    agent: tier0_consensus
+    description: Majority-vote the five judges' first-candidate picks.
+    depends_on: [verdict_verification, verdict_concurrency, verdict_pragmatist, verdict_governance, verdict_adversary]
+    inputs:
+      samples:
+        - ${steps.verdict_verification.outputs.first_pick}
+        - ${steps.verdict_concurrency.outputs.first_pick}
+        - ${steps.verdict_pragmatist.outputs.first_pick}
+        - ${steps.verdict_governance.outputs.first_pick}
+        - ${steps.verdict_adversary.outputs.first_pick}
+      min_agreement: ${inputs.min_agreement}
+    outputs:
+      winner: first_candidate
+      agreement: pick_agreement
+      votes: pick_votes
+      meets_threshold: pick_met
+
+  - name: vote_stance
+    agent: tier0_consensus
+    description: Majority-vote the five judges' APPROVE/REVISE/REJECT stances.
+    depends_on: [verdict_verification, verdict_concurrency, verdict_pragmatist, verdict_governance, verdict_adversary]
+    inputs:
+      samples:
+        - ${steps.verdict_verification.outputs.stance}
+        - ${steps.verdict_concurrency.outputs.stance}
+        - ${steps.verdict_pragmatist.outputs.stance}
+        - ${steps.verdict_governance.outputs.stance}
+        - ${steps.verdict_adversary.outputs.stance}
+      min_agreement: ${inputs.min_agreement}
+    outputs:
+      winner: approval
+      agreement: approval_agreement
+      votes: approval_votes
+      meets_threshold: approval_met
+
+  - name: synthesis
+    agent: tier3_synthesizer
+    model_override: env:TRIBUNAL_MODEL_SYNTHESIS|gemini:gemini-2.5-flash
+    description: >-
+      Merge the five verdicts into a report: ranked slate (value, effort, risk,
+      votes, dissent), the deduplicated alternatives with how many judges
+      raised each, the panel's first candidate with the vote tallies, and, for
+      that candidate, a concrete plan outline. State plainly whether the
+      approval vote is unanimous.
+    depends_on: [vote_pick, vote_stance]
+    when: ${steps.vote_pick.outputs.meets_threshold}
+    inputs:
+      candidate_slate: ${steps.brief.outputs.candidate_slate}
+      first_candidate: ${steps.vote_pick.outputs.winner}
+      pick_votes: ${steps.vote_pick.outputs.votes}
+      approval: ${steps.vote_stance.outputs.winner}
+      approval_votes: ${steps.vote_stance.outputs.votes}
+      ranking_verification: ${steps.verdict_verification.outputs.ranking}
+      alternatives_verification: ${steps.verdict_verification.outputs.alternatives}
+      rationale_verification: ${steps.verdict_verification.outputs.rationale}
+      dissent_verification: ${steps.verdict_verification.outputs.dissent}
+      ranking_concurrency: ${steps.verdict_concurrency.outputs.ranking}
+      alternatives_concurrency: ${steps.verdict_concurrency.outputs.alternatives}
+      rationale_concurrency: ${steps.verdict_concurrency.outputs.rationale}
+      dissent_concurrency: ${steps.verdict_concurrency.outputs.dissent}
+      ranking_pragmatist: ${steps.verdict_pragmatist.outputs.ranking}
+      alternatives_pragmatist: ${steps.verdict_pragmatist.outputs.alternatives}
+      rationale_pragmatist: ${steps.verdict_pragmatist.outputs.rationale}
+      dissent_pragmatist: ${steps.verdict_pragmatist.outputs.dissent}
+      ranking_governance: ${steps.verdict_governance.outputs.ranking}
+      alternatives_governance: ${steps.verdict_governance.outputs.alternatives}
+      rationale_governance: ${steps.verdict_governance.outputs.rationale}
+      dissent_governance: ${steps.verdict_governance.outputs.dissent}
+      ranking_adversary: ${steps.verdict_adversary.outputs.ranking}
+      alternatives_adversary: ${steps.verdict_adversary.outputs.alternatives}
+      rationale_adversary: ${steps.verdict_adversary.outputs.rationale}
+      dissent_adversary: ${steps.verdict_adversary.outputs.dissent}
+    outputs:
+      report: tribunal_report
+
+outputs:
+  first_candidate:
+    from: ${steps.vote_pick.outputs.winner}
+  agreement:
+    from: ${steps.vote_pick.outputs.agreement}
+  approval:
+    from: ${steps.vote_stance.outputs.winner}
+  report:
+    from: ${steps.synthesis.outputs.report}
+    optional: true
