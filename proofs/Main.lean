@@ -88,7 +88,7 @@ def validateRequest (plans : Json) : Except String Json := do
     pure (verdictJson (validate deps))
   pure (Json.mkObj [("verdicts", toJson verdicts)])
 
-def replay (j : Json) : Except String Json := do
+def replayOne (j : Json) : Except String Json := do
   if let .ok plans := j.getObjVal? "validate" then return ← validateRequest plans
   let limit ← (← j.getObjVal? "max_concurrency").getInt?
   if limit < 1 then throw "max_concurrency must be an integer >= 1"
@@ -124,6 +124,15 @@ def replay (j : Json) : Except String Json := do
     -- plan with a hanging step; only the model's run is reported for one.
     let specFields := if hangs.isEmpty then base else []
     pure (Json.mkObj (specFields ++ [("model", operational p limit batches timeout)]))
+
+/-- Answer a request, or each request in `cases` in one process, so exhaustive
+replays pay the process start once. A single invalid case fails the whole batch,
+exactly as it fails alone. -/
+def replay (j : Json) : Except String Json := do
+  if let .ok cases := j.getObjVal? "cases" then
+    let answers ← (← cases.getArr?).toList.mapM replayOne
+    return Json.mkObj [("answers", toJson answers)]
+  replayOne j
 
 def main : IO UInt32 := do
   let stdin ← IO.getStdin
