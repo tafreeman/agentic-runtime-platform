@@ -252,7 +252,13 @@ since the ready queue only ever holds unfinished steps.
 - The converse of honest status is proved for complete legal runs. Timeout
   cleanup reports FAILED (`timeout_fails_closed`), but placing an unconsumed
   timeout in a trace does not force an already completed run to fail.
-- The orchestrator's own scheduling loop (`_execute_plan`) is not modelled.
+- The orchestrator's own scheduling loop (`_execute_plan`) is not modelled. A
+  differential test (`tests/test_orchestrator_dag_differential.py`) keeps its
+  statuses, skip reasons and set of steps run equal to `DAGExecutor`'s on
+  generated plans, and pins the one deliberate difference: it runs ready steps
+  in `gather()` waves, so a dependent can start later than under
+  `DAGExecutor`. That is a check of the Python rules against each other, not a
+  proof about the orchestrator.
 
 Nonterminal results fail closed, so ADR-060's safety theorem needs no
 terminal-outcome precondition. Public `execute` rejects nonpositive limits,
