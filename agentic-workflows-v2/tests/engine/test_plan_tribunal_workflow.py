@@ -100,8 +100,8 @@ def test_synthesis_sees_whether_approval_was_reached(workflow):
 
 
 def test_equivalent_alternatives_share_one_canonical_id(workflow):
-    """Judges vote on ids from one extended slate, so the same alternative found
-    by several judges is one vote bucket, not one per judge."""
+    """Judges vote on ids from one extended slate, so the same alternative found by
+    several judges is one vote bucket, not one per judge."""
     steps = workflow.dag.steps
     assert "ALT-1" in steps["extend_slate"].description
     for key in _JUDGES:
