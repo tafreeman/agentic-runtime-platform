@@ -36,7 +36,7 @@ import asyncio
 import json
 import os
 import subprocess
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from pathlib import Path
 from typing import Any
 
@@ -65,6 +65,10 @@ Deps = list[list[int]]
 Trace = list[tuple[str, str]]
 Outcome = dict[str, Any]
 Plan = tuple[Deps, list[str], list[int], int]
+# Per-step coroutine awaited after the step's delay and before it ends; it
+# receives the live trace. Used to order events by synchronization, not by
+# counting event-loop turns.
+Holds = dict[int, Callable[[Trace], Awaitable[None]]]
 
 
 @st.composite
@@ -86,12 +90,20 @@ def plans(draw: st.DrawFn) -> Plan:
 
 
 def _safety_violations(deps: Deps, limit: int, trace: Trace) -> list[str]:
-    """Check one side's trace: dependencies ended before a start, limit held."""
+    """Check one side's trace.
+
+    A step starts once, only after its dependencies ended, and never more than
+    ``limit`` steps run at once.
+    """
     problems: list[str] = []
+    started: set[str] = set()
     ended: set[str] = set()
     running: set[str] = set()
     for kind, name in trace:
         if kind == "start":
+            if name in started:
+                problems.append(f"{name} started twice")
+            started.add(name)
             if not all(str(d) in ended for d in deps[int(name)]):
                 problems.append(f"{name} started before its dependencies ended")
             running.add(name)
@@ -116,7 +128,11 @@ def _orchestrator_with(deps: Deps) -> OrchestratorAgent:
 
 
 async def run_orchestrator(
-    deps: Deps, outcomes: list[str], delays: list[int], limit: int
+    deps: Deps,
+    outcomes: list[str],
+    delays: list[int],
+    limit: int,
+    holds: Holds | None = None,
 ) -> tuple[dict[str, Outcome], Trace]:
     """Run ``_execute_plan`` on a plan with scripted subtasks."""
     orch = _orchestrator_with(deps)
@@ -127,6 +143,8 @@ async def run_orchestrator(
         trace.append(("start", subtask.id))
         for _ in range(delays[index]):
             await asyncio.sleep(0)
+        if holds and index in holds:
+            await holds[index](trace)
         ok = outcomes[index] == "success"
         subtask.status = StepStatus.SUCCESS if ok else StepStatus.FAILED
         trace.append(("end", subtask.id))
@@ -147,10 +165,18 @@ async def run_orchestrator(
 class ScriptedRunner(StepExecutor):
     """Succeed or fail after a few loop turns."""
 
-    def __init__(self, outcomes: list[str], delays: list[int]) -> None:
+    def __init__(
+        self,
+        outcomes: list[str],
+        delays: list[int],
+        trace: Trace,
+        holds: Holds | None = None,
+    ) -> None:
         super().__init__()
         self.outcomes = outcomes
         self.delays = delays
+        self.trace = trace
+        self.holds = holds or {}
 
     async def execute(
         self, step_def: StepDefinition, ctx: ExecutionContext
@@ -158,13 +184,19 @@ class ScriptedRunner(StepExecutor):
         index = int(step_def.name)
         for _ in range(self.delays[index]):
             await asyncio.sleep(0)
+        if index in self.holds:
+            await self.holds[index](self.trace)
         return StepResult(
             step_name=step_def.name, status=StepStatus(self.outcomes[index])
         )
 
 
 async def run_executor(
-    deps: Deps, outcomes: list[str], delays: list[int], limit: int
+    deps: Deps,
+    outcomes: list[str],
+    delays: list[int],
+    limit: int,
+    holds: Holds | None = None,
 ) -> tuple[dict[str, Outcome], Trace]:
     """Run ``DAGExecutor`` on the same plan."""
     dag = DAG(name="differential")
@@ -178,7 +210,7 @@ async def run_executor(
         elif event["type"] == "step_end" and event["status"] != "skipped":
             trace.append(("end", event["step"]))
 
-    runner = ScriptedRunner(outcomes, delays)
+    runner = ScriptedRunner(outcomes, delays, trace, holds)
     result = await DAGExecutor(step_executor=runner).execute(
         dag, ctx=ExecutionContext(), max_concurrency=limit, on_update=on_update
     )
@@ -207,26 +239,78 @@ async def test_orchestrator_and_executor_agree_on_every_plan(plan: Plan) -> None
     assert not _safety_violations(deps, limit, exec_trace), (plan, exec_trace)
 
 
+async def _until(event: tuple[str, str], trace: Trace) -> None:
+    """Yield until ``event`` is in ``trace``; a deadlock fails after 5 seconds."""
+
+    async def wait() -> None:
+        while event not in trace:
+            await asyncio.sleep(0)
+
+    await asyncio.wait_for(wait(), timeout=5)
+
+
 async def test_wave_barrier_ordering_divergence_is_pinned() -> None:
     """The orchestrator waits for a whole wave; the executor does not.
 
-    ``c`` depends on ``a``. ``a`` ends first, so ``DAGExecutor`` starts ``c``
-    while ``b`` still runs; the orchestrator starts nothing until ``b`` ends
-    as well. Only the relative order of ``b``'s end and ``c``'s start is pinned. Both orders are correct (neither breaks a dependency), but they
-    are not the same schedule. When the orchestrator moves onto
-    ``DAGExecutor`` this test is expected to change, which makes the move a
-    behaviour change to review, not a refactor.
+    ``c`` depends on ``a``, and ``b`` is held until the test lets it end. Once
+    ``a`` ends, ``DAGExecutor`` starts ``c`` while ``b`` still runs: ``b`` is
+    released only after ``c`` has started, so an executor that waited for the
+    whole wave would deadlock and fail on the timeout. The orchestrator starts
+    nothing until ``b`` ends, however long ``b`` takes. Both orders are correct
+    (neither breaks a dependency), but they are not the same schedule. When the
+    orchestrator moves onto ``DAGExecutor`` this test is expected to change,
+    which makes the move a behaviour change to review, not a refactor.
     """
     deps: Deps = [[], [], [0]]
     outcomes = ["success", "success", "success"]
-    delays = [1, 3, 0]
-    _, orch_trace = await run_orchestrator(deps, outcomes, delays, 2)
-    _, exec_trace = await run_executor(deps, outcomes, delays, 2)
+    delays = [0, 0, 0]
+    c_started_when_b_released: list[bool] = []
 
-    assert orch_trace.index(("end", "1")) < orch_trace.index(("start", "2"))
+    async def release_b_after_c_starts(trace: Trace) -> None:
+        await _until(("start", "2"), trace)
+
+    async def release_b_after_a_ends(trace: Trace) -> None:
+        await _until(("end", "0"), trace)
+        await asyncio.sleep(0.05)  # long enough for any early start of c
+        c_started_when_b_released.append(("start", "2") in trace)
+
+    _, exec_trace = await run_executor(
+        deps, outcomes, delays, 2, {1: release_b_after_c_starts}
+    )
+    _, orch_trace = await run_orchestrator(
+        deps, outcomes, delays, 2, {1: release_b_after_a_ends}
+    )
+
     assert exec_trace.index(("start", "2")) < exec_trace.index(("end", "1"))
+    assert c_started_when_b_released == [False]
+    assert orch_trace.index(("end", "1")) < orch_trace.index(("start", "2"))
     assert not _safety_violations(deps, 2, orch_trace)
     assert not _safety_violations(deps, 2, exec_trace)
+
+
+@pytest.mark.parametrize(
+    ("trace", "expected"),
+    [
+        (
+            [("start", "0"), ("start", "0"), ("end", "0"), ("end", "0")],
+            "0 started twice",
+        ),
+        (
+            [("start", "0"), ("end", "0"), ("start", "0"), ("end", "0")],
+            "0 started twice",
+        ),
+        ([("start", "0"), ("start", "1"), ("end", "0"), ("end", "1")], "more than 1"),
+        (
+            [("start", "1"), ("end", "1"), ("start", "0"), ("end", "0")],
+            "before its dep",
+        ),
+    ],
+    ids=["duplicate-running", "restart-after-end", "limit", "dependency-order"],
+)
+def test_safety_checker_rejects_unsafe_traces(trace: Trace, expected: str) -> None:
+    """The checker the property test relies on must itself fail on bad traces."""
+    deps: Deps = [[], [0]] if expected == "before its dep" else [[], []]
+    assert any(expected in p for p in _safety_violations(deps, 1, trace))
 
 
 @st.composite
