@@ -260,23 +260,23 @@ def _dag_verdict(deps: Deps) -> dict[str, Any]:
 @settings(max_examples=300, deadline=None, derandomize=True)
 @given(deps=graphs())
 def test_orchestrator_validation_is_dag_validate(deps: Deps) -> None:
-    """The orchestrator refuses exactly what ``DAG.validate`` refuses, with the
-    same cycle path and the same missing pair."""
+    """The orchestrator refuses exactly what ``DAG.validate`` refuses, with the same
+    cycle path and the same missing pair."""
     verdict = _verdict(_orchestrator_with(deps)._validate_plan)
     assert verdict == _dag_verdict(deps), deps
 
 
 def test_empty_plan_is_not_validated_by_design() -> None:
-    """``DAG.validate`` calls an empty plan an error; the orchestrator has
-    nothing to run and nothing to validate, so it accepts it."""
+    """``DAG.validate`` calls an empty plan an error; the orchestrator has nothing to
+    run and nothing to validate, so it accepts it."""
     assert _verdict(_orchestrator_with([])._validate_plan) == {"verdict": "ok"}
     with pytest.raises(ValueError, match="no steps"):
         DAG(name="empty").validate()
 
 
 def test_orchestrator_validation_matches_the_lean_model() -> None:
-    """Both Python sides must also match Lean's ``validate`` on every verdict
-    path, so they cannot agree with each other on a shared bug."""
+    """Both Python sides must also match Lean's ``validate`` on every verdict path, so
+    they cannot agree with each other on a shared bug."""
     if os.environ.get("ARP_LEAN_REPLAY") != "1":
         pytest.skip("set ARP_LEAN_REPLAY=1 to cross-check against the Lean model")
     binary = ROOT / "proofs" / ".lake" / "build" / "bin" / "replay"
