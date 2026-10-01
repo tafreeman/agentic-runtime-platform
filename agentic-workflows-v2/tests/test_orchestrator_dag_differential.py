@@ -55,6 +55,7 @@ from agentic_v2.engine.step import StepDefinition, StepExecutor
 ROOT = Path(__file__).resolve().parents[2]
 MAX_STEPS = 7
 MAX_DELAY = 4  # event-loop turns a scripted step takes
+SCHEDULER_TURNS = 1000  # turns a scheduler gets to act before a held step ends
 
 # Executor skip reason -> the orchestrator's reason for the same situation. A
 # plan of FAILED/SUCCESS steps only ever skips a step because a dependency
@@ -256,7 +257,7 @@ async def test_wave_barrier_ordering_divergence_is_pinned() -> None:
     ``a`` ends, ``DAGExecutor`` starts ``c`` while ``b`` still runs: ``b`` is
     released only after ``c`` has started, so an executor that waited for the
     whole wave would deadlock and fail on the timeout. The orchestrator starts
-    nothing until ``b`` ends, however long ``b`` takes. Both orders are correct
+    nothing until ``b`` ends, however many event-loop turns it is given. Both orders are correct
     (neither breaks a dependency), but they are not the same schedule. When the
     orchestrator moves onto ``DAGExecutor`` this test is expected to change,
     which makes the move a behaviour change to review, not a refactor.
@@ -271,7 +272,11 @@ async def test_wave_barrier_ordering_divergence_is_pinned() -> None:
 
     async def release_b_after_a_ends(trace: Trace) -> None:
         await _until(("end", "0"), trace)
-        await asyncio.sleep(0.05)  # long enough for any early start of c
+        # Give a scheduler that does not wait for the wave every chance to start
+        # c: a thousand event-loop turns is far more than it needs, and unlike
+        # a wall-clock grace period it does not shrink when the machine is busy.
+        for _ in range(SCHEDULER_TURNS):
+            await asyncio.sleep(0)
         c_started_when_b_released.append(("start", "2") in trace)
 
     _, exec_trace = await run_executor(
