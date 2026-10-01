@@ -60,8 +60,38 @@ $env:AGENTIC_NO_LLM = "1"
 
 Without opt-in the replay tests skip, and with opt-in a missing binary is an
 error. The defect regression tests need no Lean and run in every suite.
-The tests use no providers or additional Python dependencies, and they compare
-the real Python executor with the Lean spec, not a handwritten Python oracle.
+The tests use no providers, and they compare the real Python executor with the
+Lean spec, not a handwritten Python oracle. The seeded replay module also imports
+`hypothesis` (a dev dependency) for its 20-example timeout test; the exhaustive
+module below needs only the standard library and pytest.
+
+## Exhaustive replay of small plans
+
+`test_dag_executor_lean_exhaustive.py` replaces sampling with enumeration inside
+a size bound. For every acyclic dependency graph of up to 3 steps (insertion
+order is the step label order, so an edge may point forward), every assignment
+of the six outcome classes (SUCCESS, SKIPPED, FAILED, a non-terminal status, an
+exception, a cancelled task), every concurrency limit from 1 to the step count
+and every legal sequence of FIRST_COMPLETED batches, the real executor runs
+once and its start order, `step_end` order, results, lifecycle states and flags
+must equal the Lean operational model's, exactly as above. That is 38,994
+schedules. A stand-in for `asyncio` inside `dag_executor` parks every step task
+at a gate and, at each wait, releases an ordered nonempty subset of the parked
+steps, which are exactly the batches `Legal` admits. Schedules are explored by
+re-execution, so each runs once, and Lean answers a whole graph's cases in one
+process through the `{"cases": [...]}` request.
+
+Setting `ARP_LEAN_EXHAUSTIVE_MAX_STEPS=4` adds all 543 graphs of 4 steps with
+four outcome classes (SUCCESS, SKIPPED, FAILED, an exception), 2,172 more cases
+that took about 19 minutes on a developer machine. The workflow runs that nightly
+and on demand, not per PR.
+
+The enumeration is complete within that bound and says nothing above it. It
+does not cover duplicate dependency edges (the seeded replay does), a timeout,
+or a cancel that lands at an await inside a batch; the executor reaches those
+awaits only with an observer that suspends. Making the ready queue LIFO, letting
+`max_concurrency` be exceeded by one, or skipping the non-terminal check each
+fails it.
 
 ## What the replay checks
 
