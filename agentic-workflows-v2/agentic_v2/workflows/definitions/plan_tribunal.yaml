@@ -3,9 +3,10 @@ description: >-
   Multi-judge review of proposed implementation plans. A brief step distils the
   source documents into a candidate slate (P1..Pn) plus a shared domain brief;
   five persona judges (verification, concurrency, pragmatist, governance,
-  adversary) each research the plans AND alternatives the plans missed, then
-  name a first candidate. A deterministic tier-0 vote decides the panel's first
-  candidate. When it clears ``min_agreement``, every judge rules APPROVE, REVISE
+  adversary) each research the plans AND alternatives the plans missed; an
+  extend_slate step merges equivalent alternatives into shared ALT-ids, and each
+  judge then names a first candidate from that extended slate. A deterministic
+  tier-0 vote decides the panel's first candidate. When it clears ``min_agreement``, every judge rules APPROVE, REVISE
   or REJECT on that one candidate, a second tier-0 vote tallies the rulings, and
   a synthesis step ranks the slate, merges the alternatives and records dissent.
   The approval is reported with its agreement and ``approval_met`` flag, so a
@@ -90,21 +91,44 @@ steps:
     outputs:
       findings: findings_verification
 
+  - name: extend_slate
+    agent: tier2_analyst
+    model_override: env:TRIBUNAL_MODEL_BRIEF|
+    description: >-
+      Build the extended slate the judges choose from: the original slate with
+      its P-ids unchanged, plus every NEW alternative from the five research
+      `findings`, merged where two judges found the same proposal. Give each
+      merged alternative one canonical id ALT-1, ALT-2 and so on, with a
+      one-line description and which judges raised it, so that equivalent
+      discoveries share a single id and can win a vote. Do not drop an
+      alternative the slate already covers; map it to its P-id. Honour `focus`.
+    depends_on: [research_verification, research_concurrency, research_pragmatist, research_governance, research_adversary]
+    tools: []
+    inputs:
+      candidate_slate: ${steps.brief.outputs.candidate_slate}
+      findings_verification: ${steps.research_verification.outputs.findings}
+      findings_concurrency: ${steps.research_concurrency.outputs.findings}
+      findings_pragmatist: ${steps.research_pragmatist.outputs.findings}
+      findings_governance: ${steps.research_governance.outputs.findings}
+      findings_adversary: ${steps.research_adversary.outputs.findings}
+      focus: ${inputs.focus}
+    outputs:
+      extended_slate: extended_slate
+
   - name: verdict_verification
     agent: tier2_reviewer
     prompt_file: judges/plan_judge_verification.md
     model_override: env:TRIBUNAL_MODEL_VERIFICATION|
     description: >-
       Verification Engineer: from your findings, judge the slate, honouring `focus`. Emit
-      `first_pick` (exactly one candidate ID, e.g. P3, or a new alternative
-      named NEW-verification-1, NEW-verification-2 and so on, so that IDs never collide across
-      judges), `ranking` (all candidates best to worst with a one-line reason
+      `first_pick` (exactly one id from the extended slate: an original
+      P-id or a consolidated ALT-id, e.g. P3 or ALT-2), `ranking` (all candidates best to worst with a one-line reason
       each), `alternatives` (new options worth adding), `rationale` and
       `dissent` (what you expect the other judges to get wrong).
-    depends_on: [research_verification]
+    depends_on: [extend_slate]
     tools: []
     inputs:
-      candidate_slate: ${steps.brief.outputs.candidate_slate}
+      candidate_slate: ${steps.extend_slate.outputs.extended_slate}
       findings: ${steps.research_verification.outputs.findings}
       focus: ${inputs.focus}
     outputs:
@@ -138,15 +162,14 @@ steps:
     model_override: env:TRIBUNAL_MODEL_CONCURRENCY|
     description: >-
       Concurrency and Runtime Skeptic: from your findings, judge the slate, honouring `focus`. Emit
-      `first_pick` (exactly one candidate ID, e.g. P3, or a new alternative
-      named NEW-concurrency-1, NEW-concurrency-2 and so on, so that IDs never collide across
-      judges), `ranking` (all candidates best to worst with a one-line reason
+      `first_pick` (exactly one id from the extended slate: an original
+      P-id or a consolidated ALT-id, e.g. P3 or ALT-2), `ranking` (all candidates best to worst with a one-line reason
       each), `alternatives` (new options worth adding), `rationale` and
       `dissent` (what you expect the other judges to get wrong).
-    depends_on: [research_concurrency]
+    depends_on: [extend_slate]
     tools: []
     inputs:
-      candidate_slate: ${steps.brief.outputs.candidate_slate}
+      candidate_slate: ${steps.extend_slate.outputs.extended_slate}
       findings: ${steps.research_concurrency.outputs.findings}
       focus: ${inputs.focus}
     outputs:
@@ -180,15 +203,14 @@ steps:
     model_override: env:TRIBUNAL_MODEL_PRAGMATIST|
     description: >-
       Cost and Effort Pragmatist: from your findings, judge the slate, honouring `focus`. Emit
-      `first_pick` (exactly one candidate ID, e.g. P3, or a new alternative
-      named NEW-pragmatist-1, NEW-pragmatist-2 and so on, so that IDs never collide across
-      judges), `ranking` (all candidates best to worst with a one-line reason
+      `first_pick` (exactly one id from the extended slate: an original
+      P-id or a consolidated ALT-id, e.g. P3 or ALT-2), `ranking` (all candidates best to worst with a one-line reason
       each), `alternatives` (new options worth adding), `rationale` and
       `dissent` (what you expect the other judges to get wrong).
-    depends_on: [research_pragmatist]
+    depends_on: [extend_slate]
     tools: []
     inputs:
-      candidate_slate: ${steps.brief.outputs.candidate_slate}
+      candidate_slate: ${steps.extend_slate.outputs.extended_slate}
       findings: ${steps.research_pragmatist.outputs.findings}
       focus: ${inputs.focus}
     outputs:
@@ -222,15 +244,14 @@ steps:
     model_override: env:TRIBUNAL_MODEL_GOVERNANCE|
     description: >-
       Governance and Evals Analyst: from your findings, judge the slate, honouring `focus`. Emit
-      `first_pick` (exactly one candidate ID, e.g. P3, or a new alternative
-      named NEW-governance-1, NEW-governance-2 and so on, so that IDs never collide across
-      judges), `ranking` (all candidates best to worst with a one-line reason
+      `first_pick` (exactly one id from the extended slate: an original
+      P-id or a consolidated ALT-id, e.g. P3 or ALT-2), `ranking` (all candidates best to worst with a one-line reason
       each), `alternatives` (new options worth adding), `rationale` and
       `dissent` (what you expect the other judges to get wrong).
-    depends_on: [research_governance]
+    depends_on: [extend_slate]
     tools: []
     inputs:
-      candidate_slate: ${steps.brief.outputs.candidate_slate}
+      candidate_slate: ${steps.extend_slate.outputs.extended_slate}
       findings: ${steps.research_governance.outputs.findings}
       focus: ${inputs.focus}
     outputs:
@@ -264,15 +285,14 @@ steps:
     model_override: env:TRIBUNAL_MODEL_ADVERSARY|
     description: >-
       Adversarial Reviewer: from your findings, judge the slate, honouring `focus`. Emit
-      `first_pick` (exactly one candidate ID, e.g. P3, or a new alternative
-      named NEW-adversary-1, NEW-adversary-2 and so on, so that IDs never collide across
-      judges), `ranking` (all candidates best to worst with a one-line reason
+      `first_pick` (exactly one id from the extended slate: an original
+      P-id or a consolidated ALT-id, e.g. P3 or ALT-2), `ranking` (all candidates best to worst with a one-line reason
       each), `alternatives` (new options worth adding), `rationale` and
       `dissent` (what you expect the other judges to get wrong).
-    depends_on: [research_adversary]
+    depends_on: [extend_slate]
     tools: []
     inputs:
-      candidate_slate: ${steps.brief.outputs.candidate_slate}
+      candidate_slate: ${steps.extend_slate.outputs.extended_slate}
       findings: ${steps.research_adversary.outputs.findings}
       focus: ${inputs.focus}
     outputs:
@@ -312,7 +332,7 @@ steps:
     when: ${steps.vote_pick.outputs.meets_threshold}
     tools: []
     inputs:
-      candidate_slate: ${steps.brief.outputs.candidate_slate}
+      candidate_slate: ${steps.extend_slate.outputs.extended_slate}
       first_candidate: ${steps.vote_pick.outputs.winner}
       findings: ${steps.research_verification.outputs.findings}
       your_rationale: ${steps.verdict_verification.outputs.rationale}
@@ -333,7 +353,7 @@ steps:
     when: ${steps.vote_pick.outputs.meets_threshold}
     tools: []
     inputs:
-      candidate_slate: ${steps.brief.outputs.candidate_slate}
+      candidate_slate: ${steps.extend_slate.outputs.extended_slate}
       first_candidate: ${steps.vote_pick.outputs.winner}
       findings: ${steps.research_concurrency.outputs.findings}
       your_rationale: ${steps.verdict_concurrency.outputs.rationale}
@@ -354,7 +374,7 @@ steps:
     when: ${steps.vote_pick.outputs.meets_threshold}
     tools: []
     inputs:
-      candidate_slate: ${steps.brief.outputs.candidate_slate}
+      candidate_slate: ${steps.extend_slate.outputs.extended_slate}
       first_candidate: ${steps.vote_pick.outputs.winner}
       findings: ${steps.research_pragmatist.outputs.findings}
       your_rationale: ${steps.verdict_pragmatist.outputs.rationale}
@@ -375,7 +395,7 @@ steps:
     when: ${steps.vote_pick.outputs.meets_threshold}
     tools: []
     inputs:
-      candidate_slate: ${steps.brief.outputs.candidate_slate}
+      candidate_slate: ${steps.extend_slate.outputs.extended_slate}
       first_candidate: ${steps.vote_pick.outputs.winner}
       findings: ${steps.research_governance.outputs.findings}
       your_rationale: ${steps.verdict_governance.outputs.rationale}
@@ -396,7 +416,7 @@ steps:
     when: ${steps.vote_pick.outputs.meets_threshold}
     tools: []
     inputs:
-      candidate_slate: ${steps.brief.outputs.candidate_slate}
+      candidate_slate: ${steps.extend_slate.outputs.extended_slate}
       first_candidate: ${steps.vote_pick.outputs.winner}
       findings: ${steps.research_adversary.outputs.findings}
       your_rationale: ${steps.verdict_adversary.outputs.rationale}
@@ -439,7 +459,7 @@ steps:
     depends_on: [vote_stance]
     when: ${steps.vote_pick.outputs.meets_threshold}
     inputs:
-      candidate_slate: ${steps.brief.outputs.candidate_slate}
+      candidate_slate: ${steps.extend_slate.outputs.extended_slate}
       first_candidate: ${steps.vote_pick.outputs.winner}
       pick_votes: ${steps.vote_pick.outputs.votes}
       approval: ${steps.vote_stance.outputs.winner}

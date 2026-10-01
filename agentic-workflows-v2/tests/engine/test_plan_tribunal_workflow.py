@@ -27,11 +27,17 @@ def workflow():
     )
 
 
-def test_every_judge_has_research_then_verdict(workflow):
+def test_every_judge_researches_then_judges_the_extended_slate(workflow):
     steps = workflow.dag.steps
+    research = [f"research_{key}" for key in _JUDGES]
+    assert steps["extend_slate"].depends_on == research
     for key in _JUDGES:
         assert steps[f"research_{key}"].depends_on == ["brief"]
-        assert steps[f"verdict_{key}"].depends_on == [f"research_{key}"]
+        verdict = steps[f"verdict_{key}"]
+        assert verdict.depends_on == ["extend_slate"]
+        assert verdict.input_mapping["candidate_slate"] == (
+            "${steps.extend_slate.outputs.extended_slate}"
+        )
 
 
 def test_judge_personas_exist_and_share_baseline(workflow):
@@ -78,7 +84,7 @@ def test_stance_is_ruled_on_the_panels_pick_not_each_judges_own(workflow):
 
 def test_focus_reaches_every_judging_and_synthesis_step(workflow):
     steps = workflow.dag.steps
-    names = ["brief", "synthesis"] + [
+    names = ["brief", "extend_slate", "synthesis"] + [
         f"{phase}_{key}"
         for key in _JUDGES
         for phase in ("research", "verdict", "ratify")
@@ -93,10 +99,21 @@ def test_synthesis_sees_whether_approval_was_reached(workflow):
     assert "approval_met" in workflow.outputs
 
 
-def test_new_alternative_ids_are_namespaced_by_judge(workflow):
+def test_equivalent_alternatives_share_one_canonical_id(workflow):
+    """Judges vote on ids from one extended slate, so the same alternative found
+    by several judges is one vote bucket, not one per judge."""
+    steps = workflow.dag.steps
+    assert "ALT-1" in steps["extend_slate"].description
     for key in _JUDGES:
-        text = workflow.dag.steps[f"verdict_{key}"].description
-        assert f"NEW-{key}-1" in text
+        assert "ALT-" in steps[f"verdict_{key}"].description
+        assert "NEW-" not in steps[f"verdict_{key}"].description
+        for name in (f"ratify_{key}",):
+            assert steps[name].input_mapping["candidate_slate"] == (
+                "${steps.extend_slate.outputs.extended_slate}"
+            )
+    assert steps["synthesis"].input_mapping["candidate_slate"] == (
+        "${steps.extend_slate.outputs.extended_slate}"
+    )
 
 
 def test_role_model_overrides_are_optional_env_vars(workflow):
