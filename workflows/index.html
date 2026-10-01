@@ -2949,6 +2949,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#plan_tribunal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        plan_tribunal
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#test_deterministic" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3090,6 +3101,13 @@ reference.</p>
 <td>Three independent reviewers vote; summarize only on agreement</td>
 </tr>
 <tr>
+<td><a href="#plan_tribunal"><code>plan_tribunal</code></a></td>
+<td>Persona judges, research, two votes</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">5</td>
+<td>Five judges research proposed plans, vote on a first candidate, rule on it and synthesize a ranked report</td>
+</tr>
+<tr>
 <td><a href="#test_deterministic"><code>test_deterministic</code></a></td>
 <td>Tier-0 placeholder path</td>
 <td style="text-align: right;">2</td>
@@ -3197,6 +3215,38 @@ the vote meets the <code>min_agreement</code> threshold, which defaults to <code
   producing a summary</li>
 </ul>
 <p><a class="md-button" href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/agentic_v2/workflows/definitions/consensus_review.yaml">View YAML →</a></p>
+<h2 id="plan_tribunal"><code>plan_tribunal</code><a class="headerlink" href="#plan_tribunal" title="Permanent link">&para;</a></h2>
+<p>Five persona judges (verification, concurrency, pragmatist, governance,
+adversary) review proposed implementation plans. A <code>brief</code> step reads the plan
+documents and emits a candidate slate plus a shared domain brief. Each judge
+then researches the slate against the repo and the web and proposes alternatives
+the plans missed. An <code>extend_slate</code> step merges equivalent alternatives into
+shared <code>ALT-</code> ids, and each judge names a first candidate from that extended
+slate. A tier-0 vote picks the panel's
+first candidate; when it meets <code>min_agreement</code>, every judge rules APPROVE,
+REVISE or REJECT on that one candidate, a second tier-0 vote tallies the
+rulings, and a synthesis step writes the ranked report with dissent. A split
+ruling is reported with <code>approval_met</code> false, never as a decision.</p>
+<ul>
+<li><strong>Pattern:</strong> Persona judges, research, two votes</li>
+<li><strong>Steps:</strong> <code>brief</code> → <code>research_*</code> ×5 → <code>extend_slate</code> → <code>verdict_*</code> ×5 →
+  <code>vote_pick</code> → <code>ratify_*</code> ×5 → <code>vote_stance</code> → <code>synthesis</code> (the last three
+  gated on <code>meets_threshold</code>)</li>
+<li><strong>Agents:</strong> <code>tier0_consensus</code>, <code>tier2_analyst</code>, <code>tier2_researcher</code>,
+  <code>tier2_reviewer</code>, <code>tier3_synthesizer</code></li>
+<li><strong>Inputs:</strong> <code>plan_paths</code>, <code>grounding_paths</code>, <code>focus</code>, <code>min_agreement</code></li>
+<li><strong>Outputs:</strong> <code>first_candidate</code>, <code>agreement</code>, <code>approval</code> (optional),
+  <code>approval_met</code> (optional), <code>report</code> (optional)</li>
+<li><strong>Models:</strong> each role reads <code>TRIBUNAL_MODEL_&lt;ROLE&gt;</code> (<code>BRIEF</code>, <code>SYNTHESIS</code>,
+  <code>VERIFICATION</code>, <code>CONCURRENCY</code>, <code>PRAGMATIST</code>, <code>GOVERNANCE</code>, <code>ADVERSARY</code>);
+  an unset variable uses normal tier routing</li>
+<li><strong>Adapter:</strong> run it with the default langchain adapter. The native adapter
+  ignores <code>model_override</code> and lacks the <code>search_files</code> and <code>web_search</code> tools
+  the research steps use</li>
+<li><strong>Use it for:</strong> a multi-perspective, evidence-backed ranking of competing
+  plans before committing to one</li>
+</ul>
+<p><a class="md-button" href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/agentic_v2/workflows/definitions/plan_tribunal.yaml">View YAML →</a></p>
 <h2 id="test_deterministic"><code>test_deterministic</code><a class="headerlink" href="#test_deterministic" title="Permanent link">&para;</a></h2>
 <p>The smallest workflow has two steps with two tier-0 agents. In the current
 native execution path, those agents still pass through the model-client loop.
@@ -3262,7 +3312,7 @@ with no inputs at all.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 1, 2026 03:04:55 UTC">October 1, 2026</span>
   </span>
 
     
