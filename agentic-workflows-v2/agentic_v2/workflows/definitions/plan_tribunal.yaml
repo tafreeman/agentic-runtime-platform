@@ -9,8 +9,10 @@ description: >-
   or REJECT on that one candidate, a second tier-0 vote tallies the rulings, and
   a synthesis step ranks the slate, merges the alternatives and records dissent.
   The approval is reported with its agreement and ``approval_met`` flag, so a
-  split ruling is never presented as a decision. Per-role models need the
-  default langchain adapter; the native adapter ignores ``model_override``.
+  split ruling is never presented as a decision. Run it with the default
+  langchain adapter: the native adapter ignores ``model_override`` and has no
+  ``search_files`` or ``web_search`` tool, so the research steps would have only
+  ``file_read`` and ``http_get``.
 version: "1.0"
 
 # Per-role models come from TRIBUNAL_MODEL_<ROLE> env vars through
