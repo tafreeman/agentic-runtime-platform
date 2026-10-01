@@ -781,7 +781,9 @@ def get_model_candidates_for_tier(
     pinned: list[str] = []
 
     if model_override:
-        pinned.append(resolve_model_override(model_override))
+        resolved = resolve_model_override(model_override)
+        if resolved:  # an optional ``env:VAR|`` override that is unset
+            pinned.append(resolved)
 
     env_key = f"AGENTIC_MODEL_TIER_{tier}"
     env_val = (os.environ.get(env_key) or "").strip()
