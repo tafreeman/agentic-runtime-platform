@@ -16,6 +16,9 @@ on:
       - 'agentic-workflows-v2/agentic_v2/engine/step_state.py'
       - 'agentic-workflows-v2/agentic_v2/contracts/messages.py'
       - 'agentic-workflows-v2/tests/engine/test_dag_executor_lean_replay.py'
+      - 'agentic-workflows-v2/tests/engine/test_dag_executor_lean_exhaustive.py'
+      - 'agentic-workflows-v2/tests/test_orchestrator_dag_differential.py'
+      - 'agentic-workflows-v2/agentic_v2/agents/orchestrator*.py'
       - '.github/workflows/lean-proofs.yml'
   pull_request:
     branches: [main, agenticv2]
@@ -26,7 +29,15 @@ on:
       - 'agentic-workflows-v2/agentic_v2/engine/step_state.py'
       - 'agentic-workflows-v2/agentic_v2/contracts/messages.py'
       - 'agentic-workflows-v2/tests/engine/test_dag_executor_lean_replay.py'
+      - 'agentic-workflows-v2/tests/engine/test_dag_executor_lean_exhaustive.py'
+      - 'agentic-workflows-v2/tests/test_orchestrator_dag_differential.py'
+      - 'agentic-workflows-v2/agentic_v2/agents/orchestrator*.py'
       - '.github/workflows/lean-proofs.yml'
+
+  # The n=4 exhaustive tier is too long for a PR; it runs nightly and on demand.
+  schedule:
+    - cron: '17 4 * * *'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -34,7 +45,7 @@ permissions:
 jobs:
   lean-replay:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: ${{ github.event_name == 'pull_request' && 20 || 60 }}
     env:
       ARP_LEAN_REPLAY: '1'
       AGENTIC_NO_LLM: '1'
@@ -62,3 +73,18 @@ jobs:
       - name: Replay the Python executor against Lean
         working-directory: agentic-workflows-v2
         run: python -m pytest tests/engine/test_dag_executor_lean_replay.py -q --timeout=120
+      # Every plan of up to 3 steps against every legal completion order.
+      - name: Replay every legal schedule of small plans against Lean
+        working-directory: agentic-workflows-v2
+        run: python -m pytest tests/engine/test_dag_executor_lean_exhaustive.py -q --timeout=120
+      # Includes the orchestrator-versus-Lean validate cross-check, which skips
+      # without ARP_LEAN_REPLAY.
+      - name: Check the orchestrator's scheduler against DAGExecutor and Lean
+        working-directory: agentic-workflows-v2
+        run: python -m pytest tests/test_orchestrator_dag_differential.py -q --timeout=120
+      - name: Replay every legal schedule of 4-step plans (nightly)
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        working-directory: agentic-workflows-v2
+        env:
+          ARP_LEAN_EXHAUSTIVE_MAX_STEPS: '4'
+        run: python -m pytest tests/engine/test_dag_executor_lean_exhaustive.py -q --timeout=900
