@@ -244,6 +244,8 @@ def resolve_model_override(model_override: str) -> str:
     - ``ollama:deepseek-r1``        — returned as-is (direct model ID)
     - ``env:VAR_NAME``              — required environment variable; raises if absent
     - ``env:VAR_NAME|gh:openai/gpt-4o-mini`` — env var with inline fallback
+    - ``env:VAR_NAME|``              — optional env var: an empty string (no
+      override) when it is unset, so normal tier routing applies
 
     Parameters
     ----------
@@ -252,7 +254,8 @@ def resolve_model_override(model_override: str) -> str:
 
     Returns
     -------
-    The resolved model ID string.
+    The resolved model ID string, or ``""`` for an optional ``env:VAR|``
+    override whose variable is unset (callers treat that as no override).
 
     Raises
     ------
@@ -280,7 +283,7 @@ def resolve_model_override(model_override: str) -> str:
     env_val = os.environ.get(env_key, "").strip()
     if env_val:
         return env_val
-    if fallback:
+    if fallback or "|" in raw:
         return fallback
 
     raise ValueError(
