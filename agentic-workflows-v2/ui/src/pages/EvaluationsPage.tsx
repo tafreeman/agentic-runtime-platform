@@ -1,12 +1,15 @@
-import { Fragment, type ReactNode, useMemo, useState } from "react";
+import { Fragment, type ReactNode, useId, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { evaluateRun } from "../api/client";
 import { useRuns } from "../hooks/useRuns";
+import { useApiAvailability } from "../hooks/useApiAvailability";
+import { describeApiError, formatApiError } from "../lib/apiErrors";
 import BTopBar from "../components/layout/BTopBar";
 import BPill, { type BPillTone } from "../components/common/BPill";
 import BAsciiBar from "../components/common/BAsciiBar";
 import EmptyState from "../components/states/EmptyState";
+import NoData from "../components/states/NoData";
 import InlineError from "../components/states/InlineError";
 import EvaluationRubricAccordion from "../components/evaluations/EvaluationRubricAccordion";
 import RunComparePanel from "../components/evaluations/RunComparePanel";
@@ -17,13 +20,11 @@ import {
   scoreToPercent,
 } from "../lib/grades";
 
-type BarColor = "b-green" | "b-clay" | "b-red" | "b-amber" | "b-blue";
+/** Semantic BAsciiBar colors used for score thresholds. */
+type BarColor = "success" | "warning" | "danger";
 
-/** Card chrome shared across the screen: theme radius + border + bg1. */
-const CARD_STYLE = {
-  borderWidth: "var(--b-bw)",
-  borderRadius: "var(--b-rad-lg)",
-} as const;
+/** Ledger band chrome shared across the screen: 8px radius, hairline, surface. */
+const BAND_CLASS = "rounded-lg border border-el-divider bg-el-surface";
 
 /** Letter-grade tier scale shown beside the scorecard grade. */
 const TIER_SCALE = ["A", "B", "C", "D", "F"] as const;
@@ -45,12 +46,11 @@ function SelectPill({
 }: Readonly<{ label: string; chosen: boolean }>) {
   return (
     <span
-      className={`inline-flex items-center border px-2 py-1.5 font-mono text-[11px] ${
+      className={`inline-flex items-center rounded-md border px-2 py-1.5 font-mono text-micro ${
         chosen
-          ? "border-b-clay/50 bg-b-bg2 text-b-text"
-          : "border-b-line bg-b-bg1 text-b-text-faint"
+          ? "border-el-secondary bg-el-subtle text-el-ink"
+          : "border-el-divider bg-el-surface text-el-muted"
       }`}
-      style={{ borderRadius: "var(--b-rad-sm)" }}
     >
       {label}
     </span>
@@ -85,9 +85,9 @@ function passLabelFor(
 
 /** Threshold-based bar color: green ≥75%, amber ≥50%, else red. */
 function rateBarColor(ratio: number): BarColor {
-  if (ratio >= 0.75) return "b-green";
-  if (ratio >= 0.5) return "b-amber";
-  return "b-red";
+  if (ratio >= 0.75) return "success";
+  if (ratio >= 0.5) return "warning";
+  return "danger";
 }
 
 /** Relative "Nh ago" label for the run picker. */
@@ -112,6 +112,11 @@ export default function EvaluationsPage() {
     null,
   );
   const queryClient = useQueryClient();
+  const { apiDown, reason: apiDownReason } = useApiAvailability();
+  const apiDownReasonId = useId();
+  // A failed refetch keeps the last good list; only a failure with nothing to
+  // show replaces the page body.
+  const loadFailure = isError ? describeApiError(error) : null;
 
   const evaluatedRuns = useMemo(
     () => (runs ?? []).filter((r) => r.evaluation_score != null),
@@ -173,17 +178,27 @@ export default function EvaluationsPage() {
     return { pct, grade: gradeLetter(null, pct) ?? "—" };
   }, [evaluatedRuns]);
 
+  let pickerEmptyText = "runs unavailable";
+  if (isLoading) pickerEmptyText = "loading runs…";
+  else if (runs) pickerEmptyText = "no runs yet — run a workflow, then score it here";
+
   let mainContent: ReactNode;
   if (isLoading) {
     mainContent = (
-      <div className="flex justify-center p-12 font-mono text-[11px] text-b-text-dim">
+      <div className="flex justify-center p-12 font-mono text-micro text-el-muted">
         Loading evaluations...
       </div>
     );
-  } else if (isError) {
-    mainContent = (
+  } else if (loadFailure && !runs) {
+    // The shell's offline banner already announces an unreachable API; keep
+    // this to a quiet note instead of a second alert.
+    mainContent = loadFailure.unreachable ? (
+      <p className="py-6 text-center font-mono text-micro text-el-muted">
+        Evaluations can't load while the API is unreachable.
+      </p>
+    ) : (
       <InlineError
-        message={`failed to load evaluations${error instanceof Error ? `: ${error.message}` : ""}`}
+        message={`failed to load evaluations: ${formatApiError(error)}`}
         onRetry={() => refetch()}
       />
     );
@@ -194,7 +209,7 @@ export default function EvaluationsPage() {
         action={
           <Link
             to="/workflows"
-            className="font-mono text-[11px] text-b-clay underline hover:text-b-text"
+            className="focus-ring inline-flex min-h-9 items-center font-mono text-micro text-el-ink underline underline-offset-2 hover:text-el-accent-strong"
           >
             [→ run a workflow with evaluation]
           </Link>
@@ -208,47 +223,32 @@ export default function EvaluationsPage() {
         {/* Scorecard + side panels */}
         <div className="grid grid-cols-1 gap-[18px] lg:grid-cols-[1.1fr_1fr]">
           {/* Scorecard: big letter grade + tier scale + distribution dimensions */}
-          <section
-            className="border border-b-line bg-b-bg1"
-            style={CARD_STYLE}
-            aria-label="scorecard"
-          >
+          <section className={BAND_CLASS} aria-label="scorecard">
             <div className="flex items-center justify-between p-[20px] pb-0">
-              <span className="font-mono text-[9.5px] uppercase tracking-[1.5px] text-b-text-faint">
+              <span className="font-mono text-micro uppercase tracking-[1.5px] text-el-muted">
                 SCORECARD · {evaluatedRuns.length} runs scored
               </span>
-              <span className="font-mono text-[9.5px] text-b-text-dim">
+              <span className="font-mono text-micro text-el-muted">
                 automated grading
               </span>
             </div>
 
             <div className="flex items-center gap-5 p-[20px]">
               <div
-                className={`flex h-24 w-24 flex-none flex-col items-center justify-center border ${gradeAccent}`}
-                style={{
-                  borderRadius: "var(--b-rad-lg)",
-                  borderColor: "currentColor",
-                  background: "rgb(var(--b-bg2))",
-                }}
+                className={`flex h-24 w-24 flex-none flex-col items-center justify-center rounded-lg border border-current bg-el-subtle ${gradeAccent}`}
               >
-                <span
-                  className="text-[48px] font-bold leading-none"
-                  style={{ fontFamily: "var(--b-font-heading)" }}
-                >
+                <span className="font-display text-[48px] font-bold leading-none">
                   {overall.grade}
                 </span>
-                <span className="mt-0.5 font-mono text-[10px] text-b-text-mid tabular-nums">
+                <span className="mt-0.5 font-mono text-micro text-el-secondary tabular-nums">
                   {overall.pct.toFixed(1)}
                 </span>
               </div>
               <div className="flex-1">
-                <div
-                  className="text-[15px] font-semibold text-b-text"
-                  style={{ fontFamily: "var(--b-font-heading)" }}
-                >
+                <div className="font-display text-[15px] font-semibold text-el-ink">
                   Multidimensional score
                 </div>
-                <p className="mt-1.5 text-[10.5px] leading-relaxed text-b-text-dim">
+                <p className="mt-1.5 text-micro leading-relaxed text-el-muted">
                   Runs scored across orthogonal criteria, classified into
                   lettered tiers with weighted normalization applied.
                 </p>
@@ -256,11 +256,7 @@ export default function EvaluationsPage() {
                   {TIER_SCALE.map((letter) => (
                     <span
                       key={letter}
-                      className={`flex h-6 w-6 items-center justify-center border font-mono text-[10px] font-semibold ${gradeColorClass(letter)}`}
-                      style={{
-                        borderRadius: "var(--b-rad-sm)",
-                        borderColor: "currentColor",
-                      }}
+                      className={`flex h-6 w-6 items-center justify-center rounded-md border border-current font-mono text-micro font-semibold ${gradeColorClass(letter)}`}
                     >
                       {letter}
                     </span>
@@ -270,8 +266,8 @@ export default function EvaluationsPage() {
             </div>
 
             {/* Score distribution — 20 buckets */}
-            <div className="border-t border-b-line-soft p-[20px]">
-              <div className="mb-3 font-mono text-[9px] uppercase tracking-[1px] text-b-text-faint">
+            <div className="border-t border-el-divider-soft p-[20px]">
+              <div className="mb-3 font-mono text-micro uppercase tracking-[1px] text-el-muted">
                 SCORE DISTRIBUTION · 20 buckets
               </div>
               <div className="flex h-[120px] items-end gap-[3px]">
@@ -279,12 +275,14 @@ export default function EvaluationsPage() {
                   const h = (c / maxBucket) * 100;
                   const mid = i * 5 + 2.5;
                   let color: string;
+                  // Same thresholds as the pass-rate bars: <50 fail,
+                  // 50–75 needs review, ≥75 pass.
                   if (mid < 50) {
-                    color = "bg-b-red";
+                    color = "bg-el-danger";
                   } else if (mid < 75) {
-                    color = "bg-b-clay";
+                    color = "bg-el-warning";
                   } else {
-                    color = "bg-b-green";
+                    color = "bg-el-success";
                   }
                   return (
                     <div
@@ -295,13 +293,13 @@ export default function EvaluationsPage() {
                       {c > 0 ? (
                         <div className={color} style={{ height: `${h}%` }} />
                       ) : (
-                        <div className="h-[2px] bg-b-line-soft" />
+                        <div className="h-[2px] bg-el-divider-soft" />
                       )}
                     </div>
                   );
                 })}
               </div>
-              <div className="mt-2 flex justify-between font-mono text-[10px] text-b-text-dim">
+              <div className="mt-2 flex justify-between font-mono text-micro text-el-muted">
                 <span>0</span>
                 <span>50</span>
                 <span>100</span>
@@ -312,31 +310,27 @@ export default function EvaluationsPage() {
           {/* Side column: pass rate by workflow */}
           <div className="flex flex-col gap-[18px]">
             <section
-              className="border border-b-line bg-b-bg1 p-[18px]"
-              style={CARD_STYLE}
+              className={`${BAND_CLASS} p-[18px]`}
               aria-label="pass rate by workflow"
             >
-              <h3
-                className="m-0 mb-1 text-[13px] font-semibold text-b-text"
-                style={{ fontFamily: "var(--b-font-heading)" }}
-              >
+              <h3 className="m-0 mb-1 font-display text-[13px] font-semibold text-el-ink">
                 Pass rate by workflow
               </h3>
-              <div className="mb-3 font-mono text-[10px] text-b-text-faint">
+              <div className="mb-3 font-mono text-micro text-el-muted">
                 grade A/B · normalized
               </div>
               {workflowPassRate.length === 0 && (
-                <div className="font-mono text-[11px] text-b-text-dim">
+                <div className="font-mono text-micro text-el-muted">
                   no data
                 </div>
               )}
               <div className="space-y-2">
                 {workflowPassRate.map((w) => (
                   <div key={w.name}>
-                    <div className="flex items-center justify-between font-mono text-[11px] text-b-text-dim">
+                    <div className="flex items-center justify-between font-mono text-micro text-el-secondary">
                       <span className="truncate">
                         {w.name} · {(w.rate * 100).toFixed(0)}%{" "}
-                        <span className="text-b-text-dim">({w.total})</span>
+                        <span className="text-el-muted">({w.total})</span>
                       </span>
                     </div>
                     <div className="mt-0.5">
@@ -354,26 +348,19 @@ export default function EvaluationsPage() {
         </div>
 
         {/* Recent evaluations table */}
-        <section
-          className="border border-b-line bg-b-bg1"
-          style={CARD_STYLE}
-          aria-label="recent evaluations"
-        >
-          <div className="flex items-center justify-between border-b border-b-line-soft p-[18px] pb-3">
-            <h3
-              className="m-0 text-[13px] font-semibold text-b-text"
-              style={{ fontFamily: "var(--b-font-heading)" }}
-            >
+        <section className={BAND_CLASS} aria-label="recent evaluations">
+          <div className="flex items-center justify-between border-b border-el-divider-soft p-[18px] pb-3">
+            <h3 className="m-0 font-display text-[13px] font-semibold text-el-ink">
               Recent evaluations
             </h3>
-            <span className="font-mono text-[9.5px] uppercase tracking-[1.5px] text-b-text-faint">
+            <span className="font-mono text-micro uppercase tracking-[1.5px] text-el-muted">
               eval runs
             </span>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full font-mono text-[11px]">
+            <table className="w-full font-mono text-micro">
               <thead>
-                <tr className="border-b border-b-line text-left text-[10px] uppercase tracking-[0.5px] text-b-text-faint">
+                <tr className="border-b border-el-divider text-left text-micro uppercase tracking-[0.5px] text-el-muted">
                   <th className="px-3 py-2">WORKFLOW</th>
                   <th className="w-[60px] px-3 py-2 text-right">SCORE</th>
                   <th className="w-[180px] px-3 py-2">PROGRESS</th>
@@ -394,17 +381,17 @@ export default function EvaluationsPage() {
                   return (
                     <Fragment key={run.filename}>
                       <tr
-                        className="cursor-pointer border-b border-b-line-soft transition-colors hover:bg-b-bg2"
+                        className="cursor-pointer border-b border-el-divider-soft transition-colors hover:bg-el-subtle"
                         onClick={() =>
                           setExpandedFilename(
                             isExpanded ? null : run.filename,
                           )
                         }
                       >
-                        <td className="truncate px-3 py-2 text-b-text">
+                        <td className="truncate px-3 py-2 text-el-ink">
                           {run.workflow_name}
                         </td>
-                        <td className="px-3 py-2 text-right tabular-nums text-b-text">
+                        <td className="px-3 py-2 text-right tabular-nums text-el-ink">
                           {pct.toFixed(1)}
                         </td>
                         <td className="px-3 py-2">
@@ -416,8 +403,7 @@ export default function EvaluationsPage() {
                         </td>
                         <td className="px-3 py-2">
                           <span
-                            className={`font-semibold ${gradeColorClass(grade)}`}
-                            style={{ fontFamily: "var(--b-font-heading)" }}
+                            className={`font-display font-semibold ${gradeColorClass(grade)}`}
                           >
                             {gradeLetter(grade, run.evaluation_score) ?? "—"}
                           </span>
@@ -425,7 +411,7 @@ export default function EvaluationsPage() {
                         <td className="px-3 py-2">
                           <BPill tone={passTone}>{passLabel}</BPill>
                         </td>
-                        <td className="px-3 py-2 text-b-text-dim">
+                        <td className="px-3 py-2 text-el-muted">
                           {run.start_time
                             ? new Date(run.start_time).toLocaleString(
                                 undefined,
@@ -442,14 +428,14 @@ export default function EvaluationsPage() {
                           <Link
                             to={`/runs/${run.filename}`}
                             aria-label="view"
-                            className="font-semibold text-b-clay hover:underline"
+                            className="focus-ring inline-flex min-h-9 min-w-9 items-center justify-center rounded-md font-semibold text-el-ink hover:bg-el-hover hover:underline"
                             onClick={(e) => e.stopPropagation()}
                           >
                             [↗]
                           </Link>
                           <button
                             type="button"
-                            className="ml-2 font-mono text-[10px] text-b-text-dim hover:text-b-text"
+                            className="focus-ring ml-1 inline-flex min-h-9 min-w-9 items-center justify-center rounded-md font-mono text-micro text-el-muted transition-colors hover:bg-el-hover hover:text-el-ink"
                             aria-label={
                               isExpanded ? "collapse rubric" : "expand rubric"
                             }
@@ -469,7 +455,7 @@ export default function EvaluationsPage() {
                         <tr>
                           <td
                             colSpan={7}
-                            className="border-b border-b-line-soft bg-b-bg2 px-3 py-2"
+                            className="border-b border-el-divider-soft bg-el-subtle px-3 py-2"
                           >
                             <EvaluationRubricAccordion
                               filename={run.filename}
@@ -495,44 +481,38 @@ export default function EvaluationsPage() {
       <div className="h-full overflow-y-auto">
         <div className="mx-auto max-w-6xl space-y-[18px] p-6">
           <div>
-            <h1
-              className="text-[24px] font-semibold text-b-text"
-              style={{ letterSpacing: "-0.5px" }}
-            >
+            <h1 className="text-[24px] font-semibold tracking-[-0.5px] text-el-ink">
               Evaluations
             </h1>
-            <div className="mt-1 font-mono text-[11px] text-b-text-dim">
-              $ {evaluatedRuns.length} runs scored · automated grading across
-              workflows
+            <div className="mt-1 font-mono text-micro text-el-muted">
+              ${" "}
+              {runs ? evaluatedRuns.length : <NoData />}{" "}
+              runs scored · automated grading across workflows
             </div>
           </div>
 
-          {/* Evaluate a previous run — clay-accent banner card */}
+          {/* Evaluate a previous run — the accent-rail primary band */}
           <section
-            className="relative overflow-hidden border bg-b-bg1 px-5 py-[18px]"
-            style={{
-              borderColor: "rgb(var(--b-clay))",
-              borderWidth: "var(--b-bw)",
-              borderRadius: "var(--b-rad-lg)",
-            }}
+            className={`relative overflow-hidden ${BAND_CLASS} px-5 py-[18px]`}
             aria-label="evaluate a previous run"
           >
+            {/* The page's single accent emphasis: a rail on the primary band. */}
             <div
-              className="absolute inset-x-0 top-0 h-[3px] bg-b-clay"
+              className="absolute inset-x-0 top-0 h-[3px] bg-el-accent"
               aria-hidden="true"
             />
-            <div className="mb-3.5 font-mono text-[9.5px] uppercase tracking-[1.5px] text-b-clay">
+            <div className="mb-3.5 font-mono text-micro uppercase tracking-[1.5px] text-el-accent-strong">
               EVALUATE A PREVIOUS RUN · replays captured logs through a judge
             </div>
             <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1.2fr]">
               <div>
-                <span className="mb-1.5 block font-mono text-[9px] uppercase tracking-[0.8px] text-b-text-dim">
+                <span className="mb-1.5 block font-mono text-micro uppercase tracking-[0.8px] text-el-muted">
                   RUN
                 </span>
                 <div className="flex max-h-32 flex-col gap-1.5 overflow-y-auto">
                   {recentRuns.length === 0 ? (
-                    <span className="font-mono text-[10px] text-b-text-dim">
-                      no runs yet
+                    <span className="font-mono text-micro text-el-muted">
+                      {pickerEmptyText}
                     </span>
                   ) : (
                     recentRuns.map((r) => {
@@ -547,20 +527,19 @@ export default function EvaluationsPage() {
                               isSelected ? null : r.filename,
                             )
                           }
-                          className={`flex items-center gap-2 border px-2 py-1.5 font-mono text-[11px] transition-colors hover:text-b-text ${
+                          className={`focus-ring flex min-h-9 items-center gap-2 rounded-md border px-2 py-1.5 font-mono text-micro transition-colors hover:text-el-ink ${
                             isSelected
-                              ? "border-b-clay bg-b-bg2 text-b-text"
-                              : "border-b-line bg-b-bg2 text-b-text-mid hover:border-b-clay/50"
+                              ? "border-el-accent-strong bg-el-accent-soft text-el-ink"
+                              : "border-el-divider bg-el-subtle text-el-secondary hover:border-el-ink/40"
                           }`}
-                          style={{ borderRadius: "var(--b-rad-sm)" }}
                         >
-                          <span className="flex-none text-[9px] text-b-text-dim">
+                          <span className="flex-none text-micro text-el-muted">
                             #{(r.run_id ?? r.filename).slice(0, 6)}
                           </span>
                           <span className="min-w-0 flex-1 truncate text-left">
                             {r.workflow_name ?? "—"}
                           </span>
-                          <span className="flex-none text-[9px] text-b-text-dim">
+                          <span className="flex-none text-micro text-el-muted">
                             {relativeWhen(r.start_time)}
                           </span>
                         </button>
@@ -571,7 +550,7 @@ export default function EvaluationsPage() {
               </div>
 
               <div>
-                <span className="mb-1.5 block font-mono text-[9px] uppercase tracking-[0.8px] text-b-text-dim">
+                <span className="mb-1.5 block font-mono text-micro uppercase tracking-[0.8px] text-el-muted">
                   METHODOLOGY
                 </span>
                 {/* DESIGN-GAP: design shows these as interactive selectable pills
@@ -586,7 +565,7 @@ export default function EvaluationsPage() {
               </div>
 
               <div>
-                <span className="mb-1.5 block font-mono text-[9px] uppercase tracking-[0.8px] text-b-text-dim">
+                <span className="mb-1.5 block font-mono text-micro uppercase tracking-[0.8px] text-el-muted">
                   DEPTH
                 </span>
                 {/* DESIGN-GAP: presentational-only selectable pills (see above). */}
@@ -598,9 +577,9 @@ export default function EvaluationsPage() {
               </div>
 
               <div>
-                <span className="mb-1.5 block font-mono text-[9px] uppercase tracking-[0.8px] text-b-text-dim">
+                <span className="mb-1.5 block font-mono text-micro uppercase tracking-[0.8px] text-el-muted">
                   JUDGE MODELS{" "}
-                  <span className="text-b-text-faint">· ensemble</span>
+                  <span>· ensemble</span>
                 </span>
                 {/* DESIGN-GAP: presentational-only selectable pills (see above). */}
                 <div className="flex flex-wrap gap-1.5">
@@ -610,20 +589,30 @@ export default function EvaluationsPage() {
                 </div>
                 <button
                   type="button"
-                  disabled={!selectedRunFilename || evalMutation.isPending}
+                  disabled={
+                    !selectedRunFilename || evalMutation.isPending || apiDown
+                  }
                   onClick={() =>
                     selectedRunFilename &&
                     evalMutation.mutate(selectedRunFilename)
                   }
-                  className="mt-3 flex w-full items-center justify-center bg-b-clay px-2 py-2 font-mono text-[11px] font-semibold text-b-ink transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-                  style={{ borderRadius: "var(--b-rad-sm)" }}
+                  aria-describedby={apiDown ? apiDownReasonId : undefined}
+                  className="focus-ring mt-3 flex min-h-9 w-full items-center justify-center rounded-md bg-el-action px-2 py-2 font-mono text-micro font-semibold text-el-action-ink transition-colors hover:bg-el-action/90 disabled:cursor-not-allowed disabled:opacity-45"
                 >
                   {evalMutation.isPending
                     ? "scoring…"
                     : "▶ evaluate a run"}
                 </button>
+                {apiDown && (
+                  <p
+                    id={apiDownReasonId}
+                    className="mt-2 text-micro text-el-muted"
+                  >
+                    {apiDownReason}
+                  </p>
+                )}
                 {evalMutation.isSuccess && (
-                  <div className="mt-2 font-mono text-[10px] text-b-green">
+                  <div className="mt-2 font-mono text-micro text-el-success">
                     {evalMutation.data?.evaluation
                       ? `scored ${evalMutation.data.evaluation.weighted_score.toFixed(1)} · ${evalMutation.data.evaluation.grade}`
                       : "scored — refresh to see details"}
@@ -632,12 +621,15 @@ export default function EvaluationsPage() {
                 {evalMutation.isError && (
                   <div
                     role="alert"
-                    className="mt-2 font-mono text-[10px] text-b-red"
+                    className="mt-2 font-mono text-micro text-el-danger"
                   >
-                    evaluation failed
-                    {evalMutation.error instanceof Error
-                      ? `: ${evalMutation.error.message}`
-                      : ""}
+                    <span className="block">
+                      evaluation failed:{" "}
+                      {describeApiError(evalMutation.error).summary}
+                    </span>
+                    <span className="block text-el-secondary">
+                      {describeApiError(evalMutation.error).remedy}
+                    </span>
                   </div>
                 )}
               </div>
@@ -646,6 +638,15 @@ export default function EvaluationsPage() {
 
           {/* Compare runs — head-to-head scoring under one rubric */}
           <RunComparePanel runs={runs ?? []} />
+
+          {loadFailure && runs && (
+            <p className="font-mono text-micro text-el-muted" role="status">
+              Showing the last loaded evaluations — refresh failed:{" "}
+              {loadFailure.unreachable
+                ? "the API is unreachable."
+                : formatApiError(error)}
+            </p>
+          )}
 
           {mainContent}
         </div>

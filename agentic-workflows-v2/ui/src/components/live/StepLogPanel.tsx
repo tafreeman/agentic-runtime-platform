@@ -22,7 +22,7 @@ export default function StepLogPanel({ events, className = "" }: Readonly<Props>
           type="button"
           aria-expanded={expanded}
           aria-controls={panelId}
-          className="flex items-center gap-1.5 font-mono text-[9.5px] uppercase tracking-[1.5px] text-b-text-faint transition-colors hover:text-b-text-dim"
+          className="focus-ring relative flex items-center gap-1.5 rounded-sm font-mono text-micro uppercase tracking-[1.5px] text-el-muted transition-colors after:absolute after:-inset-x-1 after:-inset-y-3 hover:text-el-ink"
           onClick={() => setExpanded(!expanded)}
         >
           {expanded ? (
@@ -32,10 +32,10 @@ export default function StepLogPanel({ events, className = "" }: Readonly<Props>
           )}
           Event Log · SSE
         </button>
-        <span className="flex items-center gap-[5px] font-mono text-[9px] text-b-green">
+        <span className="flex items-center gap-[5px] font-mono text-micro text-el-success">
           <span
             aria-hidden="true"
-            className="animate-b-pulse inline-block h-[5px] w-[5px] rounded-full bg-b-green"
+            className="inline-block h-[5px] w-[5px] animate-pulse rounded-full bg-el-success motion-reduce:animate-none"
           />
           streaming · {displayEvents.length}
         </span>
@@ -44,13 +44,13 @@ export default function StepLogPanel({ events, className = "" }: Readonly<Props>
       {expanded && (
         <div
           id={panelId}
-          className="flex-1 overflow-y-auto font-mono text-[10px]"
+          className="flex-1 overflow-y-auto font-mono text-micro"
           aria-live="polite"
           aria-relevant="additions"
           aria-label="Event log"
         >
           {displayEvents.length === 0 && (
-            <div className="px-2 py-4 text-center text-b-text-faint">
+            <div className="px-2 py-4 text-center text-el-muted">
               Waiting for events...
             </div>
           )}
@@ -64,16 +64,16 @@ export default function StepLogPanel({ events, className = "" }: Readonly<Props>
 }
 
 function EventLine({ event }: Readonly<{ event: ExecutionEvent }>) {
-  let color = "text-b-text-dim";
+  let color = "text-el-muted";
   let message = "";
 
   switch (event.type) {
     case "workflow_start":
-      color = "text-b-blue";
+      color = "text-el-info";
       message = `Workflow "${event.workflow_name}" started`;
       break;
     case "step_start":
-      color = "text-b-blue";
+      color = "text-el-info";
       message = `Step "${event.step}" started`;
       break;
     case "step_end":
@@ -81,7 +81,7 @@ function EventLine({ event }: Readonly<{ event: ExecutionEvent }>) {
     case "step_error": {
       const status =
         event.type === "step_error" ? "failed" : event.status ?? "failed";
-      color = status === "success" ? "text-b-green" : "text-b-red";
+      color = status === "success" ? "text-el-success" : "text-el-danger";
       message = `Step "${event.step}" ${status} (${
         event.duration_ms < 1000
           ? `${Math.round(event.duration_ms)}ms`
@@ -90,19 +90,19 @@ function EventLine({ event }: Readonly<{ event: ExecutionEvent }>) {
       break;
     }
     case "workflow_end":
-      color = event.status === "success" ? "text-b-green" : "text-b-red";
+      color = event.status === "success" ? "text-el-success" : "text-el-danger";
       message = `Workflow ${event.status}`;
       break;
     case "evaluation_start":
-      color = "text-b-amber";
+      color = "text-el-warning";
       message = "Evaluation started";
       break;
     case "evaluation_complete":
-      color = event.passed ? "text-b-green" : "text-b-amber";
+      color = event.passed ? "text-el-success" : "text-el-warning";
       message = `Evaluation complete: ${event.weighted_score.toFixed(1)} (${event.grade})`;
       break;
     case "error":
-      color = "text-b-red";
+      color = "text-el-danger";
       message = `Error: ${event.error}`;
       break;
     default:
@@ -115,9 +115,9 @@ function EventLine({ event }: Readonly<{ event: ExecutionEvent }>) {
       : "";
 
   return (
-    <div className="flex items-start gap-[9px] border-b border-b-line-soft py-[4px] leading-[1.4] last:border-b-0">
+    <div className="flex items-start gap-[9px] border-b border-el-divider-soft py-[4px] leading-[1.4] last:border-b-0">
       {timestamp && (
-        <span className="flex-none text-b-text-faint">{timestamp}</span>
+        <span className="flex-none tabular-nums text-el-muted">{timestamp}</span>
       )}
       <span className={color}>{message}</span>
     </div>

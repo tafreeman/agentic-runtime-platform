@@ -47,11 +47,13 @@ describe("gradeLetter", () => {
 
 describe("gradeColorClass", () => {
   it("maps grades to colors and absence to faint", () => {
-    expect(gradeColorClass("S")).toBe("text-b-green");
-    expect(gradeColorClass("A")).toBe("text-b-green");
-    expect(gradeColorClass("C")).toBe("text-b-amber");
-    expect(gradeColorClass("F")).toBe("text-b-red");
-    expect(gradeColorClass(null)).toBe("text-b-text-faint");
+    expect(gradeColorClass("S")).toBe("text-el-success");
+    expect(gradeColorClass("A")).toBe("text-el-success");
+    expect(gradeColorClass("b")).toBe("text-el-warning");
+    expect(gradeColorClass("C")).toBe("text-el-warning");
+    expect(gradeColorClass("D")).toBe("text-el-danger");
+    expect(gradeColorClass("F")).toBe("text-el-danger");
+    expect(gradeColorClass(null)).toBe("text-el-faint");
   });
 });
 

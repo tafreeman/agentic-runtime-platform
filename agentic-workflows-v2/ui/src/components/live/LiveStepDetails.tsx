@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight, Cpu, Timer } from "lucide-react";
 import StatusBadge from "../common/StatusBadge";
 import DurationDisplay from "../common/DurationDisplay";
 import JsonViewer from "../common/JsonViewer";
+import NoData from "../states/NoData";
 import type { StepState } from "../../hooks/useWorkflowStream";
 import type { StepStatus } from "../../api/types";
 
@@ -13,14 +14,9 @@ interface Props {
   onSelectStep: (stepName: string | null) => void;
 }
 
-/** Theme-token card chrome (radius + border-width follow the active theme). */
-const CARD_STYLE = {
-  borderRadius: "var(--b-rad-sm)",
-  borderWidth: "var(--b-bw)",
-  borderStyle: "solid",
-} as const;
-
-const INSET_STYLE = { borderRadius: "var(--b-rad-sm)" } as const;
+/** Field overline: small tracked label above each value. */
+const FIELD_LABEL_CLASS =
+  "mb-1 font-mono text-micro uppercase tracking-[0.5px] text-el-muted";
 
 function orderedStepNames(stepStates: Map<string, StepState>, stepOrder?: string[]): string[] {
   const known = new Set(stepStates.keys());
@@ -57,7 +53,7 @@ export default function LiveStepDetailsList({
 
   if (names.length === 0) {
     return (
-      <div className="border-b-line bg-b-bg0 px-3 py-4 text-center font-mono text-[11px] text-b-text-faint" style={CARD_STYLE}>
+      <div className="rounded-md border border-el-divider bg-el-canvas px-3 py-4 text-center font-mono text-micro text-el-muted">
         Waiting for step updates...
       </div>
     );
@@ -99,28 +95,25 @@ function StepPanel({
   const regionId = useId();
 
   return (
-    <div className="overflow-hidden border-b-line bg-b-bg1" style={CARD_STYLE}>
+    <div className="overflow-hidden rounded-md border border-el-divider bg-el-surface">
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={isOpen}
         aria-controls={regionId}
-        className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-b-bg2"
+        className="focus-ring-inset flex min-h-9 w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-el-hover"
       >
         {isOpen ? (
-          <ChevronDown className="h-4 w-4 text-b-text-dim" />
+          <ChevronDown className="h-4 w-4 text-el-muted" />
         ) : (
-          <ChevronRight className="h-4 w-4 text-b-text-dim" />
+          <ChevronRight className="h-4 w-4 text-el-muted" />
         )}
 
-        <span
-          className="flex-1 truncate text-[13px] font-semibold text-b-text"
-          style={{ fontFamily: "var(--b-font-heading)" }}
-        >
+        <span className="flex-1 truncate font-display text-[13px] font-semibold text-el-ink">
           {stepName}
         </span>
 
-        <div className="flex items-center gap-2 font-mono text-[11px] text-b-text-dim">
+        <div className="flex items-center gap-2 font-mono text-micro text-el-muted">
           {step.durationMs != null && (
             <span className="flex items-center gap-1">
               <Timer className="h-3 w-3" />
@@ -139,7 +132,7 @@ function StepPanel({
       </button>
 
       {isOpen && (
-        <div id={regionId} className="border-t border-b-line px-3 py-3">
+        <div id={regionId} className="border-t border-el-divider px-3 py-3">
           <LiveStepDetails
             step={{
               step_name: stepName,
@@ -151,13 +144,13 @@ function StepPanel({
             }}
           />
 
-          <div className="mt-3 flex flex-wrap gap-3 text-xs text-b-text-faint">
+          <div className="mt-3 flex flex-wrap gap-3 text-xs text-el-muted">
             {step.tier && <span>Tier: {step.tier}</span>}
             {step.modelUsed && (
               <span className="flex items-center gap-1">
                 Model: {step.modelUsed}
                 {step.modelInferred && (
-                  <span className="text-[10px] text-b-amber/80 italic">(inferred)</span>
+                  <span className="text-micro italic text-el-warning">(inferred)</span>
                 )}
               </span>
             )}
@@ -217,8 +210,7 @@ export function LiveStepDetails({ step }: Readonly<LiveStepDetailsProps>) {
       {isFailed && step.error && (
         <div
           data-testid="step-error"
-          className="border border-b-red/40 bg-b-red/10 px-3 py-2 font-mono text-[11px] text-b-red"
-          style={INSET_STYLE}
+          className="rounded-md border border-el-danger/40 bg-el-danger-soft px-3 py-2 font-mono text-micro text-el-danger"
         >
           {step.error}
         </div>
@@ -226,28 +218,28 @@ export function LiveStepDetails({ step }: Readonly<LiveStepDetailsProps>) {
 
       <div className="grid grid-cols-2 gap-3 text-xs">
         <div>
-          <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.5px] text-b-text-faint">
+          <div className={FIELD_LABEL_CLASS}>
             Status
           </div>
-          <div data-testid="step-status" className="text-b-text">
+          <div data-testid="step-status" className="text-el-ink">
             <StatusBadge status={step.status} size="sm" />
           </div>
         </div>
         <div>
-          <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.5px] text-b-text-faint">
+          <div className={FIELD_LABEL_CLASS}>
             Duration
           </div>
-          <div data-testid="step-duration" className="text-b-text">
+          <div data-testid="step-duration" className="text-el-ink">
             {formatDuration(step.duration_ms)}
           </div>
         </div>
       </div>
 
       <div>
-        <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.5px] text-b-text-faint">
+        <div className={FIELD_LABEL_CLASS}>
           Scores
         </div>
-        <div data-testid="step-scores" className="text-xs text-b-text">
+        <div data-testid="step-scores" className="text-xs text-el-ink">
           {hasScores ? (
             <JsonViewer
               data={step.scores}
@@ -255,19 +247,18 @@ export function LiveStepDetails({ step }: Readonly<LiveStepDetailsProps>) {
               maxDepth={2}
             />
           ) : (
-            <span>—</span>
+            <NoData />
           )}
         </div>
       </div>
 
       <div>
-        <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.5px] text-b-text-faint">
+        <div className={FIELD_LABEL_CLASS}>
           Inputs
         </div>
         <div
           data-testid="step-input"
-          className="max-h-60 overflow-y-auto bg-b-bg0 p-3 text-xs"
-          style={INSET_STYLE}
+          className="max-h-60 overflow-y-auto rounded-md bg-el-canvas p-3 text-xs"
         >
           {hasInput ? (
             <JsonViewer
@@ -276,19 +267,18 @@ export function LiveStepDetails({ step }: Readonly<LiveStepDetailsProps>) {
               maxDepth={3}
             />
           ) : (
-            <span className="text-b-text-faint">No input captured yet.</span>
+            <span className="text-el-muted">No input captured yet.</span>
           )}
         </div>
       </div>
 
       <div>
-        <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.5px] text-b-text-faint">
+        <div className={FIELD_LABEL_CLASS}>
           Outputs
         </div>
         <div
           data-testid="step-output"
-          className="max-h-60 overflow-y-auto bg-b-bg0 p-3 text-xs"
-          style={INSET_STYLE}
+          className="max-h-60 overflow-y-auto rounded-md bg-el-canvas p-3 text-xs"
         >
           {(() => {
             if (hasOutput) {
@@ -301,12 +291,12 @@ export function LiveStepDetails({ step }: Readonly<LiveStepDetailsProps>) {
               );
             }
             if (isRunning) {
-              return <span className="text-b-text-dim italic">streaming...</span>;
+              return <span className="text-el-muted italic">streaming...</span>;
             }
             if (isFailed) {
-              return <span className="text-b-text-faint">No output (step failed).</span>;
+              return <span className="text-el-muted">No output (step failed).</span>;
             }
-            return <span className="text-b-text-faint">No output captured yet.</span>;
+            return <span className="text-el-muted">No output captured yet.</span>;
           })()}
         </div>
       </div>

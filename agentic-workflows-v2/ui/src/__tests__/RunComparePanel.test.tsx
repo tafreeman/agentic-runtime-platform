@@ -9,6 +9,14 @@ const clientMocks = vi.hoisted(() => ({
 
 vi.mock("../api/client", () => clientMocks);
 
+const availability = vi.hoisted(() => ({
+  current: { apiDown: false, checking: false, reason: undefined as string | undefined },
+}));
+
+vi.mock("../hooks/useApiAvailability", () => ({
+  useApiAvailability: () => availability.current,
+}));
+
 import RunComparePanel from "../components/evaluations/RunComparePanel";
 
 function renderPanel(runs: RunSummary[]): ReturnType<typeof render> {
@@ -88,6 +96,7 @@ function pickAndCompare() {
 describe("RunComparePanel", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    availability.current = { apiDown: false, checking: false, reason: undefined };
   });
 
   it("renders the comparison result with winner accent and delta table", async () => {
@@ -121,20 +130,20 @@ describe("RunComparePanel", () => {
     expect(within(candidateA).getByText("pass")).toBeInTheDocument();
     expect(within(candidateB).getByText("fail")).toBeInTheDocument();
 
-    // Winner A carries the clay accent + tag; B stays neutral.
+    // Winner A carries the accent rule + tag; B stays neutral.
     expect(within(candidateA).getByText("winner")).toBeInTheDocument();
-    expect(candidateA.className).toContain("border-b-clay");
+    expect(candidateA.className).toContain("border-el-accent-strong");
     expect(within(candidateB).queryByText("winner")).not.toBeInTheDocument();
-    expect(candidateB.className).not.toContain("border-b-clay");
+    expect(candidateB.className).not.toContain("border-el-accent-strong");
 
     // Delta column: positive = A better (green), negative = worse (red),
     // null-safe em-dash.
     const correctness = screen.getByTestId("delta-correctness");
     expect(correctness).toHaveTextContent("+1.5");
-    expect(correctness.className).toContain("text-b-green");
+    expect(correctness.className).toContain("text-el-success");
     const latency = screen.getByTestId("delta-latency");
     expect(latency).toHaveTextContent("-2.0");
-    expect(latency.className).toContain("text-b-red");
+    expect(latency.className).toContain("text-el-danger");
     expect(screen.getByTestId("delta-style")).toHaveTextContent("—");
   });
 
@@ -152,10 +161,10 @@ describe("RunComparePanel", () => {
     expect(screen.queryByText("winner")).not.toBeInTheDocument();
     expect(screen.getByText("tie")).toBeInTheDocument();
     expect(screen.getByTestId("candidate-a").className).not.toContain(
-      "border-b-clay"
+      "border-el-accent-strong"
     );
     expect(screen.getByTestId("candidate-b").className).not.toContain(
-      "border-b-clay"
+      "border-el-accent-strong"
     );
   });
 
@@ -172,9 +181,9 @@ describe("RunComparePanel", () => {
     expect(screen.getByRole("button", { name: /▶ compare/ })).toBeDisabled();
   });
 
-  it("renders the thrown error message inline", async () => {
+  it("renders the server detail with a remedy instead of the raw status line", async () => {
     clientMocks.compareRuns.mockRejectedValue(
-      new Error("API 422: rubric not found")
+      new Error('API 422: {"detail": "rubric not found"}')
     );
     renderPanel([RUN_A, RUN_B]);
 
@@ -182,9 +191,68 @@ describe("RunComparePanel", () => {
 
     await waitFor(() =>
       expect(screen.getByRole("alert")).toHaveTextContent(
-        /comparison failed: API 422: rubric not found/i
+        /comparison failed: rubric not found/i
       )
     );
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent(/fix the input and try again/i);
+    expect(alert).not.toHaveTextContent(/API 422/);
     expect(screen.queryByTestId("compare-result")).not.toBeInTheDocument();
+  });
+
+  it("explains an unreachable API with the just-dev remedy", async () => {
+    clientMocks.compareRuns.mockRejectedValue(new TypeError("Failed to fetch"));
+    renderPanel([RUN_A, RUN_B]);
+
+    pickAndCompare();
+
+    await waitFor(() =>
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        /can't reach the api server/i
+      )
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent(/just dev/);
+  });
+
+  it("disables compare with a visible reason while the API is down", () => {
+    availability.current = {
+      apiDown: true,
+      checking: false,
+      reason: "The API server is unreachable. Start it with `just dev`, then retry.",
+    };
+    renderPanel([RUN_A, RUN_B]);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "pick run-1.json for candidate A" })
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "pick run-2.json for candidate B" })
+    );
+
+    const compare = screen.getByRole("button", { name: /▶ compare/ });
+    expect(compare).toBeDisabled();
+    expect(compare).toHaveAccessibleDescription(/API server is unreachable/);
+    expect(screen.getByText(/API server is unreachable/)).toBeVisible();
+    fireEvent.click(compare);
+    expect(clientMocks.compareRuns).not.toHaveBeenCalled();
+  });
+
+  it("marks an absent candidate score as no data rather than 0.0", async () => {
+    clientMocks.compareRuns.mockResolvedValue({
+      ...COMPARISON,
+      // A score the server could not compute (NaN on the wire) and no grade.
+      candidate_b: {
+        ...COMPARISON.candidate_b,
+        weighted_score: Number.NaN,
+        grade: "",
+      },
+    });
+    renderPanel([RUN_A, RUN_B]);
+
+    pickAndCompare();
+    const candidateB = await screen.findByTestId("candidate-b");
+
+    expect(within(candidateB).queryByText("0.0")).not.toBeInTheDocument();
+    expect(within(candidateB).getAllByText("no data")).toHaveLength(2);
   });
 });

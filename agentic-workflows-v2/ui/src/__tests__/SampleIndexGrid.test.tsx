@@ -117,7 +117,7 @@ describe("SampleIndexGrid", () => {
     expect(onSelect).toHaveBeenCalledWith(0);
   });
 
-  it("surfaces the server error message when samples fail to load", () => {
+  it("surfaces the server detail with a remedy when samples fail to load", () => {
     mockUseDatasetSamples.mockReturnValue({
       data: undefined,
       isLoading: false,
@@ -126,9 +126,52 @@ describe("SampleIndexGrid", () => {
 
     renderGrid();
 
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent(
+      /failed to load samples: dataset 'swe\/bench' has no samples/
+    );
+    expect(alert).toHaveTextContent(/fix the input and try again/i);
+    // The raw transport prefix is replaced by human-readable copy.
+    expect(alert).not.toHaveTextContent(/API 422/);
+  });
+
+  it("keeps an unreachable API to a quiet note (the shell banner owns it)", () => {
+    mockUseDatasetSamples.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: new Error("API 502: "),
+    });
+
+    renderGrid();
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(
-      screen.getByText(/API 422: dataset 'swe\/bench' has no samples/)
+      screen.getByText(/samples unavailable while the API is unreachable/)
     ).toBeInTheDocument();
+  });
+
+  it("pages forward and back with 36px pager controls", () => {
+    const samples = Array.from({ length: 20 }, (_, i) =>
+      makeSample({ sample_index: i, task_id: `t-${i}` })
+    );
+    mockUseDatasetSamples.mockReturnValue({
+      ...withSamples(samples),
+      data: { ...withSamples(samples).data, sample_count: 45 },
+    });
+
+    renderGrid();
+
+    const prev = screen.getByRole("button", { name: "Previous page" });
+    const next = screen.getByRole("button", { name: "Next page" });
+    expect(prev).toBeDisabled();
+    expect(next.className).toContain("min-h-9");
+    fireEvent.click(next);
+    expect(mockUseDatasetSamples).toHaveBeenLastCalledWith(
+      "repository",
+      "swe/bench",
+      20,
+      20
+    );
   });
 
   it("falls back to a generic error line for non-Error failures", () => {

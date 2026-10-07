@@ -1,4 +1,5 @@
 import { useRunEvaluationDetail } from "../../hooks/useRuns";
+import { describeApiError } from "../../lib/apiErrors";
 import BPill from "../common/BPill";
 import type { BPillTone } from "../common/BPill";
 import CriterionRow from "./CriterionRow";
@@ -21,16 +22,26 @@ export default function EvaluationRubricAccordion({
 
   if (isLoading) {
     return (
-      <div className="p-2 font-mono text-[11px] text-b-text-dim">
+      <div className="p-2 font-mono text-micro text-el-muted">
         $ loading rubric…
       </div>
     );
   }
 
   if (isError) {
+    const failure = describeApiError(error);
+    // An unreachable API is already announced by the shell-level offline
+    // banner — keep this to a quiet note instead of a second alert.
+    if (failure.unreachable) {
+      return (
+        <div className="p-2 font-mono text-micro text-el-muted">
+          rubric unavailable while the API is unreachable
+        </div>
+      );
+    }
     return (
-      <div className="p-2 font-mono text-[11px] text-b-red">
-        [!] {error instanceof Error ? error.message : "failed to load rubric"}
+      <div role="alert" className="p-2 font-mono text-micro text-el-danger">
+        [!] failed to load rubric — {failure.summary} {failure.remedy}
       </div>
     );
   }
@@ -40,13 +51,13 @@ export default function EvaluationRubricAccordion({
   if (!detail) {
     const evaluationError = data?.evaluation_error;
     return (
-      <div className="p-2 font-mono text-[11px]">
+      <div className="p-2 font-mono text-micro">
         {evaluationError ? (
-          <span className="text-b-amber">
+          <span className="text-el-warning">
             [!] evaluation failed — {evaluationError}
           </span>
         ) : (
-          <span className="text-b-text-dim">no evaluation data</span>
+          <span className="text-el-muted">no evaluation data</span>
         )}
       </div>
     );
@@ -65,17 +76,14 @@ export default function EvaluationRubricAccordion({
   return (
     <div className="space-y-3 py-2">
       {/* Header row: overall score, grade, pass/fail, rubric ID + version */}
-      <div className="flex flex-wrap items-center gap-3 font-mono text-[11px]">
-        <span
-          className="text-[15px] font-bold leading-none tabular-nums text-b-text"
-          style={{ fontFamily: "var(--b-font-heading)" }}
-        >
+      <div className="flex flex-wrap items-center gap-3 font-mono text-micro">
+        <span className="font-display text-[15px] font-bold leading-none tabular-nums text-el-ink">
           {detail.weighted_score.toFixed(1)}
         </span>
-        <span className="text-[10px] uppercase tracking-[0.5px] text-b-text-faint">
+        <span className="text-micro uppercase tracking-[0.5px] text-el-muted">
           weighted score
         </span>
-        <span className="text-[10px] uppercase tracking-[0.5px] text-b-text-dim">
+        <span className="text-micro uppercase tracking-[0.5px] text-el-muted">
           grade
         </span>
         <BPill tone={gradeToTone(detail.grade)}>{detail.grade}</BPill>
@@ -87,34 +95,25 @@ export default function EvaluationRubricAccordion({
             <BPill tone="warn">judge skipped</BPill>
           </span>
         )}
-        <span className="text-b-text-dim">
+        <span className="text-el-muted">
           {detail.rubric_id} v{detail.rubric_version}
         </span>
       </div>
 
       {/* Rubric criteria card — design ref (evaluations 487-503): heading +
           "YAML-defined · weighted · normalized" caption, then name / weight /
-          clay bar / score rows. */}
+          accent bar / score rows. */}
       {detail.criteria.length > 0 && (
-        <div
-          className="space-y-1 border border-b-line bg-b-bg1 p-[18px]"
-          style={{
-            borderWidth: "var(--b-bw)",
-            borderRadius: "var(--b-rad-lg)",
-          }}
-        >
-          <h3
-            className="m-0 whitespace-nowrap text-[13px] font-semibold text-b-text"
-            style={{ fontFamily: "var(--b-font-heading)" }}
-          >
+        <div className="space-y-1 rounded-lg border border-el-divider bg-el-surface p-[18px]">
+          <h3 className="m-0 whitespace-nowrap font-display text-[13px] font-semibold text-el-ink">
             Rubric criteria
           </h3>
-          <div className="text-[10px] text-b-text-faint">
+          <div className="text-micro text-el-muted">
             YAML-defined · weighted · normalized
           </div>
-          <table className="w-full font-mono text-[11px]">
+          <table className="w-full font-mono text-micro">
             <thead>
-              <tr className="border-b border-b-line text-left text-[10px] uppercase tracking-[0.5px] text-b-text-faint">
+              <tr className="border-b border-el-divider text-left text-micro uppercase tracking-[0.5px] text-el-muted">
                 <th className="px-3 py-1">CRITERION</th>
                 <th className="px-3 py-1 text-right">SCORE</th>
                 <th className="px-3 py-1">WEIGHT</th>
@@ -141,11 +140,11 @@ export default function EvaluationRubricAccordion({
 
       {/* Score layers block */}
       {detail.score_layers && (
-        <div className="space-y-0.5 font-mono text-[11px]">
-          <div className="text-[10px] uppercase tracking-[0.5px] text-b-text-faint">
+        <div className="space-y-0.5 font-mono text-micro">
+          <div className="text-micro uppercase tracking-[0.5px] text-el-muted">
             score layers
           </div>
-          <div className="text-b-text-dim">
+          <div className="text-el-secondary">
             <span>
               objective {detail.score_layers.layer1_objective.toFixed(1)}
             </span>
@@ -161,7 +160,7 @@ export default function EvaluationRubricAccordion({
             </span>
           </div>
           {judgeSkipped && (
-            <div className="text-b-amber">
+            <div className="text-el-warning">
               [!] judge skipped — {judgeSkipReason}
             </div>
           )}
@@ -169,7 +168,7 @@ export default function EvaluationRubricAccordion({
       )}
 
       {detail.expected_text_present === false && (
-        <div className="font-mono text-[11px] text-b-amber">
+        <div className="font-mono text-micro text-el-warning">
           [!] no expected/golden text — overlap term inactive, score is
           shape-only
         </div>
@@ -179,8 +178,8 @@ export default function EvaluationRubricAccordion({
 
       {/* Hard gates block */}
       {hardGates && (
-        <div className="space-y-0.5 font-mono text-[11px]">
-          <div className="text-[10px] uppercase tracking-[0.5px] text-b-text-faint">
+        <div className="space-y-0.5 font-mono text-micro">
+          <div className="text-micro uppercase tracking-[0.5px] text-el-muted">
             hard gates
           </div>
           <div className="grid grid-cols-2 gap-0.5">
@@ -189,7 +188,7 @@ export default function EvaluationRubricAccordion({
             ).map(([gate, passed]) => (
               <div
                 key={gate}
-                className={passed ? "text-b-green" : "text-b-red"}
+                className={passed ? "text-el-success" : "text-el-danger"}
               >
                 {passed ? "[OK]" : "[FAIL]"} {gate.replaceAll("_", " ")}
               </div>
@@ -200,12 +199,12 @@ export default function EvaluationRubricAccordion({
 
       {/* Floor violations */}
       {detail.floor_violations.length > 0 && (
-        <div className="space-y-0.5 font-mono text-[11px]">
-          <div className="text-[10px] uppercase tracking-[0.5px] text-b-text-faint">
+        <div className="space-y-0.5 font-mono text-micro">
+          <div className="text-micro uppercase tracking-[0.5px] text-el-muted">
             floor violations
           </div>
           {detail.floor_violations.map((v) => (
-            <div key={v.criterion} className="text-b-amber">
+            <div key={v.criterion} className="text-el-warning">
               [!] {v.criterion} score {(v.normalized_score * 100).toFixed(1)}{" "}
               below floor {(v.floor * 100).toFixed(1)}
             </div>
@@ -215,12 +214,12 @@ export default function EvaluationRubricAccordion({
 
       {/* Hard gate failures */}
       {detail.hard_gate_failures.length > 0 && (
-        <div className="space-y-0.5 font-mono text-[11px]">
-          <div className="text-[10px] uppercase tracking-[0.5px] text-b-text-faint">
+        <div className="space-y-0.5 font-mono text-micro">
+          <div className="text-micro uppercase tracking-[0.5px] text-el-muted">
             gate failures
           </div>
           {detail.hard_gate_failures.map((f) => (
-            <div key={f} className="text-b-red">
+            <div key={f} className="text-el-danger">
               {f}
             </div>
           ))}
