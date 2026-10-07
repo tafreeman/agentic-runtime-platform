@@ -2,6 +2,7 @@ import { memo, useEffect, useState, type ReactNode } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import type { StepStatus } from "../../api/types";
 import { usePrefersReducedMotion } from "../../hooks/usePrefersReducedMotion";
+import { graphColor, type GraphToken } from "./graphTokens";
 
 export interface StepNodeData {
   label: string;
@@ -90,32 +91,40 @@ const ASCII_STATUS: Record<StepStatus, string> = {
 };
 
 /**
- * Tier accent color used for the running node (border, ring, glow) and the
- * row-1 tier pill: T2 blue, T3 amber, T4 clay (design ref `renderVals` TIER).
+ * Capability-tier pill classes (design system tier marks): T0–T2 low, T3 mid,
+ * T4–T5 high. Unknown tiers fall back to the low mark, as before.
  */
-function tierBadgeColor(tier: string | null | undefined): string {
+function tierBadgeClass(tier: string | null | undefined): string {
   switch ((tier ?? "").toUpperCase()) {
-    case "T1":
-    case "T2":
-      return "rgb(var(--b-blue))";
     case "T3":
-      return "rgb(var(--b-amber))";
+      return "border-el-tier-mid text-el-tier-mid";
     case "T4":
-      return "rgb(var(--b-clay))";
+    case "T5":
+      return "border-el-tier-high text-el-tier-high";
     default:
-      return "rgb(var(--b-blue))";
+      return "border-el-tier-low text-el-tier-low";
   }
 }
 
-function statusBorderColor(status: StepStatus): string {
-  switch (status) {
-    case "success":   return "rgb(var(--b-green))";
-    case "running":   return "rgb(var(--b-blue))";
-    case "failed":    return "rgb(var(--b-red))";
-    case "skipped":   return "rgb(var(--b-amber))";
-    default:          return "rgb(var(--b-line))";
-  }
-}
+/** Border + handle colour per status; idle/queued/cancelled use the hairline. */
+const STATUS_BORDER_TOKEN: Record<StepStatus, GraphToken> = {
+  pending: "node-border",
+  running: "running",
+  success: "success",
+  failed: "failed",
+  skipped: "skipped",
+  cancelled: "node-border",
+};
+
+/** Status-glyph text colour; every value is text-safe on the node fills. */
+const STATUS_TEXT_CLASS: Record<StepStatus, string> = {
+  pending: "text-el-graph-pending",
+  running: "text-el-graph-running",
+  success: "text-el-graph-success",
+  failed: "text-el-graph-failed",
+  skipped: "text-el-graph-skipped",
+  cancelled: "text-el-graph-cancelled",
+};
 
 function StepNodeComponent({ id, data }: NodeProps) {
   const nodeData = data as unknown as StepNodeData;
@@ -124,8 +133,9 @@ function StepNodeComponent({ id, data }: NodeProps) {
   const reducedMotion = usePrefersReducedMotion();
 
   const isLiveRunning = status === "running" && !nodeData.disconnected;
-  // Queued/pending steps are dimmed to recede behind active work (design ref:
-  // `opacity:0.55` on queued node boxStyle).
+  // Queued/pending steps recede behind active work with the pending fill
+  // (--el-graph-node-pending) instead of the design ref's `opacity: 0.55`,
+  // which dropped the node's text below AA contrast.
   const isQueued = status === "pending";
 
   const showTokens =
@@ -135,100 +145,73 @@ function StepNodeComponent({ id, data }: NodeProps) {
   // Row-1 right pill = TIER (design ref). Model family is no longer surfaced
   // on the node; a model hint lives in the inspector panel instead.
   const tierLabel = tier ? tier.toUpperCase() : null;
-  const tierColor = tierBadgeColor(tier);
-  const borderColor = nodeData.selected
-    ? "rgb(var(--b-clay))"
-    : statusBorderColor(status);
+  const isSelected = Boolean(nodeData.selected);
+  const borderColor = graphColor(
+    isSelected ? "node-selected" : STATUS_BORDER_TOKEN[status] ?? "node-border"
+  );
+
+  // Selection reads as a 2px outline (border + 1px ring); a running step that
+  // is not selected gets a static soft halo so "running" survives reduced
+  // motion. Both are box-shadows, so neither shifts layout. Keyboard focus is
+  // the separate --el-focus outline on the React Flow node wrapper.
+  let emphasisClass = "";
+  if (isSelected) {
+    emphasisClass = "ring-1 ring-el-graph-node-selected";
+  } else if (status === "running") {
+    emphasisClass = "ring-3 ring-el-graph-running-soft";
+  }
+
+  const handleStyle = {
+    background: borderColor,
+    border: "none",
+    width: 6,
+    height: 6,
+  } as const;
 
   return (
     <>
-      <Handle
-        type="target"
-        position={Position.Top}
-        style={{ background: borderColor, border: "none", width: 6, height: 6 }}
-      />
+      <Handle type="target" position={Position.Top} style={handleStyle} />
 
       <div
         data-testid={`dag-node-${id}`}
-        style={{
-          position: "relative",
-          width: STEP_NODE_WIDTH,
-          background: "rgb(var(--b-bg2))",
-          border: `var(--b-bw) solid ${borderColor}`,
-          borderRadius: "var(--b-rad-sm)",
-          padding: "11px 13px",
-          fontSize: 10,
-          fontFamily: '"JetBrains Mono", "Geist Mono", ui-monospace, monospace',
-          boxSizing: "border-box",
-          opacity: isQueued ? 0.55 : 1,
-          boxShadow:
-            status === "running"
-              ? `rgb(var(--b-blue) / 0.33) 0px 0px 10px`
-              : "none",
-        }}
+        className={`relative box-border rounded-md border px-[13px] py-[11px] font-mono text-micro text-el-graph-meta ${
+          isQueued ? "bg-el-graph-node-pending" : "bg-el-graph-node"
+        } ${emphasisClass}`}
+        style={{ width: STEP_NODE_WIDTH, borderColor }}
       >
-        {/* Blue ring while live-running — expanding-fade pulse (design
-            "ringpulse"). The CSS prefers-reduced-motion block neutralizes the
-            animation; we also drop it from the inline style as a belt-and-braces
-            guard for JS-driven reduced-motion environments. */}
-        {isLiveRunning && (
+        {/* Live-running halo — expanding-fade pulse (design "ringpulse").
+            `.el-ring-pulse` is hidden by the CSS prefers-reduced-motion block;
+            it is also not rendered at all when usePrefersReducedMotion says
+            motion is reduced. */}
+        {isLiveRunning && !reducedMotion && (
           <span
             aria-hidden="true"
-            style={{
-              position: "absolute",
-              inset: "-1px",
-              borderRadius: "var(--b-rad-sm)",
-              border: "1px solid rgb(var(--b-blue))",
-              pointerEvents: "none",
-              animation: reducedMotion
-                ? undefined
-                : "b-ring-pulse 1.5s ease-out infinite",
-            }}
+            data-testid="step-node-ring-pulse"
+            className="el-ring-pulse pointer-events-none absolute -inset-px rounded-md border border-el-graph-running"
           />
         )}
 
         {/* Row 1: [OK] status glyph + tier badge (space-between) */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div className="flex items-center justify-between">
           <span
             data-testid="step-node-status"
-            style={{
-              color: resolveStatusColor(status),
-              fontSize: "8.5px",
-              letterSpacing: "1px",
-            }}
+            className={`tracking-[1px] ${STATUS_TEXT_CLASS[status] ?? "text-el-graph-pending"}`}
           >
             {ASCII_STATUS[status] ?? "[...]"}
           </span>
           {tierLabel && (
             <span
               data-testid="step-node-tier"
-              style={{
-                fontSize: "8.5px",
-                letterSpacing: "0.3px",
-                textTransform: "uppercase",
-                color: tierColor,
-                border: `1px solid ${tierColor}`,
-                padding: "0px 4px",
-                borderRadius: "var(--b-rad-sm)",
-              }}
+              className={`rounded-md border px-1 tracking-[0.3px] uppercase ${tierBadgeClass(tier)}`}
             >
               {tierLabel}
             </span>
           )}
         </div>
 
-        {/* Row 2: bold step name in the theme heading font */}
+        {/* Row 2: bold step name in the display font */}
         <div
-          style={{
-            color: "rgb(var(--b-text))",
-            fontFamily: "var(--b-font-heading)",
-            fontWeight: 600,
-            fontSize: "12px",
-            marginTop: "7px",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
+          className="mt-[7px] truncate font-display text-xs font-semibold text-el-graph-label"
           title={label}
         >
           {label}
@@ -236,16 +219,7 @@ function StepNodeComponent({ id, data }: NodeProps) {
 
         {/* Row 3: agent subtext */}
         {nodeData.agent && (
-          <div
-            style={{
-              fontSize: "9.5px",
-              color: "rgb(var(--b-text-dim))",
-              marginTop: "2px",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
+          <div className="mt-0.5 truncate text-el-graph-meta">
             {nodeData.agent}
           </div>
         )}
@@ -254,26 +228,12 @@ function StepNodeComponent({ id, data }: NodeProps) {
         {(nodeData.persona || nodeData.model) && (
           <div
             data-testid="step-node-config-badges"
-            style={{
-              display: "flex",
-              gap: "4px",
-              marginTop: "4px",
-              overflow: "hidden",
-            }}
+            className="mt-1 flex gap-1 overflow-hidden"
           >
             {nodeData.persona && (
               <span
                 title={`persona: ${nodeData.persona}`}
-                style={{
-                  fontSize: "8px",
-                  color: "rgb(var(--b-purple))",
-                  border: "1px solid rgb(var(--b-purple) / 0.5)",
-                  borderRadius: "var(--b-rad-sm)",
-                  padding: "0 4px",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
+                className="truncate rounded-md border border-el-graph-badge-persona/50 px-1 text-el-graph-badge-persona"
               >
                 {nodeData.persona}
               </span>
@@ -281,16 +241,7 @@ function StepNodeComponent({ id, data }: NodeProps) {
             {nodeData.model && (
               <span
                 title={`model: ${nodeData.model}`}
-                style={{
-                  fontSize: "8px",
-                  color: "rgb(var(--b-teal))",
-                  border: "1px solid rgb(var(--b-teal) / 0.5)",
-                  borderRadius: "var(--b-rad-sm)",
-                  padding: "0 4px",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
+                className="truncate rounded-md border border-el-graph-badge-model/50 px-1 text-el-graph-badge-model"
               >
                 {nodeData.model}
               </span>
@@ -304,35 +255,25 @@ function StepNodeComponent({ id, data }: NodeProps) {
           if (showTokens) {
             if (tokensIn != null || tokensOut != null) {
               tokenContent = (
-                <span data-testid="step-node-tokens" style={{ color: "rgb(var(--b-text-mid))" }}>
+                <span data-testid="step-node-tokens" className="text-el-graph-meta-strong">
                   {tokensIn != null && (
-                    <span>↓<span style={{ color: "rgb(var(--b-text))", marginLeft: "2px" }}>{fmtTokens(tokensIn)}</span></span>
+                    <span>↓<span className="ml-0.5 text-el-graph-label">{fmtTokens(tokensIn)}</span></span>
                   )}
                   {tokensOut != null && (
-                    <span style={{ marginLeft: tokensIn != null ? "4px" : undefined }}>↑<span style={{ color: "rgb(var(--b-text))", marginLeft: "2px" }}>{fmtTokens(tokensOut)}</span></span>
+                    <span className={tokensIn != null ? "ml-1" : undefined}>↑<span className="ml-0.5 text-el-graph-label">{fmtTokens(tokensOut)}</span></span>
                   )}
                 </span>
               );
             } else if (tokensUsed != null) {
               tokenContent = (
-                <span data-testid="step-node-tokens" style={{ color: "rgb(var(--b-text-mid))" }}>
-                  ↕<span style={{ color: "rgb(var(--b-text))", marginLeft: "2px" }}>{fmtTokens(tokensUsed)}</span>
+                <span data-testid="step-node-tokens" className="text-el-graph-meta-strong">
+                  ↕<span className="ml-0.5 text-el-graph-label">{fmtTokens(tokensUsed)}</span>
                 </span>
               );
             }
           }
           return (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "baseline",
-                marginTop: "9px",
-                fontSize: "9px",
-                color: "rgb(var(--b-text-faint))",
-                fontFamily: '"JetBrains Mono", "Geist Mono", ui-monospace, monospace',
-              }}
-            >
+            <div className="mt-[9px] flex items-baseline justify-between text-el-graph-meta">
               <span>{resolveStatusLabel(status)}</span>
               {tokenContent}
             </div>
@@ -341,22 +282,15 @@ function StepNodeComponent({ id, data }: NodeProps) {
 
         {/* Row 5: running timer + streaming bar */}
         {showStreamingBar && (
-          <div style={{ marginTop: "6px" }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                fontSize: "9px",
-                color: "rgb(var(--b-text-dim))",
-              }}
-            >
+          <div className="mt-1.5">
+            <div className="flex justify-between text-el-graph-meta">
               <StepTimer
                 status={status}
                 startTime={nodeData.startTime}
                 durationMs={nodeData.durationMs}
               />
             </div>
-            <StreamingBar />
+            <StreamingBar reducedMotion={reducedMotion} />
           </div>
         )}
 
@@ -364,74 +298,37 @@ function StepNodeComponent({ id, data }: NodeProps) {
         {status === "failed" && error && (
           <div
             data-testid="step-node-error"
-            style={{
-              marginTop: "4px",
-              maxHeight: 60,
-              overflowY: "auto",
-              wordBreak: "break-word",
-              fontSize: "9px",
-              color: "rgb(var(--b-red))",
-            }}
+            className="mt-1 max-h-[60px] overflow-y-auto break-words text-el-graph-failed"
           >
             {error}
           </div>
         )}
       </div>
 
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        style={{ background: borderColor, border: "none", width: 6, height: 6 }}
-      />
+      <Handle type="source" position={Position.Bottom} style={handleStyle} />
     </>
   );
 }
 
-/** Resolve a theme-aware status color via CSS variables only. */
-function resolveStatusColor(status: StepStatus): string {
-  switch (status) {
-    case "running":
-      return "rgb(var(--b-blue))";
-    case "success":
-      return "rgb(var(--b-green))";
-    case "failed":
-      return "rgb(var(--b-red))";
-    case "skipped":
-      return "rgb(var(--b-amber))";
-    case "cancelled":
-      return "rgb(var(--b-text-dim))";
-    case "pending":
-    default:
-      return "rgb(var(--b-text-dim))";
-  }
-}
-
-/** Thin animated progress bar shown while a step is streaming. */
-function StreamingBar() {
-  const reducedMotion = usePrefersReducedMotion();
-  const [phase, setPhase] = useState(0);
-
-  useEffect(() => {
-    if (reducedMotion) return;
-    const id = setInterval(() => setPhase((p) => (p + 1) % 100), 8);
-    return () => clearInterval(id);
-  }, [reducedMotion]);
-
-  // Oscillate between 20% and 80%; hold a steady fill when motion is reduced.
-  const pct = reducedMotion ? 60 : 20 + Math.abs(Math.sin(phase * 0.063)) * 60;
-
+/**
+ * Thin indeterminate activity bar shown while a step is streaming. The fill
+ * oscillates via the `.el-stream-bar` CSS animation on `transform: scaleX()`
+ * (origin left) — never `width` — so it stays off the layout path. Under
+ * reduced motion the class is dropped (and the CSS block stops it anyway) and
+ * the fill holds steady at 60%.
+ */
+function StreamingBar({ reducedMotion }: Readonly<{ reducedMotion: boolean }>) {
   return (
     <div
       data-testid="step-node-streaming-bar"
-      style={{ marginTop: "2px", height: "2px", background: "rgb(var(--b-bg3))", overflow: "hidden" }}
+      className="mt-0.5 h-0.5 overflow-hidden bg-el-graph-progress-track"
     >
       <div
-        style={{
-          width: `${pct}%`,
-          height: "100%",
-          background: "rgb(var(--b-blue))",
-          transition: "width 0.08s linear",
-        }}
+        data-testid="step-node-streaming-fill"
+        className={`h-full w-full origin-left bg-el-graph-running ${
+          reducedMotion ? "" : "el-stream-bar"
+        }`}
+        style={{ transform: "scaleX(0.6)" }}
       />
     </div>
   );

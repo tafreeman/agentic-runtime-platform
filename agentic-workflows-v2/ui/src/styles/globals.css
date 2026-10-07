@@ -363,11 +363,12 @@
 
 /* ── React Flow overrides ──
    Unlayered on purpose: they must beat @xyflow/react/dist/style.css, which is
-   also unlayered. Wave 2: move the background to --el-graph-canvas together
-   with StepNode's fill moving to --el-graph-node (tokens.css). */
+   also unlayered. The canvas uses --el-graph-canvas while StepNode fills use
+   --el-graph-node (queued: --el-graph-node-pending), so nodes stay distinct
+   from the canvas in both themes (tokens.css). */
 
 .react-flow__background {
-  background-color: rgb(var(--el-canvas)) !important;
+  background-color: rgb(var(--el-graph-canvas)) !important;
 }
 
 .react-flow__minimap {
@@ -390,12 +391,19 @@
   overflow: hidden;
 }
 
+/* Icon-only canvas controls: 36x36 hit area (design system §10.1/§16); the
+   aria-labels come from React Flow. */
 .react-flow__controls-button {
   background-color: rgb(var(--el-surface)) !important;
   border-bottom: 1px solid rgb(var(--el-divider)) !important;
   fill: rgb(var(--el-ink-muted)) !important;
-  width: 26px !important;
-  height: 26px !important;
+  width: 36px !important;
+  height: 36px !important;
+}
+
+.react-flow .react-flow__controls-button svg {
+  max-width: 14px;
+  max-height: 14px;
 }
 
 .react-flow__controls-button:hover {
@@ -433,16 +441,6 @@
   }
 }
 
-@keyframes clay-glow {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.55;
-  }
-}
-
 /* Expanding-fade pulse ring around a live-running DAG node (design "ringpulse"). */
 @keyframes b-ring-pulse {
   0% {
@@ -462,12 +460,21 @@
   animation: b-ring-pulse 1.5s ease-out infinite;
 }
 
-.animated-edge {
-  animation: dash-flow 0.5s linear infinite;
+/* StepNode's indeterminate streaming bar: oscillates the fill with
+   transform: scaleX() from the left edge (never width). Under reduced motion
+   the loop stops and the inline scaleX(0.6) holds. */
+@keyframes el-stream-bar {
+  from {
+    transform: scaleX(0.2);
+  }
+  to {
+    transform: scaleX(0.8);
+  }
 }
 
-.step-node--running {
-  animation: clay-glow 1.6s ease-in-out infinite;
+.el-stream-bar {
+  transform-origin: left;
+  animation: el-stream-bar 0.8s ease-in-out infinite alternate;
 }
 
 .dag-edge--active {
@@ -522,8 +529,7 @@
   .animate-b-blink,
   .animate-pulse-slow,
   .animate-dash-flow,
-  .animated-edge,
-  .step-node--running,
+  .el-stream-bar,
   .dag-edge--active,
   .el-ring-pulse,
   .react-flow__edge.animated path,
@@ -538,8 +544,7 @@
     opacity: 1 !important; /* cursor stays visible, not stuck "off" */
   }
 
-  .el-ring-pulse,
-  [style*="b-ring-pulse"] {
+  .el-ring-pulse {
     visibility: hidden !important; /* decorative halo: hide, don't freeze */
   }
 

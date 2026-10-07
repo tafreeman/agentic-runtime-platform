@@ -6,15 +6,24 @@ import type {
   ProbedModel,
   ToolInfo,
 } from "../../api/types";
+import { Button } from "../ui/button";
 import type { RawStep } from "./documentModel";
 
 const FIELD_LABEL_CLASS =
-  "mb-1.5 block font-mono text-[9px] uppercase tracking-[0.8px] text-b-text-dim";
+  "mb-1.5 block font-mono text-micro uppercase tracking-[0.8px] text-el-muted";
 
+// focus-ring: the 2px --el-focus outline replaces the old 50%-tint ring.
 const INPUT_CLASS =
-  "w-full border border-b-line bg-b-bg0 px-2.5 py-1.5 font-mono text-[11.5px] text-b-text focus:border-b-clay focus:outline-hidden focus:ring-1 focus:ring-b-clay/50";
+  "w-full rounded-md border border-el-divider bg-el-raised px-2.5 py-1.5 font-mono text-xs text-el-ink placeholder:text-el-muted focus-ring";
 
-const INPUT_RADIUS = { borderRadius: "var(--b-rad-sm)" } as const;
+/** Toggle chip (tools / observers): pressed = ink outline on a subtle tint. */
+function chipClass(active: boolean): string {
+  return `inline-flex min-h-9 items-center rounded-md border px-2 font-mono text-micro transition-colors focus-ring ${
+    active
+      ? "border-el-ink bg-el-subtle text-el-ink"
+      : "border-el-divider bg-el-canvas text-el-muted hover:bg-el-hover hover:text-el-ink"
+  }`;
+}
 
 export interface NodeInspectorProps {
   step: RawStep;
@@ -102,20 +111,10 @@ export default function NodeInspector({
   };
 
   return (
-    <div
-      className="p-4"
-      style={{
-        background: "rgb(var(--b-bg0))",
-        border: "var(--b-bw) solid rgb(var(--b-line))",
-        borderRadius: "var(--b-rad-sm)",
-      }}
-    >
+    <div className="rounded-md border border-el-divider bg-el-canvas p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <h3
-            className="truncate text-[15px] font-semibold text-b-text"
-            style={{ fontFamily: "var(--b-font-heading)" }}
-          >
+          <h3 className="truncate font-display text-[15px] font-semibold text-el-ink">
             {name}
           </h3>
           <input
@@ -128,18 +127,19 @@ export default function NodeInspector({
             placeholder="step description"
             aria-label="Step description"
             className={`${INPUT_CLASS} mt-1.5`}
-            style={INPUT_RADIUS}
           />
         </div>
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           onClick={onDelete}
           disabled={readOnly}
           aria-label={`Delete step ${name}`}
-          className="btn-ghost p-1 text-b-red hover:text-b-red"
+          className="size-9 text-el-danger hover:text-el-danger"
         >
-          <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
-        </button>
+          <Trash2 aria-hidden="true" />
+        </Button>
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3.5">
@@ -155,7 +155,6 @@ export default function NodeInspector({
             onChange={(event) => onPatch({ agent: event.target.value })}
             disabled={readOnly}
             className={INPUT_CLASS}
-            style={INPUT_RADIUS}
           />
         </div>
         <div>
@@ -176,7 +175,6 @@ export default function NodeInspector({
             placeholder="tier default"
             list={`models-${name}`}
             className={INPUT_CLASS}
-            style={INPUT_RADIUS}
           />
           <datalist id={`models-${name}`}>
             {models.map((model) => (
@@ -198,7 +196,6 @@ export default function NodeInspector({
             }
             disabled={readOnly}
             className={INPUT_CLASS}
-            style={INPUT_RADIUS}
           >
             <option value="">role default (from agent name)</option>
             {personas.map((p) => (
@@ -208,7 +205,7 @@ export default function NodeInspector({
             ))}
           </select>
           {selectedPersona && (
-            <p className="mt-1.5 font-mono text-[10px] leading-relaxed text-b-text-dim">
+            <p className="mt-1.5 font-mono text-micro leading-relaxed text-el-muted">
               {selectedPersona.description}
             </p>
           )}
@@ -231,7 +228,6 @@ export default function NodeInspector({
               disabled={readOnly}
               placeholder="0.0"
               className={INPUT_CLASS}
-              style={INPUT_RADIUS}
             />
           </div>
           <div>
@@ -249,7 +245,6 @@ export default function NodeInspector({
               disabled={readOnly}
               placeholder="default"
               className={INPUT_CLASS}
-              style={INPUT_RADIUS}
             />
           </div>
           <div>
@@ -266,7 +261,6 @@ export default function NodeInspector({
               disabled={readOnly}
               placeholder="default"
               className={INPUT_CLASS}
-              style={INPUT_RADIUS}
             />
           </div>
         </div>
@@ -275,7 +269,7 @@ export default function NodeInspector({
         <div className="col-span-2">
           <div className="flex items-center justify-between">
             <span className={FIELD_LABEL_CLASS}>Tools</span>
-            <label className="flex items-center gap-1.5 font-mono text-[9.5px] text-b-text-dim">
+            <label className="flex min-h-9 items-center gap-1.5 font-mono text-micro text-el-muted">
               <input
                 type="checkbox"
                 checked={explicitTools !== null}
@@ -300,14 +294,7 @@ export default function NodeInspector({
                     disabled={readOnly}
                     aria-pressed={active}
                     title={tool.description}
-                    className="font-mono text-[10px]"
-                    style={{
-                      border: `var(--b-bw) solid ${active ? "rgb(var(--b-clay))" : "rgb(var(--b-line))"}`,
-                      borderRadius: "var(--b-rad-sm)",
-                      padding: "3px 8px",
-                      color: active ? "rgb(var(--b-text))" : "rgb(var(--b-text-dim))",
-                      background: active ? "rgb(var(--b-bg2))" : "rgb(var(--b-bg0))",
-                    }}
+                    className={chipClass(active)}
                   >
                     {tool.name}
                   </button>
@@ -321,7 +308,7 @@ export default function NodeInspector({
         <div className="col-span-2">
           <div className="flex items-center justify-between">
             <span className={FIELD_LABEL_CLASS}>Observers</span>
-            <label className="flex items-center gap-1.5 font-mono text-[9.5px] text-b-text-dim">
+            <label className="flex min-h-9 items-center gap-1.5 font-mono text-micro text-el-muted">
               <input
                 type="checkbox"
                 checked={explicitObservers !== null}
@@ -352,14 +339,7 @@ export default function NodeInspector({
                     disabled={readOnly}
                     aria-pressed={active}
                     title={observer.description}
-                    className="font-mono text-[10px]"
-                    style={{
-                      border: `var(--b-bw) solid ${active ? "rgb(var(--b-teal))" : "rgb(var(--b-line))"}`,
-                      borderRadius: "var(--b-rad-sm)",
-                      padding: "3px 8px",
-                      color: active ? "rgb(var(--b-text))" : "rgb(var(--b-text-dim))",
-                      background: active ? "rgb(var(--b-bg2))" : "rgb(var(--b-bg0))",
-                    }}
+                    className={chipClass(active)}
                   >
                     {observer.id}
                   </button>
@@ -374,28 +354,23 @@ export default function NodeInspector({
           <span className={FIELD_LABEL_CLASS}>Depends on</span>
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
             {dependsOn.length === 0 && (
-              <span className="font-mono text-[10px] text-b-text-faint">
+              <span className="font-mono text-micro text-el-muted">
                 entry step — no dependencies
               </span>
             )}
             {dependsOn.map((dep) => (
               <span
                 key={dep}
-                className="inline-flex items-center gap-1 font-mono text-[10px] text-b-text"
-                style={{
-                  border: "var(--b-bw) solid rgb(var(--b-line))",
-                  borderRadius: "var(--b-rad-sm)",
-                  padding: "3px 6px",
-                  background: "rgb(var(--b-bg2))",
-                }}
+                className="inline-flex items-center gap-1 rounded-md border border-el-divider bg-el-subtle py-[3px] pl-1.5 font-mono text-micro text-el-ink"
               >
                 {dep}
+                {/* Visually compact, but a 36px square hit area. */}
                 <button
                   type="button"
                   onClick={() => onRemoveDependency(dep)}
                   disabled={readOnly}
                   aria-label={`Remove dependency ${dep}`}
-                  className="text-b-text-dim hover:text-b-red"
+                  className="relative inline-flex h-5 w-5 items-center justify-center rounded-sm text-el-muted transition-colors after:absolute after:-inset-2 hover:text-el-danger focus-ring"
                 >
                   ×
                 </button>
@@ -409,8 +384,7 @@ export default function NodeInspector({
                 }}
                 disabled={readOnly}
                 aria-label="Add dependency"
-                className="border border-b-line bg-b-bg0 px-1.5 py-1 font-mono text-[10px] text-b-text-dim"
-                style={INPUT_RADIUS}
+                className="rounded-md border border-el-divider bg-el-raised px-1.5 py-1 font-mono text-micro text-el-secondary focus-ring"
               >
                 <option value="">+ add dependency</option>
                 {availableDeps.map((candidate) => (
@@ -436,7 +410,6 @@ export default function NodeInspector({
             disabled={readOnly}
             placeholder="always"
             className={INPUT_CLASS}
-            style={INPUT_RADIUS}
           />
         </div>
         <div>
@@ -453,7 +426,6 @@ export default function NodeInspector({
             disabled={readOnly}
             placeholder="role default"
             className={INPUT_CLASS}
-            style={INPUT_RADIUS}
           />
         </div>
       </div>

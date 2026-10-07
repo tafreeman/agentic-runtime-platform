@@ -1,5 +1,5 @@
 import { render } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import { ReactFlowProvider, type NodeProps } from "@xyflow/react";
 import StepNode, { type StepNodeData } from "../components/dag/StepNode";
 
@@ -13,6 +13,9 @@ function renderStepNode(
     agent: data.agent ?? null,
     description: data.description ?? "",
     tier: data.tier ?? null,
+    persona: data.persona,
+    model: data.model,
+    selected: data.selected,
     status: data.status ?? "pending",
     startTime: data.startTime,
     durationMs: data.durationMs,
@@ -49,24 +52,76 @@ function rootOf(container: HTMLElement, id = "step-a"): HTMLElement | null {
   return container.querySelector<HTMLElement>(`[data-testid="dag-node-${id}"]`);
 }
 
+/** Stub `matchMedia` so usePrefersReducedMotion reports `reduce`. */
+function mockReducedMotion(matches: boolean) {
+  vi.stubGlobal(
+    "matchMedia",
+    vi.fn().mockImplementation((query: string) => ({
+      matches: query.includes("prefers-reduced-motion") ? matches : false,
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  );
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 describe("StepNode — live animation (Story 2.5)", () => {
-  it("applies the theme-aware blue glow when running", () => {
+  it("applies the token-driven running border and static soft halo when running", () => {
     const { container } = renderStepNode({ status: "running" });
-    // Running accent is the tier blue (design ref), token-driven across themes.
-    expect(container.innerHTML).toContain("rgb(var(--b-blue) / 0.33)");
+    const root = rootOf(container)!;
+    // Running accent is the graph-running token (flips per theme); the static
+    // halo is a soft ring, so "running" still reads under reduced motion.
+    expect(root.style.borderColor).toBe("rgb(var(--el-graph-running))");
+    expect(root.className).toContain("ring-el-graph-running-soft");
   });
 
-  it("removes glow class when succeeded", () => {
+  it("renders the pulsing halo via the .el-ring-pulse class, not an inline animation", () => {
+    const { container } = renderStepNode({ status: "running" });
+    const ring = container.querySelector(".el-ring-pulse");
+    expect(ring).not.toBeNull();
+    expect(ring?.getAttribute("aria-hidden")).toBe("true");
+    expect(ring?.getAttribute("style")).toBeNull();
+  });
+
+  it("removes the halo when succeeded", () => {
     const { container } = renderStepNode({ status: "success" });
-    expect(container.querySelector(".step-node--running")).toBeNull();
+    expect(container.querySelector(".el-ring-pulse")).toBeNull();
+    expect(rootOf(container)?.className).not.toContain("ring-el-graph-running-soft");
   });
 
-  it("removes glow class when disconnected (animation paused)", () => {
+  it("removes the halo when disconnected (animation paused)", () => {
     const { container } = renderStepNode({
       status: "running",
       disconnected: true,
     });
-    expect(container.querySelector(".step-node--running")).toBeNull();
+    expect(container.querySelector(".el-ring-pulse")).toBeNull();
+  });
+
+  it("drops the halo and holds the streaming bar still under reduced motion", () => {
+    mockReducedMotion(true);
+    const { container, getByTestId } = renderStepNode({ status: "running" });
+    expect(container.querySelector(".el-ring-pulse")).toBeNull();
+    const fill = getByTestId("step-node-streaming-fill");
+    expect(fill.className).not.toContain("el-stream-bar");
+    expect(fill.style.transform).toBe("scaleX(0.6)");
+  });
+
+  it("animates the streaming bar with transform, never width", () => {
+    const { getByTestId } = renderStepNode({ status: "running" });
+    const fill = getByTestId("step-node-streaming-fill");
+    expect(fill.className).toContain("el-stream-bar");
+    expect(fill.className).toContain("origin-left");
+    expect(fill.style.transform).toBe("scaleX(0.6)");
+    expect(fill.style.width).toBe("");
+    expect(fill.getAttribute("style") ?? "").not.toMatch(/transition/);
   });
 
   it("preserves data-testid on the root element across states", () => {
@@ -190,6 +245,71 @@ describe("StepNode — B2 redesign (Story 2.8)", () => {
       disconnected: true,
     });
     expect(queryByTestId("step-node-streaming-bar")).toBeNull();
+  });
+
+  it("fills queued nodes with the pending token instead of dimming them", () => {
+    const { container } = renderStepNode({ status: "pending" });
+    const root = rootOf(container)!;
+    expect(root.className).toContain("bg-el-graph-node-pending");
+    expect(root.className).not.toContain("bg-el-graph-node ");
+    expect(root.style.opacity).toBe("");
+  });
+
+  it("outlines the selected node with the graph selection token", () => {
+    const { container } = renderStepNode({ status: "success", selected: true });
+    const root = rootOf(container)!;
+    expect(root.style.borderColor).toBe("rgb(var(--el-graph-node-selected))");
+    expect(root.className).toContain("ring-el-graph-node-selected");
+    expect(root.className).toContain("bg-el-graph-node");
+  });
+
+  it("maps tiers onto the low/mid/high tier marks", () => {
+    const t3 = renderStepNode({ status: "success", tier: "T3" });
+    expect(t3.getByTestId("step-node-tier").className).toContain("text-el-tier-mid");
+    t3.unmount();
+    const t4 = renderStepNode({ status: "success", tier: "T4" });
+    expect(t4.getByTestId("step-node-tier").className).toContain("text-el-tier-high");
+    t4.unmount();
+    const t1 = renderStepNode({ status: "success", tier: "T1" });
+    expect(t1.getByTestId("step-node-tier").className).toContain("text-el-tier-low");
+  });
+
+  it("uses the persona and model badge tokens (model is not success-green)", () => {
+    const { getByTestId } = renderStepNode({
+      status: "pending",
+      persona: "winston",
+      model: "gpt-4o",
+    });
+    const badges = getByTestId("step-node-config-badges");
+    expect(badges.querySelector('[title="persona: winston"]')?.className).toContain(
+      "text-el-graph-badge-persona",
+    );
+    const model = badges.querySelector('[title="model: gpt-4o"]');
+    expect(model?.className).toContain("text-el-graph-badge-model");
+    expect(model?.className).not.toMatch(/success|green|teal/);
+  });
+
+  it("carries no legacy --b-* tokens or colour literals in any state", () => {
+    for (const status of [
+      "pending",
+      "running",
+      "success",
+      "failed",
+      "skipped",
+      "cancelled",
+    ] as const) {
+      const { container, unmount } = renderStepNode({
+        status,
+        tier: "T2",
+        persona: "p",
+        model: "m",
+        error: "boom",
+        tokensUsed: 5,
+      });
+      expect(container.innerHTML).not.toMatch(/--b-|rgba\(|#[0-9a-f]{3,6}\b/i);
+      expect(container.innerHTML).not.toMatch(/font-size: ?(8|9|10)(\.5)?px/);
+      unmount();
+    }
   });
 
   it("does not inline any hex colors in the root style attribute", () => {

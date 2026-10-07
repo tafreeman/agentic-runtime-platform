@@ -10,12 +10,14 @@ const mockSaveWorkflowEditor = vi.fn();
 const mockSaveWorkflowEditorDocument = vi.fn();
 const mockValidateWorkflowEditor = vi.fn();
 const mockValidateWorkflowEditorDocument = vi.fn();
+const mockHealthCheck = vi.fn();
 
 vi.mock("../hooks/useWorkflows", () => ({
   useWorkflowEditor: (...args: unknown[]) => mockUseWorkflowEditor(...args),
 }));
 
 vi.mock("../api/client", () => ({
+  healthCheck: () => mockHealthCheck(),
   saveWorkflowEditor: (...args: unknown[]) => mockSaveWorkflowEditor(...args),
   saveWorkflowEditorDocument: (...args: unknown[]) =>
     mockSaveWorkflowEditorDocument(...args),
@@ -175,6 +177,11 @@ function makeEditorData(): WorkflowEditorDocument {
 describe("WorkflowEditorPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockHealthCheck.mockResolvedValue({
+      status: "ok",
+      version: "0.1.0",
+      no_llm_mode: true,
+    });
     mockUseWorkflowEditor.mockReturnValue({
       data: makeEditorData(),
       isLoading: false,
@@ -422,5 +429,85 @@ describe("WorkflowEditorPage", () => {
     const steps = savedDocument.steps as Array<Record<string, unknown>>;
     expect(steps[0]!.tools).toEqual(["file_read", "web_search"]);
     expect(steps[0]!.observers).toEqual(["websocket", "scoring"]);
+  });
+
+  it("disables Save and Validate with a visible reason while the API is down", async () => {
+    mockHealthCheck.mockRejectedValue(new TypeError("Failed to fetch"));
+    renderPage();
+
+    // Dirty the draft so Save would otherwise be enabled.
+    fireEvent.change(screen.getByLabelText("Temperature"), {
+      target: { value: "0.4" },
+    });
+
+    const reason = await screen.findByText(/The API server is unreachable\./);
+    expect(reason.id).toBeTruthy();
+    const save = screen.getByRole("button", { name: /^save$/i });
+    const validate = screen.getByRole("button", { name: /validate/i });
+    expect(save).toBeDisabled();
+    expect(validate).toBeDisabled();
+    expect(save).toHaveAttribute("aria-describedby", reason.id);
+    expect(validate).toHaveAttribute("aria-describedby", reason.id);
+  });
+
+  it("keeps Save available with no API reason while the API is healthy", async () => {
+    renderPage();
+    fireEvent.change(screen.getByLabelText("Temperature"), {
+      target: { value: "0.4" },
+    });
+    await waitFor(() => {
+      expect(mockHealthCheck).toHaveBeenCalled();
+    });
+    const save = screen.getByRole("button", { name: /^save$/i });
+    expect(save).toBeEnabled();
+    expect(save).not.toHaveAttribute("aria-describedby");
+    expect(
+      screen.queryByText(/The API server is unreachable\./)
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows actionable copy instead of the raw error when a save fails", async () => {
+    mockSaveWorkflowEditorDocument.mockRejectedValue(new Error("API 502: "));
+    renderPage();
+
+    fireEvent.change(screen.getByLabelText("Temperature"), {
+      target: { value: "0.2" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
+
+    expect(
+      await screen.findByText(/The API server isn't responding \(HTTP 502\)\./)
+    ).toBeInTheDocument();
+    expect(screen.queryByText("API 502:")).not.toBeInTheDocument();
+  });
+
+  it("keeps the 'not validated' status neutral rather than success-green", () => {
+    renderPage();
+    const statuses = screen.getAllByText("not validated");
+    expect(statuses.length).toBeGreaterThan(0);
+    for (const status of statuses) {
+      expect(status.className).toContain("text-el-muted");
+      expect(status.className).not.toContain("text-el-success");
+    }
+  });
+
+  it("marks step tiers with the low/mid/high tier tokens", () => {
+    // The step strip derives tiers from the raw document's steps.
+    const data = makeEditorData();
+    const doc = makeDocument();
+    const steps = doc.steps as Array<Record<string, unknown>>;
+    steps[0]!.tier = "fast";
+    steps[1]!.tier = "smart";
+    data.document = doc;
+    mockUseWorkflowEditor.mockReturnValue({
+      data,
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+    renderPage();
+
+    expect(screen.getByText("fast").className).toContain("text-el-tier-low");
+    expect(screen.getByText("smart").className).toContain("text-el-tier-high");
   });
 });
