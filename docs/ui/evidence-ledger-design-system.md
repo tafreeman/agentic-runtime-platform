@@ -87,16 +87,17 @@ The prototype's defining visual rhythm must survive production:
 | `--el-surface-subtle` | `#EDE9E0` | Selected rows, quiet grouped regions |
 | `--el-surface-hover` | `#E8E3D9` | Row/control hover |
 | `--el-ink` | `#1B1B18` | Primary text and high-emphasis icons |
-| `--el-ink-secondary` | `#514D46` | Secondary labels and values |
-| `--el-ink-muted` | `#736E64` | Helper text and inactive navigation |
-| `--el-ink-faint` | `#918B80` | Decorative metadata only; not body copy |
+| `--el-ink-secondary` | `#49453F` | Secondary labels and values |
+| `--el-ink-muted` | `#5A554C` | Helper text and inactive navigation |
+| `--el-ink-faint` | `#6A645A` | Quiet metadata; AA on every surface, but not body copy |
 | `--el-divider` | `#BDB7AA` | Strong section rules and table boundaries |
 | `--el-divider-soft` | `#D3CEC4` | Row rules and subtle separation |
 | `--el-divider-faint` | `#E2DDD4` | Internal separators |
+| `--el-control-border` | `#857F73` | Boundary of inputs, selects, textareas, graph nodes (≥3:1) |
 | `--el-action` | `#1C1D19` | Primary button background |
 | `--el-action-ink` | `#F8F5EF` | Text/icon on primary action |
 | `--el-accent` | `#EF5A36` | Selected tab rail, key chart mark, emphasis |
-| `--el-accent-strong` | `#B83A20` | Accessible accent text and focus details |
+| `--el-accent-strong` | `#B6381E` | Accent text, state-bearing rails, selected graph marks |
 | `--el-accent-soft` | `#F6DDD4` | Selected/attention tint |
 | `--el-focus` | `#9E321C` | Keyboard focus ring |
 | `--el-success` | `#236C4B` | Passing/healthy text and icons |
@@ -107,13 +108,18 @@ The prototype's defining visual rhythm must survive production:
 | `--el-danger-soft` | `#F1D9D5` | Failure/destructive background |
 | `--el-info` | `#2F6788` | Informational and running states |
 | `--el-info-soft` | `#D9E5ED` | Informational background |
+| `--el-plum` | `#695385` | The one categorical secondary hue (persona, cloud, kickback); never a status |
+| `--el-plum-soft` | `#E6DFF1` | Plum background |
 
 ### 4.2 Color rules
 
 - The canvas is warm paper, not pure white.
 - Pure black is reserved for rare high-contrast needs; primary ink uses `--el-ink`.
 - Orange is never a page background or large decorative wash.
-- Use `--el-accent` for non-text emphasis, large text, or marks. Use `--el-accent-strong` for normal-size accent text.
+- Use `--el-accent` for non-text emphasis, large text, or marks. Use `--el-accent-strong` for normal-size accent text. `--el-accent` is below 3:1 on light canvas, so a rail or mark made only of it must be paired with another cue; state-bearing rails use `--el-accent-strong`.
+- Every ink tier (ink, secondary, muted, faint) is at least 4.5:1 on every surface tier in both themes; the verified ratio table lives at the top of `ui/src/styles/tokens.css` and must be updated with any token change.
+- Dividers are decorative hairlines (~1.7:1). They must never be the only boundary of an interactive control; inputs, selects, textareas and graph nodes use `--el-control-border` (≥3:1, WCAG 1.4.11).
+- Graph colors come from the `--el-graph-*` set (node, status, edge, edge-label chips, tiers) in `tokens.css`; graph code never uses `rgb()`/hex literals.
 - Status colors supplement a text label or icon; color never carries status alone.
 - Charts begin with ink, soft neutral, and orange. Add semantic colors only when the series encodes a semantic status.
 - Avoid gradients in routine product UI.
@@ -126,7 +132,8 @@ Dark mode is optional and secondary. The rewrite is complete when the light syst
 - it must use a warm charcoal, not blue-black;
 - it must preserve the same low-chrome hierarchy;
 - it must not become the default theme;
-- it must have independently verified contrast;
+- it must have independently verified contrast (see the dark table in `tokens.css`);
+- it is selected with `data-theme="dark"` on `<html>`, and Tailwind's `dark:` variant is bound to that attribute (`@custom-variant dark`), not to the OS preference;
 - it must not delay required light-mode work.
 
 ## 5. shadcn/ui token mapping
@@ -187,7 +194,7 @@ Monospace is a utility face, not a third brand face. Use `ui-monospace` only for
 | `body` | `14 / 22` | 400 | Default copy and values |
 | `body-small` | `12 / 18` | 400 | Secondary utility copy |
 | `label` | `11 / 15` | 600 | Form/table labels |
-| `metadata` | `10 / 15` | 500 | IDs, timestamps, provenance |
+| `metadata` | `11 / 15` | 500 | IDs, timestamps, provenance |
 
 ### 6.3 Typography rules
 
@@ -197,7 +204,7 @@ Monospace is a utility face, not a third brand face. Use `ui-monospace` only for
 - Use sentence case for controls and navigation.
 - Keep explanatory lines below roughly 70 characters where practical.
 - Use tabular numerals for scores, duration, latency, tokens, cost, percentages, and counts.
-- Never reduce essential interface text below 11 px.
+- Never reduce essential interface text below 11 px. In code, `text-micro` (11/15) is the floor for labels and metadata and `text-xs` (12/16) is secondary copy; arbitrary `text-[8px]`–`text-[11px]` sizes are not allowed.
 
 ## 7. Spacing and geometry
 
@@ -233,7 +240,7 @@ Whitespace is allowed to grow with viewport width, but content width must remain
 | `radius-md` | `4 px` | Inputs, buttons, menus |
 | `radius-lg` | `8 px` | Dialogs, sheets, discrete interactive objects |
 
-Avoid fully rounded pills except compact status indicators where shape improves recognition.
+Avoid fully rounded pills except compact status indicators where shape improves recognition. Badges use `radius-sm`; buttons, inputs and menus `radius-md`; dialogs and sheets `radius-lg`.
 
 ### 7.4 Borders and shadows
 
@@ -242,7 +249,7 @@ Avoid fully rounded pills except compact status indicators where shape improves 
 - Raised menus/dialogs may use `0 16px 40px rgba(27, 27, 24, 0.12)`.
 - Cards and table rows should not use drop shadows.
 - Selected rows use a subtle surface tint and 2 px orange left rail or bottom tab rail.
-- Focus uses a visible 2 px ring with 2 px offset.
+- Focus uses a visible 2 px ring with 2 px offset in `--el-focus`. A global `:focus-visible` default covers plain controls; custom controls use the `focus-ring` utility, and rows, tabs and anything inside `overflow-hidden` use `focus-ring-inset`. `outline-none`/`outline-hidden` are allowed only on programmatic focus targets or inside a wrapper that draws a full-strength ring. 50%-tint rings do not meet 3:1 and are not a substitute.
 
 ## 8. Application shell
 
@@ -264,7 +271,9 @@ Desktop shell targets:
 - icon-only navigation width: `52–64 px`;
 - active state: ink or orange rule, not a large colored capsule.
 
-Mobile uses a compact header and a Sheet/Drawer navigation. Do not compress the full desktop navigation into unreadable icons.
+Mobile uses a compact header and a Sheet/Drawer navigation. Do not compress the full desktop navigation into unreadable icons. The implemented shell shows four primary destinations in a bottom bar plus a labeled **More** item that opens a Sheet listing all seven destinations (44 px rows); every destination must be reachable on mobile.
+
+Navigation has exactly seven destinations: Overview, Live execution, Runs, Model router, Evaluations, Workflow builder, Datasets. `/live` redirects to `/live/latest`; `/settings` is a legacy deep-link alias for `/models?tab=providers` and is not a separate navigation item. The palette shortcut hint is platform-aware (`⌘K` on Apple platforms, `Ctrl K` elsewhere).
 
 ### 8.2 Page header
 
@@ -336,6 +345,10 @@ Avoid placing a card around every level of this hierarchy.
 - Persistent errors stay in the relevant surface.
 - Loading states preserve layout.
 - Stale data remains visible with a freshness/error notice when safe.
+- An unreachable API is announced once, by the shell-level offline banner (with the `just dev` remedy and a Retry). Pages do not add their own outage banner; they keep stale data and at most a quiet inline note. At most one notice sits above a page's data.
+- API-backed actions (start run, save, send, compare, …) are disabled while the API is down and show a visible reason wired with `aria-describedby`, not only a `title`.
+- Error copy is a summary, the server detail when there is one, and a remedy (`describeApiError`/`formatApiError` in `ui/src/lib/apiErrors.ts`); never a raw `API 502:` string.
+- Metrics with no underlying data render an em dash with an accessible "no data" label, never `0`, `0.0%` or `NaN`; a real zero still shows `0`.
 - Never replace an entire populated page with a spinner during background refresh.
 
 ## 10. shadcn component standards
@@ -574,7 +587,7 @@ Prohibited motion:
 - selection motion that moves surrounding content;
 - pulsing more than one or two active indicators in a viewport.
 
-Under `prefers-reduced-motion: reduce`, remove transforms, animated graph edges, and loops; preserve immediate state changes.
+Under `prefers-reduced-motion: reduce`, remove transforms, animated graph edges, and loops; preserve immediate state changes. Concretely (`globals.css`): every CSS animation stops (named loops plus a catch-all) and lands on its static state, decorative halos are hidden rather than frozen, transitions are restricted to paint-only properties so transform and size changes snap, and color/opacity/box-shadow feedback is kept but capped at `motion-fast` (120 ms). Never animate layout properties (`width`, `height`, `padding`, `margin`, `top`, `left`) or use `transition-all`; animate `transform: scaleX()` for progress fills.
 
 ## 14. Responsive system
 
@@ -718,7 +731,7 @@ Reject a design when it includes:
 
 ## 19. Implementation governance
 
-- No page-local hard-coded colors when a semantic token exists.
+- No page-local hard-coded colors when a semantic token exists. The legacy Direction B `b-*` classes and theme keys are retired; use `el-*` classes or `rgb(var(--el-*))`.
 - No one-off spacing outside the scale without a documented canvas/data reason.
 - No new component variant without at least two legitimate consumers or a specialized product requirement.
 - Build shadcn components into a shared UI layer and ARP-specific patterns into a feature-aware design-system layer.
