@@ -39,7 +39,7 @@ test.describe('settings', () => {
     // The sidebar marks the consolidated Model Router surface active.
     const modelRouterLink = page
       .getByRole('navigation')
-      .getByRole('link', { name: /model router/ });
+      .getByRole('link', { name: /model router/i });
     await expect(modelRouterLink).toHaveAttribute('aria-current', 'page');
 
     // ── Provider endpoints panel ── (static chrome, independent of the fetch)

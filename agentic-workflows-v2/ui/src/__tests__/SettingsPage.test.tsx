@@ -206,7 +206,7 @@ describe("SettingsPage", () => {
     // T1 chain in order, winner marked.
     expect(screen.getByText("anthropic:haiku")).toBeInTheDocument();
     expect(screen.getAllByText("ollama:qwen").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("▸ routes here").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Routes here").length).toBeGreaterThan(0);
     // T2 carries a non-empty override → reranked marker + reset control.
     expect(screen.getByText("reranked")).toBeInTheDocument();
     expect(

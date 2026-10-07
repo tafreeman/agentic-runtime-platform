@@ -30,7 +30,7 @@ vi.mock("../api/client", () => ({
 }));
 
 vi.mock("../components/dag/WorkflowDAG", () => ({
-  default: () => <div>Workflow DAG</div>,
+  default: () => <div>Mock workflow graph</div>,
 }));
 
 vi.mock("../components/runs/RunDetail", () => ({
@@ -113,8 +113,8 @@ describe("RunDetailPage", () => {
 
     renderAtRoute("run.json");
 
-    // BTopBar breadcrumb shows the route path.
-    expect(screen.getByText("runs/run.json")).toBeInTheDocument();
+    // BTopBar breadcrumb shows the route path (as sans segments, no prompt).
+    expect(screen.getByTitle("runs/run.json")).toHaveTextContent("runs/run.json");
     // Back button is wrapper-owned chrome, not part of the panel.
     expect(screen.getByRole("button", { name: /go back/i })).toBeInTheDocument();
   });
@@ -125,12 +125,12 @@ describe("RunDetailPage", () => {
 
     const { rerender } = renderAtRoute("run.json");
 
-    expect(screen.getByText("$ loading run…")).toBeInTheDocument();
+    expect(screen.getByText("Loading run…")).toBeInTheDocument();
 
     mockUseRunDetail.mockReturnValue({ data: null, isLoading: false });
     rerender(wrap(<RunDetailPage />, "/runs/run.json"));
 
-    expect(screen.getByText("$ run not found")).toBeInTheDocument();
+    expect(screen.getByText("Run not found")).toBeInTheDocument();
   });
 
   it("renders the run summary, a copyable run id, DAG, steps, and evaluation for a deep link", () => {
@@ -181,13 +181,16 @@ describe("RunDetailPage", () => {
     const copyIdButton = screen.getByRole("button", { name: "run-123" });
     expect(copyIdButton).toHaveAttribute("title", "Copy run-123");
 
-    expect(screen.getByText("Workflow DAG")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Workflow DAG" })).toBeInTheDocument();
+    expect(screen.getByText("Mock workflow graph")).toBeInTheDocument();
     expect(screen.getByText("Run Detail Steps 1")).toBeInTheDocument();
     expect(screen.getAllByText(/grade/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText("A").length).toBeGreaterThan(0);
-    expect(screen.getByText("passed")).toBeInTheDocument();
-    expect(screen.getByText("score detail")).toBeInTheDocument();
-    expect(screen.getByText("step scores")).toBeInTheDocument();
+    // Run and evaluation states use the shared marker words.
+    expect(screen.getAllByText("Passed").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Success").length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { name: "Score detail" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Step scores" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /ingest/i })).toBeInTheDocument();
 
     // The deep-link route uses the wide two-column page layout restored from
@@ -295,7 +298,7 @@ describe("RunDetailPage", () => {
 
     renderAtRoute("run.json");
 
-    fireEvent.click(screen.getByRole("tab", { name: "yaml" }));
+    fireEvent.click(screen.getByRole("tab", { name: "YAML" }));
 
     await waitFor(() =>
       expect(screen.getByText(/name: review_flow/)).toBeInTheDocument()

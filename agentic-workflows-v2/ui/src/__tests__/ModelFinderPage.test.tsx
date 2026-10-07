@@ -198,9 +198,12 @@ describe("ModelFinderPage", () => {
     expect(screen.getByText("16 threads")).toBeInTheDocument();
     expect(screen.getByText("GPU Test GPU · 12GB")).toBeInTheDocument();
 
+    // Memory-fit groups are not called "capability tiers" (that term is the
+    // router's T0–T5).
     expect(
-      screen.getByText("CAPABILITY TIERS · FIT-WEIGHTED SELECTION"),
+      screen.getByRole("heading", { name: "Fit for this machine" }),
     ).toBeInTheDocument();
+    expect(screen.queryByText(/CAPABILITY TIERS/)).not.toBeInTheDocument();
     expect(screen.getByText("acme/headroom-7b")).toBeInTheDocument();
     expect(screen.getByText("acme/comfortable-13b")).toBeInTheDocument();
   });

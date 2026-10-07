@@ -338,16 +338,14 @@ export default function ModelPacksPanel() {
     <div className="mx-auto w-full max-w-7xl space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="max-w-3xl">
-          <div className="mb-3 text-micro font-semibold uppercase tracking-[0.14em] text-el-muted">
-            Versioned routing policy
-          </div>
           <h1 className="font-display text-[36px] font-medium leading-tight text-el-ink">
             Model packs
           </h1>
-          <p className="mt-3 text-[14px] leading-6 text-el-muted">
-            Build immutable, instance-scoped routing policies. Validate them,
-            activate a global default, bind an exact version to a workflow,
-            and retain the selected snapshot with every run.
+          {/* Scope line (§8.2): what this tab controls, in product terms. */}
+          <p className="mt-3 max-w-[70ch] text-[14px] leading-6 text-el-muted">
+            A pack is a versioned set of tier chains. Activate one as the
+            default for every run or bind one to a workflow; each run records
+            the pack version it used, so editing a pack never changes past runs.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

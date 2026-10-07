@@ -93,15 +93,15 @@ function ModelChipRow({
       >
         <span className="truncate">{modelId}</span>
         {isWinner && (
-          <span className="flex-none font-mono text-micro font-normal uppercase tracking-[0.5px] text-el-secondary">
-            ▸ routes here
+          <span className="flex-none font-sans text-micro font-medium text-el-secondary">
+            Routes here
           </span>
         )}
         <span className="ml-auto flex flex-none items-center gap-1">
           {(info?.capabilities ?? []).map((cap) => (
             <span
               key={cap}
-              className="rounded-sm border border-el-divider px-1.5 py-px font-mono text-micro uppercase tracking-[0.3px] text-el-muted"
+              className="rounded-sm border border-el-divider px-1.5 py-px font-sans text-micro font-medium text-el-muted"
             >
               {cap}
             </span>
@@ -208,9 +208,13 @@ export default function TierBoard() {
   return (
     <section aria-label="tier routing">
       <div className="mb-8 max-w-3xl">
-        <div className="mb-3 text-micro font-semibold uppercase tracking-[0.14em] text-el-muted">Routing precedence</div>
         <h1 className="font-display text-[36px] font-medium leading-tight text-el-ink">Model tiers</h1>
-        <p className="mt-3 text-[14px] leading-6 text-el-muted">Reorder fallback chains, annotate model capabilities, and explain a sample route without invoking a provider.</p>
+        {/* Scope line (§8.2): what this tab controls, in product terms. */}
+        <p className="mt-3 max-w-[70ch] text-[14px] leading-6 text-el-muted">
+          Steps name a capability tier (T0–T5), not a model; the router
+          resolves each tier to the first available model in this order.
+          Environment pins and model packs take precedence over these chains.
+        </p>
       </div>
 
       {error && loadErrorInfo?.unreachable && (
@@ -278,8 +282,12 @@ export default function TierBoard() {
           return (
             <div key={tier.tier} className={`${CARD_CLASS} px-4 py-3.5`}>
               <div className="flex items-center gap-2.5">
-                <span className="font-display text-[14px] font-semibold text-el-ink">
-                  T{tier.tier}
+                <span
+                  className="font-display text-[14px] font-semibold text-el-ink"
+                  title={`Tier ${tier.tier} — capability tier`}
+                >
+                  <span aria-hidden="true">T{tier.tier}</span>
+                  <span className="sr-only">Tier {tier.tier} — capability tier</span>
                 </span>
                 {tier.tier === 0 && (
                   <span className="font-mono text-micro text-el-muted">

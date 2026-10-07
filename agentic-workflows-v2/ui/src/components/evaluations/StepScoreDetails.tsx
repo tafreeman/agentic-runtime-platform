@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import type { EvaluationStepScore } from "../../api/types";
 import BAsciiBar from "../common/BAsciiBar";
-import BPill from "../common/BPill";
+import StatusBadge from "../common/StatusBadge";
 
 interface StepScoreDetailsProps {
   stepScores: EvaluationStepScore[];
@@ -19,14 +19,6 @@ function scoreTone(score: number): "ok" | "warn" | "err" {
   return "err";
 }
 
-function statusTone(status: string): "ok" | "warn" | "err" | "dim" {
-  const normalized = status.toLowerCase();
-  if (normalized === "success" || normalized === "completed") return "ok";
-  if (normalized === "skipped" || normalized === "pending") return "dim";
-  if (normalized === "running") return "warn";
-  return "err";
-}
-
 export default function StepScoreDetails({
   stepScores,
 }: Readonly<StepScoreDetailsProps>) {
@@ -41,17 +33,13 @@ export default function StepScoreDetails({
 
   if (orderedScores.length === 0) {
     return (
-      <div className="font-mono text-micro text-el-muted">
-        no per-step scores
-      </div>
+      <div className="text-xs text-el-muted">No per-step scores</div>
     );
   }
 
   return (
     <div className="space-y-1">
-      <div className="text-micro uppercase tracking-[0.5px] text-el-muted">
-        step scores
-      </div>
+      <h3 className="m-0 font-sans text-xs font-semibold text-el-ink">Step scores</h3>
       <div className="overflow-hidden rounded-md border border-el-divider">
         {orderedScores.map((step) => {
           const isExpanded = expandedStep === step.step_name;
@@ -87,7 +75,7 @@ export default function StepScoreDetails({
                 })()}
                 {/* auto track: a fixed 54px clipped longer statuses ("success"). */}
                 <span className="justify-self-end">
-                  <BPill tone={statusTone(step.status)}>{step.status}</BPill>
+                  <StatusBadge status={step.status} />
                 </span>
               </button>
               {isExpanded && (

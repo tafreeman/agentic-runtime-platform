@@ -1,3 +1,14 @@
+import {
+  Database,
+  Gauge,
+  LayoutDashboard,
+  List,
+  Radio,
+  Trophy,
+  Workflow,
+  type LucideIcon,
+} from "lucide-react";
+
 /**
  * The console's primary destinations (design system §8.1: Observe, Build,
  * Evaluate, Configure — Configure has a single destination, Model Router).
@@ -12,7 +23,8 @@ export interface NavItem {
   readonly label: string;
   /** Short label for the mobile bottom bar. */
   readonly shortLabel: string;
-  readonly num: string;
+  /** Glyph for the collapsed rail and the mobile bar (same set as ⌘K). */
+  readonly icon: LucideIcon;
   readonly end: boolean;
   readonly live?: boolean;
   /**
@@ -27,13 +39,13 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: readonly NavItem[] = [
-  { to: "/", testid: "dashboard", label: "overview", shortLabel: "overview", num: "01", end: true, goKey: "d", mobilePrimary: true },
-  { to: "/live/latest", testid: "live", label: "live execution", shortLabel: "live", num: "02", end: false, live: true, matchPrefix: "/live", goKey: "e", mobilePrimary: true },
-  { to: "/runs", testid: "runs", label: "runs", shortLabel: "runs", num: "03", end: false, goKey: "r", mobilePrimary: true },
-  { to: "/models", testid: "models", label: "model router", shortLabel: "models", num: "04", end: false, goKey: "m", mobilePrimary: false },
-  { to: "/evaluations", testid: "evals", label: "evaluations", shortLabel: "evals", num: "05", end: false, goKey: "l", mobilePrimary: false },
-  { to: "/workflows", testid: "workflows", label: "workflow builder", shortLabel: "workflows", num: "06", end: false, goKey: "w", mobilePrimary: true },
-  { to: "/datasets", testid: "datasets", label: "datasets", shortLabel: "datasets", num: "07", end: false, goKey: "a", mobilePrimary: false },
+  { to: "/", testid: "dashboard", label: "Overview", shortLabel: "Overview", icon: LayoutDashboard, end: true, goKey: "d", mobilePrimary: true },
+  { to: "/live/latest", testid: "live", label: "Live execution", shortLabel: "Live", icon: Radio, end: false, live: true, matchPrefix: "/live", goKey: "e", mobilePrimary: true },
+  { to: "/runs", testid: "runs", label: "Runs", shortLabel: "Runs", icon: List, end: false, goKey: "r", mobilePrimary: true },
+  { to: "/models", testid: "models", label: "Model router", shortLabel: "Models", icon: Gauge, end: false, goKey: "m", mobilePrimary: false },
+  { to: "/evaluations", testid: "evals", label: "Evaluations", shortLabel: "Evals", icon: Trophy, end: false, goKey: "l", mobilePrimary: false },
+  { to: "/workflows", testid: "workflows", label: "Workflow builder", shortLabel: "Workflows", icon: Workflow, end: false, goKey: "w", mobilePrimary: true },
+  { to: "/datasets", testid: "datasets", label: "Datasets", shortLabel: "Datasets", icon: Database, end: false, goKey: "a", mobilePrimary: false },
 ];
 
 /**

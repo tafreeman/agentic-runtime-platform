@@ -64,6 +64,7 @@ export default function MobileNav() {
     >
       {PRIMARY_ITEMS.map((item) => {
         const active = isNavItemActive(item, pathname);
+        const Icon = item.icon;
         return (
           <Link
             key={item.to}
@@ -72,9 +73,7 @@ export default function MobileNav() {
             className={`${BAR_ITEM} ${active ? BAR_ACTIVE : BAR_INACTIVE}`}
           >
             {active && <BarRail />}
-            <span className="font-mono text-el-faint" aria-hidden="true">
-              {item.num}
-            </span>
+            <Icon aria-hidden="true" className="size-4" />
             <span>{item.shortLabel}</span>
           </Link>
         );
@@ -94,7 +93,7 @@ export default function MobileNav() {
           >
             {overflowActive && <BarRail />}
             <MoreHorizontal aria-hidden="true" className="size-4" />
-            <span>more</span>
+            <span>More</span>
           </button>
         </SheetTrigger>
         <SheetContent
@@ -122,6 +121,7 @@ export default function MobileNav() {
             <ul className="flex flex-col">
               {NAV_ITEMS.map((item) => {
                 const active = isNavItemActive(item, pathname);
+                const Icon = item.icon;
                 return (
                   <li key={item.to}>
                     <Link
@@ -143,12 +143,10 @@ export default function MobileNav() {
                           className="absolute inset-y-2 left-0 w-0.5 bg-el-accent-strong"
                         />
                       )}
-                      <span
-                        className="w-5 flex-none font-mono text-micro text-el-faint"
+                      <Icon
                         aria-hidden="true"
-                      >
-                        {item.num}
-                      </span>
+                        className={`size-4 flex-none ${active ? "text-el-ink" : "text-el-muted"}`}
+                      />
                       <span>{item.label}</span>
                     </Link>
                   </li>

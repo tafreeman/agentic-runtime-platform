@@ -21,11 +21,11 @@ export default function ConsoleStatus() {
 
   let pillLabel: string;
   if (connected) {
-    pillLabel = "api connected";
+    pillLabel = "API connected";
   } else if (loading) {
-    pillLabel = "api checking";
+    pillLabel = "API checking";
   } else {
-    pillLabel = "api disconnected";
+    pillLabel = "API disconnected";
   }
 
   return (
@@ -38,7 +38,7 @@ export default function ConsoleStatus() {
           v{health.data.version}
         </span>
       )}
-      {noLlmMode && <BPill tone="clay">no-llm</BPill>}
+      {noLlmMode && <BPill tone="clay">No-LLM mode</BPill>}
     </div>
   );
 }

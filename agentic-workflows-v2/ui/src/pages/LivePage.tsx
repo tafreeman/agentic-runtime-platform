@@ -1,6 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, ChevronDown, ChevronRight, CircleAlert, TriangleAlert } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronDown,
+  ChevronRight,
+  CircleAlert,
+  CircleDot,
+  RotateCw,
+  TriangleAlert,
+  WifiOff,
+} from "lucide-react";
 import { useWorkflowStream } from "../hooks/useWorkflowStream";
 import { useRuns } from "../hooks/useRuns";
 import { useWorkflowDAG } from "../hooks/useWorkflows";
@@ -13,9 +22,11 @@ import StepLogPanel from "../components/live/StepLogPanel";
 import LiveStepDetails from "../components/live/LiveStepDetails";
 import TokenCounter from "../components/live/TokenCounter";
 import StatusBadge from "../components/common/StatusBadge";
+import Scoreline from "../components/common/Scoreline";
+import TierMark from "../components/common/TierMark";
 import BTopBar from "../components/layout/BTopBar";
-import BPill from "../components/common/BPill";
 import NoData from "../components/states/NoData";
+import { describeStreamError } from "../lib/apiErrors";
 import type { EvaluationResult } from "../api/types";
 
 /**
@@ -37,9 +48,8 @@ const CARD_CLASS = "rounded-lg border border-el-divider bg-el-surface";
 /** Small metadata chip: 4px radius, hairline. */
 const CHIP_CLASS = "rounded-md border border-el-divider";
 
-/** Section overline: small tracked label above a panel's content. */
-const OVERLINE_CLASS =
-  "font-mono text-micro uppercase tracking-[1.5px] text-el-muted";
+/** Panel heading: sans, sentence case (no tracked mono overlines). */
+const PANEL_HEADING_CLASS = "m-0 font-sans text-xs font-semibold text-el-ink";
 
 
 function formatElapsed(ms: number): string {
@@ -105,21 +115,21 @@ function LatestRunGate() {
           data-testid="live-idle-card"
         >
           {resolving ? (
-            <div className="font-mono text-micro text-el-muted">
-              $ resolving latest run…
+            <div className="text-xs text-el-muted">
+              Resolving the latest run…
             </div>
           ) : (
             <>
-              <div className="font-mono text-micro text-el-muted">
-                $ no active run — trigger one from workflows
+              <div className="text-xs text-el-muted">
+                No active run — start one from a workflow.
               </div>
               <Link
                 to="/workflows"
                 aria-label="Go to workflows"
                 data-testid="live-idle-workflows-link"
-                className="focus-ring mt-3 inline-flex min-h-9 items-center rounded-md px-2 font-mono text-micro font-semibold text-el-ink underline underline-offset-2 hover:text-el-accent-strong"
+                className="focus-ring mt-3 inline-flex min-h-9 items-center rounded-md px-2 text-xs font-semibold text-el-ink underline underline-offset-2 hover:text-el-accent-strong"
               >
-                workflows →
+                Go to workflows →
               </Link>
             </>
           )}
@@ -141,6 +151,8 @@ function LiveRunView({ runId }: Readonly<{ runId: string | undefined }>) {
     workflowStatus: streamWorkflowStatus,
     evaluation,
     error,
+    errorKind,
+    reconnect,
   } = useWorkflowStream(
     runId ?? null
   );
@@ -293,14 +305,14 @@ function LiveRunView({ runId }: Readonly<{ runId: string | undefined }>) {
     ? stepStates.get(focusName)
     : undefined;
 
-  // In-flight states (connecting/running/evaluating) read as informational,
-  // matching the graph's running color; vermilion stays the progress mark.
-  let runTone: "ok" | "err" | "info" = "info";
-  if (workflowStatus === "completed") {
-    runTone = "ok";
-  } else if (workflowStatus === "failed" || workflowStatus === "error") {
-    runTone = "err";
-  }
+  // Human copy for a stream failure — what failed, whether the data on
+  // screen still holds, and how to recover. Never the raw socket/server text.
+  const streamError = error
+    ? describeStreamError(error, errorKind ?? "server", {
+        hasSteps: stepStates.size > 0,
+      })
+    : null;
+  const isConnectionLoss = streamError?.canReconnect ?? false;
 
   // Run-header subtitle: the mockup appends " · <pattern> · <engine> engine"
   // after the run id. Build that suffix only from data the DAG response
@@ -325,22 +337,59 @@ function LiveRunView({ runId }: Readonly<{ runId: string | undefined }>) {
           type="button"
           aria-label="Go back"
           onClick={() => navigate(-1)}
-          className="focus-ring inline-flex h-9 items-center gap-1.5 rounded-md px-2 font-mono text-micro text-el-muted transition-colors hover:bg-el-hover hover:text-el-ink"
+          className="focus-ring inline-flex h-9 items-center gap-1.5 rounded-md px-2 text-xs text-el-secondary transition-colors hover:bg-el-hover hover:text-el-ink"
         >
           <ArrowLeft aria-hidden="true" className="h-3 w-3" />
-          <span>[esc] back</span>
+          <span>Back</span>
         </button>
       </BTopBar>
 
       {workflowStatus === "evaluating" && (
-        <div role="status" className="border-b border-el-info bg-el-info-soft px-4 py-1.5 font-mono text-micro text-el-info">
-          [~] evaluating workflow output…
+        <div role="status" className="flex items-center gap-1.5 border-b border-el-info bg-el-info-soft px-4 py-1.5 text-xs text-el-info">
+          <CircleDot aria-hidden="true" className="size-3.5 flex-none" />
+          Scoring the workflow output…
         </div>
       )}
-      {error && (
-        <div role="alert" className="flex items-start gap-1.5 border-b border-el-danger bg-el-danger-soft px-4 py-2 font-mono text-micro text-el-danger">
-          <CircleAlert aria-hidden="true" className="mt-0.5 size-3.5 flex-none" />
-          <span>{error}</span>
+      {streamError && (
+        <div
+          role="alert"
+          className={`flex flex-wrap items-start gap-x-3 gap-y-2 border-b px-4 py-2.5 text-xs ${
+            isConnectionLoss
+              ? "border-el-warning bg-el-warning-soft text-el-warning"
+              : "border-el-danger bg-el-danger-soft text-el-danger"
+          }`}
+        >
+          {isConnectionLoss ? (
+            <WifiOff aria-hidden="true" className="mt-0.5 size-4 flex-none" />
+          ) : (
+            <CircleAlert aria-hidden="true" className="mt-0.5 size-4 flex-none" />
+          )}
+          <div className="min-w-0 flex-1 space-y-0.5 leading-5">
+            <p className="font-semibold">{streamError.summary}</p>
+            <p className="text-el-ink">
+              {streamError.validity} {streamError.remedy}
+            </p>
+            {streamError.detail ? (
+              <details className="text-el-secondary">
+                <summary className="focus-ring inline-flex min-h-9 cursor-pointer items-center rounded-sm">
+                  Show details
+                </summary>
+                <code className="block whitespace-pre-wrap break-words font-mono text-micro">
+                  {streamError.detail}
+                </code>
+              </details>
+            ) : null}
+          </div>
+          {isConnectionLoss && reconnect ? (
+            <button
+              type="button"
+              onClick={reconnect}
+              className="focus-ring inline-flex min-h-9 flex-none items-center gap-1.5 rounded-md border border-el-warning/50 px-3 font-medium text-el-warning transition-colors hover:bg-el-warning/10"
+            >
+              <RotateCw aria-hidden="true" className="size-3.5" />
+              Reconnect
+            </button>
+          ) : null}
         </div>
       )}
 
@@ -360,7 +409,7 @@ function LiveRunView({ runId }: Readonly<{ runId: string | undefined }>) {
                     {wfName ?? "live execution"}
                   </h1>
                   <div className="mt-[3px] truncate font-mono text-micro text-el-muted">
-                    run_{runId ?? "—"}
+                    {runId ?? "—"}
                     {runMeta.map((part, i) => (
                       <span key={`${i}-${part}`}> · {part}</span>
                     ))}
@@ -370,25 +419,23 @@ function LiveRunView({ runId }: Readonly<{ runId: string | undefined }>) {
                   <div className="font-display text-[20px] font-semibold tabular-nums text-el-ink">
                     {elapsedFmt ?? <NoData />}
                   </div>
-                  <div className="font-mono text-micro uppercase tracking-[0.5px] text-el-muted">
-                    elapsed
-                  </div>
+                  <div className="text-micro text-el-muted">Elapsed</div>
                 </div>
               </div>
 
               <div className="mt-[14px] flex items-center gap-3">
                 <span data-testid="workflow-status">
-                  <BPill tone={runTone}>{workflowStatus}</BPill>
+                  <StatusBadge status={workflowStatus} pulse={isActive} />
                 </span>
                 {totalSteps > 0 && (
-                  <span className="font-mono text-micro text-el-muted">
+                  <span className="text-micro tabular-nums text-el-muted">
                     {completedCount}/{totalSteps} steps
                   </span>
                 )}
                 {permanentRun && (
                   <Link
                     to={`/runs/${encodeURIComponent(permanentRun.filename)}`}
-                    className="focus-ring relative ml-auto rounded-sm font-mono text-micro font-semibold text-el-ink underline-offset-2 after:absolute after:-inset-x-1 after:-inset-y-3 hover:text-el-accent-strong hover:underline"
+                    className="focus-ring relative ml-auto rounded-sm text-xs font-semibold text-el-ink underline-offset-2 after:absolute after:-inset-x-1 after:-inset-y-3 hover:text-el-accent-strong hover:underline"
                   >
                     Open run record →
                   </Link>
@@ -424,43 +471,36 @@ function LiveRunView({ runId }: Readonly<{ runId: string | undefined }>) {
                     <div className="h-32 w-full max-w-sm animate-pulse rounded-none bg-el-subtle motion-reduce:animate-none" />
                   </div>
                 ) : (
-                  <div className="flex h-full items-center justify-center font-mono text-micro text-el-muted">
+                  <div className="flex h-full items-center justify-center text-xs text-el-muted">
                     {workflowStatus === "connecting"
-                      ? "$ connecting…"
-                      : "$ waiting for dag…"}
+                      ? "Connecting to the run…"
+                      : "Waiting for the workflow graph…"}
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Stat tiles: TOKENS / STEPS */}
-            <div className="grid grid-cols-2 gap-[12px]">
-              <div className={`${CARD_CLASS} p-[15px_17px]`}>
-                <div className="font-mono text-micro uppercase tracking-[1.2px] text-el-muted">
-                  tokens
-                </div>
-                <div className="mt-[8px] font-display text-[30px] font-semibold tracking-[-1px] tabular-nums text-el-ink">
-                  <TokenCounter events={events} variant="stat" />
-                </div>
-              </div>
-              <div className={`${CARD_CLASS} p-[15px_17px]`}>
-                <div className="font-mono text-micro uppercase tracking-[1.2px] text-el-muted">
-                  steps
-                </div>
-                <div className="mt-[8px] font-display text-[30px] font-semibold tracking-[-1px] tabular-nums text-el-ink">
-                  {totalSteps === 0 && completedCount === 0 ? (
-                    <NoData />
-                  ) : (
-                    <>
-                      {completedCount}
-                      <span className="text-[18px] text-el-muted">
-                        /{totalSteps > 0 ? totalSteps : <NoData />}
-                      </span>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
+            {/* Run progress as a ruled scoreline (§11.1), not KPI tiles. */}
+            <Scoreline
+              label="run progress"
+              items={[
+                { label: "Tokens", value: <TokenCounter events={events} variant="stat" /> },
+                {
+                  label: "Steps done",
+                  value:
+                    totalSteps === 0 && completedCount === 0 ? (
+                      <NoData />
+                    ) : (
+                      <>
+                        {completedCount}
+                        <span className="text-[20px] text-el-muted">
+                          /{totalSteps > 0 ? totalSteps : <NoData />}
+                        </span>
+                      </>
+                    ),
+                },
+              ]}
+            />
           </div>
 
           {/* Right column: active step, event log, evaluation */}
@@ -482,7 +522,7 @@ function LiveRunView({ runId }: Readonly<{ runId: string | undefined }>) {
 
             {/* Expandable per-step drill-down list, behind the active-step card */}
             <div className={`${CARD_CLASS} p-[14px_16px]`}>
-              <div className={`mb-[10px] ${OVERLINE_CLASS}`}>step details</div>
+              <h2 className={`mb-[10px] ${PANEL_HEADING_CLASS}`}>Step details</h2>
               <LiveStepDetails
                 stepStates={stepStates}
                 stepOrder={dag?.nodes.map((n) => n.id)}
@@ -507,15 +547,6 @@ function ActiveStepCard({
 }: Readonly<{ focusName: string | null; step: StepState | undefined }>) {
   const isRunning = step?.status === "running";
 
-  let focusStatus = "idle";
-  let focusTone = "text-el-muted";
-  if (step) {
-    focusStatus = step.status;
-    if (step.status === "running") focusTone = "text-el-info";
-    else if (step.status === "success") focusTone = "text-el-success";
-    else if (step.status === "failed") focusTone = "text-el-danger";
-  }
-
   const streamingText = useMemo(() => {
     if (!step) return "";
     if (step.error) return step.error;
@@ -531,30 +562,21 @@ function ActiveStepCard({
 
   return (
     <div className={`${CARD_CLASS} p-[16px_18px]`}>
-      <div className="flex items-center justify-between">
-        <span className={OVERLINE_CLASS}>active step</span>
-        <span className={`font-mono text-micro ${focusTone}`}>
-          {focusStatus}
-        </span>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className={PANEL_HEADING_CLASS}>Active step</h2>
+        {step ? (
+          <StatusBadge status={step.status} />
+        ) : (
+          <span className="text-xs text-el-muted">Idle</span>
+        )}
       </div>
 
-      <div className="mt-[8px] truncate font-display text-[15px] font-semibold text-el-ink">
-        {focusName ?? "no active step"}
+      <div className="mt-[8px] truncate font-mono text-[14px] font-semibold text-el-ink">
+        {focusName ?? "No active step"}
       </div>
 
-      <div className="mt-[10px] flex flex-wrap gap-[8px]">
-        {step?.tier != null && (
-          <span
-            className={`${CHIP_CLASS} px-[8px] py-[3px] font-mono text-micro text-el-secondary`}
-          >
-            tier {step.tier}
-          </span>
-        )}
-        {step && (
-          <span className={`inline-flex items-center ${CHIP_CLASS}`}>
-            <StatusBadge status={step.status} size="sm" />
-          </span>
-        )}
+      <div className="mt-[10px] flex flex-wrap items-center gap-[8px]">
+        {step?.tier != null && <TierMark tier={step.tier} />}
         {step?.modelUsed && (
           <span
             className={`${CHIP_CLASS} px-[8px] py-[3px] font-mono text-micro text-el-secondary`}
@@ -592,7 +614,7 @@ function CriterionRow({
 
   return (
     <div>
-      <div className="flex items-center justify-between font-mono text-micro">
+      <div className="flex items-center justify-between text-micro">
         <span className="truncate text-el-secondary">{c.criterion}</span>
         <span className="ml-2 shrink-0 tabular-nums text-el-muted">
           {c.score}/{c.max_score}
@@ -634,16 +656,13 @@ function EvaluationCard({
         passed ? "border-el-success" : "border-el-warning"
       }`}
     >
-      <div className="flex items-center justify-between">
-        <span
-          className={`font-mono text-micro uppercase tracking-[1.5px] ${
-            passed ? "text-el-success" : "text-el-warning"
-          }`}
-        >
-          evaluation · {passed ? "passed" : "needs work"}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="flex items-center gap-2">
+          <h2 className={PANEL_HEADING_CLASS}>Evaluation</h2>
+          <StatusBadge status={passed ? "passed" : "failed"} />
         </span>
         <span
-          className={`font-mono text-micro ${
+          className={`text-micro ${
             evaluation.judge_skipped ? "text-el-warning" : "text-el-muted"
           }`}
           title={
@@ -660,7 +679,7 @@ function EvaluationCard({
       </div>
 
       {evaluation.expected_text_present === false && (
-        <div className="mt-[6px] flex items-start gap-1.5 font-mono text-micro text-el-warning">
+        <div className="mt-[6px] flex items-start gap-1.5 text-micro text-el-warning">
           <TriangleAlert aria-hidden="true" className="mt-0.5 size-3.5 flex-none" />
           <span>no expected/golden text — score is shape-only</span>
         </div>
@@ -675,8 +694,8 @@ function EvaluationCard({
           {evaluation.grade}
         </div>
         <div className="min-w-0 pb-[4px]">
-          <div className="font-mono text-micro text-el-secondary">
-            overall{" "}
+          <div className="text-micro text-el-secondary">
+            Overall{" "}
             <span className="font-semibold tabular-nums text-el-ink">
               {evaluation.weighted_score.toFixed(1)}
             </span>
@@ -691,12 +710,13 @@ function EvaluationCard({
             <button
               type="button"
               onClick={() => setExpanded((prev) => !prev)}
-              className="focus-ring relative mt-[3px] flex items-center gap-1 rounded-sm font-mono text-micro text-el-muted transition-colors after:absolute after:-inset-x-1 after:-inset-y-3 hover:text-el-ink"
+              aria-expanded={expanded}
+              className="focus-ring relative mt-[3px] flex items-center gap-1 rounded-sm text-micro text-el-muted transition-colors after:absolute after:-inset-x-1 after:-inset-y-3 hover:text-el-ink"
             >
               {expanded ? (
-                <ChevronDown className="h-3 w-3" />
+                <ChevronDown aria-hidden="true" className="h-3 w-3" />
               ) : (
-                <ChevronRight className="h-3 w-3" />
+                <ChevronRight aria-hidden="true" className="h-3 w-3" />
               )}
               {evaluation.criteria.length} criteria
             </button>
@@ -705,9 +725,9 @@ function EvaluationCard({
         <button
           type="button"
           onClick={onOpenScorecard}
-          className={`focus-ring ml-auto inline-flex min-h-9 flex-none items-center self-center bg-transparent px-3 font-mono text-micro text-el-ink transition-colors hover:bg-el-hover ${CHIP_CLASS}`}
+          className={`focus-ring ml-auto inline-flex min-h-9 flex-none items-center self-center bg-transparent px-3 text-xs text-el-ink transition-colors hover:bg-el-hover ${CHIP_CLASS}`}
         >
-          scorecard →
+          Open scorecard →
         </button>
       </div>
 

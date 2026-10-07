@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { CircleAlert } from "lucide-react";
 import type { StepResult } from "../../api/types";
-import BPill from "../common/BPill";
+import StatusBadge from "../common/StatusBadge";
+import TierMark from "../common/TierMark";
 import DurationDisplay from "../common/DurationDisplay";
 import JsonViewer from "../common/JsonViewer";
 import NoData from "../states/NoData";
@@ -12,14 +13,6 @@ interface RunDetailStepsProps {
   steps: StepResult[];
   selectedStep: string | null;
   onSelectStep: (stepName: string) => void;
-}
-
-function statusTone(status: string) {
-  if (status === "success") return "ok" as const;
-  if (status === "failed") return "err" as const;
-  if (status === "running") return "clay" as const;
-  if (status === "skipped" || status === "cancelled") return "dim" as const;
-  return "warn" as const;
 }
 
 export default function RunDetailSteps({
@@ -38,8 +31,8 @@ export default function RunDetailSteps({
 
   if (!selected) {
     return (
-      <div className="py-6 text-center font-mono text-micro text-el-muted">
-        $ no steps recorded
+      <div className="py-6 text-center text-xs text-el-muted">
+        No steps recorded
       </div>
     );
   }
@@ -62,14 +55,14 @@ export default function RunDetailSteps({
               type="button"
               aria-pressed={active}
               onClick={() => onSelectStep(step.step_name)}
-              className={`focus-ring flex min-h-9 w-full items-center justify-between gap-2 rounded-md border px-2 py-1.5 text-left font-mono text-micro transition-colors ${
+              className={`focus-ring flex min-h-10 w-full items-center justify-between gap-2 rounded-md border px-2.5 py-1.5 text-left text-micro transition-colors ${
                 active
                   ? "border-el-accent-strong bg-el-accent-soft text-el-ink"
                   : "border-el-divider bg-el-surface text-el-secondary hover:bg-el-subtle hover:text-el-ink"
               }`}
             >
-              <span className="min-w-0 truncate">{step.step_name}</span>
-              <BPill tone={statusTone(step.status)}>{step.status}</BPill>
+              <span className="min-w-0 truncate font-mono">{step.step_name}</span>
+              <StatusBadge status={step.status} />
             </button>
           );
         })}
@@ -82,8 +75,8 @@ export default function RunDetailSteps({
               <div className="truncate font-mono text-xs text-el-ink">
                 {selected.step_name}
               </div>
-              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-micro text-el-muted">
-                <span>
+              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-micro text-el-muted">
+                <span className="tabular-nums">
                   Duration:{" "}
                   {selected.duration_ms == null ? (
                     <NoData />
@@ -91,14 +84,18 @@ export default function RunDetailSteps({
                     <DurationDisplay ms={selected.duration_ms} />
                   )}
                 </span>
-                {selected.model_used ? <span>{selected.model_used}</span> : null}
-                {selected.tier ? <span>Tier: {selected.tier}</span> : null}
+                {selected.model_used ? (
+                  <span className="font-mono">{selected.model_used}</span>
+                ) : null}
+                {selected.tier != null ? (
+                  <TierMark tier={selected.tier} />
+                ) : null}
                 {selected.tokens_used != null ? (
-                  <span>Tokens: {selected.tokens_used}</span>
+                  <span className="tabular-nums">Tokens: {selected.tokens_used}</span>
                 ) : null}
               </div>
             </div>
-            <BPill tone={statusTone(selected.status)}>{selected.status}</BPill>
+            <StatusBadge status={selected.status} />
           </div>
         </div>
 
@@ -127,7 +124,7 @@ export default function RunDetailSteps({
               // e2e/run-detail.spec.ts asserts aria-selected on these buttons;
               // converting them to role="tab" needs that spec updated too.
               aria-selected={activeTab === value}
-              className={`focus-ring-inset min-h-9 border-r border-b-2 border-r-el-divider px-3 font-mono text-micro uppercase tracking-[0.5px] transition-colors ${
+              className={`focus-ring-inset min-h-9 border-r border-b-2 border-r-el-divider px-3 text-xs transition-colors ${
                 activeTab === value
                   ? "border-b-el-accent bg-el-surface text-el-ink"
                   : "border-b-transparent text-el-muted hover:text-el-ink"

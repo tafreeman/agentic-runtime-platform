@@ -6,6 +6,7 @@ import { useWorkflowDAG } from "../hooks/useWorkflows";
 import { useRuns } from "../hooks/useRuns";
 import { runWorkflow } from "../api/client";
 import { useApiAvailability } from "../hooks/useApiAvailability";
+import { useCli } from "../hooks/useCli";
 import { describeApiError } from "../lib/apiErrors";
 import InlineError from "../components/states/InlineError";
 import WorkflowDAG from "../components/dag/WorkflowDAG";
@@ -16,6 +17,7 @@ import RunConfigForm, {
 } from "../components/runs/RunConfigForm";
 import { isWorkflowBuilderEnabled } from "../config/featureFlags";
 import BTopBar from "../components/layout/BTopBar";
+import TierMark from "../components/common/TierMark";
 
 function defaultInputValue(value: unknown): string {
   if (value == null) return "";
@@ -41,20 +43,6 @@ function coerceInputValue(
   return val;
 }
 
-/**
- * Capability-tier mark classes for a tier hint ("tier0".."tier5"), using the
- * shared tier tokens the DAG step nodes use: T0–T2 low, T3 mid, T4–T5 high.
- * The tier label always rides alongside the color, never color alone.
- */
-function tierClass(tier: string): string {
-  const match = /(\d+)/.exec(tier);
-  if (!match) return "border-el-divider text-el-muted";
-  const level = Number(match[1]);
-  if (level <= 2) return "border-el-tier-low text-el-tier-low";
-  if (level === 3) return "border-el-tier-mid text-el-tier-mid";
-  return "border-el-tier-high text-el-tier-high";
-}
-
 /** Thrown before any request when required run inputs are empty. */
 class RunInputError extends Error {}
 
@@ -72,16 +60,16 @@ function describeRunError(error: unknown): { summary: string; remedy: string } {
 
 /**
  * Top-bar action chrome: visually compact (28px) to sit in the 36px bar, with
- * the hit area expanded to 36px by an invisible ::after.
+ * the hit area expanded to 36px by an invisible ::after. Sentence-case sans
+ * labels (§6.3), like every other button.
  */
 const BAR_ACTION_CLASS =
-  "focus-ring relative inline-flex h-7 items-center gap-1.5 rounded-md px-3 font-mono text-micro transition-colors after:absolute after:-inset-1 disabled:cursor-not-allowed disabled:opacity-45";
+  "focus-ring relative inline-flex h-7 items-center gap-1.5 rounded-md px-3 text-xs transition-colors after:absolute after:-inset-1 disabled:cursor-not-allowed disabled:opacity-45";
 const BAR_GHOST_CLASS = `${BAR_ACTION_CLASS} border border-el-divider text-el-secondary hover:bg-el-hover hover:text-el-ink`;
 const BAR_PRIMARY_CLASS = `${BAR_ACTION_CLASS} bg-el-action font-semibold text-el-action-ink hover:bg-el-action/90`;
 
-/** Panel section overline. */
-const PANEL_OVERLINE_CLASS =
-  "font-mono text-micro font-bold uppercase tracking-wider text-el-secondary";
+/** Panel section heading: sans, sentence case. */
+const PANEL_HEADING_CLASS = "m-0 font-sans text-xs font-semibold text-el-ink";
 
 /** Distinct, ordered tier hints present across the DAG nodes. */
 function collectTiers(nodes: { tier?: string | null }[] | undefined): string[] {
@@ -98,10 +86,10 @@ function runButtonLabel(
   isPending: boolean,
   evaluationEnabled: boolean,
 ): string {
-  if (batchProgress) return `${batchProgress.done}/${batchProgress.total}`;
-  if (isPending) return "[…] starting";
-  if (evaluationEnabled) return "[▶] run + eval";
-  return "[▶] run";
+  if (batchProgress) return `Running ${batchProgress.done}/${batchProgress.total}`;
+  if (isPending) return "Starting…";
+  if (evaluationEnabled) return "Run with evaluation";
+  return "Run";
 }
 
 /**
@@ -214,6 +202,7 @@ export default function WorkflowDetailPage() {
   const runsFailure = runsError ? describeApiError(runsQueryError) : null;
   const { apiDown, reason: apiDownReason } = useApiAvailability();
   const apiDownReasonId = useId();
+  const { setCli } = useCli();
   const hasWorkflowSteps = (dag?.nodes.length ?? 0) > 0;
   const tiers = collectTiers(dag?.nodes);
   const supportsDeterministicDemo =
@@ -384,14 +373,14 @@ export default function WorkflowDetailPage() {
   let runStatus: { label: string; text: string; dot: string };
   if (runMutation.isPending) {
     runStatus = {
-      label: "running",
+      label: "Starting",
       text: "text-el-info",
       dot: "animate-pulse bg-el-info motion-reduce:animate-none",
     };
   } else if (apiDown) {
-    runStatus = { label: "api offline", text: "text-el-danger", dot: "bg-el-danger" };
+    runStatus = { label: "API offline", text: "text-el-danger", dot: "bg-el-danger" };
   } else {
-    runStatus = { label: "ready", text: "text-el-success", dot: "bg-el-success" };
+    runStatus = { label: "Ready", text: "text-el-success", dot: "bg-el-success" };
   }
 
   return (
@@ -404,7 +393,7 @@ export default function WorkflowDetailPage() {
           className={BAR_GHOST_CLASS}
         >
           <ArrowLeft aria-hidden="true" className="h-3 w-3" />
-          <span>[b] back</span>
+          <span>Back</span>
         </button>
         {workflowBuilderEnabled && name && (
           <Link
@@ -412,7 +401,7 @@ export default function WorkflowDetailPage() {
             className={BAR_GHOST_CLASS}
           >
             <Pencil aria-hidden="true" className="h-3 w-3" />
-            <span>[e] edit</span>
+            <span>Edit</span>
           </Link>
         )}
         {supportsDeterministicDemo && (
@@ -424,12 +413,23 @@ export default function WorkflowDetailPage() {
             className={BAR_GHOST_CLASS}
           >
             <Play aria-hidden="true" className="h-3 w-3" />
-            <span>{demoMutation.isPending ? "starting demo…" : "demo run"}</span>
+            <span>{demoMutation.isPending ? "Starting demo…" : "Demo run"}</span>
           </button>
         )}
         <button
           type="button"
-          onClick={() => { if (runMutation.isPending) return; runMutation.mutate(); }}
+          onClick={() => {
+            if (runMutation.isPending) return;
+            // CLI equivalent of a plain run (inputs go in a JSON file). The
+            // CLI has no evaluation flags, so an evaluated run has none.
+            const hasInputs = (dag?.inputs?.length ?? 0) > 0;
+            setCli(
+              configRef.current.evaluation.enabled || !name
+                ? null
+                : `agentic run ${name}${hasInputs ? " --input <inputs.json>" : ""}`,
+            );
+            runMutation.mutate();
+          }}
           disabled={runMutation.isPending || apiDown}
           aria-describedby={apiDown ? apiDownReasonId : undefined}
           className={BAR_PRIMARY_CLASS}
@@ -456,33 +456,29 @@ export default function WorkflowDetailPage() {
         <div className="flex h-[360px] min-w-0 flex-none flex-col overflow-hidden border-b border-el-divider md:h-auto md:flex-1 md:border-r md:border-b-0">
           {/* DAG header — serif workflow name, hairline meta, tier badges */}
           <div className="border-b border-el-divider bg-el-surface px-4 py-[10px]">
-            <div className="flex items-center gap-3">
-              <span className={PANEL_OVERLINE_CLASS}>■ DAG PREVIEW</span>
+            <div className="flex min-w-0 items-baseline gap-3">
               {name && (
-                <span className="truncate font-display text-[15px] font-semibold tracking-[-0.4px] text-el-ink">
+                <h1 className="m-0 truncate font-display text-[17px] font-semibold tracking-[-0.4px] text-el-ink">
                   {name}
-                </span>
+                </h1>
               )}
               {dag && hasWorkflowSteps && (
-                <span className="font-mono text-micro tabular-nums text-el-muted">
-                  {dag.nodes.length} nodes · {dag.edges.length} edges
+                <span className="flex-none text-micro tabular-nums text-el-muted">
+                  {dag.nodes.length} step{dag.nodes.length === 1 ? "" : "s"} ·{" "}
+                  {dag.edges.length} edge{dag.edges.length === 1 ? "" : "s"}
                 </span>
               )}
               {dag?.description && (
-                <span className="ml-auto hidden max-w-xs truncate font-mono text-micro text-el-muted xl:block">
+                <span className="ml-auto hidden max-w-xs truncate text-micro text-el-muted xl:block">
                   {dag.description}
                 </span>
               )}
             </div>
             {tiers.length > 0 && (
               <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                <span className="text-micro text-el-muted">Capability tiers</span>
                 {tiers.map((tier) => (
-                  <span
-                    key={tier}
-                    className={`rounded-sm border px-[5px] py-px font-mono text-micro uppercase tracking-[0.3px] ${tierClass(tier)}`}
-                  >
-                    {tier}
-                  </span>
+                  <TierMark key={tier} tier={tier} />
                 ))}
               </div>
             )}
@@ -490,21 +486,21 @@ export default function WorkflowDetailPage() {
 
           {/* DAG canvas fills remaining height */}
           {dagLoading && (
-            <div className="flex flex-1 items-center justify-center font-mono text-micro text-el-muted">
-              $ loading workflow graph
+            <div className="flex flex-1 items-center justify-center text-xs text-el-muted">
+              Loading workflow graph…
             </div>
           )}
           {!dagLoading && dagFailure && (
             // An unreachable API is already announced by the shell's offline
             // banner — a quiet note here, not a second alert.
             dagFailure.unreachable ? (
-              <div className="flex flex-1 items-center justify-center font-mono text-micro text-el-muted">
-                $ workflow graph unavailable while the API is unreachable
+              <div className="flex flex-1 items-center justify-center px-4 text-center text-xs text-el-muted">
+                Workflow graph unavailable while the API is unreachable.
               </div>
             ) : (
               <div
                 role="alert"
-                className="flex flex-1 flex-col items-center justify-center gap-1 px-4 text-center font-mono text-micro text-el-danger"
+                className="flex flex-1 flex-col items-center justify-center gap-1 px-4 text-center text-xs text-el-danger"
               >
                 <span className="flex items-start gap-1.5">
                   <CircleAlert
@@ -523,24 +519,24 @@ export default function WorkflowDetailPage() {
             </div>
           )}
           {!dagLoading && !dagError && dag && !hasWorkflowSteps && (
-            <div className="flex flex-1 items-center justify-center font-mono text-micro text-el-muted">
-              $ no workflow steps defined
+            <div className="flex flex-1 items-center justify-center text-xs text-el-muted">
+              No workflow steps defined
             </div>
           )}
           {!dagLoading && !dagError && !dag && (
-            <div className="flex flex-1 items-center justify-center font-mono text-micro text-el-danger">
-              $ failed to load dag
+            <div className="flex flex-1 items-center justify-center text-xs text-el-danger">
+              Couldn't load the workflow graph.
             </div>
           )}
         </div>
 
         {/* ── Right panel: Run config + Run history ── */}
         <div className="flex w-full flex-none flex-col bg-el-canvas md:w-[340px] md:overflow-y-auto">
-          {/* $ RUN CONFIGURATION header — live status dot */}
+          {/* Run configuration header — readiness dot + word */}
           <div className="flex items-center justify-between border-b border-el-divider bg-el-surface px-4 py-2">
-            <span className={PANEL_OVERLINE_CLASS}>$ RUN CONFIGURATION</span>
+            <h2 className={PANEL_HEADING_CLASS}>Run configuration</h2>
             <span
-              className={`flex items-center gap-1.5 font-mono text-micro ${runStatus.text}`}
+              className={`flex items-center gap-1.5 text-micro ${runStatus.text}`}
             >
               <span
                 aria-hidden="true"
@@ -572,21 +568,21 @@ export default function WorkflowDetailPage() {
               </div>
             )}
             {!dag && dagLoading && (
-              <div className="p-4 font-mono text-micro text-el-muted">
-                $ loading…
+              <div className="p-4 text-xs text-el-muted">
+                Loading…
               </div>
             )}
 
             {/* Run history */}
             <div className="border-t border-el-divider">
               <div className="flex items-center gap-2 bg-el-surface px-4 py-2">
-                <span className={PANEL_OVERLINE_CLASS}>▊ run history</span>
+                <h2 className={PANEL_HEADING_CLASS}>Run history</h2>
               </div>
               <div className="p-2">
                 {runsFailure && !runs ? (
                   runsFailure.unreachable ? (
-                    <p className="px-2 py-3 font-mono text-micro text-el-muted">
-                      run history unavailable while the API is unreachable
+                    <p className="px-2 py-3 text-xs text-el-muted">
+                      Run history unavailable while the API is unreachable.
                     </p>
                   ) : (
                     <InlineError
@@ -606,7 +602,7 @@ export default function WorkflowDetailPage() {
       {runFailure && (
         <div
           role="alert"
-          className="border-t border-el-danger bg-el-danger-soft px-4 py-2 font-mono text-micro text-el-danger"
+          className="border-t border-el-danger bg-el-danger-soft px-4 py-2 text-xs text-el-danger"
         >
           <span className="flex items-start gap-1.5">
             <CircleAlert aria-hidden="true" className="mt-0.5 size-3.5 flex-none" />

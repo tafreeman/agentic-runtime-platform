@@ -60,7 +60,9 @@ export default function ConsoleHeader() {
         type="button"
         onClick={openPalette}
         aria-label="Jump to page (search runs, workflows, actions)"
-        className="mx-auto hidden h-9 w-full max-w-md flex-none items-center gap-2 rounded-md border border-el-divider bg-el-canvas px-2.5 text-xs text-el-muted transition-colors hover:border-el-muted hover:text-el-ink focus-ring sm:flex"
+        // min-w-0 + flex-1 (not flex-none): at narrow widths / 200% zoom the
+        // box shrinks to fit beside the brand instead of being clipped.
+        className="mx-auto hidden h-9 w-full max-w-md min-w-0 flex-1 items-center gap-2 rounded-md border border-el-divider bg-el-canvas px-2.5 text-xs text-el-muted transition-colors hover:border-el-muted hover:text-el-ink focus-ring sm:flex"
       >
         <Search size={12} aria-hidden="true" className="flex-none" />
         <span className="min-w-0 flex-1 truncate text-left">

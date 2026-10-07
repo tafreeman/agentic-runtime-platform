@@ -79,6 +79,7 @@ export default function Sidebar() {
       >
         {NAV_ITEMS.map((link) => {
           const isActive = isNavItemActive(link, pathname);
+          const Icon = link.icon;
           return (
             <Link
               key={link.to}
@@ -100,9 +101,10 @@ export default function Sidebar() {
                   className="absolute inset-y-2 left-0 w-0.5 bg-el-accent-strong"
                 />
               )}
-              <span className="w-3.5 flex-none text-center text-micro text-el-faint">
-                {link.num}
-              </span>
+              <Icon
+                aria-hidden="true"
+                className={`size-4 flex-none ${isActive ? "text-el-ink" : "text-el-muted"}`}
+              />
               <span className={labelClass}>{link.label}</span>
               {/* "Live" mark only while the API answers; an outage must not
                   read as a healthy live surface. */}
@@ -207,7 +209,9 @@ export default function Sidebar() {
           >
             <path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36A5.39 5.39 0 0 1 12 3z" />
           </svg>
-          <span className={labelClass}>{theme} theme</span>
+          <span className={labelClass}>
+            {theme === "dark" ? "Dark theme" : "Paper theme"}
+          </span>
         </button>
 
         {/* Collapse control */}
@@ -222,7 +226,7 @@ export default function Sidebar() {
           <span className="w-4 flex-none text-center text-[13px]" aria-hidden="true">
             {collapsed ? "»" : "«"}
           </span>
-          {!collapsed && <span className="whitespace-nowrap">collapse</span>}
+          {!collapsed && <span className="whitespace-nowrap">Collapse</span>}
         </button>
       </div>
     </aside>

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { Button } from "../components/ui/button";
+import TierMark, { tierLevel } from "../components/common/TierMark";
 import WorkflowDAG from "../components/dag/WorkflowDAG";
 import EdgeInspector from "../components/editor/EdgeInspector";
 import NodeInspector from "../components/editor/NodeInspector";
@@ -520,11 +521,13 @@ export default function WorkflowEditorPage() {
                           {node.id}
                         </span>
                         {node.tier && (
-                          <span
-                            className={`rounded-md border px-1 font-mono text-micro uppercase ${tierClass(node.tier)}`}
-                          >
-                            {node.tier}
-                          </span>
+                          <TierMark
+                            tier={node.tier}
+                            // Named aliases (fast/sonnet/opus) carry no digit;
+                            // keep their text and the editor's alias tones.
+                            label={tierLevel(node.tier) == null ? node.tier : undefined}
+                            toneClass={tierClass(node.tier)}
+                          />
                         )}
                       </button>
                     );

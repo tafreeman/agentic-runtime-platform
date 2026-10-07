@@ -129,7 +129,7 @@ describe("EvaluationsPage", () => {
 
     renderPage();
 
-    expect(screen.getByRole("link", { name: "view" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /^Open run / })).toBeInTheDocument();
     expect(screen.getByText(/showing the last loaded evaluations/i)).toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
@@ -145,7 +145,7 @@ describe("EvaluationsPage", () => {
     renderPage();
 
     fireEvent.click(screen.getByRole("button", { name: /draft_flow/i }));
-    const evaluateButton = screen.getByRole("button", { name: /evaluate a run/i });
+    const evaluateButton = screen.getByRole("button", { name: "Evaluate run" });
     expect(evaluateButton).toBeDisabled();
     expect(evaluateButton).toHaveAccessibleDescription(/API server is unreachable/);
     fireEvent.click(evaluateButton);
@@ -170,7 +170,7 @@ describe("EvaluationsPage", () => {
     // Grade "A" renders in the table cell and also in the scorecard tier scale.
     expect(screen.getAllByText("A").length).toBeGreaterThan(0);
     // Exact name "view" targets the table's aria-labelled detail link.
-    expect(screen.getByRole("link", { name: "view" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /^Open run / })).toHaveAttribute(
       "href",
       "/runs/run-1.json"
     );
@@ -195,7 +195,7 @@ describe("EvaluationsPage", () => {
     // Unscored runs are offered in the picker too — rescoring works from the
     // captured log regardless of whether a score already exists.
     const evaluateButton = screen.getByRole("button", {
-      name: /evaluate a run/i,
+      name: "Evaluate run",
     });
     expect(evaluateButton).toBeDisabled();
 
@@ -205,7 +205,7 @@ describe("EvaluationsPage", () => {
     fireEvent.click(evaluateButton);
 
     await waitFor(() =>
-      expect(screen.getByText("scored 84.5 · B")).toBeInTheDocument()
+      expect(screen.getByText("Scored 84.5 · B")).toBeInTheDocument()
     );
     expect(mockEvaluateRun).toHaveBeenCalledWith("run-2.json");
   });
@@ -225,7 +225,7 @@ describe("EvaluationsPage", () => {
 
     const runRow = screen.getByRole("button", { name: /draft_flow/i });
     const evaluateButton = screen.getByRole("button", {
-      name: /evaluate a run/i,
+      name: "Evaluate run",
     });
 
     // Toggle: select then deselect disables the evaluate action again.
@@ -285,7 +285,7 @@ describe("EvaluationsPage", () => {
       screen.getByRole("region", { name: "compare runs" })
     ).toBeInTheDocument();
 
-    const compareButton = screen.getByRole("button", { name: /▶ compare/ });
+    const compareButton = screen.getByRole("button", { name: "Compare runs" });
     expect(compareButton).toBeDisabled();
 
     fireEvent.click(
@@ -312,7 +312,7 @@ describe("EvaluationsPage", () => {
     renderPage();
 
     fireEvent.click(screen.getByRole("button", { name: /draft_flow/i }));
-    fireEvent.click(screen.getByRole("button", { name: /evaluate a run/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Evaluate run" }));
 
     await waitFor(() =>
       expect(screen.getByRole("alert")).toHaveTextContent(
@@ -330,7 +330,7 @@ describe("EvaluationsPage", () => {
     renderPage();
 
     fireEvent.click(screen.getByRole("button", { name: /draft_flow/i }));
-    fireEvent.click(screen.getByRole("button", { name: /evaluate a run/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Evaluate run" }));
 
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent(/run log run-2\.json not found/);

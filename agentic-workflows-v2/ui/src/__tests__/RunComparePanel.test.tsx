@@ -90,7 +90,7 @@ function pickAndCompare() {
   fireEvent.click(
     screen.getByRole("button", { name: "pick run-2.json for candidate B" })
   );
-  fireEvent.click(screen.getByRole("button", { name: /▶ compare/ }));
+  fireEvent.click(screen.getByRole("button", { name: "Compare runs" }));
 }
 
 describe("RunComparePanel", () => {
@@ -104,7 +104,7 @@ describe("RunComparePanel", () => {
     renderPanel([RUN_A, RUN_B]);
 
     // Rubric id flows through the request (trimmed, null when empty).
-    fireEvent.change(screen.getByPlaceholderText("default rubric"), {
+    fireEvent.change(screen.getByPlaceholderText("Default rubric"), {
       target: { value: "review_default" },
     });
     pickAndCompare();
@@ -127,8 +127,9 @@ describe("RunComparePanel", () => {
     expect(within(candidateB).getByText("71.5")).toBeInTheDocument();
     expect(within(candidateA).getByText("B")).toBeInTheDocument();
     expect(within(candidateB).getByText("C")).toBeInTheDocument();
-    expect(within(candidateA).getByText("pass")).toBeInTheDocument();
-    expect(within(candidateB).getByText("fail")).toBeInTheDocument();
+    // Candidate outcomes use the shared status marker words.
+    expect(within(candidateA).getByText("Passed")).toBeInTheDocument();
+    expect(within(candidateB).getByText("Failed")).toBeInTheDocument();
 
     // Winner A carries the accent rule + tag; B stays neutral.
     expect(within(candidateA).getByText("winner")).toBeInTheDocument();
@@ -178,7 +179,7 @@ describe("RunComparePanel", () => {
       screen.getByRole("button", { name: "pick run-1.json for candidate B" })
     ).toBeDisabled();
     // The compare action stays disabled until both slots are filled.
-    expect(screen.getByRole("button", { name: /▶ compare/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Compare runs" })).toBeDisabled();
   });
 
   it("renders the server detail with a remedy instead of the raw status line", async () => {
@@ -229,7 +230,7 @@ describe("RunComparePanel", () => {
       screen.getByRole("button", { name: "pick run-2.json for candidate B" })
     );
 
-    const compare = screen.getByRole("button", { name: /▶ compare/ });
+    const compare = screen.getByRole("button", { name: "Compare runs" });
     expect(compare).toBeDisabled();
     expect(compare).toHaveAccessibleDescription(/API server is unreachable/);
     expect(screen.getByText(/API server is unreachable/)).toBeVisible();

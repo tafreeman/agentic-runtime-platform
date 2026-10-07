@@ -108,6 +108,54 @@ describe("DashboardPage", () => {
     expect(screen.getByText(/tokens \(30d\)/i)).toBeInTheDocument();
   });
 
+  it("shows recent-run status with the shared marker and a ruled scoreline", () => {
+    mockUseRunsSummary.mockReturnValue({
+      data: { total_runs: 2, success: 1, failed: 1, tokens_30d: 10 },
+      isLoading: false,
+    });
+    mockUseRuns.mockReturnValue({
+      data: [
+        {
+          filename: "ok.json",
+          run_id: "ok-1",
+          workflow_name: "triage",
+          status: "success",
+          step_count: 3,
+          failed_step_count: 0,
+        },
+        {
+          filename: "bad.json",
+          run_id: "bad-1",
+          workflow_name: "review",
+          status: "failed",
+          step_count: 4,
+          failed_step_count: 2,
+        },
+      ],
+      isLoading: false,
+    });
+    mockUseWorkflows.mockReturnValue({ data: ["triage"], isLoading: false });
+
+    renderDashboard();
+
+    // One status vocabulary: icon + sentence-case word, no ASCII brackets,
+    // and the description no longer repeats the status word.
+    expect(screen.getByText("Success")).toBeInTheDocument();
+    expect(screen.getByText("Failed")).toBeInTheDocument();
+    expect(screen.queryByText(/\[ ?(ok|fail) ?\]/)).not.toBeInTheDocument();
+    expect(screen.getByText("3 steps")).toBeInTheDocument();
+    expect(screen.getByText("4 steps · 2 failed")).toBeInTheDocument();
+
+    // Evidence scoreline: hairline-ruled columns, not boxed KPI cards with an
+    // accent rail.
+    const scoreline = screen.getByRole("region", { name: "run summary" });
+    expect(scoreline.className).toContain("border-y");
+    expect(scoreline.querySelector(".rounded-lg")).toBeNull();
+    expect(scoreline.querySelector(".bg-el-accent")).toBeNull();
+    // Section headings are real headings, not mono overlines.
+    expect(screen.getByRole("heading", { name: "Recent runs" })).toBeInTheDocument();
+  });
+
   it("renders the models panel from the agents endpoint", async () => {
     mockUseRunsSummary.mockReturnValue({
       data: { total_runs: 1, success: 1, failed: 0 },
@@ -254,9 +302,9 @@ describe("DashboardPage", () => {
     expect(screen.queryByText(/synced just now/i)).not.toBeInTheDocument();
     // Honest line: workflow count · live-run count · last refresh time (the
     // mocked query exposes no dataUpdatedAt, so the time renders as a dash).
-    expect(
-      screen.getByText(/2 workflows · 1 running · updated —/)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/workflows ·/)).toHaveTextContent(
+      "2 workflows · 1 running · updated —"
+    );
   });
 
   it("navigates to the workflows page on the n hotkey", () => {
@@ -513,9 +561,10 @@ describe("DashboardPage", () => {
 
       renderDashboard();
 
-      const total = screen.getByRole("button", { name: /total runs/i });
-      const rate = screen.getByRole("button", { name: /success rate/i });
-      const tokens = screen.getByRole("button", { name: /tokens \(30d\)/i });
+      // Scoreline cells are links to the metric's source page (§11.1).
+      const total = screen.getByRole("link", { name: /total runs/i });
+      const rate = screen.getByRole("link", { name: /success rate/i });
+      const tokens = screen.getByRole("link", { name: /tokens \(30d\)/i });
       for (const card of [total, rate, tokens]) {
         expect(card).toHaveAccessibleName(/no data/);
         expect(card).toHaveTextContent("—");
@@ -536,12 +585,12 @@ describe("DashboardPage", () => {
       renderDashboard();
 
       expect(
-        screen.getByRole("button", { name: /total runs/i })
+        screen.getByRole("link", { name: /total runs/i })
       ).toHaveTextContent("0");
       expect(
-        screen.getByRole("button", { name: /tokens \(30d\)/i })
+        screen.getByRole("link", { name: /tokens \(30d\)/i })
       ).toHaveTextContent("0");
-      const rate = screen.getByRole("button", { name: /success rate/i });
+      const rate = screen.getByRole("link", { name: /success rate/i });
       expect(rate).toHaveAccessibleName(/no data/);
       expect(rate).not.toHaveTextContent("0.0");
     });
@@ -557,7 +606,7 @@ describe("DashboardPage", () => {
       renderDashboard();
 
       expect(
-        screen.getByRole("button", { name: /success rate/i })
+        screen.getByRole("link", { name: /success rate/i })
       ).toHaveTextContent("75.0%");
     });
   });

@@ -15,7 +15,7 @@ vi.mock("../hooks/useRuns", () => ({
 }));
 
 vi.mock("../hooks/useCli", () => ({
-  useCli: () => ({ cli: "agentic runs list --limit 50", setCli: mockSetCli }),
+  useCli: () => ({ cli: null, setCli: mockSetCli, syncRoute: vi.fn() }),
 }));
 
 vi.mock("../hooks/useApiAvailability", () => ({
@@ -177,7 +177,7 @@ describe("RunsPage", () => {
     expect(strip).not.toHaveTextContent(/\b0\b/);
     expect(within(strip).getAllByText("no data")).toHaveLength(4);
     expect(within(strip).getAllByText("—")).toHaveLength(4);
-    expect(screen.getByText(/\$ showing/)).not.toHaveTextContent(/\b0\b/);
+    expect(screen.getByText(/recorded runs/)).not.toHaveTextContent(/\b0\b/);
   });
 
   it("keeps a real zero from real data", () => {
@@ -192,7 +192,7 @@ describe("RunsPage", () => {
     expect(within(strip).getAllByText("0")).toHaveLength(3);
     // …but an average over zero runs has no underlying data.
     expect(within(strip).getAllByText("no data")).toHaveLength(1);
-    expect(screen.getByText(/showing 0 of 0/)).toBeInTheDocument();
+    expect(screen.getByText(/recorded runs/)).toHaveTextContent(/Showing 0 of 0/);
   });
 
   it("renders the empty state when there are no runs", () => {
@@ -214,15 +214,18 @@ describe("RunsPage", () => {
     });
     renderPage();
 
-    const strip = screen.getByLabelText("run statistics");
+    // A ruled evidence scoreline (§11.1), not a boxed KPI card grid.
+    const strip = screen.getByRole("region", { name: "run statistics" });
+    expect(strip.className).toContain("border-y");
+    expect(strip.className).not.toContain("rounded-lg");
     expect(strip).toHaveTextContent("312");
-    expect(strip).toHaveTextContent("runs total");
+    expect(strip).toHaveTextContent("Total runs");
     expect(strip).toHaveTextContent("300");
-    expect(strip).toHaveTextContent("passing");
+    expect(strip).toHaveTextContent("Passing");
     expect(strip).toHaveTextContent("12");
-    expect(strip).toHaveTextContent("failed");
+    expect(strip).toHaveTextContent("Failed");
     expect(strip).toHaveTextContent("340ms");
-    expect(strip).toHaveTextContent("avg duration");
+    expect(strip).toHaveTextContent("Avg duration");
   });
 
   it("headlines 'showing X of Y' from the fetched window and the summary total", () => {
@@ -240,7 +243,7 @@ describe("RunsPage", () => {
 
     // The list endpoint returns a capped window (limit 50); the header must
     // not present that window as the total.
-    expect(screen.getByText(/showing 1 of 312/)).toBeInTheDocument();
+    expect(screen.getByText(/recorded runs/)).toHaveTextContent(/Showing 1 of 312/);
   });
 
   it("falls back to the window size for the total while the summary loads", () => {
@@ -254,7 +257,7 @@ describe("RunsPage", () => {
     // beforeEach leaves the summary undefined.
     renderPage();
 
-    expect(screen.getByText(/showing 2 of 2/)).toBeInTheDocument();
+    expect(screen.getByText(/recorded runs/)).toHaveTextContent(/Showing 2 of 2/);
   });
 
   it("truncates long run ids inside the run cell instead of overflowing the grid", () => {
@@ -272,22 +275,22 @@ describe("RunsPage", () => {
     });
     renderPage();
 
-    // CopyId must flex (not flex-none) with min-w-0 so the id truncates in
-    // its grid column instead of painting across the status glyph.
-    const copyButton = screen.getByRole("button", { name: longId });
-    expect(copyButton.className).toContain("flex-1");
-    expect(copyButton.className).toContain("min-w-0");
-    expect(copyButton.className).not.toContain("flex-none");
+    // The row's inspect button flexes (min-w-0 + flex-1) so the id truncates
+    // in its grid column instead of painting across the status marker.
+    const inspect = screen.getByRole("button", { name: `Inspect run ${longId}` });
+    expect(inspect.className).toContain("flex-1");
+    expect(inspect.className).toContain("min-w-0");
+    expect(inspect).toHaveAttribute("title", longId);
 
-    const inner = copyButton.querySelector("span.truncate");
+    const inner = inspect.querySelector("span.truncate");
     expect(inner).not.toBeNull();
     expect(inner).toHaveTextContent(longId);
 
     // The cell shrinks (min-w-0) but does not clip: overflow-hidden here would
     // also clip the button's expanded ::after hit area back to the text box.
-    expect(copyButton.parentElement?.className).toContain("min-w-0");
-    expect(copyButton.parentElement?.className).not.toContain("overflow-hidden");
-    expect(copyButton.className).toContain("after:-inset-y-3");
+    expect(inspect.parentElement?.className).toContain("min-w-0");
+    expect(inspect.parentElement?.className).not.toContain("overflow-hidden");
+    expect(inspect.className).toContain("after:-inset-y-3");
   });
 
   it("never shows a negative age when the server clock runs ahead", () => {
@@ -339,7 +342,7 @@ describe("RunsPage", () => {
     expect(screen.getByRole("link", { name: "triage_flow" })).toBeInTheDocument();
   });
 
-  it("filters rows with the workflow select and sets the CLI twin", () => {
+  it("filters rows with the workflow select (no invented CLI twin)", () => {
     mockUseRuns.mockReturnValue({
       data: [
         makeRun({ filename: "a.json", run_id: "a1", workflow_name: "review_flow" }),
@@ -357,9 +360,8 @@ describe("RunsPage", () => {
       screen.queryByRole("link", { name: "review_flow" }),
     ).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "triage_flow" })).toBeInTheDocument();
-    expect(mockSetCli).toHaveBeenCalledWith(
-      "agentic runs list --workflow triage_flow",
-    );
+    // The CLI has no `runs list` command, so nothing is set.
+    expect(mockSetCli).not.toHaveBeenCalled();
   });
 
   it("passes the Live tail switch state through to useRuns", () => {
@@ -471,7 +473,7 @@ describe("RunsPage", () => {
     expect(screen.queryByText("Inspector for deep.json")).not.toBeInTheDocument();
   });
 
-  it("exposes each run row as a copyable, keyboard-activatable button", () => {
+  it("uses table semantics with one inspect button per row (no nested controls)", () => {
     mockUseRuns.mockReturnValue({
       data: [
         makeRun({ filename: "kbd.json", run_id: "k1", workflow_name: "kbd_flow" }),
@@ -480,16 +482,67 @@ describe("RunsPage", () => {
     });
     renderPage();
 
-    const row = screen.getByRole("button", { name: "Inspect run k1" });
-    expect(row).toHaveAttribute("tabindex", "0");
+    const table = screen.getByRole("table", { name: "Runs" });
+    const rows = within(table).getAllByRole("row");
+    // Header row + one run row; rows are not buttons and take no tab stop.
+    expect(rows).toHaveLength(2);
+    for (const row of rows) {
+      expect(row).not.toHaveAttribute("tabindex");
+    }
+    expect(within(table).getAllByRole("columnheader").map((h) => h.textContent)).toEqual([
+      "Run",
+      "Workflow",
+      "Status",
+      "Duration",
+      "Steps",
+      "Score",
+      "When",
+    ]);
 
-    // CopyId renders the run id as its own copyable control inside the row.
-    expect(screen.getByRole("button", { name: "k1" })).toBeInTheDocument();
+    // The identity cell holds the row's primary control: a real button.
+    const inspect = within(rows[1]!).getByRole("button", { name: "Inspect run k1" });
+    expect(inspect.tagName).toBe("BUTTON");
+    expect(inspect).toHaveAttribute("aria-expanded", "false");
+    expect(inspect.closest('[role="cell"]')).not.toBeNull();
+    // No interactive element nests another.
+    for (const control of within(table).queryAllByRole("button")) {
+      expect(control.querySelector("a, button")).toBeNull();
+    }
 
-    // Enter/Space directly on a focused row also selects it (independent of
-    // the page-level j/k/↵ cursor nav tested below).
-    fireEvent.keyDown(row, { key: "Enter" });
+    fireEvent.click(inspect);
     expect(screen.getByText("Inspector for kbd.json")).toBeInTheDocument();
+    expect(inspect).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("shows status with the shared marker words, not ASCII brackets", () => {
+    mockUseRuns.mockReturnValue({
+      data: [
+        makeRun({ filename: "a.json", run_id: "a1", status: "success" }),
+        makeRun({ filename: "b.json", run_id: "b2", status: "failed" }),
+        makeRun({ filename: "c.json", run_id: "c3", status: "running" }),
+      ],
+      isLoading: false,
+    });
+    renderPage();
+
+    const table = screen.getByRole("table", { name: "Runs" });
+    expect(within(table).getByText("Success")).toBeInTheDocument();
+    expect(within(table).getByText("Failed")).toBeInTheDocument();
+    expect(within(table).getByText("Running")).toBeInTheDocument();
+    expect(table.textContent).not.toMatch(/\[ ?(ok|err|\.\.) ?\]/);
+  });
+
+  it("keeps the pointer row-click shortcut", () => {
+    mockUseRuns.mockReturnValue({
+      data: [makeRun({ filename: "row.json", run_id: "r1", workflow_name: "row_flow" })],
+      isLoading: false,
+    });
+    renderPage();
+
+    const row = screen.getByRole("button", { name: "Inspect run r1" }).closest('[role="row"]')!;
+    // Click a non-control cell (duration) — the whole row is a pointer target.
+    fireEvent.click(within(row as HTMLElement).getAllByRole("cell")[3]!);
+    expect(screen.getByText("Inspector for row.json")).toBeInTheDocument();
   });
 
   describe("master-detail selection", () => {
@@ -509,7 +562,8 @@ describe("RunsPage", () => {
       fireEvent.click(screen.getByRole("button", { name: "Inspect run a1" }));
 
       expect(screen.getByText("Inspector for a.json")).toBeInTheDocument();
-      expect(mockSetCli).toHaveBeenCalledWith("agentic runs inspect a1 --trace");
+      // No CLI command inspects a recorded run, so none is invented.
+      expect(mockSetCli).not.toHaveBeenCalled();
     });
 
     it("keeps the full-width table (no aside) until a run is selected", () => {
@@ -564,23 +618,29 @@ describe("RunsPage", () => {
       expect(screen.getByText("Duration")).toBeInTheDocument();
     });
 
-    it("sets a CLI-parity command when the status filter changes", () => {
-      mockUseRuns.mockReturnValue({ data: twoRuns(), isLoading: false });
+    it("filters by status with the shared status words and sets no fake CLI twin", () => {
+      mockUseRuns.mockReturnValue({
+        data: [
+          makeRun({ filename: "a.json", run_id: "a1", workflow_name: "alpha_flow" }),
+          makeRun({
+            filename: "b.json",
+            run_id: "b2",
+            workflow_name: "beta_flow",
+            status: "failed",
+          }),
+        ],
+        isLoading: false,
+      });
       renderPage();
 
-      fireEvent.change(screen.getByLabelText("Filter by status"), {
-        target: { value: "failed" },
-      });
-      expect(mockSetCli).toHaveBeenCalledWith("agentic runs list --status failed");
+      const select = screen.getByLabelText("Filter by status");
+      expect(within(select).getByRole("option", { name: /^Failed · 1$/ })).toBeInTheDocument();
+      fireEvent.change(select, { target: { value: "failed" } });
+      expect(screen.queryByRole("link", { name: "alpha_flow" })).not.toBeInTheDocument();
+      expect(screen.getByRole("link", { name: "beta_flow" })).toBeInTheDocument();
 
-      // Back to "all": the CLI twin uses only real flags (no invented --env).
-      fireEvent.change(screen.getByLabelText("Filter by status"), {
-        target: { value: "all" },
-      });
-      expect(mockSetCli).toHaveBeenLastCalledWith("agentic runs list --limit 50");
-      expect(mockSetCli).not.toHaveBeenCalledWith(
-        expect.stringContaining("--env"),
-      );
+      // There is no `agentic runs list` command — the strip shows none.
+      expect(mockSetCli).not.toHaveBeenCalled();
     });
 
     it("moves the keyboard cursor with j/k and inspects the focused row on Enter", () => {
@@ -592,7 +652,6 @@ describe("RunsPage", () => {
       fireEvent.keyDown(window, { key: "Enter" });
 
       expect(screen.getByText("Inspector for b.json")).toBeInTheDocument();
-      expect(mockSetCli).toHaveBeenCalledWith("agentic runs inspect b2 --trace");
 
       // Move back up with "k" and inspect row 0.
       fireEvent.keyDown(window, { key: "k" });

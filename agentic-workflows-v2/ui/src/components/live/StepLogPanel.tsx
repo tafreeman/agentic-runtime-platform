@@ -28,22 +28,20 @@ export default function StepLogPanel({ events, className = "" }: Readonly<Props>
           type="button"
           aria-expanded={expanded}
           aria-controls={panelId}
-          className="focus-ring relative flex items-center gap-1.5 rounded-sm font-mono text-micro uppercase tracking-[1.5px] text-el-muted transition-colors after:absolute after:-inset-x-1 after:-inset-y-3 hover:text-el-ink"
+          className="focus-ring relative flex items-center gap-1.5 rounded-sm font-sans text-xs font-semibold text-el-ink transition-colors after:absolute after:-inset-x-1 after:-inset-y-3 hover:text-el-secondary"
           onClick={() => setExpanded(!expanded)}
         >
           {expanded ? (
-            <ChevronDown className="h-3 w-3" />
+            <ChevronDown aria-hidden="true" className="h-3 w-3" />
           ) : (
-            <ChevronRight className="h-3 w-3" />
+            <ChevronRight aria-hidden="true" className="h-3 w-3" />
           )}
-          Event Log · SSE
+          Event log
         </button>
-        <span className="flex items-center gap-[5px] font-mono text-micro text-el-success">
-          <span
-            aria-hidden="true"
-            className="inline-block h-[5px] w-[5px] animate-pulse rounded-full bg-el-success motion-reduce:animate-none"
-          />
-          streaming · {displayEvents.length}
+        {/* A count, not a liveness claim: the run's own status marker says
+            whether it is still streaming. */}
+        <span className="text-micro tabular-nums text-el-muted">
+          {displayEvents.length} event{displayEvents.length === 1 ? "" : "s"}
         </span>
       </div>
 

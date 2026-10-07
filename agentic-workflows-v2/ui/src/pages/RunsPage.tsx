@@ -1,12 +1,13 @@
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { ArrowUpRight, Search } from "lucide-react";
 import { useRuns, useRunsSummary } from "../hooks/useRuns";
 import { useHotkeys } from "../hooks/useHotkeys";
-import { useCli } from "../hooks/useCli";
 import { useApiAvailability } from "../hooks/useApiAvailability";
 import BTopBar from "../components/layout/BTopBar";
 import DurationDisplay from "../components/common/DurationDisplay";
-import CopyId from "../components/common/CopyId";
+import Scoreline from "../components/common/Scoreline";
+import StatusBadge from "../components/common/StatusBadge";
 import InlineError from "../components/states/InlineError";
 import NoData from "../components/states/NoData";
 import RunDetailPanel from "../components/runs/RunDetailPanel";
@@ -23,23 +24,13 @@ const STATUS_FILTERS: readonly StatusFilter[] = [
   "running",
 ];
 
-/** CLI twin for the unfiltered list (matches the CLI's real flags). */
-const CLI_LIST_ALL = "agentic runs list --limit 50";
-
-/** ASCII status glyph + its text color class, by run status. */
-function statusAscii(status: string | null | undefined): {
-  label: string;
-  className: string;
-} {
-  if (status === "success") return { label: "[ ok ]", className: "text-el-success" };
-  if (status === "failed" || status === "error") {
-    return { label: "[err ]", className: "text-el-danger" };
-  }
-  if (status === "running" || status === "in_progress") {
-    return { label: "[ .. ]", className: "text-el-info" };
-  }
-  return { label: `[${status ?? "?"}]`, className: "text-el-muted" };
-}
+/** Option text per status filter — the shared status words (§11.3). */
+const STATUS_FILTER_LABEL: Record<StatusFilter, string> = {
+  all: "All statuses",
+  success: "Success",
+  failed: "Failed",
+  running: "Running",
+};
 
 function formatWhen(iso: string | null | undefined): string {
   if (!iso) return "—";
@@ -67,30 +58,27 @@ function shortId(run: RunSummary): string {
   return (parts.at(-1) ?? id).slice(0, 10);
 }
 
-/** One cell of the design kit's KPI strip: big mono number over a dim label. */
-function Kpi({
-  value,
-  label,
-}: Readonly<{ value: ReactNode; label: string }>) {
-  return (
-    <div className="px-4 py-3">
-      <div className="font-mono text-[26px] leading-none text-el-ink tabular-nums">
-        {value}
-      </div>
-      <div className="mt-1.5 font-mono text-micro text-el-secondary">
-        {label}
-      </div>
-    </div>
-  );
-}
-
 const selectClass =
-  "focus-ring rounded-md border border-el-control-border bg-el-raised px-2 py-1.5 font-mono text-xs text-el-ink";
+  "focus-ring rounded-md border border-el-control-border bg-el-raised px-2 py-1.5 text-xs text-el-ink";
 
 /** Dense in-row link: visually small, ::after widens the hit area to ≥36px. */
 const ROW_LINK_HIT = "relative after:absolute after:-inset-x-1 after:-inset-y-3";
-/** Same vertical expansion for the copy-id button (no horizontal bleed). */
+/** Same vertical expansion for the row's inspect button (no horizontal bleed). */
 const ROW_ID_HIT = "relative after:absolute after:inset-x-0 after:-inset-y-3";
+
+/** True when focus sits on a control that handles Enter itself. */
+function isInteractiveFocus(el: Element | null): boolean {
+  if (!el || el === document.body || el === document.documentElement) return false;
+  const tag = el.tagName.toLowerCase();
+  return (
+    tag === "input" ||
+    tag === "textarea" ||
+    tag === "select" ||
+    tag === "button" ||
+    tag === "a" ||
+    (el as HTMLElement).isContentEditable
+  );
+}
 
 export default function RunsPage() {
   const [liveTail, setLiveTail] = useState(true);
@@ -100,9 +88,9 @@ export default function RunsPage() {
     { live: liveTail }
   );
   const { data: summary } = useRunsSummary();
-  const { setCli } = useCli();
   const { apiDown } = useApiAvailability();
   const triggerReasonId = useId();
+  const inspectorId = useId();
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<RunSummary | null>(null);
@@ -152,21 +140,42 @@ export default function RunsPage() {
     setCursor((c) => Math.min(c, Math.max(0, filtered.length - 1)));
   }, [filtered.length]);
 
-  // Selecting a run drives both the inspector aside and the CLI-parity strip.
+  // Selecting a run opens the inspector aside. (The CLI has no command for
+  // browsing or inspecting recorded runs, so the CLI strip shows no
+  // equivalent for this page rather than an invented one.)
   function selectRun(run: RunSummary, index: number): void {
     setSelected(run);
     setCursor(index);
-    setCli(`agentic runs inspect ${runId(run)} --trace`);
   }
+
+  // Below md the inspector replaces the list (a full-width detail view, not a
+  // 46vw sliver). Focus follows it in, and returns to the row's inspect
+  // button on close, so keyboard and screen-reader users are never dropped
+  // on <body> when the list unmounts/remounts.
+  const asideRef = useRef<HTMLElement>(null);
+  const lastInspectedRef = useRef<string | null>(null);
+  useEffect(() => {
+    const narrow = globalThis.matchMedia?.("(max-width: 767px)").matches ?? false;
+    if (selected) {
+      lastInspectedRef.current = selected.filename;
+      if (narrow) asideRef.current?.focus();
+      return;
+    }
+    const last = lastInspectedRef.current;
+    lastInspectedRef.current = null;
+    if (!last || !narrow) return;
+    const trigger = Array.from(
+      document.querySelectorAll<HTMLButtonElement>("[data-inspect-run]"),
+    ).find((el) => el.dataset.inspectRun === last);
+    trigger?.focus();
+  }, [selected]);
 
   function changeFilter(next: StatusFilter): void {
     setFilter(next);
-    setCli(next === "all" ? CLI_LIST_ALL : `agentic runs list --status ${next}`);
   }
 
   function changeWorkflowFilter(next: string): void {
     setWorkflowFilter(next);
-    setCli(next === "all" ? CLI_LIST_ALL : `agentic runs list --workflow ${next}`);
   }
 
   useHotkeys({
@@ -176,10 +185,11 @@ export default function RunsPage() {
     escape: () => setSelected(null),
   });
 
-  // `↵` inspects the focused row. Bound directly (not via useHotkeys, which
-  // has no "enter"/"inspect" action) — same input-focus guard as useHotkeys's
-  // isInputFocused(). A ref holds the latest handler so the listener itself
-  // is registered once, not rebound on every cursor/filter change.
+  // `↵` inspects the j/k cursor row. Bound directly (not via useHotkeys,
+  // which has no "enter"/"inspect" action). It stands down whenever focus is
+  // on a real control — an input, or a row's own inspect button / link, which
+  // activates natively on Enter. A ref holds the latest handler so the
+  // listener itself is registered once, not rebound on every cursor change.
   const inspectFocusedRef = useRef<() => void>(() => {});
   inspectFocusedRef.current = () => {
     const row = filtered[cursor];
@@ -189,18 +199,7 @@ export default function RunsPage() {
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent): void {
       if (e.key !== "Enter") return;
-      const el = document.activeElement;
-      if (!el || el === document.body || el === document.documentElement) {
-        inspectFocusedRef.current();
-        return;
-      }
-      const tag = el.tagName.toLowerCase();
-      const isInput =
-        tag === "input" ||
-        tag === "textarea" ||
-        tag === "select" ||
-        (el as HTMLElement).isContentEditable;
-      if (isInput) return;
+      if (isInteractiveFocus(document.activeElement)) return;
       inspectFocusedRef.current();
     }
     globalThis.addEventListener("keydown", onKeyDown);
@@ -209,9 +208,11 @@ export default function RunsPage() {
 
   // Column order mirrors the design kit's runs table (RUN first, WHEN last);
   // the grid narrows to the four identity columns while the inspector is open.
+  // Narrow viewports scroll the table horizontally inside its own box (never
+  // the page); the min-width keeps every column legible instead of clipped.
   const gridCols = selected
-    ? "grid-cols-[minmax(120px,0.9fr)_1fr_64px_84px]"
-    : "grid-cols-[minmax(120px,0.9fr)_1.4fr_64px_84px_56px_56px_80px]";
+    ? "min-w-[440px] grid-cols-[minmax(120px,0.9fr)_1fr_92px_76px]"
+    : "min-w-[680px] grid-cols-[minmax(120px,0.9fr)_1.4fr_92px_76px_56px_56px_72px]";
 
   // KPI values: the summary when it loaded, else the fetched window, else
   // "—" — never a fabricated 0 while the data is loading or failed.
@@ -229,7 +230,7 @@ export default function RunsPage() {
   if (runs === undefined) {
     emptyMessage = "runs couldn't be loaded";
   } else if (runs.length === 0) {
-    emptyMessage = "no runs yet · select a workflow to start";
+    emptyMessage = "No runs yet · select a workflow to start";
   }
 
   return (
@@ -237,12 +238,16 @@ export default function RunsPage() {
       <BTopBar path="runs" />
 
       <div className="flex min-h-0 flex-1">
-        <div className="h-full min-w-0 flex-1 overflow-y-auto">
+        <div
+          className={`h-full min-w-0 flex-1 overflow-y-auto ${
+            selected ? "hidden md:block" : ""
+          }`}
+        >
           <div className="mx-auto max-w-5xl space-y-4 p-6">
             {/* Header */}
             <div>
               <h1
-                className="font-display text-[26px] font-semibold text-el-ink"
+                className="font-display text-[28px] font-semibold text-el-ink"
                 style={{ letterSpacing: "-0.5px" }}
               >
                 Runs
@@ -250,27 +255,31 @@ export default function RunsPage() {
               {/* The list endpoint caps at 50 rows; the summary carries the
                   real total — say so instead of presenting the window as
                   "total". */}
-              <div className="mt-1 font-mono text-micro text-el-muted">
-                $ showing {runs ? runs.length : <NoData />} of{" "}
-                {totalRuns ?? <NoData />} · filter with{" "}
-                <kbd className="font-semibold text-el-ink">/</kbd>
-              </div>
+              <p className="mt-1 text-xs text-el-muted">
+                Showing{" "}
+                <span className="tabular-nums">{runs ? runs.length : <NoData />}</span>{" "}
+                of <span className="tabular-nums">{totalRuns ?? <NoData />}</span>{" "}
+                recorded runs · filter with{" "}
+                <kbd className="rounded-sm border border-el-divider px-1 font-mono text-micro text-el-ink">
+                  /
+                </kbd>
+              </p>
             </div>
 
-            {/* KPI strip — design kit's four-cell stats band */}
-            <div
-              className="grid grid-cols-2 divide-x divide-el-divider rounded-lg border border-el-divider bg-el-surface sm:grid-cols-4"
-              aria-label="run statistics"
-            >
-              <Kpi value={totalRuns ?? <NoData />} label="runs total" />
-              <Kpi value={passing ?? <NoData />} label="passing" />
-              <Kpi value={failing ?? <NoData />} label="failed" />
-              <Kpi value={avgDuration} label="avg duration" />
-            </div>
+            {/* Evidence scoreline (§11.1) — ruled columns, no KPI cards. */}
+            <Scoreline
+              label="run statistics"
+              items={[
+                { label: "Total runs", value: totalRuns ?? <NoData /> },
+                { label: "Passing", value: passing ?? <NoData /> },
+                { label: "Failed", value: failing ?? <NoData /> },
+                { label: "Avg duration", value: avgDuration },
+              ]}
+            />
 
             {/* Filter row — status/workflow selects, live tail, trigger run */}
             <div className="flex flex-wrap items-center gap-2.5">
-              <label className="flex items-center font-mono text-micro text-el-muted">
+              <label className="flex items-center text-micro text-el-muted">
                 <span className="sr-only">status filter</span>
                 <select
                   value={filter}
@@ -283,7 +292,7 @@ export default function RunsPage() {
                     if (runs) count = ` · ${f === "all" ? runs.length : counts[f]}`;
                     return (
                       <option key={f} value={f}>
-                        status: {f}
+                        {STATUS_FILTER_LABEL[f]}
                         {count}
                       </option>
                     );
@@ -291,7 +300,7 @@ export default function RunsPage() {
                 </select>
               </label>
 
-              <label className="flex items-center font-mono text-micro text-el-muted">
+              <label className="flex items-center text-micro text-el-muted">
                 <span className="sr-only">workflow filter</span>
                 <select
                   value={workflowFilter}
@@ -299,7 +308,7 @@ export default function RunsPage() {
                   aria-label="Filter by workflow"
                   className={selectClass}
                 >
-                  <option value="all">workflow: all</option>
+                  <option value="all">All workflows</option>
                   {workflowNames.map((name) => (
                     <option key={name} value={name}>
                       {name}
@@ -308,7 +317,8 @@ export default function RunsPage() {
                 </select>
               </label>
 
-              <label className="flex min-h-9 cursor-pointer items-center gap-2 font-mono text-micro text-el-secondary">
+              {/* The whole 36px label is the hit target for the checkbox. */}
+              <label className="flex min-h-9 cursor-pointer items-center gap-2 text-xs text-el-secondary">
                 <input
                   type="checkbox"
                   role="switch"
@@ -333,19 +343,14 @@ export default function RunsPage() {
                     size="sm"
                     disabled
                     aria-describedby={triggerReasonId}
-                    className="h-9 font-mono"
+                    className="h-9"
                   >
                     Trigger run
                   </Button>
                 </div>
               ) : (
-                <Button asChild size="sm" className="ml-auto h-9 font-mono">
-                  <Link
-                    to="/workflows"
-                    onClick={() => setCli("agentic run <workflow> --input …")}
-                  >
-                    Trigger run
-                  </Link>
+                <Button asChild size="sm" className="ml-auto h-9">
+                  <Link to="/workflows">Trigger run</Link>
                 </Button>
               )}
             </div>
@@ -354,21 +359,20 @@ export default function RunsPage() {
                 encloses the "/" glyph; the input's own outline is suppressed
                 only because the wrapper's full-strength ring replaces it. */}
             <div className="flex items-center gap-2 rounded-md border border-el-control-border bg-el-raised h-10 px-3 focus-within:ring-2 focus-within:ring-el-focus focus-within:ring-offset-2 focus-within:ring-offset-el-canvas">
-              <span aria-hidden="true" className="font-mono text-[13px] font-bold text-el-muted">
-                /
-              </span>
+              <Search aria-hidden="true" className="size-3.5 flex-none text-el-muted" />
               <input
                 ref={inputRef}
                 type="text"
                 aria-label="Search runs by workflow name or run ID"
-                placeholder="search by workflow or run id…"
+                aria-keyshortcuts="/"
+                placeholder="Search by workflow or run ID…"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="min-h-0 flex-1 self-stretch bg-transparent font-mono text-xs text-el-ink outline-none placeholder:text-el-muted"
+                className="min-h-0 flex-1 self-stretch bg-transparent text-xs text-el-ink outline-none placeholder:text-el-muted"
               />
               {query && (
-                <span className="font-mono text-micro text-el-muted">
-                  {filtered.length}
+                <span className="text-micro tabular-nums text-el-muted">
+                  {filtered.length} match{filtered.length === 1 ? "" : "es"}
                 </span>
               )}
             </div>
@@ -395,139 +399,164 @@ export default function RunsPage() {
               </div>
             )}
 
-            {/* Table */}
+            {/* Table — ARIA table semantics on the CSS grid (the grid swaps
+                columns when the inspector opens). Rows are not controls: each
+                row's one keyboard/screen-reader control is the "Inspect run"
+                button in its identity cell; the row-wide click stays as a
+                pointer shortcut. No interactive element nests another. */}
             {!isLoading && (
-              <div className="overflow-hidden rounded-lg border border-el-divider bg-el-surface">
+              <div
+                role="table"
+                aria-label="Runs"
+                aria-rowcount={filtered.length + 1}
+                // relative: keeps sr-only (absolute) cell text inside the
+                // horizontal scroller instead of widening the page.
+                className="relative overflow-x-auto rounded-lg border border-el-divider bg-el-surface"
+              >
                 {/* Column headers — RUN-first order per the design kit; narrows
                     when a run is selected, mirroring the row grid swap below. */}
-                <div
-                  className={`grid ${gridCols} gap-3 border-b border-el-divider px-[18px] py-[11px] font-mono text-micro uppercase tracking-[1px] text-el-muted`}
-                >
-                  <span>Run</span>
-                  <span>Workflow</span>
-                  <span>Status</span>
-                  <span className="text-right">Duration</span>
-                  {!selected && (
-                    <>
-                      {/* DESIGN-GAP: design ref shows SPANS/ROUTE columns; the
-                          runs list exposes step counts and eval grade instead,
-                          so Steps/Score stand in until the backend surfaces
-                          span totals and route data. */}
-                      <span className="text-right">Steps</span>
-                      <span className="text-center">Score</span>
-                      <span className="text-right">When</span>
-                    </>
-                  )}
+                <div role="rowgroup">
+                  <div
+                    role="row"
+                    className={`grid ${gridCols} gap-3 border-b border-el-divider px-[18px] py-[11px] text-micro font-semibold uppercase tracking-[0.8px] text-el-muted`}
+                  >
+                    <span role="columnheader">Run</span>
+                    <span role="columnheader">Workflow</span>
+                    <span role="columnheader">Status</span>
+                    <span role="columnheader" className="text-right">Duration</span>
+                    {!selected && (
+                      <>
+                        {/* DESIGN-GAP: design ref shows SPANS/ROUTE columns; the
+                            runs list exposes step counts and eval grade instead,
+                            so Steps/Score stand in until the backend surfaces
+                            span totals and route data. */}
+                        <span role="columnheader" className="text-right">Steps</span>
+                        <span role="columnheader" className="text-center">Score</span>
+                        <span role="columnheader" className="text-right">When</span>
+                      </>
+                    )}
+                  </div>
                 </div>
 
-                {filtered.length === 0 ? (
-                  <div className="px-[18px] py-10 text-center font-mono text-micro text-el-muted">
-                    {emptyMessage}
-                  </div>
-                ) : (
-                  filtered.map((r, index) => {
-                    const grade = gradeLetter(r.evaluation_grade, r.evaluation_score);
-                    const scoreClass = gradeColorClass(grade);
-                    const ascii = statusAscii(r.status);
-                    const isSelected = selected?.filename === r.filename;
-                    const isFocused = index === cursor;
-                    let railClass = "bg-transparent";
-                    if (isSelected) railClass = "bg-el-accent";
-                    else if (isFocused) railClass = "bg-el-faint";
-                    return (
+                <div role="rowgroup">
+                  {filtered.length === 0 ? (
+                    <div role="row">
                       <div
-                        key={r.filename}
-                        role="button"
-                        tabIndex={0}
-                        aria-label={`Inspect run ${shortId(r)}`}
-                        aria-selected={isSelected}
-                        onClick={() => selectRun(r, index)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            selectRun(r, index);
-                          }
-                        }}
-                        className={`focus-ring-inset relative grid cursor-pointer ${gridCols} items-center gap-3 border-b border-el-divider-soft px-[18px] py-[13px] font-mono text-xs transition-colors last:border-b-0 hover:bg-el-subtle ${
-                          isSelected ? "bg-el-subtle" : ""
-                        }`}
+                        role="cell"
+                        className="px-[18px] py-10 text-center text-xs text-el-muted"
                       >
-                        {/* Selection/focus indicator: inset rail — vermilion
-                            when selected, faint ink when merely the j/k cursor. */}
-                        <span
-                          aria-hidden="true"
-                          className={`absolute inset-y-0 left-0 w-[3px] ${railClass}`}
-                        />
-                        {/* RUN — copyable id + deep-link to the full page.
-                            CopyId is flex-1 + min-w-0 so long ids truncate
-                            inside the grid cell instead of painting across
-                            the status column; the [↗] link stays flex-none. */}
-                        {/* No overflow clipping on this cell or on CopyId: it
-                            would clip the ::after hit areas back to the 16px
-                            text box. The inner spans truncate instead. */}
-                        <span className="flex min-w-0 items-center gap-1.5 text-el-ink">
-                          <CopyId
-                            text={runId(r)}
-                            className={`min-w-0 flex-1 text-micro ${ROW_ID_HIT}`}
-                          />
-                          <Link
-                            to={`/runs/${encodeURIComponent(r.filename)}`}
-                            onClick={(e) => e.stopPropagation()}
-                            aria-label={`Open run ${shortId(r)}`}
-                            title="Open full run page"
-                            className={`focus-ring flex-none rounded-sm text-micro text-el-muted hover:text-el-accent-strong ${ROW_LINK_HIT}`}
-                          >
-                            [↗]
-                          </Link>
-                        </span>
-                        <span className="flex min-w-0 items-baseline text-el-ink">
-                          {r.workflow_name ? (
-                            selected ? (
-                              <span className="truncate">{r.workflow_name}</span>
-                            ) : (
-                              <Link
-                                to={`/workflows/${encodeURIComponent(r.workflow_name)}`}
-                                onClick={(e) => e.stopPropagation()}
-                                className={`focus-ring min-w-0 rounded-sm underline-offset-2 hover:text-el-accent-strong hover:underline ${ROW_LINK_HIT}`}
-                              >
-                                <span className="block truncate">{r.workflow_name}</span>
-                              </Link>
-                            )
-                          ) : (
-                            "—"
-                          )}
-                        </span>
-                        <span className={`text-micro tracking-[0.5px] ${ascii.className}`}>
-                          {ascii.label}
-                        </span>
-                        <span className="text-right tabular-nums text-el-muted">
-                          <DurationDisplay ms={r.total_duration_ms} />
-                        </span>
-                        {!selected && (
-                          <>
-                            <span className="text-right tabular-nums text-el-muted">
-                              {r.step_count ?? "—"}
-                              {r.failed_step_count ? (
-                                <span className="text-el-danger">
-                                  /{r.failed_step_count}
-                                  <span className="sr-only"> failed</span>
-                                </span>
-                              ) : null}
-                            </span>
-                            <span
-                              className={`text-center font-semibold ${scoreClass}`}
-                            >
-                              {grade ?? "—"}
-                            </span>
-                            <span className="text-right text-micro text-el-muted">
-                              {formatWhen(r.start_time)}
-                            </span>
-                          </>
-                        )}
+                        {emptyMessage}
                       </div>
-                    );
-                  })
-                )}
+                    </div>
+                  ) : (
+                    filtered.map((r, index) => {
+                      const grade = gradeLetter(r.evaluation_grade, r.evaluation_score);
+                      const scoreClass = gradeColorClass(grade);
+                      const isSelected = selected?.filename === r.filename;
+                      const isFocused = index === cursor;
+                      let railClass = "bg-transparent";
+                      // State-bearing rail: accent-strong (plain accent is
+                      // under 3:1 on the light canvas, doc §4.2).
+                      if (isSelected) railClass = "bg-el-accent-strong";
+                      else if (isFocused) railClass = "bg-el-faint";
+                      return (
+                        <div
+                          key={r.filename}
+                          role="row"
+                          aria-current={isSelected ? "true" : undefined}
+                          onClick={() => selectRun(r, index)}
+                          className={`relative grid cursor-pointer ${gridCols} min-h-14 items-center gap-3 border-b border-el-divider-soft px-[18px] py-[13px] text-xs transition-colors last:border-b-0 hover:bg-el-hover ${
+                            isSelected ? "bg-el-subtle" : ""
+                          }`}
+                        >
+                          {/* Selection/focus indicator: inset rail — vermilion
+                              when selected, faint ink when merely the j/k cursor. */}
+                          <span
+                            aria-hidden="true"
+                            className={`absolute inset-y-0 left-0 w-0.5 ${railClass}`}
+                          />
+                          {/* RUN — the row's primary control (inspect) plus a
+                              deep link to the full page. The id truncates
+                              inside the button (min-w-0 + flex-1); no overflow
+                              clipping on the cell, which would clip the
+                              ::after hit areas back to the 16px text box. */}
+                          <div role="cell" className="flex min-w-0 items-center gap-1.5">
+                            <button
+                              type="button"
+                              aria-label={`Inspect run ${runId(r)}`}
+                              data-inspect-run={r.filename}
+                              aria-expanded={isSelected}
+                              aria-controls={isSelected ? inspectorId : undefined}
+                              title={runId(r)}
+                              onFocus={() => setCursor(index)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                selectRun(r, index);
+                              }}
+                              className={`focus-ring min-w-0 flex-1 rounded-sm text-left font-mono text-micro text-el-ink underline-offset-2 hover:underline ${ROW_ID_HIT}`}
+                            >
+                              <span className="block truncate">{runId(r)}</span>
+                            </button>
+                            <Link
+                              to={`/runs/${encodeURIComponent(r.filename)}`}
+                              onClick={(e) => e.stopPropagation()}
+                              aria-label={`Open run ${shortId(r)}`}
+                              title="Open full run page"
+                              className={`focus-ring relative inline-flex size-6 flex-none items-center justify-center rounded-sm text-el-muted after:absolute after:inset-x-0 after:-inset-y-2 hover:text-el-accent-strong`}
+                            >
+                              <ArrowUpRight aria-hidden="true" className="size-3.5" />
+                            </Link>
+                          </div>
+                          <div role="cell" className="flex min-w-0 items-baseline text-el-ink">
+                            {r.workflow_name ? (
+                              selected ? (
+                                <span className="truncate font-mono">{r.workflow_name}</span>
+                              ) : (
+                                <Link
+                                  to={`/workflows/${encodeURIComponent(r.workflow_name)}`}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className={`focus-ring min-w-0 rounded-sm font-mono underline-offset-2 hover:text-el-accent-strong hover:underline ${ROW_LINK_HIT}`}
+                                >
+                                  <span className="block truncate">{r.workflow_name}</span>
+                                </Link>
+                              )
+                            ) : (
+                              "—"
+                            )}
+                          </div>
+                          <div role="cell" className="min-w-0">
+                            <StatusBadge status={r.status} />
+                          </div>
+                          <div role="cell" className="text-right tabular-nums text-el-secondary">
+                            <DurationDisplay ms={r.total_duration_ms} />
+                          </div>
+                          {!selected && (
+                            <>
+                              <div role="cell" className="text-right tabular-nums text-el-secondary">
+                                {r.step_count ?? "—"}
+                                {r.failed_step_count ? (
+                                  <span className="text-el-danger">
+                                    /{r.failed_step_count}
+                                    <span className="sr-only"> failed</span>
+                                  </span>
+                                ) : null}
+                              </div>
+                              <div
+                                role="cell"
+                                className={`text-center font-semibold ${scoreClass}`}
+                              >
+                                {grade ?? "—"}
+                              </div>
+                              <div role="cell" className="text-right text-micro tabular-nums text-el-muted">
+                                {formatWhen(r.start_time)}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -538,8 +567,12 @@ export default function RunsPage() {
             columns until then), closes on Esc or [x]. */}
         {selected && (
           <aside
-            style={{ width: "min(520px, 46vw)" }}
-            className="flex-none overflow-hidden border-l border-el-divider bg-el-canvas"
+            ref={asideRef}
+            id={inspectorId}
+            aria-label="Run inspector"
+            // Programmatic focus target only (narrow-screen hand-off above).
+            tabIndex={-1}
+            className="w-full flex-none overflow-hidden bg-el-canvas focus:outline-hidden md:w-[min(520px,46vw)] md:border-l md:border-el-divider"
           >
             <RunDetailPanel
               filename={selected.filename}

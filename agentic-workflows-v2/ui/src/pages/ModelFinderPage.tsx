@@ -1,8 +1,9 @@
-import { useMemo, useState, type ReactNode } from "react";
-import { Cpu, Gauge, HardDrive, SlidersHorizontal } from "lucide-react";
+import { useMemo, useState } from "react";
+import { SlidersHorizontal } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import BTopBar from "../components/layout/BTopBar";
+import Scoreline from "../components/common/Scoreline";
 import { apiErrorText } from "../components/common/apiErrorText";
 import ChatPlaygroundPanel from "../components/models/ChatPlaygroundPanel";
 import HardwareOverrideForm from "../components/models/HardwareOverrideForm";
@@ -101,8 +102,6 @@ const CAPABILITY_TIERS: readonly CapabilityTier[] = [
   },
 ];
 
-const SECTION_LABEL =
-  "font-mono text-micro uppercase tracking-[1.2px] text-el-muted";
 const CARD_CLASS = "rounded-lg border border-el-divider bg-el-surface";
 const SELECT_CLASS =
   "h-10 rounded-md border border-el-control-border bg-el-raised px-2 font-mono text-xs text-el-ink focus-ring focus-visible:border-el-focus";
@@ -110,35 +109,12 @@ const SELECT_CLASS =
 const HIT_AREA =
   "relative after:absolute after:top-1/2 after:left-1/2 after:size-full after:min-h-9 after:min-w-9 after:-translate-x-1/2 after:-translate-y-1/2";
 
-function ProfileStat({
-  icon,
-  value,
-  label,
-  loading,
-}: Readonly<{
-  icon: ReactNode;
-  value: ReactNode;
-  label: string;
-  loading: boolean;
-}>) {
+/** Pulse placeholder for a scoreline value while the profile loads. */
+function ValueSkeleton() {
   return (
-    <div className={`${CARD_CLASS} p-4`}>
-      <div className="flex items-center gap-3">
-        {icon}
-        <div className="min-w-0">
-          {loading ? (
-            <div className="h-6 w-16 animate-pulse rounded-sm bg-el-hover" />
-          ) : (
-            <div className="font-display text-[24px] font-semibold leading-tight tracking-[-0.5px] tabular-nums text-el-ink">
-              {value}
-            </div>
-          )}
-          <div className="mt-1.5 font-mono text-micro uppercase tracking-[1.2px] text-el-muted">
-            {label}
-          </div>
-        </div>
-      </div>
-    </div>
+    <span className="block h-7 w-20 animate-pulse rounded-sm bg-el-hover motion-reduce:animate-none">
+      <span className="sr-only">Loading</span>
+    </span>
   );
 }
 
@@ -356,16 +332,32 @@ export default function ModelFinderPage() {
         {tab === "hardware" && (
           <div className="mx-auto max-w-5xl space-y-8">
             <div className="max-w-3xl">
-              <div className="mb-3 text-micro font-semibold uppercase tracking-[0.14em] text-el-muted">Local inference profile</div>
               <h1 className="font-display text-[36px] font-medium leading-tight text-el-ink">Hardware</h1>
-              <p className="mt-3 text-[14px] leading-6 text-el-muted">Review detected compute and override discovery values used by the local model fit recommendations.</p>
+              {/* Scope line (§8.2): what this tab controls, in product terms. */}
+              <p className="mt-3 max-w-[70ch] text-[14px] leading-6 text-el-muted">
+                The memory and compute used to rank local models on the Models
+                tab. Overrides change those recommendations only, not routing.
+              </p>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <ProfileStat loading={isLoading} icon={<HardDrive aria-hidden="true" className="h-5 w-5 text-el-secondary" />} value={ramText} label="usable memory" />
-              <ProfileStat loading={isLoading} icon={<Cpu aria-hidden="true" className="h-5 w-5 text-el-secondary" />} value={threadsText} label={cpuLabel} />
-              <ProfileStat loading={isLoading} icon={<Gauge aria-hidden="true" className="h-5 w-5 text-el-secondary" />} value={cinebenchText} label="estimated CPU score" />
-              <ProfileStat loading={isLoading} icon={<SlidersHorizontal aria-hidden="true" className="h-5 w-5 text-el-secondary" />} value={<span className="block text-xs leading-snug">{acceleratorText}</span>} label="accelerators" />
-            </div>
+            {/* Detected profile as a ruled scoreline (§11.1), not icon cards. */}
+            <Scoreline
+              label="detected hardware"
+              items={[
+                { label: "Usable memory", value: isLoading ? <ValueSkeleton /> : ramText },
+                { label: cpuLabel, value: isLoading ? <ValueSkeleton /> : threadsText },
+                { label: "Estimated CPU score", value: isLoading ? <ValueSkeleton /> : cinebenchText },
+                {
+                  label: "Accelerators",
+                  value: isLoading ? (
+                    <ValueSkeleton />
+                  ) : (
+                    <span className="block font-sans text-sm font-medium leading-snug tracking-normal">
+                      {acceleratorText}
+                    </span>
+                  ),
+                },
+              ]}
+            />
             <HardwareOverrideForm onClose={() => openTab("finder")} />
           </div>
         )}
@@ -373,13 +365,14 @@ export default function ModelFinderPage() {
         <div className="flex flex-col gap-5">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h1 className="font-display text-[24px] font-semibold tracking-[-0.5px] text-el-ink">
+              <h1 className="font-display text-[36px] font-medium leading-tight text-el-ink">
                 Model catalog
               </h1>
-              <p className="mt-2 max-w-3xl text-[14px] leading-6 text-el-muted">
-                Profiles RAM, CPU, GPU/NPU hints, estimated Cinebench-class CPU
-                score, and estimated 7B Q4 throughput, then ranks local LLMs by
-                your selected metric with popularity/newness/forks tie-breakers.
+              {/* Scope line (§8.2): what this tab controls, in product terms. */}
+              <p className="mt-3 max-w-[70ch] text-[14px] leading-6 text-el-muted">
+                Ranks local models by how well they fit this machine's
+                hardware. Browsing here doesn't change routing; tiers and packs
+                do.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -430,12 +423,12 @@ export default function ModelFinderPage() {
 
           {/* ─── SYSTEM PROFILE ─── */}
           <div>
-            <div className={`${SECTION_LABEL} mb-3 flex flex-wrap items-center gap-x-3 gap-y-1`}>
-              <span>
-                SYSTEM PROFILE · DISCOVERY ·{" "}
-                <span className="text-el-secondary">
-                  tier {data?.profile.performance_tier ?? "—"}
-                </span>
+            <div className="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <h2 className="m-0 font-sans text-[15px] font-semibold text-el-ink">
+                System profile
+              </h2>
+              <span className="text-xs text-el-muted">
+                Hardware class: {data?.profile.performance_tier ?? "—"}
               </span>
               <button
                 type="button"
@@ -443,9 +436,9 @@ export default function ModelFinderPage() {
                 aria-label="Edit hardware specs"
                 aria-expanded={specsOpen}
                 onClick={() => setSpecsOpen((open) => !open)}
-                className={`${HIT_AREA} rounded-sm font-mono text-micro uppercase tracking-[1.2px] text-el-secondary underline-offset-2 transition-colors hover:text-el-ink hover:underline focus-ring`}
+                className={`${HIT_AREA} rounded-sm text-xs font-medium text-el-secondary underline underline-offset-2 transition-colors hover:text-el-ink focus-ring`}
               >
-                [edit specs]
+                Edit hardware specs
               </button>
             </div>
             {specsOpen && (
@@ -453,44 +446,40 @@ export default function ModelFinderPage() {
                 <HardwareOverrideForm onClose={() => setSpecsOpen(false)} />
               </div>
             )}
-            <div className="grid gap-3.5 lg:grid-cols-4">
-              <ProfileStat
-                loading={isLoading}
-                icon={<HardDrive aria-hidden="true" className="h-5 w-5 flex-none text-el-secondary" />}
-                value={ramText}
-                label="usable memory budget"
-              />
-              <ProfileStat
-                loading={isLoading}
-                icon={<Cpu aria-hidden="true" className="h-5 w-5 flex-none text-el-secondary" />}
-                value={threadsText}
-                label={cpuLabel}
-              />
-              <ProfileStat
-                loading={isLoading}
-                icon={<Gauge aria-hidden="true" className="h-5 w-5 flex-none text-el-secondary" />}
-                value={cinebenchText}
-                label="est. Cinebench R23 multi"
-              />
-              <ProfileStat
-                loading={isLoading}
-                icon={
-                  <SlidersHorizontal aria-hidden="true" className="h-5 w-5 flex-none text-el-secondary" />
-                }
-                value={
-                  <span className="block font-mono text-xs font-normal leading-snug">
-                    {acceleratorText}
-                  </span>
-                }
-                label="accelerators"
-              />
-            </div>
+            {/* Detected profile as a ruled scoreline (§11.1), not icon cards. */}
+            <Scoreline
+              label="system profile"
+              items={[
+                { label: "Usable memory budget", value: isLoading ? <ValueSkeleton /> : ramText },
+                { label: cpuLabel, value: isLoading ? <ValueSkeleton /> : threadsText },
+                {
+                  label: "Est. Cinebench R23 multi",
+                  value: isLoading ? <ValueSkeleton /> : cinebenchText,
+                },
+                {
+                  label: "Accelerators",
+                  value: isLoading ? (
+                    <ValueSkeleton />
+                  ) : (
+                    <span className="block font-sans text-sm font-medium leading-snug tracking-normal">
+                      {acceleratorText}
+                    </span>
+                  ),
+                },
+              ]}
+            />
           </div>
 
-          {/* ─── CAPABILITY TIERS ─── */}
+          {/* ─── FIT GROUPS ─── (memory-fit buckets — not the router's T0–T5
+              capability tiers, so they are not called "tiers" here) */}
           <div>
-            <div className={`${SECTION_LABEL} mb-3`}>
-              CAPABILITY TIERS · FIT-WEIGHTED SELECTION
+            <div className="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <h2 className="m-0 font-sans text-[15px] font-semibold text-el-ink">
+                Fit for this machine
+              </h2>
+              <span className="text-xs text-el-muted">
+                Grouped by memory headroom, ranked by fit
+              </span>
             </div>
             {isLoading && (
               <div className="grid gap-3.5 md:grid-cols-2">

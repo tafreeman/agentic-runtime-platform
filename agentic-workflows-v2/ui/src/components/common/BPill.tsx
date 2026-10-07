@@ -2,8 +2,9 @@ import type { ReactNode } from "react";
 
 export type BPillTone = "ok" | "err" | "warn" | "info" | "dim" | "clay";
 
-// Tiny status/category tag (design system §10.5/§11.3): 2px radius, never a
-// pill shape. Status tones pair each color with its *-soft tint (text is
+// Tiny category tag (design system §10.5): 2px radius, never a pill shape,
+// short lowercase sans label (no tracked uppercase, no monospace costume).
+// Run/step/evaluation *status* uses the shared StatusBadge marker instead. Status tones pair each color with its *-soft tint (text is
 // >=4.5:1 on it); the caller always supplies the text label, so color never
 // carries status alone. "clay" is the one vermilion tone and stays outlined
 // (no fill) so it reads as a quiet mark rather than a second emphasis.
@@ -25,7 +26,7 @@ interface BPillProps {
 export default function BPill({ tone = "dim", children, className = "" }: Readonly<BPillProps>) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-sm border px-1.5 py-px font-mono text-micro uppercase tracking-[0.5px] ${TONE_CLASSES[tone]} ${className}`}
+      className={`inline-flex items-center gap-1 rounded-sm border px-1.5 py-px text-micro font-medium ${TONE_CLASSES[tone]} ${className}`}
     >
       {children}
     </span>

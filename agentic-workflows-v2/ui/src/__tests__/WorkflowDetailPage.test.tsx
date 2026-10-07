@@ -146,7 +146,7 @@ describe("WorkflowDetailPage", () => {
 
     renderPage();
 
-    expect(screen.getByText(/\$ loading workflow graph/i)).toBeInTheDocument();
+    expect(screen.getByText(/loading workflow graph/i)).toBeInTheDocument();
   });
 
   it("shows an API error state when the DAG fails to load", () => {
@@ -209,7 +209,7 @@ describe("WorkflowDetailPage", () => {
     expect(run).toHaveAccessibleDescription(/API server is unreachable/);
     expect(demo).toHaveAccessibleDescription(/API server is unreachable/);
     expect(screen.getByText(/runs are disabled/i)).toBeVisible();
-    expect(screen.getByText("api offline")).toBeInTheDocument();
+    expect(screen.getByText("API offline")).toBeInTheDocument();
     fireEvent.click(run);
     expect(mockRunWorkflow).not.toHaveBeenCalled();
   });
@@ -244,7 +244,7 @@ describe("WorkflowDetailPage", () => {
 
     renderPage();
 
-    expect(screen.getByText(/\$ no workflow steps defined/i)).toBeInTheDocument();
+    expect(screen.getByText(/no workflow steps defined/i)).toBeInTheDocument();
   });
 
   it("starts a run from the page", async () => {
@@ -349,11 +349,15 @@ describe("WorkflowDetailPage", () => {
 
     renderPage("/workflows/tiered_flow");
 
-    expect(screen.getByText("tier0")).toBeInTheDocument();
-    expect(screen.getByText("tier1")).toBeInTheDocument();
+    // Shared tier marks: the short "T0" form, explained by title + sr-only.
+    expect(screen.getByText("T0")).toBeInTheDocument();
+    expect(screen.getByText("T1")).toBeInTheDocument();
+    expect(screen.getByText("Tier 1 — capability tier")).toHaveClass("sr-only");
     // Tier marks use the shared capability-tier tokens (T0–T2 = low).
-    expect(screen.getByText("tier1").className).toContain("text-el-tier-low");
-    expect(screen.getByText("2 nodes · 1 edges")).toBeInTheDocument();
+    expect(screen.getByTitle("Tier 1 — capability tier").className).toContain(
+      "text-el-tier-low",
+    );
+    expect(screen.getByText(/2 steps · 1 edge$/)).toBeInTheDocument();
   });
 
   it("colors tier marks mid for T3, high for T4+, and neutral when unparsable", () => {
@@ -375,9 +379,15 @@ describe("WorkflowDetailPage", () => {
 
     renderPage("/workflows/tiered_flow");
 
-    expect(screen.getByText("tier3").className).toContain("text-el-tier-mid");
-    expect(screen.getByText("tier5").className).toContain("text-el-tier-high");
-    expect(screen.getByText("custom").className).toContain("text-el-muted");
+    expect(screen.getByTitle("Tier 3 — capability tier").className).toContain(
+      "text-el-tier-mid",
+    );
+    expect(screen.getByTitle("Tier 5 — capability tier").className).toContain(
+      "text-el-tier-high",
+    );
+    expect(screen.getByTitle("custom — capability tier").className).toContain(
+      "text-el-muted",
+    );
   });
 
   it("offers a deterministic no-LLM demo run for the built-in smoke workflow", async () => {

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import type { RunSummary } from "../../api/types";
 import DurationDisplay from "../common/DurationDisplay";
+import StatusBadge from "../common/StatusBadge";
 import { gradeColorClass, gradeLetter } from "../../lib/grades";
 
 type StatusFilter = "all" | "success" | "failed" | "running";
@@ -9,21 +10,6 @@ type StatusFilter = "all" | "success" | "failed" | "running";
 interface RunListProps {
   runs: RunSummary[] | undefined;
   isLoading: boolean;
-}
-
-/** ASCII status glyph + its text color class, by run status. */
-function statusAscii(status: string | null | undefined): {
-  label: string;
-  className: string;
-} {
-  if (status === "success") return { label: "[ ok ]", className: "text-el-success" };
-  if (status === "failed" || status === "error") {
-    return { label: "[err ]", className: "text-el-danger" };
-  }
-  if (status === "running" || status === "in_progress") {
-    return { label: "[ .. ]", className: "text-el-info" };
-  }
-  return { label: `[${status ?? "?"}]`, className: "text-el-muted" };
 }
 
 function shortId(run: RunSummary): string {
@@ -43,6 +29,14 @@ function formatWhen(iso: string | null | undefined): string {
     minute: "2-digit",
   });
 }
+
+/**
+ * Status · run (workflow + start time) · duration · score. Sized for the
+ * 340px run-history panel: the status column fits "Success", and the start
+ * time rides under the run link instead of taking a fifth column.
+ */
+const GRID_COLS =
+  "min-w-[280px] grid-cols-[84px_minmax(0,1fr)_56px_36px]";
 
 export default function RunList({ runs, isLoading }: RunListProps) {
   const navigate = useNavigate();
@@ -107,14 +101,14 @@ export default function RunList({ runs, isLoading }: RunListProps) {
               type="button"
               aria-pressed={active}
               onClick={() => setFilter(value)}
-              className={`focus-ring min-h-9 rounded-md border px-3 font-mono text-micro uppercase tracking-[0.5px] transition-colors ${
+              className={`focus-ring min-h-9 rounded-md border px-3 text-xs transition-colors ${
                 active
                   ? "border-el-ink bg-el-subtle text-el-ink"
                   : "border-el-divider text-el-muted hover:bg-el-hover hover:text-el-ink"
               }`}
             >
               {label}
-              <span aria-hidden="true" className="ml-1 text-el-muted">
+              <span aria-hidden="true" className="ml-1 tabular-nums text-el-muted">
                 · {counts[value]}
               </span>
             </button>
@@ -123,66 +117,76 @@ export default function RunList({ runs, isLoading }: RunListProps) {
       </div>
 
       {filteredRuns.length === 0 ? (
-        <div className="rounded-md border border-dashed border-el-divider px-3 py-8 text-center font-mono text-micro text-el-muted">
+        <div className="rounded-md border border-dashed border-el-divider px-3 py-8 text-center text-xs text-el-muted">
           No runs found
         </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-el-divider bg-el-surface">
-          {/* Column headers */}
-          <div className="grid grid-cols-[48px_minmax(0,1fr)_60px_40px_64px] gap-2 border-b border-el-divider px-3 py-2 font-mono text-micro uppercase tracking-[0.5px] text-el-muted">
-            <span>Status</span>
-            <span className="min-w-0 truncate">Workflow</span>
-            <span className="text-right">Duration</span>
-            <span className="text-center">Score</span>
-            <span className="text-right">When</span>
+        // ARIA table on the CSS grid. Rows are not controls: each row's one
+        // keyboard/screen-reader control is the run link in its identity
+        // cell; the row-wide click stays as a pointer shortcut only.
+        <div
+          role="table"
+          aria-label="Run history"
+          className="relative overflow-x-auto rounded-lg border border-el-divider bg-el-surface"
+        >
+          <div role="rowgroup">
+            <div
+              role="row"
+              className={`grid ${GRID_COLS} gap-2 border-b border-el-divider px-3 py-2 text-micro font-semibold uppercase tracking-[0.5px] text-el-muted`}
+            >
+              <span role="columnheader">Status</span>
+              <span role="columnheader" className="min-w-0 truncate">Run</span>
+              <span role="columnheader" className="text-right">Duration</span>
+              <span role="columnheader" className="text-center">Score</span>
+            </div>
           </div>
 
-          {filteredRuns.map((run) => {
-            const ascii = statusAscii(run.status);
-            const grade = gradeLetter(run.evaluation_grade, run.evaluation_score);
-            const target = `/runs/${encodeURIComponent(run.filename)}`;
-            return (
-              <div
-                key={run.filename}
-                role="button"
-                tabIndex={0}
-                aria-label={`Open run ${shortId(run)}`}
-                onClick={() => navigate(target)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    navigate(target);
-                  }
-                }}
-                className="focus-ring-inset grid min-h-11 cursor-pointer grid-cols-[48px_minmax(0,1fr)_60px_40px_64px] items-center gap-2 border-b border-el-divider-soft px-3 py-2 font-mono text-micro transition-colors last:border-b-0 hover:bg-el-subtle"
-              >
-                <span className={`tracking-[0.5px] ${ascii.className}`}>
-                  {ascii.label}
-                </span>
-                <span className="min-w-0 truncate text-el-ink">
-                  <Link
-                    to={target}
-                    onClick={(e) => e.stopPropagation()}
-                    aria-label={`Open run ${shortId(run)}`}
-                    className="focus-ring rounded-sm underline-offset-2 hover:text-el-accent-strong hover:underline"
-                  >
-                    {run.workflow_name ?? "--"}
-                  </Link>
-                </span>
-                <span className="text-right tabular-nums text-el-muted">
-                  <DurationDisplay ms={run.total_duration_ms} />
-                </span>
-                <span
-                  className={`text-center font-semibold ${gradeColorClass(grade)}`}
+          <div role="rowgroup">
+            {filteredRuns.map((run) => {
+              const grade = gradeLetter(run.evaluation_grade, run.evaluation_score);
+              const target = `/runs/${encodeURIComponent(run.filename)}`;
+              return (
+                <div
+                  key={run.filename}
+                  role="row"
+                  onClick={() => navigate(target)}
+                  className={`grid min-h-12 cursor-pointer ${GRID_COLS} items-center gap-2 border-b border-el-divider-soft px-3 py-2 text-micro transition-colors last:border-b-0 hover:bg-el-hover`}
                 >
-                  {grade ?? "--"}
-                </span>
-                <span className="text-right text-el-muted">
-                  {formatWhen(run.start_time)}
-                </span>
-              </div>
-            );
-          })}
+                  <div role="cell" className="min-w-0">
+                    <StatusBadge status={run.status} />
+                  </div>
+                  <div role="cell" className="min-w-0 text-el-ink">
+                    {/* The visible workflow name leads the accessible name
+                        (label-in-name); the run id disambiguates rows of the
+                        same workflow for screen readers. */}
+                    <Link
+                      to={target}
+                      onClick={(e) => e.stopPropagation()}
+                      title={run.run_id ?? run.filename}
+                      // No overflow clipping on the link itself: it would clip
+                      // the ::after hit area; the inner span truncates.
+                      className="focus-ring relative block rounded-sm font-mono underline-offset-2 after:absolute after:-inset-y-2 after:inset-x-0 hover:text-el-accent-strong hover:underline"
+                    >
+                      <span className="block truncate">{run.workflow_name ?? "--"}</span>
+                      <span className="sr-only">, run {shortId(run)}</span>
+                    </Link>
+                    <span className="block truncate tabular-nums text-el-muted">
+                      {formatWhen(run.start_time)}
+                    </span>
+                  </div>
+                  <div role="cell" className="text-right tabular-nums text-el-secondary">
+                    <DurationDisplay ms={run.total_duration_ms} />
+                  </div>
+                  <div
+                    role="cell"
+                    className={`text-center font-semibold ${gradeColorClass(grade)}`}
+                  >
+                    {grade ?? "--"}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

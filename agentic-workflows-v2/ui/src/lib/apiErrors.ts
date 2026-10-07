@@ -136,3 +136,69 @@ export function apiErrorMessage(error: unknown): string {
 export function formatApiError(error: unknown): string {
   return `${apiErrorMessage(error)} ${describeApiError(error).remedy}`;
 }
+
+/** Human copy for a live-stream failure (see {@link describeStreamError}). */
+export interface StreamErrorDescription {
+  /** What failed, in plain words. */
+  readonly summary: string;
+  /** Whether what is on screen can still be trusted. */
+  readonly validity: string;
+  /** What to do next, including the automatic retry behaviour. */
+  readonly remedy: string;
+  /** The server's own message, for an explicit "Show details" disclosure. */
+  readonly detail?: string;
+  /** True when the caller should offer a Reconnect action. */
+  readonly canReconnect: boolean;
+}
+
+const EVALUATION_FAILED_RE = /^evaluation failed:\s*/i;
+
+/**
+ * Describe a live execution-stream failure (useWorkflowStream) as summary,
+ * data validity and remedy — never the raw socket/server text as the
+ * message. `kind` says whether the server reported an error event or the
+ * socket gave up after its automatic reconnects (5 attempts, 1s→16s backoff,
+ * about 30 seconds in all). Runs execute server-side, so a lost connection
+ * does not stop the run itself.
+ */
+export function describeStreamError(
+  message: string | null | undefined,
+  kind: "server" | "connection" | null | undefined,
+  { hasSteps }: { hasSteps: boolean },
+): StreamErrorDescription {
+  const raw = (message ?? "").trim();
+  const clipped = raw.length > 300 ? `${raw.slice(0, 300)}…` : raw;
+
+  if (kind === "connection") {
+    return {
+      summary: "Lost the live connection to this run.",
+      validity: hasSteps
+        ? "The steps below show the last update received and may be out of date."
+        : "No updates arrived before the connection dropped.",
+      remedy:
+        "Automatic reconnects stopped after about 30 seconds. The run itself keeps going on the server — reconnect to resume, or open the run record once it finishes.",
+      canReconnect: true,
+    };
+  }
+
+  if (EVALUATION_FAILED_RE.test(raw)) {
+    return {
+      summary: "Scoring failed after the run finished.",
+      validity: "The run's steps and outputs below are complete and still valid.",
+      remedy: "Re-score it from Evaluations, or check the API server log.",
+      detail: clipped.replace(EVALUATION_FAILED_RE, "") || undefined,
+      canReconnect: false,
+    };
+  }
+
+  return {
+    summary: "The run stopped with a server error.",
+    validity: hasSteps
+      ? "Steps below show what completed before the error."
+      : "No steps completed before the error.",
+    remedy:
+      "Check the API server log, then start the run again from its workflow page.",
+    detail: clipped || undefined,
+    canReconnect: false,
+  };
+}

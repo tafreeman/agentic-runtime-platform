@@ -22,8 +22,7 @@ import { apiErrorText } from "../common/apiErrorText";
 const CARD_CLASS = "rounded-lg border border-el-divider bg-el-surface p-4";
 const FIELD_CLASS =
   "h-10 w-full rounded-md border border-el-control-border bg-el-raised px-2.5 font-mono text-xs text-el-ink placeholder:text-el-faint focus-ring focus-visible:border-el-focus";
-const CAPTION_LABEL =
-  "mb-1 block font-mono text-micro uppercase tracking-[1.2px] text-el-muted";
+const CAPTION_LABEL = "mb-1 block text-xs font-medium text-el-secondary";
 
 /** Parse a numeric field: empty → null, non-numeric → null (field ignored). */
 function toNumberOrNull(raw: string): number | null {
@@ -133,12 +132,16 @@ function HardwareOverrideFields({
 
   return (
     <div data-testid="hardware-override-form" className={CARD_CLASS}>
-      <div className="mb-3 font-mono text-micro uppercase tracking-[1.2px] text-el-muted">
-        HARDWARE OVERRIDE · pins these values over live detection
+      <div className="mb-3">
+        <h2 className="m-0 font-sans text-[15px] font-semibold text-el-ink">Hardware override</h2>
+        <p className="mt-0.5 text-xs text-el-muted">
+          Pins these values over live detection. Leave a field empty to keep
+          the detected value.
+        </p>
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <label className="block">
-          <span className={CAPTION_LABEL}>ram (gb)</span>
+          <span className={CAPTION_LABEL}>RAM (GB)</span>
           <input
             type="number" min="0" step="1"
             data-testid="spec-ram-gb" aria-label="Override RAM in GB"
@@ -148,7 +151,7 @@ function HardwareOverrideFields({
           />
         </label>
         <label className="block">
-          <span className={CAPTION_LABEL}>cpu threads</span>
+          <span className={CAPTION_LABEL}>CPU threads</span>
           <input
             type="number" min="0" step="1"
             data-testid="spec-cpu-cores" aria-label="Override logical CPU cores"
@@ -158,7 +161,7 @@ function HardwareOverrideFields({
           />
         </label>
         <label className="block">
-          <span className={CAPTION_LABEL}>cpu name</span>
+          <span className={CAPTION_LABEL}>CPU name</span>
           <input
             type="text"
             data-testid="spec-cpu-name" aria-label="Override CPU name"
@@ -168,7 +171,7 @@ function HardwareOverrideFields({
           />
         </label>
         <label className="block">
-          <span className={CAPTION_LABEL}>system tops</span>
+          <span className={CAPTION_LABEL}>System TOPS</span>
           <input
             type="number" min="0" step="0.1"
             data-testid="spec-system-tops" aria-label="Override system TOPS"
@@ -180,7 +183,7 @@ function HardwareOverrideFields({
       </div>
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <label className="block">
-          <span className={CAPTION_LABEL}>accelerator kind</span>
+          <span className={CAPTION_LABEL}>Accelerator kind</span>
           <select
             data-testid="spec-accel-kind" aria-label="Override accelerator kind"
             value={accelKind}
@@ -194,7 +197,7 @@ function HardwareOverrideFields({
           </select>
         </label>
         <label className="block">
-          <span className={CAPTION_LABEL}>accelerator name</span>
+          <span className={CAPTION_LABEL}>Accelerator name</span>
           <input
             type="text"
             data-testid="spec-accel-name" aria-label="Override accelerator name"
@@ -205,7 +208,7 @@ function HardwareOverrideFields({
           />
         </label>
         <label className="block">
-          <span className={CAPTION_LABEL}>accel memory (gb)</span>
+          <span className={CAPTION_LABEL}>Accelerator memory (GB)</span>
           <input
             type="number" min="0" step="1"
             data-testid="spec-accel-memory" aria-label="Override accelerator memory in GB"
@@ -215,7 +218,7 @@ function HardwareOverrideFields({
           />
         </label>
         <label className="block">
-          <span className={CAPTION_LABEL}>accel tops</span>
+          <span className={CAPTION_LABEL}>Accelerator TOPS</span>
           <input
             type="number" min="0" step="0.1"
             data-testid="spec-accel-tops" aria-label="Override accelerator TOPS"
@@ -227,7 +230,7 @@ function HardwareOverrideFields({
       </div>
 
       {mutationError && (
-        <div role="alert" className="mt-3 font-mono text-xs text-el-danger">
+        <div role="alert" className="mt-3 text-xs text-el-danger">
           failed to update hardware override: {apiErrorText(mutationError)}
         </div>
       )}
@@ -241,9 +244,8 @@ function HardwareOverrideFields({
           aria-describedby={apiDown ? apiDownHintId : undefined}
           onClick={handleSave}
           disabled={mutationsDisabled}
-          className="font-mono"
         >
-          save
+          Save
         </Button>
         <Button
           type="button"
@@ -254,9 +256,8 @@ function HardwareOverrideFields({
           aria-describedby={apiDown ? apiDownHintId : undefined}
           onClick={() => clearMutation.mutate()}
           disabled={mutationsDisabled}
-          className="font-mono"
         >
-          clear override
+          Clear
         </Button>
         <Button
           type="button"
@@ -265,9 +266,8 @@ function HardwareOverrideFields({
           aria-label="Cancel editing hardware specs"
           onClick={onClose}
           disabled={busy}
-          className="font-mono"
         >
-          cancel
+          Cancel
         </Button>
       </div>
       {apiDown && (

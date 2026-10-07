@@ -3,15 +3,17 @@ import { Check, Copy } from "lucide-react";
 import { useCli } from "../../hooks/useCli";
 
 /**
- * Sticky bottom "CLI parity" strip. Shows the command-line twin of the last UI
- * action (from {@link useCli}) and lets the user copy it. Reinforces that every
- * UI action maps to a CLI command.
+ * Sticky bottom strip showing the real `agentic` command equivalent to the
+ * current view or the last action on it (from {@link useCli}), with a copy
+ * button. Most views have no CLI counterpart; the strip then says so and
+ * keeps its height, rather than inventing a command.
  */
 export default function CliStrip() {
   const { cli } = useCli();
   const [copied, setCopied] = useState(false);
 
   const copy = () => {
+    if (!cli) return;
     navigator.clipboard?.writeText(cli);
     setCopied(true);
     setTimeout(() => setCopied(false), 1200);
@@ -19,37 +21,40 @@ export default function CliStrip() {
 
   return (
     <div
-      className="flex h-9 flex-none items-center gap-3 border-t border-el-divider bg-el-surface px-4 font-mono text-micro"
+      className="flex h-9 flex-none items-center gap-3 border-t border-el-divider bg-el-surface px-4 text-micro"
       data-testid="cli-strip"
     >
-      <span className="flex-none font-semibold tracking-widest text-el-muted uppercase">
-        CLI
-      </span>
-      <code className="min-w-0 flex-1 truncate text-el-ink">
-        <span className="text-el-muted" aria-hidden="true">$ </span>
-        {cli}
-      </code>
-      <button
-        type="button"
-        onClick={copy}
-        className={`flex h-9 flex-none items-center gap-1 rounded-md px-2 transition-colors focus-ring-inset ${
-          copied ? "text-el-success" : "text-el-secondary hover:text-el-ink"
-        }`}
-        aria-label="Copy CLI command"
-      >
-        {copied ? (
-          <Check size={12} aria-hidden="true" />
-        ) : (
-          <Copy size={12} aria-hidden="true" />
-        )}
-        {copied ? "copied" : "copy"}
-      </button>
+      <span className="flex-none font-medium text-el-muted">CLI equivalent</span>
+      {cli ? (
+        <code className="min-w-0 flex-1 truncate font-mono text-el-ink" title={cli}>
+          <span className="text-el-muted" aria-hidden="true">$ </span>
+          {cli}
+        </code>
+      ) : (
+        <span className="min-w-0 flex-1 truncate text-el-muted">
+          None for this view
+        </span>
+      )}
+      {cli ? (
+        <button
+          type="button"
+          onClick={copy}
+          className={`flex h-9 flex-none items-center gap-1 rounded-md px-2 transition-colors focus-ring-inset ${
+            copied ? "text-el-success" : "text-el-secondary hover:text-el-ink"
+          }`}
+          aria-label="Copy CLI command"
+        >
+          {copied ? (
+            <Check size={12} aria-hidden="true" />
+          ) : (
+            <Copy size={12} aria-hidden="true" />
+          )}
+          {copied ? "Copied" : "Copy"}
+        </button>
+      ) : null}
       {/* The button's name stays "Copy CLI command"; announce the outcome. */}
       <span className="sr-only" role="status">
         {copied ? "CLI command copied" : ""}
-      </span>
-      <span className="hidden flex-none text-el-muted md:inline">
-        every UI action has a CLI twin
       </span>
     </div>
   );

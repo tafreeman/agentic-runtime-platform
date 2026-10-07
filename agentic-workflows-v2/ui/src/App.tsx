@@ -7,7 +7,7 @@ import NotFoundPage from "./components/states/NotFoundPage";
 import ApiOfflineBanner from "./components/states/ApiOfflineBanner";
 import CliStrip from "./components/layout/CliStrip";
 import CommandPalette from "./components/common/CommandPalette";
-import { CliProvider } from "./hooks/useCli";
+import { CliProvider, useCliRouteSync } from "./hooks/useCli";
 import { useGoNav } from "./hooks/useGoNav";
 import { Toaster } from "./components/ui/sonner";
 
@@ -34,11 +34,13 @@ function RouteFallback() {
 }
 
 /**
- * Mounts the global `g`+key navigation sequence. Rendered as a child of
- * {@link CliProvider} because the hook reports each jump's CLI twin.
+ * Mounts the global `g`+key navigation sequence and keeps the CLI strip in
+ * step with the route. Rendered as a child of {@link CliProvider} (inside the
+ * router) because the strip's command is derived from the current path.
  */
 function GoNav() {
   useGoNav();
+  useCliRouteSync();
   return null;
 }
 

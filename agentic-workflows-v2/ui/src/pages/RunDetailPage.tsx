@@ -16,8 +16,8 @@ export default function RunDetailPage() {
 
   if (!filename) {
     return (
-      <div className="flex h-full items-center justify-center font-mono text-micro text-el-muted">
-        $ run not found
+      <div className="flex h-full items-center justify-center text-xs text-el-muted">
+        Run not found
       </div>
     );
   }
@@ -30,11 +30,11 @@ export default function RunDetailPage() {
           variant="ghost"
           size="sm"
           onClick={() => navigate(-1)}
-          className="h-9 font-mono"
+          className="h-9"
           aria-label="Go back"
         >
           <ArrowLeft aria-hidden="true" />
-          <span>[esc] back</span>
+          <span>Back</span>
         </Button>
       </BTopBar>
 

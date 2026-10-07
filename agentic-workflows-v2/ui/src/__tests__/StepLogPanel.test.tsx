@@ -19,13 +19,13 @@ describe("StepLogPanel", () => {
   it("shows a waiting note with no displayable events", () => {
     render(<StepLogPanel events={[{ type: "keepalive" } as unknown as ExecutionEvent]} />);
     expect(screen.getByText(/waiting for events/i)).toBeInTheDocument();
-    expect(screen.getByText("streaming · 0")).toBeInTheDocument();
+    expect(screen.getByText("0 events")).toBeInTheDocument();
   });
 
   it("renders one status-colored line per event, skipping keepalives", () => {
     render(<StepLogPanel events={events} />);
 
-    expect(screen.getByText("streaming · 7")).toBeInTheDocument();
+    expect(screen.getByText("7 events")).toBeInTheDocument();
     expect(screen.getByText('Workflow "review_flow" started')).toHaveClass("text-el-info");
     expect(screen.getByText('Step "review" success (1.5s)')).toHaveClass("text-el-success");
     expect(screen.getByText('Step "fix" failed (40ms)')).toHaveClass("text-el-danger");
@@ -48,7 +48,7 @@ describe("StepLogPanel", () => {
       />,
     );
 
-    expect(screen.getByText("streaming · 3")).toBeInTheDocument();
+    expect(screen.getByText("3 events")).toBeInTheDocument();
     expect(screen.queryByText(/chunk/)).not.toBeInTheDocument();
     expect(screen.getByText("Approval required: shell (fix)")).toHaveClass("text-el-warning");
     expect(screen.getByText("Approval approved: shell")).toBeInTheDocument();

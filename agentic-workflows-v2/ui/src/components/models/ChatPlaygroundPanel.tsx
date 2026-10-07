@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import { Image, Paperclip, Send, Square, X } from "lucide-react";
+import { Paperclip, Send, Square, X } from "lucide-react";
 import { sendChat } from "../../api/client";
 import type {
   ChatImagePart,
@@ -502,20 +502,16 @@ export default function ChatPlaygroundPanel({
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
       <div className="max-w-3xl">
-        <div className="mb-3 flex items-center gap-2 text-micro font-semibold uppercase tracking-[0.14em] text-el-muted">
-          <Image className="h-4 w-4" aria-hidden="true" />
-          Direct model session
-        </div>
         <h1
           className="font-display text-[36px] font-medium leading-[1.1] text-el-ink"
         >
           Chat playground
         </h1>
-        <p className="mt-3 max-w-2xl text-[14px] leading-6 text-el-muted">
-          Talk directly to one model without tier routing. Stream text, attach
-          raster images for vision-capable models, and display image output
-          when the provider returns it. A completed response is recorded as
-          liveness evidence.
+        {/* Scope line (§8.2): what this tab controls, in product terms. */}
+        <p className="mt-3 max-w-[70ch] text-[14px] leading-6 text-el-muted">
+          Talk to one model directly, without tier routing; chats don't start
+          workflow runs. Attach images for vision-capable models. A completed
+          reply is recorded as evidence that the model is live.
         </p>
       </div>
 

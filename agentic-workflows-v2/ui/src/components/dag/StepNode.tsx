@@ -2,6 +2,8 @@ import { memo, useEffect, useState, type ReactNode } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import type { StepStatus } from "../../api/types";
 import { usePrefersReducedMotion } from "../../hooks/usePrefersReducedMotion";
+import { statusMeta } from "../common/StatusBadge";
+import TierMark from "../common/TierMark";
 import { graphColor, type GraphToken } from "./graphTokens";
 
 export interface StepNodeData {
@@ -45,34 +47,6 @@ function fmtTokens(n: number): string {
   return String(n);
 }
 
-/**
- * Short, human-readable status label shown in the node footer (design ref
- * "live nodes n.boxStyle"): "queued" while pending, "streaming" while live,
- * else the terminal disposition word.
- */
-function resolveStatusLabel(status: StepStatus): string {
-  switch (status) {
-    case "running":
-      return "streaming";
-    case "success":
-      return "done";
-    case "failed":
-      return "error";
-    case "skipped":
-      return "skipped";
-    case "cancelled":
-      return "cancelled";
-    case "pending":
-    default:
-      return "queued";
-  }
-}
-
-/**
- * ASCII status glyphs for the B2 redesign. The done/running/queued glyphs match
- * the design ref ("[ ok ]", "[ •• ]", "[ -- ]"); error/skipped/cancelled keep
- * their compact bracket variants.
- */
 // Rendered node dimensions. Width is exact (fixed in the node's style);
 // height is a pre-measure estimate for @xyflow/react's initialWidth/
 // initialHeight hints — without them nodes stay visibility:hidden until a
@@ -80,31 +54,6 @@ function resolveStatusLabel(status: StepStatus): string {
 // can starve indefinitely (the PR #203 e2e flake).
 export const STEP_NODE_WIDTH = 154;
 export const STEP_NODE_ESTIMATED_HEIGHT = 96;
-
-const ASCII_STATUS: Record<StepStatus, string> = {
-  pending: "[ -- ]",
-  running: "[ •• ]",
-  success: "[ ok ]",
-  failed: "[ERR]",
-  skipped: "[SKP]",
-  cancelled: "[---]",
-};
-
-/**
- * Capability-tier pill classes (design system tier marks): T0–T2 low, T3 mid,
- * T4–T5 high. Unknown tiers fall back to the low mark, as before.
- */
-function tierBadgeClass(tier: string | null | undefined): string {
-  switch ((tier ?? "").toUpperCase()) {
-    case "T3":
-      return "border-el-tier-mid text-el-tier-mid";
-    case "T4":
-    case "T5":
-      return "border-el-tier-high text-el-tier-high";
-    default:
-      return "border-el-tier-low text-el-tier-low";
-  }
-}
 
 /** Border + handle colour per status; idle/queued/cancelled use the hairline. */
 const STATUS_BORDER_TOKEN: Record<StepStatus, GraphToken> = {
@@ -144,7 +93,9 @@ function StepNodeComponent({ id, data }: NodeProps) {
 
   // Row-1 right pill = TIER (design ref). Model family is no longer surfaced
   // on the node; a model hint lives in the inspector panel instead.
-  const tierLabel = tier ? tier.toUpperCase() : null;
+  // Same icon + sentence-case word as every other status marker (§11.3);
+  // the colour stays on the graph tokens, which are text-safe on node fills.
+  const { Icon: StatusIcon, label: statusLabel } = statusMeta(status);
   const isSelected = Boolean(nodeData.selected);
   const borderColor = graphColor(
     isSelected ? "node-selected" : STATUS_BORDER_TOKEN[status] ?? "node-border"
@@ -191,22 +142,16 @@ function StepNodeComponent({ id, data }: NodeProps) {
           />
         )}
 
-        {/* Row 1: [OK] status glyph + tier badge (space-between) */}
-        <div className="flex items-center justify-between">
+        {/* Row 1: status marker (icon + label) + tier mark (space-between) */}
+        <div className="flex items-center justify-between gap-1.5">
           <span
             data-testid="step-node-status"
-            className={`tracking-[1px] ${STATUS_TEXT_CLASS[status] ?? "text-el-graph-pending"}`}
+            className={`inline-flex min-w-0 items-center gap-1 font-sans font-medium ${STATUS_TEXT_CLASS[status] ?? "text-el-graph-pending"}`}
           >
-            {ASCII_STATUS[status] ?? "[...]"}
+            <StatusIcon aria-hidden="true" className="size-3 flex-none" />
+            <span className="truncate">{statusLabel}</span>
           </span>
-          {tierLabel && (
-            <span
-              data-testid="step-node-tier"
-              className={`rounded-md border px-1 tracking-[0.3px] uppercase ${tierBadgeClass(tier)}`}
-            >
-              {tierLabel}
-            </span>
-          )}
+          {tier && <TierMark tier={tier} data-testid="step-node-tier" />}
         </div>
 
         {/* Row 2: bold step name in the display font */}
@@ -249,7 +194,7 @@ function StepNodeComponent({ id, data }: NodeProps) {
           </div>
         )}
 
-        {/* Row 4: footer — status label (left) + token count (right) */}
+        {/* Row 4: token count (the status word lives in row 1) */}
         {(() => {
           let tokenContent: ReactNode = null;
           if (showTokens) {
@@ -268,13 +213,14 @@ function StepNodeComponent({ id, data }: NodeProps) {
               tokenContent = (
                 <span data-testid="step-node-tokens" className="text-el-graph-meta-strong">
                   ↕<span className="ml-0.5 text-el-graph-label">{fmtTokens(tokensUsed)}</span>
+                  <span className="sr-only"> tokens</span>
                 </span>
               );
             }
           }
+          if (!tokenContent) return null;
           return (
-            <div className="mt-[9px] flex items-baseline justify-between text-el-graph-meta">
-              <span>{resolveStatusLabel(status)}</span>
+            <div className="mt-[9px] flex items-baseline justify-end text-el-graph-meta">
               {tokenContent}
             </div>
           );

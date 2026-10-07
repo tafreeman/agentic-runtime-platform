@@ -39,14 +39,15 @@ function renderSidebar(initialEntry: string) {
   );
 }
 
+// Sentence-case navigation labels (design system §6.3), no ordinal prefixes.
 const ALL_DESTINATIONS = [
-  ["overview", "/"],
-  ["live execution", "/live/latest"],
-  ["runs", "/runs"],
-  ["model router", "/models"],
-  ["evaluations", "/evaluations"],
-  ["workflow builder", "/workflows"],
-  ["datasets", "/datasets"],
+  ["Overview", "/"],
+  ["Live execution", "/live/latest"],
+  ["Runs", "/runs"],
+  ["Model router", "/models"],
+  ["Evaluations", "/evaluations"],
+  ["Workflow builder", "/workflows"],
+  ["Datasets", "/datasets"],
 ] as const;
 
 describe("Sidebar", () => {
@@ -54,7 +55,8 @@ describe("Sidebar", () => {
     renderSidebar("/workflows");
 
     // Routes are addressed by their preserved data-testid; visible labels are
-    // the redesigned numbered console labels. Hrefs must remain unchanged.
+    // sentence-case names with an icon (no decorative 01–07 ordinals). Hrefs
+    // must remain unchanged.
     expect(screen.getByTestId("nav-dashboard")).toHaveAttribute("href", "/");
     expect(screen.getByTestId("nav-workflows")).toHaveAttribute(
       "href",
@@ -156,7 +158,7 @@ describe("Sidebar", () => {
     renderSidebar("/");
     fireEvent.click(screen.getByRole("button", { name: /collapse sidebar/i }));
 
-    expect(screen.getByTestId("nav-models")).toHaveAccessibleName(/model router/);
+    expect(screen.getByTestId("nav-models")).toHaveAccessibleName(/model router/i);
     expect(screen.getByRole("button", { name: /theme/i })).toHaveAccessibleName(
       /paper theme/i
     );
@@ -260,7 +262,7 @@ describe("Sidebar mobile navigation", () => {
     renderSidebar("/datasets");
 
     const more = within(mobileNav()).getByTestId("mobile-nav-more");
-    expect(more).toHaveAccessibleName("More destinations (current: datasets)");
+    expect(more).toHaveAccessibleName("More destinations (current: Datasets)");
     expect(more.className).toContain("text-el-ink");
     expect(more.querySelector(".bg-el-accent-strong")).not.toBeNull();
     for (const link of within(mobileNav()).getAllByRole("link")) {
@@ -276,13 +278,15 @@ describe("Sidebar mobile navigation", () => {
     const dialog = await screen.findByRole("dialog", { name: "Go to" });
     const sheetNav = within(dialog).getByRole("navigation", { name: "All destinations" });
     const links = within(sheetNav).getAllByRole("link");
-    expect(links.map((link) => [link.textContent?.replace(/^\d+/, ""), link.getAttribute("href")])).toEqual(
+    expect(links.map((link) => [link.textContent, link.getAttribute("href")])).toEqual(
       ALL_DESTINATIONS.map(([label, href]) => [label, href])
     );
+    // No decorative section numbers anywhere in the sheet.
+    expect(sheetNav.textContent).not.toMatch(/0[1-7]/);
     for (const link of links) {
       expect(link.className).toContain("min-h-11");
     }
-    expect(within(sheetNav).getByRole("link", { name: /model router/ })).toHaveAttribute(
+    expect(within(sheetNav).getByRole("link", { name: /model router/i })).toHaveAttribute(
       "aria-current",
       "page"
     );
@@ -314,7 +318,7 @@ describe("Sidebar mobile navigation", () => {
 
     fireEvent.click(within(mobileNav()).getByRole("button", { name: /more destinations/i }));
     const dialog = await screen.findByRole("dialog", { name: "Go to" });
-    fireEvent.click(within(dialog).getByRole("link", { name: /evaluations/ }));
+    fireEvent.click(within(dialog).getByRole("link", { name: /evaluations/i }));
 
     expect(screen.getByTestId("location")).toHaveTextContent("/evaluations");
     await waitFor(() => {

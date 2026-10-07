@@ -1,4 +1,5 @@
 import type { EvaluationCriterionDetail } from "../../api/types";
+import StatusBadge from "../common/StatusBadge";
 
 interface CriterionRowProps {
   criterion: EvaluationCriterionDetail;
@@ -42,7 +43,7 @@ export default function CriterionRow({ criterion }: Readonly<CriterionRowProps>)
       </td>
       <td className="px-3 py-[9px]">
         {criterion.floor_violated && (
-          <span className="font-mono text-micro text-el-danger">[FLOOR]</span>
+          <StatusBadge status="failed" label="Below floor" />
         )}
       </td>
     </tr>

@@ -507,8 +507,14 @@ describe("WorkflowEditorPage", () => {
     });
     renderPage();
 
-    expect(screen.getByText("fast").className).toContain("text-el-tier-low");
-    expect(screen.getByText("smart").className).toContain("text-el-tier-high");
+    // Named aliases keep their text; the mark explains itself (title + sr-only).
+    expect(screen.getByText("fast")).toBeInTheDocument();
+    expect(screen.getByTitle("fast — capability tier").className).toContain(
+      "text-el-tier-low",
+    );
+    expect(screen.getByTitle("smart — capability tier").className).toContain(
+      "text-el-tier-high",
+    );
   });
 
   it("uses the DAG's numbered tier scale (T0–T2 low, T3 mid, T4–T5 high)", () => {
@@ -526,8 +532,14 @@ describe("WorkflowEditorPage", () => {
     });
     renderPage();
 
-    // T2 is low on the graph nodes, so it must not read as "high" here.
-    expect(screen.getByText("t2").className).toContain("text-el-tier-low");
-    expect(screen.getByText("t3").className).toContain("text-el-tier-mid");
+    // T2 is low on the graph nodes, so it must not read as "high" here. The
+    // marks use the same short "T2" form as the DAG nodes.
+    expect(screen.getByText("T2")).toBeInTheDocument();
+    expect(screen.getByTitle("Tier 2 — capability tier").className).toContain(
+      "text-el-tier-low",
+    );
+    expect(screen.getByTitle("Tier 3 — capability tier").className).toContain(
+      "text-el-tier-mid",
+    );
   });
 });

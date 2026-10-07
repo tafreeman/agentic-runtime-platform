@@ -18,6 +18,13 @@ interface BAsciiBarProps {
   readonly className?: string;
 }
 
+/**
+ * Compact score/rate bar. (The name is historical: it used to print
+ * "████░░░░" block characters; it now draws a thin hairline track with a
+ * scaled fill, so the value reads as a measurement rather than ASCII art.)
+ * `width` keeps its old meaning — roughly that many monospace characters
+ * wide — so existing layouts hold.
+ */
 export default function BAsciiBar({
   value,
   width = 20,
@@ -25,9 +32,6 @@ export default function BAsciiBar({
   className = "",
 }: Readonly<BAsciiBarProps>) {
   const clamped = Math.max(0, Math.min(1, value));
-  const filled = Math.round(clamped * width);
-  const empty = width - filled;
-  const bar = "█".repeat(filled) + "░".repeat(empty);
   const pct = Math.round(clamped * 100);
   return (
     <span
@@ -36,9 +40,18 @@ export default function BAsciiBar({
       aria-valuemin={0}
       aria-valuemax={100}
       aria-label={`${pct}%`}
-      className={`font-mono text-micro leading-none ${COLOR_CLASSES[color]} ${className}`}
+      className={`inline-flex max-w-full items-center text-micro leading-none ${COLOR_CLASSES[color]} ${className}`}
+      style={{ width: `${width * 0.6}em` }}
     >
-      <span aria-hidden="true">{bar}</span>
+      <span
+        aria-hidden="true"
+        className="block h-1.5 w-full overflow-hidden rounded-sm bg-el-divider-soft"
+      >
+        <span
+          className="block h-full w-full origin-left bg-current"
+          style={{ transform: `scaleX(${clamped})` }}
+        />
+      </span>
     </span>
   );
 }

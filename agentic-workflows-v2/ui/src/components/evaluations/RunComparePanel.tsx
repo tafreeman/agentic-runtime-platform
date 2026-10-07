@@ -7,6 +7,7 @@ import type {
   RunSummary,
 } from "../../api/types";
 import BPill from "../common/BPill";
+import StatusBadge from "../common/StatusBadge";
 import NoData from "../states/NoData";
 import { useApiAvailability } from "../../hooks/useApiAvailability";
 import { describeApiError } from "../../lib/apiErrors";
@@ -59,14 +60,12 @@ function RunPickerColumn({
     // min-w-0: a grid item defaults to its min-content width, so long run
     // filenames would push column B past the card edge instead of truncating.
     <div className="min-w-0">
-      <span className="mb-1.5 block font-mono text-micro uppercase tracking-[0.8px] text-el-muted">
-        CANDIDATE {slot}
+      <span className="mb-1.5 block text-xs font-medium text-el-secondary">
+        Candidate {slot}
       </span>
       <div className="flex max-h-32 flex-col gap-1.5 overflow-y-auto">
         {runs.length === 0 ? (
-          <span className="font-mono text-micro text-el-muted">
-            no runs yet
-          </span>
+          <span className="text-xs text-el-muted">No runs yet</span>
         ) : (
           runs.map((r) => {
             const isSelected = selected === r.filename;
@@ -93,9 +92,7 @@ function RunPickerColumn({
                 <span className="max-w-[40%] flex-none truncate text-micro text-el-muted">
                   {r.workflow_name ?? "—"}
                 </span>
-                <span className="flex-none text-micro text-el-muted">
-                  {r.status ?? "—"}
-                </span>
+                <StatusBadge status={r.status} className="flex-none" />
               </button>
             );
           })
@@ -125,8 +122,8 @@ function CandidateCard({
       }`}
     >
       <div className="flex items-center justify-between">
-        <span className="font-mono text-micro uppercase tracking-[0.8px] text-el-muted">
-          CANDIDATE {slot.toUpperCase()}
+        <span className="text-xs font-medium text-el-secondary">
+          Candidate {slot.toUpperCase()}
         </span>
         {isWinner && <BPill tone="clay">winner</BPill>}
       </div>
@@ -145,9 +142,7 @@ function CandidateCard({
         <span className="font-mono text-micro text-el-ink tabular-nums">
           {pct == null ? <NoData /> : pct.toFixed(1)}
         </span>
-        <BPill tone={candidate.passed ? "ok" : "err"}>
-          {candidate.passed ? "pass" : "fail"}
-        </BPill>
+        <StatusBadge status={candidate.passed ? "passed" : "failed"} />
       </div>
     </div>
   );
@@ -160,10 +155,13 @@ function ComparisonResult({
   const isTie = result.winner === "tie";
   return (
     <div data-testid="compare-result" className="mt-4 space-y-3">
-      <div className="flex items-center justify-between font-mono text-micro uppercase tracking-[0.8px] text-el-muted">
-        <span>RESULT · rubric {result.rubric_id}</span>
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-el-muted">
+        <span>
+          <span className="font-semibold text-el-ink">Result</span> · rubric{" "}
+          <span className="font-mono">{result.rubric_id}</span>
+        </span>
         <span className="flex items-center gap-2">
-          Δ WEIGHTED{" "}
+          Δ weighted{" "}
           <span
             className={`tabular-nums ${deltaColorClass(result.weighted_score_delta)}`}
           >
@@ -186,11 +184,11 @@ function ComparisonResult({
         />
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-el-divider bg-el-subtle">
+      <div className="relative overflow-x-auto rounded-lg border border-el-divider bg-el-subtle">
         <table className="w-full font-mono text-micro">
           <thead>
-            <tr className="border-b border-el-divider text-left text-micro uppercase tracking-[0.5px] text-el-muted">
-              <th className="px-3 py-2">CRITERION</th>
+            <tr className="border-b border-el-divider text-left font-sans text-micro font-semibold uppercase tracking-[0.5px] text-el-muted">
+              <th className="px-3 py-2">Criterion</th>
               <th className="w-[80px] px-3 py-2 text-right">A</th>
               <th className="w-[80px] px-3 py-2 text-right">B</th>
               <th className="w-[80px] px-3 py-2 text-right">Δ (A−B)</th>
@@ -276,8 +274,11 @@ export default function RunComparePanel({
       className="relative overflow-hidden rounded-lg border border-el-divider bg-el-surface px-5 py-[18px]"
       aria-label="compare runs"
     >
-      <div className="mb-3.5 font-mono text-micro uppercase tracking-[1.5px] text-el-secondary">
-        COMPARE RUNS · scores two runs head-to-head under one rubric
+      <div className="mb-3.5">
+        <h2 className="m-0 font-sans text-[15px] font-semibold text-el-ink">Compare runs</h2>
+        <p className="mt-0.5 text-xs text-el-muted">
+          Scores two recorded runs head-to-head under one rubric.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-2 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,1fr)]">
@@ -298,13 +299,13 @@ export default function RunComparePanel({
 
         <div>
           <label className="block">
-            <span className="mb-1.5 block font-mono text-micro uppercase tracking-[0.8px] text-el-muted">
-              RUBRIC ID <span>· optional</span>
+            <span className="mb-1.5 block text-xs font-medium text-el-secondary">
+              Rubric ID <span className="font-normal text-el-muted">(optional)</span>
             </span>
             <input
               value={rubricId}
               onChange={(event) => setRubricId(event.target.value)}
-              placeholder="default rubric"
+              placeholder="Default rubric"
               className="focus-ring w-full rounded-md border border-el-control-border bg-el-canvas px-2 py-1.5 font-mono text-micro text-el-ink placeholder:text-el-muted focus:border-el-focus"
             />
           </label>
@@ -313,9 +314,9 @@ export default function RunComparePanel({
             disabled={!canCompare}
             onClick={handleCompare}
             aria-describedby={apiDown ? apiDownReasonId : undefined}
-            className="focus-ring mt-3 flex min-h-9 w-full items-center justify-center rounded-md bg-el-action px-2 py-2 font-mono text-micro font-semibold text-el-action-ink transition-colors hover:bg-el-action/90 disabled:cursor-not-allowed disabled:opacity-45"
+            className="focus-ring mt-3 flex min-h-9 w-full items-center justify-center rounded-md bg-el-action px-2 py-2 text-xs font-semibold text-el-action-ink transition-colors hover:bg-el-action/90 disabled:cursor-not-allowed disabled:opacity-45"
           >
-            {compareMutation.isPending ? "comparing…" : "▶ compare"}
+            {compareMutation.isPending ? "Comparing…" : "Compare runs"}
           </button>
           {apiDown && (
             <p id={apiDownReasonId} className="mt-2 text-micro text-el-muted">
@@ -323,13 +324,13 @@ export default function RunComparePanel({
             </p>
           )}
           {compareMutation.isPending && (
-            <div className="mt-2 font-mono text-micro text-el-muted">
-              scoring both runs under one rubric…
+            <div className="mt-2 text-micro text-el-muted">
+              Scoring both runs under one rubric…
             </div>
           )}
           {compareFailure && (
-            <div role="alert" className="mt-2 font-mono text-micro text-el-danger">
-              <span className="block">comparison failed: {compareFailure.summary}</span>
+            <div role="alert" className="mt-2 text-micro text-el-danger">
+              <span className="block">Comparison failed: {compareFailure.summary}</span>
               <span className="block text-el-secondary">
                 {compareFailure.remedy}
               </span>

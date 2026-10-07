@@ -164,4 +164,77 @@ describe("useWorkflowStream", () => {
 
     expect(result.current.workflowStatus).toBe("failed");
   });
+
+  it("tags a server error event as kind 'server'", () => {
+    const { result } = renderHook(() => useWorkflowStream("run-1"));
+
+    act(() => {
+      MockWebSocket.instances[0]!.simulateMessage({
+        type: "error",
+        run_id: "run-1",
+        error: "boom",
+        timestamp: "2025-01-01T00:00:03Z",
+      });
+    });
+
+    expect(result.current.workflowStatus).toBe("error");
+    expect(result.current.error).toBe("boom");
+    expect(result.current.errorKind).toBe("server");
+  });
+
+  it("tags exhausted reconnects as a connection loss and can reconnect without losing data", () => {
+    // Sockets that never open: every close counts against the retry budget.
+    class DeadSocket {
+      static readonly instances: DeadSocket[] = [];
+      onopen: (() => void) | null = null;
+      onmessage: ((evt: { data: string }) => void) | null = null;
+      onclose: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      constructor(_url: string) {
+        DeadSocket.instances.push(this);
+      }
+      close() {}
+    }
+    vi.stubGlobal("WebSocket", DeadSocket);
+    vi.useFakeTimers();
+    try {
+      const { result } = renderHook(() => useWorkflowStream("run-1"));
+      act(() => {
+        DeadSocket.instances[0]!.onmessage?.({
+          data: JSON.stringify({
+            type: "workflow_start",
+            run_id: "run-1",
+            workflow_name: "test",
+            timestamp: "2025-01-01T00:00:00Z",
+          }),
+        });
+      });
+
+      // Every socket closes: 5 backoff retries (1s…16s), then give up.
+      for (let attempt = 0; attempt <= 5; attempt++) {
+        act(() => {
+          DeadSocket.instances.at(-1)!.onclose?.();
+          vi.advanceTimersByTime(20_000);
+        });
+      }
+
+      expect(result.current.errorKind).toBe("connection");
+      expect(result.current.workflowStatus).toBe("error");
+      const socketsBefore = DeadSocket.instances.length;
+
+      act(() => {
+        result.current.reconnect?.();
+      });
+
+      // A fresh socket opens, the error clears, the in-flight status
+      // returns, and the events already received stay on screen.
+      expect(DeadSocket.instances.length).toBe(socketsBefore + 1);
+      expect(result.current.error).toBeNull();
+      expect(result.current.errorKind).toBeNull();
+      expect(result.current.workflowStatus).toBe("running");
+      expect(result.current.events).toHaveLength(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

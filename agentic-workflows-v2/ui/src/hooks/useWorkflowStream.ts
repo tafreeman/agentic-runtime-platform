@@ -31,8 +31,16 @@ export interface WorkflowStreamState {
     | "failed"
     | "error";
   evaluation: EvaluationResult | null;
+  /** Raw failure text (server error event or connection loss). Never show
+   *  it as-is: LivePage turns it into human copy via describeStreamError. */
   error: string | null;
+  /** What failed: the server reported an error, or the socket gave up. */
+  errorKind?: StreamErrorKind | null;
+  /** Re-open the stream after the automatic reconnects were exhausted. */
+  reconnect?: () => void;
 }
+
+export type StreamErrorKind = "server" | "connection";
 
 function normaliseWorkflowTerminalStatus(rawStatus: string): WorkflowStreamState["workflowStatus"] {
   const status = rawStatus.trim().toLowerCase();
@@ -54,6 +62,15 @@ export function useWorkflowStream(runId: string | null): WorkflowStreamState {
     useState<WorkflowStreamState["workflowStatus"]>("connecting");
   const [evaluation, setEvaluation] = useState<EvaluationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [errorKind, setErrorKind] = useState<StreamErrorKind | null>(null);
+  // Bumped by reconnect() to re-run the connect effect without resetting the
+  // run's accumulated state (the server replays its buffer; duplicates are
+  // dropped by seenEventsRef below).
+  const [connectAttempt, setConnectAttempt] = useState(0);
+  // The in-flight status when the socket gave up, restored on reconnect:
+  // replayed events the client already saw are dropped as duplicates, so
+  // "workflow_start" would not re-mark a running workflow as running.
+  const statusBeforeLossRef = useRef<WorkflowStreamState["workflowStatus"]>("connecting");
   const connectionRef = useRef<{ close: () => void } | null>(null);
   // Reconnects replay the server buffer from the beginning. Ignore exact wire
   // duplicates so terminal events and log rows remain singular while step
@@ -161,20 +178,26 @@ export function useWorkflowStream(runId: string | null): WorkflowStreamState {
 
       case "error":
         setError(event.error);
+        setErrorKind("server");
         setWorkflowStatus("error");
         break;
     }
   }, []);
 
+  // A new run id starts from a clean slate.
   useEffect(() => {
     if (!runId) return;
-
     setStepStates(new Map());
     setEvents([]);
     seenEventsRef.current = new Set();
     setEvaluation(null);
     setWorkflowStatus("connecting");
     setError(null);
+    setErrorKind(null);
+  }, [runId]);
+
+  useEffect(() => {
+    if (!runId) return;
 
     connectionRef.current = connectExecutionStream(runId, handleEvent, {
       onRetriesExhausted: () => {
@@ -182,7 +205,9 @@ export function useWorkflowStream(runId: string | null): WorkflowStreamState {
         // A finished run also closes the socket — don't overwrite a terminal
         // state with a spurious error.
         if (current === "completed" || current === "failed") return;
+        statusBeforeLossRef.current = current === "error" ? "connecting" : current;
         setError("connection lost — the live stream stopped responding");
+        setErrorKind("connection");
         setWorkflowStatus("error");
       },
     });
@@ -190,7 +215,22 @@ export function useWorkflowStream(runId: string | null): WorkflowStreamState {
     return () => {
       connectionRef.current?.close();
     };
-  }, [runId, handleEvent]);
+  }, [runId, handleEvent, connectAttempt]);
 
-  return { stepStates, events, workflowStatus, evaluation, error };
+  const reconnect = useCallback(() => {
+    setError(null);
+    setErrorKind(null);
+    setWorkflowStatus(statusBeforeLossRef.current);
+    setConnectAttempt((n) => n + 1);
+  }, []);
+
+  return {
+    stepStates,
+    events,
+    workflowStatus,
+    evaluation,
+    error,
+    errorKind,
+    reconnect,
+  };
 }

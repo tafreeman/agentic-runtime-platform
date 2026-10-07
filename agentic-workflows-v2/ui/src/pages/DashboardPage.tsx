@@ -4,7 +4,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type ReactNode,
 } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
@@ -15,6 +14,9 @@ import { useHotkeys } from "../hooks/useHotkeys";
 import { useApiAvailability } from "../hooks/useApiAvailability";
 import { listAgents } from "../api/client";
 import ConsoleStatus from "../components/common/ConsoleStatus";
+import Scoreline from "../components/common/Scoreline";
+import StatusBadge from "../components/common/StatusBadge";
+import TierMark from "../components/common/TierMark";
 import GettingStartedCard from "../components/dashboard/GettingStartedCard";
 import BTopBar from "../components/layout/BTopBar";
 import InlineError from "../components/states/InlineError";
@@ -23,36 +25,16 @@ import { Button } from "../components/ui/button";
 import type { AgentInfo, RunSummary } from "../api/types";
 import { gradeColorClass, gradeLetter } from "../lib/grades";
 
-/** Hairline panel shell (design system §7.4 / §10.6). */
-const PANEL_CLASS = "rounded-lg border border-el-divider bg-el-surface";
-
-/** Panel heading: sans section title, sentence case. */
-const PANEL_HEADING_CLASS =
-  "m-0 whitespace-nowrap font-display text-[13.5px] font-semibold text-el-ink";
+/** Section heading: sans section title, sentence case (no boxed panel). */
+const SECTION_HEADING_CLASS =
+  "m-0 whitespace-nowrap font-sans text-[15px] font-semibold text-el-ink";
 
 /**
- * Quiet header link ("view all →"). Stays visually small; the ::after box
+ * Quiet header link ("View all"). Stays visually small; the ::after box
  * expands the hit area to ≥36px tall without changing the row height.
  */
-const PANEL_LINK_CLASS =
-  "focus-ring relative rounded-sm font-mono text-micro text-el-secondary underline-offset-2 after:absolute after:-inset-x-2 after:-inset-y-3 hover:text-el-ink hover:underline";
-
-/** Bracketed mono status glyph, colored by run status. */
-function statusAscii(status: string | null | undefined): string {
-  if (status === "success") return "[ ok ]";
-  if (status === "failed" || status === "error") return "[fail]";
-  if (status === "running" || status === "in_progress") return "[ •• ]";
-  if (status === "cancelled") return "[skip]";
-  return `[${status ?? "?"}]`;
-}
-
-function statusColorClass(status: string | null | undefined): string {
-  if (status === "success") return "text-el-success";
-  if (status === "failed" || status === "error") return "text-el-danger";
-  if (status === "running" || status === "in_progress") return "text-el-info";
-  if (status === "cancelled") return "text-el-warning";
-  return "text-el-muted";
-}
+const SECTION_LINK_CLASS =
+  "focus-ring relative rounded-sm text-xs text-el-secondary underline-offset-2 after:absolute after:-inset-x-2 after:-inset-y-3 hover:text-el-ink hover:underline";
 
 /** A short human description for a run row (workflow context, not internal id). */
 function runDescription(run: RunSummary): string {
@@ -60,24 +42,11 @@ function runDescription(run: RunSummary): string {
   const failed = run.failed_step_count ?? 0;
   if (typeof steps === "number" && steps > 0) {
     const stepLabel = `${steps} step${steps === 1 ? "" : "s"}`;
+    // The status itself is the row's marker; repeat only the failure count.
     if (failed > 0) return `${stepLabel} · ${failed} failed`;
-    return `${stepLabel} · ${run.status ?? "unknown"}`;
+    return stepLabel;
   }
   return run.run_id ?? run.filename;
-}
-
-/** Map a tier string ("1".."5", "tier3", …) to its tier color class. */
-function tierColorClass(tier: string | null | undefined): string {
-  const t = Number((tier ?? "").replace(/[^0-9]/g, ""));
-  if (t >= 4) return "text-el-tier-high";
-  if (t === 3) return "text-el-tier-mid";
-  return "text-el-tier-low";
-}
-
-/** Short tier badge label, e.g. "2" → "T2". */
-function tierBadgeLabel(tier: string | null | undefined): string {
-  const t = (tier ?? "").toLowerCase().replace(/[^0-9]/g, "");
-  return t ? `T${t}` : "T?";
 }
 
 /** Best-effort provider label from a model/agent name like "openai:gpt-4o". */
@@ -91,53 +60,15 @@ function providerLabel(agent: AgentInfo): string {
   return tier ? `tier ${tier}` : "agent";
 }
 
-function StatCard({
-  label,
-  value,
-  unit,
-  onClick,
-  emphasis = false,
-}: Readonly<{
-  label: string;
-  value: ReactNode;
-  unit?: string;
-  onClick: () => void;
-  /** The page's single accent mark: a vermilion rail across the top. */
-  emphasis?: boolean;
-}>) {
+function ScorelineSkeleton() {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`focus-ring relative flex flex-col gap-3.5 overflow-hidden p-[22px] text-left transition-colors hover:bg-el-hover ${PANEL_CLASS}`}
-    >
-      {emphasis ? (
-        <span
-          aria-hidden="true"
-          className="absolute inset-x-0 top-0 h-[3px] bg-el-accent"
-        />
-      ) : null}
-      <span className="flex items-center justify-between">
-        <span className="font-mono text-micro uppercase tracking-[1.5px] text-el-muted">
-          {label}
-        </span>
-        <span aria-hidden="true" className="text-[13px] text-el-muted">
-          →
-        </span>
-      </span>
-      <span className="font-display text-[46px] font-semibold leading-none tracking-[-1.5px] tabular-nums text-el-ink">
-        {value}
-        {unit && <span className="text-[26px] text-el-muted">{unit}</span>}
-      </span>
-    </button>
-  );
-}
-
-function StatCardSkeleton() {
-  return (
-    <div className={`p-[22px] ${PANEL_CLASS}`}>
-      <div className="h-[11px] w-20 animate-pulse rounded-sm bg-el-hover" />
-      <div className="mt-3.5 h-10 w-24 animate-pulse rounded-sm bg-el-hover" />
+    <div className="grid grid-cols-1 border-y border-el-divider sm:grid-cols-3">
+      {["sk-stat-0", "sk-stat-1", "sk-stat-2"].map((k) => (
+        <div key={k} className="px-1 py-4 sm:px-5 sm:first:pl-0">
+          <div className="h-3 w-20 animate-pulse rounded-sm bg-el-hover" />
+          <div className="mt-3 h-8 w-24 animate-pulse rounded-sm bg-el-hover" />
+        </div>
+      ))}
     </div>
   );
 }
@@ -248,11 +179,12 @@ export default function DashboardPage() {
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           onKeyDown={(e) => e.key === "Escape" && clearFilter()}
-          placeholder="[f] filter runs…"
+          placeholder="Filter runs…"
           aria-label="Filter runs"
+          aria-keyshortcuts="f /"
           // A real control boundary (>= 3:1), sized to sit inside the 36px
           // top bar; min-h-0 opts out of the 40px base form-control floor.
-          className="focus-ring hidden h-8 min-h-0 w-40 rounded-md border border-el-control-border bg-el-raised px-2 font-mono text-micro text-el-ink placeholder:text-el-muted sm:block"
+          className="focus-ring hidden h-8 min-h-0 w-40 rounded-md border border-el-control-border bg-el-raised px-2 text-xs text-el-ink placeholder:text-el-muted sm:block"
         />
         {/* Starts a run (via /workflows), so it is gated on the API like the
             other run actions; the visible reason sits in the page header.
@@ -265,31 +197,34 @@ export default function DashboardPage() {
           disabled={apiDown}
           aria-keyshortcuts="n"
           aria-describedby={apiDown ? newRunReasonId : undefined}
-          className="relative h-9 bg-el-action font-mono text-el-action-ink after:absolute after:-inset-1"
+          className="relative h-9 bg-el-action text-el-action-ink after:absolute after:-inset-1"
         >
           <Plus aria-hidden="true" />
-          <span>
-            <span aria-hidden="true" className="hidden sm:inline">
-              [n]{" "}
-            </span>
-            New run
-          </span>
+          <span>New run</span>
+          {/* Shortcut hint beside the sentence-case label; the name stays
+              "New run" (aria-keyshortcuts carries the key). */}
+          <kbd
+            aria-hidden="true"
+            className="hidden rounded-sm border border-el-action-ink/40 px-1 font-mono text-micro leading-4 sm:inline"
+          >
+            N
+          </kbd>
         </Button>
       </BTopBar>
 
       <div className="h-full overflow-y-auto p-6">
         <div className="mx-auto flex max-w-[1120px] flex-col gap-6">
           {/* Header */}
-          <div className="flex items-end justify-between">
+          <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h1 className="font-display text-[24px] font-semibold tracking-[-0.5px] text-el-ink">
+              <h1 className="font-display text-[28px] font-semibold tracking-[-0.5px] text-el-ink">
                 Dashboard
               </h1>
-              <div className="mt-1 font-mono text-micro text-el-muted">
-                ${" "}
+              <p className="mt-1 text-xs text-el-muted">
                 {workflows ? workflows.length : <NoData />} workflows ·{" "}
-                {activeCount ?? <NoData />} running · updated {updatedLabel}
-              </div>
+                {activeCount ?? <NoData />} running · updated{" "}
+                <span className="tabular-nums">{updatedLabel}</span>
+              </p>
               {apiDown ? (
                 <p id={newRunReasonId} className="mt-1 text-micro text-el-muted">
                   New runs are unavailable. {apiDownReason}
@@ -318,165 +253,160 @@ export default function DashboardPage() {
 
           {showGettingStarted ? <GettingStartedCard /> : null}
 
-          {/* Stat cards */}
+          {/* Evidence scoreline (§11.1): ruled columns, no KPI cards. */}
           {isSummaryLoading ? (
-            <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-3">
-              {["sk-stat-0", "sk-stat-1", "sk-stat-2"].map((k) => (
-                <StatCardSkeleton key={k} />
-              ))}
-            </div>
+            <ScorelineSkeleton />
           ) : (
-            <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-3">
-              <StatCard
-                label="total runs"
-                value={
-                  typeof totalRuns === "number" ? totalRuns.toLocaleString() : <NoData />
-                }
-                onClick={() => navigate("/runs")}
-              />
-              <StatCard
-                label="success rate"
-                value={successRate === null ? <NoData /> : successRate.toFixed(1)}
-                unit={successRate === null ? undefined : "%"}
-                onClick={() => navigate("/runs")}
-              />
-              <StatCard
-                label="tokens (30d)"
-                value={
-                  typeof tokens30d === "number" ? tokens30d.toLocaleString() : <NoData />
-                }
-                onClick={() => navigate("/models")}
-                emphasis
-              />
-            </div>
+            <Scoreline
+              label="run summary"
+              items={[
+                {
+                  label: "Total runs",
+                  value:
+                    typeof totalRuns === "number" ? totalRuns.toLocaleString() : <NoData />,
+                  to: "/runs",
+                },
+                {
+                  label: "Success rate",
+                  value: successRate === null ? <NoData /> : successRate.toFixed(1),
+                  unit: successRate === null ? undefined : "%",
+                  to: "/runs",
+                },
+                {
+                  label: "Tokens (30d)",
+                  value:
+                    typeof tokens30d === "number" ? tokens30d.toLocaleString() : <NoData />,
+                  to: "/models",
+                },
+              ]}
+            />
           )}
 
-          {/* Recent runs + Models */}
-          <div className="grid grid-cols-1 gap-[18px] lg:grid-cols-[1.7fr_1fr]">
-            {/* Recent runs list */}
-            <div className={`px-[18px] pb-2 pt-[18px] ${PANEL_CLASS}`}>
-              <div className="mb-1.5 flex items-center justify-between">
-                <h3 className={PANEL_HEADING_CLASS}>Recent runs</h3>
-                <Link to="/runs" className={PANEL_LINK_CLASS}>
-                  view all →
+          {/* Recent runs + Models: headed, hairline-ruled lists (no boxed
+              panels around them). */}
+          <div className="grid grid-cols-1 gap-x-10 gap-y-8 lg:grid-cols-[1.7fr_1fr]">
+            <section aria-labelledby="dash-recent-runs">
+              <div className="mb-2 flex items-center justify-between">
+                <h2 id="dash-recent-runs" className={SECTION_HEADING_CLASS}>
+                  Recent runs
+                </h2>
+                <Link to="/runs" className={SECTION_LINK_CLASS}>
+                  View all runs →
                 </Link>
               </div>
-              {isRunsLoading &&
-                ["sk-run-0", "sk-run-1", "sk-run-2"].map((k) => (
-                  <div
-                    key={k}
-                    className="flex items-center gap-3.5 border-t border-el-divider-soft py-[11px]"
-                  >
-                    <div className="h-3.5 w-full animate-pulse rounded-sm bg-el-subtle" />
-                  </div>
-                ))}
-              {!isRunsLoading && recent.length === 0 && (
-                <div className="border-t border-el-divider-soft py-6 text-center font-mono text-micro text-el-muted">
-                  {recentEmptyMessage}
-                </div>
-              )}
-              {recent.map((r) => {
-                const letter = gradeLetter(
-                  r.evaluation_grade,
-                  r.evaluation_score,
-                );
-                return (
-                  <Link
-                    key={r.filename}
-                    to={`/runs/${encodeURIComponent(r.filename)}`}
-                    className="focus-ring-inset flex items-center gap-3.5 border-t border-el-divider-soft py-[11px] transition-colors hover:bg-el-subtle"
-                  >
-                    <span
-                      className={`w-[46px] flex-none font-mono text-micro tracking-[0.5px] ${statusColorClass(r.status)}`}
-                    >
-                      {statusAscii(r.status)}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-xs text-el-ink">
-                        {r.workflow_name ?? "—"}
-                      </div>
-                      <div className="mt-0.5 truncate font-mono text-micro text-el-muted">
-                        {runDescription(r)}
-                      </div>
-                    </div>
-                    <span
-                      className={`w-[26px] flex-none text-center font-display text-[13px] font-bold ${gradeColorClass(letter)}`}
-                    >
-                      {letter ?? "—"}
-                    </span>
-                  </Link>
-                );
-              })}
-            </div>
-
-            {/* Models panel */}
-            <div className="flex flex-col gap-[18px]">
-              <div className={`p-[18px] ${PANEL_CLASS}`}>
-                <div className="mb-1.5 flex items-center justify-between">
-                  <h3 className={PANEL_HEADING_CLASS}>Models</h3>
-                  <Link to="/models" className={PANEL_LINK_CLASS}>
-                    probe →
-                  </Link>
-                </div>
-                {agentsQuery.isLoading ? (
-                  <div className="border-t border-el-divider-soft py-6 text-center font-mono text-micro text-el-muted motion-safe:animate-pulse">
-                    loading models...
-                  </div>
-                ) : agentsQuery.isError ? (
-                  <div className="border-t border-el-divider-soft py-6 text-center font-mono text-micro text-el-muted">
-                    models unavailable
-                  </div>
-                ) : modelRows.length === 0 ? (
-                  <div className="border-t border-el-divider-soft py-6 text-center font-mono text-micro text-el-muted">
-                    no models configured
-                  </div>
-                ) : (
-                  modelRows.map((agent, i) => (
+              <div className="border-b border-el-divider-soft">
+                {isRunsLoading &&
+                  ["sk-run-0", "sk-run-1", "sk-run-2"].map((k) => (
                     <div
-                      key={`${agent.name}-${i}`}
-                      className="flex items-center gap-2.5 border-t border-el-divider-soft py-2"
+                      key={k}
+                      className="flex items-center gap-3.5 border-t border-el-divider-soft py-[14px]"
                     >
-                      <span
-                        className={`flex-none rounded-sm border border-current px-[5px] py-px font-mono text-micro tracking-[0.3px] ${tierColorClass(agent.tier)}`}
-                      >
-                        {tierBadgeLabel(agent.tier)}
-                      </span>
-                      <span className="min-w-0 flex-1 truncate text-xs text-el-secondary">
-                        {agent.name}
-                      </span>
-                      <span className="font-mono text-micro text-el-muted">
-                        {providerLabel(agent)}
-                      </span>
+                      <div className="h-3.5 w-full animate-pulse rounded-sm bg-el-subtle" />
                     </div>
-                  ))
+                  ))}
+                {!isRunsLoading && recent.length === 0 && (
+                  <div className="border-t border-el-divider-soft py-6 text-center text-xs text-el-muted">
+                    {recentEmptyMessage}
+                  </div>
                 )}
+                {recent.map((r) => {
+                  const letter = gradeLetter(
+                    r.evaluation_grade,
+                    r.evaluation_score,
+                  );
+                  return (
+                    <Link
+                      key={r.filename}
+                      to={`/runs/${encodeURIComponent(r.filename)}`}
+                      className="focus-ring-inset flex min-h-14 items-center gap-4 border-t border-el-divider-soft px-1 py-[10px] transition-colors hover:bg-el-hover"
+                    >
+                      <StatusBadge status={r.status} className="w-[84px] flex-none" />
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate font-mono text-xs text-el-ink">
+                          {r.workflow_name ?? "—"}
+                        </div>
+                        <div className="mt-0.5 truncate text-micro text-el-muted">
+                          {runDescription(r)}
+                        </div>
+                      </div>
+                      <span
+                        className={`w-[26px] flex-none text-center font-display text-[14px] font-bold ${gradeColorClass(letter)}`}
+                      >
+                        {letter ?? "—"}
+                        {letter ? <span className="sr-only"> grade</span> : null}
+                      </span>
+                    </Link>
+                  );
+                })}
               </div>
+            </section>
+
+            <div className="flex flex-col gap-8">
+              <section aria-labelledby="dash-models">
+                <div className="mb-2 flex items-center justify-between">
+                  <h2 id="dash-models" className={SECTION_HEADING_CLASS}>
+                    Models
+                  </h2>
+                  <Link to="/models" className={SECTION_LINK_CLASS}>
+                    Model router →
+                  </Link>
+                </div>
+                <div className="border-b border-el-divider-soft">
+                  {agentsQuery.isLoading ? (
+                    <div className="border-t border-el-divider-soft py-6 text-center text-xs text-el-muted motion-safe:animate-pulse">
+                      Loading models…
+                    </div>
+                  ) : agentsQuery.isError ? (
+                    <div className="border-t border-el-divider-soft py-6 text-center text-xs text-el-muted">
+                      models unavailable
+                    </div>
+                  ) : modelRows.length === 0 ? (
+                    <div className="border-t border-el-divider-soft py-6 text-center text-xs text-el-muted">
+                      no models configured
+                    </div>
+                  ) : (
+                    modelRows.map((agent, i) => (
+                      <div
+                        key={`${agent.name}-${i}`}
+                        className="flex min-h-10 items-center gap-2.5 border-t border-el-divider-soft py-2"
+                      >
+                        <TierMark tier={agent.tier} />
+                        <span className="min-w-0 flex-1 truncate text-xs text-el-secondary">
+                          {agent.name}
+                        </span>
+                        <span className="font-mono text-micro text-el-muted">
+                          {providerLabel(agent)}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </section>
 
               {/* Workflows quick list */}
               {workflows && (
-                <div className={`p-[18px] ${PANEL_CLASS}`}>
-                  <h3 className={`mb-1.5 ${PANEL_HEADING_CLASS}`}>Workflows</h3>
+                <section aria-labelledby="dash-workflows">
+                  <h2 id="dash-workflows" className={`mb-2 ${SECTION_HEADING_CLASS}`}>
+                    Workflows
+                  </h2>
                   {workflows.length === 0 ? (
-                    <div className="border-t border-el-divider-soft py-6 text-center font-mono text-micro text-el-muted">
+                    <div className="border-y border-el-divider-soft py-6 text-center text-xs text-el-muted">
                       no workflows yet
                     </div>
                   ) : (
-                    <div className="divide-y divide-el-divider-soft border-t border-el-divider-soft">
+                    <div className="divide-y divide-el-divider-soft border-y border-el-divider-soft">
                       {workflows.slice(0, 9).map((name) => (
                         <Link
                           key={name}
                           to={`/workflows/${name}`}
-                          className="focus-ring-inset flex min-h-9 items-center gap-2 px-1 font-mono text-micro text-el-secondary transition-colors hover:bg-el-subtle hover:text-el-ink"
+                          className="focus-ring-inset flex min-h-10 items-center gap-2 px-1 font-mono text-xs text-el-secondary transition-colors hover:bg-el-hover hover:text-el-ink"
                         >
-                          <span aria-hidden="true" className="text-el-muted">
-                            ▣
-                          </span>
                           <span className="truncate">{name}</span>
                         </Link>
                       ))}
                     </div>
                   )}
-                </div>
+                </section>
               )}
             </div>
           </div>

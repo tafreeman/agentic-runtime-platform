@@ -96,7 +96,7 @@ describe("EvaluationRubricAccordion", () => {
 
     render(<EvaluationRubricAccordion filename="run.json" />);
 
-    expect(screen.getByText("step scores")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Step scores" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /review_code/i })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /review_code/i }));
@@ -218,7 +218,9 @@ describe("EvaluationRubricAccordion", () => {
       "85"
     );
     expect(screen.getByText("w 0.60")).toBeInTheDocument();
-    expect(screen.getByText("[FLOOR]")).toBeInTheDocument();
+    // Floor violation reads as the shared failed marker with a qualifier.
+    expect(screen.getByText("Below floor")).toBeInTheDocument();
+    expect(screen.queryByText("[FLOOR]")).not.toBeInTheDocument();
   });
 
   it("shows a readable error with a remedy when the rubric fails to load", () => {

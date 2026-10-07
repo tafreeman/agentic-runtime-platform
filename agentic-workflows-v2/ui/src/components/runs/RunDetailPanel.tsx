@@ -13,7 +13,8 @@ import WorkflowDAG from "../dag/WorkflowDAG";
 import RunDetailSteps from "./RunDetail";
 import DurationDisplay from "../common/DurationDisplay";
 import CopyId from "../common/CopyId";
-import BPill from "../common/BPill";
+import StatusBadge from "../common/StatusBadge";
+import TierMark from "../common/TierMark";
 import BAsciiBar from "../common/BAsciiBar";
 import EvaluationRubricAccordion from "../evaluations/EvaluationRubricAccordion";
 import InlineError from "../states/InlineError";
@@ -31,7 +32,6 @@ import {
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
 
-type RunTone = "ok" | "err" | "clay" | "dim";
 type EvalTone = "pass" | "review" | "fail";
 
 /**
@@ -40,39 +40,29 @@ type EvalTone = "pass" | "review" | "fail";
  */
 const EVAL_TONE: Record<
   EvalTone,
-  { text: string; fill: string; bar: "success" | "warning" | "danger" }
+  { text: string; bar: "success" | "warning" | "danger" }
 > = {
-  pass: { text: "text-el-success", fill: "bg-el-success", bar: "success" },
-  review: { text: "text-el-warning", fill: "bg-el-warning", bar: "warning" },
-  fail: { text: "text-el-danger", fill: "bg-el-danger", bar: "danger" },
+  pass: { text: "text-el-success", bar: "success" },
+  review: { text: "text-el-warning", bar: "warning" },
+  fail: { text: "text-el-danger", bar: "danger" },
 };
 
 /**
- * Card matching the console's hairline language: theme-token radius +
- * border-width, a hairline title header with the ▊ marker. Mirrors the
- * shared BBox visual but takes the radius/border from theme tokens.
+ * Hairline detail section: a sentence-case sans title over its content. One
+ * box per section (no card nested in a card).
  */
 function DetailCard({
   title,
   children,
 }: Readonly<{ title: string; children: ReactNode }>) {
   return (
-    <div className="overflow-hidden rounded-lg border border-el-divider bg-el-surface">
-      <div className="flex items-center gap-2 border-b border-el-divider bg-el-subtle px-[11px] py-[5px] font-mono text-micro uppercase tracking-[0.5px] text-el-secondary">
-        <span aria-hidden="true" className="leading-none text-el-faint">▊</span>
-        <span>{title}</span>
-      </div>
+    <section className="overflow-hidden rounded-lg border border-el-divider bg-el-surface">
+      <h2 className="m-0 border-b border-el-divider px-3 py-2 font-sans text-xs font-semibold text-el-ink">
+        {title}
+      </h2>
       {children}
-    </div>
+    </section>
   );
-}
-
-/** Map a run's status string to a pill tone. */
-function runStatusTone(status: string): RunTone {
-  if (status === "success") return "ok";
-  if (status === "failed" || status === "error") return "err";
-  if (status === "running" || status === "in_progress") return "clay";
-  return "dim";
 }
 
 /** Choose the evaluation tone from a normalized 0..1 score. */
@@ -197,8 +187,8 @@ export default function RunDetailPanel({
 
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center font-mono text-micro text-el-muted">
-        $ loading run…
+      <div className="flex h-full items-center justify-center text-xs text-el-muted">
+        Loading run…
       </div>
     );
   }
@@ -218,8 +208,8 @@ export default function RunDetailPanel({
 
   if (!run) {
     return (
-      <div className="flex h-full items-center justify-center font-mono text-micro text-el-muted">
-        $ run not found
+      <div className="flex h-full items-center justify-center text-xs text-el-muted">
+        Run not found
       </div>
     );
   }
@@ -235,8 +225,6 @@ export default function RunDetailPanel({
       ? run.success_rate * 100
       : run.success_rate
     : null;
-
-  const runTone = runStatusTone(run.status);
 
   // Replay is only offered when it can actually succeed: older run logs
   // captured no `inputs`, and replaying those against a workflow with
@@ -281,8 +269,10 @@ export default function RunDetailPanel({
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      {/* Header band — CopyId on the run id, status, key metrics, optional close */}
-      <div className="flex items-center gap-3 border-b border-el-divider bg-el-surface px-4 py-3">
+      {/* Header band (§11.4): identity, then state + key metrics on their own
+          wrapping line, so the name never collapses in a narrow inspector;
+          the close control stays top-right. */}
+      <div className="flex items-start gap-3 border-b border-el-divider bg-el-surface px-4 py-3">
         <div className="min-w-0 flex-1">
           <h1
             className="truncate font-display text-[18px] font-semibold text-el-ink"
@@ -298,55 +288,55 @@ export default function RunDetailPanel({
               className="relative text-micro after:absolute after:inset-x-0 after:-top-1 after:-bottom-3"
             />
           </div>
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-micro text-el-secondary">
+            <StatusBadge status={run.status} />
+            <span className="tabular-nums">
+              <span className="text-el-muted">Duration </span>
+              {run.total_duration_ms == null ? (
+                <NoData />
+              ) : (
+                <DurationDisplay ms={run.total_duration_ms} />
+              )}
+            </span>
+            <span className="tabular-nums">
+              <span className="text-el-muted">Steps </span>
+              {run.step_count ?? <NoData />}
+              {run.failed_step_count ? (
+                <span className="text-el-danger">
+                  /{run.failed_step_count}
+                  <span className="sr-only"> failed</span>
+                </span>
+              ) : null}
+            </span>
+            <span className="tabular-nums">
+              <span className="text-el-muted">Step success </span>
+              {successPercent === null ? (
+                <NoData />
+              ) : (
+                <span
+                  className={
+                    successPercent > 85 ? "text-el-success" : "text-el-warning"
+                  }
+                >
+                  {successPercent.toFixed(0)}%
+                </span>
+              )}
+            </span>
+          </div>
         </div>
-        <div className="flex flex-none items-center gap-3 font-mono text-micro text-el-secondary">
-          <span>
-            <span className="text-el-muted">dur </span>
-            {run.total_duration_ms == null ? (
-              <NoData />
-            ) : (
-              <DurationDisplay ms={run.total_duration_ms} />
-            )}
-          </span>
-          <span>
-            <span className="text-el-muted">steps </span>
-            {run.step_count ?? <NoData />}
-            {run.failed_step_count ? (
-              <span className="text-el-danger">
-                /{run.failed_step_count}
-                <span className="sr-only"> failed</span>
-              </span>
-            ) : null}
-          </span>
-          <span>
-            <span className="text-el-muted">ok </span>
-            {successPercent === null ? (
-              <NoData />
-            ) : (
-              <span
-                className={
-                  successPercent > 85 ? "text-el-success" : "text-el-warning"
-                }
-              >
-                {successPercent.toFixed(0)}%
-              </span>
-            )}
-          </span>
-          <BPill tone={runTone}>{run.status}</BPill>
-          {onClose && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              onClick={onClose}
-              aria-label="Close inspector"
-              title="Close [esc]"
-              className="h-9 w-9"
-            >
-              <X aria-hidden="true" />
-            </Button>
-          )}
-        </div>
+        {onClose && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={onClose}
+            aria-label="Close inspector"
+            title="Close (Esc)"
+            className="h-9 w-9 flex-none"
+          >
+            <X aria-hidden="true" />
+          </Button>
+        )}
       </div>
 
       {/* Action bar — replay + spans/yaml tabs, per the design kit inspector */}
@@ -363,10 +353,10 @@ export default function RunDetailPanel({
                 }
                 title={replayTitle}
                 aria-describedby={replayDisabledReason ? replayReasonId : undefined}
-                className="h-9 font-mono"
+                className="h-9"
               >
                 <Play aria-hidden="true" />
-                {replay.isPending ? "replaying…" : "Replay with same inputs"}
+                {replay.isPending ? "Replaying…" : "Replay with same inputs"}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -382,7 +372,9 @@ export default function RunDetailPanel({
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={() => {
-                    setCli(`agentic run ${run.workflow_name} --replay ${filename}`);
+                    // CLI equivalent: the same workflow with the captured
+                    // inputs saved to a JSON file (`agentic run --input`).
+                    setCli(`agentic run ${run.workflow_name} --input <inputs.json>`);
                     replay.mutate();
                   }}
                 >
@@ -399,13 +391,13 @@ export default function RunDetailPanel({
                 role="tab"
                 aria-selected={activeTab === tab}
                 onClick={() => setActiveTab(tab)}
-                className={`focus-ring-inset min-h-9 border-b-2 px-3 font-mono text-micro transition-colors ${
+                className={`focus-ring-inset min-h-9 border-b-2 px-3 text-xs transition-colors ${
                   activeTab === tab
                     ? "border-el-accent text-el-ink"
                     : "border-transparent text-el-muted hover:text-el-ink"
                 }`}
               >
-                {tab}
+                {tab === "spans" ? "Spans" : "YAML"}
               </button>
             ))}
           </div>
@@ -428,8 +420,8 @@ export default function RunDetailPanel({
         <div className="flex-1 overflow-y-auto p-3">
           <DetailCard title={`${run.workflow_name}.yaml`}>
             {yamlQuery.isLoading ? (
-              <div className="p-4 font-mono text-micro text-el-muted">
-                $ loading workflow yaml…
+              <div className="p-4 text-xs text-el-muted">
+                Loading workflow YAML…
               </div>
             ) : yamlQuery.isError ? (
               <div className="p-4">
@@ -444,8 +436,8 @@ export default function RunDetailPanel({
                 {yamlQuery.data.source}
               </pre>
             ) : (
-              <div className="p-4 font-mono text-micro text-el-muted">
-                workflow yaml unavailable
+              <div className="p-4 text-xs text-el-muted">
+                Workflow YAML unavailable
               </div>
             )}
           </DetailCard>
@@ -466,7 +458,7 @@ export default function RunDetailPanel({
             : "flex-1 space-y-3 overflow-y-auto p-3"
         }
       >
-        <DetailCard title="workflow dag">
+        <DetailCard title="Workflow DAG">
           <div className={layout === "page" ? "h-[520px]" : "h-[320px]"}>
             {dag ? (
               <WorkflowDAG
@@ -478,8 +470,8 @@ export default function RunDetailPanel({
                 onNodeClick={setSelectedStep}
               />
             ) : dagLoading ? (
-              <div className="flex h-full items-center justify-center font-mono text-micro text-el-muted">
-                $ loading dag…
+              <div className="flex h-full items-center justify-center text-xs text-el-muted">
+                Loading graph…
               </div>
             ) : dagError ? (
               <div className="flex h-full items-center justify-center p-4">
@@ -490,8 +482,8 @@ export default function RunDetailPanel({
                 />
               </div>
             ) : (
-              <div className="flex h-full items-center justify-center font-mono text-micro text-el-muted">
-                $ dag unavailable
+              <div className="flex h-full items-center justify-center text-xs text-el-muted">
+                Graph unavailable
               </div>
             )}
           </div>
@@ -499,7 +491,7 @@ export default function RunDetailPanel({
 
         <div className={layout === "page" ? "space-y-3" : "contents"}>
         {routing && (
-          <DetailCard title="routing provenance">
+          <DetailCard title="Routing provenance">
             <div className="space-y-4 p-4 text-xs">
               <dl className="grid gap-x-5 gap-y-2 sm:grid-cols-2">
                 <div>
@@ -522,16 +514,18 @@ export default function RunDetailPanel({
                 )}
               </dl>
               {routing.resolved_steps.length > 0 && (
-                <div className="overflow-x-auto border-t border-el-divider-soft pt-3">
+                <div className="relative overflow-x-auto border-t border-el-divider-soft pt-3">
                   <table className="w-full text-left">
-                    <thead className="text-micro uppercase tracking-widest text-el-muted">
+                    <thead className="text-micro font-semibold uppercase tracking-[0.8px] text-el-muted">
                       <tr><th className="pb-2 pr-4">Step</th><th className="pb-2 pr-4">Tier</th><th className="pb-2 pr-4">Provider</th><th className="pb-2">Resolved model</th></tr>
                     </thead>
                     <tbody className="font-mono text-micro text-el-secondary">
                       {routing.resolved_steps.map((step, index) => (
                         <tr key={`${step.step}-${index}`} className="border-t border-el-divider-soft">
                           <td className="py-2 pr-4">{step.step}</td>
-                          <td className="py-2 pr-4">{step.tier ?? "—"}</td>
+                          <td className="py-2 pr-4">
+                            {step.tier == null ? "—" : <TierMark tier={step.tier} />}
+                          </td>
                           <td className="py-2 pr-4">{step.provider ?? "—"}</td>
                           <td className="py-2">{step.model ?? "—"}</td>
                         </tr>
@@ -544,16 +538,10 @@ export default function RunDetailPanel({
           </DetailCard>
         )}
         {evalData && evalPct !== null && (
-          <div className="relative overflow-hidden rounded-lg border border-el-divider bg-el-surface p-[18px]">
-            {/* primary scorecard: 3px status rail across the top */}
-            <div
-              aria-hidden="true"
-              className={`absolute inset-x-0 top-0 h-[3px] ${evalTone.fill}`}
-            />
-            <div
-              className={`font-mono text-micro uppercase tracking-[1.5px] ${evalTone.text}`}
-            >
-              evaluation · {evalData.passed ? "passed" : "failed"}
+          <section className="rounded-lg border border-el-divider bg-el-surface p-[18px]">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="m-0 font-sans text-xs font-semibold text-el-ink">Evaluation</h2>
+              <StatusBadge status={evalData.passed ? "passed" : "failed"} />
             </div>
             <div className="mt-3 flex items-end gap-3.5">
               <div className="flex flex-col items-center">
@@ -562,40 +550,31 @@ export default function RunDetailPanel({
                 >
                   {evalData.grade}
                 </div>
-                <div className="mt-1 font-mono text-micro uppercase tracking-[1.5px] text-el-muted">
-                  grade
-                </div>
+                <div className="mt-1 text-micro text-el-muted">Grade</div>
               </div>
-              <div className="pb-1">
-                <div className="font-mono text-micro text-el-secondary">
-                  weighted{" "}
-                  <span className="font-semibold tabular-nums text-el-ink">
-                    {evalData.weighted_score.toFixed(1)}
-                  </span>{" "}
-                  / 100
-                </div>
-                <div className="mt-1 flex items-center gap-2">
-                  <BPill tone={evalData.passed ? "ok" : "err"}>
-                    {evalData.passed ? "passed" : "failed"}
-                  </BPill>
-                </div>
+              <div className="pb-1 text-micro text-el-secondary">
+                Weighted score{" "}
+                <span className="font-semibold tabular-nums text-el-ink">
+                  {evalData.weighted_score.toFixed(1)}
+                </span>{" "}
+                / 100
               </div>
             </div>
             <div className="mt-3">
               <BAsciiBar value={evalPct} color={evalTone.bar} />
             </div>
-          </div>
+          </section>
         )}
 
         {evalData && (
-          <DetailCard title="score detail">
+          <DetailCard title="Score detail">
             <div className="p-3">
               <EvaluationRubricAccordion filename={filename} />
             </div>
           </DetailCard>
         )}
 
-        <DetailCard title={`steps · ${run.steps.length}`}>
+        <DetailCard title={`Steps · ${run.steps.length}`}>
           <div className="p-2">
             <RunDetailSteps
               steps={run.steps}

@@ -234,9 +234,12 @@ export default function ProviderPanel() {
   return (
     <section aria-label="provider endpoints">
       <div className="mb-8 max-w-3xl">
-        <div className="mb-3 text-micro font-semibold uppercase tracking-[0.14em] text-el-muted">Endpoint registry</div>
         <h1 className="font-display text-[36px] font-medium leading-tight text-el-ink">Providers</h1>
-        <p className="mt-3 text-[14px] leading-6 text-el-muted">Manage saved endpoints, environment-variable references, availability, and live discovery probes. Credentials are never accepted or displayed.</p>
+        {/* Scope line (§8.2): what this tab controls, in product terms. */}
+        <p className="mt-3 max-w-[70ch] text-[14px] leading-6 text-el-muted">
+          The endpoints the router can send model requests to. Credentials
+          stay in environment variables; this page stores only their names.
+        </p>
       </div>
 
       {error && loadErrorInfo?.unreachable && (

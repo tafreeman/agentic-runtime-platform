@@ -20,13 +20,12 @@ import {
   Workflow,
   X,
 } from "lucide-react";
-import { useCli } from "../../hooks/useCli";
 import PaletteShortcut from "../layout/PaletteShortcut";
 
 /**
- * A single entry in the command palette. `run` performs the navigation (or
- * other action) and reports the CLI twin via {@link useCli} so the sticky
- * {@link CliStrip} stays in sync with whatever the palette just did.
+ * A single entry in the command palette. `run` performs the navigation; the
+ * sticky {@link CliStrip} follows the route, so it shows the destination's
+ * real CLI equivalent (or none) without the palette inventing one.
  */
 interface PaletteCommand {
   readonly id: string;
@@ -38,9 +37,7 @@ interface PaletteCommand {
 
 /**
  * Global ⌘K / Ctrl+K command palette. Owns its own open state and keydown
- * listener — mount it once near the root (inside {@link CliProvider}) and it
- * takes care of the rest. Every navigation command also calls `setCli(...)`
- * with the CLI-parity twin of the action, same as clicking through the UI.
+ * listener — mount it once near the root and it takes care of the rest.
  */
 export default function CommandPalette() {
   const [open, setOpen] = useState(false);
@@ -48,7 +45,6 @@ export default function CommandPalette() {
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-  const { setCli } = useCli();
 
   const close = useCallback(() => {
     setOpen(false);
@@ -57,12 +53,11 @@ export default function CommandPalette() {
   }, []);
 
   const goTo = useCallback(
-    (path: string, cliTwin: string) => {
-      setCli(cliTwin);
+    (path: string) => {
       navigate(path);
       close();
     },
-    [navigate, setCli, close]
+    [navigate, close]
   );
 
   const commands = useMemo<PaletteCommand[]>(
@@ -72,49 +67,49 @@ export default function CommandPalette() {
         label: "Dashboard",
         hint: "overview",
         icon: LayoutDashboard,
-        run: () => goTo("/", "agentic dashboard"),
+        run: () => goTo("/"),
       },
       {
         id: "live",
         label: "Live execution",
         hint: "watch a run stream",
         icon: Radio,
-        run: () => goTo("/live/latest", "agentic runs watch latest --follow"),
+        run: () => goTo("/live/latest"),
       },
       {
         id: "runs",
         label: "Runs",
         hint: "history & inspector",
         icon: List,
-        run: () => goTo("/runs", "agentic runs list"),
+        run: () => goTo("/runs"),
       },
       {
         id: "workflows",
         label: "Workflows",
         hint: "builder & definitions",
         icon: Workflow,
-        run: () => goTo("/workflows", "agentic workflows list"),
+        run: () => goTo("/workflows"),
       },
       {
         id: "evaluations",
         label: "Evaluations",
         hint: "suites & results",
         icon: Trophy,
-        run: () => goTo("/evaluations", "agentic evals list"),
+        run: () => goTo("/evaluations"),
       },
       {
         id: "datasets",
         label: "Datasets",
         hint: "golden sets & fixtures",
         icon: Database,
-        run: () => goTo("/datasets", "agentic datasets list"),
+        run: () => goTo("/datasets"),
       },
       {
         id: "models",
         label: "Model router",
         hint: "tiers & routing rules",
         icon: Gauge,
-        run: () => goTo("/models", "agentic models list"),
+        run: () => goTo("/models"),
       },
     ],
     [goTo]

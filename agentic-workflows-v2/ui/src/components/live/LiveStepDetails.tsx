@@ -1,6 +1,7 @@
 import { useMemo, useId } from "react";
 import { ChevronDown, ChevronRight, Cpu, Timer } from "lucide-react";
 import StatusBadge from "../common/StatusBadge";
+import TierMark from "../common/TierMark";
 import DurationDisplay from "../common/DurationDisplay";
 import JsonViewer from "../common/JsonViewer";
 import NoData from "../states/NoData";
@@ -15,8 +16,7 @@ interface Props {
 }
 
 /** Field overline: small tracked label above each value. */
-const FIELD_LABEL_CLASS =
-  "mb-1 font-mono text-micro uppercase tracking-[0.5px] text-el-muted";
+const FIELD_LABEL_CLASS = "mb-1 text-micro font-medium text-el-muted";
 
 function orderedStepNames(stepStates: Map<string, StepState>, stepOrder?: string[]): string[] {
   const known = new Set(stepStates.keys());
@@ -109,11 +109,11 @@ function StepPanel({
           <ChevronRight className="h-4 w-4 text-el-muted" />
         )}
 
-        <span className="flex-1 truncate font-display text-[13px] font-semibold text-el-ink">
+        <span className="flex-1 truncate font-mono text-[13px] font-semibold text-el-ink">
           {stepName}
         </span>
 
-        <div className="flex items-center gap-2 font-mono text-micro text-el-muted">
+        <div className="flex items-center gap-2 text-micro tabular-nums text-el-muted">
           {step.durationMs != null && (
             <span className="flex items-center gap-1">
               <Timer className="h-3 w-3" />
@@ -145,7 +145,7 @@ function StepPanel({
           />
 
           <div className="mt-3 flex flex-wrap gap-3 text-xs text-el-muted">
-            {step.tier && <span>Tier: {step.tier}</span>}
+            {step.tier != null && <TierMark tier={step.tier} />}
             {step.modelUsed && (
               <span className="flex items-center gap-1">
                 Model: {step.modelUsed}

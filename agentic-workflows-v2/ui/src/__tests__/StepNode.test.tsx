@@ -131,30 +131,24 @@ describe("StepNode — live animation (Story 2.5)", () => {
 });
 
 describe("StepNode — B2 redesign (Story 2.8)", () => {
-  it("renders ASCII status [ •• ] while running", () => {
-    const { getByTestId } = renderStepNode({ status: "running" });
-    expect(getByTestId("step-node-status").textContent).toBe("[ •• ]");
-  });
-
-  it("renders ASCII status [ ok ] on success", () => {
-    const { getByTestId } = renderStepNode({ status: "success" });
-    expect(getByTestId("step-node-status").textContent).toBe("[ ok ]");
-  });
-
-  it("renders ASCII status [ERR] on failure", () => {
-    const { getByTestId } = renderStepNode({ status: "failed" });
-    expect(getByTestId("step-node-status").textContent).toBe("[ERR]");
-  });
-
-  it("renders ASCII status [ -- ] when pending", () => {
-    const { getByTestId } = renderStepNode({ status: "pending" });
-    expect(getByTestId("step-node-status").textContent).toBe("[ -- ]");
-  });
-
-  it("renders ASCII status [SKP] when skipped", () => {
-    const { getByTestId } = renderStepNode({ status: "skipped" });
-    expect(getByTestId("step-node-status").textContent).toBe("[SKP]");
-  });
+  it.each([
+    ["running", "Running"],
+    ["success", "Success"],
+    ["failed", "Failed"],
+    ["pending", "Pending"],
+    ["skipped", "Skipped"],
+    ["cancelled", "Cancelled"],
+  ] as const)(
+    "renders the shared status marker (icon + sentence-case word) when %s",
+    (status, label) => {
+      const { getByTestId } = renderStepNode({ status });
+      const marker = getByTestId("step-node-status");
+      expect(marker.textContent).toBe(label);
+      expect(marker.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+      // No ASCII bracket glyphs.
+      expect(marker.textContent).not.toMatch(/\[|\]/);
+    },
+  );
 
   it("renders the step name next to the status", () => {
     const { container } = renderStepNode(
@@ -176,12 +170,13 @@ describe("StepNode — B2 redesign (Story 2.8)", () => {
     );
   });
 
-  it("renders the footer status label for the current status", () => {
+  it("states the status once (no second footer vocabulary like done/streaming)", () => {
     const { container } = renderStepNode({ status: "running" });
-    expect(rootOf(container)?.textContent).toContain("streaming");
+    expect(rootOf(container)?.textContent).not.toContain("streaming");
 
     const { container: doneContainer } = renderStepNode({ status: "success" });
-    expect(rootOf(doneContainer)?.textContent).toContain("done");
+    expect(rootOf(doneContainer)?.textContent).not.toContain("done");
+    expect(rootOf(doneContainer)?.textContent?.match(/Success/g)).toHaveLength(1);
   });
 
   it("renders tier pill when tier is set", () => {
@@ -190,7 +185,10 @@ describe("StepNode — B2 redesign (Story 2.8)", () => {
       tier: "T1",
     });
     const pill = getByTestId("step-node-tier");
-    expect(pill.textContent).toBe("T1");
+    // Short "T1" mark visually; the full meaning for pointer and AT users.
+    expect(pill.querySelector('[aria-hidden="true"]')?.textContent).toBe("T1");
+    expect(pill).toHaveAttribute("title", "Tier 1 — capability tier");
+    expect(pill).toHaveTextContent("Tier 1 — capability tier");
   });
 
   it("omits tier pill when tier is null", () => {
@@ -272,6 +270,11 @@ describe("StepNode — B2 redesign (Story 2.8)", () => {
     t4.unmount();
     const t1 = renderStepNode({ status: "success", tier: "T1" });
     expect(t1.getByTestId("step-node-tier").className).toContain("text-el-tier-low");
+    t1.unmount();
+    // The API's "tier3" spelling maps by its number too (it used to fall
+    // through to the low mark).
+    const tier3 = renderStepNode({ status: "success", tier: "tier3" });
+    expect(tier3.getByTestId("step-node-tier").className).toContain("text-el-tier-mid");
   });
 
   it("uses the persona and model badge tokens (model is not success-green)", () => {

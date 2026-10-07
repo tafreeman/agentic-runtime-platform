@@ -3,6 +3,7 @@ import {
   API_START_HINT,
   apiErrorMessage,
   describeApiError,
+  describeStreamError,
   formatApiError,
 } from "../lib/apiErrors";
 
@@ -98,5 +99,46 @@ describe("formatApiError", () => {
     expect(formatApiError(undefined)).toBe(
       "Something went wrong. Retry; if it keeps failing, check the API server log.",
     );
+  });
+});
+
+describe("describeStreamError", () => {
+  it("explains a lost connection with data validity and the retry behaviour", () => {
+    const d = describeStreamError(
+      "connection lost — the live stream stopped responding",
+      "connection",
+      { hasSteps: true },
+    );
+    expect(d.summary).toBe("Lost the live connection to this run.");
+    expect(d.validity).toMatch(/may be out of date/);
+    expect(d.remedy).toMatch(/about 30 seconds/);
+    expect(d.remedy).toMatch(/keeps going on the server/);
+    expect(d.canReconnect).toBe(true);
+    // The raw socket text is not surfaced at all.
+    expect(d.detail).toBeUndefined();
+  });
+
+  it("says nothing arrived when a connection drops before any step", () => {
+    const d = describeStreamError("x", "connection", { hasSteps: false });
+    expect(d.validity).toMatch(/No updates arrived/);
+  });
+
+  it("separates a scoring failure from the run's valid results", () => {
+    const d = describeStreamError("Evaluation failed: judge missing", "server", {
+      hasSteps: true,
+    });
+    expect(d.summary).toBe("Scoring failed after the run finished.");
+    expect(d.validity).toMatch(/still valid/);
+    expect(d.detail).toBe("judge missing");
+    expect(d.canReconnect).toBe(false);
+  });
+
+  it("keeps a generic server error's text only as bounded detail", () => {
+    const long = "x".repeat(400);
+    const d = describeStreamError(long, "server", { hasSteps: false });
+    expect(d.summary).toBe("The run stopped with a server error.");
+    expect(d.validity).toMatch(/No steps completed/);
+    expect(d.remedy).toMatch(/API server log/);
+    expect(d.detail?.length).toBeLessThanOrEqual(301);
   });
 });
