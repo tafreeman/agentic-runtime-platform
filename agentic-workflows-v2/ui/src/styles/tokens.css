@@ -5,6 +5,54 @@
  * work. The legacy `b-*` variables are temporary strangler-fig aliases: a
  * route becomes Evidence Ledger immediately while its JSX migrates away from
  * Direction B utilities. New code must use `el-*` or shadcn semantic tokens.
+ *
+ * Contrast policy (WCAG 2.x relative-luminance ratios, verified per theme):
+ *  - Every ink tier (ink > ink-secondary > ink-muted > ink-faint) is >= 4.5:1
+ *    on every surface tier (canvas, surface, surface-raised, surface-subtle,
+ *    surface-hover), so any ink-on-surface pairing is AA for body text.
+ *  - accent-strong, plum and each status color are >= 4.5:1 on canvas,
+ *    surface, surface-raised and surface-subtle, and on their own *-soft tint.
+ *  - focus is >= 3:1 (non-text) on every surface tier and on accent-soft.
+ *  - --el-accent is NOT text-safe and is below 3:1 on light canvas/subtle/
+ *    hover: use it only for fills/rails paired with another cue. Use
+ *    --el-accent-strong for accent text, state-bearing rails and graph marks.
+ *  - Opacity on text (e.g. `opacity: 0.55` on queued nodes) or alpha-tinted
+ *    text colors void these guarantees; tint backgrounds, not ink.
+ *
+ * Final ratios (fg on bg; soft = the token's own *-soft background):
+ *
+ *   LIGHT (paper)   fg       canvas  surface raised  subtle  hover   soft
+ *   ink             #1b1b18  15.03   15.86   17.00   14.25   13.50   -
+ *   ink-secondary   #49453f   8.29    8.75    9.37    7.86    7.44   -
+ *   ink-muted       #5a554c   6.44    6.80    7.29    6.11    5.79   -
+ *   ink-faint       #6a645a   5.10    5.39    5.77    4.84    4.58   -
+ *   accent-strong   #b6381e   5.12    5.40    5.79    4.85    4.60   4.54
+ *   focus (>=3)     #9e321c   6.25    6.59    7.07    5.92    5.61   5.54
+ *   success         #236c4b   5.51    5.82    6.23    5.22    4.95   5.02
+ *   warning         #7a5317   5.94    6.27    6.72    5.63    5.34   5.20
+ *   danger          #a33228   6.01    6.34    6.79    5.69    5.39   5.13
+ *   info            #2f6788   5.35    5.65    6.05    5.07    4.81   4.79
+ *   plum            #695385   5.76    6.08    6.51    5.46    5.17   5.10
+ *   graph-edge(>=3) #736e64   4.41    4.66    4.99    4.18    3.96   -
+ *   accent (marks)  #ef5a36   2.96    3.12    3.34    2.80    2.65   2.62
+ *
+ *   DARK            fg       canvas  surface raised  subtle  hover   soft
+ *   ink             #f4efe6  14.03   12.82   11.44   10.49    9.26   -
+ *   ink-secondary   #d6cdc0  10.22    9.33    8.33    7.64    6.74   -
+ *   ink-muted       #c4baad   8.40    7.67    6.85    6.28    5.54   -
+ *   ink-faint       #b2aa9f   7.00    6.39    5.71    5.23    4.62   -
+ *   accent-strong   #ff997a   7.72    7.05    6.30    5.77    5.09   5.28
+ *   focus (>=3)     #ff997a   7.72    7.05    6.30    5.77    5.09   5.28
+ *   success         #6ec497   7.66    6.99    6.24    5.72    5.05   4.62
+ *   warning         #e0b369   8.28    7.56    6.75    6.19    5.46   4.90
+ *   danger          #fa8c7e   6.98    6.37    5.69    5.21    4.60   5.01
+ *   info            #7cb5d8   7.24    6.61    5.90    5.41    4.77   4.81
+ *   plum            #b8a1d8   6.98    6.38    5.70    5.22    4.61   4.99
+ *   graph-edge(>=3) #b1a89b   6.84    6.25    5.58    5.11    4.51   -
+ *   accent (marks)  #f2704c   5.51    5.03    4.49    4.12    3.63   3.76
+ *
+ * Graph canvas: light --el-graph-canvas = surface-subtle, dark = surface, so
+ * the "subtle"/"surface" columns above are the graph-canvas ratios.
  */
 
 :root,
@@ -17,37 +65,38 @@
   --el-surface-subtle: 237 233 224;  /* #ede9e0 */
   --el-surface-hover: 232 227 217;   /* #e8e3d9 */
   --el-ink: 27 27 24;                /* #1b1b18 */
-  --el-ink-secondary: 81 77 70;      /* #514d46 */
-  --el-ink-muted: 115 110 100;       /* #736e64 */
-  --el-ink-faint: 145 139 128;       /* #918b80 */
+  --el-ink-secondary: 73 69 63;      /* #49453f (was #514d46; darkened to keep the ladder evenly spaced) */
+  --el-ink-muted: 90 85 76;          /* #5a554c (was #736e64: 4.41:1 on canvas, failed AA) */
+  --el-ink-faint: 106 100 90;        /* #6a645a (was #918b80: 2.95:1 on canvas, failed AA) */
   --el-divider: 189 183 170;         /* #bdb7aa */
   --el-divider-soft: 211 206 196;    /* #d3cec4 */
   --el-divider-faint: 226 221 212;   /* #e2ddd4 */
   --el-action: 28 29 25;             /* #1c1d19 */
-  --el-action-ink: 248 245 239;
-  --el-accent: 239 90 54;            /* #ef5a36 */
-  --el-accent-strong: 184 58 32;     /* #b83a20 */
+  --el-action-ink: 248 245 239;      /* #f8f5ef */
+  --el-accent: 239 90 54;            /* #ef5a36 — marks/fills only, never text */
+  --el-accent-strong: 182 56 30;     /* #b6381e (was #b83a20: 4.42:1 on accent-soft) */
   --el-accent-soft: 246 221 212;     /* #f6ddd4 */
   --el-focus: 158 50 28;             /* #9e321c */
   --el-success: 35 108 75;           /* #236c4b */
-  --el-success-soft: 220 232 223;
+  --el-success-soft: 220 232 223;    /* #dce8df */
   --el-warning: 122 83 23;           /* #7a5317 */
-  --el-warning-soft: 240 223 189;
+  --el-warning-soft: 240 223 189;    /* #f0dfbd */
   --el-danger: 163 50 40;            /* #a33228 */
-  --el-danger-soft: 241 217 213;
+  --el-danger-soft: 241 217 213;     /* #f1d9d5 */
   --el-info: 47 103 136;             /* #2f6788 */
-  --el-info-soft: 217 229 237;
-  --el-neutral: 115 110 100;
+  --el-info-soft: 217 229 237;       /* #d9e5ed */
+  /* Categorical secondary hue (persona, cloud, kickback/rework). Never a status. */
+  --el-plum: 105 83 133;             /* #695385 (formerly the raw --b-purple) */
+  --el-plum-soft: 230 223 241;       /* #e6dff1 */
 
   --el-chart-1: var(--el-ink);
   --el-chart-2: var(--el-accent);
   --el-chart-3: 124 133 120;
   --el-chart-4: var(--el-info);
   --el-chart-5: var(--el-warning);
-  --el-graph-canvas: 237 233 224;
-  --el-graph-grid: 199 193 181;
-  --el-graph-edge: 115 110 100;
-  --el-graph-edge-active: var(--el-accent);
+  --el-graph-canvas: 237 233 224;    /* #ede9e0 */
+  --el-graph-grid: 199 193 181;      /* #c7c1b5 — decorative dot grid */
+  --el-graph-edge: 115 110 100;      /* #736e64 — 4.18:1 on graph canvas */
 
   --el-font-sans: "Geist Variable", "Inter", system-ui, -apple-system, sans-serif;
   --el-font-display: Georgia, "Times New Roman", serif;
@@ -59,6 +108,9 @@
   --el-motion-fast: 120ms;
   --el-motion-standard: 180ms;
   --el-motion-slow: 240ms;
+  /* Keyboard focus ring geometry (color is --el-focus). See globals.css. */
+  --el-focus-ring-width: 2px;
+  --el-focus-ring-offset: 2px;
   --el-nav-width: 216px;
   --el-header-height: 56px;
   --el-page-gutter: 40px;
@@ -89,37 +141,94 @@
 /* Secondary preference only. The warm-paper theme above is always default. */
 [data-theme="dark"] {
   color-scheme: dark;
-  --el-canvas: 35 33 29;
-  --el-surface: 43 40 35;
-  --el-surface-raised: 52 48 42;
-  --el-surface-subtle: 58 54 47;
-  --el-surface-hover: 67 62 54;
-  --el-ink: 244 239 230;
-  --el-ink-secondary: 214 205 192;
-  --el-ink-muted: 177 168 155;
-  --el-ink-faint: 145 137 126;
-  --el-divider: 112 104 92;
-  --el-divider-soft: 83 77 68;
-  --el-divider-faint: 68 63 55;
-  --el-action: 244 239 230;
-  --el-action-ink: 35 33 29;
-  --el-accent: 242 112 76;
-  --el-accent-strong: 255 153 122;
-  --el-accent-soft: 91 49 38;
-  --el-focus: 255 153 122;
-  --el-success: 104 190 145;
-  --el-success-soft: 42 75 58;
-  --el-warning: 224 179 105;
-  --el-warning-soft: 84 67 37;
-  --el-danger: 235 126 113;
-  --el-danger-soft: 86 46 42;
-  --el-info: 124 181 216;
-  --el-info-soft: 42 65 79;
-  --el-neutral: 177 168 155;
-  --el-graph-canvas: 43 40 35;
-  --el-graph-grid: 83 77 68;
-  --el-graph-edge: 177 168 155;
+  --el-canvas: 35 33 29;             /* #23211d */
+  --el-surface: 43 40 35;            /* #2b2823 */
+  --el-surface-raised: 52 48 42;     /* #34302a */
+  --el-surface-subtle: 58 54 47;     /* #3a362f */
+  --el-surface-hover: 67 62 54;      /* #433e36 */
+  --el-ink: 244 239 230;             /* #f4efe6 */
+  --el-ink-secondary: 214 205 192;   /* #d6cdc0 */
+  --el-ink-muted: 196 186 173;       /* #c4baad (was #b1a89b: 4.51:1 on hover, no margin) */
+  --el-ink-faint: 178 170 159;       /* #b2aa9f (was #91897e: 3.48:1 on subtle, failed AA) */
+  --el-divider: 112 104 92;          /* #70685c */
+  --el-divider-soft: 83 77 68;       /* #534d44 */
+  --el-divider-faint: 68 63 55;      /* #443f37 */
+  --el-action: 244 239 230;          /* #f4efe6 */
+  --el-action-ink: 35 33 29;         /* #23211d */
+  --el-accent: 242 112 76;           /* #f2704c */
+  --el-accent-strong: 255 153 122;   /* #ff997a */
+  --el-accent-soft: 91 49 38;        /* #5b3126 */
+  --el-focus: 255 153 122;           /* #ff997a */
+  --el-success: 110 196 151;         /* #6ec497 (was #68be91: 4.32:1 on success-soft) */
+  --el-success-soft: 42 75 58;       /* #2a4b3a */
+  --el-warning: 224 179 105;         /* #e0b369 */
+  --el-warning-soft: 84 67 37;       /* #544325 */
+  --el-danger: 250 140 126;          /* #fa8c7e (was #eb7e71: 4.26:1 on danger-soft) */
+  --el-danger-soft: 86 46 42;        /* #562e2a */
+  --el-info: 124 181 216;            /* #7cb5d8 */
+  --el-info-soft: 42 65 79;          /* #2a414f */
+  --el-plum: 184 161 216;            /* #b8a1d8 (old --b-purple had no dark value: 2.43:1) */
+  --el-plum-soft: 63 53 78;          /* #3f354e */
+  --el-graph-canvas: 43 40 35;       /* #2b2823 */
+  --el-graph-grid: 83 77 68;         /* #534d44 */
+  --el-graph-edge: 177 168 155;      /* #b1a89b — 6.25:1 on graph canvas */
   --el-scroll-thumb: #70685c;
+}
+
+/*
+ * Semantic aliases shared by both themes. Declared on every theme selector so
+ * a nested [data-theme] subtree re-resolves them against its own palette.
+ * All are RGB triplets: use `rgb(var(--el-graph-x))` or
+ * `rgb(var(--el-graph-x) / 0.15)` in inline styles, or the matching Tailwind
+ * class from globals.css (`bg-el-graph-x`, `text-…`, `border-…`, `stroke-…`).
+ * Every alias that carries text or a state mark resolves to a value in the
+ * contrast table above (text >= 4.5:1, marks/edges >= 3:1).
+ */
+:root,
+[data-theme="paper"],
+[data-theme="dark"] {
+  /* Neutral/pending status (outline-circle marker + muted ink). */
+  --el-neutral: var(--el-ink-muted);
+
+  /* Capability-tier marks: tier pills on graph nodes and model-probe rows. */
+  --el-tier-low: var(--el-info);             /* T0–T2 */
+  --el-tier-mid: var(--el-warning);          /* T3 */
+  --el-tier-high: var(--el-accent-strong);   /* T4–T5 */
+
+  /* Workflow graph — nodes. */
+  --el-graph-node: var(--el-surface-raised);         /* node fill ("light nodes") */
+  --el-graph-node-border: var(--el-divider);         /* idle hairline border */
+  --el-graph-node-selected: var(--el-accent-strong); /* selection outline (>= 3:1) */
+  --el-graph-node-pending: var(--el-graph-canvas);   /* queued fill; replaces opacity:0.55 */
+  --el-graph-label: var(--el-ink);                   /* step name */
+  --el-graph-meta: var(--el-ink-muted);              /* agent, footer, timer */
+  --el-graph-meta-strong: var(--el-ink-secondary);   /* token counts, values */
+  --el-graph-progress-track: var(--el-surface-hover);/* streaming-bar track */
+  --el-graph-badge-persona: var(--el-plum);          /* persona config badge */
+  --el-graph-badge-model: var(--el-ink-secondary);   /* model-override badge */
+
+  /* Workflow graph — step status (StepStatus). Text-safe on node/canvas/soft. */
+  --el-graph-pending: var(--el-ink-muted);
+  --el-graph-running: var(--el-info);
+  --el-graph-running-soft: var(--el-info-soft);
+  --el-graph-success: var(--el-success);
+  --el-graph-success-soft: var(--el-success-soft);
+  --el-graph-failed: var(--el-danger);
+  --el-graph-failed-soft: var(--el-danger-soft);
+  --el-graph-skipped: var(--el-warning);
+  --el-graph-skipped-soft: var(--el-warning-soft);
+  --el-graph-cancelled: var(--el-ink-muted);
+
+  /* Workflow graph — edges (--el-graph-edge is the per-theme idle edge). */
+  --el-graph-edge-active: var(--el-accent-strong);   /* success -> running hand-off */
+  --el-graph-edge-success: var(--el-success);
+  --el-graph-edge-failed: var(--el-danger);          /* solid; alpha drops it below 3:1 */
+  --el-graph-edge-kickback: var(--el-plum);          /* rework/kickback loop (dashed) */
+  --el-graph-edge-selected: var(--el-accent-strong);
+  --el-graph-edge-label-bg: var(--el-surface-raised);      /* was rgba(17,24,39,.75) */
+  --el-graph-edge-label-ink: var(--el-ink-secondary);      /* was #c6c6c6 */
+  --el-graph-edge-kickback-label-bg: var(--el-plum-soft);  /* was rgba(88,28,135,.75) */
+  --el-graph-edge-kickback-label-ink: var(--el-plum);      /* was #be95ff */
 }
 
 :root,
@@ -143,7 +252,7 @@
   --b-amber: var(--el-warning);
   --b-blue: var(--el-info);
   --b-red: var(--el-danger);
-  --b-purple: 105 83 133;
+  --b-purple: var(--el-plum);
   --b-btn-primary-ink: rgb(var(--el-action-ink));
   --b-scroll-thumb: var(--el-scroll-thumb);
   --b-ink: rgb(var(--el-ink));
