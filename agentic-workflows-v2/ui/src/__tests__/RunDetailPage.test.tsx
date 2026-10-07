@@ -10,6 +10,7 @@ const mockUseRunEvaluationDetail = vi.fn();
 const mockUseWorkflowDAG = vi.fn();
 const mockRunWorkflow = vi.fn();
 const mockGetWorkflowEditor = vi.fn();
+const mockHealthCheck = vi.fn();
 
 vi.mock("../hooks/useRuns", () => ({
   useRunDetail: (...args: unknown[]) => mockUseRunDetail(...args),
@@ -24,6 +25,8 @@ vi.mock("../hooks/useWorkflows", () => ({
 vi.mock("../api/client", () => ({
   runWorkflow: (...args: unknown[]) => mockRunWorkflow(...args),
   getWorkflowEditor: (...args: unknown[]) => mockGetWorkflowEditor(...args),
+  // Shared ["backend-health"] query behind useApiAvailability.
+  healthCheck: () => mockHealthCheck(),
 }));
 
 vi.mock("../components/dag/WorkflowDAG", () => ({
@@ -97,6 +100,7 @@ const RUN_FIXTURE = {
 describe("RunDetailPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockHealthCheck.mockResolvedValue({ status: "ok", version: "0.1.0" });
     mockUseRunEvaluationDetail.mockReturnValue({
       isLoading: false,
       data: { evaluation: null },
@@ -297,5 +301,119 @@ describe("RunDetailPage", () => {
       expect(screen.getByText(/name: review_flow/)).toBeInTheDocument()
     );
     expect(mockGetWorkflowEditor).toHaveBeenCalledWith("review_flow");
+  });
+  it("disables replay while the API is down and says why (aria-describedby)", async () => {
+    mockHealthCheck.mockRejectedValue(new TypeError("Failed to fetch"));
+    mockUseRunDetail.mockReturnValue({ data: RUN_FIXTURE, isLoading: false });
+    mockUseWorkflowDAG.mockReturnValue({ data: undefined });
+
+    renderAtRoute("run.json");
+
+    const replayButton = screen.getByRole("button", {
+      name: /replay with same inputs/i,
+    });
+    await waitFor(() => expect(replayButton).toBeDisabled());
+
+    const reasonId = replayButton.getAttribute("aria-describedby");
+    expect(reasonId).toBeTruthy();
+    const reason = document.getElementById(reasonId!);
+    expect(reason).toHaveTextContent(/api server is unreachable/i);
+    expect(reason).toHaveTextContent(/just dev/);
+    expect(reason).toBeVisible();
+
+    fireEvent.click(replayButton);
+    expect(mockRunWorkflow).not.toHaveBeenCalled();
+  });
+
+  it("shows the missing-input reason as visible text, not only a tooltip", () => {
+    mockUseRunDetail.mockReturnValue({
+      data: { ...RUN_FIXTURE, inputs: null },
+      isLoading: false,
+    });
+    mockUseWorkflowDAG.mockReturnValue({
+      data: {
+        name: "review_flow",
+        description: "",
+        nodes: [],
+        edges: [],
+        inputs: [
+          { name: "code_file", type: "string", required: true, default: null },
+        ],
+      },
+    });
+
+    renderAtRoute("run.json");
+
+    const replayButton = screen.getByRole("button", {
+      name: /replay with same inputs/i,
+    });
+    expect(replayButton).toHaveAccessibleDescription(
+      /replay unavailable: run log has no captured value for required input: code_file/i,
+    );
+  });
+
+  it("explains a failed run load with the server detail, a remedy and a retry", () => {
+    const refetch = vi.fn();
+    mockUseRunDetail.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: new Error('API 404: {"detail":"run log missing.json not found"}'),
+      refetch,
+    });
+    mockUseWorkflowDAG.mockReturnValue({ data: undefined });
+
+    renderAtRoute("missing.json");
+
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent(/couldn't load this run/i);
+    expect(alert).toHaveTextContent("run log missing.json not found");
+    expect(alert).toHaveTextContent(/check the name or link/i);
+    expect(alert).not.toHaveTextContent("API 404");
+    expect(alert).not.toHaveTextContent("[!]");
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("explains a failed replay instead of echoing the raw API error", async () => {
+    mockUseRunDetail.mockReturnValue({ data: RUN_FIXTURE, isLoading: false });
+    mockUseWorkflowDAG.mockReturnValue({ data: undefined });
+    mockRunWorkflow.mockRejectedValue(
+      new Error('API 422: {"detail":"Missing required input: code_file"}'),
+    );
+
+    renderAtRoute("run.json");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /replay with same inputs/i }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Start replay" }));
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(/replay failed; this run is unchanged/i);
+    expect(alert).toHaveTextContent("Missing required input: code_file");
+    expect(alert).toHaveTextContent(/fix the input and try again/i);
+  });
+
+  it("renders em-dash summary values when the run recorded no steps", () => {
+    mockUseRunDetail.mockReturnValue({
+      data: {
+        ...RUN_FIXTURE,
+        success_rate: 0,
+        step_count: 0,
+        total_duration_ms: null,
+        steps: [],
+      },
+      isLoading: false,
+    });
+    mockUseWorkflowDAG.mockReturnValue({ data: undefined });
+
+    renderAtRoute("run.json");
+
+    // No "0%" success rate and no "--" duration for a run with no step data.
+    expect(screen.queryByText("0%")).not.toBeInTheDocument();
+    expect(screen.queryByText("--")).not.toBeInTheDocument();
+    expect(screen.getAllByText("no data").length).toBeGreaterThanOrEqual(2);
   });
 });

@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import RunDetailPanel from "../components/runs/RunDetailPanel";
 import BTopBar from "../components/layout/BTopBar";
+import { Button } from "../components/ui/button";
 
 /**
  * Deep-link route (`/runs/:filename`) — thin wrapper that supplies the page
@@ -15,7 +16,7 @@ export default function RunDetailPage() {
 
   if (!filename) {
     return (
-      <div className="flex h-full items-center justify-center font-mono text-[11px] text-b-red">
+      <div className="flex h-full items-center justify-center font-mono text-micro text-el-muted">
         $ run not found
       </div>
     );
@@ -24,15 +25,17 @@ export default function RunDetailPage() {
   return (
     <div className="flex h-full flex-col">
       <BTopBar path={`runs/${filename}`}>
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
           onClick={() => navigate(-1)}
-          className="btn-ghost"
+          className="h-9 font-mono"
           aria-label="Go back"
         >
-          <ArrowLeft className="h-3 w-3" aria-hidden="true" />
+          <ArrowLeft aria-hidden="true" />
           <span>[esc] back</span>
-        </button>
+        </Button>
       </BTopBar>
 
       <div className="min-h-0 flex-1">

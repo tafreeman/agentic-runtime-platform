@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import RunsPage from "../pages/RunsPage";
@@ -7,6 +7,7 @@ import type { RunSummary } from "../api/types";
 const mockUseRuns = vi.fn();
 const mockUseRunsSummary = vi.fn();
 const mockSetCli = vi.fn();
+const mockApiAvailability = vi.fn();
 
 vi.mock("../hooks/useRuns", () => ({
   useRuns: (...args: unknown[]) => mockUseRuns(...args),
@@ -14,7 +15,11 @@ vi.mock("../hooks/useRuns", () => ({
 }));
 
 vi.mock("../hooks/useCli", () => ({
-  useCli: () => ({ cli: "agentic runs list --env prod --limit 50", setCli: mockSetCli }),
+  useCli: () => ({ cli: "agentic runs list --limit 50", setCli: mockSetCli }),
+}));
+
+vi.mock("../hooks/useApiAvailability", () => ({
+  useApiAvailability: () => mockApiAvailability(),
 }));
 
 // RunDetailPanel's own rendering (DAG/steps/evaluation) is covered by
@@ -60,6 +65,11 @@ describe("RunsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseRunsSummary.mockReturnValue({ data: undefined });
+    mockApiAvailability.mockReturnValue({
+      apiDown: false,
+      checking: false,
+      reason: undefined,
+    });
   });
 
   it("shows skeleton placeholders while loading", () => {
@@ -80,11 +90,106 @@ describe("RunsPage", () => {
     renderPage();
 
     const alert = screen.getByRole("alert");
-    expect(alert).toHaveTextContent(/failed to load runs/i);
+    expect(alert).toHaveTextContent(/couldn't load runs/i);
     expect(alert).toHaveTextContent(/catalog down/i);
+    // A remedy, not just the raw message.
+    expect(alert).toHaveTextContent(/retry/i);
+    // The table does not pretend the workspace is empty.
+    expect(screen.queryByText(/no runs yet/i)).not.toBeInTheDocument();
+    expect(screen.getByText("runs couldn't be loaded")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /retry/i }));
     expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("explains an HTTP error in human terms, keeping the server detail", () => {
+    mockUseRuns.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: new Error('API 422: {"detail":"limit must be <= 50"}'),
+      refetch: vi.fn(),
+    });
+    renderPage();
+
+    const alert = screen.getByRole("alert");
+    expect(alert).not.toHaveTextContent("API 422");
+    expect(alert).toHaveTextContent("limit must be <= 50");
+    expect(alert).toHaveTextContent(/fix the input and try again/i);
+  });
+
+  it("leaves the outage message to the shell banner while the API is down", () => {
+    mockApiAvailability.mockReturnValue({
+      apiDown: true,
+      checking: false,
+      reason: "The API server is unreachable. Start it with `just dev`, then retry.",
+    });
+    mockUseRuns.mockReturnValue({
+      // Stale rows from the last successful poll stay on screen.
+      data: [makeRun({ filename: "stale.json", run_id: "s1", workflow_name: "stale_flow" })],
+      isLoading: false,
+      isError: true,
+      error: new Error("API 502: "),
+      refetch: vi.fn(),
+    });
+    renderPage();
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "stale_flow" })).toBeInTheDocument();
+    // Trigger run is navigation, not an API call — it stays usable.
+    expect(screen.getByRole("link", { name: "Trigger run" })).toHaveAttribute(
+      "href",
+      "/workflows",
+    );
+  });
+
+  it("shows only a quiet note when the error itself says the API is unreachable", () => {
+    mockUseRuns.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: new TypeError("Failed to fetch"),
+      refetch: vi.fn(),
+    });
+    renderPage();
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      /couldn't load runs\. the api server is unreachable/i,
+    );
+  });
+
+  it("renders em-dash KPIs (with a no-data label) instead of fake zeros when nothing loaded", () => {
+    mockUseRuns.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: new Error("catalog down"),
+      refetch: vi.fn(),
+    });
+    renderPage();
+
+    const strip = screen.getByLabelText("run statistics");
+    expect(strip).not.toHaveTextContent(/\b0\b/);
+    expect(within(strip).getAllByText("no data")).toHaveLength(4);
+    expect(within(strip).getAllByText("—")).toHaveLength(4);
+    expect(screen.getByText(/\$ showing/)).not.toHaveTextContent(/\b0\b/);
+  });
+
+  it("keeps a real zero from real data", () => {
+    mockUseRuns.mockReturnValue({ data: [], isLoading: false });
+    mockUseRunsSummary.mockReturnValue({
+      data: { total_runs: 0, success: 0, failed: 0, avg_duration_ms: null, workflows: [] },
+    });
+    renderPage();
+
+    const strip = screen.getByLabelText("run statistics");
+    // runs total / passing / failed are genuine zeros…
+    expect(within(strip).getAllByText("0")).toHaveLength(3);
+    // …but an average over zero runs has no underlying data.
+    expect(within(strip).getAllByText("no data")).toHaveLength(1);
+    expect(screen.getByText(/showing 0 of 0/)).toBeInTheDocument();
   });
 
   it("renders the empty state when there are no runs", () => {
@@ -438,6 +543,15 @@ describe("RunsPage", () => {
         target: { value: "failed" },
       });
       expect(mockSetCli).toHaveBeenCalledWith("agentic runs list --status failed");
+
+      // Back to "all": the CLI twin uses only real flags (no invented --env).
+      fireEvent.change(screen.getByLabelText("Filter by status"), {
+        target: { value: "all" },
+      });
+      expect(mockSetCli).toHaveBeenLastCalledWith("agentic runs list --limit 50");
+      expect(mockSetCli).not.toHaveBeenCalledWith(
+        expect.stringContaining("--env"),
+      );
     });
 
     it("moves the keyboard cursor with j/k and inspects the focused row on Enter", () => {

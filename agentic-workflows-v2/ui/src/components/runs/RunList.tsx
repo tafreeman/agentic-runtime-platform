@@ -11,19 +11,19 @@ interface RunListProps {
   isLoading: boolean;
 }
 
-/** ASCII status glyph + its CSS color variable, colored by run status. */
+/** ASCII status glyph + its text color class, by run status. */
 function statusAscii(status: string | null | undefined): {
   label: string;
-  color: string;
+  className: string;
 } {
-  if (status === "success") return { label: "[ ok ]", color: "var(--b-green)" };
+  if (status === "success") return { label: "[ ok ]", className: "text-el-success" };
   if (status === "failed" || status === "error") {
-    return { label: "[err ]", color: "var(--b-red)" };
+    return { label: "[err ]", className: "text-el-danger" };
   }
   if (status === "running" || status === "in_progress") {
-    return { label: "[ .. ]", color: "var(--b-clay)" };
+    return { label: "[ .. ]", className: "text-el-info" };
   }
-  return { label: `[${status ?? "?"}]`, color: "var(--b-text-faint)" };
+  return { label: `[${status ?? "?"}]`, className: "text-el-muted" };
 }
 
 function shortId(run: RunSummary): string {
@@ -82,11 +82,7 @@ export default function RunList({ runs, isLoading }: RunListProps) {
         {Array.from({ length: 5 }).map((_, index) => (
           <div
             key={index}
-            style={{
-              borderRadius: "var(--b-rad-sm)",
-              borderWidth: "var(--b-bw)",
-            }}
-            className="h-[44px] animate-pulse border border-solid border-b-line bg-b-bg1"
+            className="h-11 animate-pulse rounded-md border border-el-divider bg-el-surface"
           />
         ))}
       </div>
@@ -109,19 +105,16 @@ export default function RunList({ runs, isLoading }: RunListProps) {
             <button
               key={value}
               type="button"
+              aria-pressed={active}
               onClick={() => setFilter(value)}
-              style={{
-                borderRadius: "var(--b-rad-sm)",
-                borderWidth: "var(--b-bw)",
-              }}
-              className={`border border-solid px-3 py-1 font-mono text-[10px] uppercase tracking-[0.5px] transition-colors ${
+              className={`focus-ring min-h-9 rounded-md border px-3 font-mono text-micro uppercase tracking-[0.5px] transition-colors ${
                 active
-                  ? "border-b-clay bg-b-clay-soft text-b-clay"
-                  : "border-b-line text-b-text-dim hover:border-b-line hover:text-b-text"
+                  ? "border-el-ink bg-el-subtle text-el-ink"
+                  : "border-el-divider text-el-muted hover:bg-el-hover hover:text-el-ink"
               }`}
             >
               {label}
-              <span aria-hidden="true" className="ml-1 text-b-text-faint">
+              <span aria-hidden="true" className="ml-1 text-el-muted">
                 · {counts[value]}
               </span>
             </button>
@@ -130,28 +123,13 @@ export default function RunList({ runs, isLoading }: RunListProps) {
       </div>
 
       {filteredRuns.length === 0 ? (
-        <div
-          style={{
-            borderRadius: "var(--b-rad-sm)",
-            borderWidth: "var(--b-bw)",
-          }}
-          className="border border-dashed border-b-line px-3 py-8 text-center font-mono text-[11px] text-b-text-dim"
-        >
+        <div className="rounded-md border border-dashed border-el-divider px-3 py-8 text-center font-mono text-micro text-el-muted">
           No runs found
         </div>
       ) : (
-        <div
-          style={{
-            borderRadius: "var(--b-rad-lg)",
-            borderWidth: "var(--b-bw)",
-          }}
-          className="overflow-hidden border border-solid border-b-line bg-b-bg1"
-        >
+        <div className="overflow-hidden rounded-lg border border-el-divider bg-el-surface">
           {/* Column headers */}
-          <div
-            style={{ borderBottomWidth: "var(--b-bw)" }}
-            className="grid grid-cols-[80px_1.5fr_78px_50px_72px] gap-2.5 border-b border-solid border-b-line px-3 py-2 font-mono text-[9px] uppercase tracking-[1px] text-b-text-faint"
-          >
+          <div className="grid grid-cols-[80px_1.5fr_78px_50px_72px] gap-2.5 border-b border-el-divider px-3 py-2 font-mono text-micro uppercase tracking-[1px] text-el-muted">
             <span>Status</span>
             <span>Workflow</span>
             <span className="text-right">Duration</span>
@@ -176,25 +154,22 @@ export default function RunList({ runs, isLoading }: RunListProps) {
                     navigate(target);
                   }
                 }}
-                className="grid cursor-pointer grid-cols-[80px_1.5fr_78px_50px_72px] items-center gap-2.5 border-b border-solid border-b-line-soft px-3 py-2 font-mono text-[11px] transition-colors last:border-b-0 hover:bg-b-bg2 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-b-clay"
+                className="focus-ring-inset grid min-h-11 cursor-pointer grid-cols-[80px_1.5fr_78px_50px_72px] items-center gap-2.5 border-b border-el-divider-soft px-3 py-2 font-mono text-micro transition-colors last:border-b-0 hover:bg-el-subtle"
               >
-                <span
-                  className="text-[9px] tracking-[0.5px]"
-                  style={{ color: ascii.color }}
-                >
+                <span className={`tracking-[0.5px] ${ascii.className}`}>
                   {ascii.label}
                 </span>
-                <span className="min-w-0 truncate text-b-text">
+                <span className="min-w-0 truncate text-el-ink">
                   <Link
                     to={target}
                     onClick={(e) => e.stopPropagation()}
                     aria-label={`Open run ${shortId(run)}`}
-                    className="hover:text-b-clay"
+                    className="focus-ring rounded-sm underline-offset-2 hover:text-el-accent-strong hover:underline"
                   >
                     {run.workflow_name ?? "--"}
                   </Link>
                 </span>
-                <span className="text-right tabular-nums text-b-text-dim">
+                <span className="text-right tabular-nums text-el-muted">
                   <DurationDisplay ms={run.total_duration_ms} />
                 </span>
                 <span
@@ -202,7 +177,7 @@ export default function RunList({ runs, isLoading }: RunListProps) {
                 >
                   {grade ?? "--"}
                 </span>
-                <span className="text-right text-[10px] text-b-text-dim">
+                <span className="text-right text-el-muted">
                   {formatWhen(run.start_time)}
                 </span>
               </div>

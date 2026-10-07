@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
+import { CircleAlert } from "lucide-react";
 import type { StepResult } from "../../api/types";
 import BPill from "../common/BPill";
 import DurationDisplay from "../common/DurationDisplay";
 import JsonViewer from "../common/JsonViewer";
+import NoData from "../states/NoData";
 
 type DetailTab = "output" | "input" | "metadata";
 
@@ -36,7 +38,7 @@ export default function RunDetailSteps({
 
   if (!selected) {
     return (
-      <div className="py-6 text-center font-mono text-[11px] text-b-text-dim">
+      <div className="py-6 text-center font-mono text-micro text-el-muted">
         $ no steps recorded
       </div>
     );
@@ -58,15 +60,12 @@ export default function RunDetailSteps({
             <button
               key={step.step_name}
               type="button"
+              aria-pressed={active}
               onClick={() => onSelectStep(step.step_name)}
-              style={{
-                borderRadius: "var(--b-rad-sm)",
-                borderWidth: "var(--b-bw)",
-              }}
-              className={`flex w-full items-center justify-between gap-2 border border-solid px-2 py-1.5 text-left font-mono text-[11px] transition-colors ${
+              className={`focus-ring flex min-h-9 w-full items-center justify-between gap-2 rounded-md border px-2 py-1.5 text-left font-mono text-micro transition-colors ${
                 active
-                  ? "border-b-clay bg-b-clay-soft text-b-text"
-                  : "border-b-line bg-b-bg1 text-b-text-dim hover:bg-b-bg2 hover:text-b-text"
+                  ? "border-el-accent-strong bg-el-accent-soft text-el-ink"
+                  : "border-el-divider bg-el-surface text-el-secondary hover:bg-el-subtle hover:text-el-ink"
               }`}
             >
               <span className="min-w-0 truncate">{step.step_name}</span>
@@ -76,19 +75,21 @@ export default function RunDetailSteps({
         })}
       </div>
 
-      <div
-        style={{ borderRadius: "var(--b-rad-lg)", borderWidth: "var(--b-bw)" }}
-        className="border border-solid border-b-line bg-b-bg1"
-      >
-        <div className="border-b border-b-line px-3 py-2">
+      <div className="overflow-hidden rounded-lg border border-el-divider bg-el-surface">
+        <div className="border-b border-el-divider px-3 py-2">
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0">
-              <div className="truncate font-mono text-[12px] text-b-text">
+              <div className="truncate font-mono text-xs text-el-ink">
                 {selected.step_name}
               </div>
-              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[10px] text-b-text-dim">
+              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-micro text-el-muted">
                 <span>
-                  Duration: <DurationDisplay ms={selected.duration_ms} />
+                  Duration:{" "}
+                  {selected.duration_ms == null ? (
+                    <NoData />
+                  ) : (
+                    <DurationDisplay ms={selected.duration_ms} />
+                  )}
                 </span>
                 {selected.model_used ? <span>{selected.model_used}</span> : null}
                 {selected.tier ? <span>Tier: {selected.tier}</span> : null}
@@ -102,12 +103,16 @@ export default function RunDetailSteps({
         </div>
 
         {selected.error ? (
-          <div className="border-b border-b-line bg-b-red/10 px-3 py-2 font-mono text-[11px] text-b-red">
-            {selected.error}
+          <div className="flex items-start gap-2 border-b border-el-divider bg-el-danger-soft px-3 py-2 font-mono text-micro text-el-danger">
+            <CircleAlert aria-hidden="true" className="mt-px size-3.5 flex-none" />
+            <span className="min-w-0 break-words">
+              <span className="sr-only">Step error: </span>
+              {selected.error}
+            </span>
           </div>
         ) : null}
 
-        <div className="flex border-b border-b-line bg-b-bg2">
+        <div className="flex border-b border-el-divider bg-el-subtle">
           {(
             [
               ["output", "Output"],
@@ -119,11 +124,13 @@ export default function RunDetailSteps({
               key={value}
               type="button"
               onClick={() => setActiveTab(value)}
+              // e2e/run-detail.spec.ts asserts aria-selected on these buttons;
+              // converting them to role="tab" needs that spec updated too.
               aria-selected={activeTab === value}
-              className={`border-r border-b-line px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.5px] transition-colors ${
+              className={`focus-ring-inset min-h-9 border-r border-b-2 border-r-el-divider px-3 font-mono text-micro uppercase tracking-[0.5px] transition-colors ${
                 activeTab === value
-                  ? "bg-b-bg1 text-b-clay shadow-[inset_0_-2px_0_0_rgb(var(--b-clay))]"
-                  : "text-b-text-dim hover:text-b-text"
+                  ? "border-b-el-accent bg-el-surface text-el-ink"
+                  : "border-b-transparent text-el-muted hover:text-el-ink"
               }`}
             >
               {label}

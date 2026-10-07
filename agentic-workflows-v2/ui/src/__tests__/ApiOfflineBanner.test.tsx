@@ -37,6 +37,9 @@ describe("ApiOfflineBanner", () => {
     const banner = await screen.findByRole("alert");
     expect(banner).toHaveTextContent(/api unreachable/i);
     expect(banner).toHaveTextContent(/just dev/);
+    // Icon + text, so the status is never colour-only.
+    expect(banner.querySelector("svg")).not.toBeNull();
+    expect(banner).toHaveAttribute("data-testid", "api-offline-banner");
 
     fireEvent.click(screen.getByRole("button", { name: /retry/i }));
     await waitFor(() => expect(mockHealthCheck).toHaveBeenCalledTimes(2));

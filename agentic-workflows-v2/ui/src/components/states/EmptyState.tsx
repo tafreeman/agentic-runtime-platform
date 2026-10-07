@@ -15,15 +15,18 @@ interface EmptyStateProps {
 export default function EmptyState({ entity, action }: Readonly<EmptyStateProps>) {
   return (
     <div className="flex flex-col items-center justify-center gap-4 py-24 font-mono">
-      <pre className="select-none text-center text-b-text-dim text-[12px] leading-tight">
+      <pre
+        aria-hidden="true"
+        className="select-none text-center text-xs leading-tight text-el-muted"
+      >
         {[
           "  ╔══════════════╗  ",
           "  ║   no data    ║  ",
           "  ╚══════════════╝  ",
         ].join("\n")}
       </pre>
-      <div className="text-[13px] text-b-text-mid">
-        <span className="text-b-clay">$</span>{" "}
+      <div className="text-[13px] text-el-secondary">
+        <span className="text-el-muted">$</span>{" "}
         <span>no {entity} yet</span>
       </div>
       {action && <div className="mt-2">{action}</div>}
@@ -39,7 +42,7 @@ export function EmptyStateWithHome({ entity }: Readonly<{ entity: string }>) {
       action={
         <Link
           to="/"
-          className="font-mono text-[11px] text-b-clay underline hover:text-b-text"
+          className="focus-ring inline-flex min-h-9 items-center rounded-md px-2 font-mono text-micro text-el-secondary underline underline-offset-2 transition-colors hover:text-el-ink"
         >
           [→ dashboard]
         </Link>
