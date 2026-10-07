@@ -48,7 +48,17 @@ def _make_fake_span_context(
     ctx.trace_id = trace_id
     ctx.span_id = span_id
     ctx.is_valid = is_valid
-    ctx.trace_flags = trace_flags
+    # A real SpanContext carries ``TraceFlags`` (an ``int`` subclass with a
+    # ``.sampled`` property), not a bare int. FastAPI >=0.142 records request
+    # metrics through OpenTelemetry, and once an earlier test has installed an
+    # SDK MeterProvider its trace-based exemplar filter reads
+    # ``trace_flags.sampled`` off this patched current span.
+    if importlib.util.find_spec("opentelemetry") is not None:
+        from opentelemetry.trace import TraceFlags
+
+        ctx.trace_flags = TraceFlags(trace_flags)
+    else:
+        ctx.trace_flags = trace_flags
     ctx.trace_state = None
     return ctx
 

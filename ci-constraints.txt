@@ -62,7 +62,7 @@ cffi==2.1.1 ; platform_python_implementation != 'PyPy'
     # via cryptography
 cfgv==3.5.0
     # via pre-commit
-charset-normalizer==3.5.1
+charset-normalizer==3.5.2
     # via requests
 claude-agent-sdk==0.2.101
     # via agentic-workflows-v2
@@ -78,7 +78,7 @@ colorama==0.4.6 ; sys_platform == 'win32'
     #   typer
 coverage==7.13.5
     # via pytest-cov
-cryptography==50.0.1
+cryptography==50.0.2
     # via
     #   google-auth
     #   pyjwt
@@ -98,9 +98,9 @@ executionkit==0.4.0
     # via agentic-workflows-v2
 fakeredis==2.35.1
     # via agentic-workflows-v2
-fastapi==0.141.1
+fastapi==0.142.2
     # via agentic-workflows-v2
-filelock==4.0.4
+filelock==4.0.9
     # via
     #   agentic-workflows-v2
     #   huggingface-hub
@@ -114,11 +114,11 @@ frozenlist==1.8.0
     #   aiosignal
 fsspec==2026.9.0
     # via huggingface-hub
-google-auth==2.58.1
+google-auth==2.59.1
     # via google-genai
 google-genai==2.7.0
     # via langchain-google-genai
-googleapis-common-protos==1.75.4
+googleapis-common-protos==1.75.5
     # via
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
@@ -159,7 +159,7 @@ httpx2-jsfetch==1.0 ; python_full_version >= '3.12' and sys_platform == 'emscrip
     # via httpx2
 huggingface-hub==1.33.0
     # via agentic-evalkit
-hypothesis==6.168.1
+hypothesis==6.168.3
     # via agentic-workflows-v2
 identify==2.6.20
     # via pre-commit
@@ -238,11 +238,11 @@ langgraph-prebuilt==1.1.0
     # via langgraph
 langgraph-sdk==0.4.5
     # via langgraph
-langsmith==0.14.1
+langsmith==0.14.3
     # via
     #   agentic-workflows-v2
     #   langchain-core
-librt==0.15.0 ; platform_python_implementation != 'PyPy'
+librt==0.16.0 ; platform_python_implementation != 'PyPy'
     # via mypy
 limits==5.8.0
     # via slowapi
@@ -268,7 +268,7 @@ mypy-extensions==1.1.0
     # via
     #   black
     #   mypy
-nodeenv==1.10.0
+nodeenv==1.11.0
     # via pre-commit
 numpy==2.4.6 ; python_full_version < '3.12'
     # via
@@ -278,7 +278,7 @@ numpy==2.5.2 ; python_full_version >= '3.12'
     # via
     #   agentic-tools
     #   pandas
-ollama==0.6.2
+ollama==0.6.3
     # via
     #   agentic-workflows-v2
     #   langchain-ollama
@@ -288,6 +288,7 @@ openai==2.54.0
     #   langchain-openai
 opentelemetry-api==1.45.0
     # via
+    #   fastapi
     #   opentelemetry-exporter-http-transport
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
@@ -339,13 +340,14 @@ packaging==26.3
     #   langsmith
     #   limits
     #   pytest
+    #   virtualenv
 pandas==3.0.6
     # via agentic-workflows-v2
 pathspec==1.1.1
     # via
     #   black
     #   mypy
-platformdirs==4.12.0
+platformdirs==4.12.2
     # via
     #   black
     #   virtualenv
@@ -412,7 +414,7 @@ pygments==2.21.0
     # via
     #   pytest
     #   rich
-pyjwt==2.15.0
+pyjwt==2.15.1
     # via
     #   agentic-workflows-v2
     #   mcp
@@ -441,7 +443,7 @@ python-dateutil==2.9.0.post0
     # via pandas
 python-discovery==1.6.1
     # via virtualenv
-python-dotenv==1.2.3
+python-dotenv==1.2.4
     # via
     #   pydantic-settings
     #   uvicorn
@@ -473,7 +475,7 @@ referencing==0.37.0
     # via
     #   jsonschema
     #   jsonschema-specifications
-regex==2026.9.10
+regex==2026.9.29
     # via tiktoken
 requests==2.34.2
     # via
@@ -518,7 +520,7 @@ sortedcontainers==2.4.0
     #   hypothesis
 sqlite-vec==0.1.9
     # via langgraph-checkpoint-sqlite
-sse-starlette==3.4.11
+sse-starlette==3.5.0
     # via mcp
 starlette==1.7.0
     # via
@@ -600,9 +602,9 @@ uvicorn==0.54.0
     # via
     #   agentic-workflows-v2
     #   mcp
-uvloop==0.22.1 ; platform_python_implementation != 'PyPy' and sys_platform != 'cygwin' and sys_platform != 'win32'
+uvloop==0.23.0 ; platform_python_implementation != 'PyPy' and sys_platform != 'cygwin' and sys_platform != 'win32'
     # via uvicorn
-virtualenv==21.13.0
+virtualenv==21.14.3
     # via pre-commit
 watchfiles==1.3.0
     # via uvicorn
@@ -613,7 +615,7 @@ websockets==16.1.1
     #   langgraph-sdk
     #   langsmith
     #   uvicorn
-wrapt==2.4.1
+wrapt==2.5.0
     # via deprecated
 xxhash==4.0.1
     # via
