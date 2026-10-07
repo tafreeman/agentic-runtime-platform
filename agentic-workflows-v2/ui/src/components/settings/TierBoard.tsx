@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getTierSettings, putTierSettings } from "../../api/client";
 import type {
@@ -7,15 +7,20 @@ import type {
   TierSettingsResponse,
   TierSettingsUpdateRequest,
 } from "../../api/types";
+import { useApiAvailability } from "../../hooks/useApiAvailability";
+import { describeApiError } from "../../lib/apiErrors";
 import BPill from "../common/BPill";
+import { apiErrorText } from "../common/apiErrorText";
+import { Button } from "../ui/button";
 
-const CARD_STYLE = {
-  background: "rgb(var(--b-bg1))",
-  border: "var(--b-bw) solid rgb(var(--b-line))",
-  borderRadius: "var(--b-rad-lg)",
-} as const;
+const CARD_CLASS = "rounded-lg border border-el-divider bg-el-surface";
 
-const CHIP_STYLE = { borderRadius: "var(--b-rad-sm)" } as const;
+/** >=36x36px centred ::after hit area for visually compact toggles. */
+const HIT_AREA =
+  "relative after:absolute after:top-1/2 after:left-1/2 after:size-full after:min-h-9 after:min-w-9 after:-translate-x-1/2 after:-translate-y-1/2";
+
+const SELECT_CLASS =
+  "mt-1 block h-10 rounded-md border border-el-divider bg-el-raised px-3 text-[13px] text-el-ink focus-ring focus-visible:border-el-focus";
 
 /** Swap positions index and index+1, returning a new array. */
 function moveDown(order: string[], index: number): string[] {
@@ -43,6 +48,7 @@ function ModelChipRow({
   info,
   expanded,
   disabled,
+  describedBy,
   onMoveUp,
   onMoveDown,
   onToggleEditor,
@@ -54,6 +60,8 @@ function ModelChipRow({
   info: TierModelInfo | undefined;
   expanded: boolean;
   disabled: boolean;
+  /** id of the visible reason the move buttons are disabled (API down). */
+  describedBy?: string;
   onMoveUp: () => void;
   onMoveDown: () => void;
   onToggleEditor: () => void;
@@ -62,27 +70,28 @@ function ModelChipRow({
   return (
     <div className="flex items-center gap-2">
       <span
-        className={`w-6 flex-none text-right font-mono text-[10px] tabular-nums ${
-          isWinner ? "font-semibold text-b-clay" : "text-b-text-faint"
+        className={`w-6 flex-none text-right font-mono text-micro tabular-nums ${
+          isWinner ? "font-semibold text-el-ink" : "text-el-muted"
         }`}
       >
         {index + 1}.
       </span>
+      {/* The routing winner gets the attention tint plus the one vermilion
+          mark per tier ("routes here"); the rest of the chain stays neutral. */}
       <button
         type="button"
         aria-label={`Edit capabilities for ${modelId} in tier ${tier}`}
         aria-expanded={expanded}
         onClick={onToggleEditor}
-        className={`flex min-w-0 flex-1 items-center gap-2 border px-2.5 py-1.5 text-left font-mono text-[11px] transition-colors hover:text-b-text focus:outline-hidden focus:ring-1 focus:ring-b-clay/50 ${
+        className={`flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-sm border px-2.5 py-1.5 text-left font-mono text-xs transition-colors hover:text-el-ink focus-ring ${
           isWinner
-            ? "border-b-clay bg-b-clay-soft text-b-text"
-            : "border-b-line bg-b-bg2 text-b-text-mid"
+            ? "border-el-accent-strong/50 bg-el-accent-soft text-el-ink"
+            : "border-el-divider bg-el-subtle text-el-secondary"
         }`}
-        style={CHIP_STYLE}
       >
         <span className="truncate">{modelId}</span>
         {isWinner && (
-          <span className="flex-none font-mono text-[8.5px] uppercase tracking-[0.5px] text-b-clay">
+          <span className="flex-none font-mono text-micro uppercase tracking-[0.5px] text-el-accent-strong">
             ▸ routes here
           </span>
         )}
@@ -90,8 +99,7 @@ function ModelChipRow({
           {(info?.capabilities ?? []).map((cap) => (
             <span
               key={cap}
-              className="border border-b-line px-1.5 py-px font-mono text-[8px] uppercase tracking-[0.3px] text-b-text-dim"
-              style={{ borderRadius: "3px" }}
+              className="rounded-sm border border-el-divider px-1.5 py-px font-mono text-micro uppercase tracking-[0.3px] text-el-muted"
             >
               {cap}
             </span>
@@ -100,26 +108,30 @@ function ModelChipRow({
         </span>
       </button>
       <span className="flex flex-none gap-1">
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="icon-sm"
           aria-label={`Move ${modelId} up in tier ${tier}`}
+          aria-describedby={describedBy}
           disabled={disabled || index === 0}
           onClick={onMoveUp}
-          className="border border-b-line px-1.5 py-1 font-mono text-[10px] text-b-text-dim transition-colors hover:text-b-text disabled:cursor-not-allowed disabled:opacity-30"
-          style={CHIP_STYLE}
+          className="font-mono text-xs font-normal text-el-secondary"
         >
           ↑
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="outline"
+          size="icon-sm"
           aria-label={`Move ${modelId} down in tier ${tier}`}
+          aria-describedby={describedBy}
           disabled={disabled || index === count - 1}
           onClick={onMoveDown}
-          className="border border-b-line px-1.5 py-1 font-mono text-[10px] text-b-text-dim transition-colors hover:text-b-text disabled:cursor-not-allowed disabled:opacity-30"
-          style={CHIP_STYLE}
+          className="font-mono text-xs font-normal text-el-secondary"
         >
           ↓
-        </button>
+        </Button>
       </span>
     </div>
   );
@@ -135,6 +147,13 @@ export default function TierBoard() {
     queryKey: ["tier-settings"],
     queryFn: getTierSettings,
   });
+
+  // Every tier edit is a PUT: disabled while the API is unreachable, with
+  // the visible reason referenced by aria-describedby.
+  const { apiDown, reason: apiDownReason } = useApiAvailability();
+  const apiHintId = useId();
+  const describedBy = apiDown ? apiHintId : undefined;
+  const loadErrorInfo = error ? describeApiError(error) : null;
 
   const saveMutation = useMutation({
     mutationFn: (update: TierSettingsUpdateRequest) => putTierSettings(update),
@@ -187,49 +206,59 @@ export default function TierBoard() {
   return (
     <section aria-label="tier routing">
       <div className="mb-8 max-w-3xl">
-        <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-el-accent-strong">Routing precedence</div>
+        <div className="mb-3 text-micro font-semibold uppercase tracking-[0.14em] text-el-muted">Routing precedence</div>
         <h1 className="font-display text-[36px] font-medium leading-tight text-el-ink">Model tiers</h1>
         <p className="mt-3 text-[14px] leading-6 text-el-muted">Reorder fallback chains, annotate model capabilities, and explain a sample route without invoking a provider.</p>
       </div>
 
-      {error && (
+      {error && loadErrorInfo?.unreachable && (
+        // The shell banner already reports the outage — a quiet note here.
+        <p className="mb-3 font-mono text-micro text-el-muted">
+          tier settings unavailable — {loadErrorInfo.summary}
+        </p>
+      )}
+      {error && !loadErrorInfo?.unreachable && (
         <div
           role="alert"
-          className="mb-3 border-b-red/40 bg-b-bg1 p-4 font-mono text-[12px] text-b-red"
-          style={{ borderWidth: "var(--b-bw)", borderRadius: "var(--b-rad-lg)" }}
+          className="mb-3 rounded-lg border border-el-danger/40 bg-el-danger-soft p-4 font-mono text-xs text-el-danger"
         >
-          failed to load tier settings: {error.message}
+          failed to load tier settings: {apiErrorText(error)}
         </div>
       )}
       {isLoading && (
-        <div className="p-4 font-mono text-[11px] text-b-text-dim">
+        <div className="p-4 font-mono text-xs text-el-muted">
           loading tiers…
         </div>
       )}
       {saveMutation.isError && (
-        <div role="alert" className="mb-3 font-mono text-[10px] text-b-red">
-          save failed: {saveMutation.error.message}
+        <div role="alert" className="mb-3 font-mono text-xs text-el-danger">
+          save failed: {apiErrorText(saveMutation.error)}
         </div>
+      )}
+      {apiDown && data && (
+        <p id={apiHintId} className="mb-3 text-micro text-el-muted">
+          Reordering and saving are unavailable: {apiDownReason}
+        </p>
       )}
 
       {data && (
         <div className="mb-7 border-y border-el-divider py-5" data-testid="routing-dry-run">
-          <div className="mb-3 text-[12px] font-semibold text-el-ink">Dry-run route explanation</div>
+          <div className="mb-3 text-xs font-semibold text-el-ink">Dry-run route explanation</div>
           <div className="flex flex-wrap items-end gap-3">
-            <label className="text-[11px] font-semibold text-el-muted">
+            <label className="text-micro font-semibold text-el-muted">
               Tier
-              <select aria-label="Dry run tier" value={dryTier} onChange={(event) => setDryTier(Number(event.target.value))} className="mt-1 block h-10 min-w-28 border border-el-divider bg-el-raised px-3 text-[13px] text-el-ink">
+              <select aria-label="Dry run tier" value={dryTier} onChange={(event) => setDryTier(Number(event.target.value))} className={`${SELECT_CLASS} min-w-28`}>
                 {data.tiers.map((tier) => <option key={tier.tier} value={tier.tier}>Tier {tier.tier}</option>)}
               </select>
             </label>
-            <label className="text-[11px] font-semibold text-el-muted">
+            <label className="text-micro font-semibold text-el-muted">
               Required capability
-              <select aria-label="Dry run capability" value={dryCapability} onChange={(event) => setDryCapability(event.target.value)} className="mt-1 block h-10 min-w-48 border border-el-divider bg-el-raised px-3 text-[13px] text-el-ink">
+              <select aria-label="Dry run capability" value={dryCapability} onChange={(event) => setDryCapability(event.target.value)} className={`${SELECT_CLASS} min-w-48`}>
                 <option value="">Any capability</option>
                 {data.known_capabilities.map((capability) => <option key={capability} value={capability}>{capability}</option>)}
               </select>
             </label>
-            <div className="min-w-0 flex-1 border-l-2 border-el-accent px-4 py-2 text-[12px] leading-5 text-el-secondary">
+            <div className="min-w-0 flex-1 border-l-2 border-el-accent px-4 py-2 text-xs leading-5 text-el-secondary">
               {dryCandidates.length > 0 ? (
                 <><strong className="text-el-ink">Routes first to {dryCandidates[0]}</strong><br />Candidates: {dryCandidates.join(" → ")}</>
               ) : (
@@ -245,40 +274,39 @@ export default function TierBoard() {
           const order = tier.effective;
           const overridden = tier.override.length > 0;
           return (
-            <div key={tier.tier} className="px-[17px] py-[15px]" style={CARD_STYLE}>
+            <div key={tier.tier} className={`${CARD_CLASS} px-4 py-3.5`}>
               <div className="flex items-center gap-2.5">
-                <span
-                  className="text-[14px] font-semibold text-b-clay"
-                  style={{ fontFamily: "var(--b-font-heading)" }}
-                >
+                <span className="font-display text-[14px] font-semibold text-el-ink">
                   T{tier.tier}
                 </span>
                 {tier.tier === 0 && (
-                  <span className="font-mono text-[9.5px] text-b-text-faint">
+                  <span className="font-mono text-micro text-el-muted">
                     deterministic
                   </span>
                 )}
                 {overridden && <BPill tone="clay">reranked</BPill>}
                 {overridden && (
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
+                    size="xs"
                     aria-label={`Reset tier ${tier.tier} to default`}
-                    disabled={saveMutation.isPending}
+                    aria-describedby={describedBy}
+                    disabled={saveMutation.isPending || apiDown}
                     onClick={() =>
                       saveMutation.mutate({
                         tier_overrides: { [String(tier.tier)]: [] },
                       })
                     }
-                    className="ml-auto border border-b-line px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.5px] text-b-text-dim transition-colors hover:border-b-clay/50 hover:text-b-clay disabled:opacity-40"
-                    style={CHIP_STYLE}
+                    className="ml-auto font-mono text-micro uppercase tracking-[0.5px] text-el-secondary"
                   >
                     reset to default
-                  </button>
+                  </Button>
                 )}
               </div>
 
               {order.length === 0 ? (
-                <p className="mt-2.5 font-mono text-[10px] text-b-text-faint">
+                <p className="mt-2.5 font-mono text-xs text-el-muted">
                   {tier.tier === 0
                     ? "no model chain — tier 0 runs deterministic (non-LLM) steps"
                     : "no models in this chain"}
@@ -297,47 +325,49 @@ export default function TierBoard() {
                           count={order.length}
                           info={modelById.get(modelId)}
                           expanded={expanded}
-                          disabled={saveMutation.isPending}
+                          disabled={saveMutation.isPending || apiDown}
+                          describedBy={describedBy}
                           onMoveUp={() => rerank(tier.tier, moveDown(order, index - 1))}
                           onMoveDown={() => rerank(tier.tier, moveDown(order, index))}
                           onToggleEditor={() => toggleEditor(tier, modelId)}
                         />
                         {expanded && editor && (
-                          <div
-                            className="ml-8 mt-1.5 border border-b-line-soft bg-b-bg0 px-3 py-2.5"
-                            style={CHIP_STYLE}
-                          >
-                            <div className="mb-2 font-mono text-[9px] uppercase tracking-[0.8px] text-b-text-dim">
+                          <div className="ml-8 mt-1.5 rounded-md border border-el-divider-soft bg-el-canvas px-3 py-2.5">
+                            <div className="mb-2 font-mono text-micro uppercase tracking-[0.8px] text-el-muted">
                               CAPABILITIES · {modelId}
                               {modelById.get(modelId)?.capability_overridden && (
-                                <span className="ml-2 text-b-amber">overridden</span>
+                                <span className="ml-2 text-el-warning">overridden</span>
                               )}
                             </div>
                             <div className="flex flex-wrap gap-1.5">
                               {(data?.known_capabilities ?? []).map((cap) => {
                                 const active = editor.tags.includes(cap);
                                 return (
+                                  // Pressed state = darker border + tint + a
+                                  // check glyph, not color alone.
                                   <button
                                     key={cap}
                                     type="button"
                                     aria-pressed={active}
                                     onClick={() => toggleTag(cap)}
-                                    className={`border px-2 py-1 font-mono text-[10px] transition-colors ${
+                                    className={`${HIT_AREA} h-8 rounded-sm border px-2.5 font-mono text-micro transition-colors focus-ring ${
                                       active
-                                        ? "border-b-clay bg-b-clay-soft text-b-text"
-                                        : "border-b-line bg-b-bg1 text-b-text-faint hover:text-b-text-mid"
+                                        ? "border-el-ink/70 bg-el-subtle text-el-ink"
+                                        : "border-el-divider bg-el-surface text-el-muted hover:text-el-secondary"
                                     }`}
-                                    style={CHIP_STYLE}
                                   >
+                                    {active && <span aria-hidden="true">✓ </span>}
                                     {cap}
                                   </button>
                                 );
                               })}
                             </div>
                             <div className="mt-3 flex items-center gap-2">
-                              <button
+                              <Button
                                 type="button"
-                                disabled={saveMutation.isPending}
+                                size="xs"
+                                aria-describedby={describedBy}
+                                disabled={saveMutation.isPending || apiDown}
                                 onClick={() =>
                                   saveMutation.mutate({
                                     model_capabilities: {
@@ -345,24 +375,25 @@ export default function TierBoard() {
                                     },
                                   })
                                 }
-                                className="bg-b-clay px-2.5 py-1 font-mono text-[10px] font-semibold text-b-ink transition-opacity hover:opacity-90 disabled:opacity-40"
-                                style={CHIP_STYLE}
+                                className="font-mono"
                               >
                                 save capabilities
-                              </button>
-                              <button
+                              </Button>
+                              <Button
                                 type="button"
-                                disabled={saveMutation.isPending}
+                                variant="outline"
+                                size="xs"
+                                aria-describedby={describedBy}
+                                disabled={saveMutation.isPending || apiDown}
                                 onClick={() =>
                                   saveMutation.mutate({
                                     model_capabilities: { [modelId]: [] },
                                   })
                                 }
-                                className="border border-b-line px-2.5 py-1 font-mono text-[10px] text-b-text-dim transition-colors hover:text-b-text disabled:opacity-40"
-                                style={CHIP_STYLE}
+                                className="font-mono font-normal text-el-secondary"
                               >
                                 clear override
-                              </button>
+                              </Button>
                             </div>
                           </div>
                         )}

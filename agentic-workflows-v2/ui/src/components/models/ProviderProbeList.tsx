@@ -1,11 +1,14 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { loadLmStudioModel } from "../../api/client";
 import type { ModelProbeResponse, ProbedModel } from "../../api/types";
+import { useApiAvailability } from "../../hooks/useApiAvailability";
+import { describeApiError } from "../../lib/apiErrors";
 import {
   loadVerifications,
   type ModelVerification,
 } from "../../lib/modelVerification";
+import { apiErrorText } from "../common/apiErrorText";
 
 // PROVIDER BACKENDS section of the model router — the full probed catalog
 // grouped by provider, with substring search, per-model badges (tier /
@@ -13,11 +16,43 @@ import {
 // "chat" action that deep-links into the playground tab.
 
 const SECTION_LABEL =
-  "font-mono text-[9px] uppercase tracking-[1.6px] text-b-text-faint";
-const CARD_STYLE = {
-  borderWidth: "var(--b-bw)",
-  borderRadius: "var(--b-rad-lg)",
-} as const;
+  "font-mono text-micro uppercase tracking-[1.2px] text-el-muted";
+/** Small tag (tier / capability / cloud): 2px radius, 11px floor. */
+const TAG = "flex-none rounded-sm border px-1.5 py-px font-mono text-micro";
+/**
+ * Dense row action: 28px visual, >=36px hit area via a centred ::after
+ * (rows are min-h-10, so neighbouring rows' targets never overlap).
+ */
+const ROW_ACTION =
+  "relative flex-none rounded-sm border border-el-divider px-2 py-0.5 font-mono text-micro text-el-secondary transition-colors hover:bg-el-hover hover:text-el-ink focus-ring after:absolute after:top-1/2 after:left-1/2 after:size-full after:min-h-9 after:min-w-9 after:-translate-x-1/2 after:-translate-y-1/2 disabled:opacity-50";
+
+type ProbeStatusTone = "success" | "warning" | "danger";
+
+/** Provider status → token classes (status text always accompanies color). */
+const STATUS_TEXT_CLASS: Record<ProbeStatusTone, string> = {
+  success: "text-el-success",
+  warning: "text-el-warning",
+  danger: "text-el-danger",
+};
+const STATUS_FILL_CLASS: Record<ProbeStatusTone, string> = {
+  success: "bg-el-success",
+  warning: "bg-el-warning",
+  danger: "bg-el-danger",
+};
+
+/**
+ * Placeholder mode or no models → warning; missing credentials → danger;
+ * keyed with models → success.
+ */
+function providerStatusTone(
+  placeholderMode: boolean,
+  group: ProbeProviderGroup,
+): ProbeStatusTone {
+  if (placeholderMode) return "warning";
+  if (!group.available) return "danger";
+  if (group.models.length === 0) return "warning";
+  return "success";
+}
 
 interface ProbeProviderGroup {
   readonly name: string;
@@ -57,11 +92,11 @@ function groupProbeByProvider(
     );
 }
 
-/** Capability-tier (1–5) accent: T1/T2 blue, T3 amber, T4/T5 clay. */
-function probeTierColor(tier: number): string {
-  if (tier >= 4) return "rgb(var(--b-clay))";
-  if (tier === 3) return "rgb(var(--b-amber))";
-  return "rgb(var(--b-blue))";
+/** Capability-tier mark: T0–T2 tier-low, T3 tier-mid, T4/T5 tier-high. */
+function probeTierClass(tier: number): string {
+  if (tier >= 4) return "border-el-tier-high text-el-tier-high";
+  if (tier === 3) return "border-el-tier-mid text-el-tier-mid";
+  return "border-el-tier-low text-el-tier-low";
 }
 
 function ProbedModelRow({
@@ -70,6 +105,8 @@ function ProbedModelRow({
   verification,
   loadBusy,
   loading,
+  apiDown,
+  apiDownHintId,
   onLoadInLmStudio,
   onOpenInPlayground,
 }: Readonly<{
@@ -78,23 +115,23 @@ function ProbedModelRow({
   verification: ModelVerification | null;
   loadBusy: boolean;
   loading: boolean;
+  /** API unreachable: loading a model is an API mutation, so it is disabled. */
+  apiDown: boolean;
+  /** id of the visible "API unreachable" reason the disabled load refers to. */
+  apiDownHintId: string;
   onLoadInLmStudio: (modelId: string) => void;
   onOpenInPlayground: (modelId: string) => void;
 }>) {
-  const color = probeTierColor(model.tier);
   const canLoad =
     model.provider === "lmstudio" && model.available && !model.running;
   return (
-    <div className="flex items-center gap-2.5 border-b border-b-line-soft py-1.5 last:border-b-0">
-      <span
-        className="flex-none border px-1.5 py-px font-mono text-[8.5px] tracking-[0.3px]"
-        style={{ borderColor: color, color, borderRadius: "3px" }}
-      >
+    <div className="flex min-h-10 items-center gap-2.5 border-b border-el-divider-soft py-1 last:border-b-0">
+      <span className={`${TAG} ${probeTierClass(model.tier)}`}>
         T{model.tier}
       </span>
       <span
         title={model.id}
-        className="flex-1 truncate text-[11px] text-b-text-mid"
+        className="flex-1 truncate text-xs text-el-secondary"
       >
         {model.id}
       </span>
@@ -103,49 +140,36 @@ function ProbedModelRow({
         .map((cap) => (
           <span
             key={cap}
-            className="flex-none border border-b-line px-1.5 py-px font-mono text-[8px] uppercase tracking-[0.3px] text-b-text-dim"
-            style={{ borderRadius: "3px" }}
+            className={`${TAG} border-el-divider uppercase tracking-[0.3px] text-el-muted`}
           >
             {cap}
           </span>
         ))}
       {model.cloud && (
-        <span
-          className="flex-none border px-1.5 py-px font-mono text-[8.5px] tracking-[0.3px]"
-          style={{
-            borderColor: "rgb(var(--b-purple))",
-            color: "rgb(var(--b-purple))",
-            borderRadius: "3px",
-          }}
-        >
-          cloud
-        </span>
+        <span className={`${TAG} border-el-plum text-el-plum`}>cloud</span>
       )}
       {model.running && (
         <span
-          className="flex flex-none items-center gap-1 font-mono text-[9px] text-b-green"
+          className="flex flex-none items-center gap-1 font-mono text-micro text-el-success"
           title="loaded in memory"
         >
-          <span
-            className="h-1.5 w-1.5 rounded-full"
-            style={{ backgroundColor: "rgb(var(--b-green))" }}
-          />
+          <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-el-success" />
           running
         </span>
       )}
       {isDefault && (
-        <span className="flex-none font-mono text-[9px] text-b-clay">
+        <span className="flex-none font-mono text-micro text-el-accent-strong">
           default
         </span>
       )}
       {!model.available && (
-        <span className="flex-none font-mono text-[9px] text-b-text-dim">
+        <span className="flex-none font-mono text-micro text-el-danger">
           no keys
         </span>
       )}
       {verification?.status === "ok" && (
         <span
-          className="flex-none font-mono text-[9px] text-b-text-dim"
+          className="flex-none font-mono text-micro text-el-success"
           title={`playground-verified ${verification.at}`}
         >
           ✓ ok
@@ -153,7 +177,7 @@ function ProbedModelRow({
       )}
       {verification?.status === "error" && (
         <span
-          className="flex-none font-mono text-[9px] text-b-text-dim"
+          className="flex-none font-mono text-micro text-el-danger"
           title={verification.message ?? `playground probe failed ${verification.at}`}
         >
           ✗ failed
@@ -164,10 +188,10 @@ function ProbedModelRow({
           type="button"
           aria-label={`Load ${model.id} in LM Studio`}
           aria-busy={loading}
-          disabled={loadBusy}
+          aria-describedby={apiDown ? apiDownHintId : undefined}
+          disabled={loadBusy || apiDown}
           onClick={() => onLoadInLmStudio(model.id)}
-          className="flex-none border border-b-clay px-1.5 py-px font-mono text-[9px] text-b-clay transition-colors hover:bg-b-clay/10 disabled:cursor-wait disabled:opacity-50"
-          style={{ borderRadius: "3px" }}
+          className={`${ROW_ACTION} ${loadBusy ? "disabled:cursor-wait" : "disabled:cursor-not-allowed"}`}
         >
           {loading ? "loading…" : "load"}
         </button>
@@ -177,8 +201,7 @@ function ProbedModelRow({
         aria-label={`Open ${model.id} in playground`}
         data-testid={`open-in-playground-${model.id}`}
         onClick={() => onOpenInPlayground(model.id)}
-        className="flex-none border border-b-line px-1.5 py-px font-mono text-[9px] text-b-text-dim transition-colors hover:border-b-clay hover:text-b-clay"
-        style={{ borderRadius: "3px" }}
+        className={ROW_ACTION}
       >
         chat
       </button>
@@ -201,6 +224,8 @@ export default function ProviderProbeList({
   onOpenInPlayground,
 }: Readonly<ProviderProbeListProps>) {
   const queryClient = useQueryClient();
+  const { apiDown, reason: apiDownReason } = useApiAvailability();
+  const apiDownHintId = useId();
   const [openProvider, setOpenProvider] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   // Verified-outcome registry, read once per mount — the finder tab unmounts
@@ -275,6 +300,10 @@ export default function ProviderProbeList({
   );
 
   const placeholderMode = probe?.no_llm_mode ?? false;
+  // An unreachable API is already announced by the shell banner, so a failed
+  // probe then gets a quiet note (the last probe stays visible) instead of a
+  // second alert.
+  const probeErrorInfo = probeError ? describeApiError(probeError) : null;
 
   return (
     <div>
@@ -287,7 +316,7 @@ export default function ProviderProbeList({
             {/* "keyed" is deliberate copy: this is env-key detection, not a
                 liveness check — the playground is the real prober. */}
             <span
-              className="text-b-text-dim"
+              className="text-el-muted"
               title="providers with credentials configured — not a liveness check"
             >
               {probe.models.length} models · {probe.available_providers.length}{" "}
@@ -295,16 +324,11 @@ export default function ProviderProbeList({
             </span>
             <span
               data-testid="probe-mode"
-              className="border px-1.5 py-px text-[8.5px] tracking-[0.3px]"
-              style={{
-                borderRadius: "var(--b-rad-sm)",
-                color: probe.no_llm_mode
-                  ? "rgb(var(--b-amber))"
-                  : "rgb(var(--b-green))",
-                borderColor: probe.no_llm_mode
-                  ? "rgb(var(--b-amber))"
-                  : "rgb(var(--b-green))",
-              }}
+              className={`rounded-sm border px-1.5 py-px tracking-[0.3px] ${
+                probe.no_llm_mode
+                  ? "border-el-warning bg-el-warning-soft text-el-warning"
+                  : "border-el-success bg-el-success-soft text-el-success"
+              }`}
             >
               {probe.no_llm_mode ? "no-LLM mode" : "LLM mode"}
             </span>
@@ -312,24 +336,37 @@ export default function ProviderProbeList({
         )}
       </div>
 
-      {probeError && (
+      {probeError && probeErrorInfo?.unreachable && (
+        <p
+          data-testid="probe-error-note"
+          className="mb-3 font-mono text-micro text-el-muted"
+        >
+          probe unavailable — {probeErrorInfo.summary}
+          {probe ? " Showing the last probe." : ""}
+        </p>
+      )}
+      {probeError && !probeErrorInfo?.unreachable && (
         <div
           role="alert"
-          className="mb-3 border-b-red/40 bg-b-bg1 p-4 font-mono text-[12px] text-b-red"
-          style={CARD_STYLE}
+          className="mb-3 rounded-lg border border-el-danger/40 bg-el-danger-soft p-4 font-mono text-xs text-el-danger"
         >
-          probe failed: {probeError.message}
+          probe failed: {apiErrorText(probeError)}
         </div>
       )}
 
       {loadMutation.error && (
         <div
           role="alert"
-          className="mb-3 border-b-red/40 bg-b-bg1 p-4 font-mono text-[12px] text-b-red"
-          style={CARD_STYLE}
+          className="mb-3 rounded-lg border border-el-danger/40 bg-el-danger-soft p-4 font-mono text-xs text-el-danger"
         >
-          LM Studio load failed: {loadMutation.error.message}
+          LM Studio load failed: {apiErrorText(loadMutation.error)}
         </div>
+      )}
+
+      {probe && apiDown && (
+        <p id={apiDownHintId} className="mb-3 font-mono text-micro text-el-muted">
+          Loading models is unavailable: {apiDownReason}
+        </p>
       )}
 
       {probe && (
@@ -338,13 +375,7 @@ export default function ProviderProbeList({
           className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-2.5"
         >
           {allProviderGroups.map((provider) => {
-            const statusColor = placeholderMode
-              ? "rgb(var(--b-amber))"
-              : !provider.available
-                ? "rgb(var(--b-red))"
-                : provider.models.length === 0
-                  ? "rgb(var(--b-amber))"
-                  : "rgb(var(--b-green))";
+            const tone = providerStatusTone(placeholderMode, provider);
             const statusText = placeholderMode
               ? "placeholder"
               : !provider.available
@@ -356,33 +387,30 @@ export default function ProviderProbeList({
               <article
                 key={provider.name}
                 data-testid={`provider-card-${provider.name}`}
-                className="relative min-w-0 overflow-hidden border border-b-line bg-b-bg1 p-3.5"
-                style={CARD_STYLE}
+                className="relative min-w-0 overflow-hidden rounded-lg border border-el-divider bg-el-surface p-3.5"
               >
                 <span
                   aria-hidden="true"
-                  className="absolute inset-y-0 left-0 w-[2px]"
-                  style={{ backgroundColor: statusColor }}
+                  className={`absolute inset-y-0 left-0 w-[2px] ${STATUS_FILL_CLASS[tone]}`}
                 />
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <h3 className="truncate font-mono text-[12px] font-semibold text-b-text">
+                    <h3 className="truncate font-mono text-xs font-semibold text-el-ink">
                       {provider.name}
                     </h3>
-                    <p className="mt-1 font-mono text-[9px] text-b-text-dim">
+                    <p className="mt-1 font-mono text-micro text-el-muted">
                       {provider.models.length} detected model
                       {provider.models.length === 1 ? "" : "s"}
                     </p>
                   </div>
                   <span
-                    className="mt-0.5 h-2 w-2 flex-none rounded-full"
-                    style={{ backgroundColor: statusColor }}
+                    aria-hidden="true"
+                    className={`mt-0.5 h-2 w-2 flex-none rounded-full ${STATUS_FILL_CLASS[tone]}`}
                     title={statusText}
                   />
                 </div>
                 <div
-                  className="mt-3 font-mono text-[8.5px] uppercase tracking-[0.8px]"
-                  style={{ color: statusColor }}
+                  className={`mt-3 font-mono text-micro uppercase tracking-[0.8px] ${STATUS_TEXT_CLASS[tone]}`}
                 >
                   {statusText}
                 </div>
@@ -401,38 +429,34 @@ export default function ProviderProbeList({
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="filter models by id or provider…"
-            className="w-full max-w-[340px] border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text placeholder:text-b-text-faint focus:border-b-clay focus:outline-hidden"
-            style={{ borderRadius: "var(--b-rad-sm)" }}
+            className="h-10 w-full max-w-[340px] rounded-md border border-el-divider bg-el-raised px-2.5 font-mono text-xs text-el-ink placeholder:text-el-faint focus-ring focus-visible:border-el-focus"
           />
           <span
             data-testid="catalog-search-count"
-            className="font-mono text-[10px] text-b-text-dim"
+            className="font-mono text-micro text-el-muted"
           >
             {filteredModels.length} / {totalCount} models
           </span>
         </div>
       )}
 
-      <div
-        className="overflow-hidden border-b-line bg-b-bg1"
-        style={CARD_STYLE}
-      >
+      <div className="overflow-hidden rounded-lg border border-el-divider bg-el-surface">
         {!probe && probing && (
           <div className="space-y-px">
             {["sk-prov-0", "sk-prov-1", "sk-prov-2"].map((k) => (
               <div key={k} className="px-4 py-3">
-                <div className="h-4 w-full animate-pulse rounded bg-b-bg3" />
+                <div className="h-4 w-full animate-pulse rounded-sm bg-el-hover" />
               </div>
             ))}
           </div>
         )}
         {probe && probe.available_providers.length === 0 && !searchActive && (
-          <div className="p-6 font-mono text-[12px] text-b-text-dim">
+          <div className="p-6 font-mono text-xs text-el-muted">
             no providers have credentials configured
           </div>
         )}
         {probe && searchActive && providerGroups.length === 0 && (
-          <div className="p-6 font-mono text-[12px] text-b-text-dim">
+          <div className="p-6 font-mono text-xs text-el-muted">
             no models match &ldquo;{search.trim()}&rdquo;
           </div>
         )}
@@ -443,13 +467,7 @@ export default function ProviderProbeList({
           // In no-LLM mode every tier is routed to the placeholder model,
           // so a green "ready"/key-present status is misleading — show a
           // neutral/amber "placeholder" instead.
-          const statusColor = placeholderMode
-            ? "rgb(var(--b-amber))"
-            : !provider.available
-              ? "rgb(var(--b-red))"
-              : provider.models.length === 0
-                ? "rgb(var(--b-amber))"
-                : "rgb(var(--b-green))";
+          const tone = providerStatusTone(placeholderMode, provider);
           const statusText = placeholderMode
             ? "placeholder"
             : !provider.available
@@ -460,8 +478,9 @@ export default function ProviderProbeList({
           return (
             <div
               key={provider.name}
-              className={index > 0 ? "border-t border-b-line-soft" : ""}
+              className={index > 0 ? "border-t border-el-divider-soft" : ""}
             >
+              {/* Inset ring: the list container clips overflow. */}
               <button
                 type="button"
                 data-testid={`provider-row-${provider.name}`}
@@ -469,31 +488,30 @@ export default function ProviderProbeList({
                   setOpenProvider(isOpen && !searchActive ? null : provider.name)
                 }
                 aria-expanded={isOpen}
-                className="flex w-full items-center gap-3 px-[18px] py-[11px] text-left font-mono text-[11px] transition-colors hover:bg-b-bg2/50 focus:outline-hidden focus:ring-1 focus:ring-inset focus:ring-b-clay/50"
+                className="flex min-h-11 w-full items-center gap-3 px-4 py-2.5 text-left font-mono text-xs transition-colors hover:bg-el-subtle focus-ring-inset"
               >
-                <span className="w-2.5 flex-none text-[10px] text-b-text-faint">
+                <span aria-hidden="true" className="w-2.5 flex-none text-micro text-el-muted">
                   {isOpen ? "▾" : "▸"}
                 </span>
-                <span className="flex-1 font-medium text-b-text">
+                <span className="flex-1 font-medium text-el-ink">
                   {provider.name}
                 </span>
                 <span
-                  className="flex items-center gap-1.5 text-[10.5px]"
-                  style={{ color: statusColor }}
+                  className={`flex items-center gap-1.5 text-micro ${STATUS_TEXT_CLASS[tone]}`}
                 >
                   <span
-                    className="h-1.5 w-1.5 rounded-full"
-                    style={{ backgroundColor: statusColor }}
+                    aria-hidden="true"
+                    className={`h-1.5 w-1.5 rounded-full ${STATUS_FILL_CLASS[tone]}`}
                   />
                   {statusText}
                 </span>
-                <span className="w-20 flex-none text-right text-[9.5px] text-b-text-dim">
+                <span className="w-20 flex-none text-right text-micro text-el-muted">
                   {provider.models.length} model
                   {provider.models.length === 1 ? "" : "s"}
                 </span>
               </button>
               {isOpen && (
-                <div className="bg-b-bg0 py-1 pl-10 pr-[18px]">
+                <div className="bg-el-canvas py-1 pl-10 pr-4">
                   {provider.models.map((model) => {
                     // Suppress the "default" marker in no-LLM mode: the
                     // tier defaults are bypassed for the placeholder model.
@@ -512,6 +530,8 @@ export default function ProviderProbeList({
                           loadMutation.isPending &&
                           loadMutation.variables === model.id
                         }
+                        apiDown={apiDown}
+                        apiDownHintId={apiDownHintId}
                         onLoadInLmStudio={beginLmStudioLoad}
                         onOpenInPlayground={onOpenInPlayground}
                       />

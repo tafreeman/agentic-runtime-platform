@@ -210,10 +210,11 @@ export default function CommandPalette() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[14vh]">
-      {/* Backdrop */}
+      {/* Backdrop — same scrim as the shared Dialog overlay in both themes. */}
       <button
         type="button"
-        className="absolute inset-0 cursor-default border-0 bg-black/60"
+        tabIndex={-1}
+        className="absolute inset-0 cursor-default border-0 bg-el-ink/25 dark:bg-el-canvas/75"
         aria-label="Close command palette"
         onClick={close}
       />
@@ -222,11 +223,12 @@ export default function CommandPalette() {
         role="dialog"
         aria-modal="true"
         aria-label="Command palette"
-        className="relative w-full max-w-lg border border-b-line bg-b-bg1 font-mono shadow-2xl"
+        className="relative w-full max-w-lg rounded-lg border border-el-divider bg-el-raised font-mono shadow-(--el-shadow-raised)"
       >
-        {/* Search row */}
-        <div className="flex items-center gap-2.5 border-b border-b-line px-3.5">
-          <Search size={14} className="flex-none text-b-text-dim" aria-hidden="true" />
+        {/* Search row. The input draws no outline of its own: the row shows a
+            full-strength 2px inset ring while the input has focus. */}
+        <div className="flex items-center gap-2.5 rounded-t-lg border-b border-el-divider px-3.5 focus-within:ring-2 focus-within:ring-inset focus-within:ring-ring">
+          <Search size={14} className="flex-none text-el-muted" aria-hidden="true" />
           <input
             ref={inputRef}
             type="text"
@@ -237,17 +239,17 @@ export default function CommandPalette() {
             aria-label="Search commands"
             autoComplete="off"
             spellCheck={false}
-            className="h-11 min-w-0 flex-1 bg-transparent text-[13px] text-b-text placeholder:text-b-text-faint focus:outline-hidden"
+            className="h-11 min-w-0 flex-1 bg-transparent text-[13px] text-el-ink placeholder:text-el-faint outline-hidden"
           />
-          <span className="flex flex-none items-center gap-1 text-b-text-faint">
+          <span className="flex flex-none items-center gap-1 text-el-muted">
             <Command size={12} aria-hidden="true" />
-            <span className="text-[10px]">K</span>
+            <span className="text-micro">K</span>
           </span>
           <button
             type="button"
             onClick={close}
             aria-label="Close command palette"
-            className="flex flex-none items-center justify-center p-1 text-b-text-dim hover:text-b-text focus:outline-hidden focus:ring-1 focus:ring-b-clay/50"
+            className="-mr-2 flex size-9 flex-none items-center justify-center rounded-md text-el-muted transition-colors hover:bg-el-hover hover:text-el-ink focus-ring"
           >
             <X size={14} aria-hidden="true" />
           </button>
@@ -256,7 +258,7 @@ export default function CommandPalette() {
         {/* Results */}
         <ul role="listbox" aria-label="Commands" className="max-h-80 overflow-y-auto py-1.5">
           {results.length === 0 && (
-            <li className="px-3.5 py-6 text-center text-[12px] text-b-text-dim">
+            <li className="px-3.5 py-6 text-center text-xs text-el-muted">
               No commands match &ldquo;{query}&rdquo;.
             </li>
           )}
@@ -265,31 +267,37 @@ export default function CommandPalette() {
             const active = index === activeIndex;
             return (
               <li key={command.id} role="presentation">
+                {/* Active row = selected-row rule (§7.4): subtle tint + 2px
+                    accent-strong rail; text stays ink. */}
                 <button
                   type="button"
                   role="option"
                   aria-selected={active}
                   onClick={() => command.run()}
                   onMouseEnter={() => setActiveIndex(index)}
-                  className={`flex w-full items-center gap-3 px-3.5 py-2.5 text-left text-[13px] transition-colors focus:outline-hidden ${
+                  className={`flex w-full items-center gap-3 px-3.5 py-2.5 text-left text-[13px] transition-colors focus-ring-inset ${
                     active
-                      ? "bg-b-bg2 text-b-clay shadow-[inset_3px_0_0_var(--color-b-clay)]"
-                      : "text-b-text-mid hover:bg-b-bg2"
+                      ? "bg-el-subtle text-el-ink shadow-[inset_2px_0_0_rgb(var(--el-accent-strong))]"
+                      : "text-el-secondary hover:bg-el-subtle"
                   }`}
                 >
                   <Icon
                     size={15}
-                    className={`flex-none ${active ? "text-b-clay" : "text-b-text-dim"}`}
+                    className={`flex-none ${active ? "text-el-ink" : "text-el-muted"}`}
                     aria-hidden="true"
                   />
                   <span className="min-w-0 flex-1 truncate">{command.label}</span>
                   {command.hint && (
-                    <span className="flex-none truncate text-[11px] text-b-text-faint">
+                    <span className="flex-none truncate text-micro text-el-muted">
                       {command.hint}
                     </span>
                   )}
                   {active && (
-                    <ArrowRight size={13} className="flex-none text-b-clay" aria-hidden="true" />
+                    <ArrowRight
+                      size={13}
+                      className="flex-none text-el-accent-strong"
+                      aria-hidden="true"
+                    />
                   )}
                 </button>
               </li>
@@ -298,24 +306,24 @@ export default function CommandPalette() {
         </ul>
 
         {/* Footer hints */}
-        <div className="flex items-center gap-4 border-t border-b-line px-3.5 py-2 text-[10px] text-b-text-faint">
+        <div className="flex items-center gap-4 rounded-b-lg border-t border-el-divider px-3.5 py-2 text-micro text-el-muted">
           <span className="flex items-center gap-1.5">
-            <kbd className="border border-b-line bg-b-bg2 px-1.5 py-px text-b-text-dim">
+            <kbd className="rounded-sm border border-el-divider bg-el-subtle px-1.5 py-px text-el-secondary">
               ↑
             </kbd>
-            <kbd className="border border-b-line bg-b-bg2 px-1.5 py-px text-b-text-dim">
+            <kbd className="rounded-sm border border-el-divider bg-el-subtle px-1.5 py-px text-el-secondary">
               ↓
             </kbd>
             move
           </span>
           <span className="flex items-center gap-1.5">
-            <kbd className="flex items-center border border-b-line bg-b-bg2 px-1.5 py-px text-b-text-dim">
+            <kbd className="flex items-center rounded-sm border border-el-divider bg-el-subtle px-1.5 py-px text-el-secondary">
               <CornerDownLeft size={10} aria-hidden="true" />
             </kbd>
             open
           </span>
           <span className="flex items-center gap-1.5">
-            <kbd className="border border-b-line bg-b-bg2 px-1.5 py-px text-b-text-dim">
+            <kbd className="rounded-sm border border-el-divider bg-el-subtle px-1.5 py-px text-el-secondary">
               esc
             </kbd>
             close

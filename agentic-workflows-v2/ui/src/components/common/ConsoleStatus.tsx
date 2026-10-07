@@ -34,7 +34,7 @@ export default function ConsoleStatus() {
         {pillLabel}
       </BPill>
       {connected && (
-        <span className="font-mono text-[10px] text-b-text-faint">
+        <span className="font-mono text-micro text-el-muted">
           v{health.data.version}
         </span>
       )}

@@ -31,12 +31,22 @@ describe("StatusBadge", () => {
     expect(badge?.className).toContain("text-sm");
   });
 
-  it("uses --b-* color tokens (no legacy gray/blue/green classes)", () => {
+  it("uses Evidence Ledger status tokens (no legacy b-* or palette classes)", () => {
     const { container } = render(<StatusBadge status="success" />);
     const badge = container.firstElementChild;
-    expect(badge?.className).toContain("text-b-green");
+    expect(badge?.className).toContain("text-el-success");
+    expect(badge?.className).not.toMatch(/text-b-/);
     expect(badge?.className).not.toMatch(/text-green-\d+/);
     expect(badge?.className).not.toContain("rounded-full");
+  });
+
+  it("keeps vermilion off the running state (info, like the graph)", () => {
+    const { container } = render(<StatusBadge status="running" />);
+    const badge = container.firstElementChild;
+    expect(badge?.className).toContain("text-el-info");
+    expect(badge?.className).not.toMatch(/accent/);
+    // Status is never color alone: the text label is exposed.
+    expect(badge).toHaveAttribute("aria-label", "RUN");
   });
 
   it("running badge has animate-pulse class", () => {

@@ -3,13 +3,16 @@ import { Cpu, Gauge, HardDrive, SlidersHorizontal } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import BTopBar from "../components/layout/BTopBar";
+import { apiErrorText } from "../components/common/apiErrorText";
 import ChatPlaygroundPanel from "../components/models/ChatPlaygroundPanel";
 import HardwareOverrideForm from "../components/models/HardwareOverrideForm";
 import ProviderProbeList from "../components/models/ProviderProbeList";
 import ModelPacksPanel from "../components/models/ModelPacksPanel";
 import ProviderPanel from "../components/settings/ProviderPanel";
 import TierBoard from "../components/settings/TierBoard";
+import { Button } from "../components/ui/button";
 import { getModelRecommendations, probeModels } from "../api/client";
+import { describeApiError } from "../lib/apiErrors";
 import type {
   ModelCandidate,
   ModelSortField,
@@ -52,7 +55,10 @@ interface CapabilityTier {
   readonly letter: string;
   readonly label: string;
   readonly desc: string;
-  readonly color: string;
+  /** Text color for the band letter (text-safe token). */
+  readonly textClass: string;
+  /** Border color for the band's model chips (decorative; letter carries it). */
+  readonly borderClass: string;
   readonly match: (model: ModelCandidate) => boolean;
 }
 
@@ -62,7 +68,8 @@ const CAPABILITY_TIERS: readonly CapabilityTier[] = [
     letter: "S",
     label: "headroom",
     desc: "fits with budget to spare",
-    color: "rgb(var(--b-green))",
+    textClass: "text-el-success",
+    borderClass: "border-el-success",
     match: (m) => m.runnable && m.fit_score >= 80,
   },
   {
@@ -70,7 +77,8 @@ const CAPABILITY_TIERS: readonly CapabilityTier[] = [
     letter: "A",
     label: "comfortable",
     desc: "runs on this machine",
-    color: "rgb(var(--b-blue))",
+    textClass: "text-el-info",
+    borderClass: "border-el-info",
     match: (m) => m.runnable && m.fit_score >= 60 && m.fit_score < 80,
   },
   {
@@ -78,7 +86,8 @@ const CAPABILITY_TIERS: readonly CapabilityTier[] = [
     letter: "B",
     label: "workable",
     desc: "runs with trade-offs",
-    color: "rgb(var(--b-clay))",
+    textClass: "text-el-accent-strong",
+    borderClass: "border-el-accent-strong",
     match: (m) => m.runnable && m.fit_score < 60,
   },
   {
@@ -86,20 +95,20 @@ const CAPABILITY_TIERS: readonly CapabilityTier[] = [
     letter: "C",
     label: "tight",
     desc: "exceeds detected budget",
-    color: "rgb(var(--b-amber))",
+    textClass: "text-el-warning",
+    borderClass: "border-el-warning",
     match: (m) => !m.runnable,
   },
 ];
 
 const SECTION_LABEL =
-  "font-mono text-[9px] uppercase tracking-[1.6px] text-b-text-faint";
-const CARD_STYLE = {
-  borderWidth: "var(--b-bw)",
-  borderRadius: "var(--b-rad-lg)",
-} as const;
-const CHIP_STYLE = {
-  borderRadius: "var(--b-rad-sm)",
-} as const;
+  "font-mono text-micro uppercase tracking-[1.2px] text-el-muted";
+const CARD_CLASS = "rounded-lg border border-el-divider bg-el-surface";
+const SELECT_CLASS =
+  "h-10 rounded-md border border-el-divider bg-el-raised px-2 font-mono text-xs text-el-ink focus-ring focus-visible:border-el-focus";
+/** >=36x36px centred ::after hit area for visually compact controls. */
+const HIT_AREA =
+  "relative after:absolute after:top-1/2 after:left-1/2 after:size-full after:min-h-9 after:min-w-9 after:-translate-x-1/2 after:-translate-y-1/2";
 
 function ProfileStat({
   icon,
@@ -113,27 +122,18 @@ function ProfileStat({
   loading: boolean;
 }>) {
   return (
-    <div
-      className="border-b-line bg-b-bg1 p-[15px]"
-      style={{ borderWidth: "var(--b-bw)", borderRadius: "var(--b-rad-lg)" }}
-    >
+    <div className={`${CARD_CLASS} p-4`}>
       <div className="flex items-center gap-3">
         {icon}
         <div className="min-w-0">
           {loading ? (
-            <div className="h-6 w-16 animate-pulse rounded bg-b-bg3" />
+            <div className="h-6 w-16 animate-pulse rounded-sm bg-el-hover" />
           ) : (
-            <div
-              className="text-[24px] font-semibold leading-tight tabular-nums text-b-text"
-              style={{
-                fontFamily: "var(--b-font-heading)",
-                letterSpacing: "-0.5px",
-              }}
-            >
+            <div className="font-display text-[24px] font-semibold leading-tight tracking-[-0.5px] tabular-nums text-el-ink">
               {value}
             </div>
           )}
-          <div className="mt-1.5 font-mono text-[9px] uppercase tracking-[1.2px] text-b-text-faint">
+          <div className="mt-1.5 font-mono text-micro uppercase tracking-[1.2px] text-el-muted">
             {label}
           </div>
         </div>
@@ -178,12 +178,13 @@ function TabButton({
       data-testid={testId}
       aria-selected={active}
       onClick={onClick}
-      className={`-mb-px whitespace-nowrap border-b-2 px-1 pb-3 pt-4 text-[13px] font-semibold transition-colors ${
-        active ? "text-el-ink" : "text-el-muted hover:text-el-ink"
+      // The active rail is state-bearing, so it uses accent-strong (>=3:1).
+      // Inset ring: the tab strip scrolls horizontally and would clip it.
+      className={`-mb-px whitespace-nowrap border-b-2 px-1 pb-3 pt-4 text-[13px] font-semibold transition-colors focus-ring-inset ${
+        active
+          ? "border-el-accent-strong text-el-ink"
+          : "border-transparent text-el-muted hover:text-el-ink"
       }`}
-      style={{
-        borderBottomColor: active ? "rgb(var(--b-clay))" : "transparent",
-      }}
     >
       {label}
     </button>
@@ -291,19 +292,24 @@ export default function ModelFinderPage() {
   return (
     <div className="flex h-full flex-col">
       <BTopBar path="model router">
-        <button
+        {/* A read, not a mutation: stays available as the retry while the
+            API is down. */}
+        <Button
           type="button"
+          variant="ghost"
+          size="xs"
           onClick={rescan}
           disabled={probing || refreshing}
           aria-busy={probing || refreshing}
           aria-label="Rescan providers"
-          className="btn-ghost"
+          className="font-mono text-micro font-normal text-el-secondary"
         >
           <SlidersHorizontal
-            className={`h-3 w-3 ${probing || refreshing ? "animate-spin" : ""}`}
-          />{" "}
+            aria-hidden="true"
+            className={probing || refreshing ? "animate-spin" : ""}
+          />
           rescan
-        </button>
+        </Button>
       </BTopBar>
 
       <div className="flex items-center gap-6 overflow-x-auto border-b border-el-divider px-5 sm:px-8 lg:px-10" role="tablist" aria-label="Model router sections">
@@ -339,15 +345,15 @@ export default function ModelFinderPage() {
         {tab === "hardware" && (
           <div className="mx-auto max-w-5xl space-y-8">
             <div className="max-w-3xl">
-              <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-el-accent-strong">Local inference profile</div>
+              <div className="mb-3 text-micro font-semibold uppercase tracking-[0.14em] text-el-muted">Local inference profile</div>
               <h1 className="font-display text-[36px] font-medium leading-tight text-el-ink">Hardware</h1>
               <p className="mt-3 text-[14px] leading-6 text-el-muted">Review detected compute and override discovery values used by the local model fit recommendations.</p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <ProfileStat loading={isLoading} icon={<HardDrive className="h-5 w-5 text-el-accent-strong" />} value={`${data?.profile.ram_gb ?? 0} GB`} label="usable memory" />
-              <ProfileStat loading={isLoading} icon={<Cpu className="h-5 w-5 text-el-info" />} value={`${data?.profile.cpu_cores_logical ?? 0} threads`} label={data?.profile.cpu_name ?? "detecting CPU"} />
-              <ProfileStat loading={isLoading} icon={<Gauge className="h-5 w-5 text-el-success" />} value={compactNumber(data?.profile.estimated_cinebench_r23_multi ?? 0)} label="estimated CPU score" />
-              <ProfileStat loading={isLoading} icon={<SlidersHorizontal className="h-5 w-5 text-el-warning" />} value={<span className="text-[12px]">{acceleratorText}</span>} label="accelerators" />
+              <ProfileStat loading={isLoading} icon={<HardDrive aria-hidden="true" className="h-5 w-5 text-el-secondary" />} value={`${data?.profile.ram_gb ?? 0} GB`} label="usable memory" />
+              <ProfileStat loading={isLoading} icon={<Cpu aria-hidden="true" className="h-5 w-5 text-el-secondary" />} value={`${data?.profile.cpu_cores_logical ?? 0} threads`} label={data?.profile.cpu_name ?? "detecting CPU"} />
+              <ProfileStat loading={isLoading} icon={<Gauge aria-hidden="true" className="h-5 w-5 text-el-secondary" />} value={compactNumber(data?.profile.estimated_cinebench_r23_multi ?? 0)} label="estimated CPU score" />
+              <ProfileStat loading={isLoading} icon={<SlidersHorizontal aria-hidden="true" className="h-5 w-5 text-el-secondary" />} value={<span className="text-xs">{acceleratorText}</span>} label="accelerators" />
             </div>
             <HardwareOverrideForm onClose={() => openTab("finder")} />
           </div>
@@ -356,10 +362,7 @@ export default function ModelFinderPage() {
         <div className="flex flex-col gap-5">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h1
-                className="text-[24px] font-semibold text-b-text"
-                style={{ fontFamily: "var(--b-font-heading)", letterSpacing: "-0.5px" }}
-              >
+              <h1 className="font-display text-[24px] font-semibold tracking-[-0.5px] text-el-ink">
                 Model catalog
               </h1>
               <p className="mt-2 max-w-3xl text-[14px] leading-6 text-el-muted">
@@ -374,8 +377,7 @@ export default function ModelFinderPage() {
                 onChange={(event) =>
                   setCategory(event.target.value as ModelTaskCategory | "all")
                 }
-                className="border border-b-line bg-b-bg1 px-2 py-1 font-mono text-[11px] text-b-text focus:outline-hidden focus:ring-1 focus:ring-b-clay/50"
-                style={CHIP_STYLE}
+                className={SELECT_CLASS}
                 aria-label="Model category"
               >
                 {CATEGORIES.map((item) => (
@@ -387,8 +389,7 @@ export default function ModelFinderPage() {
               <select
                 value={sortBy}
                 onChange={(event) => setSortBy(event.target.value as ModelSortField)}
-                className="border border-b-line bg-b-bg1 px-2 py-1 font-mono text-[11px] text-b-text focus:outline-hidden focus:ring-1 focus:ring-b-clay/50"
-                style={CHIP_STYLE}
+                className={SELECT_CLASS}
                 aria-label="Sort models by"
               >
                 {SORTS.map((item) => (
@@ -400,13 +401,19 @@ export default function ModelFinderPage() {
             </div>
           </div>
 
-          {error && (
+          {error && describeApiError(error).unreachable && (
+            // The shell banner already reports the outage — a quiet note.
+            <p className="font-mono text-micro text-el-muted">
+              model recommendations unavailable —{" "}
+              {describeApiError(error).summary}
+            </p>
+          )}
+          {error && !describeApiError(error).unreachable && (
             <div
               role="alert"
-              className="border-b-red/40 bg-b-bg1 p-4 font-mono text-[12px] text-b-red"
-              style={CARD_STYLE}
+              className="rounded-lg border border-el-danger/40 bg-el-danger-soft p-4 font-mono text-xs text-el-danger"
             >
-              failed to load model recommendations: {error.message}
+              failed to load model recommendations: {apiErrorText(error)}
             </div>
           )}
 
@@ -415,7 +422,7 @@ export default function ModelFinderPage() {
             <div className={`${SECTION_LABEL} mb-3 flex flex-wrap items-center gap-x-3 gap-y-1`}>
               <span>
                 SYSTEM PROFILE · DISCOVERY ·{" "}
-                <span className="text-b-text-dim">
+                <span className="text-el-secondary">
                   tier {data?.profile.performance_tier ?? "—"}
                 </span>
               </span>
@@ -425,7 +432,7 @@ export default function ModelFinderPage() {
                 aria-label="Edit hardware specs"
                 aria-expanded={specsOpen}
                 onClick={() => setSpecsOpen((open) => !open)}
-                className="font-mono text-[9px] uppercase tracking-[1.2px] text-b-text-dim transition-colors hover:text-b-clay"
+                className={`${HIT_AREA} rounded-sm font-mono text-micro uppercase tracking-[1.2px] text-el-secondary underline-offset-2 transition-colors hover:text-el-ink hover:underline focus-ring`}
               >
                 [edit specs]
               </button>
@@ -438,19 +445,19 @@ export default function ModelFinderPage() {
             <div className="grid gap-3.5 lg:grid-cols-4">
               <ProfileStat
                 loading={isLoading}
-                icon={<HardDrive className="h-5 w-5 flex-none text-b-clay" />}
+                icon={<HardDrive aria-hidden="true" className="h-5 w-5 flex-none text-el-secondary" />}
                 value={`${data?.profile.ram_gb ?? 0} GB`}
                 label="usable memory budget"
               />
               <ProfileStat
                 loading={isLoading}
-                icon={<Cpu className="h-5 w-5 flex-none text-b-blue" />}
+                icon={<Cpu aria-hidden="true" className="h-5 w-5 flex-none text-el-secondary" />}
                 value={`${data?.profile.cpu_cores_logical ?? 0} threads`}
                 label={data?.profile.cpu_name ?? "detecting CPU"}
               />
               <ProfileStat
                 loading={isLoading}
-                icon={<Gauge className="h-5 w-5 flex-none text-b-green" />}
+                icon={<Gauge aria-hidden="true" className="h-5 w-5 flex-none text-el-secondary" />}
                 value={compactNumber(
                   data?.profile.estimated_cinebench_r23_multi ?? 0,
                 )}
@@ -459,10 +466,10 @@ export default function ModelFinderPage() {
               <ProfileStat
                 loading={isLoading}
                 icon={
-                  <SlidersHorizontal className="h-5 w-5 flex-none text-b-purple" />
+                  <SlidersHorizontal aria-hidden="true" className="h-5 w-5 flex-none text-el-secondary" />
                 }
                 value={
-                  <span className="font-mono text-[12px] font-normal leading-snug">
+                  <span className="font-mono text-xs font-normal leading-snug">
                     {acceleratorText}
                   </span>
                 }
@@ -479,12 +486,8 @@ export default function ModelFinderPage() {
             {isLoading && (
               <div className="grid gap-3.5 md:grid-cols-2">
                 {CAPABILITY_TIERS.map((tier) => (
-                  <div
-                    key={tier.key}
-                    className="border-b-line bg-b-bg1 px-[17px] py-[15px]"
-                    style={CARD_STYLE}
-                  >
-                    <div className="h-5 w-40 animate-pulse rounded bg-b-bg3" />
+                  <div key={tier.key} className={`${CARD_CLASS} px-4 py-3.5`}>
+                    <div className="h-5 w-40 animate-pulse rounded-sm bg-el-hover" />
                   </div>
                 ))}
               </div>
@@ -492,25 +495,15 @@ export default function ModelFinderPage() {
             {!isLoading && populatedBuckets.length > 0 && (
               <div className="grid gap-3.5 md:grid-cols-2">
                 {populatedBuckets.map(({ tier, tierModels }) => (
-                  <div
-                    key={tier.key}
-                    className="border-b-line bg-b-bg1 px-[17px] py-[15px]"
-                    style={CARD_STYLE}
-                  >
+                  <div key={tier.key} className={`${CARD_CLASS} px-4 py-3.5`}>
                     <div className="flex items-baseline gap-2.5">
-                      <span
-                        className="text-[14px] font-semibold"
-                        style={{
-                          fontFamily: "var(--b-font-heading)",
-                          color: tier.color,
-                        }}
-                      >
+                      <span className={`font-display text-[14px] font-semibold ${tier.textClass}`}>
                         {tier.letter}
                       </span>
-                      <span className="text-[11px] text-b-text-mid">
+                      <span className="text-xs text-el-secondary">
                         {tier.label}
                       </span>
-                      <span className="ml-auto font-mono text-[9.5px] text-b-text-faint">
+                      <span className="ml-auto font-mono text-micro text-el-muted">
                         {tier.desc}
                       </span>
                     </div>
@@ -522,15 +515,10 @@ export default function ModelFinderPage() {
                           target="_blank"
                           rel="noreferrer"
                           title={`${model.name} · ${model.fit_score}% fit`}
-                          className="inline-flex max-w-[200px] items-center gap-1.5 border px-[9px] py-1 font-mono text-[10px] text-b-text-mid transition-colors hover:text-b-clay"
-                          style={{
-                            ...CHIP_STYLE,
-                            borderColor: tier.color,
-                            backgroundColor: "rgb(var(--b-bg2))",
-                          }}
+                          className={`${HIT_AREA} inline-flex min-h-8 max-w-[200px] items-center gap-1.5 rounded-sm border bg-el-subtle px-2 py-1 font-mono text-micro text-el-secondary underline-offset-2 transition-colors hover:text-el-ink hover:underline focus-ring ${tier.borderClass}`}
                         >
                           <span className="truncate">{model.name}</span>
-                          <span className="flex-none text-b-text-dim">
+                          <span className="flex-none text-el-muted">
                             {model.fit_score}%
                           </span>
                         </a>
@@ -551,9 +539,9 @@ export default function ModelFinderPage() {
                   <span
                     key={tier.key}
                     data-testid={`fit-band-empty-${tier.key}`}
-                    className="font-mono text-[9.5px] text-b-text-faint"
+                    className="font-mono text-micro text-el-muted"
                   >
-                    <span style={{ color: tier.color }}>{tier.letter}</span>{" "}
+                    <span className={tier.textClass}>{tier.letter}</span>{" "}
                     {tier.label} — none
                   </span>
                 ))}
@@ -562,7 +550,7 @@ export default function ModelFinderPage() {
             {allFitWithHeadroom && (
               <p
                 data-testid="fit-headroom-caption"
-                className="mt-2 font-mono text-[9.5px] text-b-text-dim"
+                className="mt-2 font-mono text-micro text-el-muted"
               >
                 all matches fit with headroom on this machine
               </p>
@@ -578,7 +566,7 @@ export default function ModelFinderPage() {
           />
 
           {data?.profile.notes.map((note) => (
-            <p key={note} className="font-mono text-[10px] text-b-text-dim">
+            <p key={note} className="font-mono text-micro text-el-muted">
               note: {note}
             </p>
           ))}

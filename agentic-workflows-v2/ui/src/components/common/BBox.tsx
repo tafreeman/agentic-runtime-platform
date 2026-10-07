@@ -16,21 +16,15 @@ export default function BBox({
   bodyClassName = "",
 }: Readonly<BBoxProps>) {
   return (
-    <div
-      className={`border-b-line bg-b-bg1 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] ${className}`}
-      style={{ borderRadius: "var(--b-rad-lg)", borderWidth: "var(--b-bw)", borderStyle: "solid" }}
-    >
+    <div className={`rounded-lg border border-el-divider bg-el-surface ${className}`}>
       {title && (
-        <div
-          className="flex items-center justify-between border-b border-b-line bg-b-bg2 px-[11px] py-[5px]"
-          style={{
-            borderTopLeftRadius: "var(--b-rad-lg)",
-            borderTopRightRadius: "var(--b-rad-lg)",
-          }}
-        >
-          <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.5px] text-b-text-mid">
-            <span className="text-b-green leading-none">▊</span>
-            <span style={{ fontFamily: "var(--b-font-heading)" }}>{title}</span>
+        <div className="flex items-center justify-between rounded-t-lg border-b border-el-divider bg-el-subtle px-3 py-1.5">
+          <div className="flex items-center gap-2 text-micro uppercase tracking-[0.5px] text-el-secondary">
+            {/* Decorative block mark: neutral ink, not a status color. */}
+            <span aria-hidden="true" className="leading-none text-el-faint">
+              ▊
+            </span>
+            <span>{title}</span>
           </div>
           {right && <div className="flex items-center gap-2">{right}</div>}
         </div>

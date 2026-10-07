@@ -1,12 +1,15 @@
 import type { StepStatus } from "../../api/types";
 
+// Status always carries a text label (never color alone, §11.3). Running is
+// info-blue like the graph's running state — vermilion stays reserved for
+// selection/emphasis — and its pulse stops under reduced motion (globals.css).
 const config: Record<StepStatus, { label: string; color: string; animate?: boolean }> = {
-  pending:   { label: "[----]", color: "text-b-text-dim" },
-  running:   { label: "[RUN]",  color: "text-b-clay",     animate: true },
-  success:   { label: "[OK ]",  color: "text-b-green" },
-  failed:    { label: "[ERR]",  color: "text-b-red" },
-  skipped:   { label: "[WARN]", color: "text-b-amber" },
-  cancelled: { label: "[----]", color: "text-b-text-dim" },
+  pending:   { label: "[----]", color: "text-el-neutral" },
+  running:   { label: "[RUN]",  color: "text-el-info",    animate: true },
+  success:   { label: "[OK ]",  color: "text-el-success" },
+  failed:    { label: "[ERR]",  color: "text-el-danger" },
+  skipped:   { label: "[WARN]", color: "text-el-warning" },
+  cancelled: { label: "[----]", color: "text-el-neutral" },
 };
 
 interface Props {

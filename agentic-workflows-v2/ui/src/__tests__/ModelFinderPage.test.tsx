@@ -16,6 +16,7 @@ const mockLoadLmStudioModel = vi.fn();
 const mockGetHardwareOverride = vi.fn();
 const mockPutHardwareOverride = vi.fn();
 const mockDeleteHardwareOverride = vi.fn();
+const mockHealthCheck = vi.fn();
 
 vi.mock("../api/client", async () => {
   const actual = await vi.importActual("../api/client");
@@ -29,6 +30,8 @@ vi.mock("../api/client", async () => {
     putHardwareOverride: (...args: unknown[]) => mockPutHardwareOverride(...args),
     deleteHardwareOverride: (...args: unknown[]) =>
       mockDeleteHardwareOverride(...args),
+    // Mutating actions are gated on the shared backend-health cache.
+    healthCheck: () => mockHealthCheck(),
   };
 });
 
@@ -142,6 +145,7 @@ describe("ModelFinderPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    mockHealthCheck.mockResolvedValue({ status: "ok", version: "test" });
     mockGetModelRecommendations.mockResolvedValue(makeResponse());
     mockProbeModels.mockResolvedValue(makeProbe());
     mockLoadLmStudioModel.mockResolvedValue({
@@ -416,9 +420,54 @@ describe("ModelFinderPage", () => {
       }),
     );
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "LM Studio load failed: API 502: load rejected",
+    // Readable copy that still carries the server's detail.
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(
+      "LM Studio load failed: The API server isn't responding (HTTP 502). Details: load rejected.",
     );
+    expect(alert).not.toHaveTextContent("API 502:");
+  });
+
+  it("disables LM Studio load while the API is down and says why", async () => {
+    mockHealthCheck.mockRejectedValue(new TypeError("Failed to fetch"));
+    mockProbeModels.mockResolvedValue(
+      makeProbe({
+        available_providers: ["lmstudio"],
+        unavailable_providers: [],
+        models: [
+          {
+            id: "lmstudio:qwen/qwen3.5-9b",
+            provider: "lmstudio",
+            tier: 0,
+            available: true,
+            running: false,
+          },
+        ],
+      }),
+    );
+    renderPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: /lmstudio.*ready/ }));
+    const hint = await screen.findByText(/Loading models is unavailable/);
+    const loadButton = screen.getByRole("button", {
+      name: "Load lmstudio:qwen/qwen3.5-9b in LM Studio",
+    });
+    expect(loadButton).toBeDisabled();
+    expect(loadButton).toHaveAttribute("aria-describedby", hint.id);
+    // Opening the playground is navigation, not a mutation — still enabled.
+    expect(
+      screen.getByTestId("open-in-playground-lmstudio:qwen/qwen3.5-9b"),
+    ).toBeEnabled();
+  });
+
+  it("keeps an unreachable-API probe failure to a quiet note", async () => {
+    mockProbeModels.mockRejectedValue(new TypeError("Failed to fetch"));
+    renderPage();
+
+    expect(await screen.findByTestId("probe-error-note")).toHaveTextContent(
+      "probe unavailable — Can't reach the API server.",
+    );
+    expect(screen.queryByText(/probe failed/)).not.toBeInTheDocument();
   });
 
   it("rescan refreshes both the recommendations and the probe", async () => {
@@ -450,6 +499,7 @@ describe("ModelFinderPage", () => {
 
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent("failed to load model recommendations: boom");
+    expect(alert).toHaveTextContent("check the API server log");
   });
 
   it("shows an empty state when no providers have credentials", async () => {
@@ -746,5 +796,37 @@ describe("ModelFinderPage", () => {
     expect(
       screen.queryByTestId("hardware-override-form"),
     ).not.toBeInTheDocument();
+  });
+
+  it("disables hardware override save and clear while the API is down", async () => {
+    mockHealthCheck.mockRejectedValue(new TypeError("Failed to fetch"));
+    renderPage();
+
+    fireEvent.click(await screen.findByTestId("edit-specs"));
+    const hint = await screen.findByText(/Saving is unavailable/);
+    expect(hint).toHaveTextContent("The API server is unreachable.");
+    for (const id of ["save-specs", "clear-specs"]) {
+      const button = screen.getByTestId(id);
+      expect(button).toBeDisabled();
+      expect(button).toHaveAttribute("aria-describedby", hint.id);
+    }
+    // Cancel is local and stays available.
+    expect(
+      screen.getByRole("button", { name: "Cancel editing hardware specs" }),
+    ).toBeEnabled();
+  });
+
+  it("shows a hardware override save failure as readable copy", async () => {
+    mockPutHardwareOverride.mockRejectedValue(
+      new Error('API 422: {"detail":"ram_gb must be positive"}'),
+    );
+    renderPage();
+
+    fireEvent.click(await screen.findByTestId("edit-specs"));
+    fireEvent.click(await screen.findByTestId("save-specs"));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "failed to update hardware override: ram_gb must be positive. Fix the input and try again.",
+    );
   });
 });

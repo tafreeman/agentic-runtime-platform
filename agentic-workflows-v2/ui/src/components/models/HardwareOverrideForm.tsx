@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   deleteHardwareOverride,
@@ -9,21 +9,21 @@ import type {
   HardwareAcceleratorOverride,
   HardwareOverride,
 } from "../../api/hardware";
+import { useApiAvailability } from "../../hooks/useApiAvailability";
+import { describeApiError } from "../../lib/apiErrors";
+import { Button } from "../ui/button";
+import { apiErrorText } from "../common/apiErrorText";
 
 // Inline "[edit specs]" form for the SYSTEM PROFILE section — lets the user
 // pin RAM/CPU/TOPS/accelerator values so recommendations can be previewed for
 // hardware other than what was auto-detected. Saving PUTs the sparse override
 // and invalidates the recommendation + probe queries so the page re-derives.
 
-const CARD_STYLE = {
-  borderWidth: "var(--b-bw)",
-  borderRadius: "var(--b-rad-lg)",
-} as const;
+const CARD_CLASS = "rounded-lg border border-el-divider bg-el-surface p-4";
 const FIELD_CLASS =
-  "w-full border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text placeholder:text-b-text-faint focus:border-b-clay focus:outline-hidden";
-const FIELD_STYLE = { borderRadius: "var(--b-rad-sm)" } as const;
+  "h-10 w-full rounded-md border border-el-divider bg-el-raised px-2.5 font-mono text-xs text-el-ink placeholder:text-el-faint focus-ring focus-visible:border-el-focus";
 const CAPTION_LABEL =
-  "mb-1 block font-mono text-[9px] uppercase tracking-[1.2px] text-b-text-faint";
+  "mb-1 block font-mono text-micro uppercase tracking-[1.2px] text-el-muted";
 
 /** Parse a numeric field: empty → null, non-numeric → null (field ignored). */
 function toNumberOrNull(raw: string): number | null {
@@ -95,8 +95,12 @@ function HardwareOverrideFields({
     },
   });
 
+  const { apiDown, reason: apiDownReason } = useApiAvailability();
+  const apiDownHintId = useId();
   const busy = saveMutation.isPending || clearMutation.isPending;
   const mutationError = saveMutation.error ?? clearMutation.error;
+  // Save / clear write to the API; cancel stays available.
+  const mutationsDisabled = busy || apiDown;
 
   const handleSave = () => {
     const cores = toIntOrNull(cpuCores);
@@ -128,12 +132,8 @@ function HardwareOverrideFields({
   };
 
   return (
-    <div
-      data-testid="hardware-override-form"
-      className="border-b-line bg-b-bg1 p-4"
-      style={CARD_STYLE}
-    >
-      <div className="mb-3 font-mono text-[9px] uppercase tracking-[1.2px] text-b-text-faint">
+    <div data-testid="hardware-override-form" className={CARD_CLASS}>
+      <div className="mb-3 font-mono text-micro uppercase tracking-[1.2px] text-el-muted">
         HARDWARE OVERRIDE · pins these values over live detection
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -144,7 +144,7 @@ function HardwareOverrideFields({
             data-testid="spec-ram-gb" aria-label="Override RAM in GB"
             value={ramGb}
             onChange={(event) => setRamGb(event.target.value)}
-            className={FIELD_CLASS} style={FIELD_STYLE}
+            className={FIELD_CLASS}
           />
         </label>
         <label className="block">
@@ -154,7 +154,7 @@ function HardwareOverrideFields({
             data-testid="spec-cpu-cores" aria-label="Override logical CPU cores"
             value={cpuCores}
             onChange={(event) => setCpuCores(event.target.value)}
-            className={FIELD_CLASS} style={FIELD_STYLE}
+            className={FIELD_CLASS}
           />
         </label>
         <label className="block">
@@ -164,7 +164,7 @@ function HardwareOverrideFields({
             data-testid="spec-cpu-name" aria-label="Override CPU name"
             value={cpuName}
             onChange={(event) => setCpuName(event.target.value)}
-            className={FIELD_CLASS} style={FIELD_STYLE}
+            className={FIELD_CLASS}
           />
         </label>
         <label className="block">
@@ -174,7 +174,7 @@ function HardwareOverrideFields({
             data-testid="spec-system-tops" aria-label="Override system TOPS"
             value={systemTops}
             onChange={(event) => setSystemTops(event.target.value)}
-            className={FIELD_CLASS} style={FIELD_STYLE}
+            className={FIELD_CLASS}
           />
         </label>
       </div>
@@ -187,7 +187,7 @@ function HardwareOverrideFields({
             onChange={(event) =>
               setAccelKind(event.target.value === "npu" ? "npu" : "gpu")
             }
-            className={FIELD_CLASS} style={FIELD_STYLE}
+            className={FIELD_CLASS}
           >
             <option value="gpu">gpu</option>
             <option value="npu">npu</option>
@@ -201,7 +201,7 @@ function HardwareOverrideFields({
             value={accelName}
             onChange={(event) => setAccelName(event.target.value)}
             placeholder="leave empty for none"
-            className={FIELD_CLASS} style={FIELD_STYLE}
+            className={FIELD_CLASS}
           />
         </label>
         <label className="block">
@@ -211,7 +211,7 @@ function HardwareOverrideFields({
             data-testid="spec-accel-memory" aria-label="Override accelerator memory in GB"
             value={accelMemory}
             onChange={(event) => setAccelMemory(event.target.value)}
-            className={FIELD_CLASS} style={FIELD_STYLE}
+            className={FIELD_CLASS}
           />
         </label>
         <label className="block">
@@ -221,51 +221,60 @@ function HardwareOverrideFields({
             data-testid="spec-accel-tops" aria-label="Override accelerator TOPS"
             value={accelTops}
             onChange={(event) => setAccelTops(event.target.value)}
-            className={FIELD_CLASS} style={FIELD_STYLE}
+            className={FIELD_CLASS}
           />
         </label>
       </div>
 
       {mutationError && (
-        <div
-          role="alert"
-          className="mt-3 font-mono text-[10px] text-b-red"
-        >
-          failed to update hardware override: {mutationError.message}
+        <div role="alert" className="mt-3 font-mono text-xs text-el-danger">
+          failed to update hardware override: {apiErrorText(mutationError)}
         </div>
       )}
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
-        <button
+        <Button
           type="button"
+          size="sm"
           data-testid="save-specs"
           aria-label="Save hardware override"
+          aria-describedby={apiDown ? apiDownHintId : undefined}
           onClick={handleSave}
-          disabled={busy}
-          className="btn-primary disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={mutationsDisabled}
+          className="font-mono"
         >
           save
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          size="sm"
+          variant="outline"
           data-testid="clear-specs"
           aria-label="Clear hardware override"
+          aria-describedby={apiDown ? apiDownHintId : undefined}
           onClick={() => clearMutation.mutate()}
-          disabled={busy}
-          className="btn-ghost disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={mutationsDisabled}
+          className="font-mono"
         >
           clear override
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          size="sm"
+          variant="ghost"
           aria-label="Cancel editing hardware specs"
           onClick={onClose}
           disabled={busy}
-          className="btn-ghost disabled:cursor-not-allowed disabled:opacity-50"
+          className="font-mono"
         >
           cancel
-        </button>
+        </Button>
       </div>
+      {apiDown && (
+        <p id={apiDownHintId} className="mt-2 text-micro text-el-muted">
+          Saving is unavailable: {apiDownReason}
+        </p>
+      )}
     </div>
   );
 }
@@ -289,22 +298,26 @@ export default function HardwareOverrideForm({
 
   if (isLoading) {
     return (
-      <div
-        className="border-b-line bg-b-bg1 p-4 font-mono text-[10px] text-b-text-dim"
-        style={CARD_STYLE}
-      >
+      <div className={`${CARD_CLASS} font-mono text-xs text-el-muted`}>
         loading hardware override…
       </div>
     );
   }
   if (error) {
+    // Unreachable API: the shell banner already says so — keep this quiet.
+    if (describeApiError(error).unreachable) {
+      return (
+        <div className={`${CARD_CLASS} font-mono text-xs text-el-muted`}>
+          hardware override unavailable — {describeApiError(error).summary}
+        </div>
+      );
+    }
     return (
       <div
         role="alert"
-        className="border-b-red/40 bg-b-bg1 p-4 font-mono text-[11px] text-b-red"
-        style={CARD_STYLE}
+        className="rounded-lg border border-el-danger/40 bg-el-danger-soft p-4 font-mono text-xs text-el-danger"
       >
-        failed to load hardware override: {error.message}
+        failed to load hardware override: {apiErrorText(error)}
       </div>
     );
   }
