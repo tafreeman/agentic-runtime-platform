@@ -28,7 +28,7 @@ import { apiErrorText } from "../common/apiErrorText";
 
 /** Matches the shared Input: 40px, 4px radius, full-strength focus ring. */
 const FIELD_CLASS =
-  "h-10 w-full rounded-md border border-el-divider bg-el-raised px-2.5 font-mono text-[13px] text-el-ink placeholder:text-el-faint focus-ring focus-visible:border-el-focus";
+  "h-10 w-full rounded-md border border-el-control-border bg-el-raised px-2.5 font-mono text-[13px] text-el-ink placeholder:text-el-faint focus-ring focus-visible:border-el-focus";
 /** Streaming = running state: info color; the pulse stops under reduced motion. */
 const PULSE_DOT =
   "animate-b-pulse inline-block h-[5px] w-[5px] rounded-full bg-el-info";
@@ -641,7 +641,7 @@ export default function ChatPlaygroundPanel({
       )}
 
       <section
-        className="rounded-lg border border-el-divider bg-el-raised p-3 shadow-(--el-shadow-raised)"
+        className="rounded-lg border border-el-control-border bg-el-raised p-3 shadow-(--el-shadow-raised)"
         aria-label="Message composer"
       >
         {attachments.length > 0 && (

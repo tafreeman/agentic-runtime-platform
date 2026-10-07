@@ -61,7 +61,7 @@ export default function StepScoreDetails({
             <div key={step.step_name} className="border-b border-el-divider-soft last:border-b-0">
               <button
                 type="button"
-                className="focus-ring-inset grid min-h-9 w-full grid-cols-[minmax(0,1fr)_72px_84px_54px] items-center gap-2 px-3 py-2 text-left font-mono text-micro transition-colors hover:bg-el-subtle"
+                className="focus-ring-inset grid min-h-9 w-full grid-cols-[minmax(0,1fr)_56px_84px_auto] items-center gap-2 px-3 py-2 text-left font-mono text-micro transition-colors hover:bg-el-subtle"
                 aria-expanded={isExpanded}
                 onClick={() => setExpandedStep(isExpanded ? null : step.step_name)}
               >
@@ -85,7 +85,10 @@ export default function StepScoreDetails({
                     />
                   );
                 })()}
-                <BPill tone={statusTone(step.status)}>{step.status}</BPill>
+                {/* auto track: a fixed 54px clipped longer statuses ("success"). */}
+                <span className="justify-self-end">
+                  <BPill tone={statusTone(step.status)}>{step.status}</BPill>
+                </span>
               </button>
               {isExpanded && (
                 <div className="border-t border-el-divider-soft bg-el-canvas px-3 py-2">

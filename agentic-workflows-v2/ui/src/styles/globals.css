@@ -45,18 +45,11 @@
   --color-muted: rgb(var(--el-surface-subtle));
   --color-muted-foreground: rgb(var(--el-ink-muted));
 
-  --color-accent-blue: rgb(var(--b-blue));
-  --color-accent-green: rgb(var(--b-green));
-  --color-accent-red: rgb(var(--b-red));
-  --color-accent-amber: rgb(var(--b-amber));
-  --color-accent-purple: rgb(var(--b-purple));
-  --color-accent-clay: rgb(var(--b-clay));
-
   --color-destructive: rgb(var(--el-danger));
   --color-destructive-foreground: rgb(var(--el-surface-raised));
 
   --color-border: rgb(var(--el-divider));
-  --color-input: rgb(var(--el-divider));
+  --color-input: rgb(var(--el-control-border));
   --color-ring: rgb(var(--el-focus));
 
   /* Evidence Ledger palette (tokens.css). Surfaces and ink tiers. */
@@ -72,6 +65,8 @@
   --color-el-divider: rgb(var(--el-divider));
   --color-el-divider-soft: rgb(var(--el-divider-soft));
   --color-el-divider-faint: rgb(var(--el-divider-faint));
+  /* >= 3:1 boundary for inputs, selects, textareas and input groups. */
+  --color-el-control-border: rgb(var(--el-control-border));
   --color-el-action: rgb(var(--el-action));
   --color-el-action-ink: rgb(var(--el-action-ink));
   --color-el-accent: rgb(var(--el-accent));
@@ -131,42 +126,21 @@
   --color-el-graph-edge-kickback-label-bg: rgb(var(--el-graph-edge-kickback-label-bg));
   --color-el-graph-edge-kickback-label-ink: rgb(var(--el-graph-edge-kickback-label-ink));
 
-  /* Legacy Direction B classes — migrate to the el-* classes above. */
-  --color-b-bg0: rgb(var(--b-bg0));
-  --color-b-bg1: rgb(var(--b-bg1));
-  --color-b-bg2: rgb(var(--b-bg2));
-  --color-b-bg3: rgb(var(--b-bg3));
-  --color-b-line: rgb(var(--b-line));
-  --color-b-line-soft: rgb(var(--b-line-soft));
-  --color-b-text: rgb(var(--b-text));
-  --color-b-text-mid: rgb(var(--b-text-mid));
-  --color-b-text-dim: rgb(var(--b-text-dim));
-  --color-b-text-faint: rgb(var(--b-text-faint));
-  --color-b-clay: rgb(var(--b-clay));
-  --color-b-clay-soft: var(--b-clay-soft);
-  --color-b-green: rgb(var(--b-green));
-  --color-b-amber: rgb(var(--b-amber));
-  --color-b-blue: rgb(var(--b-blue));
-  --color-b-red: rgb(var(--b-red));
-  --color-b-purple: rgb(var(--b-purple));
-
-  --color-surface-0: rgb(var(--b-bg0));
-  --color-surface-1: rgb(var(--b-bg1));
-  --color-surface-2: rgb(var(--b-bg2));
-  --color-surface-3: rgb(var(--b-bg3));
-
   --font-sans: var(--el-font-sans);
   --font-display: var(--el-font-display);
-  --font-mono: var(--b-font-mono);
-  --font-heading: var(--b-font-heading);
+  --font-mono: var(--el-font-mono);
 
   --radius-sm: var(--el-radius-sm);
   --radius-md: var(--el-radius-md);
   --radius-lg: var(--el-radius-lg);
-  --radius-b-lg: var(--b-rad-lg);
-  --radius-b-sm: var(--b-rad-sm);
 
-  --border-width-b: var(--b-bw);
+  /*
+    The legacy Direction B theme keys (--color-b-*, --color-surface-*,
+    --color-accent-*, --font-heading, --radius-b-*, --border-width-b) are gone:
+    no JSX uses them, and --border-width-b / --radius-b-* collided with core
+    utilities — `border-b` drew a full 1px box instead of a bottom rule, and
+    `rounded-b-lg` rounded all four corners.
+  */
 
   --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   --animate-dash-flow: b-dash-flow 0.5s linear infinite;
@@ -232,7 +206,11 @@
 
   A global :focus-visible default in @layer base gives every focusable element
   the same ring, but any utility (outline-hidden, outline-none, ring-*) beats
-  the base layer, so sites that suppress outlines must adopt focus-ring.
+  the base layer, so sites that suppress outlines must adopt focus-ring. The
+  only remaining suppressions are programmatic focus targets (main, dialog/
+  popover content, the cmdk list) and bare inputs whose bordered wrapper draws
+  a full-strength focus-within ring (InputGroup, cmdk input, the command
+  palette and the Runs/Workflows search rows).
 */
 @utility focus-ring {
   &:focus-visible {
@@ -246,38 +224,6 @@
     outline: var(--el-focus-ring-width) solid rgb(var(--el-focus));
     outline-offset: calc(-1 * var(--el-focus-ring-width));
   }
-}
-
-/*
-  DEPRECATED — legacy Direction B component utilities: card, card-hover, btn,
-  btn-primary, btn-ghost. Kept only so unmigrated JSX keeps rendering; do not
-  use them in new code. Migrate call sites to the shadcn Button / Ledger
-  compositions with el-* tokens, then delete these utilities.
-*/
-@utility card {
-  @apply border-b border-b-line bg-b-bg1 p-4;
-  border-radius: var(--b-rad-lg);
-}
-
-@utility card-hover {
-  @apply card transition-colors duration-150 hover:border-b-clay/40 hover:bg-b-bg2;
-}
-
-@utility btn {
-  @apply inline-flex items-center gap-1.5 px-3 py-1.5 font-mono text-micro transition-colors duration-150 focus-ring;
-  border-radius: var(--b-rad-sm);
-}
-
-@utility btn-primary {
-  @apply btn bg-b-clay;
-  color: var(--b-btn-primary-ink);
-  &:hover {
-    opacity: 0.85;
-  }
-}
-
-@utility btn-ghost {
-  @apply btn border-b border-b-line text-b-text-dim hover:bg-b-bg2 hover:text-b-text;
 }
 
 @layer base {
@@ -329,7 +275,7 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: var(--b-scroll-thumb);
+    background: var(--el-scroll-thumb);
     border-radius: 3px;
   }
 }
@@ -340,22 +286,30 @@
     background: rgb(var(--el-canvas));
     color: rgb(var(--el-ink));
   }
+}
 
+@layer base {
   /*
-    Transitional enforcer: inside the app shell, keep the focus ring visible
-    even where legacy `outline-hidden` / `focus:outline-hidden` utilities
-    suppress it (this rule is emitted after all utilities). It sets only
-    style/width/color, so the offset still comes from the base default,
-    focus-ring, or focus-ring-inset. Remove once no call site suppresses
-    outlines.
+    Design system §10.2: self-bordered text controls are at least 40px tall
+    with the 4px control radius. In the base layer, so a control's own
+    utilities (min-h-*, rounded-*) still win; `.el-app` (0,1,0) outranks
+    preflight's `input { border-radius: 0 }`. Excluded: non-text
+    inputs (checkbox, radio, range, file, color) and bare inputs drawn inside
+    a bordered wrapper that owns the height (InputGroup, cmdk).
   */
-  .el-app :where(button, a, input, select, textarea, [tabindex]):focus-visible {
-    outline-style: solid;
-    outline-width: var(--el-focus-ring-width);
-    outline-color: rgb(var(--el-focus));
-  }
-
-  .el-app :where(input, select, textarea) {
+  .el-app
+    :where(
+      input:not(
+          [type="checkbox"],
+          [type="radio"],
+          [type="range"],
+          [type="file"],
+          [type="hidden"],
+          [type="color"]
+        ),
+      select,
+      textarea
+    ):where(:not([data-slot="input-group-control"], [cmdk-input])) {
     min-height: 40px;
     border-radius: var(--el-radius-md);
   }
@@ -520,11 +474,10 @@
  * StepNode's streaming bar and ring) must also honor usePrefersReducedMotion.
  * ────────────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  /* (a) Named loops, then the catch-all. */
+  /* (a) Named loops in use, then the catch-all (which also covers any
+     unlisted Tailwind loop such as animate-ping). */
   .animate-pulse,
   .animate-spin,
-  .animate-ping,
-  .animate-bounce,
   .animate-b-pulse,
   .animate-b-blink,
   .animate-pulse-slow,

@@ -11,8 +11,14 @@ export default function StepLogPanel({ events, className = "" }: Readonly<Props>
   const [expanded, setExpanded] = useState(true);
   const panelId = useId();
 
+  // Token deltas are per-chunk stream noise: logging (and announcing) each
+  // one would flood the polite live region (§16), so the log lists lifecycle
+  // events only.
   const displayEvents = events.filter(
-    (e) => e.type !== "keepalive" && e.type !== "connection_established"
+    (e) =>
+      e.type !== "keepalive" &&
+      e.type !== "connection_established" &&
+      e.type !== "token_delta"
   );
 
   return (
@@ -105,8 +111,19 @@ function EventLine({ event }: Readonly<{ event: ExecutionEvent }>) {
       color = "text-el-danger";
       message = `Error: ${event.error}`;
       break;
+    case "approval_required":
+      color = "text-el-warning";
+      message = `Approval required: ${event.tool_name}${
+        event.agent_or_step ? ` (${event.agent_or_step})` : ""
+      }`;
+      break;
+    case "approval_decision":
+      message = `Approval ${event.decision}: ${event.tool_name}`;
+      break;
     default:
-      message = JSON.stringify(event);
+      // Readable fallback for event types this view doesn't know yet —
+      // never a raw JSON dump as the default experience (§18).
+      message = `Event: ${event.type ?? "unknown"}`;
   }
 
   const timestamp =

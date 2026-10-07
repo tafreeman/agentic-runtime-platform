@@ -1,28 +1,13 @@
-/** Legacy Direction B names are kept so existing call sites stay valid. */
-type BAsciiBarColor =
-  | "b-green"
-  | "b-clay"
-  | "b-red"
-  | "b-amber"
-  | "b-blue"
-  | "success"
-  | "accent"
-  | "danger"
-  | "warning"
-  | "info";
+/** Semantic status colors (el-* tokens). */
+type BAsciiBarColor = "success" | "accent" | "danger" | "warning" | "info";
 
 // Static class map (dynamic `text-${color}` was invisible to Tailwind's
-// scanner and depended on legacy b-* classes being emitted elsewhere).
+// scanner).
 const COLOR_CLASSES: Record<BAsciiBarColor, string> = {
-  "b-green": "text-el-success",
   success: "text-el-success",
-  "b-clay": "text-el-accent-strong",
   accent: "text-el-accent-strong",
-  "b-red": "text-el-danger",
   danger: "text-el-danger",
-  "b-amber": "text-el-warning",
   warning: "text-el-warning",
-  "b-blue": "text-el-info",
   info: "text-el-info",
 };
 

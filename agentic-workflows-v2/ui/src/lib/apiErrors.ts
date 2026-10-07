@@ -108,8 +108,31 @@ export function describeApiError(error: unknown): ApiErrorDescription {
   };
 }
 
-/** One-line form of {@link describeApiError}: "summary remedy". */
+/** End a fragment with sentence punctuation so joined parts read cleanly. */
+function sentence(text: string): string {
+  const trimmed = text.trim();
+  return /[.!?…]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+}
+
+/**
+ * What failed, in words: the {@link describeApiError} summary as a sentence,
+ * plus the server's own detail when the summary leaves it out (gateway
+ * 502/503/504 summaries carry it only in `detail`). No remedy — pair it with
+ * one, or use {@link formatApiError}.
+ */
+export function apiErrorMessage(error: unknown): string {
+  const { summary, detail } = describeApiError(error);
+  const extra =
+    detail && !summary.includes(detail) ? ` Details: ${sentence(detail)}` : "";
+  return `${sentence(summary)}${extra}`;
+}
+
+/**
+ * One-line, user-facing copy for a failed API call: {@link apiErrorMessage}
+ * followed by the recovery remedy, e.g. "pack exists. Fix the input and try
+ * again." Use it wherever an error is shown instead of the raw `err.message`
+ * ("API 409: …").
+ */
 export function formatApiError(error: unknown): string {
-  const { summary, remedy } = describeApiError(error);
-  return `${summary} ${remedy}`;
+  return `${apiErrorMessage(error)} ${describeApiError(error).remedy}`;
 }

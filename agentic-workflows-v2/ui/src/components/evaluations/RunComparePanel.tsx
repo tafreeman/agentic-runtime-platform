@@ -56,7 +56,9 @@ function RunPickerColumn({
   onSelect: (filename: string | null) => void;
 }>) {
   return (
-    <div>
+    // min-w-0: a grid item defaults to its min-content width, so long run
+    // filenames would push column B past the card edge instead of truncating.
+    <div className="min-w-0">
       <span className="mb-1.5 block font-mono text-micro uppercase tracking-[0.8px] text-el-muted">
         CANDIDATE {slot}
       </span>
@@ -278,7 +280,7 @@ export default function RunComparePanel({
         COMPARE RUNS · scores two runs head-to-head under one rubric
       </div>
 
-      <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-2 lg:grid-cols-[1.2fr_1.2fr_1fr]">
+      <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-2 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,1fr)]">
         <RunPickerColumn
           slot="A"
           runs={pickerRuns}
@@ -303,7 +305,7 @@ export default function RunComparePanel({
               value={rubricId}
               onChange={(event) => setRubricId(event.target.value)}
               placeholder="default rubric"
-              className="focus-ring w-full rounded-md border border-el-divider bg-el-canvas px-2 py-1.5 font-mono text-micro text-el-ink placeholder:text-el-muted focus:border-el-focus"
+              className="focus-ring w-full rounded-md border border-el-control-border bg-el-canvas px-2 py-1.5 font-mono text-micro text-el-ink placeholder:text-el-muted focus:border-el-focus"
             />
           </label>
           <button

@@ -69,18 +69,23 @@ export default function ConsoleHeader() {
         <PaletteShortcut />
       </button>
 
-      <span
-        className={`ml-auto hidden flex-none font-mono text-micro md:inline ${
-          noLlmMode ? "text-el-warning" : "text-el-success"
-        }`}
-        title={
-          noLlmMode
-            ? "deterministic placeholder mode — no provider calls"
-            : "live providers"
-        }
-      >
-        {noLlmMode ? "no-llm · deterministic" : "live providers"}
-      </span>
+      {/* Only once the server has reported its mode: while the health check
+          is pending or failing the mode is unknown, and the shell's offline
+          banner carries the outage, so no (green) guess is shown. */}
+      {health.data ? (
+        <span
+          className={`ml-auto hidden flex-none font-mono text-micro md:inline ${
+            noLlmMode ? "text-el-warning" : "text-el-success"
+          }`}
+          title={
+            noLlmMode
+              ? "deterministic placeholder mode — no provider calls"
+              : "live providers"
+          }
+        >
+          {noLlmMode ? "no-llm · deterministic" : "live providers"}
+        </span>
+      ) : null}
     </header>
   );
 }

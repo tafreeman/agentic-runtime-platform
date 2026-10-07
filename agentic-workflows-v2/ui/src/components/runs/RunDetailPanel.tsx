@@ -35,17 +35,16 @@ type RunTone = "ok" | "err" | "clay" | "dim";
 type EvalTone = "pass" | "review" | "fail";
 
 /**
- * Evaluation scorecard colors by tone. `bar` is the BAsciiBar color prop,
- * which (outside this module) still only accepts its legacy names; they
- * alias the same el-success / el-warning / el-danger tokens.
+ * Evaluation scorecard colors by tone. `bar` is BAsciiBar's semantic color
+ * prop (el-success / el-warning / el-danger).
  */
 const EVAL_TONE: Record<
   EvalTone,
-  { text: string; fill: string; bar: "b-green" | "b-amber" | "b-red" }
+  { text: string; fill: string; bar: "success" | "warning" | "danger" }
 > = {
-  pass: { text: "text-el-success", fill: "bg-el-success", bar: "b-green" },
-  review: { text: "text-el-warning", fill: "bg-el-warning", bar: "b-amber" },
-  fail: { text: "text-el-danger", fill: "bg-el-danger", bar: "b-red" },
+  pass: { text: "text-el-success", fill: "bg-el-success", bar: "success" },
+  review: { text: "text-el-warning", fill: "bg-el-warning", bar: "warning" },
+  fail: { text: "text-el-danger", fill: "bg-el-danger", bar: "danger" },
 };
 
 /**
@@ -292,7 +291,12 @@ export default function RunDetailPanel({
             {run.workflow_name}
           </h1>
           <div className="mt-0.5">
-            <CopyId text={run.run_id} className="text-micro" />
+            <CopyId
+              text={run.run_id}
+              // ::after grows the 16px id line to a 32px hit area, mostly
+              // downward into the band's padding (not over the title).
+              className="relative text-micro after:absolute after:inset-x-0 after:-top-1 after:-bottom-3"
+            />
           </div>
         </div>
         <div className="flex flex-none items-center gap-3 font-mono text-micro text-el-secondary">
@@ -449,12 +453,16 @@ export default function RunDetailPanel({
       ) : (
       /* Spans tab — DAG, evaluation, and step detail. "aside" keeps a single
          scrollable column that fits the ~520px inspector; "page" spreads the
-         cards across two columns like the pre-redesign full-page route. */
+         cards across two columns like the pre-redesign full-page route.
+         auto-rows-max: below xl the cards stack in one column, and with
+         `auto` rows the overflow-hidden DAG card (min-content 0) collapsed to
+         its 2px border once the column outgrew the scroll box. items-start
+         keeps the DAG card from stretching to the tall right column at xl. */
       <div
         data-testid={`run-detail-${layout}-layout`}
         className={
           layout === "page"
-            ? "grid min-h-0 flex-1 grid-cols-1 content-start gap-3 overflow-y-auto p-3 xl:grid-cols-[1.25fr_1fr]"
+            ? "grid min-h-0 flex-1 auto-rows-max grid-cols-1 content-start items-start gap-3 overflow-y-auto p-3 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]"
             : "flex-1 space-y-3 overflow-y-auto p-3"
         }
       >

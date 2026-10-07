@@ -19,7 +19,7 @@ const FIELD_LABEL_CLASS =
   "mb-1.5 block font-mono text-micro uppercase tracking-[0.8px] text-el-muted";
 
 const INPUT_CLASS =
-  "h-10 w-full rounded-md border border-el-divider bg-el-canvas px-2.5 font-mono text-xs text-el-ink placeholder:text-el-faint focus-ring focus-visible:border-el-focus disabled:opacity-60";
+  "h-10 w-full rounded-md border border-el-control-border bg-el-canvas px-2.5 font-mono text-xs text-el-ink placeholder:text-el-faint focus-ring focus-visible:border-el-focus disabled:opacity-60";
 
 /** Compact card action: mono micro label on the shared outline Button. */
 const CARD_ACTION_CLASS = "font-mono text-micro uppercase tracking-[0.5px]";

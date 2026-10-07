@@ -64,18 +64,27 @@ function normalizeIssues(issues: WorkflowEditorValidationIssue[] | undefined) {
 }
 
 /**
- * Capability-tier mark classes for a tier badge: 0/fast/haiku → low,
- * 1/sonnet → mid, 2/smart/opus → high (design system tier marks).
+ * Capability-tier mark classes for a tier badge — the same scale as the DAG
+ * step nodes and the workflow detail page: a numbered tier ("t2", "tier3",
+ * "4") maps T0–T2 → low, T3 → mid, T4–T5 → high; named aliases fall back to
+ * fast/haiku → low, sonnet → mid, smart/opus → high.
  */
 function tierClass(tier: string | null | undefined): string {
   const t = (tier ?? "").toLowerCase();
-  if (t.includes("0") || t.includes("fast") || t.includes("haiku")) {
-    return "border-el-tier-low text-el-tier-low";
-  }
-  if (t.includes("2") || t.includes("smart") || t.includes("opus")) {
+  const digit = /(\d+)/.exec(t);
+  if (digit) {
+    const level = Number(digit[1]);
+    if (level <= 2) return "border-el-tier-low text-el-tier-low";
+    if (level === 3) return "border-el-tier-mid text-el-tier-mid";
     return "border-el-tier-high text-el-tier-high";
   }
-  if (t.includes("1") || t.includes("sonnet")) {
+  if (t.includes("fast") || t.includes("haiku")) {
+    return "border-el-tier-low text-el-tier-low";
+  }
+  if (t.includes("smart") || t.includes("opus")) {
+    return "border-el-tier-high text-el-tier-high";
+  }
+  if (t.includes("sonnet")) {
     return "border-el-tier-mid text-el-tier-mid";
   }
   return "border-el-divider text-el-muted";
@@ -560,7 +569,7 @@ export default function WorkflowEditorPage() {
                       onChange={(event) => setDraftSource(event.target.value)}
                       spellCheck={false}
                       readOnly={isReadOnly}
-                      className="h-[430px] w-full resize-none rounded-md border border-el-divider bg-el-raised p-3 font-mono text-sm leading-[1.55] text-el-ink focus-ring"
+                      className="h-[430px] w-full resize-none rounded-md border border-el-control-border bg-el-raised p-3 font-mono text-sm leading-[1.55] text-el-ink focus-ring"
                       aria-label="Workflow source"
                     />
                   </div>

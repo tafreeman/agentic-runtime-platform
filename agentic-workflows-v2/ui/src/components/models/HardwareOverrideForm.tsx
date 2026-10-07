@@ -21,7 +21,7 @@ import { apiErrorText } from "../common/apiErrorText";
 
 const CARD_CLASS = "rounded-lg border border-el-divider bg-el-surface p-4";
 const FIELD_CLASS =
-  "h-10 w-full rounded-md border border-el-divider bg-el-raised px-2.5 font-mono text-xs text-el-ink placeholder:text-el-faint focus-ring focus-visible:border-el-focus";
+  "h-10 w-full rounded-md border border-el-control-border bg-el-raised px-2.5 font-mono text-xs text-el-ink placeholder:text-el-faint focus-ring focus-visible:border-el-focus";
 const CAPTION_LABEL =
   "mb-1 block font-mono text-micro uppercase tracking-[1.2px] text-el-muted";
 

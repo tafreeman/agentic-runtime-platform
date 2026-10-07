@@ -1,3 +1,4 @@
+import { CircleAlert } from "lucide-react";
 import { useState } from "react";
 import { useDatasetSamples } from "../../hooks/useDatasets";
 import type { DatasetSampleSummary } from "../../api/types";
@@ -60,8 +61,11 @@ export default function SampleIndexGrid({
     }
     return (
       <div role="alert" className="p-3 font-mono text-micro text-el-danger">
-        <span className="block">[!] failed to load samples: {failure.summary}</span>
-        <span className="block text-el-secondary">{failure.remedy}</span>
+        <span className="flex items-start gap-1.5">
+          <CircleAlert aria-hidden="true" className="mt-0.5 size-3.5 flex-none" />
+          <span>failed to load samples: {failure.summary}</span>
+        </span>
+        <span className="block pl-5 text-el-secondary">{failure.remedy}</span>
       </div>
     );
   }

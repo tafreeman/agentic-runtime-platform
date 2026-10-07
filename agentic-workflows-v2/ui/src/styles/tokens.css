@@ -13,6 +13,10 @@
  *  - accent-strong, plum and each status color are >= 4.5:1 on canvas,
  *    surface, surface-raised and surface-subtle, and on their own *-soft tint.
  *  - focus is >= 3:1 (non-text) on every surface tier and on accent-soft.
+ *  - control-border (inputs, selects, textareas, input groups, graph nodes)
+ *    is >= 3:1 (WCAG 1.4.11) on canvas, surface, surface-raised and the graph
+ *    canvas. The divider tiers are decorative hairlines (~1.7:1) and must not
+ *    be the only boundary of an interactive control.
  *  - --el-accent is NOT text-safe and is below 3:1 on light canvas/subtle/
  *    hover: use it only for fills/rails paired with another cue. Use
  *    --el-accent-strong for accent text, state-bearing rails and graph marks.
@@ -34,6 +38,7 @@
  *   info            #2f6788   5.35    5.65    6.05    5.07    4.81   4.79
  *   plum            #695385   5.76    6.08    6.51    5.46    5.17   5.10
  *   graph-edge(>=3) #736e64   4.41    4.66    4.99    4.18    3.96   -
+ *   control-bdr(>=3) #857f73  3.46    3.65    3.92    3.28    3.11   -
  *   accent (marks)  #ef5a36   2.96    3.12    3.34    2.80    2.65   2.62
  *
  *   DARK            fg       canvas  surface raised  subtle  hover   soft
@@ -49,10 +54,14 @@
  *   info            #7cb5d8   7.24    6.61    5.90    5.41    4.77   4.81
  *   plum            #b8a1d8   6.98    6.38    5.70    5.22    4.61   4.99
  *   graph-edge(>=3) #b1a89b   6.84    6.25    5.58    5.11    4.51   -
+ *   control-bdr(>=3) #8a8276  4.24    3.87    3.45    3.17    2.79   -
  *   accent (marks)  #f2704c   5.51    5.03    4.49    4.12    3.63   3.76
  *
  * Graph canvas: light --el-graph-canvas = surface-subtle, dark = surface, so
- * the "subtle"/"surface" columns above are the graph-canvas ratios.
+ * the "subtle"/"surface" columns above are the graph-canvas ratios. Graph
+ * node borders use control-border (light 3.28:1 / dark 3.87:1 on the graph
+ * canvas), so queued nodes — whose fill matches the canvas — keep a visible
+ * >= 3:1 boundary.
  */
 
 :root,
@@ -71,6 +80,7 @@
   --el-divider: 189 183 170;         /* #bdb7aa */
   --el-divider-soft: 211 206 196;    /* #d3cec4 */
   --el-divider-faint: 226 221 212;   /* #e2ddd4 */
+  --el-control-border: 133 127 115;  /* #857f73 — >= 3:1 form-control boundary */
   --el-action: 28 29 25;             /* #1c1d19 */
   --el-action-ink: 248 245 239;      /* #f8f5ef */
   --el-accent: 239 90 54;            /* #ef5a36 — marks/fills only, never text */
@@ -133,7 +143,7 @@
   --accent-foreground: rgb(var(--el-ink));
   --destructive: rgb(var(--el-danger));
   --border: rgb(var(--el-divider));
-  --input: rgb(var(--el-divider));
+  --input: rgb(var(--el-control-border));
   --ring: rgb(var(--el-focus));
   --radius: var(--el-radius-md);
 }
@@ -153,6 +163,7 @@
   --el-divider: 112 104 92;          /* #70685c */
   --el-divider-soft: 83 77 68;       /* #534d44 */
   --el-divider-faint: 68 63 55;      /* #443f37 */
+  --el-control-border: 138 130 118;  /* #8a8276 — >= 3:1 form-control boundary */
   --el-action: 244 239 230;          /* #f4efe6 */
   --el-action-ink: 35 33 29;         /* #23211d */
   --el-accent: 242 112 76;           /* #f2704c */
@@ -197,7 +208,7 @@
 
   /* Workflow graph — nodes. */
   --el-graph-node: var(--el-surface-raised);         /* node fill ("light nodes") */
-  --el-graph-node-border: var(--el-divider);         /* idle hairline border */
+  --el-graph-node-border: var(--el-control-border); /* idle border, >= 3:1 on canvas */
   --el-graph-node-selected: var(--el-accent-strong); /* selection outline (>= 3:1) */
   --el-graph-node-pending: var(--el-graph-canvas);   /* queued fill; replaces opacity:0.55 */
   --el-graph-label: var(--el-ink);                   /* step name */

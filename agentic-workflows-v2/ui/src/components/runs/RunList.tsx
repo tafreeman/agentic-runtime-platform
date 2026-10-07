@@ -129,9 +129,9 @@ export default function RunList({ runs, isLoading }: RunListProps) {
       ) : (
         <div className="overflow-hidden rounded-lg border border-el-divider bg-el-surface">
           {/* Column headers */}
-          <div className="grid grid-cols-[80px_1.5fr_78px_50px_72px] gap-2.5 border-b border-el-divider px-3 py-2 font-mono text-micro uppercase tracking-[1px] text-el-muted">
+          <div className="grid grid-cols-[48px_minmax(0,1fr)_60px_40px_64px] gap-2 border-b border-el-divider px-3 py-2 font-mono text-micro uppercase tracking-[0.5px] text-el-muted">
             <span>Status</span>
-            <span>Workflow</span>
+            <span className="min-w-0 truncate">Workflow</span>
             <span className="text-right">Duration</span>
             <span className="text-center">Score</span>
             <span className="text-right">When</span>
@@ -154,7 +154,7 @@ export default function RunList({ runs, isLoading }: RunListProps) {
                     navigate(target);
                   }
                 }}
-                className="focus-ring-inset grid min-h-11 cursor-pointer grid-cols-[80px_1.5fr_78px_50px_72px] items-center gap-2.5 border-b border-el-divider-soft px-3 py-2 font-mono text-micro transition-colors last:border-b-0 hover:bg-el-subtle"
+                className="focus-ring-inset grid min-h-11 cursor-pointer grid-cols-[48px_minmax(0,1fr)_60px_40px_64px] items-center gap-2 border-b border-el-divider-soft px-3 py-2 font-mono text-micro transition-colors last:border-b-0 hover:bg-el-subtle"
               >
                 <span className={`tracking-[0.5px] ${ascii.className}`}>
                   {ascii.label}

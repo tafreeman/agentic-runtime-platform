@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import CommandPalette from "../components/common/CommandPalette";
 import { CliProvider } from "../hooks/useCli";
 
@@ -18,6 +18,10 @@ function renderPalette() {
   );
 }
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 function openPalette() {
   fireEvent.keyDown(window, { key: "k", ctrlKey: true });
 }
@@ -34,6 +38,16 @@ describe("CommandPalette", () => {
     // run/workflow search that does not exist.
     const input = screen.getByLabelText("Search commands");
     expect(input).toHaveAttribute("placeholder", "jump to page… (g+key)");
+  });
+
+  it("shows the platform's own shortcut in the search row", () => {
+    vi.spyOn(navigator, "platform", "get").mockReturnValue("Linux x86_64");
+    renderPalette();
+    openPalette();
+
+    const hint = screen.getByTestId("palette-shortcut");
+    expect(hint).toHaveAttribute("data-platform", "other");
+    expect(hint).toHaveTextContent("CtrlK");
   });
 
   it("filters commands and navigates to the chosen page, then closes", () => {

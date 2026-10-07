@@ -128,8 +128,8 @@ describe("BPill / BAsciiBar", () => {
     expect(pill.className).toContain("bg-transparent");
   });
 
-  it("maps legacy and semantic bar colors to static el classes", () => {
-    const { rerender } = render(<BAsciiBar value={0.5} color="b-red" />);
+  it("maps semantic bar colors to static el classes", () => {
+    const { rerender } = render(<BAsciiBar value={0.5} color="danger" />);
     expect(screen.getByRole("progressbar").className).toContain("text-el-danger");
     rerender(<BAsciiBar value={0.5} color="info" />);
     expect(screen.getByRole("progressbar").className).toContain("text-el-info");

@@ -137,10 +137,13 @@ describe("RunsPage", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "stale_flow" })).toBeInTheDocument();
-    // Trigger run is navigation, not an API call — it stays usable.
-    expect(screen.getByRole("link", { name: "Trigger run" })).toHaveAttribute(
-      "href",
-      "/workflows",
+    // Starting a run needs the API: the action is disabled with a visible,
+    // programmatically associated reason (no dead link to /workflows).
+    expect(screen.queryByRole("link", { name: "Trigger run" })).not.toBeInTheDocument();
+    const trigger = screen.getByRole("button", { name: "Trigger run" });
+    expect(trigger).toBeDisabled();
+    expect(trigger).toHaveAccessibleDescription(
+      "New runs are unavailable while the API is unreachable.",
     );
   });
 
@@ -280,8 +283,34 @@ describe("RunsPage", () => {
     expect(inner).not.toBeNull();
     expect(inner).toHaveTextContent(longId);
 
-    // Belt-and-braces: the wrapping cell clips anything that still escapes.
-    expect(copyButton.parentElement?.className).toContain("overflow-hidden");
+    // The cell shrinks (min-w-0) but does not clip: overflow-hidden here would
+    // also clip the button's expanded ::after hit area back to the text box.
+    expect(copyButton.parentElement?.className).toContain("min-w-0");
+    expect(copyButton.parentElement?.className).not.toContain("overflow-hidden");
+    expect(copyButton.className).toContain("after:-inset-y-3");
+  });
+
+  it("never shows a negative age when the server clock runs ahead", () => {
+    mockUseRuns.mockReturnValue({
+      data: [
+        makeRun({
+          filename: "ahead.json",
+          run_id: "ahead",
+          start_time: new Date(Date.now() + 90_000).toISOString(),
+        }),
+        makeRun({
+          filename: "old.json",
+          run_id: "old",
+          start_time: new Date(Date.now() - 3 * 3600_000).toISOString(),
+        }),
+      ],
+      isLoading: false,
+    });
+    renderPage();
+
+    expect(screen.getByText("just now")).toBeInTheDocument();
+    expect(screen.getByText("3h ago")).toBeInTheDocument();
+    expect(screen.queryByText(/^-\d/)).not.toBeInTheDocument();
   });
 
   it("renders run rows and filters by query", () => {

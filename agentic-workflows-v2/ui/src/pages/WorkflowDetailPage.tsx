@@ -1,6 +1,6 @@
 import { useId, useMemo, useRef, useState } from "react";
 import { Link, useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { Play, ArrowLeft, Loader2, Pencil } from "lucide-react";
+import { Play, ArrowLeft, Loader2, Pencil, CircleAlert } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { useWorkflowDAG } from "../hooks/useWorkflows";
 import { useRuns } from "../hooks/useRuns";
@@ -447,11 +447,13 @@ export default function WorkflowDetailPage() {
         </button>
       </BTopBar>
 
-      {/* Three-panel body: [DAG center] [run config right] */}
-      <div className="flex flex-1 overflow-hidden">
+      {/* Body: [DAG center] [run config right]. Below md the two stack in
+          one scrolling column — the graph keeps a real 360px canvas instead
+          of collapsing to zero width beside a full-width config panel. */}
+      <div className="flex flex-1 flex-col overflow-y-auto md:flex-row md:overflow-hidden">
 
         {/* ── Center: DAG ── */}
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden border-r border-el-divider">
+        <div className="flex h-[360px] min-w-0 flex-none flex-col overflow-hidden border-b border-el-divider md:h-auto md:flex-1 md:border-r md:border-b-0">
           {/* DAG header — serif workflow name, hairline meta, tier badges */}
           <div className="border-b border-el-divider bg-el-surface px-4 py-[10px]">
             <div className="flex items-center gap-3">
@@ -504,7 +506,13 @@ export default function WorkflowDetailPage() {
                 role="alert"
                 className="flex flex-1 flex-col items-center justify-center gap-1 px-4 text-center font-mono text-micro text-el-danger"
               >
-                <span>[!] {dagFailure.summary}</span>
+                <span className="flex items-start gap-1.5">
+                  <CircleAlert
+                    aria-hidden="true"
+                    className="mt-0.5 size-3.5 flex-none"
+                  />
+                  <span>{dagFailure.summary}</span>
+                </span>
                 <span className="text-el-secondary">{dagFailure.remedy}</span>
               </div>
             )
@@ -527,7 +535,7 @@ export default function WorkflowDetailPage() {
         </div>
 
         {/* ── Right panel: Run config + Run history ── */}
-        <div className="flex w-full flex-col overflow-y-auto bg-el-canvas md:w-[340px]">
+        <div className="flex w-full flex-none flex-col bg-el-canvas md:w-[340px] md:overflow-y-auto">
           {/* $ RUN CONFIGURATION header — live status dot */}
           <div className="flex items-center justify-between border-b border-el-divider bg-el-surface px-4 py-2">
             <span className={PANEL_OVERLINE_CLASS}>$ RUN CONFIGURATION</span>
@@ -600,8 +608,11 @@ export default function WorkflowDetailPage() {
           role="alert"
           className="border-t border-el-danger bg-el-danger-soft px-4 py-2 font-mono text-micro text-el-danger"
         >
-          <span className="block">[!] {runFailure.summary}</span>
-          <span className="block text-el-ink">{runFailure.remedy}</span>
+          <span className="flex items-start gap-1.5">
+            <CircleAlert aria-hidden="true" className="mt-0.5 size-3.5 flex-none" />
+            <span>{runFailure.summary}</span>
+          </span>
+          <span className="block pl-5 text-el-ink">{runFailure.remedy}</span>
         </div>
       )}
     </div>

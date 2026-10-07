@@ -429,7 +429,7 @@ export default function ProviderProbeList({
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="filter models by id or provider…"
-            className="h-10 w-full max-w-[340px] rounded-md border border-el-divider bg-el-raised px-2.5 font-mono text-xs text-el-ink placeholder:text-el-faint focus-ring focus-visible:border-el-focus"
+            className="h-10 w-full max-w-[340px] rounded-md border border-el-control-border bg-el-raised px-2.5 font-mono text-xs text-el-ink placeholder:text-el-faint focus-ring focus-visible:border-el-focus"
           />
           <span
             data-testid="catalog-search-count"

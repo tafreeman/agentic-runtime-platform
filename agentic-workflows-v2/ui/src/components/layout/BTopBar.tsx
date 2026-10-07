@@ -7,18 +7,24 @@ interface BTopBarProps {
 
 export default function BTopBar({ path, children }: Readonly<BTopBarProps>) {
   return (
-    <div className="flex h-9 items-center gap-2 border-b border-el-divider bg-el-surface px-4 font-mono text-micro">
-      <span className="font-display font-semibold tracking-tight text-el-ink">
+    <div className="flex h-9 min-w-0 items-center gap-2 border-b border-el-divider bg-el-surface px-4 font-mono text-micro">
+      {/* The "agentic :" prompt prefix is decorative; below sm it yields its
+          width to the path and the right-slot actions. */}
+      <span className="hidden flex-none font-display font-semibold tracking-tight text-el-ink sm:inline">
         agentic
       </span>
-      <span className="text-el-muted">:</span>
-      <span className="text-el-secondary">~/</span>
-      <span className="text-el-secondary">{path}</span>
+      <span className="hidden flex-none text-el-muted sm:inline">:</span>
+      <span className="flex-none text-el-secondary">~/</span>
+      {/* Long paths (run filenames) truncate on one line instead of wrapping
+          out of the 36px bar; the full path stays available as a tooltip. */}
+      <span className="min-w-0 truncate text-el-secondary" title={path}>
+        {path}
+      </span>
       {/* Static prompt cursor: decorative, so no infinite blink (§13). */}
-      <span className="text-el-faint" aria-hidden="true">
+      <span className="flex-none text-el-faint" aria-hidden="true">
         █
       </span>
-      <div className="ml-auto flex items-center gap-2">{children}</div>
+      <div className="ml-auto flex flex-none items-center gap-2">{children}</div>
     </div>
   );
 }

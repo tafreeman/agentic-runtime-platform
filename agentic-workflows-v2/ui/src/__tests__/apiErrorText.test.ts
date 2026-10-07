@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { apiErrorMessage, apiErrorText } from "../components/common/apiErrorText";
+import { formatApiError } from "../lib/apiErrors";
 
 describe("apiErrorText", () => {
   it("keeps the server detail a gateway summary would otherwise drop", () => {
@@ -25,6 +26,10 @@ describe("apiErrorText", () => {
     expect(apiErrorText(new TypeError("Failed to fetch"))).toBe(
       "Can't reach the API server. Start it with `just dev`, then retry.",
     );
+  });
+
+  it("is the lib formatter under its legacy name", () => {
+    expect(apiErrorText).toBe(formatApiError);
   });
 
   it("leaves sentence punctuation alone", () => {

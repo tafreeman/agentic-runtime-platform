@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ChevronRight, Pencil } from "lucide-react";
+import { ChevronRight, Pencil, CircleAlert } from "lucide-react";
 import { useWorkflows } from "../hooks/useWorkflows";
 import { useRuns } from "../hooks/useRuns";
 import BTopBar from "../components/layout/BTopBar";
@@ -85,7 +85,7 @@ export default function WorkflowsPage() {
           {/* Search — the wrapper draws a full-strength focus-within ring (the
               compliant replacement), so the bare input inside suppresses its
               own outline instead of drawing a second ring. */}
-          <div className="flex items-center gap-2 rounded-md border border-el-divider bg-el-surface px-3 py-2 focus-within:ring-2 focus-within:ring-el-focus focus-within:ring-offset-2 focus-within:ring-offset-el-canvas">
+          <div className="flex items-center gap-2 rounded-md border border-el-control-border bg-el-surface h-10 px-3 focus-within:ring-2 focus-within:ring-el-focus focus-within:ring-offset-2 focus-within:ring-offset-el-canvas">
             <span
               aria-hidden="true"
               className="font-mono text-[13px] font-bold text-el-secondary"
@@ -99,7 +99,7 @@ export default function WorkflowsPage() {
               placeholder="filter by name, tag…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="flex-1 bg-transparent font-mono text-xs text-el-ink outline-none placeholder:text-el-muted"
+              className="min-h-0 flex-1 self-stretch bg-transparent font-mono text-xs text-el-ink outline-none placeholder:text-el-muted"
             />
             {query && (
               <span className="font-mono text-micro text-el-muted" aria-live="polite">
@@ -133,8 +133,14 @@ export default function WorkflowsPage() {
                 role="alert"
                 className="rounded-md border border-el-danger/40 bg-el-danger-soft px-3 py-3 font-mono text-micro text-el-danger"
               >
-                <span className="block">[!] {loadFailure.summary}</span>
-                <span className="block text-el-ink">{loadFailure.remedy}</span>
+                <span className="flex items-start gap-1.5">
+                  <CircleAlert
+                    aria-hidden="true"
+                    className="mt-0.5 size-3.5 flex-none"
+                  />
+                  <span>{loadFailure.summary}</span>
+                </span>
+                <span className="block pl-5 text-el-ink">{loadFailure.remedy}</span>
               </div>
             ))}
 

@@ -159,7 +159,11 @@ describe("WorkflowDetailPage", () => {
 
     renderPage();
 
-    expect(screen.getByText(/\[!\] dag unavailable/i)).toBeInTheDocument();
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent(/dag unavailable/i);
+    // Status is carried by an icon plus words, not an ASCII glyph.
+    expect(alert).not.toHaveTextContent("[!]");
+    expect(alert.querySelector("svg[aria-hidden='true']")).not.toBeNull();
   });
 
   it("keeps an unreachable-API DAG failure to a quiet note", () => {
@@ -219,7 +223,8 @@ describe("WorkflowDetailPage", () => {
     fireEvent.click(screen.getByTestId("run-button"));
 
     const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent(/\[!\] unknown model pack review-stable@9/);
+    expect(alert).toHaveTextContent(/unknown model pack review-stable@9/);
+    expect(alert).not.toHaveTextContent("[!]");
     expect(alert).toHaveTextContent(/fix the input and try again/i);
     expect(alert).not.toHaveTextContent(/API 422/);
   });

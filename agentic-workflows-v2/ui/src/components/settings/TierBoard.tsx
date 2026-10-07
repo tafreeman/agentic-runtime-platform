@@ -20,7 +20,7 @@ const HIT_AREA =
   "relative after:absolute after:top-1/2 after:left-1/2 after:size-full after:min-h-9 after:min-w-9 after:-translate-x-1/2 after:-translate-y-1/2";
 
 const SELECT_CLASS =
-  "mt-1 block h-10 rounded-md border border-el-divider bg-el-raised px-3 text-[13px] text-el-ink focus-ring focus-visible:border-el-focus";
+  "mt-1 block h-10 rounded-md border border-el-control-border bg-el-raised px-3 text-[13px] text-el-ink focus-ring focus-visible:border-el-focus";
 
 /** Swap positions index and index+1, returning a new array. */
 function moveDown(order: string[], index: number): string[] {
@@ -76,8 +76,10 @@ function ModelChipRow({
       >
         {index + 1}.
       </span>
-      {/* The routing winner gets the attention tint plus the one vermilion
-          mark per tier ("routes here"); the rest of the chain stays neutral. */}
+      {/* The routing winner reads through weight, an ink outline and the
+          "routes here" label — no vermilion: with one winner per tier, an
+          accent fill would repeat five times down the page (§4.2 restraint).
+          The dry-run result's rule stays the view's single accent mark. */}
       <button
         type="button"
         aria-label={`Edit capabilities for ${modelId} in tier ${tier}`}
@@ -85,13 +87,13 @@ function ModelChipRow({
         onClick={onToggleEditor}
         className={`flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-sm border px-2.5 py-1.5 text-left font-mono text-xs transition-colors hover:text-el-ink focus-ring ${
           isWinner
-            ? "border-el-accent-strong/50 bg-el-accent-soft text-el-ink"
+            ? "border-el-ink/70 bg-el-raised font-semibold text-el-ink"
             : "border-el-divider bg-el-subtle text-el-secondary"
         }`}
       >
         <span className="truncate">{modelId}</span>
         {isWinner && (
-          <span className="flex-none font-mono text-micro uppercase tracking-[0.5px] text-el-accent-strong">
+          <span className="flex-none font-mono text-micro font-normal uppercase tracking-[0.5px] text-el-secondary">
             ▸ routes here
           </span>
         )}

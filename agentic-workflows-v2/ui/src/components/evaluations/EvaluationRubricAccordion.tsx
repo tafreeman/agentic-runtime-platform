@@ -1,3 +1,4 @@
+import { CircleAlert, TriangleAlert } from "lucide-react";
 import { useRunEvaluationDetail } from "../../hooks/useRuns";
 import { describeApiError } from "../../lib/apiErrors";
 import BPill from "../common/BPill";
@@ -40,8 +41,14 @@ export default function EvaluationRubricAccordion({
       );
     }
     return (
-      <div role="alert" className="p-2 font-mono text-micro text-el-danger">
-        [!] failed to load rubric — {failure.summary} {failure.remedy}
+      <div
+        role="alert"
+        className="flex items-start gap-1.5 p-2 font-mono text-micro text-el-danger"
+      >
+        <CircleAlert aria-hidden="true" className="mt-0.5 size-3.5 flex-none" />
+        <span>
+          failed to load rubric — {failure.summary} {failure.remedy}
+        </span>
       </div>
     );
   }
@@ -53,8 +60,12 @@ export default function EvaluationRubricAccordion({
     return (
       <div className="p-2 font-mono text-micro">
         {evaluationError ? (
-          <span className="text-el-warning">
-            [!] evaluation failed — {evaluationError}
+          <span className="flex items-start gap-1.5 text-el-warning">
+            <TriangleAlert
+              aria-hidden="true"
+              className="mt-0.5 size-3.5 flex-none"
+            />
+            <span>evaluation failed — {evaluationError}</span>
           </span>
         ) : (
           <span className="text-el-muted">no evaluation data</span>
@@ -160,17 +171,24 @@ export default function EvaluationRubricAccordion({
             </span>
           </div>
           {judgeSkipped && (
-            <div className="text-el-warning">
-              [!] judge skipped — {judgeSkipReason}
+            <div className="flex items-start gap-1.5 text-el-warning">
+              <TriangleAlert
+                aria-hidden="true"
+                className="mt-0.5 size-3.5 flex-none"
+              />
+              <span>judge skipped — {judgeSkipReason}</span>
             </div>
           )}
         </div>
       )}
 
       {detail.expected_text_present === false && (
-        <div className="font-mono text-micro text-el-warning">
-          [!] no expected/golden text — overlap term inactive, score is
-          shape-only
+        <div className="flex items-start gap-1.5 font-mono text-micro text-el-warning">
+          <TriangleAlert aria-hidden="true" className="mt-0.5 size-3.5 flex-none" />
+          <span>
+            no expected/golden text — overlap term inactive, score is
+            shape-only
+          </span>
         </div>
       )}
 
@@ -204,9 +222,18 @@ export default function EvaluationRubricAccordion({
             floor violations
           </div>
           {detail.floor_violations.map((v) => (
-            <div key={v.criterion} className="text-el-warning">
-              [!] {v.criterion} score {(v.normalized_score * 100).toFixed(1)}{" "}
-              below floor {(v.floor * 100).toFixed(1)}
+            <div
+              key={v.criterion}
+              className="flex items-start gap-1.5 text-el-warning"
+            >
+              <TriangleAlert
+                aria-hidden="true"
+                className="mt-0.5 size-3.5 flex-none"
+              />
+              <span>
+                {v.criterion} score {(v.normalized_score * 100).toFixed(1)}{" "}
+                below floor {(v.floor * 100).toFixed(1)}
+              </span>
             </div>
           ))}
         </div>

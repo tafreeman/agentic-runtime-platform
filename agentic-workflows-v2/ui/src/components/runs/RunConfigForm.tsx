@@ -74,7 +74,7 @@ const CARD_CLASS = "rounded-lg border border-el-divider bg-el-surface";
  * radius-md, and the 2px --el-focus ring on keyboard focus (§10.2).
  */
 const CONTROL_CLASS =
-  "focus-ring rounded-md border border-el-divider bg-el-raised px-2 py-1.5 font-mono text-xs text-el-ink placeholder:text-el-muted disabled:opacity-60";
+  "focus-ring rounded-md border border-el-control-border bg-el-raised px-2 py-1.5 font-mono text-xs text-el-ink placeholder:text-el-muted disabled:opacity-60";
 
 /** Small uppercase field label (the 11px `label` tier). */
 const FIELD_LABEL_CLASS =
@@ -572,7 +572,7 @@ export default function RunConfigForm({
                 data-testid="model-pack-select"
                 value={modelPackKey}
                 onChange={(event) => setModelPackKey(event.target.value)}
-                className="focus-ring mt-2 w-full rounded-md border border-el-divider bg-el-raised px-3 py-2 text-[13px] font-normal text-el-ink"
+                className="focus-ring mt-2 w-full rounded-md border border-el-control-border bg-el-raised px-3 py-2 text-[13px] font-normal text-el-ink"
               >
                 <option value="">Automatic · run → workflow → global → defaults</option>
                 {(modelPacksQuery.data?.packs ?? [])

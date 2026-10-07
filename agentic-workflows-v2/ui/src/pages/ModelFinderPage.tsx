@@ -86,8 +86,8 @@ const CAPABILITY_TIERS: readonly CapabilityTier[] = [
     letter: "B",
     label: "workable",
     desc: "runs with trade-offs",
-    textClass: "text-el-accent-strong",
-    borderClass: "border-el-accent-strong",
+    textClass: "text-el-warning",
+    borderClass: "border-el-warning",
     match: (m) => m.runnable && m.fit_score < 60,
   },
   {
@@ -95,8 +95,8 @@ const CAPABILITY_TIERS: readonly CapabilityTier[] = [
     letter: "C",
     label: "tight",
     desc: "exceeds detected budget",
-    textClass: "text-el-warning",
-    borderClass: "border-el-warning",
+    textClass: "text-el-danger",
+    borderClass: "border-el-danger",
     match: (m) => !m.runnable,
   },
 ];
@@ -105,7 +105,7 @@ const SECTION_LABEL =
   "font-mono text-micro uppercase tracking-[1.2px] text-el-muted";
 const CARD_CLASS = "rounded-lg border border-el-divider bg-el-surface";
 const SELECT_CLASS =
-  "h-10 rounded-md border border-el-divider bg-el-raised px-2 font-mono text-xs text-el-ink focus-ring focus-visible:border-el-focus";
+  "h-10 rounded-md border border-el-control-border bg-el-raised px-2 font-mono text-xs text-el-ink focus-ring focus-visible:border-el-focus";
 /** >=36x36px centred ::after hit area for visually compact controls. */
 const HIT_AREA =
   "relative after:absolute after:top-1/2 after:left-1/2 after:size-full after:min-h-9 after:min-w-9 after:-translate-x-1/2 after:-translate-y-1/2";
@@ -250,8 +250,19 @@ export default function ModelFinderPage() {
     queryFn: probeModels,
   });
 
+  // No profile (still loading, or the API is down) renders "—", never a
+  // fabricated "0 GB" / "0 threads" / "CPU only" reading.
+  const profile = data?.profile;
+  const ramText = profile ? `${profile.ram_gb} GB` : "—";
+  const threadsText = profile ? `${profile.cpu_cores_logical} threads` : "—";
+  const cpuLabel = profile?.cpu_name ?? (isLoading ? "detecting CPU" : "CPU");
+  const cinebenchText = profile
+    ? compactNumber(profile.estimated_cinebench_r23_multi)
+    : "—";
+
   const acceleratorText = useMemo(() => {
-    const accelerators = data?.profile.accelerators ?? [];
+    if (!data?.profile) return "—";
+    const accelerators = data.profile.accelerators;
     if (accelerators.length === 0) return "CPU only";
     return accelerators
       .map((item) =>
@@ -350,10 +361,10 @@ export default function ModelFinderPage() {
               <p className="mt-3 text-[14px] leading-6 text-el-muted">Review detected compute and override discovery values used by the local model fit recommendations.</p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <ProfileStat loading={isLoading} icon={<HardDrive aria-hidden="true" className="h-5 w-5 text-el-secondary" />} value={`${data?.profile.ram_gb ?? 0} GB`} label="usable memory" />
-              <ProfileStat loading={isLoading} icon={<Cpu aria-hidden="true" className="h-5 w-5 text-el-secondary" />} value={`${data?.profile.cpu_cores_logical ?? 0} threads`} label={data?.profile.cpu_name ?? "detecting CPU"} />
-              <ProfileStat loading={isLoading} icon={<Gauge aria-hidden="true" className="h-5 w-5 text-el-secondary" />} value={compactNumber(data?.profile.estimated_cinebench_r23_multi ?? 0)} label="estimated CPU score" />
-              <ProfileStat loading={isLoading} icon={<SlidersHorizontal aria-hidden="true" className="h-5 w-5 text-el-secondary" />} value={<span className="text-xs">{acceleratorText}</span>} label="accelerators" />
+              <ProfileStat loading={isLoading} icon={<HardDrive aria-hidden="true" className="h-5 w-5 text-el-secondary" />} value={ramText} label="usable memory" />
+              <ProfileStat loading={isLoading} icon={<Cpu aria-hidden="true" className="h-5 w-5 text-el-secondary" />} value={threadsText} label={cpuLabel} />
+              <ProfileStat loading={isLoading} icon={<Gauge aria-hidden="true" className="h-5 w-5 text-el-secondary" />} value={cinebenchText} label="estimated CPU score" />
+              <ProfileStat loading={isLoading} icon={<SlidersHorizontal aria-hidden="true" className="h-5 w-5 text-el-secondary" />} value={<span className="block text-xs leading-snug">{acceleratorText}</span>} label="accelerators" />
             </div>
             <HardwareOverrideForm onClose={() => openTab("finder")} />
           </div>
@@ -446,21 +457,19 @@ export default function ModelFinderPage() {
               <ProfileStat
                 loading={isLoading}
                 icon={<HardDrive aria-hidden="true" className="h-5 w-5 flex-none text-el-secondary" />}
-                value={`${data?.profile.ram_gb ?? 0} GB`}
+                value={ramText}
                 label="usable memory budget"
               />
               <ProfileStat
                 loading={isLoading}
                 icon={<Cpu aria-hidden="true" className="h-5 w-5 flex-none text-el-secondary" />}
-                value={`${data?.profile.cpu_cores_logical ?? 0} threads`}
-                label={data?.profile.cpu_name ?? "detecting CPU"}
+                value={threadsText}
+                label={cpuLabel}
               />
               <ProfileStat
                 loading={isLoading}
                 icon={<Gauge aria-hidden="true" className="h-5 w-5 flex-none text-el-secondary" />}
-                value={compactNumber(
-                  data?.profile.estimated_cinebench_r23_multi ?? 0,
-                )}
+                value={cinebenchText}
                 label="est. Cinebench R23 multi"
               />
               <ProfileStat
@@ -469,7 +478,7 @@ export default function ModelFinderPage() {
                   <SlidersHorizontal aria-hidden="true" className="h-5 w-5 flex-none text-el-secondary" />
                 }
                 value={
-                  <span className="font-mono text-xs font-normal leading-snug">
+                  <span className="block font-mono text-xs font-normal leading-snug">
                     {acceleratorText}
                   </span>
                 }

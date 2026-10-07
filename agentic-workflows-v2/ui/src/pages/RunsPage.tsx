@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useRuns, useRunsSummary } from "../hooks/useRuns";
 import { useHotkeys } from "../hooks/useHotkeys";
@@ -43,9 +43,12 @@ function statusAscii(status: string | null | undefined): {
 
 function formatWhen(iso: string | null | undefined): string {
   if (!iso) return "—";
-  const d = new Date(iso);
-  const diff = Date.now() - d.getTime();
-  const s = Math.floor(diff / 1000);
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return "—";
+  // Clamp: a start time slightly ahead of this machine's clock (server skew)
+  // reads "just now", never a negative "-12s ago".
+  const s = Math.max(0, Math.floor((Date.now() - t) / 1000));
+  if (s < 5) return "just now";
   if (s < 60) return `${s}s ago`;
   const m = Math.floor(s / 60);
   if (m < 60) return `${m}m ago`;
@@ -82,10 +85,12 @@ function Kpi({
 }
 
 const selectClass =
-  "focus-ring rounded-md border border-el-divider bg-el-raised px-2 py-1.5 font-mono text-xs text-el-ink";
+  "focus-ring rounded-md border border-el-control-border bg-el-raised px-2 py-1.5 font-mono text-xs text-el-ink";
 
 /** Dense in-row link: visually small, ::after widens the hit area to ≥36px. */
 const ROW_LINK_HIT = "relative after:absolute after:-inset-x-1 after:-inset-y-3";
+/** Same vertical expansion for the copy-id button (no horizontal bleed). */
+const ROW_ID_HIT = "relative after:absolute after:inset-x-0 after:-inset-y-3";
 
 export default function RunsPage() {
   const [liveTail, setLiveTail] = useState(true);
@@ -97,6 +102,7 @@ export default function RunsPage() {
   const { data: summary } = useRunsSummary();
   const { setCli } = useCli();
   const { apiDown } = useApiAvailability();
+  const triggerReasonId = useId();
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<RunSummary | null>(null);
@@ -314,22 +320,40 @@ export default function RunsPage() {
                 Live tail
               </label>
 
-              {/* Navigation to /workflows (runs start there): stays enabled
-                  while the API is down. */}
-              <Button asChild size="sm" className="ml-auto h-9 font-mono">
-                <Link
-                  to="/workflows"
-                  onClick={() => setCli("agentic run <workflow> --input …")}
-                >
-                  Trigger run
-                </Link>
-              </Button>
+              {/* Runs start from /workflows. While the API is down the action
+                  is disabled with a visible reason, matching the dashboard's
+                  "New run" and the shell banner ("run actions are disabled"). */}
+              {apiDown ? (
+                <div className="ml-auto flex items-center gap-2.5">
+                  <p id={triggerReasonId} className="text-micro text-el-muted">
+                    New runs are unavailable while the API is unreachable.
+                  </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled
+                    aria-describedby={triggerReasonId}
+                    className="h-9 font-mono"
+                  >
+                    Trigger run
+                  </Button>
+                </div>
+              ) : (
+                <Button asChild size="sm" className="ml-auto h-9 font-mono">
+                  <Link
+                    to="/workflows"
+                    onClick={() => setCli("agentic run <workflow> --input …")}
+                  >
+                    Trigger run
+                  </Link>
+                </Button>
+              )}
             </div>
 
             {/* Search — the ring is drawn on the wrapper (focus-within) so it
                 encloses the "/" glyph; the input's own outline is suppressed
                 only because the wrapper's full-strength ring replaces it. */}
-            <div className="flex items-center gap-2 rounded-md border border-el-divider bg-el-raised px-3 py-1.5 focus-within:ring-2 focus-within:ring-el-focus focus-within:ring-offset-2 focus-within:ring-offset-el-canvas">
+            <div className="flex items-center gap-2 rounded-md border border-el-control-border bg-el-raised h-10 px-3 focus-within:ring-2 focus-within:ring-el-focus focus-within:ring-offset-2 focus-within:ring-offset-el-canvas">
               <span aria-hidden="true" className="font-mono text-[13px] font-bold text-el-muted">
                 /
               </span>
@@ -340,7 +364,7 @@ export default function RunsPage() {
                 placeholder="search by workflow or run id…"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="flex-1 bg-transparent font-mono text-xs text-el-ink outline-none placeholder:text-el-muted"
+                className="min-h-0 flex-1 self-stretch bg-transparent font-mono text-xs text-el-ink outline-none placeholder:text-el-muted"
               />
               {query && (
                 <span className="font-mono text-micro text-el-muted">
@@ -438,10 +462,13 @@ export default function RunsPage() {
                             CopyId is flex-1 + min-w-0 so long ids truncate
                             inside the grid cell instead of painting across
                             the status column; the [↗] link stays flex-none. */}
-                        <span className="flex min-w-0 items-center gap-1.5 overflow-hidden text-el-ink">
+                        {/* No overflow clipping on this cell or on CopyId: it
+                            would clip the ::after hit areas back to the 16px
+                            text box. The inner spans truncate instead. */}
+                        <span className="flex min-w-0 items-center gap-1.5 text-el-ink">
                           <CopyId
                             text={runId(r)}
-                            className="min-w-0 flex-1 overflow-hidden text-micro"
+                            className={`min-w-0 flex-1 text-micro ${ROW_ID_HIT}`}
                           />
                           <Link
                             to={`/runs/${encodeURIComponent(r.filename)}`}
@@ -461,9 +488,9 @@ export default function RunsPage() {
                               <Link
                                 to={`/workflows/${encodeURIComponent(r.workflow_name)}`}
                                 onClick={(e) => e.stopPropagation()}
-                                className={`focus-ring truncate rounded-sm underline-offset-2 hover:text-el-accent-strong hover:underline ${ROW_LINK_HIT}`}
+                                className={`focus-ring min-w-0 rounded-sm underline-offset-2 hover:text-el-accent-strong hover:underline ${ROW_LINK_HIT}`}
                               >
-                                {r.workflow_name}
+                                <span className="block truncate">{r.workflow_name}</span>
                               </Link>
                             )
                           ) : (

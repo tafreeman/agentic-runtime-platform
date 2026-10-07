@@ -24,6 +24,13 @@ export default function Sidebar() {
   // not a client build-time flag, so it can never drift from how the server was
   // actually started.
   const noLlmMode = health.data?.no_llm_mode ?? false;
+  // Unknown until the server reports it: show "—", never a guessed "off".
+  let noLlmTitle = "No-LLM mode unknown";
+  let noLlmWord = "—";
+  if (health.data !== undefined) {
+    noLlmTitle = noLlmMode ? "No-LLM mode active" : "No-LLM mode off";
+    noLlmWord = noLlmMode ? "on" : "off";
+  }
   const serverVersion = health.data?.version;
 
   let engineDotClass = "bg-el-danger";
@@ -97,7 +104,9 @@ export default function Sidebar() {
                 {link.num}
               </span>
               <span className={labelClass}>{link.label}</span>
-              {link.live && !collapsed && (
+              {/* "Live" mark only while the API answers; an outage must not
+                  read as a healthy live surface. */}
+              {link.live && !collapsed && engineConnected && (
                 <span
                   aria-hidden="true"
                   className="ml-auto h-1.5 w-1.5 flex-none rounded-full bg-el-success"
@@ -105,7 +114,7 @@ export default function Sidebar() {
               )}
               {!collapsed && (
                 <span
-                  className={`${link.live ? "" : "ml-auto "}flex-none font-mono text-micro text-el-muted`}
+                  className={`${link.live && engineConnected ? "" : "ml-auto "}flex-none font-mono text-micro text-el-muted`}
                   aria-hidden="true"
                 >
                   g {link.goKey}
@@ -161,7 +170,7 @@ export default function Sidebar() {
             the state; the dot is a supplement, never the only cue. */}
         <div
           className="flex items-center gap-2.5 px-2.5 py-[7px]"
-          title={noLlmMode ? "No-LLM mode active" : "No-LLM mode off"}
+          title={noLlmTitle}
         >
           <span
             aria-hidden="true"
@@ -172,7 +181,7 @@ export default function Sidebar() {
           <span className={`${labelClass} text-micro text-el-secondary`}>
             No-LLM mode{" "}
             <span className={noLlmMode ? "text-el-warning" : "text-el-muted"}>
-              {noLlmMode ? "on" : "off"}
+              {noLlmWord}
             </span>
           </span>
         </div>

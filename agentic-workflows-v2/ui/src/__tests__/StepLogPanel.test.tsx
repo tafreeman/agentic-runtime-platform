@@ -34,6 +34,28 @@ describe("StepLogPanel", () => {
     expect(screen.getByText("Error: socket closed")).toHaveClass("text-el-danger");
   });
 
+  it("skips token deltas and never dumps raw JSON for other events", () => {
+    render(
+      <StepLogPanel
+        events={
+          [
+            { type: "token_delta", step: "review", delta: "chunk" },
+            { type: "approval_required", tool_name: "shell", agent_or_step: "fix" },
+            { type: "approval_decision", tool_name: "shell", decision: "approved" },
+            { type: "future_event" },
+          ] as unknown as ExecutionEvent[]
+        }
+      />,
+    );
+
+    expect(screen.getByText("streaming · 3")).toBeInTheDocument();
+    expect(screen.queryByText(/chunk/)).not.toBeInTheDocument();
+    expect(screen.getByText("Approval required: shell (fix)")).toHaveClass("text-el-warning");
+    expect(screen.getByText("Approval approved: shell")).toBeInTheDocument();
+    expect(screen.getByText("Event: future_event")).toBeInTheDocument();
+    expect(screen.queryByText(/\{"type"/)).not.toBeInTheDocument();
+  });
+
   it("collapses and expands the log from its labelled toggle", () => {
     render(<StepLogPanel events={events} />);
 

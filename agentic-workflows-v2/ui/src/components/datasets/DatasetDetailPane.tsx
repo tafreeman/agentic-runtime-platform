@@ -1,3 +1,4 @@
+import { CircleAlert } from "lucide-react";
 import { useId, useState } from "react";
 import { Link } from "react-router-dom";
 import { useDatasetSampleDetail } from "../../hooks/useDatasets";
@@ -40,7 +41,7 @@ function RunWithSample({
           data-testid="run-with-sample-workflow"
           value={effectiveWorkflow}
           onChange={(event) => setWorkflow(event.target.value)}
-          className="focus-ring min-w-0 flex-1 rounded-md border border-el-divider bg-el-canvas px-2 py-1.5 font-mono text-micro text-el-ink"
+          className="focus-ring min-w-0 flex-1 rounded-md border border-el-control-border bg-el-canvas px-2 py-1.5 font-mono text-micro text-el-ink"
           disabled={isLoading || !workflows?.length}
         >
           {!workflows?.length ? (
@@ -73,7 +74,11 @@ function RunWithSample({
 function FieldValue({ value }: Readonly<{ value: unknown }>) {
   if (typeof value === "string") {
     return (
-      <span>{value.length > 200 ? `${value.slice(0, 200)}…` : value}</span>
+      // pre-wrap + break-words: diffs and multi-line prompts keep their line
+      // breaks and long tokens wrap instead of widening the pane.
+      <span className="whitespace-pre-wrap break-words">
+        {value.length > 200 ? `${value.slice(0, 200)}…` : value}
+      </span>
     );
   }
   if (typeof value === "object" && value !== null) {
@@ -134,8 +139,11 @@ export default function DatasetDetailPane({
     }
     return (
       <div role="alert" className="p-3 font-mono text-micro text-el-danger">
-        <span className="block">[!] failed to load sample: {failure.summary}</span>
-        <span className="block text-el-secondary">{failure.remedy}</span>
+        <span className="flex items-start gap-1.5">
+          <CircleAlert aria-hidden="true" className="mt-0.5 size-3.5 flex-none" />
+          <span>failed to load sample: {failure.summary}</span>
+        </span>
+        <span className="block pl-5 text-el-secondary">{failure.remedy}</span>
       </div>
     );
   }

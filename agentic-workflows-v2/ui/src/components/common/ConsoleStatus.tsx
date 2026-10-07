@@ -29,7 +29,7 @@ export default function ConsoleStatus() {
   }
 
   return (
-    <div className="flex items-center gap-1.5" data-testid="console-status">
+    <div className="flex flex-none items-center gap-1.5 whitespace-nowrap" data-testid="console-status">
       <BPill tone={pillTone}>
         {pillLabel}
       </BPill>

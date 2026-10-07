@@ -14,7 +14,7 @@ const FIELD_LABEL_CLASS =
 
 // focus-ring: the 2px --el-focus outline replaces the old 50%-tint ring.
 const INPUT_CLASS =
-  "w-full rounded-md border border-el-divider bg-el-raised px-2.5 py-1.5 font-mono text-xs text-el-ink placeholder:text-el-muted focus-ring";
+  "w-full rounded-md border border-el-control-border bg-el-raised px-2.5 py-1.5 font-mono text-xs text-el-ink placeholder:text-el-muted focus-ring";
 
 /** Toggle chip (tools / observers): pressed = ink outline on a subtle tint. */
 function chipClass(active: boolean): string {
@@ -384,7 +384,7 @@ export default function NodeInspector({
                 }}
                 disabled={readOnly}
                 aria-label="Add dependency"
-                className="rounded-md border border-el-divider bg-el-raised px-1.5 py-1 font-mono text-micro text-el-secondary focus-ring"
+                className="rounded-md border border-el-control-border bg-el-raised px-1.5 py-1 font-mono text-micro text-el-secondary focus-ring"
               >
                 <option value="">+ add dependency</option>
                 {availableDeps.map((candidate) => (

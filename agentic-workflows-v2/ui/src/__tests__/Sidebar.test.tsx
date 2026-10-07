@@ -178,6 +178,8 @@ describe("Sidebar", () => {
     renderSidebar("/");
 
     expect(await screen.findByText("engine: offline")).toBeInTheDocument();
+    // Mode and the live mark are unknown while the API is down — no guesses.
+    expect(screen.getByTitle("No-LLM mode unknown")).toHaveTextContent("No-LLM mode —");
   });
 
   it("reflects the server-reported no-LLM mode, not a build-time flag", async () => {

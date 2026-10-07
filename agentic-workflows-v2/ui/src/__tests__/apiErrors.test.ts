@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { API_START_HINT, describeApiError, formatApiError } from "../lib/apiErrors";
+import {
+  API_START_HINT,
+  apiErrorMessage,
+  describeApiError,
+  formatApiError,
+} from "../lib/apiErrors";
 
 describe("describeApiError", () => {
   it("treats an empty-body proxy 502 as an unreachable API with a start hint", () => {
@@ -65,6 +70,33 @@ describe("formatApiError", () => {
   it("joins summary and remedy into one line", () => {
     expect(formatApiError(new Error("API 502: "))).toBe(
       `The API server isn't responding (HTTP 502). ${API_START_HINT}`,
+    );
+  });
+
+  it("punctuates a bare server detail before the remedy", () => {
+    expect(formatApiError(new Error("API 409: pack exists"))).toBe(
+      "pack exists. Fix the input and try again.",
+    );
+    expect(formatApiError(new Error("API 500: boom"))).toBe(
+      "The API failed (HTTP 500): boom. Check the API server log, then retry.",
+    );
+  });
+
+  it("keeps the server detail a gateway summary would otherwise drop", () => {
+    expect(formatApiError(new Error("API 503: model warming up"))).toBe(
+      `The API server isn't responding (HTTP 503). Details: model warming up. ${API_START_HINT}`,
+    );
+  });
+
+  it("does not double-punctuate truncated or already-punctuated text", () => {
+    expect(apiErrorMessage(new Error("Already done!"))).toBe("Already done!");
+    const long = "x".repeat(300);
+    expect(apiErrorMessage(new Error(`API 400: ${long}`))).toBe(`${"x".repeat(200)}…`);
+  });
+
+  it("falls back to a generic sentence for unknown values", () => {
+    expect(formatApiError(undefined)).toBe(
+      "Something went wrong. Retry; if it keeps failing, check the API server log.",
     );
   });
 });

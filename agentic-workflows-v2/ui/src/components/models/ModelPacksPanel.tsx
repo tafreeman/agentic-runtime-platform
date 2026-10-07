@@ -416,7 +416,7 @@ export default function ModelPacksPanel() {
           <label className="space-y-2 text-xs font-semibold text-el-secondary">
             Seed from
             <select
-              className="h-10 w-full rounded-md border border-el-divider bg-el-raised px-3 text-[13px] text-el-ink focus-ring focus-visible:border-el-focus"
+              className="h-10 w-full rounded-md border border-el-control-border bg-el-raised px-3 text-[13px] text-el-ink focus-ring focus-visible:border-el-focus"
               value={createDraft.source}
               onChange={(event) =>
                 setCreateDraft((draft) => ({

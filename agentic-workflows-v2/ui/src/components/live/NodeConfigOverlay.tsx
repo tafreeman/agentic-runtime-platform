@@ -11,7 +11,7 @@ import { useApiAvailability } from "../../hooks/useApiAvailability";
 
 /** Shared field chrome: 4px radius, hairline, surface fill, AA focus ring. */
 const FIELD_CLASS =
-  "focus-ring w-full rounded-md border border-el-divider bg-el-surface py-2 text-sm text-el-ink transition-colors focus:border-el-focus";
+  "focus-ring w-full rounded-md border border-el-control-border bg-el-surface py-2 text-sm text-el-ink transition-colors focus:border-el-focus";
 
 /** Field label: small tracked overline above the control. */
 const LABEL_CLASS =

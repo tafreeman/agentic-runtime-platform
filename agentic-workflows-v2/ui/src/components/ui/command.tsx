@@ -69,7 +69,7 @@ function CommandInput({
 }: React.ComponentProps<typeof CommandPrimitive.Input>) {
   return (
     <div data-slot="command-input-wrapper" className="p-1 pb-0">
-      <InputGroup className="h-9! rounded-md! border-el-divider-soft bg-el-subtle shadow-none! data-[slot=input-group-addon]:*:pl-2!">
+      <InputGroup className="h-9! rounded-md! border-el-control-border bg-el-subtle shadow-none! data-[slot=input-group-addon]:*:pl-2!">
         {/* outline-hidden: the InputGroup wrapper draws the focus ring. */}
         <CommandPrimitive.Input
           data-slot="command-input"

@@ -46,16 +46,17 @@ export default function App() {
   const workflowBuilderEnabled = isWorkflowBuilderEnabled();
   const location = useLocation();
   const mainRef = useRef<HTMLElement>(null);
-  const isFirstRender = useRef(true);
+  const lastPathname = useRef(location.pathname);
 
   // Move focus to the main region on client-side navigation so keyboard and
   // screen-reader users are told the content changed. Skip the initial load —
-  // focus belongs wherever the browser placed it then.
+  // focus belongs wherever the browser placed it then. Comparing against the
+  // last pathname (not a "first render" flag) keeps StrictMode's double
+  // effect run from stealing focus on load, which made the skip link
+  // unreachable as the first Tab stop in dev.
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
+    if (lastPathname.current === location.pathname) return;
+    lastPathname.current = location.pathname;
     mainRef.current?.focus();
   }, [location.pathname]);
 

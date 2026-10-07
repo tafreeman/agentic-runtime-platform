@@ -49,7 +49,7 @@ describe("ConsoleHeader", () => {
       screen.getByRole("button", { name: /search runs, workflows, actions/i })
     ).toBeInTheDocument();
     // no-LLM mode is server-reported (GET /api/health), fetched async — the
-    // badge starts as "live providers" and flips once the query resolves.
+    // badge appears once the query resolves.
     expect(
       await screen.findByText("no-llm · deterministic")
     ).toBeInTheDocument();
@@ -71,6 +71,22 @@ describe("ConsoleHeader", () => {
     expect(await screen.findByText("live providers")).toBeInTheDocument();
     // There is no environment concept: no invented "prod" label.
     expect(screen.queryByText(/prod/)).not.toBeInTheDocument();
+  });
+
+  it("shows no provider-mode guess while the API is unreachable", async () => {
+    mockHealthCheck.mockRejectedValue(new Error("API 502: "));
+
+    renderWithClient(
+      <MemoryRouter>
+        <ConsoleHeader />
+      </MemoryRouter>
+    );
+
+    // Let the failed health check settle, then confirm no green badge.
+    await screen.findByRole("link", { name: /console home/i });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(screen.queryByText("live providers")).not.toBeInTheDocument();
+    expect(screen.queryByText("no-llm · deterministic")).not.toBeInTheDocument();
   });
 
   it("shows the palette shortcut as ⌘K on Apple platforms", () => {

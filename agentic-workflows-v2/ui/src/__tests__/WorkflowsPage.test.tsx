@@ -52,7 +52,9 @@ describe("WorkflowsPage", () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText(/\[!\] catalog unavailable/i)).toBeInTheDocument();
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent(/catalog unavailable/i);
+    expect(alert).not.toHaveTextContent("[!]");
   });
 
   it("shows an empty catalog state when no workflows exist", () => {

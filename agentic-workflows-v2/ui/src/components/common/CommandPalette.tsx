@@ -9,7 +9,6 @@ import {
 import { useNavigate } from "react-router-dom";
 import {
   ArrowRight,
-  Command,
   CornerDownLeft,
   Database,
   Gauge,
@@ -22,6 +21,7 @@ import {
   X,
 } from "lucide-react";
 import { useCli } from "../../hooks/useCli";
+import PaletteShortcut from "../layout/PaletteShortcut";
 
 /**
  * A single entry in the command palette. `run` performs the navigation (or
@@ -241,10 +241,9 @@ export default function CommandPalette() {
             spellCheck={false}
             className="h-11 min-w-0 flex-1 bg-transparent text-[13px] text-el-ink placeholder:text-el-faint outline-hidden"
           />
-          <span className="flex flex-none items-center gap-1 text-el-muted">
-            <Command size={12} aria-hidden="true" />
-            <span className="text-micro">K</span>
-          </span>
+          {/* Platform-aware hint (⌘K on Apple, Ctrl K elsewhere), the same
+              markup as the header search affordance. */}
+          <PaletteShortcut variant="inline" className="text-el-muted" />
           <button
             type="button"
             onClick={close}

@@ -460,6 +460,19 @@ describe("ModelFinderPage", () => {
     ).toBeEnabled();
   });
 
+  it("shows em dashes, not fabricated zeros, when the hardware profile is unavailable", async () => {
+    mockGetModelRecommendations.mockRejectedValue(new Error("API 502: "));
+    renderPage();
+
+    expect(
+      await screen.findByText(/model recommendations unavailable/),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("0 GB")).not.toBeInTheDocument();
+    expect(screen.queryByText("0 threads")).not.toBeInTheDocument();
+    expect(screen.queryByText("CPU only")).not.toBeInTheDocument();
+    expect(screen.getAllByText("—").length).toBeGreaterThanOrEqual(4);
+  });
+
   it("keeps an unreachable-API probe failure to a quiet note", async () => {
     mockProbeModels.mockRejectedValue(new TypeError("Failed to fetch"));
     renderPage();

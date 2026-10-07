@@ -95,8 +95,9 @@ function relativeWhen(iso: string | null | undefined): string {
   if (!iso) return "—";
   const time = new Date(iso).getTime();
   if (Number.isNaN(time)) return "—";
-  const diff = Date.now() - time;
-  const s = Math.floor(diff / 1000);
+  // Clamp server clock skew: a slightly-future start reads "now", not "-12s".
+  const s = Math.max(0, Math.floor((Date.now() - time) / 1000));
+  if (s < 5) return "now";
   if (s < 60) return `${s}s`;
   const m = Math.floor(s / 60);
   if (m < 60) return `${m}m`;

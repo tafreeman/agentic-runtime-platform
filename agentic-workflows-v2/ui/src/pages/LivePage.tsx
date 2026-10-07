@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronRight, CircleAlert, TriangleAlert } from "lucide-react";
 import { useWorkflowStream } from "../hooks/useWorkflowStream";
 import { useRuns } from "../hooks/useRuns";
 import { useWorkflowDAG } from "../hooks/useWorkflows";
@@ -338,8 +338,9 @@ function LiveRunView({ runId }: Readonly<{ runId: string | undefined }>) {
         </div>
       )}
       {error && (
-        <div role="alert" className="border-b border-el-danger bg-el-danger-soft px-4 py-2 font-mono text-micro text-el-danger">
-          [!] {error}
+        <div role="alert" className="flex items-start gap-1.5 border-b border-el-danger bg-el-danger-soft px-4 py-2 font-mono text-micro text-el-danger">
+          <CircleAlert aria-hidden="true" className="mt-0.5 size-3.5 flex-none" />
+          <span>{error}</span>
         </div>
       )}
 
@@ -407,7 +408,7 @@ function LiveRunView({ runId }: Readonly<{ runId: string | undefined }>) {
               </div>
 
               {/* Live DAG — ReactFlow stays the engine */}
-              <div className="mt-[16px] h-[330px] min-w-0">
+              <div className="mt-[16px] h-[330px] min-w-0 lg:h-[440px]">
                 {dag ? (
                   <WorkflowDAG
                     dagNodes={dag.nodes}
@@ -659,8 +660,9 @@ function EvaluationCard({
       </div>
 
       {evaluation.expected_text_present === false && (
-        <div className="mt-[6px] font-mono text-micro text-el-warning">
-          [!] no expected/golden text — score is shape-only
+        <div className="mt-[6px] flex items-start gap-1.5 font-mono text-micro text-el-warning">
+          <TriangleAlert aria-hidden="true" className="mt-0.5 size-3.5 flex-none" />
+          <span>no expected/golden text — score is shape-only</span>
         </div>
       )}
 

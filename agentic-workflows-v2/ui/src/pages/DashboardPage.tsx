@@ -250,7 +250,9 @@ export default function DashboardPage() {
           onKeyDown={(e) => e.key === "Escape" && clearFilter()}
           placeholder="[f] filter runs…"
           aria-label="Filter runs"
-          className="focus-ring hidden h-5 w-36 rounded-sm bg-transparent font-mono text-micro text-el-ink placeholder:text-el-muted sm:block"
+          // A real control boundary (>= 3:1), sized to sit inside the 36px
+          // top bar; min-h-0 opts out of the 40px base form-control floor.
+          className="focus-ring hidden h-8 min-h-0 w-40 rounded-md border border-el-control-border bg-el-raised px-2 font-mono text-micro text-el-ink placeholder:text-el-muted sm:block"
         />
         {/* Starts a run (via /workflows), so it is gated on the API like the
             other run actions; the visible reason sits in the page header.
