@@ -269,7 +269,8 @@ Desktop shell targets:
 - header height: `56–64 px`;
 - expanded navigation width: no more than `220 px` when a side rail is used;
 - icon-only navigation width: `52–64 px`;
-- active state: ink or orange rule, not a large colored capsule.
+- active state: ink or orange rule, not a large colored capsule;
+- each destination is an icon plus a sentence-case label; no decorative section numbers (01, 02, …).
 
 Mobile uses a compact header and a Sheet/Drawer navigation. Do not compress the full desktop navigation into unreadable icons. The implemented shell shows four primary destinations in a bottom bar plus a labeled **More** item that opens a Sheet listing all seven destinations (44 px rows); every destination must be reachable on mobile.
 
@@ -431,7 +432,7 @@ Do not use Card for ordinary sections, KPI mosaics, tables, filter bars, or page
 
 - Use the shadcn Command foundation for the global command palette.
 - Group results by product area.
-- Show shortcut hints and CLI twins where real.
+- Show shortcut hints and CLI twins where real. A CLI equivalent is shown only when a real `agentic` command does the same thing (e.g. `agentic list workflows`, `agentic run <workflow> --input <file>`, `agentic validate <workflow>`); otherwise show none rather than an invented command.
 - Do not expose actions the current user cannot perform.
 - Search labels, IDs, and common aliases without sending secrets or full datasets to external services.
 
@@ -454,7 +455,7 @@ A scoreline replaces KPI card grids. It may combine:
 - one evidence-backed change note;
 - provenance/freshness metadata.
 
-Use top and bottom rules, aligned columns, and whitespace rather than a boxed card. Limit to three conceptual regions and five primary metrics.
+Use top and bottom rules, aligned columns, and whitespace rather than a boxed card. Limit to three conceptual regions and five primary metrics. Implemented as the shared `Scoreline` component (`ui/src/components/common/`); a metric with no data shows an em dash, never a fake zero.
 
 ### 11.2 Provenance strip
 
@@ -485,6 +486,8 @@ Use stable mappings:
 - warning/review: triangle or half-filled marker + warning color;
 - failed/error: x or diamond + danger color;
 - neutral/pending: outline circle + muted ink.
+
+Implemented as the single `StatusBadge` marker (lucide icon + sentence-case status word + semantic color), used for runs, steps, DAG nodes, evaluations and gates alike. Bracketed ASCII status labels (`[ ok ]`, `[fail]`) are not used. Capability tiers render through `TierMark`, which gives `T0`–`T5` an accessible "Tier N — capability tier" description.
 
 ### 11.4 Inspector
 
@@ -727,7 +730,9 @@ Reject a design when it includes:
 - controls without real backend behavior;
 - fake scores, costs, latency, health, or progress;
 - animation that competes with reading;
-- the dark Control Room or dark Flow Canvas prototype aesthetics applied to production.
+- the dark Control Room or dark Flow Canvas prototype aesthetics applied to production;
+- eyebrow/kicker labels sitting directly above a heading, or decorative section numbers;
+- bracketed terminal-style action or status labels (`[▶] run`, `[ ok ]`) and monospace used as a costume for "technical" rather than for IDs, code, commands or aligned numbers.
 
 ## 19. Implementation governance
 
