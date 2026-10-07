@@ -4,6 +4,7 @@ import Sidebar from "./components/layout/Sidebar";
 import ConsoleHeader from "./components/layout/ConsoleHeader";
 import { isWorkflowBuilderEnabled } from "./config/featureFlags";
 import NotFoundPage from "./components/states/NotFoundPage";
+import ApiOfflineBanner from "./components/states/ApiOfflineBanner";
 import CliStrip from "./components/layout/CliStrip";
 import CommandPalette from "./components/common/CommandPalette";
 import { CliProvider } from "./hooks/useCli";
@@ -65,13 +66,18 @@ export default function App() {
       {/* Skip-to-main-content: visually hidden until focused via keyboard Tab */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-none focus:bg-b-bg1 focus:px-3 focus:py-1.5 focus:font-mono focus:text-[11px] focus:text-b-clay focus:ring-1 focus:ring-b-clay/50 focus:outline-hidden"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded-md focus:border focus:border-el-divider focus:bg-el-raised focus:px-3 focus:py-2.5 focus:text-xs focus:text-el-ink focus-ring"
       >
         skip to main content
       </a>
       <ConsoleHeader />
+      {/* The one shell-level "API unreachable" notice; pages don't add their own. */}
+      <ApiOfflineBanner />
       <div className="flex min-h-0 flex-1 overflow-hidden">
       <Sidebar />
+      {/* tabIndex=-1: a programmatic focus target only (skip link and
+          route-change focus above), never reachable by Tab — so no focus ring
+          around the whole content region. */}
       <main
         ref={mainRef}
         id="main-content"
@@ -89,9 +95,13 @@ export default function App() {
           <Route path="/datasets" element={<DatasetsPage />} />
           <Route path="/evaluations" element={<EvaluationsPage />} />
           <Route path="/models" element={<ModelFinderPage />} />
+          {/* Legacy deep-link alias: provider settings are the Model Router's
+              "providers" tab (one Configure destination, design system §8.1). */}
           <Route path="/settings" element={<Navigate to="/models?tab=providers" replace />} />
           <Route path="/runs" element={<RunsPage />} />
           <Route path="/runs/:filename" element={<RunDetailPage />} />
+          {/* Bare /live resolves to the "latest" alias that LivePage handles. */}
+          <Route path="/live" element={<Navigate to="/live/latest" replace />} />
           <Route path="/live/:runId" element={<LivePage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

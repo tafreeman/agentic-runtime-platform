@@ -17,7 +17,10 @@ interface CliContextValue {
   setCli: (command: string) => void;
 }
 
-const DEFAULT_CLI = "agentic runs list --env prod --limit 50";
+// The twin shown before any UI action. A real command from
+// agentic_v2/cli/main.py (`agentic list [workflows|agents|tools|adapters]`);
+// there is no `runs list` command and no environment concept to flag.
+const DEFAULT_CLI = "agentic list workflows";
 
 const CliContext = createContext<CliContextValue>({
   cli: DEFAULT_CLI,

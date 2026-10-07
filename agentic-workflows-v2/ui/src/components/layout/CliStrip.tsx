@@ -19,26 +19,36 @@ export default function CliStrip() {
 
   return (
     <div
-      className="flex h-9 flex-none items-center gap-3 border-t border-b-line bg-black px-4 font-mono text-[11px]"
+      className="flex h-9 flex-none items-center gap-3 border-t border-el-divider bg-el-surface px-4 font-mono text-micro"
       data-testid="cli-strip"
     >
-      <span className="flex-none tracking-widest text-b-clay uppercase">CLI</span>
-      <code className="min-w-0 flex-1 truncate text-b-text-mid">
-        <span className="text-b-text-dim">$ </span>
+      <span className="flex-none font-semibold tracking-widest text-el-muted uppercase">
+        CLI
+      </span>
+      <code className="min-w-0 flex-1 truncate text-el-ink">
+        <span className="text-el-muted" aria-hidden="true">$ </span>
         {cli}
       </code>
       <button
         type="button"
         onClick={copy}
-        className={`flex flex-none items-center gap-1 ${
-          copied ? "text-b-green" : "text-b-clay hover:underline"
+        className={`flex h-9 flex-none items-center gap-1 rounded-md px-2 transition-colors focus-ring-inset ${
+          copied ? "text-el-success" : "text-el-secondary hover:text-el-ink"
         }`}
         aria-label="Copy CLI command"
       >
-        {copied ? <Check size={12} /> : <Copy size={12} />}
+        {copied ? (
+          <Check size={12} aria-hidden="true" />
+        ) : (
+          <Copy size={12} aria-hidden="true" />
+        )}
         {copied ? "copied" : "copy"}
       </button>
-      <span className="hidden flex-none text-b-text-dim md:inline">
+      {/* The button's name stays "Copy CLI command"; announce the outcome. */}
+      <span className="sr-only" role="status">
+        {copied ? "CLI command copied" : ""}
+      </span>
+      <span className="hidden flex-none text-el-muted md:inline">
         every UI action has a CLI twin
       </span>
     </div>

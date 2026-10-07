@@ -22,7 +22,10 @@ export const GO_TARGETS: Readonly<Record<string, GoTarget>> = {
   l: { path: "/evaluations", cli: "agentic evals list" },
   w: { path: "/workflows", cli: "agentic workflows list" },
   a: { path: "/datasets", cli: "agentic datasets list" },
-  s: { path: "/settings", cli: "agentic settings show" },
+  // Not hinted in the sidebar: "providers & tiers" is a tab of the Model
+  // Router (design system §8.1), so `g s` jumps straight to that tab — the
+  // same place the legacy `/settings` route redirects to.
+  s: { path: "/models?tab=providers", cli: "agentic models list" },
 };
 
 /** Returns true if a text-entry element currently has focus. */
