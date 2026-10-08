@@ -3799,18 +3799,18 @@
 </tr>
 <tr>
 <td><code>--el-ink-secondary</code></td>
-<td style="text-align: right;"><code>#514D46</code></td>
+<td style="text-align: right;"><code>#49453F</code></td>
 <td>Secondary labels and values</td>
 </tr>
 <tr>
 <td><code>--el-ink-muted</code></td>
-<td style="text-align: right;"><code>#736E64</code></td>
+<td style="text-align: right;"><code>#5A554C</code></td>
 <td>Helper text and inactive navigation</td>
 </tr>
 <tr>
 <td><code>--el-ink-faint</code></td>
-<td style="text-align: right;"><code>#918B80</code></td>
-<td>Decorative metadata only; not body copy</td>
+<td style="text-align: right;"><code>#6A645A</code></td>
+<td>Quiet metadata; AA on every surface, but not body copy</td>
 </tr>
 <tr>
 <td><code>--el-divider</code></td>
@@ -3826,6 +3826,11 @@
 <td><code>--el-divider-faint</code></td>
 <td style="text-align: right;"><code>#E2DDD4</code></td>
 <td>Internal separators</td>
+</tr>
+<tr>
+<td><code>--el-control-border</code></td>
+<td style="text-align: right;"><code>#857F73</code></td>
+<td>Boundary of inputs, selects, textareas, graph nodes (≥3:1)</td>
 </tr>
 <tr>
 <td><code>--el-action</code></td>
@@ -3844,8 +3849,8 @@
 </tr>
 <tr>
 <td><code>--el-accent-strong</code></td>
-<td style="text-align: right;"><code>#B83A20</code></td>
-<td>Accessible accent text and focus details</td>
+<td style="text-align: right;"><code>#B6381E</code></td>
+<td>Accent text, state-bearing rails, selected graph marks</td>
 </tr>
 <tr>
 <td><code>--el-accent-soft</code></td>
@@ -3897,6 +3902,16 @@
 <td style="text-align: right;"><code>#D9E5ED</code></td>
 <td>Informational background</td>
 </tr>
+<tr>
+<td><code>--el-plum</code></td>
+<td style="text-align: right;"><code>#695385</code></td>
+<td>The one categorical secondary hue (persona, cloud, kickback); never a status</td>
+</tr>
+<tr>
+<td><code>--el-plum-soft</code></td>
+<td style="text-align: right;"><code>#E6DFF1</code></td>
+<td>Plum background</td>
+</tr>
 </tbody>
 </table>
 <h3 id="42-color-rules">4.2 Color rules<a class="headerlink" href="#42-color-rules" title="Permanent link">&para;</a></h3>
@@ -3904,7 +3919,10 @@
 <li>The canvas is warm paper, not pure white.</li>
 <li>Pure black is reserved for rare high-contrast needs; primary ink uses <code>--el-ink</code>.</li>
 <li>Orange is never a page background or large decorative wash.</li>
-<li>Use <code>--el-accent</code> for non-text emphasis, large text, or marks. Use <code>--el-accent-strong</code> for normal-size accent text.</li>
+<li>Use <code>--el-accent</code> for non-text emphasis, large text, or marks. Use <code>--el-accent-strong</code> for normal-size accent text. <code>--el-accent</code> is below 3:1 on light canvas, so a rail or mark made only of it must be paired with another cue; state-bearing rails use <code>--el-accent-strong</code>.</li>
+<li>Every ink tier (ink, secondary, muted, faint) is at least 4.5:1 on every surface tier in both themes; the verified ratio table lives at the top of <code>ui/src/styles/tokens.css</code> and must be updated with any token change.</li>
+<li>Dividers are decorative hairlines (~1.7:1). They must never be the only boundary of an interactive control; inputs, selects, textareas and graph nodes use <code>--el-control-border</code> (≥3:1, WCAG 1.4.11).</li>
+<li>Graph colors come from the <code>--el-graph-*</code> set (node, status, edge, edge-label chips, tiers) in <code>tokens.css</code>; graph code never uses <code>rgb()</code>/hex literals.</li>
 <li>Status colors supplement a text label or icon; color never carries status alone.</li>
 <li>Charts begin with ink, soft neutral, and orange. Add semantic colors only when the series encodes a semantic status.</li>
 <li>Avoid gradients in routine product UI.</li>
@@ -3916,7 +3934,8 @@
 <li>it must use a warm charcoal, not blue-black;</li>
 <li>it must preserve the same low-chrome hierarchy;</li>
 <li>it must not become the default theme;</li>
-<li>it must have independently verified contrast;</li>
+<li>it must have independently verified contrast (see the dark table in <code>tokens.css</code>);</li>
+<li>it is selected with <code>data-theme="dark"</code> on <code>&lt;html&gt;</code>, and Tailwind's <code>dark:</code> variant is bound to that attribute (<code>@custom-variant dark</code>), not to the OS preference;</li>
 <li>it must not delay required light-mode work.</li>
 </ul>
 <h2 id="5-shadcnui-token-mapping">5. shadcn/ui token mapping<a class="headerlink" href="#5-shadcnui-token-mapping" title="Permanent link">&para;</a></h2>
@@ -4032,7 +4051,7 @@
 </tr>
 <tr>
 <td><code>metadata</code></td>
-<td><code>10 / 15</code></td>
+<td><code>11 / 15</code></td>
 <td style="text-align: right;">500</td>
 <td>IDs, timestamps, provenance</td>
 </tr>
@@ -4046,7 +4065,7 @@
 <li>Use sentence case for controls and navigation.</li>
 <li>Keep explanatory lines below roughly 70 characters where practical.</li>
 <li>Use tabular numerals for scores, duration, latency, tokens, cost, percentages, and counts.</li>
-<li>Never reduce essential interface text below 11 px.</li>
+<li>Never reduce essential interface text below 11 px. In code, <code>text-micro</code> (11/15) is the floor for labels and metadata and <code>text-xs</code> (12/16) is secondary copy; arbitrary <code>text-[8px]</code>–<code>text-[11px]</code> sizes are not allowed.</li>
 </ul>
 <h2 id="7-spacing-and-geometry">7. Spacing and geometry<a class="headerlink" href="#7-spacing-and-geometry" title="Permanent link">&para;</a></h2>
 <h3 id="71-base-scale">7.1 Base scale<a class="headerlink" href="#71-base-scale" title="Permanent link">&para;</a></h3>
@@ -4136,7 +4155,7 @@
 </tr>
 </tbody>
 </table>
-<p>Avoid fully rounded pills except compact status indicators where shape improves recognition.</p>
+<p>Avoid fully rounded pills except compact status indicators where shape improves recognition. Badges use <code>radius-sm</code>; buttons, inputs and menus <code>radius-md</code>; dialogs and sheets <code>radius-lg</code>.</p>
 <h3 id="74-borders-and-shadows">7.4 Borders and shadows<a class="headerlink" href="#74-borders-and-shadows" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Default dividers are 1 px hairlines.</li>
@@ -4144,7 +4163,7 @@
 <li>Raised menus/dialogs may use <code>0 16px 40px rgba(27, 27, 24, 0.12)</code>.</li>
 <li>Cards and table rows should not use drop shadows.</li>
 <li>Selected rows use a subtle surface tint and 2 px orange left rail or bottom tab rail.</li>
-<li>Focus uses a visible 2 px ring with 2 px offset.</li>
+<li>Focus uses a visible 2 px ring with 2 px offset in <code>--el-focus</code>. A global <code>:focus-visible</code> default covers plain controls; custom controls use the <code>focus-ring</code> utility, and rows, tabs and anything inside <code>overflow-hidden</code> use <code>focus-ring-inset</code>. <code>outline-none</code>/<code>outline-hidden</code> are allowed only on programmatic focus targets or inside a wrapper that draws a full-strength ring. 50%-tint rings do not meet 3:1 and are not a substitute.</li>
 </ul>
 <h2 id="8-application-shell">8. Application shell<a class="headerlink" href="#8-application-shell" title="Permanent link">&para;</a></h2>
 <h3 id="81-global-navigation">8.1 Global navigation<a class="headerlink" href="#81-global-navigation" title="Permanent link">&para;</a></h3>
@@ -4161,9 +4180,11 @@
 <li>header height: <code>56–64 px</code>;</li>
 <li>expanded navigation width: no more than <code>220 px</code> when a side rail is used;</li>
 <li>icon-only navigation width: <code>52–64 px</code>;</li>
-<li>active state: ink or orange rule, not a large colored capsule.</li>
+<li>active state: ink or orange rule, not a large colored capsule;</li>
+<li>each destination is an icon plus a sentence-case label; no decorative section numbers (01, 02, …).</li>
 </ul>
-<p>Mobile uses a compact header and a Sheet/Drawer navigation. Do not compress the full desktop navigation into unreadable icons.</p>
+<p>Mobile uses a compact header and a Sheet/Drawer navigation. Do not compress the full desktop navigation into unreadable icons. The implemented shell shows four primary destinations in a bottom bar plus a labeled <strong>More</strong> item that opens a Sheet listing all seven destinations (44 px rows); every destination must be reachable on mobile.</p>
+<p>Navigation has exactly seven destinations: Overview, Live execution, Runs, Model router, Evaluations, Workflow builder, Datasets. <code>/live</code> redirects to <code>/live/latest</code>; <code>/settings</code> is a legacy deep-link alias for <code>/models?tab=providers</code> and is not a separate navigation item. The palette shortcut hint is platform-aware (<code>⌘K</code> on Apple platforms, <code>Ctrl K</code> elsewhere).</p>
 <h3 id="82-page-header">8.2 Page header<a class="headerlink" href="#82-page-header" title="Permanent link">&para;</a></h3>
 <p>A page header contains:</p>
 <ol>
@@ -4226,6 +4247,10 @@
 <li>Persistent errors stay in the relevant surface.</li>
 <li>Loading states preserve layout.</li>
 <li>Stale data remains visible with a freshness/error notice when safe.</li>
+<li>An unreachable API is announced once, by the shell-level offline banner (with the <code>just dev</code> remedy and a Retry). Pages do not add their own outage banner; they keep stale data and at most a quiet inline note. At most one notice sits above a page's data.</li>
+<li>API-backed actions (start run, save, send, compare, …) are disabled while the API is down and show a visible reason wired with <code>aria-describedby</code>, not only a <code>title</code>.</li>
+<li>Error copy is a summary, the server detail when there is one, and a remedy (<code>describeApiError</code>/<code>formatApiError</code> in <code>ui/src/lib/apiErrors.ts</code>); never a raw <code>API 502:</code> string.</li>
+<li>Metrics with no underlying data render an em dash with an accessible "no data" label, never <code>0</code>, <code>0.0%</code> or <code>NaN</code>; a real zero still shows <code>0</code>.</li>
 <li>Never replace an entire populated page with a spinner during background refresh.</li>
 </ul>
 <h2 id="10-shadcn-component-standards">10. shadcn component standards<a class="headerlink" href="#10-shadcn-component-standards" title="Permanent link">&para;</a></h2>
@@ -4301,7 +4326,7 @@
 <ul>
 <li>Use the shadcn Command foundation for the global command palette.</li>
 <li>Group results by product area.</li>
-<li>Show shortcut hints and CLI twins where real.</li>
+<li>Show shortcut hints and CLI twins where real. A CLI equivalent is shown only when a real <code>agentic</code> command does the same thing (e.g. <code>agentic list workflows</code>, <code>agentic run &lt;workflow&gt; --input &lt;file&gt;</code>, <code>agentic validate &lt;workflow&gt;</code>); otherwise show none rather than an invented command.</li>
 <li>Do not expose actions the current user cannot perform.</li>
 <li>Search labels, IDs, and common aliases without sending secrets or full datasets to external services.</li>
 </ul>
@@ -4322,7 +4347,7 @@
 <li>one evidence-backed change note;</li>
 <li>provenance/freshness metadata.</li>
 </ul>
-<p>Use top and bottom rules, aligned columns, and whitespace rather than a boxed card. Limit to three conceptual regions and five primary metrics.</p>
+<p>Use top and bottom rules, aligned columns, and whitespace rather than a boxed card. Limit to three conceptual regions and five primary metrics. Implemented as the shared <code>Scoreline</code> component (<code>ui/src/components/common/</code>); a metric with no data shows an em dash, never a fake zero.</p>
 <h3 id="112-provenance-strip">11.2 Provenance strip<a class="headerlink" href="#112-provenance-strip" title="Permanent link">&para;</a></h3>
 <p>Display the values that determine trust:</p>
 <ul>
@@ -4347,6 +4372,7 @@
 <li>failed/error: x or diamond + danger color;</li>
 <li>neutral/pending: outline circle + muted ink.</li>
 </ul>
+<p>Implemented as the single <code>StatusBadge</code> marker (lucide icon + sentence-case status word + semantic color), used for runs, steps, DAG nodes, evaluations and gates alike. Bracketed ASCII status labels (<code>[ ok ]</code>, <code>[fail]</code>) are not used. Capability tiers render through <code>TierMark</code>, which gives <code>T0</code>–<code>T5</code> an accessible "Tier N — capability tier" description.</p>
 <h3 id="114-inspector">11.4 Inspector<a class="headerlink" href="#114-inspector" title="Permanent link">&para;</a></h3>
 <p>Inspector order:</p>
 <ol>
@@ -4456,7 +4482,7 @@
 <li>selection motion that moves surrounding content;</li>
 <li>pulsing more than one or two active indicators in a viewport.</li>
 </ul>
-<p>Under <code>prefers-reduced-motion: reduce</code>, remove transforms, animated graph edges, and loops; preserve immediate state changes.</p>
+<p>Under <code>prefers-reduced-motion: reduce</code>, remove transforms, animated graph edges, and loops; preserve immediate state changes. Concretely (<code>globals.css</code>): every CSS animation stops (named loops plus a catch-all) and lands on its static state, decorative halos are hidden rather than frozen, transitions are restricted to paint-only properties so transform and size changes snap, and color/opacity/box-shadow feedback is kept but capped at <code>motion-fast</code> (120 ms). Never animate layout properties (<code>width</code>, <code>height</code>, <code>padding</code>, <code>margin</code>, <code>top</code>, <code>left</code>) or use <code>transition-all</code>; animate <code>transform: scaleX()</code> for progress fills.</p>
 <h2 id="14-responsive-system">14. Responsive system<a class="headerlink" href="#14-responsive-system" title="Permanent link">&para;</a></h2>
 <h3 id="desktop-1280-px">Desktop — <code>≥1280 px</code><a class="headerlink" href="#desktop-1280-px" title="Permanent link">&para;</a></h3>
 <ul>
@@ -4577,11 +4603,13 @@
 <li>controls without real backend behavior;</li>
 <li>fake scores, costs, latency, health, or progress;</li>
 <li>animation that competes with reading;</li>
-<li>the dark Control Room or dark Flow Canvas prototype aesthetics applied to production.</li>
+<li>the dark Control Room or dark Flow Canvas prototype aesthetics applied to production;</li>
+<li>eyebrow/kicker labels sitting directly above a heading, or decorative section numbers;</li>
+<li>bracketed terminal-style action or status labels (<code>[▶] run</code>, <code>[ ok ]</code>) and monospace used as a costume for "technical" rather than for IDs, code, commands or aligned numbers.</li>
 </ul>
 <h2 id="19-implementation-governance">19. Implementation governance<a class="headerlink" href="#19-implementation-governance" title="Permanent link">&para;</a></h2>
 <ul>
-<li>No page-local hard-coded colors when a semantic token exists.</li>
+<li>No page-local hard-coded colors when a semantic token exists. The legacy Direction B <code>b-*</code> classes and theme keys are retired; use <code>el-*</code> classes or <code>rgb(var(--el-*))</code>.</li>
 <li>No one-off spacing outside the scale without a documented canvas/data reason.</li>
 <li>No new component variant without at least two legitimate consumers or a specialized product requirement.</li>
 <li>Build shadcn components into a shared UI layer and ARP-specific patterns into a feature-aware design-system layer.</li>
@@ -4633,7 +4661,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 27, 2026 12:43:26 UTC">July 27, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 8, 2026 08:32:27 UTC">October 8, 2026</span>
   </span>
 
     
