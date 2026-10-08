@@ -52,7 +52,9 @@ describe("WorkflowsPage", () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText(/\[!\] catalog unavailable/i)).toBeInTheDocument();
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent(/catalog unavailable/i);
+    expect(alert).not.toHaveTextContent("[!]");
   });
 
   it("shows an empty catalog state when no workflows exist", () => {
@@ -68,7 +70,7 @@ describe("WorkflowsPage", () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText(/\$ no workflow definitions found/i)).toBeInTheDocument();
+    expect(screen.getByText(/no workflow definitions found/i)).toBeInTheDocument();
   });
 
   it("filters workflows by search query", () => {
@@ -86,7 +88,7 @@ describe("WorkflowsPage", () => {
     expect(screen.getByText("code_review")).toBeInTheDocument();
     expect(screen.getByText("triage_workflow")).toBeInTheDocument();
 
-    fireEvent.change(screen.getByPlaceholderText("filter by name, tag…"), {
+    fireEvent.change(screen.getByPlaceholderText("Filter by name…"), {
       target: { value: "triage" },
     });
 
@@ -106,7 +108,7 @@ describe("WorkflowsPage", () => {
       </MemoryRouter>
     );
 
-    fireEvent.change(screen.getByPlaceholderText("filter by name, tag…"), {
+    fireEvent.change(screen.getByPlaceholderText("Filter by name…"), {
       target: { value: "missing" },
     });
 
@@ -133,8 +135,9 @@ describe("WorkflowsPage", () => {
     const editLink = screen.getByTestId("workflow-edit-code_review");
     expect(editLink).toHaveAttribute("href", "/workflows/code_review/edit");
     expect(editLink).toHaveAccessibleName("Edit code_review workflow");
-    // Presentational: definitions count is surfaced as a stat numeric.
-    expect(screen.getByText("Definitions")).toBeInTheDocument();
+    // The definitions count lives once, in the scope line (no hero numeral).
+    expect(screen.getByText(/definitions ·/)).toHaveTextContent(/^2 definitions/);
+    expect(screen.queryByText("Definitions")).not.toBeInTheDocument();
   });
 
   it("hides edit actions when the workflow builder is disabled", () => {

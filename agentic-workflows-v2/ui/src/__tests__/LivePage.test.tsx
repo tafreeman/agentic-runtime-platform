@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import LivePage from "../pages/LivePage";
@@ -77,10 +77,60 @@ describe("LivePage", () => {
     renderPage();
 
     expect(screen.getByText("review_flow")).toBeInTheDocument();
-    // Component renders "$ connecting…" (unicode ellipsis) in the DAG placeholder area
-    expect(screen.getByText("$ connecting…")).toBeInTheDocument();
-    // Status pill renders the workflowStatus value directly
-    expect(screen.getByText("connecting")).toBeInTheDocument();
+    // Plain-language placeholder in the DAG area (no "$" prompt costume).
+    expect(screen.getByText("Connecting to the run…")).toBeInTheDocument();
+    // The shared status marker renders the workflowStatus in sentence case.
+    expect(within(screen.getByTestId("workflow-status")).getByText("Connecting")).toBeInTheDocument();
+  });
+
+  it("shows unknown elapsed/steps as no data instead of 0:00 and 0/0", () => {
+    mockUseWorkflowStream.mockReturnValue({
+      stepStates: new Map(),
+      events: [],
+      workflowStatus: "connecting",
+      evaluation: null,
+      error: null,
+    });
+    mockUseWorkflowDAG.mockReturnValue({ data: undefined });
+
+    renderPage();
+
+    expect(screen.queryByText("0:00")).not.toBeInTheDocument();
+    expect(screen.queryByText("/0")).not.toBeInTheDocument();
+    // Elapsed + steps tiles (TokenCounter is mocked here).
+    expect(screen.getAllByText("no data")).toHaveLength(2);
+  });
+
+  it("animates the step progress fill with transform, not width", () => {
+    mockUseWorkflowStream.mockReturnValue({
+      workflowStatus: "running",
+      error: null,
+      stepStates: new Map([
+        ["a", { status: "success" }],
+        ["b", { status: "running" }],
+      ]),
+      events: [],
+      evaluation: null,
+    });
+    mockUseWorkflowDAG.mockReturnValue({
+      data: {
+        nodes: [
+          { id: "a", agent: "x", description: "", depends_on: [], tier: null },
+          { id: "b", agent: "y", description: "", depends_on: ["a"], tier: null },
+        ],
+        edges: [{ source: "a", target: "b" }],
+      },
+    });
+
+    const { container } = renderPage();
+
+    expect(screen.getByText("1/2 steps")).toBeInTheDocument();
+    const fill = container.querySelector<HTMLElement>(".origin-left.bg-el-accent");
+    expect(fill).not.toBeNull();
+    expect(fill?.style.transform).toBe("scaleX(0.5)");
+    expect(fill?.style.width).toBe("");
+    expect(fill?.className).toContain("transition-transform");
+    expect(fill?.className).not.toMatch(/transition-(all|\[width\])/);
   });
 
   it("renders live execution details, error banner, and expandable evaluation", () => {
@@ -138,12 +188,17 @@ describe("LivePage", () => {
     renderPage();
 
     expect(screen.getByText("Mock DAG")).toBeInTheDocument();
-    // Error banner renders "[!] stream dropped once"
-    expect(screen.getByText(/stream dropped once/)).toBeInTheDocument();
+    // A server error is explained in human terms; the raw text only sits
+    // behind an explicit "Show details" disclosure.
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent("The run stopped with a server error.");
+    expect(alert).toHaveTextContent(/check the api server log/i);
+    expect(within(alert).getByText("Show details")).toBeInTheDocument();
+    expect(within(alert).getByText("stream dropped once").closest("details")).not.toBeNull();
     expect(screen.getByText("0/1 steps")).toBeInTheDocument();
     expect(screen.getByText("Token count")).toBeInTheDocument();
-    // Status pill renders workflowStatus = "completed", runTone = "ok"
-    expect(screen.getByText("completed")).toBeInTheDocument();
+    // Status marker renders workflowStatus = "completed" in sentence case.
+    expect(screen.getByTestId("workflow-status")).toHaveTextContent("Completed");
     expect(screen.getByRole("link", { name: "Open run record →" })).toHaveAttribute(
       "href",
       "/runs/20260714_review_flow-1234abcd_success.json",
@@ -153,6 +208,12 @@ describe("LivePage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /1 criteria/i }));
     expect(screen.getByText("Correctness")).toBeInTheDocument();
+    // 9/10 → a 90% criterion bar drawn with scaleX on a full-width fill.
+    const criterionFill = screen
+      .getByText("Correctness")
+      .closest("div")
+      ?.parentElement?.querySelector<HTMLElement>(".origin-left");
+    expect(criterionFill?.style.transform).toBe("scaleX(0.9)");
 
     fireEvent.click(screen.getByRole("button", { name: "Mock DAG" }));
     expect(screen.getByText("Selected review")).toBeInTheDocument();
@@ -196,7 +257,7 @@ describe("LivePage", () => {
       renderPage("/live/latest");
 
       expect(
-        screen.getByText(/no active run — trigger one from workflows/)
+        screen.getByText(/no active run — start one from a workflow/i)
       ).toBeInTheDocument();
       expect(screen.getByTestId("live-idle-workflows-link")).toHaveAttribute(
         "href",
@@ -245,7 +306,7 @@ describe("LivePage", () => {
 
       renderPage("/live/latest");
 
-      expect(screen.getByText(/resolving latest run/)).toBeInTheDocument();
+      expect(screen.getByText(/resolving the latest run/i)).toBeInTheDocument();
       expect(mockUseWorkflowStream).not.toHaveBeenCalled();
     });
   });
@@ -267,7 +328,7 @@ describe("LivePage", () => {
 
     renderPage();
 
-    expect(screen.getByText("failed")).toBeInTheDocument();
+    expect(screen.getByTestId("workflow-status")).toHaveTextContent("Failed");
   });
 
   it("reconciles a missed terminal socket event from the permanent run record", () => {
@@ -297,7 +358,53 @@ describe("LivePage", () => {
 
     renderPage();
 
-    expect(screen.getByTestId("workflow-status")).toHaveTextContent("completed");
+    expect(screen.getByTestId("workflow-status")).toHaveTextContent("Completed");
     expect(mockUseRuns).toHaveBeenLastCalledWith("review_flow", { live: false });
+  });
+
+  it("explains a lost connection, keeps the data, and offers Reconnect", () => {
+    const reconnect = vi.fn();
+    mockUseWorkflowStream.mockReturnValue({
+      workflowStatus: "error",
+      error: "connection lost — the live stream stopped responding",
+      errorKind: "connection",
+      reconnect,
+      stepStates: new Map([["review", { status: "success" }]]),
+      events: [],
+      evaluation: null,
+    });
+    mockUseWorkflowDAG.mockReturnValue({ data: undefined });
+
+    renderPage();
+
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent("Lost the live connection to this run.");
+    expect(alert).toHaveTextContent(/last update received and may be out of date/);
+    expect(alert).toHaveTextContent(/keeps going on the server/);
+    // Never the raw socket text.
+    expect(alert).not.toHaveTextContent(/connection lost —/);
+
+    fireEvent.click(within(alert).getByRole("button", { name: "Reconnect" }));
+    expect(reconnect).toHaveBeenCalledTimes(1);
+  });
+
+  it("separates a scoring failure from the run's own (still valid) results", () => {
+    mockUseWorkflowStream.mockReturnValue({
+      workflowStatus: "error",
+      error: "Evaluation failed: judge required but none configured",
+      errorKind: "server",
+      stepStates: new Map(),
+      events: [],
+      evaluation: null,
+    });
+    mockUseWorkflowDAG.mockReturnValue({ data: undefined });
+
+    renderPage();
+
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent("Scoring failed after the run finished.");
+    expect(alert).toHaveTextContent(/still valid/);
+    expect(within(alert).queryByRole("button", { name: "Reconnect" })).toBeNull();
+    expect(within(alert).getByText("judge required but none configured")).toBeInTheDocument();
   });
 });

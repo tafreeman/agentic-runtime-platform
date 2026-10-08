@@ -108,6 +108,54 @@ describe("DashboardPage", () => {
     expect(screen.getByText(/tokens \(30d\)/i)).toBeInTheDocument();
   });
 
+  it("shows recent-run status with the shared marker and a ruled scoreline", () => {
+    mockUseRunsSummary.mockReturnValue({
+      data: { total_runs: 2, success: 1, failed: 1, tokens_30d: 10 },
+      isLoading: false,
+    });
+    mockUseRuns.mockReturnValue({
+      data: [
+        {
+          filename: "ok.json",
+          run_id: "ok-1",
+          workflow_name: "triage",
+          status: "success",
+          step_count: 3,
+          failed_step_count: 0,
+        },
+        {
+          filename: "bad.json",
+          run_id: "bad-1",
+          workflow_name: "review",
+          status: "failed",
+          step_count: 4,
+          failed_step_count: 2,
+        },
+      ],
+      isLoading: false,
+    });
+    mockUseWorkflows.mockReturnValue({ data: ["triage"], isLoading: false });
+
+    renderDashboard();
+
+    // One status vocabulary: icon + sentence-case word, no ASCII brackets,
+    // and the description no longer repeats the status word.
+    expect(screen.getByText("Success")).toBeInTheDocument();
+    expect(screen.getByText("Failed")).toBeInTheDocument();
+    expect(screen.queryByText(/\[ ?(ok|fail) ?\]/)).not.toBeInTheDocument();
+    expect(screen.getByText("3 steps")).toBeInTheDocument();
+    expect(screen.getByText("4 steps · 2 failed")).toBeInTheDocument();
+
+    // Evidence scoreline: hairline-ruled columns, not boxed KPI cards with an
+    // accent rail.
+    const scoreline = screen.getByRole("region", { name: "run summary" });
+    expect(scoreline.className).toContain("border-y");
+    expect(scoreline.querySelector(".rounded-lg")).toBeNull();
+    expect(scoreline.querySelector(".bg-el-accent")).toBeNull();
+    // Section headings are real headings, not mono overlines.
+    expect(screen.getByRole("heading", { name: "Recent runs" })).toBeInTheDocument();
+  });
+
   it("renders the models panel from the agents endpoint", async () => {
     mockUseRunsSummary.mockReturnValue({
       data: { total_runs: 1, success: 1, failed: 0 },
@@ -254,9 +302,9 @@ describe("DashboardPage", () => {
     expect(screen.queryByText(/synced just now/i)).not.toBeInTheDocument();
     // Honest line: workflow count · live-run count · last refresh time (the
     // mocked query exposes no dataUpdatedAt, so the time renders as a dash).
-    expect(
-      screen.getByText(/2 workflows · 1 running · updated —/)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/workflows ·/)).toHaveTextContent(
+      "2 workflows · 1 running · updated —"
+    );
   });
 
   it("navigates to the workflows page on the n hotkey", () => {
@@ -374,5 +422,238 @@ describe("DashboardPage", () => {
       screen.getByText(/no runs yet · select a workflow to start/i)
     ).toBeInTheDocument();
     expect(screen.getByText(/no workflows yet/i)).toBeInTheDocument();
+  });
+
+  describe("one notice above the data", () => {
+    const staleRun = {
+      filename: "run1.json",
+      run_id: "run-001",
+      workflow_name: "triage",
+      status: "success",
+      start_time: null,
+      step_count: 1,
+      failed_step_count: 0,
+      total_duration_ms: 1000,
+      evaluation_score: null,
+    };
+
+    it("shows one compact error with a remedy for a partial failure, and no getting-started card", () => {
+      mockUseRunsSummary.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        error: new Error('API 500: {"detail":"summary index corrupt"}'),
+        refetch: vi.fn(),
+      });
+      mockUseRuns.mockReturnValue({ data: [], isLoading: false, refetch: vi.fn() });
+      mockUseWorkflows.mockReturnValue({ data: ["triage"], refetch: vi.fn() });
+
+      renderDashboard();
+
+      const alerts = screen.getAllByRole("alert");
+      expect(alerts).toHaveLength(1);
+      expect(alerts[0]).toHaveTextContent(/couldn't be loaded/i);
+      expect(alerts[0]).toHaveTextContent("summary index corrupt");
+      expect(alerts[0]).toHaveTextContent(/check the api server log/i);
+      expect(alerts[0]).not.toHaveTextContent("API 500:");
+      // Never alongside an error.
+      expect(screen.queryByTestId("getting-started-card")).not.toBeInTheDocument();
+      expect(screen.queryByText(/quick start/i)).not.toBeInTheDocument();
+    });
+
+    it("retries every dashboard query from the single error strip", () => {
+      const refetchRuns = vi.fn();
+      const refetchSummary = vi.fn();
+      const refetchWorkflows = vi.fn();
+      mockUseRunsSummary.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        error: new Error("API 500: "),
+        refetch: refetchSummary,
+      });
+      mockUseRuns.mockReturnValue({ data: [], isLoading: false, refetch: refetchRuns });
+      mockUseWorkflows.mockReturnValue({ data: [], refetch: refetchWorkflows });
+
+      renderDashboard();
+
+      fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+      expect(refetchRuns).toHaveBeenCalledTimes(1);
+      expect(refetchSummary).toHaveBeenCalledTimes(1);
+      expect(refetchWorkflows).toHaveBeenCalledTimes(1);
+    });
+
+    it("adds no page banner while the API is down and keeps stale data visible", async () => {
+      mockHealthCheck.mockRejectedValue(new TypeError("Failed to fetch"));
+      mockUseRunsSummary.mockReturnValue({
+        data: { total_runs: 1, success: 1, failed: 0 },
+        isLoading: false,
+        error: new Error("API 502: "),
+      });
+      mockUseRuns.mockReturnValue({ data: [staleRun], isLoading: false });
+      mockUseWorkflows.mockReturnValue({ data: ["triage"] });
+
+      renderDashboard();
+
+      await waitFor(() =>
+        expect(screen.getByText(/api disconnected/i)).toBeInTheDocument()
+      );
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      expect(screen.queryByRole("status")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("getting-started-card")).not.toBeInTheDocument();
+      // Stale data stays on screen.
+      expect(
+        document.querySelector('a[href="/runs/run1.json"]')
+      ).toBeInTheDocument();
+    });
+
+    it("hides the getting-started card when the API is down, even with no runs", async () => {
+      mockHealthCheck.mockRejectedValue(new Error("offline"));
+      mockUseRunsSummary.mockReturnValue({
+        data: { total_runs: 0, success: 0, failed: 0 },
+        isLoading: false,
+      });
+      mockUseRuns.mockReturnValue({ data: [], isLoading: false });
+      mockUseWorkflows.mockReturnValue({ data: ["triage"] });
+
+      renderDashboard();
+
+      await waitFor(() =>
+        expect(
+          screen.queryByTestId("getting-started-card")
+        ).not.toBeInTheDocument()
+      );
+    });
+
+    it("shows only a quiet note when a query error says the API is unreachable", () => {
+      mockUseRunsSummary.mockReturnValue({
+        data: { total_runs: 1, success: 1, failed: 0 },
+        isLoading: false,
+      });
+      mockUseRuns.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        error: new TypeError("Failed to fetch"),
+        refetch: vi.fn(),
+      });
+      mockUseWorkflows.mockReturnValue({ data: ["triage"] });
+
+      renderDashboard();
+
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      expect(screen.getByRole("status")).toHaveTextContent(
+        /api server is unreachable/i
+      );
+      // Failed runs list is not presented as an empty workspace.
+      expect(screen.queryByText(/no runs yet/i)).not.toBeInTheDocument();
+      expect(screen.getByText("recent runs unavailable")).toBeInTheDocument();
+    });
+  });
+
+  describe("KPIs without data", () => {
+    it("renders em dashes with a no-data label, not 0 / 0.0%", () => {
+      mockUseRunsSummary.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        error: new Error("API 500: "),
+        refetch: vi.fn(),
+      });
+      mockUseRuns.mockReturnValue({ data: undefined, isLoading: false });
+      mockUseWorkflows.mockReturnValue({ data: undefined });
+
+      renderDashboard();
+
+      // Scoreline cells are links to the metric's source page (§11.1).
+      const total = screen.getByRole("link", { name: /total runs/i });
+      const rate = screen.getByRole("link", { name: /success rate/i });
+      const tokens = screen.getByRole("link", { name: /tokens \(30d\)/i });
+      for (const card of [total, rate, tokens]) {
+        expect(card).toHaveAccessibleName(/no data/);
+        expect(card).toHaveTextContent("—");
+        expect(card).not.toHaveTextContent(/\b0\b/);
+      }
+      expect(rate).not.toHaveTextContent("%");
+      expect(screen.queryByText(/0\.0/)).not.toBeInTheDocument();
+    });
+
+    it("keeps a real zero total but shows no rate over zero runs", () => {
+      mockUseRunsSummary.mockReturnValue({
+        data: { total_runs: 0, success: 0, failed: 0, tokens_30d: 0 },
+        isLoading: false,
+      });
+      mockUseRuns.mockReturnValue({ data: [], isLoading: false });
+      mockUseWorkflows.mockReturnValue({ data: ["triage"] });
+
+      renderDashboard();
+
+      expect(
+        screen.getByRole("link", { name: /total runs/i })
+      ).toHaveTextContent("0");
+      expect(
+        screen.getByRole("link", { name: /tokens \(30d\)/i })
+      ).toHaveTextContent("0");
+      const rate = screen.getByRole("link", { name: /success rate/i });
+      expect(rate).toHaveAccessibleName(/no data/);
+      expect(rate).not.toHaveTextContent("0.0");
+    });
+
+    it("computes a real success rate from real data", () => {
+      mockUseRunsSummary.mockReturnValue({
+        data: { total_runs: 4, success: 3, failed: 1 },
+        isLoading: false,
+      });
+      mockUseRuns.mockReturnValue({ data: [], isLoading: false });
+      mockUseWorkflows.mockReturnValue({ data: ["triage"] });
+
+      renderDashboard();
+
+      expect(
+        screen.getByRole("link", { name: /success rate/i })
+      ).toHaveTextContent("75.0%");
+    });
+  });
+
+  describe("New run action", () => {
+    it("has a visible label and accessible name at every width", () => {
+      mockUseRunsSummary.mockReturnValue({
+        data: { total_runs: 1, success: 1, failed: 0 },
+        isLoading: false,
+      });
+      mockUseRuns.mockReturnValue({ data: [], isLoading: false });
+      mockUseWorkflows.mockReturnValue({ data: ["triage"] });
+
+      renderDashboard();
+
+      const button = screen.getByRole("button", { name: "New run" });
+      expect(button).toBeEnabled();
+      // The label text itself is not sr-only (it was icon-only on mobile).
+      expect(screen.getByText("New run")).not.toHaveClass("sr-only");
+      expect(button).toHaveAttribute("aria-keyshortcuts", "n");
+      fireEvent.click(button);
+      expect(screen.getByText("workflows page stub")).toBeInTheDocument();
+    });
+
+    it("is disabled with a visible reason while the API is down, and n is inert", async () => {
+      mockHealthCheck.mockRejectedValue(new TypeError("Failed to fetch"));
+      mockUseRunsSummary.mockReturnValue({
+        data: { total_runs: 1, success: 1, failed: 0 },
+        isLoading: false,
+      });
+      mockUseRuns.mockReturnValue({ data: [], isLoading: false });
+      mockUseWorkflows.mockReturnValue({ data: ["triage"] });
+
+      renderDashboard();
+
+      const button = screen.getByRole("button", { name: "New run" });
+      await waitFor(() => expect(button).toBeDisabled());
+      expect(button).toHaveAccessibleDescription(
+        /new runs are unavailable.*api server is unreachable/i
+      );
+      const reason = document.getElementById(
+        button.getAttribute("aria-describedby")!
+      );
+      expect(reason).toBeVisible();
+
+      fireEvent.keyDown(window, { key: "n" });
+      expect(screen.queryByText("workflows page stub")).not.toBeInTheDocument();
+    });
   });
 });

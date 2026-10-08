@@ -15,9 +15,7 @@ type SelectedSource = "repository" | "local" | null;
 
 function SectionLabel({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <div
-      className="border-b border-b-line-soft bg-b-bg2 px-3 py-1.5 font-mono text-[9px] uppercase tracking-[1.5px] text-b-text-faint"
-    >
+    <div className="border-b border-el-divider-soft bg-el-subtle px-3 py-1.5 font-mono text-micro uppercase tracking-[1.5px] text-el-muted">
       {children}
     </div>
   );
@@ -35,37 +33,32 @@ function DatasetRow({ dataset, active, onSelect }: Readonly<DatasetRowProps>) {
       type="button"
       aria-label={`Select dataset ${dataset.name}`}
       data-testid={`dataset-row-${dataset.id}`}
+      aria-pressed={active}
       onClick={onSelect}
-      className={`relative grid w-full grid-cols-[1fr_auto] items-center gap-2 border-b border-b-line-soft px-3 py-2 text-left transition-colors hover:bg-b-bg2 ${
-        active ? "bg-b-bg3" : ""
+      className={`focus-ring-inset relative grid min-h-9 w-full grid-cols-[1fr_auto] items-center gap-2 border-b border-el-divider-soft px-3 py-2 text-left transition-colors hover:bg-el-hover ${
+        active ? "bg-el-subtle" : ""
       }`}
     >
       {active && (
         <span
           aria-hidden="true"
-          className="absolute inset-y-0 left-0 w-[2px] bg-b-clay"
+          className="absolute inset-y-0 left-0 w-[2px] bg-el-accent"
         />
       )}
       <span className="min-w-0">
-        <span className="block truncate font-mono text-[11px] text-b-text">
+        <span className="block truncate font-mono text-micro text-el-ink">
           {dataset.name}
         </span>
-        <span className="block truncate font-mono text-[10px] text-b-text-dim">
+        <span className="block truncate font-mono text-micro text-el-muted">
           {dataset.id}
         </span>
       </span>
       {dataset.sample_count != null && (
         <span className="flex flex-col items-end leading-none">
-          <span
-            className="tabular-nums text-[14px] text-b-text-mid"
-            style={{
-              fontFamily: "var(--b-font-heading)",
-              letterSpacing: "-0.5px",
-            }}
-          >
+          <span className="font-display text-[14px] tracking-[-0.5px] tabular-nums text-el-secondary">
             {dataset.sample_count}
           </span>
-          <span className="mt-0.5 font-mono text-[8px] uppercase tracking-[1px] text-b-text-faint">
+          <span className="mt-0.5 font-mono text-micro uppercase tracking-[1px] text-el-muted">
             samples
           </span>
         </span>
@@ -86,16 +79,10 @@ export default function DatasetBrowser({ datasets }: Readonly<DatasetBrowserProp
   }
 
   return (
-    <div
-      className="flex h-full overflow-hidden bg-b-bg1"
-      style={{
-        border: "var(--b-bw) solid rgb(var(--b-line))",
-        borderRadius: "var(--b-rad-lg)",
-      }}
-    >
+    <div className="flex h-full overflow-hidden rounded-lg border border-el-divider bg-el-surface">
       {/* Left pane — dataset list */}
       <div
-        className="w-1/4 min-w-[160px] overflow-y-auto border-r border-b-line"
+        className="w-1/4 min-w-[160px] overflow-y-auto border-r border-el-divider"
       >
         {datasets.repository.length > 0 && (
           <div>
@@ -131,11 +118,11 @@ export default function DatasetBrowser({ datasets }: Readonly<DatasetBrowserProp
           <div>
             <SectionLabel>eval sets · {datasets.eval_sets.length}</SectionLabel>
             {datasets.eval_sets.map((es) => (
-              <div key={es.id} className="border-b border-b-line-soft px-3 py-2">
-                <div className="truncate font-mono text-[11px] text-b-text">
+              <div key={es.id} className="border-b border-el-divider-soft px-3 py-2">
+                <div className="truncate font-mono text-micro text-el-ink">
                   {es.name}
                 </div>
-                <div className="font-mono text-[10px] text-b-text-dim">
+                <div className="font-mono text-micro text-el-muted">
                   {es.datasets.length} linked datasets
                 </div>
                 {es.datasets.length > 0 && (
@@ -143,8 +130,7 @@ export default function DatasetBrowser({ datasets }: Readonly<DatasetBrowserProp
                     {es.datasets.map((d) => (
                       <span
                         key={d}
-                        className="inline-flex items-center bg-b-bg3 px-1.5 py-px font-mono text-[10px] text-b-text-mid"
-                        style={{ borderRadius: "var(--b-rad-sm)" }}
+                        className="inline-flex items-center rounded-sm bg-el-hover px-1.5 py-px font-mono text-micro text-el-secondary"
                       >
                         {d}
                       </span>
@@ -159,14 +145,14 @@ export default function DatasetBrowser({ datasets }: Readonly<DatasetBrowserProp
         {datasets.repository.length === 0 &&
           datasets.local.length === 0 &&
           datasets.eval_sets.length === 0 && (
-            <div className="px-3 py-4 font-mono text-[11px] text-b-text-dim">
-              $ no datasets available
+            <div className="px-3 py-4 font-mono text-micro text-el-muted">
+              $ no datasets found — add a dataset, then reload this page
             </div>
           )}
       </div>
 
       {/* Middle pane — sample index */}
-      <div className="w-1/3 overflow-hidden border-r border-b-line">
+      <div className="w-1/3 overflow-hidden border-r border-el-divider">
         {selectedSource && selectedDatasetId ? (
           <SampleIndexGrid
             datasetSource={selectedSource}
@@ -175,7 +161,7 @@ export default function DatasetBrowser({ datasets }: Readonly<DatasetBrowserProp
             onSelect={setSelectedSampleIndex}
           />
         ) : (
-          <div className="flex h-full items-center justify-center font-mono text-[11px] text-b-text-dim">
+          <div className="flex h-full items-center justify-center font-mono text-micro text-el-muted">
             $ select a dataset
           </div>
         )}
@@ -190,7 +176,7 @@ export default function DatasetBrowser({ datasets }: Readonly<DatasetBrowserProp
             sampleIndex={selectedSampleIndex}
           />
         ) : (
-          <div className="flex h-full items-center justify-center font-mono text-[11px] text-b-text-dim">
+          <div className="flex h-full items-center justify-center font-mono text-micro text-el-muted">
             $ select a sample
           </div>
         )}

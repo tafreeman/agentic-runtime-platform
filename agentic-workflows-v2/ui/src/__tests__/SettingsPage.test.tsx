@@ -12,6 +12,8 @@ const mockGetProviderSettings = vi.fn();
 const mockPutProviderSettings = vi.fn();
 const mockGetTierSettings = vi.fn();
 const mockPutTierSettings = vi.fn();
+const mockHealthCheck = vi.fn();
+const mockProbeProvider = vi.fn();
 
 vi.mock("../api/client", async () => {
   const actual = await vi.importActual("../api/client");
@@ -21,6 +23,9 @@ vi.mock("../api/client", async () => {
     putProviderSettings: (...args: unknown[]) => mockPutProviderSettings(...args),
     getTierSettings: (...args: unknown[]) => mockGetTierSettings(...args),
     putTierSettings: (...args: unknown[]) => mockPutTierSettings(...args),
+    probeProvider: (...args: unknown[]) => mockProbeProvider(...args),
+    // Saves and probes are gated on the shared backend-health cache.
+    healthCheck: () => mockHealthCheck(),
   };
 });
 
@@ -118,6 +123,7 @@ function renderPage() {
 describe("SettingsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockHealthCheck.mockResolvedValue({ status: "ok", version: "test" });
     mockGetProviderSettings.mockResolvedValue(makeProviderResponse());
     mockGetTierSettings.mockResolvedValue(makeTierResponse());
     mockPutProviderSettings.mockResolvedValue(makeProviderResponse());
@@ -200,7 +206,7 @@ describe("SettingsPage", () => {
     // T1 chain in order, winner marked.
     expect(screen.getByText("anthropic:haiku")).toBeInTheDocument();
     expect(screen.getAllByText("ollama:qwen").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("▸ routes here").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Routes here").length).toBeGreaterThan(0);
     // T2 carries a non-empty override → reranked marker + reset control.
     expect(screen.getByText("reranked")).toBeInTheDocument();
     expect(
@@ -431,10 +437,105 @@ describe("SettingsPage", () => {
       screen.getByRole("switch", { name: "Toggle provider anthropic-main" }),
     );
 
+    // Readable copy: the server's detail plus a remedy, not "API 422:".
     const alert = await screen.findByText(
-      /save failed: API 422: duplicate provider id/,
+      "save failed: duplicate provider id. Fix the input and try again.",
     );
-    expect(alert).toBeInTheDocument();
+    expect(alert).toHaveAttribute("role", "alert");
+    expect(screen.queryByText(/API 422/)).not.toBeInTheDocument();
+  });
+
+  it("renders a tier save failure as readable copy with the server detail", async () => {
+    mockPutTierSettings.mockRejectedValue(
+      new Error('API 500: {"detail":"settings file is read-only"}'),
+    );
+    renderPage();
+    await screen.findByText("T2");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Reset tier 2 to default" }),
+    );
+
+    expect(
+      await screen.findByText(
+        "save failed: The API failed (HTTP 500): settings file is read-only. Check the API server log, then retry.",
+      ),
+    ).toHaveAttribute("role", "alert");
+  });
+
+  it("probes a provider and shows the result", async () => {
+    mockProbeProvider.mockResolvedValue({
+      provider_id: "anthropic-main",
+      status: "available",
+      latency_ms: 42,
+      discovered_model_count: 3,
+      detail: "ok",
+    });
+    renderPage();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Probe provider anthropic-main" }),
+    );
+
+    await waitFor(() =>
+      expect(mockProbeProvider.mock.calls[0]?.[0]).toBe("anthropic-main"),
+    );
+    expect(await screen.findByText(/42 ms · 3 models/)).toBeInTheDocument();
+  });
+
+  it("disables provider and tier mutations while the API is down and says why", async () => {
+    mockHealthCheck.mockRejectedValue(new TypeError("Failed to fetch"));
+    renderPage();
+    await screen.findByText("T1");
+
+    const providerHint = await screen.findByText(/Saving and probing are unavailable/);
+    expect(providerHint).toHaveTextContent("The API server is unreachable.");
+    for (const name of [
+      "Probe provider anthropic-main",
+      "Delete provider anthropic-main",
+    ]) {
+      const button = screen.getByRole("button", { name });
+      expect(button).toBeDisabled();
+      expect(button).toHaveAttribute("aria-describedby", providerHint.id);
+    }
+    const toggle = screen.getByRole("switch", {
+      name: "Toggle provider anthropic-main",
+    });
+    expect(toggle).toBeDisabled();
+    expect(toggle).toHaveAttribute("aria-describedby", providerHint.id);
+
+    const tierHint = screen.getByText(/Reordering and saving are unavailable/);
+    const moveDown = screen.getByRole("button", {
+      name: "Move anthropic:haiku down in tier 1",
+    });
+    expect(moveDown).toBeDisabled();
+    expect(moveDown).toHaveAttribute("aria-describedby", tierHint.id);
+    expect(
+      screen.getByRole("button", { name: "Reset tier 2 to default" }),
+    ).toBeDisabled();
+
+    // Opening the add form is local; its submit is gated with its own hint.
+    fireEvent.click(screen.getByRole("button", { name: "Add Ollama provider" }));
+    const save = screen.getByRole("button", { name: "save provider" });
+    expect(save).toBeDisabled();
+    expect(
+      document.getElementById(save.getAttribute("aria-describedby") ?? ""),
+    ).toHaveTextContent(/Saving is unavailable: The API server is unreachable/);
+    expect(mockPutProviderSettings).not.toHaveBeenCalled();
+    expect(mockPutTierSettings).not.toHaveBeenCalled();
+  });
+
+  it("keeps unreachable-API load failures to quiet notes, not alerts", async () => {
+    mockGetProviderSettings.mockRejectedValue(new TypeError("Failed to fetch"));
+    mockGetTierSettings.mockRejectedValue(new TypeError("Failed to fetch"));
+    renderPage();
+
+    expect(
+      await screen.findByText(/provider settings unavailable — Can't reach the API server\./),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText(/tier settings unavailable — Can't reach the API server\./),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it("renders load errors for both settings queries", async () => {

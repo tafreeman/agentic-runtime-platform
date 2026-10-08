@@ -39,13 +39,13 @@ test.describe('settings', () => {
     // The sidebar marks the consolidated Model Router surface active.
     const modelRouterLink = page
       .getByRole('navigation')
-      .getByRole('link', { name: /model router/ });
+      .getByRole('link', { name: /model router/i });
     await expect(modelRouterLink).toHaveAttribute('aria-current', 'page');
 
     // ── Provider endpoints panel ── (static chrome, independent of the fetch)
     const providerRegion = page.getByRole('region', { name: 'provider endpoints' });
     await expect(providerRegion).toBeVisible();
-    await expect(providerRegion.getByText(/endpoint registry/i)).toBeVisible();
+    await expect(providerRegion.getByText(/endpoints the router can send model requests to/i)).toBeVisible();
     // The add-provider type picker is built from a fixed preset list, so these
     // buttons render regardless of how many providers are configured.
     await expect(

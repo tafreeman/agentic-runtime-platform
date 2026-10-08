@@ -36,13 +36,16 @@ export function gradeLetter(
   return "F";
 }
 
-/** Tailwind text-color class for a one-letter grade (faint when absent). */
+/**
+ * Evidence Ledger text-color class for a one-letter grade (faint when absent).
+ * Status color always rides alongside the letter itself, never alone.
+ */
 export function gradeColorClass(grade: string | null | undefined): string {
   const g = grade?.toUpperCase();
-  if (g === "S" || g === "A") return "text-b-green";
-  if (g === "B" || g === "C") return "text-b-amber";
-  if (g === "D" || g === "F") return "text-b-red";
-  return "text-b-text-faint";
+  if (g === "S" || g === "A") return "text-el-success";
+  if (g === "B" || g === "C") return "text-el-warning";
+  if (g === "D" || g === "F") return "text-el-danger";
+  return "text-el-faint";
 }
 
 /** Whether a run passed: S/A/B grades, or a normalized score >= 75. */

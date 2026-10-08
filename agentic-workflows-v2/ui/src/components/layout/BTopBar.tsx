@@ -5,25 +5,31 @@ interface BTopBarProps {
   children?: ReactNode; // right-slot action buttons
 }
 
+/**
+ * Compact location bar above a page: the current path as a quiet sans
+ * breadcrumb (no terminal prompt costume) plus a right-hand action slot.
+ */
 export default function BTopBar({ path, children }: Readonly<BTopBarProps>) {
+  const segments = path.split("/").filter(Boolean);
   return (
-    <div
-      className="flex h-9 items-center gap-2 border-b border-b-line bg-b-bg1 px-4 font-mono text-[11px]"
-      style={{ borderBottomWidth: "var(--b-bw)" }}
-    >
-      <span
-        className="font-semibold tracking-tight text-b-clay"
-        style={{ fontFamily: "var(--b-font-heading)" }}
-      >
-        agentic
+    <div className="flex h-9 min-w-0 items-center gap-2 border-b border-el-divider bg-el-surface px-4 text-xs">
+      {/* Long paths (run filenames) truncate on one line instead of wrapping
+          out of the 36px bar; the full path stays available as a tooltip. */}
+      <span className="min-w-0 truncate text-el-muted" title={path}>
+        {segments.map((segment, i) => (
+          <span key={`${i}-${segment}`}>
+            {i > 0 ? (
+              <span aria-hidden="true" className="px-1.5 text-el-faint">
+                /
+              </span>
+            ) : null}
+            <span className={i === segments.length - 1 ? "text-el-secondary" : undefined}>
+              {segment}
+            </span>
+          </span>
+        ))}
       </span>
-      <span className="text-b-text-dim">:</span>
-      <span className="text-b-text-mid">~/</span>
-      <span className="text-b-text-mid">{path}</span>
-      <span className="animate-b-blink text-b-clay" aria-hidden="true">
-        █
-      </span>
-      <div className="ml-auto flex items-center gap-2">{children}</div>
+      <div className="ml-auto flex flex-none items-center gap-2">{children}</div>
     </div>
   );
 }

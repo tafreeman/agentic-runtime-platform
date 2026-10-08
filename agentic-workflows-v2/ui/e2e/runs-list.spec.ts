@@ -4,12 +4,13 @@ import { expect, test } from '@playwright/test';
  * Runs list surface — "browsing past runs" (/runs → RunsPage).
  *
  * On mount the page fires GET /api/runs?limit=50 (useRuns → listRuns) plus an
- * aggregate GET /api/runs/summary and renders the history as a master table:
- * one keyboard-navigable row per run (role="button", aria-label="Inspect run
- * <shortId>"), a KPI stats band, a status/workflow filter row, a live-tail
- * switch, and a per-row deep-link ([↗], aria-label="Open run <shortId>") to the
- * standalone /runs/:filename detail route. Clicking a row body opens the
- * in-place inspector aside; the [↗] link is the one that changes the URL.
+ * aggregate GET /api/runs/summary and renders the history as an ARIA table:
+ * one row per run whose identity cell holds the row's keyboard control (an
+ * "Inspect run <runId>" button — rows themselves are not buttons), a ruled
+ * stats scoreline, a status/workflow filter row, a live-tail switch, and a
+ * per-row deep-link (↗ icon, aria-label="Open run <shortId>") to the
+ * standalone /runs/:filename detail route. Clicking a row body or its inspect
+ * button opens the in-place inspector aside; the deep link changes the URL.
  *
  * These specs stay agnostic to the (generated, volatile) run ids, timestamps,
  * and durations: they correlate the UI against the live API only by *shape* and
@@ -30,9 +31,9 @@ test.describe('runs list', () => {
     await page.goto('/runs');
 
     // Page chrome renders immediately, independent of the async history fetch:
-    // the "Runs" h1 and the KPI stats band (its static "runs total" cell label).
+    // the "Runs" h1 and the stats scoreline (its static "Total runs" label).
     await expect(page.getByRole('heading', { name: /^runs$/i })).toBeVisible();
-    await expect(page.getByText('runs total', { exact: true })).toBeVisible();
+    await expect(page.getByText('Total runs', { exact: true })).toBeVisible();
 
     // The filter row's labelled controls (no data-testid in source): the status
     // <select> this test drives, plus the search box that anchors the row.
@@ -49,8 +50,8 @@ test.describe('runs list', () => {
     const runs = (await res.json()) as Array<{ status: string }>;
     expect(Array.isArray(runs), 'GET /api/runs must return an array').toBe(true);
 
-    // Every rendered run is a keyboard row: role="button", name "Inspect run
-    // <shortId>". This is the robust list anchor (empty OR populated).
+    // Every rendered run has one inspect button, name "Inspect run <runId>".
+    // This is the robust list anchor (empty OR populated).
     const rows = page.getByRole('button', { name: /^Inspect run / });
 
     if (runs.length === 0) {
@@ -70,7 +71,7 @@ test.describe('runs list', () => {
     await expect(rows).toHaveCount(runs.length, { timeout: 15_000 });
 
     // Drive the status filter to "success" (the option *value*, not its
-    // "status: success · N" label). Filtering is a client-side narrowing — no
+    // "Success · N" label). Filtering is a client-side narrowing — no
     // refetch — so the list must stay coherent: it must show *exactly* the
     // success runs from the fetched page, else the "no runs match" placeholder.
     const successCount = runs.filter((r) => r.status === 'success').length;
@@ -111,7 +112,7 @@ test.describe('runs list', () => {
     // Populated: rows land (deterministic no_llm history already on disk).
     await expect(rows.first()).toBeVisible({ timeout: 30_000 });
 
-    // Each row carries a deep-link ([↗], aria-label="Open run <shortId>") to
+    // Each row carries a deep-link (↗, aria-label="Open run <shortId>") to
     // the standalone detail route; its stopPropagation keeps the click from
     // also opening the in-place inspector aside. Capture the first link's href
     // before following it so we can assert we land on *that* run, not merely

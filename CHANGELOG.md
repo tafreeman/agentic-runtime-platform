@@ -1,5 +1,44 @@
 # Changelog
 
+## Unreleased - UI accessibility and design-system pass
+
+- Text contrast: muted and faint ink now pass WCAG AA (4.5:1) on every
+  surface in both themes; light faint was 2.95:1 and muted 4.41:1. Inputs,
+  selects and graph nodes get a 3:1 `--el-control-border`. The verified ratio
+  table lives in `ui/src/styles/tokens.css`.
+- Type floor: no essential text below 11px. The ~420 `text-[9–11px]` sites
+  now use the new `text-micro` (11px) or `text-xs` (12px) sizes.
+- Focus: every control shows a solid 2px `#9e321c` focus ring. This replaces
+  the 50%-tint rings and the `outline-none` sites that had no visible
+  replacement.
+- Navigation: `/live` now redirects to `/live/latest` instead of 404ing. The
+  duplicate "providers & tiers" entry is gone, leaving seven destinations;
+  `/settings` stays as a deep-link alias. On mobile, a labeled "More" sheet
+  reaches every page. The palette hint shows ⌘K on Apple platforms and Ctrl K
+  elsewhere.
+- API down: one shell-level banner with the `just dev` remedy, instead of
+  page banners stacking. Errors read as summary, server detail and remedy
+  rather than "API 502:". Run, save, send and compare actions are disabled
+  with a visible reason. Metrics with no data show "—" instead of 0.0%.
+- One status marker (icon plus sentence-case word) replaces the
+  `[ ok ]`/`[fail]` labels. A ruled scoreline replaces the KPI cards. The CLI
+  strip shows a real `agentic` command, or none, instead of invented ones.
+  Presentational Evaluations pills with no backend behind them are removed.
+- Motion and tokens:
+  - Reduced motion now stops loops and transform motion but keeps short
+    color feedback.
+  - Nothing animates width or padding, and nothing uses `transition-all`.
+  - Legacy `b-*` classes and graph colour literals are gone in favour of
+    `el-*` / `--el-graph-*` tokens.
+  - `dark:` follows the app's theme toggle.
+  - A theme-key collision that made every `border-b` draw a full box is
+    fixed.
+- UI tests: 446 → 664. Statement coverage 71.5% → 79.3%; branch coverage
+  65.6% → 75.8%.
+- Docs: the Evidence Ledger spec is updated, and
+  `docs/ui/impeccable-context-changes.md` lists the matching edits for the
+  local Impeccable `DESIGN.md` and `design.json`.
+
 ## Unreleased - plan_tribunal workflow
 
 - New bundled workflow `plan_tribunal`: five persona judges research proposed

@@ -18,6 +18,8 @@ const api = vi.hoisted(() => ({
   getModelPackDependencies: vi.fn(),
   archiveModelPack: vi.fn(),
   importModelPack: vi.fn(),
+  // Pack actions are gated on the shared backend-health cache.
+  healthCheck: vi.fn(),
 }));
 
 vi.mock("../api/client", () => api);
@@ -65,6 +67,7 @@ function renderPanel() {
 describe("ModelPacksPanel", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    api.healthCheck.mockResolvedValue({ status: "ok", version: "test" });
     api.listModelPacks.mockResolvedValue(RESPONSE);
     api.validateModelPack.mockResolvedValue({
       ref: { id: PACK.id, version: PACK.version },
@@ -143,9 +146,11 @@ describe("ModelPacksPanel", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Create version 1" }));
 
+    // Human-readable copy: the server's detail plus a remedy, not "API 409:".
     await waitFor(() =>
       expect(toastSpy.error).toHaveBeenCalledWith(
-        "API 409: model pack 'review-stable' already exists",
+        "model pack 'review-stable' already exists.",
+        { description: "Fix the input and try again." },
       ),
     );
     // The form stays open so the user can correct the input and retry.
@@ -208,5 +213,81 @@ describe("ModelPacksPanel", () => {
       id: "review-stable",
       version: 2,
     }));
+  });
+
+  it("keeps a local precondition failure as its own message", async () => {
+    api.getModelPackDependencies.mockResolvedValue({
+      ref: { id: PACK.id, version: PACK.version },
+      globally_active: true,
+      workflows: [],
+      recent_run_ids: [],
+    });
+    renderPanel();
+    await screen.findByText("Review stable");
+
+    fireEvent.click(screen.getByRole("button", { name: "Archive" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm archive" }));
+
+    await waitFor(() =>
+      expect(toastSpy.error).toHaveBeenCalledWith(
+        "Pack is still used by the global default.",
+      ),
+    );
+    expect(api.archiveModelPack).not.toHaveBeenCalled();
+  });
+
+  it("shows a save failure as readable copy that keeps the server detail", async () => {
+    api.versionModelPack.mockRejectedValue(
+      new Error('API 422: {"detail":"tier_chains.1 is empty"}'),
+    );
+    renderPanel();
+    await screen.findByText("Review stable");
+
+    fireEvent.click(screen.getByRole("button", { name: "Save as version 3" }));
+
+    expect(
+      await screen.findByText(
+        "tier_chains.1 is empty. Fix the input and try again.",
+      ),
+    ).toHaveAttribute("role", "alert");
+  });
+
+  it("disables every pack action while the API is down and says why", async () => {
+    api.healthCheck.mockRejectedValue(new TypeError("Failed to fetch"));
+    renderPanel();
+    await screen.findByText("Review stable");
+
+    const hint = await screen.findByText(/Pack actions are unavailable/);
+    expect(hint).toHaveTextContent("The API server is unreachable.");
+    for (const name of [
+      "Import",
+      "Validate",
+      "Activate",
+      "Deactivate",
+      "Duplicate",
+      "Export",
+      "Archive",
+      "Bind",
+      "Remove review binding",
+    ]) {
+      const button = screen.getByRole("button", { name });
+      expect(button).toBeDisabled();
+      expect(button).toHaveAttribute("aria-describedby", hint.id);
+    }
+    const save = screen.getByRole("button", { name: "Save as version 3" });
+    expect(save).toBeDisabled();
+    expect(
+      document.getElementById(save.getAttribute("aria-describedby") ?? ""),
+    ).toHaveTextContent(/Saving is unavailable: The API server is unreachable/);
+  });
+
+  it("keeps an unreachable-API list failure to a quiet note", async () => {
+    api.listModelPacks.mockRejectedValue(new TypeError("Failed to fetch"));
+    renderPanel();
+
+    expect(
+      await screen.findByText(/Model packs unavailable — Can't reach the API server\./),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });

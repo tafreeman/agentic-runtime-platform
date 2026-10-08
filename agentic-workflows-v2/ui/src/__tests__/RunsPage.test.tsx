@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import RunsPage from "../pages/RunsPage";
@@ -7,6 +7,7 @@ import type { RunSummary } from "../api/types";
 const mockUseRuns = vi.fn();
 const mockUseRunsSummary = vi.fn();
 const mockSetCli = vi.fn();
+const mockApiAvailability = vi.fn();
 
 vi.mock("../hooks/useRuns", () => ({
   useRuns: (...args: unknown[]) => mockUseRuns(...args),
@@ -14,7 +15,11 @@ vi.mock("../hooks/useRuns", () => ({
 }));
 
 vi.mock("../hooks/useCli", () => ({
-  useCli: () => ({ cli: "agentic runs list --env prod --limit 50", setCli: mockSetCli }),
+  useCli: () => ({ cli: null, setCli: mockSetCli, syncRoute: vi.fn() }),
+}));
+
+vi.mock("../hooks/useApiAvailability", () => ({
+  useApiAvailability: () => mockApiAvailability(),
 }));
 
 // RunDetailPanel's own rendering (DAG/steps/evaluation) is covered by
@@ -60,6 +65,11 @@ describe("RunsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseRunsSummary.mockReturnValue({ data: undefined });
+    mockApiAvailability.mockReturnValue({
+      apiDown: false,
+      checking: false,
+      reason: undefined,
+    });
   });
 
   it("shows skeleton placeholders while loading", () => {
@@ -80,11 +90,109 @@ describe("RunsPage", () => {
     renderPage();
 
     const alert = screen.getByRole("alert");
-    expect(alert).toHaveTextContent(/failed to load runs/i);
+    expect(alert).toHaveTextContent(/couldn't load runs/i);
     expect(alert).toHaveTextContent(/catalog down/i);
+    // A remedy, not just the raw message.
+    expect(alert).toHaveTextContent(/retry/i);
+    // The table does not pretend the workspace is empty.
+    expect(screen.queryByText(/no runs yet/i)).not.toBeInTheDocument();
+    expect(screen.getByText("runs couldn't be loaded")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /retry/i }));
     expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("explains an HTTP error in human terms, keeping the server detail", () => {
+    mockUseRuns.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: new Error('API 422: {"detail":"limit must be <= 50"}'),
+      refetch: vi.fn(),
+    });
+    renderPage();
+
+    const alert = screen.getByRole("alert");
+    expect(alert).not.toHaveTextContent("API 422");
+    expect(alert).toHaveTextContent("limit must be <= 50");
+    expect(alert).toHaveTextContent(/fix the input and try again/i);
+  });
+
+  it("leaves the outage message to the shell banner while the API is down", () => {
+    mockApiAvailability.mockReturnValue({
+      apiDown: true,
+      checking: false,
+      reason: "The API server is unreachable. Start it with `just dev`, then retry.",
+    });
+    mockUseRuns.mockReturnValue({
+      // Stale rows from the last successful poll stay on screen.
+      data: [makeRun({ filename: "stale.json", run_id: "s1", workflow_name: "stale_flow" })],
+      isLoading: false,
+      isError: true,
+      error: new Error("API 502: "),
+      refetch: vi.fn(),
+    });
+    renderPage();
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "stale_flow" })).toBeInTheDocument();
+    // Starting a run needs the API: the action is disabled with a visible,
+    // programmatically associated reason (no dead link to /workflows).
+    expect(screen.queryByRole("link", { name: "Trigger run" })).not.toBeInTheDocument();
+    const trigger = screen.getByRole("button", { name: "Trigger run" });
+    expect(trigger).toBeDisabled();
+    expect(trigger).toHaveAccessibleDescription(
+      "New runs are unavailable while the API is unreachable.",
+    );
+  });
+
+  it("shows only a quiet note when the error itself says the API is unreachable", () => {
+    mockUseRuns.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: new TypeError("Failed to fetch"),
+      refetch: vi.fn(),
+    });
+    renderPage();
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      /couldn't load runs\. the api server is unreachable/i,
+    );
+  });
+
+  it("renders em-dash KPIs (with a no-data label) instead of fake zeros when nothing loaded", () => {
+    mockUseRuns.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: new Error("catalog down"),
+      refetch: vi.fn(),
+    });
+    renderPage();
+
+    const strip = screen.getByLabelText("run statistics");
+    expect(strip).not.toHaveTextContent(/\b0\b/);
+    expect(within(strip).getAllByText("no data")).toHaveLength(4);
+    expect(within(strip).getAllByText("—")).toHaveLength(4);
+    expect(screen.getByText(/recorded runs/)).not.toHaveTextContent(/\b0\b/);
+  });
+
+  it("keeps a real zero from real data", () => {
+    mockUseRuns.mockReturnValue({ data: [], isLoading: false });
+    mockUseRunsSummary.mockReturnValue({
+      data: { total_runs: 0, success: 0, failed: 0, avg_duration_ms: null, workflows: [] },
+    });
+    renderPage();
+
+    const strip = screen.getByLabelText("run statistics");
+    // runs total / passing / failed are genuine zeros…
+    expect(within(strip).getAllByText("0")).toHaveLength(3);
+    // …but an average over zero runs has no underlying data.
+    expect(within(strip).getAllByText("no data")).toHaveLength(1);
+    expect(screen.getByText(/recorded runs/)).toHaveTextContent(/Showing 0 of 0/);
   });
 
   it("renders the empty state when there are no runs", () => {
@@ -106,15 +214,18 @@ describe("RunsPage", () => {
     });
     renderPage();
 
-    const strip = screen.getByLabelText("run statistics");
+    // A ruled evidence scoreline (§11.1), not a boxed KPI card grid.
+    const strip = screen.getByRole("region", { name: "run statistics" });
+    expect(strip.className).toContain("border-y");
+    expect(strip.className).not.toContain("rounded-lg");
     expect(strip).toHaveTextContent("312");
-    expect(strip).toHaveTextContent("runs total");
+    expect(strip).toHaveTextContent("Total runs");
     expect(strip).toHaveTextContent("300");
-    expect(strip).toHaveTextContent("passing");
+    expect(strip).toHaveTextContent("Passing");
     expect(strip).toHaveTextContent("12");
-    expect(strip).toHaveTextContent("failed");
+    expect(strip).toHaveTextContent("Failed");
     expect(strip).toHaveTextContent("340ms");
-    expect(strip).toHaveTextContent("avg duration");
+    expect(strip).toHaveTextContent("Avg duration");
   });
 
   it("headlines 'showing X of Y' from the fetched window and the summary total", () => {
@@ -132,7 +243,7 @@ describe("RunsPage", () => {
 
     // The list endpoint returns a capped window (limit 50); the header must
     // not present that window as the total.
-    expect(screen.getByText(/showing 1 of 312/)).toBeInTheDocument();
+    expect(screen.getByText(/recorded runs/)).toHaveTextContent(/Showing 1 of 312/);
   });
 
   it("falls back to the window size for the total while the summary loads", () => {
@@ -146,7 +257,7 @@ describe("RunsPage", () => {
     // beforeEach leaves the summary undefined.
     renderPage();
 
-    expect(screen.getByText(/showing 2 of 2/)).toBeInTheDocument();
+    expect(screen.getByText(/recorded runs/)).toHaveTextContent(/Showing 2 of 2/);
   });
 
   it("truncates long run ids inside the run cell instead of overflowing the grid", () => {
@@ -164,19 +275,45 @@ describe("RunsPage", () => {
     });
     renderPage();
 
-    // CopyId must flex (not flex-none) with min-w-0 so the id truncates in
-    // its grid column instead of painting across the status glyph.
-    const copyButton = screen.getByRole("button", { name: longId });
-    expect(copyButton.className).toContain("flex-1");
-    expect(copyButton.className).toContain("min-w-0");
-    expect(copyButton.className).not.toContain("flex-none");
+    // The row's inspect button flexes (min-w-0 + flex-1) so the id truncates
+    // in its grid column instead of painting across the status marker.
+    const inspect = screen.getByRole("button", { name: `Inspect run ${longId}` });
+    expect(inspect.className).toContain("flex-1");
+    expect(inspect.className).toContain("min-w-0");
+    expect(inspect).toHaveAttribute("title", longId);
 
-    const inner = copyButton.querySelector("span.truncate");
+    const inner = inspect.querySelector("span.truncate");
     expect(inner).not.toBeNull();
     expect(inner).toHaveTextContent(longId);
 
-    // Belt-and-braces: the wrapping cell clips anything that still escapes.
-    expect(copyButton.parentElement?.className).toContain("overflow-hidden");
+    // The cell shrinks (min-w-0) but does not clip: overflow-hidden here would
+    // also clip the button's expanded ::after hit area back to the text box.
+    expect(inspect.parentElement?.className).toContain("min-w-0");
+    expect(inspect.parentElement?.className).not.toContain("overflow-hidden");
+    expect(inspect.className).toContain("after:-inset-y-3");
+  });
+
+  it("never shows a negative age when the server clock runs ahead", () => {
+    mockUseRuns.mockReturnValue({
+      data: [
+        makeRun({
+          filename: "ahead.json",
+          run_id: "ahead",
+          start_time: new Date(Date.now() + 90_000).toISOString(),
+        }),
+        makeRun({
+          filename: "old.json",
+          run_id: "old",
+          start_time: new Date(Date.now() - 3 * 3600_000).toISOString(),
+        }),
+      ],
+      isLoading: false,
+    });
+    renderPage();
+
+    expect(screen.getByText("just now")).toBeInTheDocument();
+    expect(screen.getByText("3h ago")).toBeInTheDocument();
+    expect(screen.queryByText(/^-\d/)).not.toBeInTheDocument();
   });
 
   it("renders run rows and filters by query", () => {
@@ -205,7 +342,7 @@ describe("RunsPage", () => {
     expect(screen.getByRole("link", { name: "triage_flow" })).toBeInTheDocument();
   });
 
-  it("filters rows with the workflow select and sets the CLI twin", () => {
+  it("filters rows with the workflow select (no invented CLI twin)", () => {
     mockUseRuns.mockReturnValue({
       data: [
         makeRun({ filename: "a.json", run_id: "a1", workflow_name: "review_flow" }),
@@ -223,9 +360,8 @@ describe("RunsPage", () => {
       screen.queryByRole("link", { name: "review_flow" }),
     ).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "triage_flow" })).toBeInTheDocument();
-    expect(mockSetCli).toHaveBeenCalledWith(
-      "agentic runs list --workflow triage_flow",
-    );
+    // The CLI has no `runs list` command, so nothing is set.
+    expect(mockSetCli).not.toHaveBeenCalled();
   });
 
   it("passes the Live tail switch state through to useRuns", () => {
@@ -337,7 +473,7 @@ describe("RunsPage", () => {
     expect(screen.queryByText("Inspector for deep.json")).not.toBeInTheDocument();
   });
 
-  it("exposes each run row as a copyable, keyboard-activatable button", () => {
+  it("uses table semantics with one inspect button per row (no nested controls)", () => {
     mockUseRuns.mockReturnValue({
       data: [
         makeRun({ filename: "kbd.json", run_id: "k1", workflow_name: "kbd_flow" }),
@@ -346,16 +482,67 @@ describe("RunsPage", () => {
     });
     renderPage();
 
-    const row = screen.getByRole("button", { name: "Inspect run k1" });
-    expect(row).toHaveAttribute("tabindex", "0");
+    const table = screen.getByRole("table", { name: "Runs" });
+    const rows = within(table).getAllByRole("row");
+    // Header row + one run row; rows are not buttons and take no tab stop.
+    expect(rows).toHaveLength(2);
+    for (const row of rows) {
+      expect(row).not.toHaveAttribute("tabindex");
+    }
+    expect(within(table).getAllByRole("columnheader").map((h) => h.textContent)).toEqual([
+      "Run",
+      "Workflow",
+      "Status",
+      "Duration",
+      "Steps",
+      "Score",
+      "When",
+    ]);
 
-    // CopyId renders the run id as its own copyable control inside the row.
-    expect(screen.getByRole("button", { name: "k1" })).toBeInTheDocument();
+    // The identity cell holds the row's primary control: a real button.
+    const inspect = within(rows[1]!).getByRole("button", { name: "Inspect run k1" });
+    expect(inspect.tagName).toBe("BUTTON");
+    expect(inspect).toHaveAttribute("aria-expanded", "false");
+    expect(inspect.closest('[role="cell"]')).not.toBeNull();
+    // No interactive element nests another.
+    for (const control of within(table).queryAllByRole("button")) {
+      expect(control.querySelector("a, button")).toBeNull();
+    }
 
-    // Enter/Space directly on a focused row also selects it (independent of
-    // the page-level j/k/↵ cursor nav tested below).
-    fireEvent.keyDown(row, { key: "Enter" });
+    fireEvent.click(inspect);
     expect(screen.getByText("Inspector for kbd.json")).toBeInTheDocument();
+    expect(inspect).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("shows status with the shared marker words, not ASCII brackets", () => {
+    mockUseRuns.mockReturnValue({
+      data: [
+        makeRun({ filename: "a.json", run_id: "a1", status: "success" }),
+        makeRun({ filename: "b.json", run_id: "b2", status: "failed" }),
+        makeRun({ filename: "c.json", run_id: "c3", status: "running" }),
+      ],
+      isLoading: false,
+    });
+    renderPage();
+
+    const table = screen.getByRole("table", { name: "Runs" });
+    expect(within(table).getByText("Success")).toBeInTheDocument();
+    expect(within(table).getByText("Failed")).toBeInTheDocument();
+    expect(within(table).getByText("Running")).toBeInTheDocument();
+    expect(table.textContent).not.toMatch(/\[ ?(ok|err|\.\.) ?\]/);
+  });
+
+  it("keeps the pointer row-click shortcut", () => {
+    mockUseRuns.mockReturnValue({
+      data: [makeRun({ filename: "row.json", run_id: "r1", workflow_name: "row_flow" })],
+      isLoading: false,
+    });
+    renderPage();
+
+    const row = screen.getByRole("button", { name: "Inspect run r1" }).closest('[role="row"]')!;
+    // Click a non-control cell (duration) — the whole row is a pointer target.
+    fireEvent.click(within(row as HTMLElement).getAllByRole("cell")[3]!);
+    expect(screen.getByText("Inspector for row.json")).toBeInTheDocument();
   });
 
   describe("master-detail selection", () => {
@@ -375,7 +562,8 @@ describe("RunsPage", () => {
       fireEvent.click(screen.getByRole("button", { name: "Inspect run a1" }));
 
       expect(screen.getByText("Inspector for a.json")).toBeInTheDocument();
-      expect(mockSetCli).toHaveBeenCalledWith("agentic runs inspect a1 --trace");
+      // No CLI command inspects a recorded run, so none is invented.
+      expect(mockSetCli).not.toHaveBeenCalled();
     });
 
     it("keeps the full-width table (no aside) until a run is selected", () => {
@@ -430,14 +618,29 @@ describe("RunsPage", () => {
       expect(screen.getByText("Duration")).toBeInTheDocument();
     });
 
-    it("sets a CLI-parity command when the status filter changes", () => {
-      mockUseRuns.mockReturnValue({ data: twoRuns(), isLoading: false });
+    it("filters by status with the shared status words and sets no fake CLI twin", () => {
+      mockUseRuns.mockReturnValue({
+        data: [
+          makeRun({ filename: "a.json", run_id: "a1", workflow_name: "alpha_flow" }),
+          makeRun({
+            filename: "b.json",
+            run_id: "b2",
+            workflow_name: "beta_flow",
+            status: "failed",
+          }),
+        ],
+        isLoading: false,
+      });
       renderPage();
 
-      fireEvent.change(screen.getByLabelText("Filter by status"), {
-        target: { value: "failed" },
-      });
-      expect(mockSetCli).toHaveBeenCalledWith("agentic runs list --status failed");
+      const select = screen.getByLabelText("Filter by status");
+      expect(within(select).getByRole("option", { name: /^Failed · 1$/ })).toBeInTheDocument();
+      fireEvent.change(select, { target: { value: "failed" } });
+      expect(screen.queryByRole("link", { name: "alpha_flow" })).not.toBeInTheDocument();
+      expect(screen.getByRole("link", { name: "beta_flow" })).toBeInTheDocument();
+
+      // There is no `agentic runs list` command — the strip shows none.
+      expect(mockSetCli).not.toHaveBeenCalled();
     });
 
     it("moves the keyboard cursor with j/k and inspects the focused row on Enter", () => {
@@ -449,7 +652,6 @@ describe("RunsPage", () => {
       fireEvent.keyDown(window, { key: "Enter" });
 
       expect(screen.getByText("Inspector for b.json")).toBeInTheDocument();
-      expect(mockSetCli).toHaveBeenCalledWith("agentic runs inspect b2 --trace");
 
       // Move back up with "k" and inspect row 0.
       fireEvent.keyDown(window, { key: "k" });

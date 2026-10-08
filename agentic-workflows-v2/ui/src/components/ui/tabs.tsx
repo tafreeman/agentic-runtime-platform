@@ -60,8 +60,10 @@ function TabsTrigger({
   return (
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
+      // The active rail is state-bearing, so it uses accent-strong (>=3:1);
+      // focus draws inside the tab so the tab list's rule never clips it.
       className={cn(
-        "relative inline-flex h-10 flex-1 items-center justify-center gap-1.5 whitespace-nowrap border-x-0 border-t-0 border-b-2 border-transparent bg-transparent px-3 text-[13px] font-semibold text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-el-accent data-[state=active]:text-foreground data-[orientation=vertical]:w-full data-[orientation=vertical]:justify-start [&_svg]:pointer-events-none [&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0",
+        "relative inline-flex h-10 flex-1 items-center justify-center gap-1.5 whitespace-nowrap border-x-0 border-t-0 border-b-2 border-transparent bg-transparent px-3 text-[13px] font-semibold text-muted-foreground transition-colors hover:text-foreground focus-ring-inset disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-el-accent-strong data-[state=active]:text-foreground data-[orientation=vertical]:w-full data-[orientation=vertical]:justify-start [&_svg]:pointer-events-none [&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0",
         className
       )}
       {...props}
@@ -76,7 +78,8 @@ function TabsContent({
   return (
     <TabsPrimitive.Content
       data-slot="tabs-content"
-      className={cn("flex-1 text-sm outline-hidden", className)}
+      // Radix makes the panel a Tab stop (tabIndex=0), so it needs a ring.
+      className={cn("flex-1 text-sm focus-ring", className)}
       {...props}
     />
   )

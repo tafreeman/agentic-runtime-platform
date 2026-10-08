@@ -9,6 +9,8 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
+import { Button } from "../components/ui/button";
+import TierMark, { tierLevel } from "../components/common/TierMark";
 import WorkflowDAG from "../components/dag/WorkflowDAG";
 import EdgeInspector from "../components/editor/EdgeInspector";
 import NodeInspector from "../components/editor/NodeInspector";
@@ -38,19 +40,18 @@ import {
   validateWorkflowEditorDocument,
 } from "../api/client";
 import type { WorkflowEditorValidationIssue } from "../api/types";
+import { useApiAvailability } from "../hooks/useApiAvailability";
 import { useWorkflowEditor } from "../hooks/useWorkflows";
+import { formatApiError } from "../lib/apiErrors";
 
-const CARD_STYLE = {
-  background: "rgb(var(--b-bg1))",
-  border: "var(--b-bw) solid rgb(var(--b-line))",
-  borderRadius: "var(--b-rad-lg)",
-} as const;
+/** Bordered surface panel (graph, step strip, validation band). */
+const PANEL_CLASS = "rounded-lg border border-el-divider bg-el-surface";
 
-const INPUT_STYLE = {
-  background: "rgb(var(--b-bg0))",
-  border: "var(--b-bw) solid rgb(var(--b-line))",
-  borderRadius: "var(--b-rad-sm)",
-} as const;
+/** Small tracked overline label (type floor: text-micro). */
+const OVERLINE_CLASS =
+  "font-mono text-micro uppercase tracking-[1.5px] text-el-muted";
+
+const API_REASON_ID = "workflow-editor-api-reason";
 
 type EditorMode = "visual" | "yaml";
 
@@ -63,19 +64,31 @@ function normalizeIssues(issues: WorkflowEditorValidationIssue[] | undefined) {
   return issues ?? [];
 }
 
-/** Resolve a theme-aware status color (CSS var) for a tier badge. */
-function tierColor(tier: string | null | undefined): string {
+/**
+ * Capability-tier mark classes for a tier badge — the same scale as the DAG
+ * step nodes and the workflow detail page: a numbered tier ("t2", "tier3",
+ * "4") maps T0–T2 → low, T3 → mid, T4–T5 → high; named aliases fall back to
+ * fast/haiku → low, sonnet → mid, smart/opus → high.
+ */
+function tierClass(tier: string | null | undefined): string {
   const t = (tier ?? "").toLowerCase();
-  if (t.includes("0") || t.includes("fast") || t.includes("haiku")) {
-    return "rgb(var(--b-green))";
+  const digit = /(\d+)/.exec(t);
+  if (digit) {
+    const level = Number(digit[1]);
+    if (level <= 2) return "border-el-tier-low text-el-tier-low";
+    if (level === 3) return "border-el-tier-mid text-el-tier-mid";
+    return "border-el-tier-high text-el-tier-high";
   }
-  if (t.includes("2") || t.includes("smart") || t.includes("opus")) {
-    return "rgb(var(--b-purple))";
+  if (t.includes("fast") || t.includes("haiku")) {
+    return "border-el-tier-low text-el-tier-low";
   }
-  if (t.includes("1") || t.includes("sonnet")) {
-    return "rgb(var(--b-blue))";
+  if (t.includes("smart") || t.includes("opus")) {
+    return "border-el-tier-high text-el-tier-high";
   }
-  return "rgb(var(--b-text-dim))";
+  if (t.includes("sonnet")) {
+    return "border-el-tier-mid text-el-tier-mid";
+  }
+  return "border-el-divider text-el-muted";
 }
 
 function ModePill({
@@ -88,15 +101,11 @@ function ModePill({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className="inline-flex items-center font-mono text-[10.5px]"
-      style={{
-        border: "var(--b-bw) solid",
-        borderColor: active ? "rgb(var(--b-clay))" : "rgb(var(--b-line))",
-        borderRadius: "var(--b-rad-sm)",
-        padding: "5px 11px",
-        color: active ? "rgb(var(--b-text))" : "rgb(var(--b-text-dim))",
-        background: active ? "rgb(var(--b-bg2))" : "rgb(var(--b-bg0))",
-      }}
+      className={`inline-flex min-h-9 items-center rounded-md border px-[11px] font-mono text-micro transition-colors focus-ring ${
+        active
+          ? "border-el-ink bg-el-subtle text-el-ink"
+          : "border-el-divider bg-el-canvas text-el-muted hover:bg-el-hover hover:text-el-ink"
+      }`}
     >
       {label}
     </button>
@@ -107,6 +116,7 @@ export default function WorkflowEditorPage() {
   const { name } = useParams<{ name: string }>();
   const queryClient = useQueryClient();
   const { data, isLoading, isError, error } = useWorkflowEditor(name, true);
+  const { apiDown, reason: apiReason } = useApiAvailability();
 
   const [mode, setMode] = useState<EditorMode>("visual");
   const [selection, setSelection] = useState<Selection>(null);
@@ -228,10 +238,12 @@ export default function WorkflowEditorPage() {
   const stepCount = graph.nodes.length;
   const edgeCount = graph.edges.length;
 
-  const validColor = hasErrors ? "rgb(var(--b-red))" : "rgb(var(--b-green))";
-  const validText = (() => {
-    if (issueCount === 0) return "not validated";
-    return hasErrors ? `${issueCount} blocking` : "valid";
+  // Status text + marker colour; "not validated" stays neutral, not green.
+  const [validText, validTextClass, validDotClass] = (() => {
+    if (issueCount === 0) return ["not validated", "text-el-muted", "bg-el-neutral"];
+    return hasErrors
+      ? [`${issueCount} blocking`, "text-el-danger", "bg-el-danger"]
+      : ["valid", "text-el-success", "bg-el-success"];
   })();
 
   const handleModeSwitch = (nextMode: EditorMode) => {
@@ -271,51 +283,45 @@ export default function WorkflowEditorPage() {
     setSelection({ kind: "edge", id: `${source}->${target}` });
   };
 
+  const apiActionProps = apiDown
+    ? ({ "aria-describedby": API_REASON_ID } as const)
+    : {};
+
   return (
-    <div className="flex h-full flex-col overflow-y-auto bg-b-bg0">
+    <div className="flex h-full flex-col overflow-y-auto bg-el-canvas">
       {/* ── workflow header band ── */}
       <div className="p-4 pb-0">
-        <div
-          className="flex flex-wrap items-center gap-x-5 gap-y-3 bg-b-bg1 px-4 py-3.5"
-          style={{
-            border: "var(--b-bw) solid rgb(var(--b-line))",
-            borderRadius: "var(--b-rad-lg)",
-          }}
-        >
-          <Link
-            to={`/workflows/${encodeURIComponent(name ?? "")}`}
-            className="btn-ghost p-1"
-            aria-label="Back to workflow detail"
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-lg border border-el-divider bg-el-surface px-4 py-3.5">
+          <Button
+            asChild
+            variant="ghost"
+            size="icon"
+            className="size-9"
           >
-            <ArrowLeft aria-hidden="true" className="h-4 w-4" />
-          </Link>
+            <Link
+              to={`/workflows/${encodeURIComponent(name ?? "")}`}
+              aria-label="Back to workflow detail"
+            >
+              <ArrowLeft aria-hidden="true" />
+            </Link>
+          </Button>
 
           <div className="flex items-center gap-2.5">
-            <span className="font-mono text-[9px] uppercase tracking-[1.2px] text-b-text-faint">
+            <span className="font-mono text-micro uppercase tracking-[1.2px] text-el-muted">
               Workflow
             </span>
-            <h1
-              className="truncate font-semibold text-b-text"
-              style={{ fontFamily: "var(--b-font-heading)", fontSize: "20px" }}
-            >
+            <h1 className="truncate font-display text-xl font-semibold text-el-ink">
               {name}
             </h1>
             {data?.read_only && (
-              <span
-                className="inline-flex items-center font-mono text-[9px] uppercase tracking-[0.5px] text-b-amber"
-                style={{
-                  border: "var(--b-bw) solid rgb(var(--b-amber) / 0.4)",
-                  borderRadius: "var(--b-rad-sm)",
-                  padding: "1px 6px",
-                }}
-              >
+              <span className="inline-flex items-center rounded-md bg-el-warning-soft px-1.5 py-px font-mono text-micro uppercase tracking-[0.5px] text-el-warning">
                 read only
               </span>
             )}
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="font-mono text-[9px] uppercase tracking-[1.2px] text-b-text-faint">
+            <span className="font-mono text-micro uppercase tracking-[1.2px] text-el-muted">
               Mode
             </span>
             <ModePill
@@ -331,96 +337,105 @@ export default function WorkflowEditorPage() {
           </div>
 
           <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-2">
-            <span className="font-mono text-[10px] text-b-text-dim">
+            <span className="font-mono text-micro text-el-muted">
               {stepCount} steps · {edgeCount} edges
             </span>
             <span
-              className="flex items-center gap-1.5 font-mono text-[10px]"
-              style={{ color: validColor }}
+              className={`flex items-center gap-1.5 font-mono text-micro ${validTextClass}`}
             >
               <span
                 aria-hidden="true"
-                className="inline-block h-1.5 w-1.5 rounded-full"
-                style={{ background: validColor }}
+                className={`inline-block h-1.5 w-1.5 rounded-full ${validDotClass}`}
               />
               {validText}
             </span>
             {lastSavedAt && (
-              <span className="font-mono text-[10px] text-b-text-dim">
+              <span className="font-mono text-micro text-el-muted">
                 Last saved {new Date(lastSavedAt).toLocaleString()}
               </span>
             )}
             {isDirty && (
-              <span
-                className="inline-flex items-center font-mono text-[9px] uppercase tracking-[0.5px] text-b-blue"
-                style={{
-                  border: "var(--b-bw) solid rgb(var(--b-blue) / 0.4)",
-                  borderRadius: "var(--b-rad-sm)",
-                  padding: "1px 6px",
-                }}
-              >
+              <span className="inline-flex items-center rounded-md bg-el-info-soft px-1.5 py-px font-mono text-micro uppercase tracking-[0.5px] text-el-info">
                 Unsaved changes
               </span>
             )}
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={() => validateMutation.mutate()}
-              disabled={validateMutation.isPending || saveMutation.isPending || isReadOnly}
+              disabled={
+                apiDown ||
+                validateMutation.isPending ||
+                saveMutation.isPending ||
+                isReadOnly
+              }
               aria-busy={validateMutation.isPending}
-              className="btn-ghost"
+              className="h-9"
+              {...apiActionProps}
             >
               {validateMutation.isPending ? (
-                <Loader2 aria-hidden="true" className="h-3.5 w-3.5 animate-spin" />
+                <Loader2 aria-hidden="true" className="animate-spin" />
               ) : (
-                <CheckCircle2 aria-hidden="true" className="h-3.5 w-3.5" />
+                <CheckCircle2 aria-hidden="true" />
               )}
               {validateMutation.isPending ? "Validating…" : "Validate"}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              size="sm"
               onClick={() => saveMutation.mutate()}
-              disabled={!isDirty || saveMutation.isPending || isReadOnly}
+              disabled={apiDown || !isDirty || saveMutation.isPending || isReadOnly}
               aria-busy={saveMutation.isPending}
-              className="btn-primary"
+              className="h-9"
+              {...apiActionProps}
             >
               {saveMutation.isPending ? (
-                <Loader2 aria-hidden="true" className="h-3.5 w-3.5 animate-spin" />
+                <Loader2 aria-hidden="true" className="animate-spin" />
               ) : (
-                <Save aria-hidden="true" className="h-3.5 w-3.5" />
+                <Save aria-hidden="true" />
               )}
               {saveMutation.isPending ? "Saving…" : "Save"}
-            </button>
-            <Link
-              to={`/workflows/${encodeURIComponent(name ?? "")}`}
-              className="inline-flex items-center gap-1.5 bg-b-clay px-3.5 py-[7px] font-mono text-[11px] font-semibold text-b-ink transition-colors hover:bg-b-clay/90 focus:outline-hidden focus:ring-1 focus:ring-b-clay/50"
-              style={{ borderRadius: "var(--b-rad-sm)" }}
-            >
-              run config →
-            </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm" className="h-9">
+              <Link to={`/workflows/${encodeURIComponent(name ?? "")}`}>
+                run config →
+              </Link>
+            </Button>
           </div>
+          {apiDown && (
+            <p
+              id={API_REASON_ID}
+              className="w-full text-right font-mono text-micro text-el-muted"
+            >
+              {apiReason}
+            </p>
+          )}
         </div>
       </div>
 
       {(() => {
         if (isLoading) {
           return (
-            <div className="flex flex-1 items-center justify-center font-mono text-[11px] text-b-text-dim">
+            <div className="flex flex-1 items-center justify-center font-mono text-xs text-el-muted">
               Loading workflow editor...
             </div>
           );
         }
         if (isError) {
           return (
-            <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center font-mono text-[11px] text-b-red">
+            <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center font-mono text-xs text-el-danger">
               <TriangleAlert aria-hidden="true" className="h-5 w-5" />
               <div>Unable to load workflow editor.</div>
-              <div className="font-mono text-[10px] text-b-red/70">{error.message}</div>
+              <div className="font-mono text-micro text-el-secondary">
+                {formatApiError(error)}
+              </div>
             </div>
           );
         }
         if (!data) {
           return (
-            <div className="flex flex-1 items-center justify-center font-mono text-[11px] text-b-text-dim">
+            <div className="flex flex-1 items-center justify-center font-mono text-xs text-el-muted">
               No workflow editor data available.
             </div>
           );
@@ -429,21 +444,23 @@ export default function WorkflowEditorPage() {
           <div className="grid flex-1 grid-cols-1 items-start gap-4 p-4 xl:grid-cols-[1.12fr_0.98fr]">
             {/* ── LEFT: canvas ── */}
             <div className="flex min-w-0 flex-col gap-4">
-              <div className="flex min-h-[420px] flex-col p-3.5" style={CARD_STYLE}>
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-[9.5px] uppercase tracking-[1.5px] text-b-text-faint">
+              <div className={`flex min-h-[420px] flex-col p-3.5 ${PANEL_CLASS}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <span className={OVERLINE_CLASS}>
                     Graph · click nodes and edges to configure · drag handles to
                     connect
                   </span>
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
+                    size="sm"
                     onClick={handleAddStep}
                     disabled={isReadOnly || mode !== "visual"}
-                    className="btn-ghost"
+                    className="h-9"
                   >
-                    <Plus aria-hidden="true" className="h-3.5 w-3.5" />
+                    <Plus aria-hidden="true" />
                     add step
-                  </button>
+                  </Button>
                 </div>
                 {/* Explicit height, not min-h/flex-1: WorkflowDAG's root is
                     h-full and React Flow needs a measurable parent (#004).
@@ -474,54 +491,43 @@ export default function WorkflowEditorPage() {
               </div>
 
               {/* step strip */}
-              <div className="p-3.5" style={CARD_STYLE}>
-                <span className="font-mono text-[9.5px] uppercase tracking-[1.5px] text-b-text-faint">
-                  Steps
-                </span>
+              <div className={`p-3.5 ${PANEL_CLASS}`}>
+                <span className={OVERLINE_CLASS}>Steps</span>
                 <div className="mt-2.5 flex flex-wrap gap-1.5">
                   {graph.nodes.length === 0 && (
-                    <div className="py-2 font-mono text-[10px] text-b-text-faint">
+                    <div className="py-2 font-mono text-micro text-el-muted">
                       no steps defined
                     </div>
                   )}
                   {graph.nodes.map((node, index) => {
                     const isSelected =
                       selection?.kind === "node" && selection.id === node.id;
-                    const color = tierColor(node.tier);
                     return (
                       <button
                         type="button"
                         key={node.id}
                         onClick={() => setSelection({ kind: "node", id: node.id })}
                         aria-pressed={isSelected}
-                        className="flex items-center gap-2 text-left"
-                        style={{
-                          background: isSelected
-                            ? "rgb(var(--b-bg2))"
-                            : "rgb(var(--b-bg0))",
-                          border: `var(--b-bw) solid ${isSelected ? "rgb(var(--b-clay))" : "rgb(var(--b-line))"}`,
-                          borderRadius: "var(--b-rad-sm)",
-                          padding: "6px 10px",
-                        }}
+                        className={`flex min-h-9 items-center gap-2 rounded-md border px-2.5 py-1.5 text-left transition-colors focus-ring ${
+                          isSelected
+                            ? "border-el-accent-strong bg-el-subtle"
+                            : "border-el-divider bg-el-canvas hover:bg-el-hover"
+                        }`}
                       >
-                        <span className="font-mono text-[9px] text-b-text-faint">
+                        <span className="font-mono text-micro text-el-muted">
                           {index + 1}
                         </span>
-                        <span className="text-[11.5px] font-medium text-b-text">
+                        <span className="text-xs font-medium text-el-ink">
                           {node.id}
                         </span>
                         {node.tier && (
-                          <span
-                            className="font-mono text-[8.5px] uppercase"
-                            style={{
-                              color,
-                              border: `1px solid ${color}`,
-                              borderRadius: "var(--b-rad-sm)",
-                              padding: "0px 4px",
-                            }}
-                          >
-                            {node.tier}
-                          </span>
+                          <TierMark
+                            tier={node.tier}
+                            // Named aliases (fast/sonnet/opus) carry no digit;
+                            // keep their text and the editor's alias tones.
+                            label={tierLevel(node.tier) == null ? node.tier : undefined}
+                            toneClass={tierClass(node.tier)}
+                          />
                         )}
                       </button>
                     );
@@ -530,52 +536,43 @@ export default function WorkflowEditorPage() {
               </div>
             </div>
 
-            {/* ── RIGHT: inspector (clay accent) ── */}
-            <div
-              className="relative flex min-w-0 flex-col gap-4 overflow-hidden p-[18px]"
-              style={{
-                background: "rgb(var(--b-bg1))",
-                border: "var(--b-bw) solid rgb(var(--b-clay))",
-                borderRadius: "var(--b-rad-lg)",
-              }}
-            >
+            {/* ── RIGHT: inspector — the vermilion top rail is its one key
+                mark; the heading and border stay neutral. ── */}
+            <div className="relative flex min-w-0 flex-col gap-4 overflow-hidden rounded-lg border border-el-divider bg-el-surface p-[18px]">
               <span
                 aria-hidden="true"
-                className="absolute inset-x-0 top-0 h-0.5"
-                style={{ background: "rgb(var(--b-clay))" }}
+                className="absolute inset-x-0 top-0 h-0.5 bg-el-accent"
               />
               <div className="flex items-center gap-2.5">
-                <h2 className="font-mono text-[9.5px] uppercase tracking-[1.5px] text-b-clay">
+                <h2 className="font-mono text-micro font-semibold uppercase tracking-[1.5px] text-el-ink">
                   {selection?.kind === "edge" ? "Configure edge" : "Configure step"}
                 </h2>
                 {selection && (
-                  <span className="font-mono text-[9.5px] text-b-text-faint">
+                  <span className="font-mono text-micro text-el-muted">
                     {selection.id}
                   </span>
                 )}
               </div>
 
               {mode === "yaml" && (
-                <div style={{ ...INPUT_STYLE }}>
-                  <div
-                    className="px-3 py-2"
-                    style={{ borderBottom: "var(--b-bw) solid rgb(var(--b-line))" }}
-                  >
-                    <span className="flex items-center justify-between font-mono text-[9px] uppercase tracking-[0.8px] text-b-text-dim">
+                <div className="rounded-md border border-el-divider bg-el-canvas">
+                  <div className="border-b border-el-divider px-3 py-2">
+                    <span className="flex items-center justify-between font-mono text-micro uppercase tracking-[0.8px] text-el-muted">
                       Workflow source (YAML)
-                      <span className="text-b-text-faint">
+                      <span className="text-el-faint">
                         {draftSource.length} chars
                       </span>
                     </span>
                   </div>
                   <div className="p-3">
+                    {/* Dense technical editor: 14px minimum (design system
+                        §10.2); focus-ring replaces the 50%-tint ring. */}
                     <textarea
                       value={draftSource}
                       onChange={(event) => setDraftSource(event.target.value)}
                       spellCheck={false}
                       readOnly={isReadOnly}
-                      className="h-[430px] w-full resize-none border border-b-line bg-b-bg0 p-3 font-mono text-[11.5px] leading-[1.55] text-b-text focus:border-b-clay focus:outline-hidden focus:ring-1 focus:ring-b-clay/50"
-                      style={{ borderRadius: "var(--b-rad-sm)" }}
+                      className="h-[430px] w-full resize-none rounded-md border border-el-control-border bg-el-raised p-3 font-mono text-sm leading-[1.55] text-el-ink focus-ring"
                       aria-label="Workflow source"
                     />
                   </div>
@@ -651,70 +648,39 @@ export default function WorkflowEditorPage() {
               )}
 
               {mode === "visual" && !selectedStep && selection?.kind !== "edge" && (
-                <div
-                  className="px-4 py-6 text-center font-mono text-[11px] text-b-text-dim"
-                  style={{
-                    border: "var(--b-bw) dashed rgb(var(--b-line))",
-                    borderRadius: "var(--b-rad-sm)",
-                  }}
-                >
+                <div className="rounded-md border border-dashed border-el-divider px-4 py-6 text-center font-mono text-xs text-el-muted">
                   Select a step or edge in the graph to configure it.
                 </div>
               )}
             </div>
 
             {/* ── VALIDATION band ── */}
-            <div className="xl:col-span-2 p-[18px]" style={CARD_STYLE}>
+            <div className={`p-[18px] xl:col-span-2 ${PANEL_CLASS}`}>
               <div className="mb-3.5 flex items-center gap-3">
-                <span className="font-mono text-[9.5px] uppercase tracking-[1.5px] text-b-text-faint">
-                  Validation
-                </span>
+                <span className={OVERLINE_CLASS}>Validation</span>
                 <span
-                  className="flex items-center gap-1.5 font-mono text-[10px]"
-                  style={{ color: validColor }}
+                  className={`flex items-center gap-1.5 font-mono text-micro ${validTextClass}`}
                 >
                   <span
                     aria-hidden="true"
-                    className="inline-block h-1.5 w-1.5 rounded-full"
-                    style={{ background: validColor }}
+                    className={`inline-block h-1.5 w-1.5 rounded-full ${validDotClass}`}
                   />
                   {validText}
                 </span>
               </div>
 
               {validateMutation.isError && (
-                <div
-                  className="mb-2 px-3 py-2 font-mono text-[11px] text-b-red"
-                  style={{
-                    border: "var(--b-bw) solid rgb(var(--b-red) / 0.4)",
-                    borderRadius: "var(--b-rad-sm)",
-                    background: "rgb(var(--b-red) / 0.1)",
-                  }}
-                >
-                  {validateMutation.error.message}
+                <div className="mb-2 rounded-md border border-el-danger/40 bg-el-danger-soft px-3 py-2 font-mono text-xs text-el-danger">
+                  {formatApiError(validateMutation.error)}
                 </div>
               )}
               {saveMutation.isError && (
-                <div
-                  className="mb-2 px-3 py-2 font-mono text-[11px] text-b-red"
-                  style={{
-                    border: "var(--b-bw) solid rgb(var(--b-red) / 0.4)",
-                    borderRadius: "var(--b-rad-sm)",
-                    background: "rgb(var(--b-red) / 0.1)",
-                  }}
-                >
-                  {saveMutation.error.message}
+                <div className="mb-2 rounded-md border border-el-danger/40 bg-el-danger-soft px-3 py-2 font-mono text-xs text-el-danger">
+                  {formatApiError(saveMutation.error)}
                 </div>
               )}
               {issueCount === 0 && !validateMutation.isPending && (
-                <div
-                  className="px-3 py-2 font-mono text-[11px] text-b-text-dim"
-                  style={{
-                    border: "var(--b-bw) solid rgb(var(--b-line))",
-                    borderRadius: "var(--b-rad-sm)",
-                    background: "rgb(var(--b-bg2))",
-                  }}
-                >
+                <div className="rounded-md border border-el-divider-soft bg-el-subtle px-3 py-2 font-mono text-xs text-el-muted">
                   No validation messages yet. Run validation to preview schema and
                   graph issues.
                 </div>
@@ -722,22 +688,18 @@ export default function WorkflowEditorPage() {
               <div className="space-y-2">
                 {issues.map((issue, index) => {
                   const isIssueError = issue.level === "error";
-                  const accent = isIssueError ? "var(--b-red)" : "var(--b-amber)";
                   return (
                     <div
                       key={`${issue.level}-${issue.path ?? "root"}-${index}`}
-                      className={`px-3 py-2 font-mono text-[11px] ${isIssueError ? "text-b-red" : "text-b-amber"}`}
-                      style={{
-                        border: `var(--b-bw) solid rgb(${accent} / 0.4)`,
-                        borderRadius: "var(--b-rad-sm)",
-                        background: `rgb(${accent} / 0.1)`,
-                      }}
+                      className={`rounded-md border px-3 py-2 font-mono text-xs ${
+                        isIssueError
+                          ? "border-el-danger/40 bg-el-danger-soft text-el-danger"
+                          : "border-el-warning/40 bg-el-warning-soft text-el-warning"
+                      }`}
                     >
                       <div className="font-medium">{issue.message}</div>
                       {issue.path && (
-                        <div className="mt-1 font-mono text-[11px] opacity-80">
-                          {issue.path}
-                        </div>
+                        <div className="mt-1 font-mono text-xs">{issue.path}</div>
                       )}
                     </div>
                   );

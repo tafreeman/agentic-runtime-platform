@@ -10,6 +10,7 @@ const mockUseRunEvaluationDetail = vi.fn();
 const mockUseWorkflowDAG = vi.fn();
 const mockRunWorkflow = vi.fn();
 const mockGetWorkflowEditor = vi.fn();
+const mockHealthCheck = vi.fn();
 
 vi.mock("../hooks/useRuns", () => ({
   useRunDetail: (...args: unknown[]) => mockUseRunDetail(...args),
@@ -24,10 +25,12 @@ vi.mock("../hooks/useWorkflows", () => ({
 vi.mock("../api/client", () => ({
   runWorkflow: (...args: unknown[]) => mockRunWorkflow(...args),
   getWorkflowEditor: (...args: unknown[]) => mockGetWorkflowEditor(...args),
+  // Shared ["backend-health"] query behind useApiAvailability.
+  healthCheck: () => mockHealthCheck(),
 }));
 
 vi.mock("../components/dag/WorkflowDAG", () => ({
-  default: () => <div>Workflow DAG</div>,
+  default: () => <div>Mock workflow graph</div>,
 }));
 
 vi.mock("../components/runs/RunDetail", () => ({
@@ -97,6 +100,7 @@ const RUN_FIXTURE = {
 describe("RunDetailPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockHealthCheck.mockResolvedValue({ status: "ok", version: "0.1.0" });
     mockUseRunEvaluationDetail.mockReturnValue({
       isLoading: false,
       data: { evaluation: null },
@@ -109,8 +113,8 @@ describe("RunDetailPage", () => {
 
     renderAtRoute("run.json");
 
-    // BTopBar breadcrumb shows the route path.
-    expect(screen.getByText("runs/run.json")).toBeInTheDocument();
+    // BTopBar breadcrumb shows the route path (as sans segments, no prompt).
+    expect(screen.getByTitle("runs/run.json")).toHaveTextContent("runs/run.json");
     // Back button is wrapper-owned chrome, not part of the panel.
     expect(screen.getByRole("button", { name: /go back/i })).toBeInTheDocument();
   });
@@ -121,12 +125,12 @@ describe("RunDetailPage", () => {
 
     const { rerender } = renderAtRoute("run.json");
 
-    expect(screen.getByText("$ loading run…")).toBeInTheDocument();
+    expect(screen.getByText("Loading run…")).toBeInTheDocument();
 
     mockUseRunDetail.mockReturnValue({ data: null, isLoading: false });
     rerender(wrap(<RunDetailPage />, "/runs/run.json"));
 
-    expect(screen.getByText("$ run not found")).toBeInTheDocument();
+    expect(screen.getByText("Run not found")).toBeInTheDocument();
   });
 
   it("renders the run summary, a copyable run id, DAG, steps, and evaluation for a deep link", () => {
@@ -177,13 +181,16 @@ describe("RunDetailPage", () => {
     const copyIdButton = screen.getByRole("button", { name: "run-123" });
     expect(copyIdButton).toHaveAttribute("title", "Copy run-123");
 
-    expect(screen.getByText("Workflow DAG")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Workflow DAG" })).toBeInTheDocument();
+    expect(screen.getByText("Mock workflow graph")).toBeInTheDocument();
     expect(screen.getByText("Run Detail Steps 1")).toBeInTheDocument();
     expect(screen.getAllByText(/grade/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText("A").length).toBeGreaterThan(0);
-    expect(screen.getByText("passed")).toBeInTheDocument();
-    expect(screen.getByText("score detail")).toBeInTheDocument();
-    expect(screen.getByText("step scores")).toBeInTheDocument();
+    // Run and evaluation states use the shared marker words.
+    expect(screen.getAllByText("Passed").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Success").length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { name: "Score detail" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Step scores" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /ingest/i })).toBeInTheDocument();
 
     // The deep-link route uses the wide two-column page layout restored from
@@ -291,11 +298,125 @@ describe("RunDetailPage", () => {
 
     renderAtRoute("run.json");
 
-    fireEvent.click(screen.getByRole("tab", { name: "yaml" }));
+    fireEvent.click(screen.getByRole("tab", { name: "YAML" }));
 
     await waitFor(() =>
       expect(screen.getByText(/name: review_flow/)).toBeInTheDocument()
     );
     expect(mockGetWorkflowEditor).toHaveBeenCalledWith("review_flow");
+  });
+  it("disables replay while the API is down and says why (aria-describedby)", async () => {
+    mockHealthCheck.mockRejectedValue(new TypeError("Failed to fetch"));
+    mockUseRunDetail.mockReturnValue({ data: RUN_FIXTURE, isLoading: false });
+    mockUseWorkflowDAG.mockReturnValue({ data: undefined });
+
+    renderAtRoute("run.json");
+
+    const replayButton = screen.getByRole("button", {
+      name: /replay with same inputs/i,
+    });
+    await waitFor(() => expect(replayButton).toBeDisabled());
+
+    const reasonId = replayButton.getAttribute("aria-describedby");
+    expect(reasonId).toBeTruthy();
+    const reason = document.getElementById(reasonId!);
+    expect(reason).toHaveTextContent(/api server is unreachable/i);
+    expect(reason).toHaveTextContent(/just dev/);
+    expect(reason).toBeVisible();
+
+    fireEvent.click(replayButton);
+    expect(mockRunWorkflow).not.toHaveBeenCalled();
+  });
+
+  it("shows the missing-input reason as visible text, not only a tooltip", () => {
+    mockUseRunDetail.mockReturnValue({
+      data: { ...RUN_FIXTURE, inputs: null },
+      isLoading: false,
+    });
+    mockUseWorkflowDAG.mockReturnValue({
+      data: {
+        name: "review_flow",
+        description: "",
+        nodes: [],
+        edges: [],
+        inputs: [
+          { name: "code_file", type: "string", required: true, default: null },
+        ],
+      },
+    });
+
+    renderAtRoute("run.json");
+
+    const replayButton = screen.getByRole("button", {
+      name: /replay with same inputs/i,
+    });
+    expect(replayButton).toHaveAccessibleDescription(
+      /replay unavailable: run log has no captured value for required input: code_file/i,
+    );
+  });
+
+  it("explains a failed run load with the server detail, a remedy and a retry", () => {
+    const refetch = vi.fn();
+    mockUseRunDetail.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: new Error('API 404: {"detail":"run log missing.json not found"}'),
+      refetch,
+    });
+    mockUseWorkflowDAG.mockReturnValue({ data: undefined });
+
+    renderAtRoute("missing.json");
+
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent(/couldn't load this run/i);
+    expect(alert).toHaveTextContent("run log missing.json not found");
+    expect(alert).toHaveTextContent(/check the name or link/i);
+    expect(alert).not.toHaveTextContent("API 404");
+    expect(alert).not.toHaveTextContent("[!]");
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("explains a failed replay instead of echoing the raw API error", async () => {
+    mockUseRunDetail.mockReturnValue({ data: RUN_FIXTURE, isLoading: false });
+    mockUseWorkflowDAG.mockReturnValue({ data: undefined });
+    mockRunWorkflow.mockRejectedValue(
+      new Error('API 422: {"detail":"Missing required input: code_file"}'),
+    );
+
+    renderAtRoute("run.json");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /replay with same inputs/i }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Start replay" }));
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(/replay failed; this run is unchanged/i);
+    expect(alert).toHaveTextContent("Missing required input: code_file");
+    expect(alert).toHaveTextContent(/fix the input and try again/i);
+  });
+
+  it("renders em-dash summary values when the run recorded no steps", () => {
+    mockUseRunDetail.mockReturnValue({
+      data: {
+        ...RUN_FIXTURE,
+        success_rate: 0,
+        step_count: 0,
+        total_duration_ms: null,
+        steps: [],
+      },
+      isLoading: false,
+    });
+    mockUseWorkflowDAG.mockReturnValue({ data: undefined });
+
+    renderAtRoute("run.json");
+
+    // No "0%" success rate and no "--" duration for a run with no step data.
+    expect(screen.queryByText("0%")).not.toBeInTheDocument();
+    expect(screen.queryByText("--")).not.toBeInTheDocument();
+    expect(screen.getAllByText("no data").length).toBeGreaterThanOrEqual(2);
   });
 });

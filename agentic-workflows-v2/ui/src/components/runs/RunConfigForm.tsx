@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { CircleAlert, Minus, Plus, X } from "lucide-react";
 import { useEvaluationDatasets } from "../../hooks/useWorkflows";
 import { useDatasetSamples } from "../../hooks/useDatasets";
 import { listModelPacks, probeModels } from "../../api/client";
+import InlineError from "../states/InlineError";
+import { Button } from "../ui/button";
 import type {
   DatasetSampleSummary,
   ExecutionProfileRequest,
@@ -63,17 +66,19 @@ function buildInitialValues(inputs: WorkflowInputSchema[]) {
   );
 }
 
-/** Theme-token radius + border-width for cards (radius-lg). */
-const CARD_TOKENS = {
-  borderRadius: "var(--b-rad-lg)",
-  borderWidth: "var(--b-bw)",
-} as const;
+/** Hairline card shell for each advanced-config group (radius-lg). */
+const CARD_CLASS = "rounded-lg border border-el-divider bg-el-surface";
 
-/** Theme-token radius + border-width for small controls (radius-sm). */
-const CONTROL_TOKENS = {
-  borderRadius: "var(--b-rad-sm)",
-  borderWidth: "var(--b-bw)",
-} as const;
+/**
+ * Text-like control (input/select/textarea): raised surface, divider border,
+ * radius-md, and the 2px --el-focus ring on keyboard focus (§10.2).
+ */
+const CONTROL_CLASS =
+  "focus-ring rounded-md border border-el-control-border bg-el-raised px-2 py-1.5 font-mono text-xs text-el-ink placeholder:text-el-muted disabled:opacity-60";
+
+/** Small uppercase field label (the 11px `label` tier). */
+const FIELD_LABEL_CLASS =
+  "font-mono text-micro uppercase tracking-[0.5px] text-el-muted";
 
 /** Input schema types that render a file picker instead of a text field. */
 const FILE_INPUT_TYPES = new Set(["image", "audio", "file"]);
@@ -180,43 +185,46 @@ function FileInputField({
         accept={fileAccept(input.type)}
         required={input.required && !value}
         onChange={(event) => onFile(event.target.files?.[0] ?? null)}
-        style={CONTROL_TOKENS}
         className={fieldClass}
       />
       {showChip && state.meta ? (
         <div
           data-testid={`file-chip-${input.name}`}
-          style={CONTROL_TOKENS}
-          className="flex items-center gap-2 border border-solid border-b-line bg-b-bg1 px-2 py-1.5"
+          className="flex items-center gap-2 rounded-md border border-el-divider bg-el-surface px-2 py-1"
         >
           {value.startsWith("data:image") ? (
+            // Thumbnail of the user's own upload; the alt names the file so
+            // the preview is identifiable without seeing it.
             <img
               src={value}
               alt={`${state.meta.name} preview`}
-              className="max-h-12 border border-solid border-b-line"
-              style={{ borderRadius: "var(--b-rad-sm)" }}
+              className="max-h-12 rounded-sm border border-el-divider"
             />
           ) : null}
-          <span className="min-w-0 flex-1 truncate font-mono text-[10px] text-b-text">
+          <span className="min-w-0 flex-1 truncate font-mono text-micro text-el-ink">
             {state.meta.name}
           </span>
-          <span className="flex-none font-mono text-[10px] text-b-text-dim">
+          <span className="flex-none font-mono text-micro text-el-muted">
             {humanFileSize(state.meta.size)}
           </span>
           <button
             type="button"
             aria-label={`remove ${input.name}`}
             onClick={onClear}
-            className="flex-none font-mono text-[10px] text-b-text-dim hover:text-b-red"
+            className="focus-ring inline-flex size-9 flex-none items-center justify-center rounded-md text-el-muted transition-colors hover:bg-el-hover hover:text-el-danger"
           >
-            [x]
+            <X aria-hidden="true" className="size-4" />
           </button>
         </div>
       ) : null}
       {state.error ? (
-        <div role="alert" className="font-mono text-[10px] text-b-red">
-          [!] {state.error}
-        </div>
+        <p
+          role="alert"
+          className="flex items-start gap-1.5 font-mono text-micro text-el-danger"
+        >
+          <CircleAlert aria-hidden="true" className="mt-px size-3.5 flex-none" />
+          <span>{state.error}</span>
+        </p>
       ) : null}
     </div>
   );
@@ -264,12 +272,6 @@ export default function RunConfigForm({
   const datasetsQuery = useEvaluationDatasets(advancedOpen);
   const datasets = datasetsQuery.data ?? null;
   const datasetsLoading = datasetsQuery.isLoading;
-  let datasetsError: string | null = null;
-  if (datasetsQuery.error instanceof Error) {
-    datasetsError = datasetsQuery.error.message;
-  } else if (datasetsQuery.isError) {
-    datasetsError = "failed to load datasets";
-  }
 
   useEffect(() => {
     setInputValues(buildInitialValues(inputs));
@@ -333,12 +335,6 @@ export default function RunConfigForm({
     0,
     SAMPLE_PREVIEW_LIMIT
   );
-  const samplePreviewError =
-    samplePreviewQuery.error instanceof Error
-      ? samplePreviewQuery.error.message
-      : samplePreviewQuery.error
-        ? "failed to load samples"
-        : null;
   const previewSamples = samplePreviewQuery.data?.samples;
 
   const values = useMemo<RunConfigValues>(
@@ -449,25 +445,23 @@ export default function RunConfigForm({
         datasetSelected ? (
           <div
             data-testid="dataset-inputs-banner"
-            style={CARD_TOKENS}
-            className="border border-solid border-b-line bg-b-bg1 px-3 py-2 space-y-1.5"
+            className={`space-y-1.5 px-3 py-2 ${CARD_CLASS}`}
           >
-            <div className="font-mono text-[10px] text-b-green uppercase tracking-wider">
+            <div className="font-mono text-micro uppercase tracking-wider text-el-success">
               $ inputs from dataset
             </div>
-            <div className="font-mono text-[10px] text-b-text-dim truncate">
+            <div className="truncate font-mono text-micro text-el-muted">
               {activeDatasetLabel} · sample {sampleText}
             </div>
             <div className="flex flex-wrap gap-1.5 pt-1">
               {inputs.map((inp) => (
                 <span
                   key={inp.name}
-                  style={CONTROL_TOKENS}
-                  className="border border-solid border-b-line bg-b-bg0 px-1.5 py-0.5 font-mono text-[9px] text-b-text-dim"
+                  className="rounded-sm border border-el-divider bg-el-canvas px-1.5 py-0.5 font-mono text-micro text-el-muted"
                 >
                   {inp.name}
                   {inp.required ? (
-                    <span className="text-b-text-faint"> ·ds</span>
+                    <span className="text-el-faint"> ·ds</span>
                   ) : null}
                 </span>
               ))}
@@ -480,15 +474,14 @@ export default function RunConfigForm({
         >
           {inputs.map((input) => {
             const id = `workflow-input-${input.name}`;
-            const fieldClass =
-              "w-full border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text placeholder:text-b-text-faint focus:border-b-clay focus:outline-hidden";
+            const fieldClass = `w-full ${CONTROL_CLASS}`;
 
             return (
               <label key={input.name} htmlFor={id} className="block">
-                <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.5px] text-b-text-dim">
+                <span className={`mb-1 block ${FIELD_LABEL_CLASS}`}>
                   {input.name}
                   {input.required ? (
-                    <span className="text-b-red"> *</span>
+                    <span className="text-el-danger"> *</span>
                   ) : null}
                 </span>
                 {FILE_INPUT_TYPES.has(input.type ?? "") ? (
@@ -510,7 +503,6 @@ export default function RunConfigForm({
                     onChange={(event) =>
                       updateInputValue(input.name, event.target.value)
                     }
-                    style={CONTROL_TOKENS}
                     className={fieldClass}
                   >
                     {!input.required ? <option value="">--</option> : null}
@@ -531,7 +523,6 @@ export default function RunConfigForm({
                     }
                     placeholder={input.description}
                     rows={3}
-                    style={CONTROL_TOKENS}
                     className={fieldClass}
                   />
                 ) : (
@@ -545,7 +536,6 @@ export default function RunConfigForm({
                     }
                     placeholder={input.description}
                     type={input.type === "number" ? "number" : "text"}
-                    style={CONTROL_TOKENS}
                     className={fieldClass}
                   />
                 )}
@@ -556,32 +546,33 @@ export default function RunConfigForm({
         )
       ) : null}
 
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="sm"
         data-testid="advanced-toggle"
+        aria-expanded={advancedOpen}
         onClick={() => setAdvancedOpen((open) => !open)}
-        className="btn-ghost"
+        className="h-9 font-mono"
       >
-        <span>{advancedOpen ? "[-]" : "[+]"}</span>
+        {advancedOpen ? <Minus aria-hidden="true" /> : <Plus aria-hidden="true" />}
         <span>advanced</span>
-      </button>
+      </Button>
 
       {advancedOpen ? (
         <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
           <div
             data-testid="model-pack-config"
-            style={CARD_TOKENS}
-            className="border border-solid border-b-line bg-b-bg1 p-3 md:col-span-3"
+            className={`p-3 md:col-span-3 ${CARD_CLASS}`}
           >
-            <label className="block text-[12px] font-semibold text-b-text-dim">
+            <label className="block text-xs font-semibold text-el-secondary">
               Model pack
               <select
                 aria-label="Model pack"
                 data-testid="model-pack-select"
                 value={modelPackKey}
                 onChange={(event) => setModelPackKey(event.target.value)}
-                style={CONTROL_TOKENS}
-                className="mt-2 w-full border border-solid border-b-line bg-b-bg0 px-3 py-2 text-[13px] text-b-text"
+                className="focus-ring mt-2 w-full rounded-md border border-el-control-border bg-el-raised px-3 py-2 text-[13px] font-normal text-el-ink"
               >
                 <option value="">Automatic · run → workflow → global → defaults</option>
                 {(modelPacksQuery.data?.packs ?? [])
@@ -597,25 +588,23 @@ export default function RunConfigForm({
                   ))}
               </select>
             </label>
-            <p className="mt-2 text-[11px] leading-5 text-b-text-faint">
+            <p className="mt-2 text-micro leading-5 text-el-muted">
               Selects an immutable routing policy for this run. A direct model
               override below has higher precedence and is recorded separately.
             </p>
           </div>
           <div
             data-testid="model-override-config"
-            style={CARD_TOKENS}
-            className="border border-solid border-b-line bg-b-bg1 p-3 md:col-span-3"
+            className={`p-3 md:col-span-3 ${CARD_CLASS}`}
           >
-            <label className="block font-mono text-[10px] uppercase tracking-[0.5px] text-b-text-dim">
+            <label className={`block ${FIELD_LABEL_CLASS}`}>
               model override
               <select
                 aria-label="Model override"
                 data-testid="model-override-select"
                 value={modelOverride}
                 onChange={(event) => setModelOverride(event.target.value)}
-                style={CONTROL_TOKENS}
-                className="mt-1 w-full border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text"
+                className={`mt-1 w-full normal-case tracking-normal ${CONTROL_CLASS}`}
               >
                 <option value="">tier default (no override)</option>
                 {modelOptions.map((model) => (
@@ -629,18 +618,16 @@ export default function RunConfigForm({
 
           <div
             data-testid="runtime-config"
-            style={CARD_TOKENS}
-            className="border border-solid border-b-line bg-b-bg1 p-3"
+            className={`p-3 ${CARD_CLASS}`}
           >
-            <label className="block font-mono text-[10px] uppercase tracking-[0.5px] text-b-text-dim">
+            <label className={`block ${FIELD_LABEL_CLASS}`}>
               runtime
               <select
                 value={runtime}
                 onChange={(event) =>
                   setRuntime(event.target.value as ExecutionProfileRequest["runtime"])
                 }
-                style={CONTROL_TOKENS}
-                className="mt-1 w-full border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text"
+                className={`mt-1 w-full normal-case tracking-normal ${CONTROL_CLASS}`}
               >
                 <option value="subprocess">subprocess</option>
                 <option value="docker">docker</option>
@@ -650,30 +637,26 @@ export default function RunConfigForm({
 
           <div
             data-testid="rubric-config"
-            style={CARD_TOKENS}
-            className="border border-solid border-b-line bg-b-bg1 p-3"
+            className={`p-3 ${CARD_CLASS}`}
           >
-            <label className="block font-mono text-[10px] uppercase tracking-[0.5px] text-b-text-dim">
+            <label className={`block ${FIELD_LABEL_CLASS}`}>
               rubric id
               <input
                 value={rubricId}
                 onChange={(event) => setRubricId(event.target.value)}
                 placeholder={`${workflowName}_default`}
-                style={CONTROL_TOKENS}
-                className="mt-1 w-full border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text placeholder:text-b-text-faint"
+                className={`mt-1 w-full normal-case tracking-normal ${CONTROL_CLASS}`}
               />
             </label>
           </div>
 
-          <div
-            style={CARD_TOKENS}
-            className="border border-solid border-b-line bg-b-bg1 p-3 md:col-span-3"
-          >
-            <label className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.5px] text-b-text-dim">
+          <div className={`p-3 md:col-span-3 ${CARD_CLASS}`}>
+            <label className={`flex min-h-9 items-center gap-2 ${FIELD_LABEL_CLASS}`}>
               <input
                 type="checkbox"
                 checked={evaluationEnabled}
                 onChange={(event) => setEvaluationEnabled(event.target.checked)}
+                className="focus-ring size-4 accent-el-action"
               />
               eval
             </label>
@@ -684,8 +667,7 @@ export default function RunConfigForm({
                 onChange={(event) =>
                   updateDatasetSource(event.target.value as DatasetSource)
                 }
-                style={CONTROL_TOKENS}
-                className="border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text"
+                className={CONTROL_CLASS}
               >
                 <option value="none">none</option>
                 <option value="repository">repository</option>
@@ -698,8 +680,7 @@ export default function RunConfigForm({
                   aria-label="Dataset"
                   value={datasetId}
                   onChange={(event) => setDatasetId(event.target.value)}
-                  style={CONTROL_TOKENS}
-                  className="border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text"
+                  className={CONTROL_CLASS}
                   disabled={datasetsLoading}
                 >
                   <option value="">
@@ -716,8 +697,7 @@ export default function RunConfigForm({
                   aria-label="Evaluation set"
                   value={evalSetId}
                   onChange={(event) => setEvalSetId(event.target.value)}
-                  style={CONTROL_TOKENS}
-                  className="border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text"
+                  className={CONTROL_CLASS}
                   disabled={datasetsLoading}
                 >
                   <option value="">
@@ -730,10 +710,7 @@ export default function RunConfigForm({
                   ))}
                 </select>
               ) : (
-                <div
-                  style={CONTROL_TOKENS}
-                  className="border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text-dim"
-                >
+                <div className="flex items-center rounded-md border border-el-divider bg-el-canvas px-2 py-1.5 font-mono text-xs text-el-muted">
                   no dataset
                 </div>
               )}
@@ -743,8 +720,7 @@ export default function RunConfigForm({
                 value={sampleText}
                 onChange={(event) => setSampleText(event.target.value)}
                 placeholder="0,1,2"
-                style={CONTROL_TOKENS}
-                className="border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text placeholder:text-b-text-faint"
+                className={CONTROL_CLASS}
               />
               <input
                 aria-label="Runs per record"
@@ -756,26 +732,27 @@ export default function RunConfigForm({
                     Math.max(1, Number.parseInt(event.target.value, 10) || 1)
                   )
                 }
-                style={CONTROL_TOKENS}
-                className="border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text"
+                className={CONTROL_CLASS}
               />
             </div>
             {previewSource ? (
               <div data-testid="sample-preview" className="mt-2 space-y-0.5">
                 {samplePreviewQuery.isLoading ? (
-                  <div className="font-mono text-[10px] text-b-text-dim">
+                  <div className="font-mono text-micro text-el-muted">
                     loading samples…
                   </div>
-                ) : samplePreviewError ? (
-                  <div className="font-mono text-[10px] text-b-red">
-                    [!] {samplePreviewError}
-                  </div>
+                ) : samplePreviewQuery.isError ? (
+                  <InlineError
+                    message="Couldn't load the sample preview."
+                    error={samplePreviewQuery.error}
+                    onRetry={() => void samplePreviewQuery.refetch()}
+                  />
                 ) : previewSamples ? (
                   selectedSamples.map((index) => (
                     <div
                       key={index}
                       data-testid={`sample-preview-line-${index}`}
-                      className="truncate font-mono text-[10px] text-b-text-dim"
+                      className="truncate font-mono text-micro text-el-muted"
                     >
                       {samplePreviewLine(index, previewSamples)}
                     </div>
@@ -783,12 +760,15 @@ export default function RunConfigForm({
                 ) : null}
               </div>
             ) : null}
-            {datasetsError ? (
-              <div className="mt-2 font-mono text-[10px] text-b-red">
-                [!] {datasetsError}
-              </div>
+            {datasetsQuery.isError ? (
+              <InlineError
+                className="mt-2"
+                message="Couldn't load datasets."
+                error={datasetsQuery.error}
+                onRetry={() => void datasetsQuery.refetch()}
+              />
             ) : datasets ? (
-              <div className="mt-2 font-mono text-[10px] text-b-text-dim">
+              <div className="mt-2 font-mono text-micro text-el-muted">
                 {datasets.repository.length} repository · {datasets.local.length} local ·{" "}
                 {datasets.eval_sets.length} eval sets
               </div>

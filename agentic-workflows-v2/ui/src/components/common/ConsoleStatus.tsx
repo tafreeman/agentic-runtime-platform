@@ -21,24 +21,24 @@ export default function ConsoleStatus() {
 
   let pillLabel: string;
   if (connected) {
-    pillLabel = "api connected";
+    pillLabel = "API connected";
   } else if (loading) {
-    pillLabel = "api checking";
+    pillLabel = "API checking";
   } else {
-    pillLabel = "api disconnected";
+    pillLabel = "API disconnected";
   }
 
   return (
-    <div className="flex items-center gap-1.5" data-testid="console-status">
+    <div className="flex flex-none items-center gap-1.5 whitespace-nowrap" data-testid="console-status">
       <BPill tone={pillTone}>
         {pillLabel}
       </BPill>
       {connected && (
-        <span className="font-mono text-[10px] text-b-text-faint">
+        <span className="font-mono text-micro text-el-muted">
           v{health.data.version}
         </span>
       )}
-      {noLlmMode && <BPill tone="clay">no-llm</BPill>}
+      {noLlmMode && <BPill tone="clay">No-LLM mode</BPill>}
     </div>
   );
 }

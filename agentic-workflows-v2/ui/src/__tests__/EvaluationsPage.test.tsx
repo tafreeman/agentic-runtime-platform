@@ -18,6 +18,14 @@ vi.mock("../api/client", () => ({
   compareRuns: (request: unknown) => mockCompareRuns(request),
 }));
 
+const availability = vi.hoisted(() => ({
+  current: { apiDown: false, checking: false, reason: undefined as string | undefined },
+}));
+
+vi.mock("../hooks/useApiAvailability", () => ({
+  useApiAvailability: () => availability.current,
+}));
+
 function renderPage(): ReturnType<typeof render> {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -59,6 +67,7 @@ const UNSCORED_RUN = {
 describe("EvaluationsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    availability.current = { apiDown: false, checking: false, reason: undefined };
   });
 
   it("renders loading and empty evaluation states", () => {
@@ -85,9 +94,62 @@ describe("EvaluationsPage", () => {
     renderPage();
 
     const alert = screen.getByRole("alert");
-    expect(alert).toHaveTextContent(/failed to load evaluations/i);
+    expect(alert).toHaveTextContent(/failed to load evaluations: eval store down/i);
     fireEvent.click(screen.getByRole("button", { name: /retry/i }));
     expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps quiet (no second alert) when the API is unreachable", () => {
+    mockUseRuns.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: new Error("API 502: "),
+      refetch: vi.fn(),
+    });
+
+    renderPage();
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/evaluations can't load while the API is unreachable/i)
+    ).toBeInTheDocument();
+    // The run count is unknown, not zero.
+    expect(screen.getAllByText("no data").length).toBeGreaterThan(0);
+  });
+
+  it("keeps showing stale evaluations when a refetch fails", () => {
+    mockUseRuns.mockReturnValue({
+      data: [SCORED_RUN],
+      isLoading: false,
+      isError: true,
+      error: new TypeError("Failed to fetch"),
+      refetch: vi.fn(),
+    });
+
+    renderPage();
+
+    expect(screen.getByRole("link", { name: /^Open run / })).toBeInTheDocument();
+    expect(screen.getByText(/showing the last loaded evaluations/i)).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("disables evaluate with a visible reason while the API is down", () => {
+    availability.current = {
+      apiDown: true,
+      checking: false,
+      reason: "The API server is unreachable. Start it with `just dev`, then retry.",
+    };
+    mockUseRuns.mockReturnValue({ isLoading: false, data: [UNSCORED_RUN] });
+
+    renderPage();
+
+    fireEvent.click(screen.getByRole("button", { name: /draft_flow/i }));
+    const evaluateButton = screen.getByRole("button", { name: "Evaluate run" });
+    expect(evaluateButton).toBeDisabled();
+    expect(evaluateButton).toHaveAccessibleDescription(/API server is unreachable/);
+    fireEvent.click(evaluateButton);
+    expect(mockEvaluateRun).not.toHaveBeenCalled();
   });
 
   it("renders evaluated runs in a table", () => {
@@ -108,7 +170,7 @@ describe("EvaluationsPage", () => {
     // Grade "A" renders in the table cell and also in the scorecard tier scale.
     expect(screen.getAllByText("A").length).toBeGreaterThan(0);
     // Exact name "view" targets the table's aria-labelled detail link.
-    expect(screen.getByRole("link", { name: "view" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /^Open run / })).toHaveAttribute(
       "href",
       "/runs/run-1.json"
     );
@@ -133,7 +195,7 @@ describe("EvaluationsPage", () => {
     // Unscored runs are offered in the picker too — rescoring works from the
     // captured log regardless of whether a score already exists.
     const evaluateButton = screen.getByRole("button", {
-      name: /evaluate a run/i,
+      name: "Evaluate run",
     });
     expect(evaluateButton).toBeDisabled();
 
@@ -143,7 +205,7 @@ describe("EvaluationsPage", () => {
     fireEvent.click(evaluateButton);
 
     await waitFor(() =>
-      expect(screen.getByText("scored 84.5 · B")).toBeInTheDocument()
+      expect(screen.getByText("Scored 84.5 · B")).toBeInTheDocument()
     );
     expect(mockEvaluateRun).toHaveBeenCalledWith("run-2.json");
   });
@@ -163,7 +225,7 @@ describe("EvaluationsPage", () => {
 
     const runRow = screen.getByRole("button", { name: /draft_flow/i });
     const evaluateButton = screen.getByRole("button", {
-      name: /evaluate a run/i,
+      name: "Evaluate run",
     });
 
     // Toggle: select then deselect disables the evaluate action again.
@@ -223,7 +285,7 @@ describe("EvaluationsPage", () => {
       screen.getByRole("region", { name: "compare runs" })
     ).toBeInTheDocument();
 
-    const compareButton = screen.getByRole("button", { name: /▶ compare/ });
+    const compareButton = screen.getByRole("button", { name: "Compare runs" });
     expect(compareButton).toBeDisabled();
 
     fireEvent.click(
@@ -250,12 +312,29 @@ describe("EvaluationsPage", () => {
     renderPage();
 
     fireEvent.click(screen.getByRole("button", { name: /draft_flow/i }));
-    fireEvent.click(screen.getByRole("button", { name: /evaluate a run/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Evaluate run" }));
 
     await waitFor(() =>
       expect(screen.getByRole("alert")).toHaveTextContent(
         /evaluation failed: judge unavailable/i
       )
     );
+  });
+
+  it("explains a server rejection with its detail and a remedy", async () => {
+    mockUseRuns.mockReturnValue({ isLoading: false, data: [UNSCORED_RUN] });
+    mockEvaluateRun.mockRejectedValue(
+      new Error('API 404: {"detail": "run log run-2.json not found"}')
+    );
+
+    renderPage();
+
+    fireEvent.click(screen.getByRole("button", { name: /draft_flow/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Evaluate run" }));
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(/run log run-2\.json not found/);
+    expect(alert).toHaveTextContent(/check the name or link/i);
+    expect(alert).not.toHaveTextContent(/API 404/);
   });
 });

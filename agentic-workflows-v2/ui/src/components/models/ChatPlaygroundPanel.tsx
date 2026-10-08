@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import { Image, Paperclip, Send, Square, X } from "lucide-react";
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { Paperclip, Send, Square, X } from "lucide-react";
 import { sendChat } from "../../api/client";
 import type {
   ChatImagePart,
@@ -10,11 +10,14 @@ import type {
   ProbedModel,
 } from "../../api/types";
 import { Button } from "../ui/button";
+import { useApiAvailability } from "../../hooks/useApiAvailability";
+import { describeApiError } from "../../lib/apiErrors";
 import {
   loadVerifications,
   recordVerification,
   type ModelVerification,
 } from "../../lib/modelVerification";
+import { apiErrorText } from "../common/apiErrorText";
 
 // Chat playground — direct POST /api/chat probe for any model in the catalog.
 // Unavailable/local models stay selectable on purpose: sending a message is
@@ -23,12 +26,12 @@ import {
 // Terminal stream outcomes are persisted to the verification registry, which
 // then drives picker ordering, default selection, and finder catalog badges.
 
-const CARD_STYLE = { borderWidth: "var(--b-bw)", borderRadius: "var(--b-rad-lg)" } as const;
-const CONTROL_STYLE = { borderWidth: "var(--b-bw)", borderRadius: "var(--b-rad-sm)" } as const;
+/** Matches the shared Input: 40px, 4px radius, full-strength focus ring. */
 const FIELD_CLASS =
-  "w-full border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text placeholder:text-b-text-faint focus:border-b-clay focus:outline-hidden";
+  "h-10 w-full rounded-md border border-el-control-border bg-el-raised px-2.5 font-mono text-[13px] text-el-ink placeholder:text-el-faint focus-ring focus-visible:border-el-focus";
+/** Streaming = running state: info color; the pulse stops under reduced motion. */
 const PULSE_DOT =
-  "animate-b-pulse inline-block h-[5px] w-[5px] rounded-full bg-b-green";
+  "animate-b-pulse inline-block h-[5px] w-[5px] rounded-full bg-el-info";
 
 /** Server-side default sampling temperature (contracts/chat.py). */
 const DEFAULT_TEMPERATURE = 0.2;
@@ -215,14 +218,13 @@ function ChatMessageRow({
     <div
       data-testid="chat-message"
       data-role={message.role}
-      className={`max-w-[88%] border px-4 py-3 ${
+      className={`max-w-[88%] rounded-lg border px-4 py-3 ${
         isUser
           ? "ml-auto border-el-divider bg-el-subtle"
           : "mr-auto border-el-divider-soft bg-el-raised"
       }`}
-      style={{ borderRadius: "var(--el-radius-lg)" }}
     >
-      <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold text-el-muted">
+      <div className="mb-2 flex items-center gap-2 text-micro font-semibold text-el-muted">
         <span>{isUser ? "You" : "Model"}</span>
         {streaming && <span aria-hidden="true" className={PULSE_DOT} />}
       </div>
@@ -234,13 +236,19 @@ function ChatMessageRow({
       {message.media.length > 0 && (
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
           {message.media.map((asset) => (
-            <figure key={asset.id} className="overflow-hidden border border-el-divider-soft bg-el-canvas">
+            <figure key={asset.id} className="overflow-hidden rounded-md border border-el-divider-soft bg-el-canvas">
+              {/* Content image, never decorative: the attachment's file name
+                  or the provider's alt text, with a fallback when the stream
+                  sent an empty alt. */}
               <img
                 src={asset.url}
-                alt={asset.name}
+                alt={
+                  asset.name ||
+                  (isUser ? "Attached image" : "Image returned by the model")
+                }
                 className="max-h-80 w-full object-contain"
               />
-              <figcaption className="truncate border-t border-el-divider-soft px-2 py-1 font-mono text-[10px] text-el-muted">
+              <figcaption className="truncate border-t border-el-divider-soft px-2 py-1 font-mono text-micro text-el-muted">
                 {asset.name}
               </figcaption>
             </figure>
@@ -285,6 +293,8 @@ export default function ChatPlaygroundPanel({
   );
   const abortRef = useRef<AbortController | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const { apiDown, reason: apiDownReason } = useApiAvailability();
+  const blockedHintId = useId();
 
   const groups = useMemo(
     () => groupModelsByProvider(probe, verifications),
@@ -371,7 +381,8 @@ export default function ChatPlaygroundPanel({
     if (
       (content === "" && attachments.length === 0) ||
       effectiveModel === "" ||
-      streaming
+      streaming ||
+      apiDown
     )
       return;
     // Latch the model under test on first send: without this, a probe
@@ -407,11 +418,15 @@ export default function ChatPlaygroundPanel({
       })
       .catch((err: unknown) => {
         if (controller.signal.aborted) return;
-        failStream(
-          request.model,
-          err instanceof Error ? err.message : String(err),
-          null,
-        );
+        // An unreachable API says nothing about the model, so it must not
+        // be recorded as a failed liveness probe for it.
+        if (describeApiError(err).unreachable) {
+          setMessages((prev) => withoutEmptyAssistantTail(prev));
+          setError({ message: apiErrorText(err), category: null });
+          setStreaming(false);
+          return;
+        }
+        failStream(request.model, apiErrorText(err), null);
       });
   };
 
@@ -475,64 +490,68 @@ export default function ChatPlaygroundPanel({
   // "doing nothing" during a slow probe or a hung stream is explained.
   const blockedHint = streaming
     ? "streaming — press stop first"
-    : effectiveModel === ""
-      ? probeLoading
-        ? "probing providers…"
-        : "no model selected"
-      : null;
+    : apiDown
+      ? (apiDownReason ?? "the API server is unreachable")
+      : effectiveModel === ""
+        ? probeLoading
+          ? "probing providers…"
+          : "no model selected"
+        : null;
+  const probeErrorInfo = probeError ? describeApiError(probeError) : null;
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
       <div className="max-w-3xl">
-        <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-el-accent-strong">
-          <Image className="h-4 w-4" aria-hidden="true" />
-          Direct model session
-        </div>
         <h1
           className="font-display text-[36px] font-medium leading-[1.1] text-el-ink"
         >
           Chat playground
         </h1>
-        <p className="mt-3 max-w-2xl text-[14px] leading-6 text-el-muted">
-          Talk directly to one model without tier routing. Stream text, attach
-          raster images for vision-capable models, and display image output
-          when the provider returns it. A completed response is recorded as
-          liveness evidence.
+        {/* Scope line (§8.2): what this tab controls, in product terms. */}
+        <p className="mt-3 max-w-[70ch] text-[14px] leading-6 text-el-muted">
+          Talk to one model directly, without tier routing; chats don't start
+          workflow runs. Attach images for vision-capable models. A completed
+          reply is recorded as evidence that the model is live.
         </p>
       </div>
 
-      {probeError && (
+      {/* Unreachable API: the shell banner already says so — quiet note. */}
+      {probeError && probeErrorInfo?.unreachable && (
+        <p
+          data-testid="playground-probe-error"
+          className="font-mono text-micro text-el-muted"
+        >
+          probe unavailable — {probeErrorInfo.summary}
+        </p>
+      )}
+      {probeError && !probeErrorInfo?.unreachable && (
         <div
           role="alert" data-testid="playground-probe-error"
-          className="border-b-red/40 bg-b-bg1 p-3 font-mono text-[11px] text-b-red"
-          style={CARD_STYLE}
+          className="rounded-lg border border-el-danger/40 bg-el-danger-soft p-3 font-mono text-xs text-el-danger"
         >
-          probe failed: {probeError.message}
+          probe failed: {apiErrorText(probeError)}
         </div>
       )}
 
       {probe?.no_llm_mode && (
-        <div
-          className="border-b-amber/50 bg-b-bg1 p-3 font-mono text-[11px] text-b-amber"
-          style={CARD_STYLE}
-        >
+        <div className="rounded-lg border border-el-warning/50 bg-el-warning-soft p-3 font-mono text-xs text-el-warning">
           placeholder mode — replies are canned (AGENTIC_NO_LLM)
         </div>
       )}
 
       <section className="border-y border-el-divider py-5" aria-label="Session configuration">
-        <div className="mb-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-el-muted">
+        <div className="mb-4 text-micro font-semibold uppercase tracking-[0.12em] text-el-muted">
           Session configuration
         </div>
         <div className="flex flex-wrap items-end gap-4">
           <div className="min-w-[260px] flex-1">
-            <label htmlFor="chat-model-picker" className="mb-2 block text-[12px] font-semibold text-el-secondary">Model</label>
+            <label htmlFor="chat-model-picker" className="mb-2 block text-xs font-semibold text-el-secondary">Model</label>
             <select
               id="chat-model-picker"
               data-testid="chat-model-picker" aria-label="Playground model"
               value={effectiveModel}
               onChange={(event) => setModel(event.target.value)}
-              className={FIELD_CLASS} style={CONTROL_STYLE}
+              className={FIELD_CLASS}
             >
               {groups.length === 0 && (
                 <option value="">
@@ -551,13 +570,13 @@ export default function ChatPlaygroundPanel({
             </select>
           </div>
           <div className="w-24">
-            <label htmlFor="chat-temperature" className="mb-2 block text-[12px] font-semibold text-el-secondary">Temperature</label>
+            <label htmlFor="chat-temperature" className="mb-2 block text-xs font-semibold text-el-secondary">Temperature</label>
             <input
               id="chat-temperature"
               type="number" step="0.1" min="0" max="2" aria-label="Temperature"
               value={temperature}
               onChange={(event) => setTemperature(event.target.value)}
-              className={FIELD_CLASS} style={CONTROL_STYLE}
+              className={FIELD_CLASS}
             />
           </div>
           <Button
@@ -572,23 +591,22 @@ export default function ChatPlaygroundPanel({
       </section>
 
       <section>
-        <div className="mb-3 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-el-muted">
+        <div className="mb-3 flex items-center gap-3 text-micro font-semibold uppercase tracking-[0.12em] text-el-muted">
           <span>
             Transcript · {messages.length} message{messages.length === 1 ? "" : "s"}
           </span>
           {streaming && (
-            <span className="flex items-center gap-[5px] font-mono text-[9px] normal-case tracking-normal text-b-green">
+            <span className="flex items-center gap-[5px] font-mono text-micro normal-case tracking-normal text-el-info">
               <span aria-hidden="true" className={PULSE_DOT} /> streaming
             </span>
           )}
         </div>
         <div
           aria-live="polite" aria-relevant="additions text" aria-label="Chat transcript"
-          className="flex max-h-[520px] min-h-[280px] flex-col gap-3 overflow-y-auto border border-el-divider bg-el-surface p-4 sm:p-6"
-          style={{ borderRadius: "var(--el-radius-lg)" }}
+          className="flex max-h-[520px] min-h-[280px] flex-col gap-3 overflow-y-auto rounded-lg border border-el-divider bg-el-surface p-4 sm:p-6"
         >
           {messages.length === 0 && (
-            <div className="m-auto font-mono text-[10px] text-b-text-faint">
+            <div className="m-auto text-sm text-el-muted">
               Start with a question or attach an image for a vision-capable model.
             </div>
           )}
@@ -606,15 +624,11 @@ export default function ChatPlaygroundPanel({
       {error && (
         <div
           role="alert" data-testid="chat-error"
-          className="flex flex-wrap items-center gap-2 border-b-red/60 bg-b-bg1 p-3 font-mono text-[11px] text-b-red"
-          style={CARD_STYLE}
+          className="flex flex-wrap items-center gap-2 rounded-lg border border-el-danger/60 bg-el-danger-soft p-3 font-mono text-xs text-el-danger"
         >
           <span className="font-semibold uppercase tracking-[0.5px]">stream failed</span>
           {error.category && (
-            <span
-              className="border border-b-red/60 px-1.5 py-px text-[8.5px] uppercase tracking-[0.3px]"
-              style={{ borderRadius: "3px" }}
-            >
+            <span className="rounded-sm border border-el-danger/60 px-1.5 py-px text-micro uppercase tracking-[0.3px]">
               {error.category}
             </span>
           )}
@@ -623,8 +637,7 @@ export default function ChatPlaygroundPanel({
       )}
 
       <section
-        className="border border-el-divider bg-el-raised p-3 shadow-(--el-shadow-raised)"
-        style={{ borderRadius: "var(--el-radius-lg)" }}
+        className="rounded-lg border border-el-control-border bg-el-raised p-3 shadow-(--el-shadow-raised)"
         aria-label="Message composer"
       >
         {attachments.length > 0 && (
@@ -632,13 +645,14 @@ export default function ChatPlaygroundPanel({
             {attachments.map((asset) => (
               <div
                 key={asset.id}
-                className="group relative h-20 w-24 overflow-hidden border border-el-divider bg-el-canvas"
+                className="group relative h-20 w-24 overflow-hidden rounded-md border border-el-divider bg-el-canvas"
               >
                 <img
                   src={asset.url}
-                  alt={asset.name}
+                  alt={`Attached image ${asset.name}`}
                   className="h-full w-full object-cover"
                 />
+                {/* 36px hit area in the corner; the visible chip stays 24px. */}
                 <button
                   type="button"
                   aria-label={`Remove ${asset.name}`}
@@ -647,11 +661,17 @@ export default function ChatPlaygroundPanel({
                       current.filter((item) => item.id !== asset.id),
                     )
                   }
-                  className="absolute right-1 top-1 grid h-6 w-6 place-items-center bg-el-action text-el-raised"
+                  className="absolute right-0 top-0 grid size-9 place-items-center focus-ring-inset"
                 >
-                  <X className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span className="grid size-6 place-items-center rounded-sm bg-el-action text-el-action-ink">
+                    <X className="h-3.5 w-3.5" aria-hidden="true" />
+                  </span>
                 </button>
-                <span className="absolute inset-x-0 bottom-0 truncate bg-el-action/80 px-1 py-0.5 text-[9px] text-el-raised">
+                {/* Visual caption only — the image alt already names it. */}
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-x-0 bottom-0 truncate bg-el-action/80 px-1 py-0.5 text-micro text-el-action-ink"
+                >
                   {asset.name}
                 </span>
               </div>
@@ -671,7 +691,7 @@ export default function ChatPlaygroundPanel({
           onChange={(event) => setInput(event.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Ask a question or describe what to inspect in the attached image…"
-          className="min-h-[88px] w-full resize-y border-0 bg-transparent px-2 py-2 text-[14px] leading-6 text-el-ink placeholder:text-el-faint focus:outline-hidden"
+          className="min-h-[88px] w-full resize-y rounded-md border-0 bg-transparent px-2 py-2 text-[14px] leading-6 text-el-ink placeholder:text-el-faint focus-ring-inset"
         />
         <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-el-divider-soft pt-3">
           <input
@@ -693,7 +713,7 @@ export default function ChatPlaygroundPanel({
             <Paperclip className="h-4 w-4" aria-hidden="true" />
             Attach image
           </Button>
-          <span className="text-[11px] text-el-muted">
+          <span className="text-micro text-el-muted">
             PNG, JPEG, WebP, or GIF · 5 MiB each
           </span>
           <div className="ml-auto flex gap-2">
@@ -712,8 +732,10 @@ export default function ChatPlaygroundPanel({
               type="button"
               data-testid="chat-send"
               onClick={handleSend}
+              aria-describedby={blockedHint ? blockedHintId : undefined}
               disabled={
                 streaming ||
+                apiDown ||
                 (input.trim() === "" && attachments.length === 0) ||
                 effectiveModel === ""
               }
@@ -727,8 +749,9 @@ export default function ChatPlaygroundPanel({
 
       {blockedHint && (
         <div
+          id={blockedHintId}
           data-testid="chat-blocked-hint"
-          className="-mt-5 text-[11px] text-el-muted"
+          className="-mt-5 text-micro text-el-muted"
         >
           Send blocked — {blockedHint}
         </div>

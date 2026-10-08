@@ -1,11 +1,13 @@
 import { ArrowRight, Unlink } from "lucide-react";
+import { Button } from "../ui/button";
 import type { EdgeInfo } from "./documentModel";
 
 const FIELD_LABEL_CLASS =
-  "mb-1.5 block font-mono text-[9px] uppercase tracking-[0.8px] text-b-text-dim";
+  "mb-1.5 block font-mono text-micro uppercase tracking-[0.8px] text-el-muted";
 
+// focus-ring: the 2px --el-focus outline replaces the old 50%-tint ring.
 const INPUT_CLASS =
-  "w-full border border-b-line bg-b-bg0 px-2.5 py-1.5 font-mono text-[11.5px] text-b-text focus:border-b-clay focus:outline-hidden focus:ring-1 focus:ring-b-clay/50";
+  "w-full rounded-md border border-el-control-border bg-el-raised px-2.5 py-1.5 font-mono text-xs text-el-ink placeholder:text-el-muted focus-ring";
 
 export interface EdgeInspectorProps {
   edge: EdgeInfo;
@@ -32,34 +34,29 @@ export default function EdgeInspector({
   onRemoveEdge,
 }: Readonly<EdgeInspectorProps>) {
   return (
-    <div
-      className="p-4"
-      style={{
-        background: "rgb(var(--b-bg0))",
-        border: "var(--b-bw) solid rgb(var(--b-line))",
-        borderRadius: "var(--b-rad-sm)",
-      }}
-    >
+    <div className="rounded-md border border-el-divider bg-el-canvas p-4">
       <div className="flex items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2 font-mono text-[12px] text-b-text">
+        <div className="flex min-w-0 items-center gap-2 font-mono text-xs text-el-ink">
           <span className="truncate font-semibold">{edge.source}</span>
           <ArrowRight
             aria-hidden="true"
-            className="h-3.5 w-3.5 flex-none text-b-clay"
+            className="h-3.5 w-3.5 flex-none text-el-muted"
           />
           <span className="truncate font-semibold">{edge.target}</span>
         </div>
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
           onClick={onRemoveEdge}
           disabled={readOnly}
-          className="btn-ghost text-b-red hover:text-b-red"
+          className="h-9 text-el-danger hover:text-el-danger"
         >
-          <Unlink aria-hidden="true" className="h-3.5 w-3.5" />
+          <Unlink aria-hidden="true" />
           remove edge
-        </button>
+        </Button>
       </div>
-      <p className="mt-1 font-mono text-[10px] text-b-text-dim">
+      <p className="mt-1 font-mono text-micro text-el-muted">
         dependency edge — {edge.target} runs after {edge.source}
       </p>
 
@@ -68,7 +65,7 @@ export default function EdgeInspector({
           Data flowing along this edge
         </span>
         {edge.mappings.length === 0 && (
-          <p className="font-mono text-[10.5px] text-b-text-faint">
+          <p className="font-mono text-micro text-el-muted">
             ordering-only dependency — {edge.target} reads no outputs from{" "}
             {edge.source}
           </p>
@@ -77,7 +74,7 @@ export default function EdgeInspector({
           {edge.mappings.map((mapping) => (
             <div key={mapping.key}>
               <label
-                className="mb-1 block font-mono text-[10px] text-b-teal"
+                className="mb-1 block font-mono text-micro text-el-secondary"
                 htmlFor={`mapping-${edge.source}-${edge.target}-${mapping.key}`}
               >
                 {mapping.key}
@@ -89,7 +86,6 @@ export default function EdgeInspector({
                 onChange={(event) => onPatchMapping(mapping.key, event.target.value)}
                 disabled={readOnly}
                 className={INPUT_CLASS}
-                style={{ borderRadius: "var(--b-rad-sm)" }}
               />
             </div>
           ))}
@@ -111,7 +107,6 @@ export default function EdgeInspector({
           disabled={readOnly}
           placeholder="always runs"
           className={INPUT_CLASS}
-          style={{ borderRadius: "var(--b-rad-sm)" }}
         />
       </div>
     </div>

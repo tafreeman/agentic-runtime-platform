@@ -1,7 +1,8 @@
 /**
  * BDagMini — static SVG thumbnail of a workflow DAG.
  * Pure SVG, no xyflow. Reuses layoutDAG for positioning.
- * Themes via --b-* CSS tokens (rgb(var(--b-*)) pattern).
+ * Themes via the --el-graph-* tokens (Tailwind fill-/stroke-el-graph-* classes),
+ * so the thumbnail flips with data-theme and carries no literal colours.
  */
 import { useMemo } from "react";
 import { layoutDAG } from "./dagLayout";
@@ -17,7 +18,7 @@ interface Props {
   nodes: DAGNode[];
   edges: DAGEdge[];
   className?: string;
-  /** When true, node outlines use the clay accent to mark the active thumbnail. */
+  /** When true, node outlines use the graph selection colour to mark the active thumbnail. */
   selected?: boolean;
 }
 
@@ -44,11 +45,8 @@ export default function BDagMini({
           y="30"
           textAnchor="middle"
           dominantBaseline="middle"
-          style={{
-            fill: "rgb(var(--b-text-dim))",
-            fontSize: 14,
-            fontFamily: "monospace",
-          }}
+          className="fill-el-graph-meta font-mono"
+          style={{ fontSize: 14 }}
         >
           $ no steps
         </text>
@@ -58,9 +56,11 @@ export default function BDagMini({
 
   const posMap = new Map(positions.map((p) => [p.id, p]));
 
-  // Uniform hairline outline (design ref: 1px line stroke); the clay accent is
-  // reserved for the selected thumbnail rather than encoding tier per node.
-  const nodeStroke = selected ? "rgb(var(--b-clay))" : "rgb(var(--b-line))";
+  // Uniform hairline outline (design ref: 1px line stroke); the selection
+  // colour is reserved for the selected thumbnail rather than encoding tier.
+  const nodeStrokeClass = selected
+    ? "stroke-el-graph-node-selected"
+    : "stroke-el-graph-node-border";
 
   // Bounding box over all node rects
   let minX = Infinity,
@@ -100,10 +100,7 @@ export default function BDagMini({
           orient="auto"
           markerUnits="userSpaceOnUse"
         >
-          <path
-            d="M0,0 L0,14 L14,7 z"
-            style={{ fill: "rgb(var(--b-line))" }}
-          />
+          <path d="M0,0 L0,14 L14,7 z" className="fill-el-graph-edge" />
         </marker>
       </defs>
 
@@ -119,7 +116,8 @@ export default function BDagMini({
             y1={src.y + NODE_H}
             x2={tgt.x + NODE_W / 2}
             y2={tgt.y}
-            style={{ stroke: "rgb(var(--b-line))", strokeWidth: 1 }}
+            className="stroke-el-graph-edge"
+            style={{ strokeWidth: 1 }}
             markerEnd="url(#bdagmini-arrow)"
           />
         );
@@ -138,13 +136,12 @@ export default function BDagMini({
               y={pos.y}
               width={NODE_W}
               height={NODE_H}
+              className={`fill-el-graph-node ${nodeStrokeClass}`}
               style={{
-                fill: "rgb(var(--b-bg2))",
-                stroke: nodeStroke,
                 strokeWidth: 1,
-                // Corner radius from the theme (0 on paper) via the CSS `rx`
+                // Corner radius from the theme radius token via the CSS `rx`
                 // geometry property rather than a hardcoded rx attribute.
-                rx: "var(--b-rad-sm)",
+                rx: "var(--el-radius-md)",
               }}
             />
             <text
@@ -152,13 +149,8 @@ export default function BDagMini({
               y={pos.y + NODE_H / 2}
               textAnchor="middle"
               dominantBaseline="middle"
-              style={{
-                fill: "rgb(var(--b-text))",
-                fontSize: 24,
-                fontFamily: "var(--b-font-heading)",
-                fontWeight: 600,
-                pointerEvents: "none",
-              }}
+              className="pointer-events-none fill-el-graph-label font-display font-semibold"
+              style={{ fontSize: 24 }}
             >
               {label}
             </text>

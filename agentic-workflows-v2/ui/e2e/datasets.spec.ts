@@ -24,9 +24,9 @@ test.describe('datasets', () => {
     await page.goto('/');
 
     // Sidebar routes to the datasets page. The link's accessible name carries
-    // the "07" ordinal prefix, so match by regex within the nav landmark.
+    // any ordinal prefix, so match by case-insensitive regex within the nav landmark.
     const nav = page.getByRole('navigation');
-    await nav.getByRole('link', { name: /datasets/ }).click();
+    await nav.getByRole('link', { name: /datasets/i }).click();
     await expect(page).toHaveURL(/\/datasets$/);
 
     // Page shell: the h1 and the mono "$ N repo · N local · N eval sets" strip.

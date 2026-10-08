@@ -3,7 +3,30 @@
 
 @import 'tailwindcss';
 
+/*
+  `dark:` follows the app's theme toggle (useTheme sets
+  <html data-theme="dark">), not the OS `prefers-color-scheme`, so owned shadcn
+  sources' `dark:` classes match the theme the user actually picked.
+*/
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 @theme {
+  /*
+    Type floor (design system §6.3): no essential text below 11px.
+      text-micro = 11px / 15px — the absolute floor: metadata, IDs,
+                   timestamps, overlines, table/field labels, tags.
+      text-xs    = 12px / 16px — secondary utility copy (body-small).
+    Arbitrary sizes below 12px — text-[8px], text-[8.5px], text-[9px],
+    text-[9.5px], text-[10px], text-[10.5px], text-[11px] — must be replaced
+    with text-micro (11px); text-[11.5px] with text-xs (12px). Inline
+    `fontSize` values follow the same rule. Sizes are rem so they scale with
+    the user's default font size (11px/12px at the 16px default).
+  */
+  --text-micro: 0.6875rem;
+  --text-micro--line-height: calc(15 / 11);
+  --text-xs: 0.75rem;
+  --text-xs--line-height: calc(16 / 12);
+
   --color-background: rgb(var(--el-canvas));
   --color-foreground: rgb(var(--el-ink));
 
@@ -22,20 +45,14 @@
   --color-muted: rgb(var(--el-surface-subtle));
   --color-muted-foreground: rgb(var(--el-ink-muted));
 
-  --color-accent-blue: rgb(var(--b-blue));
-  --color-accent-green: rgb(var(--b-green));
-  --color-accent-red: rgb(var(--b-red));
-  --color-accent-amber: rgb(var(--b-amber));
-  --color-accent-purple: rgb(var(--b-purple));
-  --color-accent-clay: rgb(var(--b-clay));
-
   --color-destructive: rgb(var(--el-danger));
   --color-destructive-foreground: rgb(var(--el-surface-raised));
 
   --color-border: rgb(var(--el-divider));
-  --color-input: rgb(var(--el-divider));
+  --color-input: rgb(var(--el-control-border));
   --color-ring: rgb(var(--el-focus));
 
+  /* Evidence Ledger palette (tokens.css). Surfaces and ink tiers. */
   --color-el-canvas: rgb(var(--el-canvas));
   --color-el-surface: rgb(var(--el-surface));
   --color-el-raised: rgb(var(--el-surface-raised));
@@ -47,50 +64,83 @@
   --color-el-faint: rgb(var(--el-ink-faint));
   --color-el-divider: rgb(var(--el-divider));
   --color-el-divider-soft: rgb(var(--el-divider-soft));
+  --color-el-divider-faint: rgb(var(--el-divider-faint));
+  /* >= 3:1 boundary for inputs, selects, textareas and input groups. */
+  --color-el-control-border: rgb(var(--el-control-border));
   --color-el-action: rgb(var(--el-action));
+  --color-el-action-ink: rgb(var(--el-action-ink));
   --color-el-accent: rgb(var(--el-accent));
   --color-el-accent-strong: rgb(var(--el-accent-strong));
   --color-el-accent-soft: rgb(var(--el-accent-soft));
+  --color-el-focus: rgb(var(--el-focus));
+
+  /* Status (text-safe) and their soft backgrounds. */
   --color-el-success: rgb(var(--el-success));
+  --color-el-success-soft: rgb(var(--el-success-soft));
   --color-el-warning: rgb(var(--el-warning));
+  --color-el-warning-soft: rgb(var(--el-warning-soft));
   --color-el-danger: rgb(var(--el-danger));
+  --color-el-danger-soft: rgb(var(--el-danger-soft));
   --color-el-info: rgb(var(--el-info));
+  --color-el-info-soft: rgb(var(--el-info-soft));
+  --color-el-neutral: rgb(var(--el-neutral));
 
-  --color-b-bg0: rgb(var(--b-bg0));
-  --color-b-bg1: rgb(var(--b-bg1));
-  --color-b-bg2: rgb(var(--b-bg2));
-  --color-b-bg3: rgb(var(--b-bg3));
-  --color-b-line: rgb(var(--b-line));
-  --color-b-line-soft: rgb(var(--b-line-soft));
-  --color-b-text: rgb(var(--b-text));
-  --color-b-text-mid: rgb(var(--b-text-mid));
-  --color-b-text-dim: rgb(var(--b-text-dim));
-  --color-b-text-faint: rgb(var(--b-text-faint));
-  --color-b-clay: rgb(var(--b-clay));
-  --color-b-clay-soft: var(--b-clay-soft);
-  --color-b-green: rgb(var(--b-green));
-  --color-b-amber: rgb(var(--b-amber));
-  --color-b-blue: rgb(var(--b-blue));
-  --color-b-red: rgb(var(--b-red));
-  --color-b-purple: rgb(var(--b-purple));
+  /* Categorical hues (never status). */
+  --color-el-plum: rgb(var(--el-plum));
+  --color-el-plum-soft: rgb(var(--el-plum-soft));
+  --color-el-tier-low: rgb(var(--el-tier-low));
+  --color-el-tier-mid: rgb(var(--el-tier-mid));
+  --color-el-tier-high: rgb(var(--el-tier-high));
 
-  --color-surface-0: rgb(var(--b-bg0));
-  --color-surface-1: rgb(var(--b-bg1));
-  --color-surface-2: rgb(var(--b-bg2));
-  --color-surface-3: rgb(var(--b-bg3));
+  /* Workflow graph (DAG canvas, BDagMini, editor step list). */
+  --color-el-graph-canvas: rgb(var(--el-graph-canvas));
+  --color-el-graph-grid: rgb(var(--el-graph-grid));
+  --color-el-graph-node: rgb(var(--el-graph-node));
+  --color-el-graph-node-border: rgb(var(--el-graph-node-border));
+  --color-el-graph-node-selected: rgb(var(--el-graph-node-selected));
+  --color-el-graph-node-pending: rgb(var(--el-graph-node-pending));
+  --color-el-graph-label: rgb(var(--el-graph-label));
+  --color-el-graph-meta: rgb(var(--el-graph-meta));
+  --color-el-graph-meta-strong: rgb(var(--el-graph-meta-strong));
+  --color-el-graph-progress-track: rgb(var(--el-graph-progress-track));
+  --color-el-graph-badge-persona: rgb(var(--el-graph-badge-persona));
+  --color-el-graph-badge-model: rgb(var(--el-graph-badge-model));
+  --color-el-graph-pending: rgb(var(--el-graph-pending));
+  --color-el-graph-running: rgb(var(--el-graph-running));
+  --color-el-graph-running-soft: rgb(var(--el-graph-running-soft));
+  --color-el-graph-success: rgb(var(--el-graph-success));
+  --color-el-graph-success-soft: rgb(var(--el-graph-success-soft));
+  --color-el-graph-failed: rgb(var(--el-graph-failed));
+  --color-el-graph-failed-soft: rgb(var(--el-graph-failed-soft));
+  --color-el-graph-skipped: rgb(var(--el-graph-skipped));
+  --color-el-graph-skipped-soft: rgb(var(--el-graph-skipped-soft));
+  --color-el-graph-cancelled: rgb(var(--el-graph-cancelled));
+  --color-el-graph-edge: rgb(var(--el-graph-edge));
+  --color-el-graph-edge-active: rgb(var(--el-graph-edge-active));
+  --color-el-graph-edge-success: rgb(var(--el-graph-edge-success));
+  --color-el-graph-edge-failed: rgb(var(--el-graph-edge-failed));
+  --color-el-graph-edge-kickback: rgb(var(--el-graph-edge-kickback));
+  --color-el-graph-edge-selected: rgb(var(--el-graph-edge-selected));
+  --color-el-graph-edge-label-bg: rgb(var(--el-graph-edge-label-bg));
+  --color-el-graph-edge-label-ink: rgb(var(--el-graph-edge-label-ink));
+  --color-el-graph-edge-kickback-label-bg: rgb(var(--el-graph-edge-kickback-label-bg));
+  --color-el-graph-edge-kickback-label-ink: rgb(var(--el-graph-edge-kickback-label-ink));
 
   --font-sans: var(--el-font-sans);
   --font-display: var(--el-font-display);
-  --font-mono: var(--b-font-mono);
-  --font-heading: var(--b-font-heading);
+  --font-mono: var(--el-font-mono);
 
   --radius-sm: var(--el-radius-sm);
   --radius-md: var(--el-radius-md);
   --radius-lg: var(--el-radius-lg);
-  --radius-b-lg: var(--b-rad-lg);
-  --radius-b-sm: var(--b-rad-sm);
 
-  --border-width-b: var(--b-bw);
+  /*
+    The legacy Direction B theme keys (--color-b-*, --color-surface-*,
+    --color-accent-*, --font-heading, --radius-b-*, --border-width-b) are gone:
+    no JSX uses them, and --border-width-b / --radius-b-* collided with core
+    utilities — `border-b` drew a full 1px box instead of a bottom rule, and
+    `rounded-b-lg` rounded all four corners.
+  */
 
   --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   --animate-dash-flow: b-dash-flow 0.5s linear infinite;
@@ -141,36 +191,54 @@
   }
 }
 
-@utility card {
-  @apply border-b border-b-line bg-b-bg1 p-4;
-  border-radius: var(--b-rad-lg);
-}
+/*
+  Keyboard focus (design system §7.4/§16): a 2px --el-focus outline with a 2px
+  offset, shown on :focus-visible only. Geometry lives in tokens.css
+  (--el-focus-ring-width / --el-focus-ring-offset).
 
-@utility card-hover {
-  @apply card transition-colors duration-150 hover:border-b-clay/40 hover:bg-b-bg2;
-}
+    focus-ring        — explicit ring; use on any custom interactive element
+                        that previously used `focus:outline-hidden focus:ring-*`
+                        (remove those classes: a `focus:` variant utility is
+                        emitted after this one and would win).
+    focus-ring-inset  — same ring drawn inside the border box (offset -2px)
+                        for rows, tabs and controls inside overflow-hidden or
+                        tightly packed containers where an outset ring clips.
 
-@utility btn {
-  @apply inline-flex items-center gap-1.5 px-3 py-1.5 font-mono text-[11px] transition-colors duration-150 focus:outline-hidden focus:ring-1 focus:ring-b-clay/50;
-  border-radius: var(--b-rad-sm);
-}
-
-@utility btn-primary {
-  @apply btn bg-b-clay;
-  color: var(--b-btn-primary-ink);
-  &:hover {
-    opacity: 0.85;
+  A global :focus-visible default in @layer base gives every focusable element
+  the same ring, but any utility (outline-hidden, outline-none, ring-*) beats
+  the base layer, so sites that suppress outlines must adopt focus-ring. The
+  only remaining suppressions are programmatic focus targets (main, dialog/
+  popover content, the cmdk list) and bare inputs whose bordered wrapper draws
+  a full-strength focus-within ring (InputGroup, cmdk input, the command
+  palette and the Runs/Workflows search rows).
+*/
+@utility focus-ring {
+  &:focus-visible {
+    outline: var(--el-focus-ring-width) solid rgb(var(--el-focus));
+    outline-offset: var(--el-focus-ring-offset);
   }
 }
 
-@utility btn-ghost {
-  @apply btn border-b border-b-line text-b-text-dim hover:bg-b-bg2 hover:text-b-text;
+@utility focus-ring-inset {
+  &:focus-visible {
+    outline: var(--el-focus-ring-width) solid rgb(var(--el-focus));
+    outline-offset: calc(-1 * var(--el-focus-ring-width));
+  }
 }
 
 @layer base {
   * {
     box-sizing: border-box;
-    @apply border-border outline-ring/50;
+    /* Full-strength focus color: any outline utility that sets only a width
+       or style inherits the AA-verified --el-focus, never a 50% tint. */
+    @apply border-border outline-ring;
+  }
+
+  /* Global keyboard-focus default for every focusable element, including
+     Radix portals rendered outside .el-app. */
+  :focus-visible {
+    outline: var(--el-focus-ring-width) solid rgb(var(--el-focus));
+    outline-offset: var(--el-focus-ring-offset);
   }
 
   html {
@@ -207,7 +275,7 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: var(--b-scroll-thumb);
+    background: var(--el-scroll-thumb);
     border-radius: 3px;
   }
 }
@@ -218,27 +286,48 @@
     background: rgb(var(--el-canvas));
     color: rgb(var(--el-ink));
   }
+}
 
-  .el-app :where(button, a, input, select, textarea, [tabindex]):focus-visible {
-    outline: 2px solid rgb(var(--el-focus));
-    outline-offset: 2px;
-  }
-
-  .el-app :where(input, select, textarea) {
+@layer base {
+  /*
+    Design system §10.2: self-bordered text controls are at least 40px tall
+    with the 4px control radius. In the base layer, so a control's own
+    utilities (min-h-*, rounded-*) still win; `.el-app` (0,1,0) outranks
+    preflight's `input { border-radius: 0 }`. Excluded: non-text
+    inputs (checkbox, radio, range, file, color) and bare inputs drawn inside
+    a bordered wrapper that owns the height (InputGroup, cmdk).
+  */
+  .el-app
+    :where(
+      input:not(
+          [type="checkbox"],
+          [type="radio"],
+          [type="range"],
+          [type="file"],
+          [type="hidden"],
+          [type="color"]
+        ),
+      select,
+      textarea
+    ):where(:not([data-slot="input-group-control"], [cmdk-input])) {
     min-height: 40px;
     border-radius: var(--el-radius-md);
   }
 }
 
-/* ── React Flow overrides ── */
+/* ── React Flow overrides ──
+   Unlayered on purpose: they must beat @xyflow/react/dist/style.css, which is
+   also unlayered. The canvas uses --el-graph-canvas while StepNode fills use
+   --el-graph-node (queued: --el-graph-node-pending), so nodes stay distinct
+   from the canvas in both themes (tokens.css). */
 
 .react-flow__background {
-  background-color: rgb(var(--b-bg0)) !important;
+  background-color: rgb(var(--el-graph-canvas)) !important;
 }
 
 .react-flow__minimap {
-  background-color: rgb(var(--b-bg1)) !important;
-  border: 1px solid rgb(var(--b-line)) !important;
+  background-color: rgb(var(--el-surface)) !important;
+  border: 1px solid rgb(var(--el-divider)) !important;
   border-radius: 0 !important;
   opacity: 0.8;
   transition: opacity 0.2s;
@@ -248,29 +337,52 @@
   opacity: 1;
 }
 
+/* Zoom/fit controls stay at full opacity: a resting opacity of 0.6 dropped
+   the icons below the 3:1 non-text contrast floor. */
 .react-flow__controls {
-  border: 1px solid rgb(var(--b-line)) !important;
+  border: 1px solid rgb(var(--el-divider)) !important;
   border-radius: 0 !important;
   overflow: hidden;
-  opacity: 0.6;
-  transition: opacity 0.2s;
 }
 
-.react-flow__controls:hover {
-  opacity: 1;
-}
-
+/* Icon-only canvas controls: 36x36 hit area (design system §10.1/§16); the
+   aria-labels come from React Flow. */
 .react-flow__controls-button {
-  background-color: rgb(var(--b-bg1)) !important;
-  border-bottom: 1px solid rgb(var(--b-line)) !important;
-  fill: rgb(var(--b-text-dim)) !important;
-  width: 26px !important;
-  height: 26px !important;
+  background-color: rgb(var(--el-surface)) !important;
+  border-bottom: 1px solid rgb(var(--el-divider)) !important;
+  fill: rgb(var(--el-ink-muted)) !important;
+  width: 36px !important;
+  height: 36px !important;
+}
+
+.react-flow .react-flow__controls-button svg {
+  max-width: 14px;
+  max-height: 14px;
 }
 
 .react-flow__controls-button:hover {
-  background-color: rgb(var(--b-bg2)) !important;
-  fill: rgb(var(--b-text)) !important;
+  background-color: rgb(var(--el-surface-subtle)) !important;
+  fill: rgb(var(--el-ink)) !important;
+}
+
+/* The controls container clips overflow, so its buttons use the inset ring. */
+.react-flow__controls-button:focus-visible {
+  outline: var(--el-focus-ring-width) solid rgb(var(--el-focus));
+  outline-offset: calc(-1 * var(--el-focus-ring-width));
+}
+
+/* React Flow's stylesheet sets `outline: none` on focused nodes and edges;
+   restore the Ledger ring for keyboard users. Edges are SVG, so the focused
+   edge path takes the focus color and weight instead of an outline. */
+.react-flow .react-flow__node.selectable:focus-visible,
+.react-flow .react-flow__node:focus-visible {
+  outline: var(--el-focus-ring-width) solid rgb(var(--el-focus));
+  outline-offset: var(--el-focus-ring-offset);
+}
+
+.react-flow .react-flow__edge:focus-visible .react-flow__edge-path {
+  stroke: rgb(var(--el-focus)) !important;
+  stroke-width: 3px !important;
 }
 
 .react-flow__viewport {
@@ -280,16 +392,6 @@
 @keyframes dash-flow {
   to {
     stroke-dashoffset: -12;
-  }
-}
-
-@keyframes clay-glow {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.55;
   }
 }
 
@@ -305,12 +407,28 @@
   }
 }
 
-.animated-edge {
-  animation: dash-flow 0.5s linear infinite;
+/* Class form of the running-node halo: put it on an aria-hidden, absolutely
+   positioned child instead of an inline `animation` style, so reduced motion
+   can hide it (see below). */
+.el-ring-pulse {
+  animation: b-ring-pulse 1.5s ease-out infinite;
 }
 
-.step-node--running {
-  animation: clay-glow 1.6s ease-in-out infinite;
+/* StepNode's indeterminate streaming bar: oscillates the fill with
+   transform: scaleX() from the left edge (never width). Under reduced motion
+   the loop stops and the inline scaleX(0.6) holds. */
+@keyframes el-stream-bar {
+  from {
+    transform: scaleX(0.2);
+  }
+  to {
+    transform: scaleX(0.8);
+  }
+}
+
+.el-stream-bar {
+  transform-origin: left;
+  animation: el-stream-bar 0.8s ease-in-out infinite alternate;
 }
 
 .dag-edge--active {
@@ -329,26 +447,80 @@
 }
 
 /* ──────────────────────────────────────────────────────────────
- * Reduced motion (WCAG 2.3.3 / seizure safety)
+ * Reduced motion (WCAG 2.3.3; design system §13)
  *
- * Users who set `prefers-reduced-motion: reduce` at the OS level get a
- * static experience: looping/infinite animations (clay-glow, dash-flow,
- * the blinking cursor, opacity pulses) are stopped, and large transform
- * transitions (DAG pan/zoom, node/edge fades) snap instantly instead of
- * animating. Short color transitions are flattened too — harmless, and
- * keeps the rule simple and future-proof.
+ * Under `prefers-reduced-motion: reduce` the policy is targeted, not a
+ * blanket "make every duration ~0":
+ *
+ *  (a) Loops stop. Every CSS animation is removed (`animation: none`): the
+ *      named loops below plus a `*` catch-all, so future loops and entrance/
+ *      exit keyframes are covered too. Elements fall back to their
+ *      un-animated style, which is the intended static state: pulses and
+ *      skeletons sit at full opacity, spinners hold still, the blinking
+ *      cursor stays visible, active edges keep their static dash pattern.
+ *      Purely decorative halos (ring pulse) are hidden rather than frozen.
+ *  (b) No large movement or layout motion. Transitions are limited to
+ *      paint-only properties, so transform/translate/scale and layout
+ *      changes (DAG pan/zoom, sheet slides, progress-bar widths) snap to
+ *      their end state; entrance slide/zoom animations are gone with (a).
+ *  (c) Short feedback stays. Color, background, border, outline, fill/stroke,
+ *      opacity and box-shadow transitions still run, capped at
+ *      --el-motion-fast (120ms) wherever this file or a Tailwind `duration-*`
+ *      class sets something longer (Tailwind's default is 150ms, at the cap).
+ *  (d) Smooth scrolling is off.
+ *
+ * Radix Presence unmounts immediately when the computed animation-name is
+ * `none`, so exit animations cannot hang. JS-driven motion (auto pan/zoom,
+ * StepNode's streaming bar and ring) must also honor usePrefersReducedMotion.
  * ────────────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
+  /* (a) Named loops in use, then the catch-all (which also covers any
+     unlisted Tailwind loop such as animate-ping). */
+  .animate-pulse,
+  .animate-spin,
+  .animate-b-pulse,
+  .animate-b-blink,
+  .animate-pulse-slow,
+  .animate-dash-flow,
+  .el-stream-bar,
+  .dag-edge--active,
+  .el-ring-pulse,
+  .react-flow__edge.animated path,
   *,
   *::before,
   *::after {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
+    animation: none !important;
+  }
+
+  /* (a) Static end states. */
+  .animate-b-blink {
+    opacity: 1 !important; /* cursor stays visible, not stuck "off" */
+  }
+
+  .el-ring-pulse {
+    visibility: hidden !important; /* decorative halo: hide, don't freeze */
+  }
+
+  /* (b) Paint-only transitions; geometry snaps. (d) No smooth scrolling. */
+  *,
+  *::before,
+  *::after {
+    transition-property:
+      color, background-color, border-color, outline-color,
+      text-decoration-color, fill, stroke, stroke-opacity, opacity,
+      box-shadow !important;
     scroll-behavior: auto !important;
   }
 
   .react-flow__viewport {
     transition: none !important;
+  }
+
+  /* (c) Cap longer feedback transitions at --el-motion-fast. */
+  [class*="duration-"],
+  .react-flow__edge path,
+  .react-flow__node,
+  .react-flow__minimap {
+    transition-duration: var(--el-motion-fast) !important;
   }
 }

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import DatasetsPage from "../pages/DatasetsPage";
 
@@ -33,6 +33,63 @@ describe("DatasetsPage", () => {
     rerender(<DatasetsPage />);
     // Empty state now uses the shared <EmptyState> component ("$ no … yet").
     expect(screen.getByText("no datasets yet")).toBeInTheDocument();
+    // Counts are unknown until the catalog loads — "—", never a fake 0.
+    expect(screen.getAllByText("no data")).toHaveLength(3);
+    expect(screen.queryByText("0")).not.toBeInTheDocument();
+  });
+
+  it("shows a readable error with retry when the catalog fails to load", () => {
+    const refetch = vi.fn();
+    mockUseEvaluationDatasets.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: new Error("API 500: "),
+      refetch,
+    });
+
+    render(<DatasetsPage />);
+
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent(/failed to load datasets: The API failed \(HTTP 500\)/);
+    expect(alert).toHaveTextContent(/check the API server log/i);
+    fireEvent.click(screen.getByRole("button", { name: /retry/i }));
+    expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps an unreachable API to a quiet note instead of a second alert", () => {
+    mockUseEvaluationDatasets.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: new TypeError("Failed to fetch"),
+      refetch: vi.fn(),
+    });
+
+    render(<DatasetsPage />);
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/datasets can't load while the API is unreachable/i)
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the last loaded catalog on screen when a refetch fails", () => {
+    mockUseEvaluationDatasets.mockReturnValue({
+      isLoading: false,
+      error: new TypeError("Failed to fetch"),
+      refetch: vi.fn(),
+      data: {
+        repository: [
+          { id: "repo-1", name: "Repository Dataset", description: "", sample_count: 12 },
+        ],
+        local: [],
+        eval_sets: [],
+      },
+    });
+
+    render(<DatasetsPage />);
+
+    expect(screen.getByText("Repository Dataset")).toBeInTheDocument();
+    expect(screen.getByText(/showing the last loaded datasets/i)).toBeInTheDocument();
   });
 
   it("renders repository, local, and evaluation set cards", () => {

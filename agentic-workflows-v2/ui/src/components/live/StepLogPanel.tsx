@@ -11,8 +11,14 @@ export default function StepLogPanel({ events, className = "" }: Readonly<Props>
   const [expanded, setExpanded] = useState(true);
   const panelId = useId();
 
+  // Token deltas are per-chunk stream noise: logging (and announcing) each
+  // one would flood the polite live region (§16), so the log lists lifecycle
+  // events only.
   const displayEvents = events.filter(
-    (e) => e.type !== "keepalive" && e.type !== "connection_established"
+    (e) =>
+      e.type !== "keepalive" &&
+      e.type !== "connection_established" &&
+      e.type !== "token_delta"
   );
 
   return (
@@ -22,35 +28,33 @@ export default function StepLogPanel({ events, className = "" }: Readonly<Props>
           type="button"
           aria-expanded={expanded}
           aria-controls={panelId}
-          className="flex items-center gap-1.5 font-mono text-[9.5px] uppercase tracking-[1.5px] text-b-text-faint transition-colors hover:text-b-text-dim"
+          className="focus-ring relative flex items-center gap-1.5 rounded-sm font-sans text-xs font-semibold text-el-ink transition-colors after:absolute after:-inset-x-1 after:-inset-y-3 hover:text-el-secondary"
           onClick={() => setExpanded(!expanded)}
         >
           {expanded ? (
-            <ChevronDown className="h-3 w-3" />
+            <ChevronDown aria-hidden="true" className="h-3 w-3" />
           ) : (
-            <ChevronRight className="h-3 w-3" />
+            <ChevronRight aria-hidden="true" className="h-3 w-3" />
           )}
-          Event Log · SSE
+          Event log
         </button>
-        <span className="flex items-center gap-[5px] font-mono text-[9px] text-b-green">
-          <span
-            aria-hidden="true"
-            className="animate-b-pulse inline-block h-[5px] w-[5px] rounded-full bg-b-green"
-          />
-          streaming · {displayEvents.length}
+        {/* A count, not a liveness claim: the run's own status marker says
+            whether it is still streaming. */}
+        <span className="text-micro tabular-nums text-el-muted">
+          {displayEvents.length} event{displayEvents.length === 1 ? "" : "s"}
         </span>
       </div>
 
       {expanded && (
         <div
           id={panelId}
-          className="flex-1 overflow-y-auto font-mono text-[10px]"
+          className="flex-1 overflow-y-auto font-mono text-micro"
           aria-live="polite"
           aria-relevant="additions"
           aria-label="Event log"
         >
           {displayEvents.length === 0 && (
-            <div className="px-2 py-4 text-center text-b-text-faint">
+            <div className="px-2 py-4 text-center text-el-muted">
               Waiting for events...
             </div>
           )}
@@ -64,16 +68,16 @@ export default function StepLogPanel({ events, className = "" }: Readonly<Props>
 }
 
 function EventLine({ event }: Readonly<{ event: ExecutionEvent }>) {
-  let color = "text-b-text-dim";
+  let color = "text-el-muted";
   let message = "";
 
   switch (event.type) {
     case "workflow_start":
-      color = "text-b-blue";
+      color = "text-el-info";
       message = `Workflow "${event.workflow_name}" started`;
       break;
     case "step_start":
-      color = "text-b-blue";
+      color = "text-el-info";
       message = `Step "${event.step}" started`;
       break;
     case "step_end":
@@ -81,7 +85,7 @@ function EventLine({ event }: Readonly<{ event: ExecutionEvent }>) {
     case "step_error": {
       const status =
         event.type === "step_error" ? "failed" : event.status ?? "failed";
-      color = status === "success" ? "text-b-green" : "text-b-red";
+      color = status === "success" ? "text-el-success" : "text-el-danger";
       message = `Step "${event.step}" ${status} (${
         event.duration_ms < 1000
           ? `${Math.round(event.duration_ms)}ms`
@@ -90,23 +94,34 @@ function EventLine({ event }: Readonly<{ event: ExecutionEvent }>) {
       break;
     }
     case "workflow_end":
-      color = event.status === "success" ? "text-b-green" : "text-b-red";
+      color = event.status === "success" ? "text-el-success" : "text-el-danger";
       message = `Workflow ${event.status}`;
       break;
     case "evaluation_start":
-      color = "text-b-amber";
+      color = "text-el-warning";
       message = "Evaluation started";
       break;
     case "evaluation_complete":
-      color = event.passed ? "text-b-green" : "text-b-amber";
+      color = event.passed ? "text-el-success" : "text-el-warning";
       message = `Evaluation complete: ${event.weighted_score.toFixed(1)} (${event.grade})`;
       break;
     case "error":
-      color = "text-b-red";
+      color = "text-el-danger";
       message = `Error: ${event.error}`;
       break;
+    case "approval_required":
+      color = "text-el-warning";
+      message = `Approval required: ${event.tool_name}${
+        event.agent_or_step ? ` (${event.agent_or_step})` : ""
+      }`;
+      break;
+    case "approval_decision":
+      message = `Approval ${event.decision}: ${event.tool_name}`;
+      break;
     default:
-      message = JSON.stringify(event);
+      // Readable fallback for event types this view doesn't know yet —
+      // never a raw JSON dump as the default experience (§18).
+      message = `Event: ${event.type ?? "unknown"}`;
   }
 
   const timestamp =
@@ -115,9 +130,9 @@ function EventLine({ event }: Readonly<{ event: ExecutionEvent }>) {
       : "";
 
   return (
-    <div className="flex items-start gap-[9px] border-b border-b-line-soft py-[4px] leading-[1.4] last:border-b-0">
+    <div className="flex items-start gap-[9px] border-b border-el-divider-soft py-[4px] leading-[1.4] last:border-b-0">
       {timestamp && (
-        <span className="flex-none text-b-text-faint">{timestamp}</span>
+        <span className="flex-none tabular-nums text-el-muted">{timestamp}</span>
       )}
       <span className={color}>{message}</span>
     </div>

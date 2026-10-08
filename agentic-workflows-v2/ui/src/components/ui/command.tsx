@@ -23,7 +23,7 @@ function Command({
     <CommandPrimitive
       data-slot="command"
       className={cn(
-        "flex size-full flex-col overflow-hidden rounded-xl! bg-popover p-1 text-popover-foreground",
+        "flex size-full flex-col overflow-hidden rounded-lg bg-popover p-1 text-popover-foreground",
         className
       )}
       {...props}
@@ -52,7 +52,7 @@ function CommandDialog({
       </DialogHeader>
       <DialogContent
         className={cn(
-          "top-1/3 translate-y-0 overflow-hidden rounded-xl! p-0",
+          "top-1/3 translate-y-0 overflow-hidden rounded-lg p-0",
           className
         )}
         showCloseButton={showCloseButton}
@@ -69,7 +69,8 @@ function CommandInput({
 }: React.ComponentProps<typeof CommandPrimitive.Input>) {
   return (
     <div data-slot="command-input-wrapper" className="p-1 pb-0">
-      <InputGroup className="h-8! rounded-lg! border-input/30 bg-input/30 shadow-none! data-[slot=input-group-addon]:*:pl-2!">
+      <InputGroup className="h-9! rounded-md! border-el-control-border bg-el-subtle shadow-none! data-[slot=input-group-addon]:*:pl-2!">
+        {/* outline-hidden: the InputGroup wrapper draws the focus ring. */}
         <CommandPrimitive.Input
           data-slot="command-input"
           className={cn(
@@ -93,6 +94,8 @@ function CommandList({
   return (
     <CommandPrimitive.List
       data-slot="command-list"
+      // outline-hidden: the list is never a Tab stop — DOM focus stays in the
+      // input and the active item is marked with data-selected.
       className={cn(
         "no-scrollbar max-h-72 scroll-py-1 overflow-x-hidden overflow-y-auto outline-hidden",
         className
@@ -152,8 +155,11 @@ function CommandItem({
   return (
     <CommandPrimitive.Item
       data-slot="command-item"
+      // cmdk keeps DOM focus in the input, so the active item is its
+      // data-selected state: the tint alone is under 3:1, so it also gets a
+      // 2px accent-strong rail (>=3:1 on the menu), per the selected-row rule.
       className={cn(
-        "group/command-item relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none in-data-[slot=dialog-content]:rounded-lg! data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 data-selected:bg-muted data-selected:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [svg]:*:data-selected:text-foreground",
+        "group/command-item relative flex min-h-9 cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm select-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 data-selected:bg-el-subtle data-selected:text-foreground data-selected:shadow-[inset_2px_0_0_rgb(var(--el-accent-strong))] [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [svg]:*:data-selected:text-foreground",
         className
       )}
       {...props}
