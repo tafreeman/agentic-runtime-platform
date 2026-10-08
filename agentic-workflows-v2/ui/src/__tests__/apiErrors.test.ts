@@ -15,8 +15,18 @@ describe("describeApiError", () => {
     expect(d.detail).toBeUndefined();
   });
 
-  it.each([503, 504])("treats gateway status %i as unreachable", (status) => {
-    expect(describeApiError(new Error(`API ${status}: down`)).unreachable).toBe(true);
+  it.each([
+    [503, ""],
+    [504, "down"],
+  ])("treats gateway status %i as unreachable", (status, body) => {
+    expect(describeApiError(new Error(`API ${status}: ${body}`)).unreachable).toBe(true);
+  });
+
+  it("treats a 503 with a server-supplied detail as an application error, not an outage", () => {
+    const d = describeApiError(new Error('API 503: {"detail":"settings store is not writable"}'));
+    expect(d).toMatchObject({ status: 503, unreachable: false, detail: "settings store is not writable" });
+    expect(d.summary).toMatch(/settings store is not writable/);
+    expect(d.remedy).not.toBe(API_START_HINT);
   });
 
   it("treats a fetch TypeError as unreachable", () => {
@@ -84,8 +94,8 @@ describe("formatApiError", () => {
   });
 
   it("keeps the server detail a gateway summary would otherwise drop", () => {
-    expect(formatApiError(new Error("API 503: model warming up"))).toBe(
-      `The API server isn't responding (HTTP 503). Details: model warming up. ${API_START_HINT}`,
+    expect(formatApiError(new Error("API 504: model warming up"))).toBe(
+      `The API server isn't responding (HTTP 504). Details: model warming up. ${API_START_HINT}`,
     );
   });
 

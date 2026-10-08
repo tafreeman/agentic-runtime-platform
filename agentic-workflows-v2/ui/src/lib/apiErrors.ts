@@ -19,7 +19,7 @@ export interface ApiErrorDescription {
   readonly remedy: string;
   /** HTTP status when the failure came from an HTTP response. */
   readonly status?: number;
-  /** True when the API looks unreachable (network failure or 502/503/504). */
+  /** True when the API looks unreachable (network failure, 502/504, or a 503 with no server-supplied detail). */
   readonly unreachable: boolean;
   /** Server-supplied detail (e.g. a FastAPI `detail`), when there was one. */
   readonly detail?: string;
@@ -55,7 +55,11 @@ export function describeApiError(error: unknown): ApiErrorDescription {
   if (match) {
     const status = Number(match[1]);
     const detail = extractDetail(match[2] ?? "");
-    if (GATEWAY_STATUSES.has(status)) {
+    // A 503 that carries a server-supplied detail is the application reporting
+    // a real condition (store not writable, provider unavailable) — the API is
+    // reachable, so surface its detail instead of the "start the server" hint.
+    const isAppUnavailable = status === 503 && detail !== undefined;
+    if (GATEWAY_STATUSES.has(status) && !isAppUnavailable) {
       return {
         summary: `The API server isn't responding (HTTP ${status}).`,
         remedy: API_START_HINT,
