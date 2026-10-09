@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased - UI design guardrails
+
+- The design rules from the accessibility pass are now enforced in CI rather
+  than by periodic audits. `designDrift.test.ts` fails on text below 11px,
+  colour literals in TS/TSX, `transition-all` and layout-property transitions;
+  `tokens.contrast.test.ts` checks WCAG AA for every ink/surface pair in both
+  themes. Each rule carries its own mutation check.
+- `PRODUCT.md`, `DESIGN.md` and `.impeccable/design.json` are tracked at the repo
+  root, and `.claude/rules/ui-design.md` loads the rules automatically for any
+  change under `agentic-workflows-v2/ui/`.
+- `just ui-check` runs UI coverage, tests and the build in one step, plus the
+  Impeccable detector when `IMPECCABLE_DETECT` is set.
+
 ## Unreleased - UI accessibility and design-system pass
 
 - Text contrast: muted and faint ink now pass WCAG AA (4.5:1) on every
@@ -35,9 +48,8 @@
     fixed.
 - UI tests: 446 → 664. Statement coverage 71.5% → 79.3%; branch coverage
   65.6% → 75.8%.
-- Docs: the Evidence Ledger spec is updated, and
-  `docs/ui/impeccable-context-changes.md` lists the matching edits for the
-  local Impeccable `DESIGN.md` and `design.json`.
+- Docs: the Evidence Ledger spec is updated; the matching Impeccable context
+  is tracked at the repo root (see `docs/ui/impeccable-context-changes.md`).
 
 ## Unreleased - plan_tribunal workflow
 
