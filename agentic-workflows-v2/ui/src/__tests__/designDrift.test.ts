@@ -58,9 +58,15 @@ const RULES: readonly Rule[] = [
       belowFloor(code, /fontSize:\s*["'`]?(\d+(?:\.\d+)?)(?:px)?["'`]?(?=\s*[,}\n])/g),
   },
   {
-    name: "CSS font-size below the 11px floor",
+    name: "CSS font-size or font shorthand below the 11px floor",
     appliesTo: /\.css$/,
-    find: (code) => belowFloor(code, /font-size:\s*(\d+(?:\.\d+)?)px/g),
+    // `font-size: 10px`, and the size slot of the `font` shorthand
+    // (`font: 600 10px/1.2 sans-serif`).
+    find: (code) =>
+      belowFloor(
+        code,
+        /(?<![\w-])font(?:-size)?\s*:[^;}]*?(?<![\w.-])(\d+(?:\.\d+)?)px(?=[\s/;}]|$)/g,
+      ),
   },
   {
     name: "hex colour literal (use an el-* or --el-graph-* token)",
@@ -108,8 +114,10 @@ function layoutTransitions(code: string): string[] {
     .filter(([, value = ""]) =>
       value
         .split(",")
-        .map((segment) => segment.trim().split(/\s+/)[0] ?? "")
-        .some((property) => LAYOUT_PROPERTY.test(property.replace(/_/g, "-"))),
+        // The shorthand allows property, duration and easing in any order
+        // (`120ms width`), and Tailwind writes spaces as underscores.
+        .flatMap((segment) => segment.trim().split(/[\s_]+/))
+        .some((token) => LAYOUT_PROPERTY.test(token)),
     )
     .map(([declaration = ""]) => declaration);
 }
@@ -147,6 +155,10 @@ describe("design drift", () => {
     ["x.tsx", '<p className="text-[10px]">', "<p className=\"text-[11px]\">"],
     ["x.tsx", "style={{ fontSize: 9 }}", "style={{ fontSize: 12 }}"],
     ["x.css", ".a { font-size: 10px; }", ".a { font-size: 12px; }"],
+    ["x.css", ".a { font: 10px sans-serif; }", ".a { font: 12px sans-serif; }"],
+    ["x.css", ".a { font: 600 10px/1.4 Georgia; }", ".a { font: 600 13px/1.4 Georgia; }"],
+    ["x.css", ".a { transition: 120ms width; }", ".a { transition: 120ms opacity; }"],
+    ["x.tsx", 'className="transition-[opacity_120ms,width_120ms]"', 'className="transition-[opacity_120ms]"'],
     ["x.tsx", 'stroke="#9e321c"', 'stroke="rgb(var(--el-accent))"'],
     ["x.tsx", 'fill: "rgba(0, 0, 0, 0.4)"', 'fill: "rgb(var(--el-graph-edge) / 0.4)"'],
     ["x.tsx", 'className="transition-all"', 'className="transition-colors"'],
