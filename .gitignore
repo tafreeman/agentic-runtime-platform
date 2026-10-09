@@ -476,6 +476,9 @@ docs/project-scan-report.json
 .agents/
 docs/screenshots/b-redesign/
 .claude/worktrees/
+# Impeccable session state (design.json is tracked; live sessions and caches are not)
+.impeccable/live/
+.impeccable/hook.cache.json
 
 # MkDocs local build output and plugin cache
 site/

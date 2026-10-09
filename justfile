@@ -54,6 +54,14 @@ release-check: _require-venv
     & "{{venv_python}}" -m twine check dist/* agentic-workflows-v2/dist/* agentic-v2-eval/dist/*
     & "{{venv_python}}" scripts/verify_release_artifacts.py
 
+# UI gate in one command: unit tests (incl. design-drift + contrast guards),
+# coverage floors, then the production build. Optionally runs the Impeccable
+# detector when IMPECCABLE_DETECT points at its detect.mjs.
+ui-check:
+    npm --prefix agentic-workflows-v2/ui run test:coverage
+    npm --prefix agentic-workflows-v2/ui run build
+    if ($env:IMPECCABLE_DETECT) { node "$env:IMPECCABLE_DETECT" --json agentic-workflows-v2/ui/src } else { Write-Host "IMPECCABLE_DETECT not set; skipping the Impeccable detector" }
+
 dev:
     & "./agentic-workflows-v2/scripts/start-dev.ps1" -BackendPort {{backend_port}} -FrontendPort {{frontend_port}} -ApiProxyTarget "http://127.0.0.1:{{backend_port}}"
 
