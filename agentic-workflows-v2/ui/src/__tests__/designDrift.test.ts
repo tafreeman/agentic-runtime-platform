@@ -70,7 +70,9 @@ const RULES: readonly Rule[] = [
   {
     name: "rgb()/hsl() literal not backed by a token (use rgb(var(--el-*)))",
     appliesTo: /\.tsx?$/,
-    find: (code) => matches(code, /\b(?:rgb|hsl)a?\((?!\s*var\()[^)]*\)/g),
+    // Only design tokens may feed a colour call: `var(--el-*)`, not legacy
+    // `--b-*` aliases or an arbitrary `--brand-color`.
+    find: (code) => matches(code, /\b(?:rgb|hsl)a?\((?!\s*var\(--el-)[^)]*\)/g),
   },
   {
     name: "transition-all / transition: all (name the properties)",
@@ -80,13 +82,37 @@ const RULES: readonly Rule[] = [
   {
     name: "transition on a layout property (animate transform/opacity, or snap)",
     appliesTo: /\.(tsx?|css)$/,
-    find: (code) =>
-      matches(
-        code,
-        /transition-\[(?:width|height|top|left|right|bottom|margin|padding)[^\]]*\]|transition(?:Property)?:\s*["'`]?(?:width|height|top|left|right|bottom|margin|padding)\b/g,
-      ),
+    find: layoutTransitions,
   },
 ];
+
+const LAYOUT_PROPERTY =
+  /^(?:width|height|min-width|max-width|min-height|max-height|top|left|right|bottom|inset|margin|padding)(?:-|$)/;
+
+/**
+ * Every property named by a transition — Tailwind `transition-[a,b]`, CSS
+ * `transition: a 1s, b 1s` / `transition-property`, or inline `transition` /
+ * `transitionProperty` — so a layout property listed after an allowed one is
+ * still caught.
+ */
+function layoutTransitions(code: string): string[] {
+  const declarations = [
+    ...[...code.matchAll(/transition-\[([^\]]+)\]/g)].map((m) => [m[0], m[1] ?? ""]),
+    ...[
+      ...code.matchAll(
+        /transition(?:-property|Property)?\s*:\s*["'`]?([^;"'`}]+)/g,
+      ),
+    ].map((m) => [m[0], m[1] ?? ""]),
+  ];
+  return declarations
+    .filter(([, value = ""]) =>
+      value
+        .split(",")
+        .map((segment) => segment.trim().split(/\s+/)[0] ?? "")
+        .some((property) => LAYOUT_PROPERTY.test(property.replace(/_/g, "-"))),
+    )
+    .map(([declaration = ""]) => declaration);
+}
 
 /** Drop comments so prose about a banned pattern doesn't trip the guard. */
 function stripComments(code: string): string {
@@ -125,6 +151,11 @@ describe("design drift", () => {
     ["x.tsx", 'fill: "rgba(0, 0, 0, 0.4)"', 'fill: "rgb(var(--el-graph-edge) / 0.4)"'],
     ["x.tsx", 'className="transition-all"', 'className="transition-colors"'],
     ["x.tsx", 'className="transition-[width]"', 'className="transition-transform"'],
+    ["x.tsx", 'className="transition-[opacity,width]"', 'className="transition-[opacity,transform]"'],
+    ["x.css", ".a { transition: opacity 120ms, width 120ms; }", ".a { transition: opacity 120ms, transform 120ms; }"],
+    ["x.tsx", 'style={{ transitionProperty: "opacity, height" }}', 'style={{ transitionProperty: "opacity" }}'],
+    ["x.tsx", 'color: "rgb(var(--b-purple))"', 'color: "rgb(var(--el-plum))"'],
+    ["x.tsx", 'color: "rgb(var(--brand-color) / 0.5)"', 'color: "rgb(var(--el-accent) / 0.5)"'],
   ])("catches a violation in %s: %s", (file, bad, good) => {
     expect(violations({ [`../src/${file}`]: bad })).toHaveLength(1);
     expect(violations({ [`../src/${file}`]: good })).toEqual([]);

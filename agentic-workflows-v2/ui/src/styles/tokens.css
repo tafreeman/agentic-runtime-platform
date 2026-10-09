@@ -54,12 +54,12 @@
  *   info            #7cb5d8   7.24    6.61    5.90    5.41    4.77   4.81
  *   plum            #b8a1d8   6.98    6.38    5.70    5.22    4.61   4.99
  *   graph-edge(>=3) #b1a89b   6.84    6.25    5.58    5.11    4.51   -
- *   control-bdr(>=3) #8a8276  4.24    3.87    3.45    3.17    2.79   -
+ *   control-bdr(>=3) #928a7e  4.71    4.31    3.84    3.52    3.11   -
  *   accent (marks)  #f2704c   5.51    5.03    4.49    4.12    3.63   3.76
  *
  * Graph canvas: light --el-graph-canvas = surface-subtle, dark = surface, so
  * the "subtle"/"surface" columns above are the graph-canvas ratios. Graph
- * node borders use control-border (light 3.28:1 / dark 3.87:1 on the graph
+ * node borders use control-border (light 3.28:1 / dark 4.31:1 on the graph
  * canvas), so queued nodes — whose fill matches the canvas — keep a visible
  * >= 3:1 boundary.
  */
@@ -163,7 +163,7 @@
   --el-divider: 112 104 92;          /* #70685c */
   --el-divider-soft: 83 77 68;       /* #534d44 */
   --el-divider-faint: 68 63 55;      /* #443f37 */
-  --el-control-border: 138 130 118;  /* #8a8276 — >= 3:1 form-control boundary */
+  --el-control-border: 146 138 126;  /* #928a7e — >= 3:1 on every surface incl. hover */
   --el-action: 244 239 230;          /* #f4efe6 */
   --el-action-ink: 35 33 29;         /* #23211d */
   --el-accent: 242 112 76;           /* #f2704c */

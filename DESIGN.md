@@ -94,13 +94,13 @@ Warm-paper neutrals with a single vermilion accent and muted, ink-dark status co
 - **Canvas Paper** (#f2efe8), **Page Surface** (#f8f5ef), **Raised Sheet** (#fffdfa), **Subtle Fill** (#ede9e0), **Hover Fill** (#e8e3d9): layered backgrounds.
 - **Secondary / Muted / Faint Ink** (#49453f / #5a554c / #6a645a): text hierarchy. Every tier is at least 4.5:1 on every surface in both themes.
 - **Divider** (#bdb7aa), soft (#d3cec4), faint (#e2ddd4): decorative hairlines (~1.7:1).
-- **Control Border** (#857f73; dark #8a8276): the at-least-3:1 boundary for inputs, selects, textareas and graph nodes. Dividers must not be the only boundary of an interactive control.
+- **Control Border** (#857f73; dark #928a7e): the at-least-3:1 boundary for inputs, selects, textareas and graph nodes. Dividers must not be the only boundary of an interactive control.
 
 ### Status
 - **Success** #236c4b, **Warning** #7a5317, **Danger** #a33228, **Info** #2f6788, each with a soft tint background and at least 4.5:1 on its tint.
 
 ### Dark theme (`[data-theme="dark"]`)
-ink-muted #c4baad, ink-faint #b2aa9f, success #6ec497, danger #fa8c7e, plum #b8a1d8, plum-soft #3f354e, control-border #8a8276.
+ink-muted #c4baad, ink-faint #b2aa9f, success #6ec497, danger #fa8c7e, plum #b8a1d8, plum-soft #3f354e, control-border #928a7e.
 
 ### Graph tokens
 Graph code uses the `--el-graph-*` set (node, node-border, step status, edges, badges) via `rgb(var(--el-graph-x))` or the matching `bg-/text-/border-/stroke-el-graph-x` classes, never `rgb()` or hex literals. Canvas #ede9e0 with a decorative grid #c7c1b5.

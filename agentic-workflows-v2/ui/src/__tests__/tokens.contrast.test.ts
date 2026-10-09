@@ -181,6 +181,12 @@ describe.each(THEMES)("%s theme tokens", (theme) => {
       failingPairs(tokens, cross(["focus"], NEUTRAL_SURFACES), AA_UI),
     ).toEqual([]);
   });
+
+  it("keeps control boundaries (inputs, selects, graph nodes) at 3:1", () => {
+    expect(
+      failingPairs(tokens, cross(["control-border"], NEUTRAL_SURFACES), AA_UI),
+    ).toEqual([]);
+  });
 });
 
 describe("token parsing", () => {
