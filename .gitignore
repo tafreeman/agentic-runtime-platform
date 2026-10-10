@@ -480,6 +480,17 @@ docs/screenshots/b-redesign/
 .impeccable/live/
 .impeccable/hook.cache.json
 
+# Design-tool working material under docs/ui/. The design system itself is
+# tracked (docs/ui/evidence-ledger-design-system.md and the other .md files);
+# these are a vendored copy of the Impeccable skill, per-session critique
+# output, and generated mockups. MkDocs copies non-Markdown files in docs/
+# straight into the built site, so committing them would publish ~6MB of
+# scratch to Pages.
+docs/ui/_impeccable/
+docs/ui/.impeccable/
+docs/ui/superdesign-local/
+docs/ui/*.html
+
 # MkDocs local build output and plugin cache
 site/
 .cache/
