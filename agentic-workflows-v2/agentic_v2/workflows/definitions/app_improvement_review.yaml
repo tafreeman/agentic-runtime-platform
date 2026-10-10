@@ -111,7 +111,7 @@ steps:
   # Establish one evidence base before the independent reviews fan out.
   - name: inventory_app
     agent: tier2_app_analyst
-    prompt_file: app_analyst.md
+    prompt_file: app_review/app_analyst.md
     description: >-
       Inspect the application read-only. Establish its purpose, users, major
       components, runtime and data flows, delivery model, current strengths,
@@ -130,7 +130,7 @@ steps:
   # Independent lens 1: system structure and architectural change.
   - name: architecture_lens
     agent: tier3_architect
-    prompt_file: app_analyst.md
+    prompt_file: app_review/app_analyst.md
     description: >-
       Assess boundaries, coupling, data ownership, interfaces, scalability,
       failure modes, and architectural fitness for the goal. Return grounded
@@ -152,7 +152,7 @@ steps:
   # Independent lens 2: user value and experience.
   - name: product_ux_lens
     agent: tier2_product_analyst
-    prompt_file: app_analyst.md
+    prompt_file: app_review/app_analyst.md
     description: >-
       Assess whether the app's flows, information architecture, feature set,
       feedback states, accessibility considerations, and product assumptions
@@ -175,7 +175,7 @@ steps:
   # Independent lens 3: production risk and trustworthiness.
   - name: reliability_security_lens
     agent: tier3_reliability_reviewer
-    prompt_file: app_analyst.md
+    prompt_file: app_review/app_analyst.md
     description: >-
       Assess security boundaries, failure handling, data protection,
       observability, recovery, deployment safety, and operational evidence.
@@ -197,7 +197,7 @@ steps:
   # Independent lens 4: ability to change the app safely and repeatedly.
   - name: delivery_maintainability_lens
     agent: tier2_delivery_analyst
-    prompt_file: app_analyst.md
+    prompt_file: app_review/app_analyst.md
     description: >-
       Assess code organization, test strategy, dependency management,
       developer workflow, CI/CD, documentation, upgrade paths, and change
@@ -219,7 +219,7 @@ steps:
   # Independent lens 5: resource use and economic efficiency.
   - name: performance_cost_lens
     agent: tier2_performance_analyst
-    prompt_file: app_analyst.md
+    prompt_file: app_review/app_analyst.md
     description: >-
       Assess likely latency, throughput, resource, model/API, storage, and
       operational cost drivers. Do not invent measurements. Separate measured
@@ -241,7 +241,7 @@ steps:
   # Independent lens 6: deliberately challenge the current product/system model.
   - name: reinvention_lens
     agent: tier3_product_strategist
-    prompt_file: app_analyst.md
+    prompt_file: app_review/app_analyst.md
     description: >-
       Start from the desired user outcome rather than the current architecture.
       Propose at least three materially different futures: simplify or remove,
@@ -264,7 +264,7 @@ steps:
   # Review the reviewers before allowing their conclusions into the scorecard.
   - name: challenge_analysis
     agent: tier3_challenger
-    prompt_file: app_synthesizer.md
+    prompt_file: app_review/app_synthesizer.md
     description: >-
       Cross-examine all six lenses. Identify unsupported claims, duplicated or
       conflicting recommendations, inconsistent scores, missing perspectives,
@@ -312,7 +312,7 @@ steps:
 
   - name: score_and_prioritize
     agent: tier3_app_synthesizer
-    prompt_file: app_synthesizer.md
+    prompt_file: app_review/app_synthesizer.md
     description: >-
       Build a five-lens 0-10 scorecard and calculate the weighted overall score
       using score_weights. If weights do not sum to 1.0, normalize them and
@@ -347,7 +347,7 @@ steps:
 
   - name: build_roadmap
     agent: tier2_planner
-    prompt_file: app_synthesizer.md
+    prompt_file: app_review/app_synthesizer.md
     description: >-
       Convert the recommendation into a phased roadmap. Define a minimal,
       reversible first slice; dependencies; acceptance evidence; success and
@@ -369,7 +369,7 @@ steps:
 
   - name: assemble_report
     agent: tier3_app_synthesizer
-    prompt_file: app_synthesizer.md
+    prompt_file: app_review/app_synthesizer.md
     description: >-
       Assemble a concise decision report. Lead with the current score and
       recommended direction, then present evidence, disagreements, ranked
