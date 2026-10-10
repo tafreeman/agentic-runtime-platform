@@ -1,0 +1,416 @@
+name: app_improvement_review
+description: >-
+  Analyze an existing application through independent architecture, product,
+  reliability, delivery, performance, and clean-sheet lenses; challenge the
+  evidence; score the current app; and produce a prioritized improvement or
+  redesign roadmap.
+version: "1.0"
+
+capabilities:
+  inputs: [app_path, app_context, improvement_goal, change_appetite, score_weights]
+  outputs:
+    - executive_summary
+    - current_state
+    - scorecard
+    - recommended_direction
+    - ranked_changes
+    - roadmap
+    - rethink_options
+    - evidence_gaps
+    - full_report
+
+evaluation:
+  rubric_id: app_improvement_review_v1
+  scoring_profile: B
+  criteria:
+    - name: correctness_rubric
+      definition: Findings and scores are traceable to the supplied app and evidence.
+      evidence_required:
+        - File and line references for code-derived claims
+        - Observations separated from inferences and unknowns
+      scale:
+        "1": Mostly generic or contradicted by the app
+        "2": Several unsupported or incorrect claims
+        "3": Generally grounded with notable evidence gaps
+        "4": Well grounded with minor gaps
+        "5": Fully traceable, accurate, and explicit about uncertainty
+      weight: 0.35
+      critical_floor: 0.70
+      formula_id: zero_one
+    - name: code_quality
+      definition: The analysis covers material app qualities and makes sound trade-offs.
+      evidence_required:
+        - Independent lens findings
+        - Alternatives with costs, risks, and prerequisites
+      scale:
+        "1": Superficial analysis with no useful alternatives
+        "2": Narrow analysis or weak trade-offs
+        "3": Adequate coverage and usable alternatives
+        "4": Strong coverage and explicit trade-offs
+        "5": Comprehensive, internally consistent decision analysis
+      weight: 0.30
+      critical_floor: 0.70
+      formula_id: zero_one
+    - name: efficiency
+      definition: Recommendations are prioritized by impact, effort, risk, and reversibility.
+      evidence_required:
+        - Ranked changes
+        - A bounded first slice
+      scale:
+        "1": Unprioritized wish list
+        "2": Priorities lack decision factors
+        "3": Basic impact and effort prioritization
+        "4": Clear sequencing with dependencies and risk
+        "5": Decision-ready sequencing with a minimal reversible first slice
+      weight: 0.20
+      formula_id: zero_one
+    - name: documentation
+      definition: The final report is clear, complete, and usable as an implementation brief.
+      evidence_required:
+        - Executive summary and scorecard
+        - Roadmap, success metrics, and kill criteria
+      scale:
+        "1": Incomplete or hard to follow
+        "2": Major report sections are missing
+        "3": Complete and understandable
+        "4": Clear and implementation-ready
+        "5": Concise, complete, and decision-ready
+      weight: 0.15
+      formula_id: zero_one
+
+inputs:
+  app_path:
+    type: string
+    description: Repository or application directory to inspect
+    required: true
+  app_context:
+    type: string
+    description: Optional product context, users, constraints, and known problems
+    required: false
+    default: ""
+  improvement_goal:
+    type: string
+    description: The outcome the review should optimize for
+    default: Improve user value, system quality, and delivery confidence
+  change_appetite:
+    type: string
+    description: How disruptive recommendations may be
+    enum: [incremental, balanced, reimagine]
+    default: balanced
+  score_weights:
+    type: object
+    description: Weights for the five scored lenses; values should sum to 1.0
+    default:
+      architecture: 0.25
+      product_ux: 0.20
+      reliability_security: 0.25
+      delivery_maintainability: 0.15
+      performance_cost: 0.15
+
+steps:
+  # Establish one evidence base before the independent reviews fan out.
+  - name: inventory_app
+    agent: tier2_app_analyst
+    prompt_file: app_analyst.md
+    description: >-
+      Inspect the application read-only. Establish its purpose, users, major
+      components, runtime and data flows, delivery model, current strengths,
+      constraints, and material unknowns. Cite code-derived claims as
+      path:line and do not treat documentation claims as runtime proof.
+    tools: [file_read, file_list, search_files, code_analyze]
+    inputs:
+      app_path: ${inputs.app_path}
+      app_context: ${inputs.app_context}
+      improvement_goal: ${inputs.improvement_goal}
+    outputs:
+      current_state: current_state
+      evidence_index: evidence_index
+      assessment_limits: assessment_limits
+
+  # Independent lens 1: system structure and architectural change.
+  - name: architecture_lens
+    agent: tier3_architect
+    prompt_file: app_analyst.md
+    description: >-
+      Assess boundaries, coupling, data ownership, interfaces, scalability,
+      failure modes, and architectural fitness for the goal. Return grounded
+      findings, at least two options ranging from minimal change to redesign,
+      and a 0-10 score object with confidence, rationale, and evidence.
+    depends_on: [inventory_app]
+    tools: [file_read, file_list, search_files, code_analyze]
+    inputs:
+      app_path: ${inputs.app_path}
+      current_state: ${steps.inventory_app.outputs.current_state}
+      evidence_index: ${steps.inventory_app.outputs.evidence_index}
+      improvement_goal: ${inputs.improvement_goal}
+      change_appetite: ${inputs.change_appetite}
+    outputs:
+      findings: architecture_findings
+      options: architecture_options
+      score: architecture_score
+
+  # Independent lens 2: user value and experience.
+  - name: product_ux_lens
+    agent: tier2_product_analyst
+    prompt_file: app_analyst.md
+    description: >-
+      Assess whether the app's flows, information architecture, feature set,
+      feedback states, accessibility considerations, and product assumptions
+      support the stated users and goal. Return grounded findings, improvement
+      options, and a 0-10 score object with confidence, rationale, and evidence.
+    depends_on: [inventory_app]
+    tools: [file_read, file_list, search_files, code_analyze]
+    inputs:
+      app_path: ${inputs.app_path}
+      app_context: ${inputs.app_context}
+      current_state: ${steps.inventory_app.outputs.current_state}
+      evidence_index: ${steps.inventory_app.outputs.evidence_index}
+      improvement_goal: ${inputs.improvement_goal}
+      change_appetite: ${inputs.change_appetite}
+    outputs:
+      findings: product_ux_findings
+      options: product_ux_options
+      score: product_ux_score
+
+  # Independent lens 3: production risk and trustworthiness.
+  - name: reliability_security_lens
+    agent: tier3_reliability_reviewer
+    prompt_file: app_analyst.md
+    description: >-
+      Assess security boundaries, failure handling, data protection,
+      observability, recovery, deployment safety, and operational evidence.
+      Distinguish structural inspection from tests or runtime behavior that
+      were not observed. Return findings, options, and a 0-10 score object.
+    depends_on: [inventory_app]
+    tools: [file_read, file_list, search_files, code_analyze]
+    inputs:
+      app_path: ${inputs.app_path}
+      current_state: ${steps.inventory_app.outputs.current_state}
+      evidence_index: ${steps.inventory_app.outputs.evidence_index}
+      improvement_goal: ${inputs.improvement_goal}
+      change_appetite: ${inputs.change_appetite}
+    outputs:
+      findings: reliability_security_findings
+      options: reliability_security_options
+      score: reliability_security_score
+
+  # Independent lens 4: ability to change the app safely and repeatedly.
+  - name: delivery_maintainability_lens
+    agent: tier2_delivery_analyst
+    prompt_file: app_analyst.md
+    description: >-
+      Assess code organization, test strategy, dependency management,
+      developer workflow, CI/CD, documentation, upgrade paths, and change
+      isolation. Return findings, improvement options, and a 0-10 score object
+      with confidence, rationale, and evidence.
+    depends_on: [inventory_app]
+    tools: [file_read, file_list, search_files, code_analyze]
+    inputs:
+      app_path: ${inputs.app_path}
+      current_state: ${steps.inventory_app.outputs.current_state}
+      evidence_index: ${steps.inventory_app.outputs.evidence_index}
+      improvement_goal: ${inputs.improvement_goal}
+      change_appetite: ${inputs.change_appetite}
+    outputs:
+      findings: delivery_maintainability_findings
+      options: delivery_maintainability_options
+      score: delivery_maintainability_score
+
+  # Independent lens 5: resource use and economic efficiency.
+  - name: performance_cost_lens
+    agent: tier2_performance_analyst
+    prompt_file: app_analyst.md
+    description: >-
+      Assess likely latency, throughput, resource, model/API, storage, and
+      operational cost drivers. Do not invent measurements. Separate measured
+      facts from hypotheses that require profiling. Return findings, options,
+      and a 0-10 score object with confidence, rationale, and evidence.
+    depends_on: [inventory_app]
+    tools: [file_read, file_list, search_files, code_analyze]
+    inputs:
+      app_path: ${inputs.app_path}
+      current_state: ${steps.inventory_app.outputs.current_state}
+      evidence_index: ${steps.inventory_app.outputs.evidence_index}
+      improvement_goal: ${inputs.improvement_goal}
+      change_appetite: ${inputs.change_appetite}
+    outputs:
+      findings: performance_cost_findings
+      options: performance_cost_options
+      score: performance_cost_score
+
+  # Independent lens 6: deliberately challenge the current product/system model.
+  - name: reinvention_lens
+    agent: tier3_product_strategist
+    prompt_file: app_analyst.md
+    description: >-
+      Start from the desired user outcome rather than the current architecture.
+      Propose at least three materially different futures: simplify or remove,
+      recompose around a different product flow, and redesign the technical
+      model. State assumptions, migration cost, disruption risk, and the
+      cheapest experiment that could invalidate each option.
+    depends_on: [inventory_app]
+    tools: [file_read, file_list, search_files, code_analyze]
+    inputs:
+      app_path: ${inputs.app_path}
+      app_context: ${inputs.app_context}
+      current_state: ${steps.inventory_app.outputs.current_state}
+      improvement_goal: ${inputs.improvement_goal}
+      change_appetite: ${inputs.change_appetite}
+    outputs:
+      rethink_options: rethink_options
+      assumptions_to_test: assumptions_to_test
+      disruption_risks: disruption_risks
+
+  # Review the reviewers before allowing their conclusions into the scorecard.
+  - name: challenge_analysis
+    agent: tier3_challenger
+    prompt_file: app_synthesizer.md
+    description: >-
+      Cross-examine all six lenses. Identify unsupported claims, duplicated or
+      conflicting recommendations, inconsistent scores, missing perspectives,
+      and changes that violate known constraints. Preserve genuine
+      disagreements instead of averaging them away.
+    depends_on:
+      - architecture_lens
+      - product_ux_lens
+      - reliability_security_lens
+      - delivery_maintainability_lens
+      - performance_cost_lens
+      - reinvention_lens
+    tools: []
+    inputs:
+      assessment_limits: ${steps.inventory_app.outputs.assessment_limits}
+      architecture:
+        findings: ${steps.architecture_lens.outputs.findings}
+        options: ${steps.architecture_lens.outputs.options}
+        score: ${steps.architecture_lens.outputs.score}
+      product_ux:
+        findings: ${steps.product_ux_lens.outputs.findings}
+        options: ${steps.product_ux_lens.outputs.options}
+        score: ${steps.product_ux_lens.outputs.score}
+      reliability_security:
+        findings: ${steps.reliability_security_lens.outputs.findings}
+        options: ${steps.reliability_security_lens.outputs.options}
+        score: ${steps.reliability_security_lens.outputs.score}
+      delivery_maintainability:
+        findings: ${steps.delivery_maintainability_lens.outputs.findings}
+        options: ${steps.delivery_maintainability_lens.outputs.options}
+        score: ${steps.delivery_maintainability_lens.outputs.score}
+      performance_cost:
+        findings: ${steps.performance_cost_lens.outputs.findings}
+        options: ${steps.performance_cost_lens.outputs.options}
+        score: ${steps.performance_cost_lens.outputs.score}
+      reinvention:
+        options: ${steps.reinvention_lens.outputs.rethink_options}
+        assumptions: ${steps.reinvention_lens.outputs.assumptions_to_test}
+        risks: ${steps.reinvention_lens.outputs.disruption_risks}
+    outputs:
+      validated_findings: validated_findings
+      disagreements: disagreements
+      discarded_ideas: discarded_ideas
+      evidence_gaps: evidence_gaps
+
+  - name: score_and_prioritize
+    agent: tier3_app_synthesizer
+    prompt_file: app_synthesizer.md
+    description: >-
+      Build a five-lens 0-10 scorecard and calculate the weighted overall score
+      using score_weights. If weights do not sum to 1.0, normalize them and
+      disclose that fact. Rank changes by user impact, risk reduction, effort,
+      reversibility, dependencies, and evidence confidence. Select an explicit
+      direction consistent with change_appetite and preserve minority views.
+    depends_on: [challenge_analysis]
+    tools: []
+    inputs:
+      improvement_goal: ${inputs.improvement_goal}
+      change_appetite: ${inputs.change_appetite}
+      score_weights: ${inputs.score_weights}
+      scores:
+        architecture: ${steps.architecture_lens.outputs.score}
+        product_ux: ${steps.product_ux_lens.outputs.score}
+        reliability_security: ${steps.reliability_security_lens.outputs.score}
+        delivery_maintainability: ${steps.delivery_maintainability_lens.outputs.score}
+        performance_cost: ${steps.performance_cost_lens.outputs.score}
+      validated_findings: ${steps.challenge_analysis.outputs.validated_findings}
+      disagreements: ${steps.challenge_analysis.outputs.disagreements}
+      architecture_options: ${steps.architecture_lens.outputs.options}
+      product_ux_options: ${steps.product_ux_lens.outputs.options}
+      reliability_security_options: ${steps.reliability_security_lens.outputs.options}
+      delivery_maintainability_options: ${steps.delivery_maintainability_lens.outputs.options}
+      performance_cost_options: ${steps.performance_cost_lens.outputs.options}
+      rethink_options: ${steps.reinvention_lens.outputs.rethink_options}
+    outputs:
+      scorecard: scorecard
+      ranked_changes: ranked_changes
+      recommended_direction: recommended_direction
+      decision_rationale: decision_rationale
+
+  - name: build_roadmap
+    agent: tier2_planner
+    prompt_file: app_synthesizer.md
+    description: >-
+      Convert the recommendation into a phased roadmap. Define a minimal,
+      reversible first slice; dependencies; acceptance evidence; success and
+      guardrail metrics; rollback points; and kill criteria. Keep unsupported
+      effort estimates qualitative and label them as assumptions.
+    depends_on: [score_and_prioritize]
+    tools: []
+    inputs:
+      current_state: ${steps.inventory_app.outputs.current_state}
+      assessment_limits: ${steps.inventory_app.outputs.assessment_limits}
+      ranked_changes: ${steps.score_and_prioritize.outputs.ranked_changes}
+      recommended_direction: ${steps.score_and_prioritize.outputs.recommended_direction}
+      evidence_gaps: ${steps.challenge_analysis.outputs.evidence_gaps}
+    outputs:
+      roadmap: roadmap
+      success_metrics: success_metrics
+      kill_criteria: kill_criteria
+      next_experiments: next_experiments
+
+  - name: assemble_report
+    agent: tier3_app_synthesizer
+    prompt_file: app_synthesizer.md
+    description: >-
+      Assemble a concise decision report. Lead with the current score and
+      recommended direction, then present evidence, disagreements, ranked
+      changes, the minimum first slice, the roadmap, rethink options, and
+      limitations. Do not introduce findings that were not validated upstream.
+    depends_on: [score_and_prioritize, build_roadmap]
+    tools: []
+    inputs:
+      current_state: ${steps.inventory_app.outputs.current_state}
+      scorecard: ${steps.score_and_prioritize.outputs.scorecard}
+      recommended_direction: ${steps.score_and_prioritize.outputs.recommended_direction}
+      decision_rationale: ${steps.score_and_prioritize.outputs.decision_rationale}
+      ranked_changes: ${steps.score_and_prioritize.outputs.ranked_changes}
+      validated_findings: ${steps.challenge_analysis.outputs.validated_findings}
+      disagreements: ${steps.challenge_analysis.outputs.disagreements}
+      rethink_options: ${steps.reinvention_lens.outputs.rethink_options}
+      roadmap: ${steps.build_roadmap.outputs.roadmap}
+      success_metrics: ${steps.build_roadmap.outputs.success_metrics}
+      kill_criteria: ${steps.build_roadmap.outputs.kill_criteria}
+      next_experiments: ${steps.build_roadmap.outputs.next_experiments}
+      evidence_gaps: ${steps.challenge_analysis.outputs.evidence_gaps}
+    outputs:
+      executive_summary: executive_summary
+      report: full_report
+
+outputs:
+  executive_summary:
+    from: ${steps.assemble_report.outputs.executive_summary}
+  current_state:
+    from: ${steps.inventory_app.outputs.current_state}
+  scorecard:
+    from: ${steps.score_and_prioritize.outputs.scorecard}
+  recommended_direction:
+    from: ${steps.score_and_prioritize.outputs.recommended_direction}
+  ranked_changes:
+    from: ${steps.score_and_prioritize.outputs.ranked_changes}
+  roadmap:
+    from: ${steps.build_roadmap.outputs.roadmap}
+  rethink_options:
+    from: ${steps.reinvention_lens.outputs.rethink_options}
+  evidence_gaps:
+    from: ${steps.challenge_analysis.outputs.evidence_gaps}
+  full_report:
+    from: ${steps.assemble_report.outputs.report}
