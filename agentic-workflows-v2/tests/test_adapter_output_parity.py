@@ -45,6 +45,7 @@ class _ParityCase:
 
 _SOURCE_FILE = str(Path(__file__).resolve())
 _PARITY_CASES = {
+    "app_improvement_review": _ParityCase(inputs={"app_path": _SOURCE_FILE}),
     "bug_resolution": _ParityCase(
         inputs={
             "bug_report": "A workflow input resolves to null",
