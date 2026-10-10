@@ -31,14 +31,6 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-# scripts/eval_gate.py imports agentic_v2_eval, a separate workspace package that
-# is not installed in the unit-test job's venv. Skip this whole module when it is
-# unavailable (eval_gate is exercised by the eval-package CI job instead) so
-# loading eval_gate does not raise a collection-time ModuleNotFoundError.
-pytest.importorskip("agentic_v2_eval")
-
-import pytest
-
 from agentic_v2.contracts import StepResult, StepStatus, WorkflowResult
 
 _SCRIPT_PATH = Path(__file__).resolve().parents[2] / "scripts" / "eval_gate.py"
@@ -323,12 +315,14 @@ def _expected_weighted_score(
     eval_gate: ModuleType, workflow_result: WorkflowResult, case: dict[str, Any]
 ) -> float:
     """Compute the ground-truth weighted_score for one mocked run the same way
-    score_case_live does internally (derive_criteria + Scorer), so tests assert against
+    score_case_live does internally (derive_criteria + CriterionScorer), so tests assert against
     the module's own real scoring logic rather than a hand-computed constant that could
     silently drift from the rubric."""
     golden = workflow_result.model_dump(mode="json")
     criteria = eval_gate.derive_criteria(golden, case)
-    scorer = eval_gate.Scorer(eval_gate.load_rubric(str(case.get("rubric", "code"))))
+    scorer = eval_gate.CriterionScorer(
+        eval_gate.load_rubric(str(case.get("rubric", "code")))
+    )
     return scorer.score(criteria).weighted_score
 
 

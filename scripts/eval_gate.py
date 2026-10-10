@@ -7,10 +7,9 @@ Audit FIX #3. Reads a committed dataset manifest (e.g.
 1. loads the referenced golden workflow-result JSON,
 2. deterministically derives the rubric's criterion floats from stable
    structural fields (no LLM, no network, no wall-clock, no ids),
-3. scores them with the real ``agentic_v2_eval`` ``Scorer`` + ``load_rubric``,
+3. scores them with the real runtime ``CriterionScorer`` + ``load_rubric``,
 4. asserts every rubric criterion was supplied (``missing_criteria == []`` is a
-   hard fail -- a missing/typo'd criterion silently shrinks the denominator in
-   ``Scorer.score`` rather than lowering the score, so we guard it explicitly),
+   hard fail even when the remaining criteria clear the threshold),
 5. compares ``weighted_score`` to the per-case / global threshold.
 
 Exits non-zero when any case scores below threshold, leaks a rubric criterion,
@@ -40,7 +39,7 @@ lucky sample never flips the gate on its own.
 truthy, or none of the canonical provider key env vars (``ANTHROPIC_API_KEY``,
 ``OPENAI_API_KEY``, ``GEMINI_API_KEY``, ``AZURE_OPENAI_API_KEY``,
 ``AZURE_FOUNDRY_API_KEY``) are CONFIGURED, the gate prints a clear message and
-exits 0 (collected-but-skipped) without importing ``agentic_v2`` or attempting
+exits 0 (collected-but-skipped) without importing the workflow engine or attempting
 a call -- it never fails a run merely for lacking a key. This is a presence
 check, not a validity check (it does not authenticate the key), and it reads
 through the platform's own secret resolver, which also honours a ``.env``
@@ -58,13 +57,17 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import math
 import statistics
 import sys
 from pathlib import Path
 from typing import Any
 
-from agentic_v2_eval.rubrics import load_rubric
-from agentic_v2_eval.scorer import Scorer, ScoringResult
+from agentic_v2.scoring.criterion_aggregation import (
+    CriterionScorer,
+    CriterionScoreSummary,
+)
+from agentic_v2.scoring.rubrics import load_rubric
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _DEFAULT_CASES = _REPO_ROOT / "datasets" / "default" / "golden_cases.json"
@@ -110,15 +113,26 @@ def _load_json(path: Path) -> Any:
         return json.load(handle)
 
 
-def _safe_float(value: Any, default: float = 0.0) -> float:
-    """Coerce a possibly-null / non-numeric JSON value to float; ``default`` on
-    failure."""
+def _safe_float(value: Any) -> float:
+    """Coerce a numeric value, rejecting malformed/nonfinite inputs."""
     if value is None:
-        return default
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return default
+        raise ValueError("score input must be numeric")
+    if isinstance(value, bool):
+        raise ValueError("boolean is not a numeric score")
+    number = float(value)
+    if not math.isfinite(number):
+        raise ValueError("score input must be finite")
+    return number
+
+
+def _validate_threshold(value: Any) -> float:
+    """Reject invalid pass bars before comparisons or live execution."""
+    if value is None:
+        raise ValueError("threshold must be a finite number in [0, 1]")
+    threshold = _safe_float(value)
+    if not 0.0 <= threshold <= 1.0:
+        raise ValueError("threshold must be in [0, 1]")
+    return threshold
 
 
 def derive_criteria(golden: dict[str, Any], case: dict[str, Any]) -> dict[str, float]:
@@ -130,11 +144,16 @@ def derive_criteria(golden: dict[str, Any], case: dict[str, Any]) -> dict[str, f
     """
     # Defensive throughout: a golden may be malformed (null/wrong-typed fields).
     # The gate must fail with a clear score, never a traceback.
-    expected_criteria = case.get("expected_criteria")
+    expected_criteria = case.get("expected_criteria", {})
     if not isinstance(expected_criteria, dict):
-        expected_criteria = {}
+        raise ValueError("expected_criteria must be an object")
 
-    raw_steps = golden.get("steps")
+    raw_steps = golden.get("steps", [])
+    if not isinstance(raw_steps, list) or any(
+        not isinstance(step, dict) or not isinstance(step.get("step_name"), str)
+        for step in raw_steps
+    ):
+        raise ValueError("steps must be a list of objects with string step_name")
     steps: list[dict[str, Any]] = [
         s
         for s in (raw_steps if isinstance(raw_steps, list) else [])
@@ -142,10 +161,15 @@ def derive_criteria(golden: dict[str, Any], case: dict[str, Any]) -> dict[str, f
     ]
 
     # Correctness -- normalized step success rate.
-    correctness = _safe_float(golden.get("success_rate")) / 100.0
+    correctness = _safe_float(golden.get("success_rate", 0.0)) / 100.0
 
     # Completeness -- fraction of expected steps that completed as "success".
     raw_names = expected_criteria.get("expected_step_names")
+    if raw_names is not None and (
+        not isinstance(raw_names, (list, tuple))
+        or any(not isinstance(name, str) for name in raw_names)
+    ):
+        raise ValueError("expected_step_names must be a list of strings")
     expected_names = (
         tuple(raw_names)
         if isinstance(raw_names, (list, tuple))
@@ -173,8 +197,8 @@ def derive_criteria(golden: dict[str, Any], case: dict[str, Any]) -> dict[str, f
     # Efficiency -- retry penalty. 0 retries -> 1.0; degrade linearly toward
     # max_retries + 1. Both clamped to >= 0 so a malformed negative value can't
     # make retry_budget 0 and divide by zero.
-    total_retries = max(0, int(_safe_float(golden.get("total_retries"))))
-    retry_budget = max(0, int(_safe_float(expected_criteria.get("max_retries")))) + 1
+    total_retries = max(0, int(_safe_float(golden.get("total_retries", 0))))
+    retry_budget = max(0, int(_safe_float(expected_criteria.get("max_retries", 0)))) + 1
     efficiency = max(0.0, 1.0 - (total_retries / retry_budget))
 
     # Security -- 1.0 unless any step leaks a non-empty error_type. Tolerate the
@@ -212,15 +236,10 @@ def _resolve_case_threshold(case: dict[str, Any], global_threshold: float) -> fl
     value -- so a case's own ``threshold`` field can only ever raise the bar
     relative to what ``--threshold`` passes on the command line.
     """
-    case_threshold = case.get("threshold")
-    try:
-        return (
-            global_threshold
-            if case_threshold is None
-            else max(global_threshold, float(case_threshold))
-        )
-    except (TypeError, ValueError):
+    global_threshold = _validate_threshold(global_threshold)
+    if case.get("threshold") is None:
         return global_threshold
+    return max(global_threshold, _validate_threshold(case["threshold"]))
 
 
 def _score_criteria(
@@ -233,11 +252,20 @@ def _score_criteria(
 
     Shared tail for both the mocked (golden-file) and ``--live`` (real-model)
     paths -- both produce a ``criteria`` dict via :func:`derive_criteria` and
-    hand it here so the ``Scorer`` invocation and pass/fail assembly are never
+    hand it here so the ``CriterionScorer`` invocation and pass/fail assembly are never
     duplicated.
     """
-    scorer = Scorer(load_rubric(rubric_name))
-    result: ScoringResult = scorer.score(criteria)
+    try:
+        threshold = _validate_threshold(threshold)
+    except (TypeError, ValueError, OverflowError) as err:
+        return _error_result(case_id, _DEFAULT_THRESHOLD, f"invalid threshold: {err}")
+    try:
+        scorer = CriterionScorer(load_rubric(rubric_name))
+        for value in criteria.values():
+            _safe_float(value)
+        result: CriterionScoreSummary = scorer.score(criteria)
+    except (TypeError, ValueError, OSError, OverflowError) as err:
+        return _error_result(case_id, threshold, str(err))
 
     # Guard the silent-skip footgun: every rubric criterion must be supplied.
     missing = list(result.missing_criteria)
@@ -248,7 +276,7 @@ def _score_criteria(
         "rubric": rubric_name,
         "weighted_score": result.weighted_score,
         "total_score": result.total_score,
-        "criterion_scores": result.criterion_scores,
+        "criterion_scores": dict(result.criterion_scores),
         "missing_criteria": missing,
         "threshold": threshold,
         "passed": passed,
@@ -266,15 +294,21 @@ def score_case(
     if not isinstance(case, dict):
         return _error_result(
             "<invalid>",
-            global_threshold,
+            _DEFAULT_THRESHOLD,
             f"case is not a JSON object: {type(case).__name__}",
         )
 
     case_id = str(case.get("case_id", "<unnamed>"))
     rubric_name = str(case.get("rubric", "code"))
-    threshold = _resolve_case_threshold(case, global_threshold)
+    try:
+        threshold = _resolve_case_threshold(case, global_threshold)
+    except (TypeError, ValueError, OverflowError) as err:
+        return _error_result(case_id, _DEFAULT_THRESHOLD, f"invalid threshold: {err}")
 
-    golden_path = Path(case.get("golden_output_path", ""))
+    try:
+        golden_path = Path(case.get("golden_output_path", ""))
+    except (TypeError, ValueError) as err:
+        return _error_result(case_id, threshold, f"invalid golden path: {err}")
     if not golden_path.is_absolute():
         golden_path = (cases_dir / golden_path).resolve()
 
@@ -294,7 +328,10 @@ def score_case(
             case_id, threshold, f"golden file is not a JSON object: {golden_path}"
         )
 
-    criteria = derive_criteria(golden, case)
+    try:
+        criteria = derive_criteria(golden, case)
+    except (TypeError, ValueError, OverflowError) as err:
+        return _error_result(case_id, threshold, f"invalid golden input: {err}")
     return _score_criteria(case_id, rubric_name, criteria, threshold)
 
 
@@ -340,13 +377,16 @@ async def score_case_live(
     if not isinstance(case, dict):
         return _error_result(
             "<invalid>",
-            global_threshold,
+            _DEFAULT_THRESHOLD,
             f"case is not a JSON object: {type(case).__name__}",
         )
 
     case_id = str(case.get("case_id", "<unnamed>"))
     rubric_name = str(case.get("rubric", "code"))
-    threshold = _resolve_case_threshold(case, global_threshold)
+    try:
+        threshold = _resolve_case_threshold(case, global_threshold)
+    except (TypeError, ValueError, OverflowError) as err:
+        return _error_result(case_id, _DEFAULT_THRESHOLD, f"invalid threshold: {err}")
 
     workflow_name = case.get("workflow_name")
     if not isinstance(workflow_name, str) or not workflow_name:
@@ -362,8 +402,11 @@ async def score_case_live(
             case_id, threshold, "case 'live_inputs' must be a JSON object"
         )
 
-    scorer = Scorer(load_rubric(rubric_name))
-    per_run: list[ScoringResult] = []
+    try:
+        scorer = CriterionScorer(load_rubric(rubric_name))
+    except (TypeError, ValueError, OSError) as err:
+        return _error_result(case_id, threshold, f"invalid rubric: {err}")
+    per_run: list[CriterionScoreSummary] = []
     for run_index in range(_LIVE_RUNS_PER_CASE):
         try:
             live_result = await run_workflow(workflow_name, **live_inputs)
@@ -378,9 +421,12 @@ async def score_case_live(
                 f"live run {run_index + 1}/{_LIVE_RUNS_PER_CASE} of "
                 f"'{workflow_name}' failed: {err}",
             )
-        golden = live_result.model_dump(mode="json")
-        criteria = derive_criteria(golden, case)
-        per_run.append(scorer.score(criteria))
+        try:
+            golden = live_result.model_dump(mode="json")
+            criteria = derive_criteria(golden, case)
+            per_run.append(scorer.score(criteria))
+        except (AttributeError, TypeError, ValueError, OverflowError) as err:
+            return _error_result(case_id, threshold, f"invalid live result: {err}")
 
     # The MEDIAN weighted_score across the _LIVE_RUNS_PER_CASE runs, to damp
     # single-call variance from a live model.
@@ -402,7 +448,7 @@ async def score_case_live(
         "rubric": rubric_name,
         "weighted_score": median_score,
         "total_score": median_result.total_score,
-        "criterion_scores": median_result.criterion_scores,
+        "criterion_scores": dict(median_result.criterion_scores),
         "missing_criteria": missing,
         "threshold": threshold,
         "passed": not missing and median_score >= threshold,
@@ -494,7 +540,6 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--threshold",
-        type=float,
         default=_DEFAULT_THRESHOLD,
         dest="threshold",
         help=(
@@ -516,6 +561,12 @@ def main(argv: list[str] | None = None) -> int:
         ),
     )
     args = parser.parse_args(argv)
+
+    try:
+        args.threshold = _validate_threshold(args.threshold)
+    except (TypeError, ValueError, OverflowError) as err:
+        print(f"ERROR: invalid threshold: {err}", file=sys.stderr)
+        return 1
 
     cases_path: Path = args.cases.resolve()
     if not cases_path.exists():
