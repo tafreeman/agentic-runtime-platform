@@ -41,16 +41,21 @@ const INLINE_FONT_SIZE = new RegExp(
   String.raw`fontSize:\s*["'\x60]?${PX_NUMBER}(?:px)?["'\x60]?(?=\s*[,}\n])`,
   "g",
 );
+// The two CSS patterns below are case-insensitive because CSS property names
+// and unit identifiers are (`FONT: 10PX` is valid). The TSX-side patterns above
+// stay case-sensitive on purpose: `fontSize` is a JS property name and
+// `text-[10px]` a Tailwind class, both of which are case-sensitive, so folding
+// case there would invite false positives rather than close a hole.
 const CSS_FONT_SIZE = new RegExp(
   String.raw`(?<![\w-])font-size\s*:\s*${PX_NUMBER}px`,
-  "g",
+  "gi",
 );
 // The shorthand's leading run excludes `/`, so the lazy prefix can never reach
 // past the size into the line height — `font: 1rem/10px sans-serif` sets a 1rem
 // size and must not be read as 10px type.
 const CSS_FONT_SHORTHAND = new RegExp(
   String.raw`(?<![\w-])font\s*:(?:\s*[^;}/]*?\s)?${PX_NUMBER}px(?=[\s/;}]|$)`,
-  "g",
+  "gi",
 );
 
 interface Rule {
@@ -182,6 +187,9 @@ describe("design drift", () => {
     // A length may drop the leading zero, in every type-floor pattern.
     ["x.css", ".a { font: .5px sans-serif; }", ".a { font: 12px sans-serif; }"],
     ["x.css", ".a { font-size: .5px; }", ".a { font-size: 12px; }"],
+    // CSS property names and units are case-insensitive.
+    ["x.css", ".a { FONT: 10PX sans-serif; }", ".a { FONT: 12PX sans-serif; }"],
+    ["x.css", ".a { Font-Size: 10Px; }", ".a { Font-Size: 12Px; }"],
     ["x.tsx", '<p className="text-[.5px]">', '<p className="text-[11px]">'],
     ["x.tsx", "style={{ fontSize: .5 }}", "style={{ fontSize: 12 }}"],
     ["x.css", ".a { transition: 120ms width; }", ".a { transition: 120ms opacity; }"],
