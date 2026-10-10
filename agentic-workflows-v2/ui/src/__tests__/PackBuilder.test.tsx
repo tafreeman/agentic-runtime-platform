@@ -2,13 +2,15 @@ import type { Active, Over } from "@dnd-kit/core";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { useReducer } from "react";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import type { TierModelInfo } from "../api/types";
+import type { ProbedModel, TierModelInfo } from "../api/types";
 import { PackBuilder } from "../components/models/pack-builder/PackBuilder";
 import {
   dropAction,
   dropPosition,
+  mergeModelCatalog,
   readDragData,
   resolveDrop,
+  selectModels,
   type DragData,
   type PriceInfo,
 } from "../components/models/pack-builder/builderParts";
@@ -48,6 +50,16 @@ const INITIAL = draftFromPack({
   judge_model: null,
 });
 
+const EMPTY = draftFromPack({
+  tier_chains: {},
+  capability_requirements: {},
+  allowed_providers: [],
+  judge_model: null,
+});
+
+const manyModels = (count: number): TierModelInfo[] =>
+  Array.from({ length: count }, (_, i) => model(`acme:m-${String(i).padStart(3, "0")}`));
+
 const PRICES: Record<string, PriceInfo> = {
   [GPT]: { label: "paid", reason: "input costs money" },
   [LLAMA]: { label: "local" },
@@ -59,6 +71,7 @@ interface HarnessProps {
   initial?: PackDraft;
   models?: TierModelInfo[];
   priceLabels?: Record<string, PriceInfo>;
+  catalogLoading?: boolean;
   disabled?: boolean;
   seen: { draft: PackDraft };
 }
@@ -67,6 +80,7 @@ function Harness({
   initial = INITIAL,
   models = MODELS,
   priceLabels,
+  catalogLoading,
   disabled,
   seen,
 }: Readonly<HarnessProps>) {
@@ -80,6 +94,7 @@ function Harness({
       tiers={TIERS}
       knownCapabilities={KNOWN}
       priceLabels={priceLabels}
+      catalogLoading={catalogLoading}
       disabled={disabled}
     />
   );
@@ -105,6 +120,9 @@ function chipIds(tier: string): (string | null | undefined)[] {
     .getAllByRole("listitem")
     .map((item) => item.querySelector("span[title]")?.getAttribute("title"));
 }
+
+const openRequirements = (tier: string) =>
+  fireEvent.click(screen.getByRole("button", { name: `Edit requirements for tier ${tier}` }));
 
 /** Radix menus open on Enter at the trigger; jsdom has no real pointer events. */
 async function openMenu(trigger: HTMLElement) {
@@ -223,6 +241,7 @@ describe("PackBuilder", () => {
   it("warns when a required capability has no model and clears it when one is added", async () => {
     const seen = setup();
 
+    openRequirements("1");
     const toggle = screen.getByRole("button", { name: "Require vision in tier 1" });
     expect(toggle).toHaveAttribute("aria-pressed", "false");
     expect(lane("1").queryByText(/No model in tier 1 has/)).toBeNull();
@@ -241,6 +260,7 @@ describe("PackBuilder", () => {
 
   it("clears the warning when the requirement is toggled off again", () => {
     const seen = setup();
+    openRequirements("1");
     const toggle = screen.getByRole("button", { name: "Require vision in tier 1" });
 
     fireEvent.click(toggle);
@@ -249,6 +269,61 @@ describe("PackBuilder", () => {
 
     expect(lane("1").queryByText(/No model in tier 1 has/)).toBeNull();
     expect(seen.draft.capabilityRequirements["1"]).toEqual([]);
+  });
+
+  it("shows only the selected requirements until Edit requirements is opened", () => {
+    setup({
+      initial: draftFromPack({
+        tier_chains: { "1": [HAIKU], "2": [GPT] },
+        capability_requirements: { "2": ["vision"] },
+        allowed_providers: [],
+        judge_model: null,
+      }),
+    });
+
+    // Collapsed: chips for what is required, no toggles for what is not.
+    const chips = within(screen.getByRole("list", { name: "Capabilities required in tier 2" }));
+    expect(chips.getByText("vision")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Require tools in tier 2" })).toBeNull();
+    expect(lane("1").getByText("no capabilities")).toBeInTheDocument();
+    const edit = screen.getByRole("button", { name: "Edit requirements for tier 2" });
+    expect(edit).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(edit);
+
+    expect(edit).toHaveAttribute("aria-expanded", "true");
+    const group = within(screen.getByRole("group", { name: "Capabilities required in tier 2" }));
+    expect(group.getAllByRole("button")).toHaveLength(KNOWN.length);
+    expect(group.getByRole("button", { name: "Require vision in tier 2" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(group.getByRole("button", { name: "Require tools in tier 2" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+    expect(screen.queryByRole("list", { name: "Capabilities required in tier 2" })).toBeNull();
+
+    fireEvent.click(edit);
+    expect(edit).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("group", { name: "Capabilities required in tier 2" })).toBeNull();
+  });
+
+  it("keeps the unmet-capability warning visible while requirements are collapsed", () => {
+    setup({
+      initial: draftFromPack({
+        tier_chains: { "2": [GPT] },
+        capability_requirements: { "2": ["thinking"] },
+        allowed_providers: [],
+        judge_model: null,
+      }),
+    });
+
+    expect(screen.getByRole("button", { name: "Edit requirements for tier 2" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    expect(lane("2").getByText("No model in tier 2 has thinking")).toBeInTheDocument();
   });
 
   it("toggles allowed providers and explains that none selected allows every provider", () => {
@@ -340,6 +415,65 @@ describe("PackBuilder", () => {
     expect(palette.getByText("Price unknown")).toBeInTheDocument();
   });
 
+  it("lists free and local models first, then the rest by provider and id", () => {
+    setup({ priceLabels: PRICES });
+
+    // local (ollama) and free (openrouter) lead; paid openai follows unknown anthropic.
+    expect(paletteIds()).toEqual([LLAMA, FREE, HAIKU, GPT]);
+  });
+
+  it("sorts by provider and id when nothing is priced", () => {
+    setup();
+
+    expect(paletteIds()).toEqual([HAIKU, LLAMA, GPT, FREE]);
+  });
+
+  it("renders at most 60 matches and says how many there are", () => {
+    setup({ models: manyModels(75), initial: EMPTY });
+
+    const ids = paletteIds();
+    expect(ids).toHaveLength(60);
+    expect(ids[0]).toBe("acme:m-000");
+    expect(ids[59]).toBe("acme:m-059");
+    expect(screen.getByText("Showing 60 of 75. Search or filter to narrow.")).toBeInTheDocument();
+
+    // Searching reaches models beyond the cap, and the note goes once it all fits.
+    fireEvent.change(screen.getByLabelText("Search models"), { target: { value: "m-07" } });
+    expect(paletteIds()).toHaveLength(5);
+    expect(screen.queryByText(/Showing 60 of/)).toBeNull();
+  });
+
+  it("shows no limit note when exactly 60 models match", () => {
+    setup({ models: manyModels(60), initial: EMPTY });
+
+    expect(paletteIds()).toHaveLength(60);
+    expect(screen.queryByText(/Showing 60 of/)).toBeNull();
+  });
+
+  it("caps a lane's Add model list the same way and searches the whole catalog", async () => {
+    setup({ models: manyModels(75), initial: EMPTY });
+
+    fireEvent.click(screen.getByRole("button", { name: "Add model to tier 1" }));
+    const options = within(await screen.findByRole("listbox"));
+    expect(options.getAllByRole("option")).toHaveLength(60);
+    expect(options.getByText("Showing 60 of 75. Search or filter to narrow.")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Search models for tier 1"), {
+      target: { value: "m-074" },
+    });
+    await waitFor(() => expect(options.getAllByRole("option")).toHaveLength(1));
+    expect(options.queryByText(/Showing 60 of/)).toBeNull();
+  });
+
+  it("shows a quiet loading line while the catalog loads and still lists what it has", () => {
+    setup({ catalogLoading: true });
+
+    expect(screen.getByText("Loading all models and prices…")).toBeInTheDocument();
+    expect(paletteIds()).toHaveLength(4);
+    // The "no price data" hint would contradict a load in progress.
+    expect(screen.queryByText(/Price data is not loaded yet/)).toBeNull();
+  });
+
   it("lists models already in the pack when tier settings supplied none", () => {
     setup({ models: [] });
 
@@ -354,6 +488,7 @@ describe("PackBuilder", () => {
     expect(screen.getByRole("button", { name: "Add model to tier 2" })).toBeDisabled();
     expect(screen.getByRole("button", { name: `Move ${GPT} down in tier 2` })).toBeDisabled();
     expect(screen.getByRole("button", { name: `Remove ${GPT} from tier 2` })).toBeDisabled();
+    openRequirements("2");
     expect(screen.getByRole("button", { name: "Require vision in tier 2" })).toBeDisabled();
     expect(screen.getByLabelText("Judge model")).toBeDisabled();
   });
@@ -457,5 +592,82 @@ describe("drop resolution", () => {
 
   it("resolves nothing when nothing is under the drag", () => {
     expect(resolveDrop(active(chip("2", "a:x"), 0), null, CHAINS)).toBeNull();
+  });
+});
+
+describe("model catalog", () => {
+  function probed(
+    id: string,
+    capabilities?: string[],
+    available = true,
+  ): ProbedModel {
+    return { id, provider: id.split(":")[0] ?? id, tier: 1, available, capabilities };
+  }
+
+  it("unions tier-settings and probed models, one entry per id", () => {
+    const merged = mergeModelCatalog(MODELS, [
+      probed(GPT, ["thinking"]),
+      probed("acme:new", ["vision"], false),
+      probed("acme:new", ["vision"], false),
+      probed("acme:bare"),
+    ]);
+
+    expect(merged.map((entry) => entry.id)).toEqual([
+      GPT,
+      HAIKU,
+      LLAMA,
+      FREE,
+      "acme:new",
+      "acme:bare",
+    ]);
+    expect(merged.find((entry) => entry.id === "acme:new")).toEqual({
+      id: "acme:new",
+      provider: "acme",
+      capabilities: ["vision"],
+      capability_overridden: false,
+    });
+    expect(merged.find((entry) => entry.id === "acme:bare")?.capabilities).toEqual([]);
+  });
+
+  it("prefers tier-settings capabilities and falls back to the probe's", () => {
+    const merged = mergeModelCatalog(MODELS, [
+      probed(GPT, ["thinking"]),
+      probed(LLAMA, ["tools"]),
+    ]);
+    const capabilitiesOf = (id: string) =>
+      merged.find((entry) => entry.id === id)?.capabilities;
+
+    expect(capabilitiesOf(GPT)).toEqual(["vision", "tools"]);
+    expect(capabilitiesOf(LLAMA)).toEqual(["tools"]);
+  });
+
+  it("does not mutate its inputs", () => {
+    const tier = [...MODELS];
+    mergeModelCatalog(tier, [probed("acme:new")]);
+    selectModels(tier, PRICES, { query: "", provider: "", freeOnly: false });
+
+    expect(tier).toEqual(MODELS);
+  });
+
+  it("filters by query, provider and free-only before sorting", () => {
+    const all = (filter: Partial<Parameters<typeof selectModels>[2]>) =>
+      selectModels(MODELS, PRICES, { query: "", provider: "", freeOnly: false, ...filter }).map(
+        (entry) => entry.id,
+      );
+
+    expect(all({ query: "TOOLS" })).toEqual([FREE, HAIKU, GPT]);
+    expect(all({ provider: "openai" })).toEqual([GPT]);
+    expect(all({ freeOnly: true })).toEqual([LLAMA, FREE]);
+    expect(all({ freeOnly: true, query: "free" })).toEqual([FREE]);
+  });
+
+  it("treats a missing price as not free", () => {
+    const result = selectModels(MODELS, undefined, {
+      query: "",
+      provider: "",
+      freeOnly: true,
+    });
+
+    expect(result).toEqual([]);
   });
 });

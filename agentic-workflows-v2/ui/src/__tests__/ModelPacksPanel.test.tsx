@@ -368,8 +368,10 @@ describe("ModelPacksPanel", () => {
     expect(chainList("2")).toHaveTextContent("openai:gpt-4o");
     expect(chainList("1")).toHaveTextContent("anthropic:haiku");
     expect(
-      screen.getByRole("button", { name: "Require vision in tier 2" }),
-    ).toHaveAttribute("aria-pressed", "true");
+      within(
+        screen.getByRole("list", { name: "Capabilities required in tier 2" }),
+      ).getByText("vision"),
+    ).toBeInTheDocument();
     expect(screen.getByLabelText("Judge model")).toHaveValue("openai:gpt-4o");
     expect(
       within(screen.getByRole("group", { name: "Allowed providers" })).getByRole(
@@ -388,6 +390,7 @@ describe("ModelPacksPanel", () => {
     fireEvent.click(screen.getByRole("button", { name: "Move ollama:llama3 up in tier 2" }));
     const providers = within(screen.getByRole("group", { name: "Allowed providers" }));
     fireEvent.click(providers.getByRole("button", { name: "ollama" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit requirements for tier 1" }));
     fireEvent.click(screen.getByRole("button", { name: "Require tools in tier 1" }));
     fireEvent.change(screen.getByLabelText("Judge model"), {
       target: { value: "anthropic:haiku" },
@@ -516,6 +519,70 @@ describe("ModelPacksPanel", () => {
     const models = within(screen.getByRole("list", { name: "Models" }));
     expect(models.getAllByRole("listitem")).toHaveLength(1);
     expect(models.getByText("Local")).toBeInTheDocument();
+    expect(api.probeModels).not.toHaveBeenCalled();
+  });
+
+  it("offers every probed model beside the tier-settings ones, without duplicates", async () => {
+    const probe: ModelProbeResponse = {
+      available_providers: [],
+      unavailable_providers: [],
+      tier_defaults: {},
+      no_llm_mode: false,
+      models: [
+        // Also a tier-settings model: listed once, with the tier-settings tags.
+        { id: "openai:gpt-4o", provider: "openai", tier: 2, available: true, capabilities: ["thinking"] },
+        // Tier settings give it no tags, so the probe's fill in.
+        { id: "ollama:llama3", provider: "ollama", tier: 1, available: true, capabilities: ["tools"] },
+        // Only the probe knows this one.
+        { id: "gemini:flash", provider: "gemini", tier: 1, available: true, capabilities: ["vision"] },
+      ],
+    };
+    const { queryClient } = renderPanel();
+    queryClient.setQueryData(["model-probe"], probe);
+    await screen.findByText("Review stable");
+
+    const palette = within(screen.getByRole("list", { name: "Models" }));
+    await waitFor(() => expect(palette.getAllByRole("listitem")).toHaveLength(4));
+    const row = (id: string) =>
+      palette.getAllByRole("listitem").find((item) => item.querySelector("[title]")?.getAttribute("title") === id);
+    expect(row("gemini:flash")).toHaveTextContent("vision");
+    expect(row("openai:gpt-4o")).toHaveTextContent("vision");
+    expect(row("openai:gpt-4o")).not.toHaveTextContent("thinking");
+    expect(row("ollama:llama3")).toHaveTextContent("tools");
+    // The probe-only model can be added to a tier like any other.
+    await addToTier("gemini:flash", "3");
+    await waitFor(() => expect(chainList("3")).toHaveTextContent("gemini:flash"));
+    expect(api.probeModels).not.toHaveBeenCalled();
+  });
+
+  it("shows a loading line while the page's probe runs and fills in when it resolves", async () => {
+    let resolveProbe: (value: ModelProbeResponse) => void = () => {};
+    const pending = new Promise<ModelProbeResponse>((resolve) => {
+      resolveProbe = resolve;
+    });
+    const { queryClient } = renderPanel();
+    await screen.findByText("Review stable");
+    expect(screen.queryByText("Loading all models and prices…")).toBeNull();
+
+    // The page-level query starts the probe; the panel only watches the shared cache.
+    void queryClient.fetchQuery({ queryKey: ["model-probe"], queryFn: () => pending });
+
+    expect(await screen.findByText("Loading all models and prices…")).toBeInTheDocument();
+    expect(within(screen.getByRole("list", { name: "Models" })).getAllByRole("listitem")).toHaveLength(3);
+
+    resolveProbe({
+      available_providers: [],
+      unavailable_providers: [],
+      tier_defaults: {},
+      no_llm_mode: false,
+      models: [
+        { id: "gemini:flash", provider: "gemini", tier: 1, available: true, price_label: "free" },
+      ],
+    });
+
+    await waitFor(() => expect(screen.queryByText("Loading all models and prices…")).toBeNull());
+    expect(within(screen.getByRole("list", { name: "Models" })).getAllByRole("listitem")).toHaveLength(4);
+    expect(screen.getByLabelText("Free and local only")).toBeEnabled();
     expect(api.probeModels).not.toHaveBeenCalled();
   });
 

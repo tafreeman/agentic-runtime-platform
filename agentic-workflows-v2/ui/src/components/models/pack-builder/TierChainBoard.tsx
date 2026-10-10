@@ -1,4 +1,4 @@
-import { useMemo, type Dispatch } from "react";
+import { useId, useMemo, useState, type Dispatch } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -154,6 +154,77 @@ function ChainChip({
   );
 }
 
+/**
+ * A tier's required capabilities as quiet chips. The full set of toggles only
+ * appears behind "Edit requirements", so a lane shows what it needs, not
+ * everything it could need.
+ */
+function RequirementsRow({
+  tier,
+  required,
+  options,
+  disabled,
+  dispatch,
+}: Readonly<{
+  tier: string;
+  required: readonly string[];
+  options: readonly string[];
+  disabled?: boolean;
+  dispatch: Dispatch<DraftAction>;
+}>) {
+  const [editing, setEditing] = useState(false);
+  const panelId = useId();
+  if (options.length === 0) return null;
+  const label = `Capabilities required in tier ${tier}`;
+  return (
+    <div className="mt-3 border-t border-el-divider-soft pt-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-micro font-medium text-el-muted">Requires</span>
+        {!editing &&
+          (required.length === 0 ? (
+            <span className="text-micro text-el-muted">no capabilities</span>
+          ) : (
+            <ul aria-label={label} className="flex flex-wrap gap-1.5">
+              {required.map((capability) => (
+                <li key={capability}>
+                  <CapabilityTag name={capability} />
+                </li>
+              ))}
+            </ul>
+          ))}
+        <Button
+          type="button"
+          variant="ghost"
+          size="xs"
+          className="ml-auto"
+          aria-expanded={editing}
+          aria-controls={editing ? panelId : undefined}
+          onClick={() => setEditing((open) => !open)}
+        >
+          Edit requirements{" "}
+          <span className="sr-only">for tier {tier}</span>
+          {editing ? <ChevronUp aria-hidden="true" /> : <ChevronDown aria-hidden="true" />}
+        </Button>
+      </div>
+      {editing && (
+        <div id={panelId} role="group" aria-label={label} className="mt-2 flex flex-wrap gap-1.5">
+          {options.map((capability) => (
+            <ToggleChip
+              key={capability}
+              pressed={required.includes(capability)}
+              disabled={disabled}
+              label={`Require ${capability} in tier ${tier}`}
+              onClick={() => dispatch({ type: "toggleCapability", tier, capability })}
+            >
+              {capability}
+            </ToggleChip>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface LaneProps {
   tier: string;
   draft: PackDraft;
@@ -197,7 +268,6 @@ function TierLane({
     if (at === index) return "before";
     return index === chain.length - 1 && at >= chain.length ? "after" : undefined;
   };
-  const toggles = [...new Set([...capabilities, ...required])];
 
   return (
     <section
@@ -257,30 +327,13 @@ function TierLane({
         </SortableContext>
       )}
 
-      {toggles.length > 0 && (
-        <div className="mt-3 border-t border-el-divider-soft pt-3">
-          <div className="mb-2 text-micro font-medium text-el-muted">
-            Require capabilities in this tier
-          </div>
-          <div
-            role="group"
-            aria-label={`Capabilities required in tier ${tier}`}
-            className="flex flex-wrap gap-1.5"
-          >
-            {toggles.map((capability) => (
-              <ToggleChip
-                key={capability}
-                pressed={required.includes(capability)}
-                disabled={disabled}
-                label={`Require ${capability} in tier ${tier}`}
-                onClick={() => dispatch({ type: "toggleCapability", tier, capability })}
-              >
-                {capability}
-              </ToggleChip>
-            ))}
-          </div>
-        </div>
-      )}
+      <RequirementsRow
+        tier={tier}
+        required={required}
+        options={[...new Set([...capabilities, ...required])]}
+        disabled={disabled}
+        dispatch={dispatch}
+      />
       <div aria-live="polite">
         {unmet.map((capability) => (
           <p key={capability} className="mt-2 text-xs text-el-warning">

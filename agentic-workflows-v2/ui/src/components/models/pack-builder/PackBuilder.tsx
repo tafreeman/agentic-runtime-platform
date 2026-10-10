@@ -41,6 +41,8 @@ export interface PackBuilderProps {
   tiers: readonly string[];
   knownCapabilities: readonly string[];
   priceLabels?: Readonly<Record<string, PriceInfo>>;
+  /** True while the full model catalog and prices are still loading. */
+  catalogLoading?: boolean;
   disabled?: boolean;
 }
 
@@ -161,6 +163,7 @@ export function PackBuilder({
   tiers,
   knownCapabilities,
   priceLabels,
+  catalogLoading,
   disabled,
 }: Readonly<PackBuilderProps>) {
   const reduceMotion = usePrefersReducedMotion();
@@ -214,29 +217,32 @@ export function PackBuilder({
   };
 
   return (
-    <div className="space-y-8">
-      <DndContext
-        sensors={sensors}
-        collisionDetection={detectCollisions}
-        accessibility={{ announcements, screenReaderInstructions: { draggable: INSTRUCTIONS } }}
-        onDragStart={handleStart}
-        onDragMove={handleMove}
-        onDragEnd={handleEnd}
-        onDragCancel={cancel}
-      >
-        {/* Side by side only when there is room: the pack editor already sits
-            beside the pack list, so below 2xl the palette stacks above the lanes. */}
-        <div className="grid gap-8 2xl:grid-cols-[300px_minmax(0,1fr)]">
-          <div className="2xl:sticky 2xl:top-4 2xl:self-start">
-            <ModelPalette
-              models={allModels}
-              tiers={tiers}
-              chains={chains}
-              priceLabels={priceLabels}
-              disabled={disabled}
-              onAdd={(tier, model) => dispatch({ type: "add", tier, model })}
-            />
-          </div>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={detectCollisions}
+      accessibility={{ announcements, screenReaderInstructions: { draggable: INSTRUCTIONS } }}
+      onDragStart={handleStart}
+      onDragMove={handleMove}
+      onDragEnd={handleEnd}
+      onDragCancel={cancel}
+    >
+      {/* Side by side only when there is room: the pack editor already sits
+          beside the pack list, so below 2xl the palette stacks above the lanes.
+          Everything that follows the lanes lives in the same grid row, so the
+          sticky palette stays pinned until the whole builder has scrolled past. */}
+      <div className="grid gap-8 2xl:grid-cols-[300px_minmax(0,1fr)]">
+        <div className="2xl:sticky 2xl:top-4 2xl:self-start">
+          <ModelPalette
+            models={allModels}
+            tiers={tiers}
+            chains={chains}
+            priceLabels={priceLabels}
+            loading={catalogLoading}
+            disabled={disabled}
+            onAdd={(tier, model) => dispatch({ type: "add", tier, model })}
+          />
+        </div>
+        <div className="min-w-0 space-y-8">
           <TierChainBoard
             draft={draft}
             tiers={tiers}
@@ -247,46 +253,44 @@ export function PackBuilder({
             disabled={disabled}
             dispatch={dispatch}
           />
-        </div>
-        <DragOverlay dropAnimation={reduceMotion ? null : undefined}>
-          {active && active.kind !== "lane" ? (
-            <div className="rounded-sm border border-el-ink/70 bg-el-raised px-2.5 py-1.5 font-mono text-xs text-el-ink shadow-md">
-              {active.model}
+          <div className="grid gap-8 md:grid-cols-2">
+            <ProvidersSection
+              draft={draft}
+              providers={providers}
+              disabled={disabled}
+              dispatch={dispatch}
+            />
+            <JudgeSection
+              draft={draft}
+              models={allModels}
+              disabled={disabled}
+              dispatch={dispatch}
+            />
+          </div>
+          <details className="border-t border-el-divider pt-3">
+            <summary className="cursor-pointer text-xs font-semibold text-el-secondary focus-ring">
+              View as JSON
+            </summary>
+            <div
+              role="region"
+              aria-label="Pack as JSON"
+              tabIndex={0}
+              className="mt-2 max-h-64 overflow-auto rounded-sm bg-el-subtle p-3 focus-ring"
+            >
+              <pre className="font-mono text-xs text-el-secondary">
+                {JSON.stringify(draftToUpdate(draft), null, 2)}
+              </pre>
             </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
-
-      <div className="grid gap-8 md:grid-cols-2">
-        <ProvidersSection
-          draft={draft}
-          providers={providers}
-          disabled={disabled}
-          dispatch={dispatch}
-        />
-        <JudgeSection
-          draft={draft}
-          models={allModels}
-          disabled={disabled}
-          dispatch={dispatch}
-        />
-      </div>
-
-      <details className="border-t border-el-divider pt-3">
-        <summary className="cursor-pointer text-xs font-semibold text-el-secondary focus-ring">
-          View as JSON
-        </summary>
-        <div
-          role="region"
-          aria-label="Pack as JSON"
-          tabIndex={0}
-          className="mt-2 max-h-64 overflow-auto rounded-sm bg-el-subtle p-3 focus-ring"
-        >
-          <pre className="font-mono text-xs text-el-secondary">
-            {JSON.stringify(draftToUpdate(draft), null, 2)}
-          </pre>
+          </details>
         </div>
-      </details>
-    </div>
+      </div>
+      <DragOverlay dropAnimation={reduceMotion ? null : undefined}>
+        {active && active.kind !== "lane" ? (
+          <div className="rounded-sm border border-el-ink/70 bg-el-raised px-2.5 py-1.5 font-mono text-xs text-el-ink shadow-md">
+            {active.model}
+          </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
   );
 }

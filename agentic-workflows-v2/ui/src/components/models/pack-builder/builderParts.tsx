@@ -9,13 +9,86 @@ import {
   type Over,
 } from "@dnd-kit/core";
 import type { ReactNode } from "react";
-import type { PriceLabel } from "../../../api/types";
+import type { PriceLabel, ProbedModel, TierModelInfo } from "../../../api/types";
 import type { DraftAction } from "./packDraft";
 
 /** What a price pill needs: the probe's label and, optionally, why. */
 export interface PriceInfo {
   label: PriceLabel;
   reason?: string;
+}
+
+// ---------------------------------------------------------------------------
+// The model catalog: what the palette and the lane pickers choose from.
+
+/** Most models a list renders at once; the rest are reached by searching. */
+export const LIST_LIMIT = 60;
+
+export const limitNote = (total: number): string =>
+  `Showing ${LIST_LIMIT} of ${total}. Search or filter to narrow.`;
+
+/**
+ * Tier-settings models plus every probed model, one entry per id. Tier
+ * settings win on provider and on capabilities when they have any; a probed
+ * model only fills in capabilities the tier entry lacks.
+ */
+export function mergeModelCatalog(
+  tierModels: readonly TierModelInfo[],
+  probed: readonly ProbedModel[],
+): TierModelInfo[] {
+  const merged = new Map<string, TierModelInfo>();
+  for (const model of tierModels) merged.set(model.id, model);
+  for (const model of probed) {
+    const known = merged.get(model.id);
+    const capabilities = model.capabilities ?? [];
+    if (!known) {
+      merged.set(model.id, {
+        id: model.id,
+        provider: model.provider,
+        capabilities,
+        capability_overridden: false,
+      });
+    } else if (known.capabilities.length === 0 && capabilities.length > 0) {
+      merged.set(model.id, { ...known, capabilities });
+    }
+  }
+  return [...merged.values()];
+}
+
+export interface ModelFilter {
+  query: string;
+  provider: string;
+  freeOnly: boolean;
+}
+
+const isFreeOrLocal = (price: PriceInfo | undefined): boolean =>
+  price?.label === "free" || price?.label === "local";
+
+/** Models that pass the filter: free and local first, then by provider and id. */
+export function selectModels(
+  models: readonly TierModelInfo[],
+  prices: Readonly<Record<string, PriceInfo>> | undefined,
+  { query, provider, freeOnly }: ModelFilter,
+): TierModelInfo[] {
+  const needle = query.trim().toLowerCase();
+  const rank = (model: TierModelInfo) => (isFreeOrLocal(prices?.[model.id]) ? 0 : 1);
+  return models
+    .filter((model) => {
+      if (provider && model.provider !== provider) return false;
+      if (freeOnly && !isFreeOrLocal(prices?.[model.id])) return false;
+      return (
+        !needle ||
+        [model.id, model.provider, ...model.capabilities].some((text) =>
+          text.toLowerCase().includes(needle),
+        )
+      );
+    })
+    .sort(
+      (a, b) =>
+        rank(a) - rank(b) ||
+        a.provider.localeCompare(b.provider) ||
+        a.id.localeCompare(b.id),
+    );
 }
 
 export const SELECT_CLASS =

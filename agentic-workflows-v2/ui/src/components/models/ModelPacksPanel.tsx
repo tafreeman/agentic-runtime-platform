@@ -48,7 +48,7 @@ import {
   draftToUpdate,
   isDraftDirty,
 } from "./pack-builder/packDraft";
-import type { PriceInfo } from "./pack-builder/builderParts";
+import { mergeModelCatalog, type PriceInfo } from "./pack-builder/builderParts";
 
 interface EditorState {
   name: string;
@@ -183,10 +183,17 @@ export default function ModelPacksPanel() {
     (isDraftDirty(draft, baseline) ||
       editor.name.trim() !== selected.name ||
       editor.description.trim() !== selected.description);
-  const tierModels = useMemo(
-    () => tierSettingsQuery.data?.models ?? [],
-    [tierSettingsQuery.data],
+  // Curated tier-settings models first, then everything the shared probe found.
+  const models = useMemo(
+    () =>
+      mergeModelCatalog(
+        tierSettingsQuery.data?.models ?? [],
+        probeQuery.data?.models ?? [],
+      ),
+    [tierSettingsQuery.data, probeQuery.data],
   );
+  // The probe is started by the page, not here; this only reflects its progress.
+  const catalogLoading = probeQuery.isFetching && !probeQuery.data;
   const tiers = useMemo(
     () =>
       sortedTiers(
@@ -616,17 +623,17 @@ export default function ModelPacksPanel() {
               )}
               {tierSettingsQuery.isError && (
                 <p className="text-micro text-el-muted">
-                  Tier settings are unavailable, so the model list only includes models
-                  already in this pack.
+                  Tier settings are unavailable, so the model list may be incomplete.
                 </p>
               )}
               <PackBuilder
                 draft={draft}
                 dispatch={dispatchDraft}
-                models={tierModels}
+                models={models}
                 tiers={tiers}
                 knownCapabilities={tierSettingsQuery.data?.known_capabilities ?? []}
                 priceLabels={priceLabels}
+                catalogLoading={catalogLoading}
                 disabled={selected.archived}
               />
 
