@@ -2,6 +2,29 @@
 
 **Status:** Accepted
 **Date:** 2026-07-03
+
+## Scoring ownership update — 2026-09-10
+
+ARP owns the arithmetic used by its required quality check. The new
+`scoring/criterion_aggregation.py` replaces that check's dependency on the old
+evaluation package. EvalKit remains optional; the bridge uses EvalKit's rubric
+validation and ARP's calculation.
+
+Missing criteria retain their weight in ARP's calculation. EvalKit excludes
+unavailable criteria from its average. With two equally weighted criteria,
+one scoring 1 and one unavailable, the results are 0.5 and 1.0 respectively.
+These rules remain different. The required ARP check rejects missing criteria
+regardless of its numeric score, and rejects malformed or non-finite numbers.
+
+Validation covers saved legacy results in `test_criterion_aggregation.py`,
+the two scoring policies in `test_scoring_policy_differential.py`, and isolated
+gate execution in `test_eval_gate_independence.py`. Runtime evidence rules and
+the removal of automatic scores for nonempty output remain unchanged.
+
+The old package is not deleted in this change. Remove it only after the
+replacement `eval-golden-gate` check passes on merged main. That removal must
+also cover workspace, build, test and CI references.
+
 **Related:** `agentic-v2-eval/` (in-tree package being superseded),
 `agentic_v2/scoring/step_scoring.py`, `agentic_v2/scoring/evalkit_bridge.py`
 (new, this slice), `agentic_v2/models/llm.py`, ADR-032 (extract scoring

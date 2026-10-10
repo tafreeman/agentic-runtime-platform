@@ -9,6 +9,8 @@ on:
       - 'tools/**'
       - 'datasets/**'
       - 'scripts/eval_gate.py'
+      - 'agentic-workflows-v2/agentic_v2/scoring/**'
+      - 'agentic-workflows-v2/tests/test_eval_gate*.py'
       - '.github/workflows/eval-package-ci.yml'
       - 'pyproject.toml'
       - 'ci-constraints.txt'
@@ -139,7 +141,7 @@ jobs:
 
   eval-golden-gate:
     # Scored, deterministic, key-free golden eval gate. Scores the committed
-    # dataset under datasets/default/ through the real agentic_v2_eval.Scorer and
+    # dataset under datasets/default/ through the real runtime CriterionScorer and
     # exits non-zero when the weighted code-rubric score drops below the
     # committed threshold (0.80). AGENTIC_NO_LLM=1 is a fail-closed safety belt;
     # the gate path is pure arithmetic over committed JSON and never builds a
@@ -161,13 +163,19 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e "." -c ci-constraints.txt
-          pip install -e "agentic-v2-eval/[dev]" -c ci-constraints.txt
+          pip install -e "agentic-workflows-v2/[dev]" -c ci-constraints.txt
 
       - name: Score golden dataset and enforce threshold
         env:
           AGENTIC_NO_LLM: "1"
         run: |
           python scripts/eval_gate.py --cases datasets/default/golden_cases.json --threshold 0.80
+
+      - name: Verify runtime gate independence and mocked live behavior
+        env:
+          AGENTIC_NO_LLM: "1"
+        run: |
+          python -m pytest agentic-workflows-v2/tests/test_eval_gate_independence.py agentic-workflows-v2/tests/test_eval_gate_live.py -q --no-cov
 
   eval-live-gate:
     # Real-model eval-live-gate: runs scripts/eval_gate.py --live, which

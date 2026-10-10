@@ -335,6 +335,7 @@ jobs:
           cd agentic-workflows-v2
           python -m pytest \
             tests/test_evalkit_bridge.py \
+            tests/test_scoring_policy_differential.py \
             tests/contract/test_evalkit_boundary.py \
             -q --timeout=120
       - name: Verify runtime scoring without the legacy evaluation package

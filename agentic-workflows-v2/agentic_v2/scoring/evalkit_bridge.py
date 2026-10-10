@@ -11,6 +11,8 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable, Mapping
 from typing import TYPE_CHECKING, Any
 
+from .criterion_aggregation import CriterionSpec, score_criterion_values
+
 if TYPE_CHECKING:
     from agentic_evalkit.graders import Rubric
     from agentic_evalkit.targets import CallableTarget
@@ -152,95 +154,26 @@ def rubric_from_yaml_dict(rubric_data: dict[str, Any]) -> "Rubric":
 def score_criteria(
     rubric_data: dict[str, Any], criterion_scores: Mapping[str, float]
 ) -> float:
-    """Compute the same weighted score as ARP's legacy ``Scorer`` via evalkit types.
+    """Score an EvalKit rubric using ARP's fixed-denominator rule.
 
-    Reproduces ``agentic_v2_eval.scorer.Scorer(rubric_data).score(criterion_scores)
-    .weighted_score`` using evalkit's :class:`~agentic_evalkit.graders.Rubric`
-    as the intermediate representation, so callers migrating off
-    ``agentic_v2_eval`` get identical numbers.
-
-    Parity is **exact by construction, computed directly from the converted
-    Rubric's criteria** rather than by driving evalkit's
-    ``CompositeGrader``/``WeightedGrader`` aggregation. Those primitives grade
-    a ``NormalizedExecutionResult`` end-to-end (they call ``.grade()`` on
-    component graders and combine typed ``GradeResult``s); bridging a bare
-    ``{criterion_id: score}`` dict through that path would require
-    fabricating a grader per criterion and a fake execution/sample, and their
-    weighted-mean semantics differ from ``Scorer`` in a way that matters here:
-    ``CompositeGrader`` *excludes* a non-definitive (missing/abstain/error)
-    component's weight from **both** the numerator and the denominator, so a
-    missing component simply shrinks the averaging pool. ``Scorer`` instead
-    fixes the denominator (``total_weight``) as the sum of *every* criterion's
-    weight in the rubric **up front**, before it even looks at which criteria
-    are present in the ``results`` dict — a missing criterion is excluded only
-    from the numerator, not the denominator. That means a missing criterion
-    behaves like a scored ``0`` in ``Scorer``'s aggregate, not like an
-    abstention — the two aggregations are not interchangeable, and driving
-    ``CompositeGrader`` here would silently change the score for any input
-    with a missing criterion. Computing the weighted mean directly from
-    ``Rubric.criteria`` (the fixed, full criteria list) reproduces ``Scorer``'s
-    exact arithmetic instead:
-
-    * The denominator (``total_weight``) is the sum of **every** criterion's
-      weight in the rubric, computed before checking ``criterion_scores`` —
-      identical to ``Scorer``'s ``total_weight = sum(c.weight for c in
-      self.criteria)`` computed ahead of its missing-criterion loop.
-    * A criterion whose ``criterion_id`` is absent from ``criterion_scores``
-      contributes ``0`` to the numerator but its weight still counts in the
-      (already-fixed) denominator — identical to ``Scorer``'s
-      ``missing_criteria`` handling, which has the same net effect despite
-      being expressed as a ``continue`` in the loop.
-    * A present criterion's score is clamped to ``[scale_min, scale_max]``
-      (``[0, 1]`` for every rubric produced by :func:`rubric_from_yaml_dict`)
-      then normalized by the same ``(value - min) / (max - min)`` formula
-      ``Scorer`` uses, before being weighted into the numerator.
-    * If the rubric has no criteria at all, or every criterion's weight is
-      ``0`` (so the denominator is ``0.0``), the result is ``0.0`` — identical
-      to ``Scorer``'s empty-criteria and zero-total-weight branches, both of
-      which return ``weighted_score=0.0`` rather than raising or dividing by
-      zero.
-
-    Args:
-        rubric_data: A rubric dict in the same shape :func:`rubric_from_yaml_dict`
-            accepts.
-        criterion_scores: Mapping of criterion name to raw score. Names that
-            do not match a criterion in ``rubric_data`` are ignored (this
-            mirrors ``Scorer``, which only ever reads known criterion names
-            out of the ``results`` dict passed to it).
-
-    Returns:
-        The weighted score in ``[0.0, 1.0]``, identical to
-        ``Scorer(rubric_data).score(criterion_scores).weighted_score``.
-
-    Raises:
-        RuntimeError: ``agentic-evalkit`` is not installed.
-        ValueError: ``rubric_data`` is malformed (see :func:`rubric_from_yaml_dict`).
+    Missing criteria keep their weight in the denominator. EvalKit's composite
+    grader instead excludes unavailable criteria; the policies are distinct.
+    The optional EvalKit dependency and its rubric validation remain required.
     """
     _require_evalkit()
 
     rubric = rubric_from_yaml_dict(rubric_data)
 
-    # Denominator fixed over ALL criteria up front — matches Scorer's
-    # `total_weight = sum(c.weight for c in self.criteria)`, computed before
-    # any missing-criterion check. A missing criterion is excluded from the
-    # numerator only, so it behaves like a scored 0 in the final average.
-    total_weight = sum(criterion.weight for criterion in rubric.criteria)
-    if total_weight <= 0.0:
-        return 0.0
-
-    weighted_sum = 0.0
-    for criterion in rubric.criteria:
-        if criterion.criterion_id not in criterion_scores:
-            continue
-        scale_min = criterion.scale_min if criterion.scale_min is not None else 0.0
-        scale_max = criterion.scale_max if criterion.scale_max is not None else 1.0
-        value = float(criterion_scores[criterion.criterion_id])
-        value = max(scale_min, min(scale_max, value))
-        range_size = scale_max - scale_min
-        normalized = (value - scale_min) / range_size if range_size > 0 else value
-        weighted_sum += criterion.weight * normalized
-
-    return weighted_sum / total_weight
+    criteria = tuple(
+        CriterionSpec(
+            name=criterion.criterion_id,
+            weight=criterion.weight,
+            min_value=criterion.scale_min if criterion.scale_min is not None else 0.0,
+            max_value=criterion.scale_max if criterion.scale_max is not None else 1.0,
+        )
+        for criterion in rubric.criteria
+    )
+    return score_criterion_values(criteria, criterion_scores).weighted_score
 
 
 def workflow_callable_target(
