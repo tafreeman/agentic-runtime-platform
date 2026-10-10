@@ -512,7 +512,16 @@ export interface ProbedModel {
   capabilities?: string[];
   /** True when the model is currently loaded in memory (/api/ps). */
   running?: boolean;
+  /**
+   * What a call costs: runs on this machine, free, paid, or unknown. A
+   * missing price is reported as unknown, never as free.
+   */
+  price_label?: PriceLabel;
+  /** Why the label was chosen, e.g. "both prices are 0". */
+  price_reason?: string;
 }
+
+export type PriceLabel = "local" | "free" | "paid" | "unknown";
 
 /**
  * Response from `GET /api/models/probe` — re-probes which LLM providers have
