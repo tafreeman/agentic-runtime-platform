@@ -29,6 +29,35 @@ const EXEMPT = [
 
 const TYPE_FLOOR_PX = 11;
 
+// A CSS length may omit the leading zero — `.5px` is valid and below the floor.
+// Every type-floor pattern shares this one number grammar: four hand-copied
+// variants are how the shorthand check drifted into missing `.5px` in the first
+// place.
+const PX_NUMBER = String.raw`(\d+(?:\.\d+)?|\.\d+)`;
+
+const ARBITRARY_TEXT_SIZE = new RegExp(String.raw`text-\[${PX_NUMBER}px\]`, "g");
+const INLINE_FONT_SIZE = new RegExp(
+  // \x60 is a backtick: spelling it out keeps the template literal readable.
+  String.raw`fontSize:\s*["'\x60]?${PX_NUMBER}(?:px)?["'\x60]?(?=\s*[,}\n])`,
+  "g",
+);
+// The two CSS patterns below are case-insensitive because CSS property names
+// and unit identifiers are (`FONT: 10PX` is valid). The TSX-side patterns above
+// stay case-sensitive on purpose: `fontSize` is a JS property name and
+// `text-[10px]` a Tailwind class, both of which are case-sensitive, so folding
+// case there would invite false positives rather than close a hole.
+const CSS_FONT_SIZE = new RegExp(
+  String.raw`(?<![\w-])font-size\s*:\s*${PX_NUMBER}px`,
+  "gi",
+);
+// The shorthand's leading run excludes `/`, so the lazy prefix can never reach
+// past the size into the line height — `font: 1rem/10px sans-serif` sets a 1rem
+// size and must not be read as 10px type.
+const CSS_FONT_SHORTHAND = new RegExp(
+  String.raw`(?<![\w-])font\s*:(?:\s*[^;}/]*?\s)?${PX_NUMBER}px(?=[\s/;}]|$)`,
+  "gi",
+);
+
 interface Rule {
   readonly name: string;
   readonly appliesTo: RegExp;
@@ -49,18 +78,22 @@ const RULES: readonly Rule[] = [
   {
     name: "arbitrary text size below the 11px floor (use text-micro or text-xs)",
     appliesTo: /\.(tsx?|css)$/,
-    find: (code) => belowFloor(code, /text-\[(\d+(?:\.\d+)?)px\]/g),
+    find: (code) => belowFloor(code, ARBITRARY_TEXT_SIZE),
   },
   {
     name: "inline fontSize below the 11px floor",
     appliesTo: /\.tsx?$/,
-    find: (code) =>
-      belowFloor(code, /fontSize:\s*["'`]?(\d+(?:\.\d+)?)(?:px)?["'`]?(?=\s*[,}\n])/g),
+    find: (code) => belowFloor(code, INLINE_FONT_SIZE),
   },
   {
-    name: "CSS font-size below the 11px floor",
+    name: "CSS font-size or font shorthand below the 11px floor",
     appliesTo: /\.css$/,
-    find: (code) => belowFloor(code, /font-size:\s*(\d+(?:\.\d+)?)px/g),
+    // Two declarations, because only the shorthand has a line-height slot:
+    // `font-size: 10px`, and the size slot of `font: 600 10px/1.2 sans-serif`.
+    find: (code) => [
+      ...belowFloor(code, CSS_FONT_SIZE),
+      ...belowFloor(code, CSS_FONT_SHORTHAND),
+    ],
   },
   {
     name: "hex colour literal (use an el-* or --el-graph-* token)",
@@ -108,8 +141,10 @@ function layoutTransitions(code: string): string[] {
     .filter(([, value = ""]) =>
       value
         .split(",")
-        .map((segment) => segment.trim().split(/\s+/)[0] ?? "")
-        .some((property) => LAYOUT_PROPERTY.test(property.replace(/_/g, "-"))),
+        // The shorthand allows property, duration and easing in any order
+        // (`120ms width`), and Tailwind writes spaces as underscores.
+        .flatMap((segment) => segment.trim().split(/[\s_]+/))
+        .some((token) => LAYOUT_PROPERTY.test(token)),
     )
     .map(([declaration = ""]) => declaration);
 }
@@ -147,6 +182,18 @@ describe("design drift", () => {
     ["x.tsx", '<p className="text-[10px]">', "<p className=\"text-[11px]\">"],
     ["x.tsx", "style={{ fontSize: 9 }}", "style={{ fontSize: 12 }}"],
     ["x.css", ".a { font-size: 10px; }", ".a { font-size: 12px; }"],
+    ["x.css", ".a { font: 10px sans-serif; }", ".a { font: 12px sans-serif; }"],
+    ["x.css", ".a { font: 600 10px/1.4 Georgia; }", ".a { font: 600 13px/1.4 Georgia; }"],
+    // A length may drop the leading zero, in every type-floor pattern.
+    ["x.css", ".a { font: .5px sans-serif; }", ".a { font: 12px sans-serif; }"],
+    ["x.css", ".a { font-size: .5px; }", ".a { font-size: 12px; }"],
+    // CSS property names and units are case-insensitive.
+    ["x.css", ".a { FONT: 10PX sans-serif; }", ".a { FONT: 12PX sans-serif; }"],
+    ["x.css", ".a { Font-Size: 10Px; }", ".a { Font-Size: 12Px; }"],
+    ["x.tsx", '<p className="text-[.5px]">', '<p className="text-[11px]">'],
+    ["x.tsx", "style={{ fontSize: .5 }}", "style={{ fontSize: 12 }}"],
+    ["x.css", ".a { transition: 120ms width; }", ".a { transition: 120ms opacity; }"],
+    ["x.tsx", 'className="transition-[opacity_120ms,width_120ms]"', 'className="transition-[opacity_120ms]"'],
     ["x.tsx", 'stroke="#9e321c"', 'stroke="rgb(var(--el-accent))"'],
     ["x.tsx", 'fill: "rgba(0, 0, 0, 0.4)"', 'fill: "rgb(var(--el-graph-edge) / 0.4)"'],
     ["x.tsx", 'className="transition-all"', 'className="transition-colors"'],
@@ -159,6 +206,18 @@ describe("design drift", () => {
   ])("catches a violation in %s: %s", (file, bad, good) => {
     expect(violations({ [`../src/${file}`]: bad })).toHaveLength(1);
     expect(violations({ [`../src/${file}`]: good })).toEqual([]);
+  });
+
+  // The `font` shorthand carries the line height after a slash. Only the size
+  // slot is type, so a small line height on a compliant size is not a floor
+  // violation and must not fail the guard.
+  it("reads only the size slot of the font shorthand", () => {
+    expect(violations({ "../src/x.css": ".a { font: 1rem/10px sans-serif; }" })).toEqual([]);
+    expect(violations({ "../src/x.css": ".a { font: 600 1rem/8px Georgia; }" })).toEqual([]);
+    expect(violations({ "../src/x.css": ".a { font: 12px/10px sans-serif; }" })).toEqual([]);
+    expect(
+      violations({ "../src/x.css": ".a { font: 10px/1.5 sans-serif; }" }),
+    ).toHaveLength(1);
   });
 
   it("ignores banned patterns inside comments and exempt files", () => {
