@@ -29,6 +29,30 @@ const EXEMPT = [
 
 const TYPE_FLOOR_PX = 11;
 
+// A CSS length may omit the leading zero — `.5px` is valid and below the floor.
+// Every type-floor pattern shares this one number grammar: four hand-copied
+// variants are how the shorthand check drifted into missing `.5px` in the first
+// place.
+const PX_NUMBER = String.raw`(\d+(?:\.\d+)?|\.\d+)`;
+
+const ARBITRARY_TEXT_SIZE = new RegExp(String.raw`text-\[${PX_NUMBER}px\]`, "g");
+const INLINE_FONT_SIZE = new RegExp(
+  // \x60 is a backtick: spelling it out keeps the template literal readable.
+  String.raw`fontSize:\s*["'\x60]?${PX_NUMBER}(?:px)?["'\x60]?(?=\s*[,}\n])`,
+  "g",
+);
+const CSS_FONT_SIZE = new RegExp(
+  String.raw`(?<![\w-])font-size\s*:\s*${PX_NUMBER}px`,
+  "g",
+);
+// The shorthand's leading run excludes `/`, so the lazy prefix can never reach
+// past the size into the line height — `font: 1rem/10px sans-serif` sets a 1rem
+// size and must not be read as 10px type.
+const CSS_FONT_SHORTHAND = new RegExp(
+  String.raw`(?<![\w-])font\s*:(?:\s*[^;}/]*?\s)?${PX_NUMBER}px(?=[\s/;}]|$)`,
+  "g",
+);
+
 interface Rule {
   readonly name: string;
   readonly appliesTo: RegExp;
@@ -49,28 +73,21 @@ const RULES: readonly Rule[] = [
   {
     name: "arbitrary text size below the 11px floor (use text-micro or text-xs)",
     appliesTo: /\.(tsx?|css)$/,
-    find: (code) => belowFloor(code, /text-\[(\d+(?:\.\d+)?)px\]/g),
+    find: (code) => belowFloor(code, ARBITRARY_TEXT_SIZE),
   },
   {
     name: "inline fontSize below the 11px floor",
     appliesTo: /\.tsx?$/,
-    find: (code) =>
-      belowFloor(code, /fontSize:\s*["'`]?(\d+(?:\.\d+)?)(?:px)?["'`]?(?=\s*[,}\n])/g),
+    find: (code) => belowFloor(code, INLINE_FONT_SIZE),
   },
   {
     name: "CSS font-size or font shorthand below the 11px floor",
     appliesTo: /\.css$/,
     // Two declarations, because only the shorthand has a line-height slot:
     // `font-size: 10px`, and the size slot of `font: 600 10px/1.2 sans-serif`.
-    // The shorthand's leading run excludes `/`, so the lazy prefix can never
-    // reach past the size into the line height — `font: 1rem/10px sans-serif`
-    // sets a 1rem size and must not be read as 10px type.
     find: (code) => [
-      ...belowFloor(code, /(?<![\w-])font-size\s*:\s*(\d+(?:\.\d+)?)px/g),
-      ...belowFloor(
-        code,
-        /(?<![\w-])font\s*:(?:\s*[^;}/]*?\s)?(\d+(?:\.\d+)?)px(?=[\s/;}]|$)/g,
-      ),
+      ...belowFloor(code, CSS_FONT_SIZE),
+      ...belowFloor(code, CSS_FONT_SHORTHAND),
     ],
   },
   {
@@ -162,6 +179,11 @@ describe("design drift", () => {
     ["x.css", ".a { font-size: 10px; }", ".a { font-size: 12px; }"],
     ["x.css", ".a { font: 10px sans-serif; }", ".a { font: 12px sans-serif; }"],
     ["x.css", ".a { font: 600 10px/1.4 Georgia; }", ".a { font: 600 13px/1.4 Georgia; }"],
+    // A length may drop the leading zero, in every type-floor pattern.
+    ["x.css", ".a { font: .5px sans-serif; }", ".a { font: 12px sans-serif; }"],
+    ["x.css", ".a { font-size: .5px; }", ".a { font-size: 12px; }"],
+    ["x.tsx", '<p className="text-[.5px]">', '<p className="text-[11px]">'],
+    ["x.tsx", "style={{ fontSize: .5 }}", "style={{ fontSize: 12 }}"],
     ["x.css", ".a { transition: 120ms width; }", ".a { transition: 120ms opacity; }"],
     ["x.tsx", 'className="transition-[opacity_120ms,width_120ms]"', 'className="transition-[opacity_120ms]"'],
     ["x.tsx", 'stroke="#9e321c"', 'stroke="rgb(var(--el-accent))"'],
