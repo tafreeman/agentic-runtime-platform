@@ -32,9 +32,16 @@ schema drift) degrades to "no models for this provider" rather than raising —
 callers keep the static catalog. The probe is bounded by an 8 s per-request
 timeout. API keys are sent as auth headers and are never logged.
 
-Cost lane (ARP-IMPROVEMENTS F1/F2): none of this module's listings expose
-free-vs-paid status -- that is a curated judgment, not a probeable fact (same
-split as ADR-040's tier/price curation). See
+Price (ARP-IMPROVEMENTS F1/F2): most of these listings carry ids only, so
+free-vs-paid is not probeable for them and rests on curation
+(``config/defaults/model_registry.yaml``) or a per-source declaration.
+OpenRouter is the exception: its public catalog publishes ``pricing.prompt``,
+``pricing.completion`` and ``pricing.request`` per model, which
+:class:`CloudModelInfo` keeps as ``price_in`` / ``price_out`` (USD per million
+tokens) and ``price_request`` (USD per call). ``None`` means "not published",
+never 0. :mod:`agentic_v2.models.price_label` turns these, the curated prices
+and the declarations into the ``price_label`` the model probe reports. Cost-lane
+enforcement is unchanged: it still uses the fail-closed curated
 :func:`agentic_v2.models.model_registry.cost_lane_for` and, for NVIDIA NIM
 specifically, the curated free-endpoint entries (``tiers: []``, deliberately
 not in any tier chain) in ``config/defaults/model_registry.yaml``.
@@ -43,12 +50,16 @@ not in any tier chain) in ``config/defaults/model_registry.yaml``.
 from __future__ import annotations
 
 import logging
+import math
 import os
 import threading
 import time
+from collections.abc import Mapping
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
+from decimal import Decimal
 from typing import Any
+from urllib.parse import urlsplit
 
 import httpx
 
@@ -86,9 +97,19 @@ _NON_CHAT_MARKERS = (
 
 @dataclass(frozen=True)
 class CloudModelInfo:
-    """A model surfaced by a live cloud-provider listing (provider-prefixed id)."""
+    """A model surfaced by a live cloud-provider listing (provider-prefixed id).
+
+    The price fields are what the provider's own listing published, and stay
+    ``None`` when it published nothing (every provider except OpenRouter, and
+    OpenRouter's static fallback ids). ``None`` is "unknown", never 0 -- see
+    :mod:`agentic_v2.models.price_label`. ``price_in`` / ``price_out`` are USD
+    per million tokens (the registry's unit); ``price_request`` is USD per call.
+    """
 
     id: str
+    price_in: float | None = None
+    price_out: float | None = None
+    price_request: float | None = None
 
 
 def _is_chat_model_id(model_id: str) -> bool:
@@ -121,8 +142,21 @@ def _get_json(
         return None
 
 
-def _dedup_prefixed(prefix: str, names: list[str]) -> list[CloudModelInfo]:
-    """Wrap bare model names as ``prefix:<name>`` records, de-duplicated."""
+# (price_in per Mtok, price_out per Mtok, price_request per call); ``None`` = unpublished.
+_PriceTriple = tuple[float | None, float | None, float | None]
+_NO_PRICES: _PriceTriple = (None, None, None)
+
+
+def _dedup_prefixed(
+    prefix: str,
+    names: list[str],
+    prices: Mapping[str, _PriceTriple] | None = None,
+) -> list[CloudModelInfo]:
+    """Wrap bare model names as ``prefix:<name>`` records, de-duplicated.
+
+    ``prices`` maps a bare name to the prices its listing published; a name with
+    no entry keeps ``None`` (unknown) for all three.
+    """
     discovered: list[CloudModelInfo] = []
     seen: set[str] = set()
     for name in names:
@@ -133,7 +167,15 @@ def _dedup_prefixed(prefix: str, names: list[str]) -> list[CloudModelInfo]:
         model_id = f"{prefix}:{name}"
         if model_id not in seen:
             seen.add(model_id)
-            discovered.append(CloudModelInfo(id=model_id))
+            price_in, price_out, price_request = (prices or {}).get(name, _NO_PRICES)
+            discovered.append(
+                CloudModelInfo(
+                    id=model_id,
+                    price_in=price_in,
+                    price_out=price_out,
+                    price_request=price_request,
+                )
+            )
     return discovered
 
 
@@ -153,13 +195,26 @@ def _data_ids(payload: Any) -> list[str]:
 # ---------------------------------------------------------------------------
 
 
-def _openai_models_url() -> str:
-    """Resolve the OpenAI ``/models`` URL, honoring proxy/Azure base overrides."""
-    base = (
+_OPENAI_DEFAULT_BASE = "https://api.openai.com/v1"
+
+
+def resolve_openai_base_url() -> str:
+    """Resolve the configured OpenAI base URL (``OPENAI_BASE_URL`` / ``OPENAI_API_BASE``).
+
+    Callers needing only the *origin* should compare it with
+    :func:`openai_base_is_nvidia` rather than echoing the URL: a proxy base can
+    embed credentials.
+    """
+    return (
         os.environ.get("OPENAI_BASE_URL")
         or os.environ.get("OPENAI_API_BASE")
-        or "https://api.openai.com/v1"
+        or _OPENAI_DEFAULT_BASE
     ).rstrip("/")
+
+
+def _openai_models_url() -> str:
+    """Resolve the OpenAI ``/models`` URL, honoring proxy/Azure base overrides."""
+    base = resolve_openai_base_url()
     # A base already ending in /v1 takes /models directly; a bare host needs /v1.
     return f"{base}/models" if base.endswith("/v1") else f"{base}/v1/models"
 
@@ -281,6 +336,41 @@ def resolve_nvidia_base_url() -> str:
     return base
 
 
+def _origin(url: str) -> tuple[str, str, int] | None:
+    """``(scheme, host, port)`` of ``url``, or ``None`` when it is not http(s)."""
+    try:
+        parts = urlsplit(url)
+        port = parts.port
+    except ValueError:
+        return None
+    host = (parts.hostname or "").lower()
+    scheme = parts.scheme.lower()
+    if scheme not in ("http", "https") or not host:
+        return None
+    return scheme, host, port or (443 if scheme == "https" else 80)
+
+
+def nvidia_base_is_documented() -> bool:
+    """Whether ``NVIDIA_BASE_URL`` (or its default) is NVIDIA's documented origin.
+
+    An on-prem NIM behind ``NVIDIA_BASE_URL`` is not the hosted free tier, so
+    :mod:`agentic_v2.models.price_label` believes the free-tier declaration
+    only while this is true.
+    """
+    return _origin(resolve_nvidia_base_url()) == _origin(_NVIDIA_DEFAULT_BASE)
+
+
+def openai_base_is_nvidia() -> bool:
+    """Whether the ``openai:`` provider is an alias for NVIDIA's hosted API.
+
+    True when the configured OpenAI base URL has exactly NVIDIA's documented
+    origin (an OpenAI-compatible client pointed at ``integrate.api.nvidia.com``),
+    so its models are NVIDIA endpoints. Compares origins only and returns a
+    bool: the URL itself is never logged or returned.
+    """
+    return _origin(resolve_openai_base_url()) == _origin(_NVIDIA_DEFAULT_BASE)
+
+
 def discover_nvidia_models() -> list[CloudModelInfo]:
     """List NVIDIA NIM chat models the configured key can reach (best-effort).
 
@@ -342,6 +432,16 @@ def resolve_openrouter_base_url() -> str:
     if not base.endswith("/v1"):
         base = f"{base}/v1"
     return base
+
+
+def openrouter_base_is_documented() -> bool:
+    """Whether the resolved OpenRouter base is OpenRouter's documented origin.
+
+    Prices in the catalog are believed only from the documented origin: a
+    gateway behind ``OPENROUTER_BASE_URL`` can publish any number, and a free
+    price on a gateway proves nothing about what you are billed.
+    """
+    return _origin(resolve_openrouter_base_url()) == _origin(_OPENROUTER_DEFAULT_BASE)
 
 
 def _read_openrouter_cache(*, allow_expired: bool) -> list[CloudModelInfo] | None:
@@ -417,6 +517,60 @@ def _parse_openrouter_ids(payload: Any) -> list[str] | None:
     return sorted(set(model_ids))
 
 
+def _per_million(value: object) -> float | None:
+    """USD per token as published (``"0.000003"``) -> USD per million tokens.
+
+    ``None`` unless a finite number, so an unreadable token price reads as
+    "not published" and never as 0. A negative value (OpenRouter's ``"-1"``
+    marker for dynamically priced routers) is kept: the label rule turns it
+    into "unknown".
+    """
+    if isinstance(value, bool) or not isinstance(value, str | int | float):
+        return None
+    try:
+        price = float(Decimal(str(value).strip()) * 1_000_000)
+    except (ArithmeticError, ValueError):
+        return None
+    return price if math.isfinite(price) else None
+
+
+def _per_call(value: object) -> float | None:
+    """USD per request: ``None`` when absent, NaN when present but unreadable.
+
+    NaN (not ``None``) so a fee that cannot be read makes the label "unknown"
+    instead of silently reading as "no fee" and turning a metered model free.
+    """
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, str | int | float):
+        return math.nan
+    try:
+        return float(Decimal(str(value).strip()))
+    except (ArithmeticError, ValueError):
+        return math.nan
+
+
+def _parse_openrouter_prices(payload: Any) -> dict[str, _PriceTriple]:
+    """Map each catalog id to its published ``pricing`` triple (first entry wins)."""
+    prices: dict[str, _PriceTriple] = {}
+    if not isinstance(payload, dict) or not isinstance(payload.get("data"), list):
+        return prices
+    for entry in payload["data"]:
+        if not isinstance(entry, dict):
+            continue
+        model_id = entry.get("id")
+        if not isinstance(model_id, str) or model_id in prices:
+            continue
+        pricing = entry.get("pricing")
+        pricing = pricing if isinstance(pricing, dict) else {}
+        prices[model_id] = (
+            _per_million(pricing.get("prompt")),
+            _per_million(pricing.get("completion")),
+            _per_call(pricing.get("request")),
+        )
+    return prices
+
+
 def discover_openrouter_models() -> list[CloudModelInfo]:
     """List the full chat-compatible OpenRouter catalog (best-effort, cached).
 
@@ -424,7 +578,9 @@ def discover_openrouter_models() -> list[CloudModelInfo]:
     ``OPENROUTER_API_KEY``; a configured key is still sent as bearer auth for
     gateways that require it. Failed fetches reuse the last live listing, then
     the static fallback. Ids retain ``publisher/model[:free]`` so they
-    round-trip to the runtime backends.
+    round-trip to the runtime backends. The catalog's published prices ride
+    along on each :class:`CloudModelInfo` (and through the cache); the static
+    fallback carries none -- a ``:free`` suffix is not read as a price.
     """
     api_key = os.environ.get("OPENROUTER_API_KEY")
     cached = _read_openrouter_cache(allow_expired=False)
@@ -447,7 +603,9 @@ def discover_openrouter_models() -> list[CloudModelInfo]:
         if stale is not None:
             return stale
         return _dedup_prefixed("openrouter", list(_OPENROUTER_STATIC_FALLBACK))
-    discovered = _dedup_prefixed("openrouter", model_ids)
+    discovered = _dedup_prefixed(
+        "openrouter", model_ids, _parse_openrouter_prices(payload)
+    )
     _write_openrouter_cache(discovered)
     return discovered
 
@@ -489,6 +647,10 @@ __all__ = [
     "discover_nvidia_models",
     "discover_openai_models",
     "discover_openrouter_models",
+    "nvidia_base_is_documented",
+    "openai_base_is_nvidia",
+    "openrouter_base_is_documented",
     "resolve_nvidia_base_url",
+    "resolve_openai_base_url",
     "resolve_openrouter_base_url",
 ]

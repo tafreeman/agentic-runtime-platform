@@ -66,6 +66,7 @@ from ..models.local_discovery import (
     discover_onnx_models,
 )
 from ..models.ollama_discovery import discover_ollama_models
+from ..models.price_annotation import annotate_price_labels
 from .model_builders import (
     _resolve_notebooklm_model_name,
     build_anthropic_model,
@@ -434,7 +435,7 @@ def _merge_local_models(models: list[dict[str, Any]]) -> None:
 def _merge_cloud_models(
     models: list[dict[str, Any]],
     cloud_listing: Sequence[CloudModelInfo] | None = None,
-) -> None:
+) -> Sequence[CloudModelInfo]:
     """Append live cloud-provider listings as tier-0 catalog entries.
 
     Skipped entirely in no-LLM mode: every tier routes to the placeholder
@@ -443,12 +444,13 @@ def _merge_cloud_models(
     env — OpenRouter's public catalog entries honestly show False without the
     key still required for inference.
     ``cloud_listing`` is the probe route's pre-fetched sweep (shared with the
-    drift pass); ``None`` means fetch here.
+    drift pass); ``None`` means fetch here. Returns the listing merged (empty in
+    no-LLM mode) so the caller can read its published prices without a re-fetch.
     """
     from ..settings import is_agentic_no_llm_enabled
 
     if is_agentic_no_llm_enabled():
-        return
+        return ()
     listing = discover_cloud_models() if cloud_listing is None else cloud_listing
     known_ids = {m["id"] for m in models}
     for info in listing:
@@ -463,6 +465,7 @@ def _merge_cloud_models(
                 "available": is_provider_available(provider_prefix(info.id)),
             }
         )
+    return listing
 
 
 def enumerate_known_models(
@@ -478,6 +481,10 @@ def enumerate_known_models(
     LM Studio servers, the ONNX cache, and (when keyed) the Ollama cloud expose
     right now, so the console shows everything currently runnable — not just the
     static fallback chains.
+
+    Every entry also carries ``price_label`` (``local`` / ``free`` / ``paid`` /
+    ``unknown``) and ``price_reason``; a missing price is ``unknown``, never
+    free (see :mod:`agentic_v2.models.price_label`).
     """
     lowest_tier: dict[str, int] = {}
     for tier, chain in _TIER_FALLBACK_CHAINS.items():
@@ -498,8 +505,9 @@ def enumerate_known_models(
 
     _merge_ollama_models(models)
     _merge_local_models(models)
-    _merge_cloud_models(models, cloud_listing)
+    listing = _merge_cloud_models(models, cloud_listing)
 
+    models = annotate_price_labels(models, listing)
     models.sort(key=lambda m: (m["tier"], str(m["provider"]), str(m["id"])))
     return models
 
