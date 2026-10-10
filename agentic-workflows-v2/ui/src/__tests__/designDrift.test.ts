@@ -60,13 +60,18 @@ const RULES: readonly Rule[] = [
   {
     name: "CSS font-size or font shorthand below the 11px floor",
     appliesTo: /\.css$/,
-    // `font-size: 10px`, and the size slot of the `font` shorthand
-    // (`font: 600 10px/1.2 sans-serif`).
-    find: (code) =>
-      belowFloor(
+    // Two declarations, because only the shorthand has a line-height slot:
+    // `font-size: 10px`, and the size slot of `font: 600 10px/1.2 sans-serif`.
+    // The shorthand's leading run excludes `/`, so the lazy prefix can never
+    // reach past the size into the line height — `font: 1rem/10px sans-serif`
+    // sets a 1rem size and must not be read as 10px type.
+    find: (code) => [
+      ...belowFloor(code, /(?<![\w-])font-size\s*:\s*(\d+(?:\.\d+)?)px/g),
+      ...belowFloor(
         code,
-        /(?<![\w-])font(?:-size)?\s*:[^;}]*?(?<![\w.-])(\d+(?:\.\d+)?)px(?=[\s/;}]|$)/g,
+        /(?<![\w-])font\s*:(?:\s*[^;}/]*?\s)?(\d+(?:\.\d+)?)px(?=[\s/;}]|$)/g,
       ),
+    ],
   },
   {
     name: "hex colour literal (use an el-* or --el-graph-* token)",
@@ -171,6 +176,18 @@ describe("design drift", () => {
   ])("catches a violation in %s: %s", (file, bad, good) => {
     expect(violations({ [`../src/${file}`]: bad })).toHaveLength(1);
     expect(violations({ [`../src/${file}`]: good })).toEqual([]);
+  });
+
+  // The `font` shorthand carries the line height after a slash. Only the size
+  // slot is type, so a small line height on a compliant size is not a floor
+  // violation and must not fail the guard.
+  it("reads only the size slot of the font shorthand", () => {
+    expect(violations({ "../src/x.css": ".a { font: 1rem/10px sans-serif; }" })).toEqual([]);
+    expect(violations({ "../src/x.css": ".a { font: 600 1rem/8px Georgia; }" })).toEqual([]);
+    expect(violations({ "../src/x.css": ".a { font: 12px/10px sans-serif; }" })).toEqual([]);
+    expect(
+      violations({ "../src/x.css": ".a { font: 10px/1.5 sans-serif; }" }),
+    ).toHaveLength(1);
   });
 
   it("ignores banned patterns inside comments and exempt files", () => {
