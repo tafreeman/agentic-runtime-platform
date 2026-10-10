@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useReducer, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Archive,
@@ -22,8 +22,10 @@ import {
   duplicateModelPack,
   exportModelPack,
   getModelPackDependencies,
+  getTierSettings,
   importModelPack,
   listModelPacks,
+  probeModels,
   validateModelPack,
   versionModelPack,
 } from "../../api/client";
@@ -39,55 +41,42 @@ import { describeApiError } from "../../lib/apiErrors";
 import { apiErrorMessage, apiErrorText } from "../common/apiErrorText";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { Textarea } from "../ui/textarea";
+import { PackBuilder } from "./pack-builder/PackBuilder";
+import {
+  draftFromPack,
+  draftReducer,
+  draftToUpdate,
+  isDraftDirty,
+} from "./pack-builder/packDraft";
+import type { PriceInfo } from "./pack-builder/builderParts";
 
 interface EditorState {
   name: string;
   description: string;
-  tierChains: string;
-  allowedProviders: string;
-  capabilities: string;
-  judgeModel: string;
 }
 
-const EMPTY_EDITOR: EditorState = {
-  name: "",
-  description: "",
-  tierChains: "{}",
-  allowedProviders: "",
-  capabilities: "{}",
-  judgeModel: "",
-};
+const EMPTY_EDITOR: EditorState = { name: "", description: "" };
+
+/** Tier keys the backend accepts (ui_settings.ModelPack validates 0..5). */
+const DEFAULT_TIERS = ["0", "1", "2", "3", "4", "5"];
+
+const EMPTY_DRAFT = draftFromPack({
+  tier_chains: {},
+  capability_requirements: {},
+  allowed_providers: [],
+  judge_model: null,
+});
 
 function refKey(ref: ModelPackRef): string {
   return `${ref.id}@${ref.version}`;
 }
 
 function editorFor(pack: ModelPack): EditorState {
-  return {
-    name: pack.name,
-    description: pack.description,
-    tierChains: JSON.stringify(pack.tier_chains, null, 2),
-    allowedProviders: pack.allowed_providers.join(", "),
-    capabilities: JSON.stringify(pack.capability_requirements, null, 2),
-    judgeModel: pack.judge_model ?? "",
-  };
+  return { name: pack.name, description: pack.description };
 }
 
-function parseObjectOfStringArrays(
-  value: string,
-  label: string,
-): Record<string, string[]> {
-  const parsed: unknown = JSON.parse(value);
-  if (!parsed || Array.isArray(parsed) || typeof parsed !== "object") {
-    throw new Error(`${label} must be a JSON object.`);
-  }
-  for (const [key, item] of Object.entries(parsed)) {
-    if (!Array.isArray(item) || item.some((entry) => typeof entry !== "string")) {
-      throw new Error(`${label}.${key} must be an array of model IDs.`);
-    }
-  }
-  return parsed as Record<string, string[]>;
+function sortedTiers(...groups: readonly (readonly string[])[]): string[] {
+  return [...new Set(groups.flat())].sort((a, b) => Number(a) - Number(b));
 }
 
 /**
@@ -127,6 +116,7 @@ export default function ModelPacksPanel() {
   const importRef = useRef<HTMLInputElement | null>(null);
   const [selectedKey, setSelectedKey] = useState("");
   const [editor, setEditor] = useState<EditorState>(EMPTY_EDITOR);
+  const [draft, dispatchDraft] = useReducer(draftReducer, EMPTY_DRAFT);
   const [createOpen, setCreateOpen] = useState(false);
   const [createDraft, setCreateDraft] = useState({
     id: "",
@@ -140,9 +130,25 @@ export default function ModelPacksPanel() {
   const [formError, setFormError] = useState<string | null>(null);
   const [archiveConfirm, setArchiveConfirm] = useState(false);
 
+  // Loading a pack replaces both the metadata fields and the builder draft.
+  const loadPack = useCallback((pack: ModelPack) => {
+    setEditor(editorFor(pack));
+    dispatchDraft({ type: "reset", draft: draftFromPack(pack) });
+  }, []);
+
   const packsQuery = useQuery({
     queryKey: ["model-packs"],
     queryFn: listModelPacks,
+  });
+  const tierSettingsQuery = useQuery({
+    queryKey: ["tier-settings"],
+    queryFn: getTierSettings,
+  });
+  // Read-only view of the Providers tab's probe: never triggers a new probe.
+  const probeQuery = useQuery({
+    queryKey: ["model-probe"],
+    queryFn: probeModels,
+    enabled: false,
   });
   const packs = packsQuery.data?.packs ?? [];
   const selected = useMemo(
@@ -163,10 +169,42 @@ export default function ModelPacksPanel() {
         packs[0];
       if (next) {
         setSelectedKey(refKey(next));
-        setEditor(editorFor(next));
+        loadPack(next);
       }
     }
-  }, [packs, packsQuery.data?.active, selectedKey]);
+  }, [packs, packsQuery.data?.active, selectedKey, loadPack]);
+
+  const baseline = useMemo(
+    () => (selected ? draftFromPack(selected) : EMPTY_DRAFT),
+    [selected],
+  );
+  const dirty =
+    selected !== null &&
+    (isDraftDirty(draft, baseline) ||
+      editor.name.trim() !== selected.name ||
+      editor.description.trim() !== selected.description);
+  const tierModels = useMemo(
+    () => tierSettingsQuery.data?.models ?? [],
+    [tierSettingsQuery.data],
+  );
+  const tiers = useMemo(
+    () =>
+      sortedTiers(
+        DEFAULT_TIERS,
+        (tierSettingsQuery.data?.tiers ?? []).map((tier) => String(tier.tier)),
+        Object.keys(draft.tierChains),
+      ),
+    [tierSettingsQuery.data, draft.tierChains],
+  );
+  const priceLabels = useMemo(() => {
+    const labels: Record<string, PriceInfo> = {};
+    for (const model of probeQuery.data?.models ?? []) {
+      if (model.price_label) {
+        labels[model.id] = { label: model.price_label, reason: model.price_reason };
+      }
+    }
+    return Object.keys(labels).length > 0 ? labels : undefined;
+  }, [probeQuery.data]);
 
   const refresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ["model-packs"] });
@@ -180,7 +218,7 @@ export default function ModelPacksPanel() {
       setCreateDraft({ id: "", name: "", description: "", source: "effective" });
       await refresh();
       setSelectedKey(refKey(pack));
-      setEditor(editorFor(pack));
+      loadPack(pack);
     },
     onError: toastFailure,
   });
@@ -197,33 +235,22 @@ export default function ModelPacksPanel() {
       toast.success(`Saved immutable version ${pack.version}`);
       await refresh();
       setSelectedKey(refKey(pack));
-      setEditor(editorFor(pack));
+      loadPack(pack);
     },
     onError: (error) => setFormError(apiErrorText(error)),
   });
 
   const saveNewVersion = () => {
     if (!selected) return;
-    try {
-      const update: ModelPackUpdateRequest = {
+    setFormError(null);
+    versionMutation.mutate({
+      packId: selected.id,
+      update: {
         name: editor.name.trim(),
         description: editor.description.trim(),
-        tier_chains: parseObjectOfStringArrays(editor.tierChains, "tier_chains"),
-        allowed_providers: editor.allowedProviders
-          .split(",")
-          .map((value) => value.trim())
-          .filter(Boolean),
-        capability_requirements: parseObjectOfStringArrays(
-          editor.capabilities,
-          "capability_requirements",
-        ),
-        judge_model: editor.judgeModel.trim() || null,
-      };
-      setFormError(null);
-      versionMutation.mutate({ packId: selected.id, update });
-    } catch (error) {
-      setFormError(error instanceof Error ? error.message : "Invalid model pack");
-    }
+        ...draftToUpdate(draft),
+      },
+    });
   };
 
   const actionMutation = useMutation({
@@ -309,7 +336,7 @@ export default function ModelPacksPanel() {
       toast.success(`Duplicated as ${pack.id}`);
       await refresh();
       setSelectedKey(refKey(pack));
-      setEditor(editorFor(pack));
+      loadPack(pack);
     },
     onError: (error) => {
       if (error.message !== "Duplicate cancelled.") toastFailure(error);
@@ -327,6 +354,7 @@ export default function ModelPacksPanel() {
       toast.success(`Imported ${pack.name}`);
       await refresh();
       setSelectedKey(refKey(pack));
+      loadPack(pack);
     } catch (error) {
       toastFailure(error instanceof Error ? error : new Error("Import failed"));
     } finally {
@@ -479,7 +507,7 @@ export default function ModelPacksPanel() {
                   aria-current={isSelected ? "true" : undefined}
                   onClick={() => {
                     setSelectedKey(refKey(pack));
-                    setEditor(editorFor(pack));
+                    loadPack(pack);
                     setValidation(null);
                     setFormError(null);
                     setArchiveConfirm(false);
@@ -576,26 +604,31 @@ export default function ModelPacksPanel() {
                   <Input aria-label="Pack name" value={editor.name} onChange={(event) => setEditor((value) => ({ ...value, name: event.target.value }))} />
                 </label>
                 <label className="space-y-2 text-xs font-semibold text-el-secondary">
-                  Allowed providers
-                  <Input placeholder="openai, anthropic, ollama" value={editor.allowedProviders} onChange={(event) => setEditor((value) => ({ ...value, allowedProviders: event.target.value }))} />
-                </label>
-                <label className="space-y-2 text-xs font-semibold text-el-secondary md:col-span-2">
                   Description
                   <Input aria-label="Pack description" value={editor.description} onChange={(event) => setEditor((value) => ({ ...value, description: event.target.value }))} />
                 </label>
-                <label className="space-y-2 text-xs font-semibold text-el-secondary">
-                  Tier chains (JSON)
-                  <Textarea className="min-h-56 font-mono text-xs" value={editor.tierChains} onChange={(event) => setEditor((value) => ({ ...value, tierChains: event.target.value }))} />
-                </label>
-                <label className="space-y-2 text-xs font-semibold text-el-secondary">
-                  Capability requirements (JSON)
-                  <Textarea className="min-h-56 font-mono text-xs" value={editor.capabilities} onChange={(event) => setEditor((value) => ({ ...value, capabilities: event.target.value }))} />
-                </label>
-                <label className="space-y-2 text-xs font-semibold text-el-secondary md:col-span-2">
-                  Judge model
-                  <Input placeholder="provider:model" value={editor.judgeModel} onChange={(event) => setEditor((value) => ({ ...value, judgeModel: event.target.value }))} />
-                </label>
               </div>
+
+              {selected.archived && (
+                <p className="text-micro text-el-muted">
+                  This version is archived, so it is read-only.
+                </p>
+              )}
+              {tierSettingsQuery.isError && (
+                <p className="text-micro text-el-muted">
+                  Tier settings are unavailable, so the model list only includes models
+                  already in this pack.
+                </p>
+              )}
+              <PackBuilder
+                draft={draft}
+                dispatch={dispatchDraft}
+                models={tierModels}
+                tiers={tiers}
+                knownCapabilities={tierSettingsQuery.data?.known_capabilities ?? []}
+                priceLabels={priceLabels}
+                disabled={selected.archived}
+              />
 
               {formError && <p role="alert" className="text-[13px] text-el-danger">{formError}</p>}
 
@@ -607,6 +640,11 @@ export default function ModelPacksPanel() {
                 >
                   Save as version {selected.version + 1}
                 </Button>
+                {dirty && (
+                  <span className="text-xs font-semibold text-el-warning">
+                    Unsaved changes
+                  </span>
+                )}
                 <span id={saveHintId} className="text-xs text-el-muted">
                   {apiDown
                     ? `Saving is unavailable: ${apiDownReason ?? "the API server is unreachable."}`
