@@ -780,18 +780,6 @@ REGISTRY: dict[str, ProviderEntry] = {
                 "rate_limit": {"rpm": 40, "note": LIMIT_PER_ACCOUNT},
             },
             {
-                "id": "deepseek-ai/deepseek-v4-flash",
-                "capability": "chat",
-                "status": "working",
-                "rate_limit": {"rpm": 40, "note": LIMIT_PER_ACCOUNT},
-            },
-            {
-                "id": "deepseek-ai/deepseek-v4-pro",
-                "capability": "chat",
-                "status": "working",
-                "rate_limit": {"rpm": 40, "note": LIMIT_PER_ACCOUNT},
-            },
-            {
                 "id": "qwen/qwen3.5-397b-a17b",
                 "capability": "chat",
                 "status": "working",
@@ -841,12 +829,6 @@ REGISTRY: dict[str, ProviderEntry] = {
             },
             {
                 "id": "moonshotai/kimi-k2.6",
-                "capability": "chat",
-                "status": "working",
-                "rate_limit": {"rpm": 40, "note": LIMIT_PER_ACCOUNT},
-            },
-            {
-                "id": "openai/gpt-oss-120b",
                 "capability": "chat",
                 "status": "working",
                 "rate_limit": {"rpm": 40, "note": LIMIT_PER_ACCOUNT},
