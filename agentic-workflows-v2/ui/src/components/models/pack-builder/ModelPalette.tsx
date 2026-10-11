@@ -24,6 +24,7 @@ import {
   LIST_LIMIT,
   PricePill,
   SELECT_CLASS,
+  customModelId,
   limitNote,
   paletteDragId,
   selectModels,
@@ -31,12 +32,16 @@ import {
 } from "./builderParts";
 import { providerOf } from "./packDraft";
 
+const NO_IDS: ReadonlySet<string> = new Set();
+
 interface ModelPaletteProps {
   models: readonly TierModelInfo[];
   tiers: readonly string[];
   /** Current chains, to mark which tiers already hold a model. */
   chains: Readonly<Record<string, readonly string[]>>;
   priceLabels?: Readonly<Record<string, PriceInfo>>;
+  /** Ids in `models` that the catalog does not know; they are marked as such. */
+  uncatalogued?: ReadonlySet<string>;
   /** True while the shared probe is still fetching the full catalog and prices. */
   loading?: boolean;
   disabled?: boolean;
@@ -87,6 +92,7 @@ function AddToTierMenu({
 function PaletteItem({
   model,
   price,
+  uncatalogued,
   tiers,
   usedIn,
   disabled,
@@ -94,6 +100,7 @@ function PaletteItem({
 }: Readonly<{
   model: TierModelInfo;
   price: PriceInfo | undefined;
+  uncatalogued: boolean;
   tiers: readonly string[];
   usedIn: readonly string[];
   disabled?: boolean;
@@ -123,6 +130,7 @@ function PaletteItem({
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-1">
           <span className="text-micro text-el-muted">{model.provider}</span>
+          {uncatalogued && <span className="text-micro text-el-muted">Not in the catalog</span>}
           <PricePill info={price} />
           {model.capabilities.map((name) => (
             <CapabilityTag key={name} name={name} reported={model.capability_source === "probe"} />
@@ -150,6 +158,7 @@ export function AddModelPicker({
   models,
   chain,
   prices,
+  uncatalogued = NO_IDS,
   disabled,
   onPick,
 }: Readonly<{
@@ -157,6 +166,8 @@ export function AddModelPicker({
   models: readonly TierModelInfo[];
   chain: readonly string[];
   prices?: Readonly<Record<string, PriceInfo>>;
+  /** Ids in `models` that the catalog does not know; they are marked as such. */
+  uncatalogued?: ReadonlySet<string>;
   disabled?: boolean;
   onPick: (model: string) => void;
 }>) {
@@ -167,6 +178,18 @@ export function AddModelPicker({
     () => selectModels(models, prices, { query, provider: "", freeOnly: false }),
     [models, prices, query],
   );
+  // The typed id, when it is shaped like one and the list has no row for it:
+  // pack validation accepts any prefixed id, so the catalog must not gate entry.
+  const customId = useMemo(() => {
+    const id = customModelId(query);
+    return id !== null && !models.some((model) => model.id === id) ? id : null;
+  }, [models, query]);
+  const customAdded = customId !== null && chain.includes(customId);
+  const pick = (model: string) => {
+    onPick(model);
+    setOpen(false);
+    setQuery("");
+  };
   return (
     <Popover
       open={open}
@@ -192,6 +215,28 @@ export function AddModelPicker({
           />
           <CommandList>
             <CommandEmpty>No models found.</CommandEmpty>
+            {/* First, so Enter adds the exact id typed rather than a catalog id
+                that merely contains it (cmdk activates the first enabled item). */}
+            {customId !== null && (
+              <CommandGroup className="border-b border-el-divider-soft">
+                <CommandItem
+                  value={`add ${customId}`}
+                  disabled={customAdded}
+                  onSelect={() => pick(customId)}
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block break-all text-xs">
+                      Add <span className="font-mono">{customId}</span> to tier {tier}
+                    </span>
+                    <span className="block text-micro text-el-muted">
+                      {customAdded
+                        ? `Already in tier ${tier}`
+                        : "Not in the catalog; validation will check it"}
+                    </span>
+                  </span>
+                </CommandItem>
+              </CommandGroup>
+            )}
             <CommandGroup>
               {matches.slice(0, LIST_LIMIT).map((model) => {
                 const added = chain.includes(model.id);
@@ -200,14 +245,13 @@ export function AddModelPicker({
                     key={model.id}
                     value={model.id}
                     disabled={added}
-                    onSelect={() => {
-                      onPick(model.id);
-                      setOpen(false);
-                      setQuery("");
-                    }}
+                    onSelect={() => pick(model.id)}
                   >
-                    <span className="min-w-0 flex-1 truncate font-mono text-xs">
-                      {model.id}
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-mono text-xs">{model.id}</span>
+                      {uncatalogued.has(model.id) && (
+                        <span className="block text-micro text-el-muted">Not in the catalog</span>
+                      )}
                     </span>
                     <PricePill info={prices?.[model.id]} />
                     {added && <span className="text-xs text-el-muted">Added</span>}
@@ -232,6 +276,7 @@ export function ModelPalette({
   tiers,
   chains,
   priceLabels,
+  uncatalogued = NO_IDS,
   loading,
   disabled,
   onAdd,
@@ -320,6 +365,7 @@ export function ModelPalette({
             key={model.id}
             model={model}
             price={priceLabels?.[model.id]}
+            uncatalogued={uncatalogued.has(model.id)}
             tiers={tiers}
             usedIn={tiers.filter((tier) => chains[tier]?.includes(model.id))}
             disabled={disabled}

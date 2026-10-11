@@ -680,6 +680,114 @@ class TestEnumerateKnownModelsPriceLabels:
             == "cloud model via Ollama"
         )
 
+    _STATIC_OLLAMA = "ollama:static-undiscovered:7b"
+    _LOCAL_TAGS_URL = "http://localhost:11434/api/tags"
+
+    def _count_local_tags_requests(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        routes: dict[str, dict[str, object]],
+    ) -> list[str]:
+        """Serve ``routes`` over httpx for real discovery; return the URL log.
+
+        Wires the real ``discover_ollama_models`` and the real
+        ``is_served_locally`` (the class fixture stubs both) with a cold
+        ``/api/tags`` cache, so every request the probe makes is observable.
+        """
+        import httpx
+
+        from agentic_v2.langchain import models as lcm
+        from agentic_v2.models import ollama_discovery
+
+        calls: list[str] = []
+
+        class _Response:
+            def __init__(self, payload: dict[str, object]) -> None:
+                self._payload = payload
+
+            def raise_for_status(self) -> None:
+                return None
+
+            def json(self) -> dict[str, object]:
+                return self._payload
+
+        def _fake_get(
+            url: str, headers: dict[str, str] | None = None, timeout: object = None
+        ) -> _Response:
+            calls.append(url)
+            if url not in routes:
+                raise httpx.ConnectError(f"unreachable: {url}")
+            return _Response(routes[url])
+
+        monkeypatch.setenv("OLLAMA_API_KEY", "test-key")
+        monkeypatch.setattr(ollama_discovery.httpx, "get", _fake_get)
+        monkeypatch.setattr(ollama_discovery, "_local_tags_cache", None)
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_ollama_models",
+            ollama_discovery.discover_ollama_models,
+        )
+        monkeypatch.setattr(
+            "agentic_v2.models.price_annotation.is_served_locally",
+            ollama_discovery.is_served_locally,
+        )
+        monkeypatch.setattr(lcm, "_TIER_FALLBACK_CHAINS", {1: [self._STATIC_OLLAMA]})
+        return calls
+
+    def test_probe_asks_the_local_daemon_for_tags_once_when_it_answers(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        calls = self._count_local_tags_requests(
+            monkeypatch,
+            {
+                self._LOCAL_TAGS_URL: {"models": [{"name": "smollm2:135m"}]},
+                "http://localhost:11434/api/ps": {"models": []},
+                "https://ollama.com/api/tags": {"models": []},
+            },
+        )
+
+        by_id = {m["id"]: m for m in enumerate_known_models()}
+
+        # The static id was never discovered and the daemon does not list it, so
+        # the API key reroutes it to ollama.com -- decided from the discovery
+        # pass, not from a second /api/tags read.
+        assert by_id[self._STATIC_OLLAMA]["price_label"] == "unknown"
+        assert by_id[self._STATIC_OLLAMA]["price_reason"] == "cloud model via Ollama"
+        assert by_id["ollama:smollm2:135m"]["price_label"] == "local"
+        assert calls.count(self._LOCAL_TAGS_URL) == 1
+
+    def test_probe_does_not_retry_an_unreachable_daemon_for_annotation(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # No routes: every request raises ConnectError, like a daemon that is down.
+        calls = self._count_local_tags_requests(monkeypatch, {})
+
+        by_id = {m["id"]: m for m in enumerate_known_models()}
+
+        # A failed discovery is reused as "nothing is local" -- one timeout, not two.
+        assert by_id[self._STATIC_OLLAMA]["price_label"] == "unknown"
+        assert by_id[self._STATIC_OLLAMA]["price_reason"] == "cloud model via Ollama"
+        assert calls.count(self._LOCAL_TAGS_URL) == 1
+
+    def test_probe_resolves_a_static_alias_against_the_discovered_tags(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Discovery lists ``foo:latest``; the static id is the bare ``foo``.
+        calls = self._count_local_tags_requests(
+            monkeypatch,
+            {
+                self._LOCAL_TAGS_URL: {
+                    "models": [{"name": "static-undiscovered:7b:latest"}]
+                },
+                "http://localhost:11434/api/ps": {"models": []},
+                "https://ollama.com/api/tags": {"models": []},
+            },
+        )
+
+        by_id = {m["id"]: m for m in enumerate_known_models()}
+
+        assert by_id[self._STATIC_OLLAMA]["price_label"] == "local"
+        assert calls.count(self._LOCAL_TAGS_URL) == 1
+
     def test_openrouter_published_price_flows_through_the_probe_payload(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:

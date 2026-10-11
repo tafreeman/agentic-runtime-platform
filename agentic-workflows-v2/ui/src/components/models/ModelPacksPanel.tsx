@@ -627,6 +627,7 @@ export default function ModelPacksPanel() {
                 </p>
               )}
               <PackBuilder
+                key={selectedKey}
                 draft={draft}
                 dispatch={dispatchDraft}
                 models={models}

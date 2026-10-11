@@ -56,6 +56,18 @@ export function mergeModelCatalog(
   return [...merged.values()];
 }
 
+/** `provider:model`: a lowercase provider prefix, then a model part with no spaces. */
+const MODEL_ID_SHAPE = /^[a-z0-9_-]+:\S+$/;
+
+/**
+ * The model id the picker's search text spells out, or null when it is not a
+ * plausible `provider:model` (pack validation rejects ids without a prefix).
+ */
+export function customModelId(query: string): string | null {
+  const id = query.trim();
+  return MODEL_ID_SHAPE.test(id) ? id : null;
+}
+
 export interface ModelFilter {
   query: string;
   provider: string;
