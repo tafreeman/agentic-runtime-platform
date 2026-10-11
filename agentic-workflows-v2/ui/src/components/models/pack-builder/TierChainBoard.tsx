@@ -246,6 +246,7 @@ interface LaneProps {
   modelById: ReadonlyMap<string, TierModelInfo>;
   capabilities: readonly string[];
   prices?: Readonly<Record<string, PriceInfo>>;
+  uncatalogued?: ReadonlySet<string>;
   /** Insertion point for a cross-lane or palette drag, to draw the marker. */
   dropTarget: DropTarget | null;
   disabled?: boolean;
@@ -259,6 +260,7 @@ function TierLane({
   modelById,
   capabilities,
   prices,
+  uncatalogued,
   dropTarget,
   disabled,
   dispatch,
@@ -306,6 +308,7 @@ function TierLane({
             models={models}
             chain={chain}
             prices={prices}
+            uncatalogued={uncatalogued}
             disabled={disabled}
             onPick={(model) => dispatch({ type: "add", tier, model })}
           />
@@ -369,6 +372,7 @@ export function TierChainBoard({
   models,
   knownCapabilities,
   priceLabels,
+  uncatalogued,
   dropTarget,
   disabled,
   dispatch,
@@ -378,6 +382,8 @@ export function TierChainBoard({
   models: readonly TierModelInfo[];
   knownCapabilities: readonly string[];
   priceLabels?: Readonly<Record<string, PriceInfo>>;
+  /** Ids in `models` that the catalog does not know; the lane pickers mark them. */
+  uncatalogued?: ReadonlySet<string>;
   dropTarget: DropTarget | null;
   disabled?: boolean;
   dispatch: Dispatch<DraftAction>;
@@ -404,6 +410,7 @@ export function TierChainBoard({
           modelById={modelById}
           capabilities={knownCapabilities}
           prices={priceLabels}
+          uncatalogued={uncatalogued}
           dropTarget={dropTarget}
           disabled={disabled}
           dispatch={dispatch}

@@ -50,14 +50,38 @@ const INSTRUCTIONS =
   "To pick up a model in a tier, press space or enter on its reorder button. " +
   "Use the arrow keys to move it, then press space or enter to drop it, or escape to cancel.";
 
+const NO_IDS: ReadonlySet<string> = new Set();
+
+/** Every model id the draft references: all tier chains, then the judge. */
+function draftModelIds(draft: PackDraft): string[] {
+  const ids = [...Object.values(draft.tierChains).flat(), draft.judgeModel ?? ""];
+  return [...new Set(ids)].filter((id) => id !== "");
+}
+
 /**
- * The catalog plus any id the pack already references, with the pack's own
- * capability overrides applied. Probe-only tags remain visible with their
- * source marked; the server does not validate against those tags.
+ * Every id the draft has referenced since this builder mounted. A model the
+ * catalog does not know is only reachable through the draft, so without this
+ * memory, removing it from its last tier would leave no way to add it back.
+ */
+function useReferencedModelIds(draft: PackDraft): readonly string[] {
+  const [remembered, setRemembered] = useState(() => draftModelIds(draft));
+  const unseen = draftModelIds(draft).filter((id) => !remembered.includes(id));
+  if (unseen.length === 0) return remembered;
+  // Set during render, so this pass is discarded and re-run with the new ids.
+  const next = [...remembered, ...unseen];
+  setRemembered(next);
+  return next;
+}
+
+/**
+ * The catalog plus every id the pack references (`referenced`), with the
+ * pack's own capability overrides applied. Probe-only tags remain visible with
+ * their source marked; the server does not validate against those tags.
  */
 function withPackModels(
   models: readonly TierModelInfo[],
   draft: PackDraft,
+  referenced: readonly string[],
 ): TierModelInfo[] {
   const overrides = draft.modelCapabilities;
   const withOverride = (model: TierModelInfo): TierModelInfo => {
@@ -67,11 +91,10 @@ function withPackModels(
       : { ...model, capabilities: [...override], capability_source: undefined };
   };
   const known = new Set(models.map((model) => model.id));
-  const extra = [...Object.values(draft.tierChains).flat(), draft.judgeModel ?? ""]
-    .filter((id) => id !== "" && !known.has(id));
+  const extra = referenced.filter((id) => !known.has(id));
   return [
     ...models.map(withOverride),
-    ...[...new Set(extra)].map((id) =>
+    ...extra.map((id) =>
       withOverride({
         id,
         provider: providerOf(id),
@@ -182,17 +205,33 @@ export function PackBuilder({
   const reduceMotion = usePrefersReducedMotion();
   const [active, setActive] = useState<DragData | null>(null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
-  const allModels = useMemo(() => withPackModels(models, draft), [models, draft]);
-  const providers = useMemo(
-    () =>
-      [
-        ...new Set([
-          ...allModels.map((model) => model.provider),
-          ...draft.allowedProviders,
-        ]),
-      ].sort(),
-    [allModels, draft.allowedProviders],
+  const referenced = useReferencedModelIds(draft);
+  const allModels = useMemo(
+    () => withPackModels(models, draft, referenced),
+    [models, draft, referenced],
   );
+  const catalogIds = useMemo(() => new Set(models.map((model) => model.id)), [models]);
+  // Marked in the pickers; held back while the catalog is still loading, when
+  // "not in the catalog" would not yet be true.
+  const uncatalogued = useMemo(
+    () =>
+      catalogLoading
+        ? NO_IDS
+        : new Set(referenced.filter((id) => !catalogIds.has(id))),
+    [referenced, catalogIds, catalogLoading],
+  );
+  // A remembered id that has left the draft stays pickable, not a provider chip.
+  const providers = useMemo(() => {
+    const inDraft = new Set(draftModelIds(draft));
+    return [
+      ...new Set([
+        ...allModels
+          .filter((model) => catalogIds.has(model.id) || inDraft.has(model.id))
+          .map((model) => model.provider),
+        ...draft.allowedProviders,
+      ]),
+    ].sort();
+  }, [allModels, catalogIds, draft]);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -250,6 +289,7 @@ export function PackBuilder({
             tiers={tiers}
             chains={chains}
             priceLabels={priceLabels}
+            uncatalogued={uncatalogued}
             loading={catalogLoading}
             disabled={disabled}
             onAdd={(tier, model) => dispatch({ type: "add", tier, model })}
@@ -262,6 +302,7 @@ export function PackBuilder({
             models={allModels}
             knownCapabilities={knownCapabilities}
             priceLabels={priceLabels}
+            uncatalogued={uncatalogued}
             dropTarget={dropTarget}
             disabled={disabled}
             dispatch={dispatch}

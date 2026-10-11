@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { useReducer } from "react";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ProbedModel, TierModelInfo } from "../api/types";
+import { AddModelPicker } from "../components/models/pack-builder/ModelPalette";
 import { PackBuilder } from "../components/models/pack-builder/PackBuilder";
 import {
   dropAction,
@@ -582,6 +583,134 @@ describe("PackBuilder", () => {
     });
     await waitFor(() => expect(options.getAllByRole("option")).toHaveLength(1));
     expect(options.queryByText(/Showing 60 of/)).toBeNull();
+  });
+
+  describe("explicit model id entry", () => {
+    const CUSTOM = "openai:my-new-model";
+    const draftHolding = (...chain: string[]) =>
+      draftFromPack({
+        tier_chains: { "1": chain },
+        capability_requirements: {},
+        allowed_providers: [],
+        judge_model: null,
+      });
+
+    async function typeInPicker(tier: string, text: string) {
+      fireEvent.click(screen.getByRole("button", { name: `Add model to tier ${tier}` }));
+      const search = await screen.findByLabelText(`Search models for tier ${tier}`);
+      fireEvent.change(search, { target: { value: text } });
+      return within(await screen.findByRole("listbox"));
+    }
+
+    it("offers a typed provider:model id the catalog lacks and adds it like a catalog pick", async () => {
+      const seen = setup();
+
+      const options = await typeInPicker("3", `  ${CUSTOM}  `);
+      const option = await options.findByRole("option", {
+        name: new RegExp(`Add ${CUSTOM} to tier 3`),
+      });
+      expect(option).toHaveTextContent("Not in the catalog; validation will check it");
+      expect(within(option).getByText(CUSTOM)).toHaveClass("font-mono");
+      fireEvent.click(option);
+
+      await waitFor(() => expect(seen.draft.tierChains["3"]).toEqual([CUSTOM]));
+      expect(chipIds("3")).toEqual([CUSTOM]);
+      await waitFor(() =>
+        expect(screen.queryByLabelText("Search models for tier 3")).toBeNull(),
+      );
+    });
+
+    it("adds the typed id when Enter is pressed on the only option", async () => {
+      const seen = setup();
+
+      await typeInPicker("3", CUSTOM);
+      await screen.findByRole("option", { name: new RegExp(`Add ${CUSTOM}`) });
+      fireEvent.keyDown(screen.getByLabelText("Search models for tier 3"), { key: "Enter" });
+
+      await waitFor(() => expect(seen.draft.tierChains["3"]).toEqual([CUSTOM]));
+    });
+
+    it("offers nothing extra for text that is not a prefixed id", async () => {
+      setup();
+
+      const options = await typeInPicker("3", "my-new-model");
+      expect(options.queryByRole("option", { name: /^Add / })).toBeNull();
+      expect(options.getByText("No models found.")).toBeInTheDocument();
+
+      for (const text of ["openai:", ":gpt", "OpenAI:gpt", "open ai:gpt", "openai:two words"]) {
+        fireEvent.change(screen.getByLabelText("Search models for tier 3"), {
+          target: { value: text },
+        });
+        await waitFor(() => expect(options.queryByRole("option", { name: /^Add / })).toBeNull());
+      }
+    });
+
+    it("lists the catalog row, not a second entry, for an id the catalog already has", async () => {
+      setup();
+
+      const options = await typeInPicker("3", HAIKU);
+
+      expect(options.getAllByRole("option")).toHaveLength(1);
+      expect(options.queryByRole("option", { name: /^Add / })).toBeNull();
+    });
+
+    it("disables a typed id the tier already holds and says why", async () => {
+      // The draft's own ids join the list, so the row is disabled and marked Added.
+      setup({ initial: draftHolding(CUSTOM), models: [] });
+      const options = await typeInPicker("1", CUSTOM);
+      expect(options.getByRole("option", { name: new RegExp(CUSTOM) })).toHaveAttribute(
+        "aria-disabled",
+        "true",
+      );
+      expect(options.getByText("Added")).toBeInTheDocument();
+    });
+
+    it("explains a disabled typed option when the list has no row for the id", async () => {
+      const onPick = vi.fn();
+      render(
+        <AddModelPicker tier="3" models={[]} chain={[CUSTOM]} onPick={onPick} />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: "Add model to tier 3" }));
+      fireEvent.change(await screen.findByLabelText("Search models for tier 3"), {
+        target: { value: CUSTOM },
+      });
+      const option = await screen.findByRole("option", { name: new RegExp(`Add ${CUSTOM}`) });
+
+      expect(option).toHaveAttribute("aria-disabled", "true");
+      expect(option).toHaveTextContent("Already in tier 3");
+      fireEvent.click(option);
+      expect(onPick).not.toHaveBeenCalled();
+    });
+
+    it("lets an uncatalogued id be added again after its last tier drops it", async () => {
+      const seen = setup({ initial: draftHolding(CUSTOM), models: MODELS });
+      expect(chipIds("1")).toEqual([CUSTOM]);
+
+      fireEvent.click(screen.getByRole("button", { name: `Remove ${CUSTOM} from tier 1` }));
+      expect(seen.draft.tierChains["1"]).toEqual([]);
+
+      // Still listed in the palette, marked, and offered by every lane's picker.
+      const palette = within(screen.getByRole("list", { name: "Models" }));
+      expect(palette.getByTitle(CUSTOM)).toBeInTheDocument();
+      expect(palette.getByText("Not in the catalog")).toBeInTheDocument();
+
+      const options = await typeInPicker("2", "my-new");
+      const row = options.getByRole("option", { name: new RegExp(CUSTOM) });
+      expect(row).toHaveTextContent("Not in the catalog");
+      expect(row).not.toHaveAttribute("aria-disabled", "true");
+      expect(options.queryByRole("option", { name: /^Add / })).toBeNull();
+      fireEvent.click(row);
+
+      await waitFor(() => expect(seen.draft.tierChains["2"]).toEqual([CUSTOM]));
+      expect(chipIds("2")).toEqual([CUSTOM]);
+    });
+
+    it("marks an uncatalogued id only once the catalog has loaded", () => {
+      setup({ initial: draftHolding(CUSTOM), models: MODELS, catalogLoading: true });
+
+      expect(screen.queryByText("Not in the catalog")).toBeNull();
+    });
   });
 
   it("shows a quiet loading line while the catalog loads and still lists what it has", () => {
