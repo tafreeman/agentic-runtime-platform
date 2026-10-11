@@ -18,7 +18,7 @@ gh:openai/gpt-4o
 openai:gpt-4.1
 anthropic:claude-sonnet-4-6
 gemini:gemini-2.5-flash
-nvidia:meta/llama-3.1-8b-instruct
+nvidia:openai/gpt-oss-20b
 openrouter:publisher/model
 mistral:mistral-medium-latest
 ollama:qwen3:8b

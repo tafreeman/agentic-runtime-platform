@@ -7,6 +7,7 @@ allowing callers to catch broad or narrow categories.
 from __future__ import annotations
 
 import enum
+import re
 from textwrap import dedent
 
 
@@ -78,8 +79,16 @@ class ErrorCode(enum.Enum):
     RATE_LIMITED = "rate_limited"
     AUTH_ERROR = "auth_error"
     NOT_FOUND = "not_found"
+    MODEL_RETIRED = "model_retired"
     TRANSIENT = "transient"
     UNKNOWN = "unknown"
+
+
+# HTTP 410 Gone: the provider has retired the model for good (NVIDIA NIM answers
+# "has reached its end of life ... and is no longer available"). Word-bounded so
+# a longer number such as "4100ms" does not match.
+_GONE_STATUS_RE = re.compile(r"\b410\b")
+_RETIRED_MARKERS = ("end of life", "end-of-life")
 
 
 def classify_error(error_message: str) -> tuple[ErrorCode, bool]:
@@ -87,7 +96,8 @@ def classify_error(error_message: str) -> tuple[ErrorCode, bool]:
 
     Returns:
         A ``(code, should_retry)`` tuple.  ``should_retry`` is ``False`` for
-        permanent errors (auth, not-found) and ``True`` for transient ones.
+        permanent errors (auth, retired model, not-found) and ``True`` for
+        transient ones.
     """
     msg = error_message.lower()
     if any(
@@ -100,6 +110,8 @@ def classify_error(error_message: str) -> tuple[ErrorCode, bool]:
         for kw in ("401", "403", "unauthorized", "forbidden", "authentication")
     ):
         return ErrorCode.AUTH_ERROR, False
+    if _GONE_STATUS_RE.search(msg) or any(kw in msg for kw in _RETIRED_MARKERS):
+        return ErrorCode.MODEL_RETIRED, False
     if "404" in msg or "not found" in msg:
         return ErrorCode.NOT_FOUND, False
     return ErrorCode.TRANSIENT, True

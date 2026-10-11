@@ -738,12 +738,6 @@ REGISTRY: dict[str, ProviderEntry] = {
                 "rate_limit": {"rpm": 40, "note": LIMIT_PER_ACCOUNT},
             },
             {
-                "id": "meta/llama-3.1-8b-instruct",
-                "capability": "chat",
-                "status": "working",
-                "rate_limit": {"rpm": 40, "note": LIMIT_PER_ACCOUNT},
-            },
-            {
                 "id": "meta/llama-3.2-3b-instruct",
                 "capability": "chat",
                 "status": "working",
