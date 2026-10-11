@@ -14,6 +14,7 @@ Supported providers
 - NVIDIA NIM        — ``build_nvidia_model``
 - OpenRouter        — ``build_openrouter_model``
 - DigitalOcean      — ``build_digitalocean_model``
+- Mistral           — ``build_mistral_model``
 - Anthropic         — ``build_anthropic_model``
 - Gemini            — ``build_gemini_model``
 - NotebookLM alias  — ``build_notebooklm_model`` (routes to Gemini)
@@ -512,6 +513,66 @@ def build_digitalocean_model(model_name: str, temperature: float) -> Any:
         model=model_name,
         base_url="https://inference.do-ai.run/v1",
         api_key=api_key,
+        temperature=temperature,
+    )
+
+
+def build_mistral_model(model_name: str, temperature: float) -> Any:
+    """Build a ChatMistralAI instance for Mistral's La Plateforme.
+
+    Mistral's chat API is only partly OpenAI-compatible, so unlike the NVIDIA /
+    OpenRouter / DigitalOcean builders this does **not** swap the ``base_url`` of
+    ``ChatOpenAI`` (which can send parameters Mistral rejects): it uses the
+    first-party ``langchain-mistralai`` package, the same arrangement as
+    Anthropic and Gemini. The base URL is resolved by
+    :func:`resolve_mistral_base_url` — the same helper discovery uses, and the
+    same ``MISTRAL_BASE_URL`` variable ``langchain-mistralai`` itself reads — so
+    a model surfaced by the probe is reachable here.
+
+    Parameters
+    ----------
+    model_name:
+        Bare model name after the ``mistral:`` prefix, verbatim as returned by
+        ``GET https://api.mistral.ai/v1/models`` (e.g. ``mistral-medium-latest``
+        or ``labs-leanstral-1-5``). Labs models are ordinary ids on the same
+        endpoint; there is no publisher segment to strip.
+    temperature:
+        Sampling temperature. ``langchain-mistralai`` rejects values outside
+        ``[0.0, 1.0]``.
+
+    Returns
+    -------
+    A ``ChatMistralAI`` instance (default 120 s timeout and 5 retries).
+
+    Raises
+    ------
+    ImportError
+        If ``langchain-mistralai`` is not installed.
+    ValueError
+        If ``MISTRAL_API_KEY`` is not set.
+    """
+    try:
+        from langchain_mistralai import ChatMistralAI
+    except ImportError as exc:
+        raise ImportError(
+            "langchain-mistralai is required for Mistral models. "
+            "Install with: pip install langchain-mistralai"
+        ) from exc
+
+    api_key = os.environ.get("MISTRAL_API_KEY")
+    if not api_key:
+        raise ValueError(
+            "MISTRAL_API_KEY environment variable is required for Mistral models."
+        )
+
+    from ..models.cloud_discovery import resolve_mistral_base_url
+
+    base_url = resolve_mistral_base_url()
+    logger.debug("Using Mistral: %s at %s", model_name, base_url)
+    return ChatMistralAI(
+        model=model_name,
+        api_key=api_key,
+        base_url=base_url,
         temperature=temperature,
     )
 

@@ -17,6 +17,9 @@
     "generate:types:check": "node scripts/generate-ts-types.mjs && git diff --exit-code -- src/api/events.generated.ts"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@fontsource-variable/geist": "^5.3.0",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/exporter-trace-otlp-http": "^0.222.0",

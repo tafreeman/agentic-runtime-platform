@@ -564,6 +564,227 @@ class TestEnumerateKnownModelsMerge:
         assert called["n"] == 0  # gated before the probe runs
 
 
+class TestEnumerateKnownModelsPriceLabels:
+    """Every enumerated row carries ``price_label`` + ``price_reason``.
+
+    The rule table is in tests/models/test_price_label.py and the fact-gathering
+    in tests/models/test_price_annotation.py; this pins the wiring through
+    ``enumerate_known_models`` (the ``/api/models/probe`` ``models`` payload).
+    """
+
+    _LABELS = {"local", "free", "paid", "unknown"}
+
+    @pytest.fixture(autouse=True)
+    def _isolate(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        for var in (
+            "OLLAMA_BASE_URL",
+            "OLLAMA_API_KEY",
+            "OPENAI_BASE_URL",
+            "OPENAI_API_BASE",
+            "LMSTUDIO_HOST",
+            "OPENROUTER_BASE_URL",
+            "NVIDIA_BASE_URL",
+        ):
+            monkeypatch.delenv(var, raising=False)
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_lmstudio_models", lambda: []
+        )
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_onnx_models", lambda: []
+        )
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_ollama_models", lambda: []
+        )
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_cloud_models", lambda: []
+        )
+        monkeypatch.setattr(
+            "agentic_v2.models.price_annotation.is_served_locally", lambda name: False
+        )
+
+    def test_every_model_has_both_fields(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        from agentic_v2.models.cloud_discovery import CloudModelInfo
+        from agentic_v2.models.local_discovery import LocalModelInfo
+
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_ollama_models",
+            lambda: [
+                OllamaModelInfo(
+                    id="ollama:smollm2:135m", name="smollm2:135m", cloud=False
+                ),
+                OllamaModelInfo(
+                    id="ollama:gpt-oss:120b-cloud",
+                    name="gpt-oss:120b-cloud",
+                    cloud=True,
+                ),
+            ],
+        )
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_lmstudio_models",
+            lambda: [LocalModelInfo(id="lmstudio:gemma-3-12b-it")],
+        )
+        listing = [
+            CloudModelInfo(id="openai:gpt-4o-2099-mega"),
+            CloudModelInfo(
+                id="openrouter:vendor/free",
+                price_in=0.0,
+                price_out=0.0,
+                price_request=0.0,
+            ),
+        ]
+
+        models = enumerate_known_models(cloud_listing=listing)
+
+        assert len(models) > len(listing)
+        for model in models:
+            assert model["price_label"] in self._LABELS, model["id"]
+            assert isinstance(model["price_reason"], str), model["id"]
+            assert model["price_reason"], model["id"]
+
+    def test_every_model_has_both_fields_in_no_llm_mode(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("AGENTIC_NO_LLM", "1")
+        models = enumerate_known_models()
+        assert models
+        assert all("price_label" in m and "price_reason" in m for m in models)
+
+    def test_existing_fields_are_untouched(self) -> None:
+        for model in enumerate_known_models():
+            assert {"id", "provider", "tier", "available"} <= model.keys()
+
+    def test_local_and_cloud_ollama_models_are_told_apart(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_ollama_models",
+            lambda: [
+                OllamaModelInfo(
+                    id="ollama:smollm2:135m", name="smollm2:135m", cloud=False
+                ),
+                OllamaModelInfo(
+                    id="ollama:gpt-oss:120b-cloud",
+                    name="gpt-oss:120b-cloud",
+                    cloud=True,
+                ),
+            ],
+        )
+        by_id = {m["id"]: m for m in enumerate_known_models()}
+
+        assert by_id["ollama:smollm2:135m"]["price_label"] == "local"
+        assert by_id["ollama:smollm2:135m"]["price_reason"] == "runs on this machine"
+        assert by_id["ollama:gpt-oss:120b-cloud"]["price_label"] == "unknown"
+        assert (
+            by_id["ollama:gpt-oss:120b-cloud"]["price_reason"]
+            == "cloud model via Ollama"
+        )
+
+    def test_openrouter_published_price_flows_through_the_probe_payload(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from agentic_v2.models.cloud_discovery import CloudModelInfo
+
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+        listing = [
+            CloudModelInfo(
+                id="openrouter:v/free", price_in=0.0, price_out=0.0, price_request=0.0
+            ),
+            CloudModelInfo(id="openrouter:v/paid", price_in=3.0, price_out=15.0),
+            CloudModelInfo(id="openrouter:v/bare"),
+            CloudModelInfo(id="openrouter:v/free:free"),
+        ]
+        by_id = {m["id"]: m for m in enumerate_known_models(cloud_listing=listing)}
+
+        assert (
+            by_id["openrouter:v/free"]["price_label"],
+            by_id["openrouter:v/free"]["price_reason"],
+        ) == ("free", "both prices are 0")
+        assert by_id["openrouter:v/paid"]["price_label"] == "paid"
+        assert by_id["openrouter:v/bare"]["price_label"] == "unknown"
+        # A ":free" suffix is not a price.
+        assert by_id["openrouter:v/free:free"]["price_label"] == "unknown"
+        assert by_id["openrouter:v/free:free"]["price_reason"] == "price not published"
+
+    def test_openai_alias_for_nvidia_is_labelled_free_through_the_probe(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from agentic_v2.models.cloud_discovery import CloudModelInfo
+
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+        monkeypatch.setenv("OPENAI_BASE_URL", "https://integrate.api.nvidia.com/v1")
+        listing = [CloudModelInfo(id="openai:meta/llama-3.1-8b-instruct")]
+        by_id = {m["id"]: m for m in enumerate_known_models(cloud_listing=listing)}
+
+        row = by_id["openai:meta/llama-3.1-8b-instruct"]
+        assert row["price_label"] == "free"
+        assert (
+            row["price_reason"] == "free tier declared for nvidia (via OPENAI_BASE_URL)"
+        )
+
+    def test_openai_on_any_other_base_stays_unknown_through_the_probe(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from agentic_v2.models.cloud_discovery import CloudModelInfo
+
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+        monkeypatch.setenv("OPENAI_BASE_URL", "https://proxy.example/v1")
+        listing = [CloudModelInfo(id="openai:gpt-4o-2099-mega")]
+        by_id = {m["id"]: m for m in enumerate_known_models(cloud_listing=listing)}
+
+        assert by_id["openai:gpt-4o-2099-mega"]["price_label"] == "unknown"
+
+    def test_gateway_base_url_distrusts_published_prices(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from agentic_v2.models.cloud_discovery import CloudModelInfo
+
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+        monkeypatch.setenv("OPENROUTER_BASE_URL", "http://gateway.local:8080")
+        listing = [CloudModelInfo(id="openrouter:v/free", price_in=0.0, price_out=0.0)]
+        by_id = {m["id"]: m for m in enumerate_known_models(cloud_listing=listing)}
+
+        assert by_id["openrouter:v/free"]["price_label"] == "unknown"
+        assert (
+            by_id["openrouter:v/free"]["price_reason"]
+            == "address differs from the documented one"
+        )
+
+    def test_listing_prices_reach_a_chain_model_without_a_second_fetch(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A model already in a tier chain still gets its live price, and the probe's
+        shared sweep is not fetched again."""
+        from agentic_v2.models.cloud_discovery import CloudModelInfo
+
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+        calls = {"n": 0}
+
+        def _tracked() -> list[CloudModelInfo]:
+            calls["n"] += 1
+            return []
+
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_cloud_models", _tracked
+        )
+        chain_id = next(
+            m["id"]
+            for m in enumerate_known_models()
+            if m["tier"] >= 1 and m["provider"] == "anthropic"
+        )
+        calls["n"] = 0
+
+        by_id = {
+            m["id"]: m
+            for m in enumerate_known_models(
+                cloud_listing=[CloudModelInfo(id=chain_id, price_in=1.0, price_out=5.0)]
+            )
+        }
+
+        assert by_id[chain_id]["price_label"] == "paid"
+        assert calls["n"] == 0
+
+
 class TestRegistryDriftDetection:
     """detect_registry_drift quarantines retired pinned ids (ADR-040).
 

@@ -278,7 +278,9 @@ def _tier_settings_response(settings: UiSettings) -> TierSettingsResponse:
         )
 
     models: list[TierModelInfo] = []
+    registry_ids: set[str] = set()
     for model in registry.models:
+        registry_ids.add(model.id)
         override_caps = settings.model_capabilities.get(model.id)
         models.append(
             TierModelInfo(
@@ -292,6 +294,19 @@ def _tier_settings_response(settings: UiSettings) -> TierSettingsResponse:
                 capability_overridden=override_caps is not None,
             )
         )
+    # Validation also accepts global overrides for models discovered only by a
+    # provider probe. Expose those overrides so the pack builder can distinguish
+    # them from provider-reported tags that validation does not use.
+    for model_id, capabilities in sorted(settings.model_capabilities.items()):
+        if model_id not in registry_ids:
+            models.append(
+                TierModelInfo(
+                    id=model_id,
+                    provider=model_id.partition(":")[0],
+                    capabilities=list(capabilities),
+                    capability_overridden=True,
+                )
+            )
 
     return TierSettingsResponse(
         tiers=tiers,

@@ -20,13 +20,14 @@ anthropic:claude-sonnet-4-6
 gemini:gemini-2.5-flash
 nvidia:meta/llama-3.1-8b-instruct
 openrouter:publisher/model
+mistral:mistral-medium-latest
 ollama:qwen3:8b
 lmstudio:publisher/model
 onnx:path/to/model
 ```
 
 Supported prefixes differ between execution paths. The LangChain model builder
-supports GitHub Models, OpenAI, NVIDIA, OpenRouter, Anthropic, Gemini,
+supports GitHub Models, OpenAI, NVIDIA, OpenRouter, Mistral, Anthropic, Gemini,
 NotebookLM-as-Gemini, Ollama, LM Studio, local API, and its `local:` ONNX
 builder. The native backend also supports Azure, Azure Foundry, and `onnx:`.
 
@@ -84,6 +85,7 @@ The availability gate checks for configuration, not network liveness:
 | GitHub Models | `GITHUB_TOKEN` |
 | NVIDIA | `NVIDIA_API_KEY` |
 | OpenRouter | `OPENROUTER_API_KEY` |
+| Mistral | `MISTRAL_API_KEY` |
 | Ollama, LM Studio, local API, local ONNX | No key required by the gate |
 
 Secret-backed native clients can support additional aliases such as
@@ -110,7 +112,8 @@ Discovery currently covers:
 - local and cloud Ollama catalogs;
 - LM Studio's model catalog;
 - ONNX model directories;
-- OpenAI, Anthropic, Gemini, GitHub Models, NVIDIA, and OpenRouter catalogs.
+- OpenAI, Anthropic, Gemini, GitHub Models, NVIDIA, OpenRouter, and Mistral
+  catalogs.
 
 Cloud calls are skipped in no-LLM mode. Individual discovery failures degrade
 to the remaining static or discovered entries rather than failing the entire

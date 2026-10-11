@@ -16,6 +16,7 @@ from unittest.mock import patch
 import pytest
 
 from agentic_v2.models.backends import (
+    LANGCHAIN_ONLY_PREFIXES,
     PREFIX_MAP,
     AnthropicBackend,
     AzureFoundryBackend,
@@ -212,6 +213,53 @@ class TestMultiBackendRouting:
         openai = StubBackend("openai")
         multi = MultiBackend(backends={"openai": openai, "github": StubBackend("gh")})
         assert multi._get_backend("gpt-4o") is openai
+
+    @pytest.mark.parametrize(
+        "model",
+        ["digitalocean:deepseek-v4-flash-0731", "mistral:labs-leanstral-1-5"],
+    )
+    def test_langchain_only_prefix_never_reaches_the_openai_default(
+        self, model: str
+    ) -> None:
+        """A provider with no native backend must fail, not be sent to OpenAI.
+
+        ``openai`` may be an alias for another vendor's API (OPENAI_BASE_URL),
+        so the bare-name fallback would silently misroute these ids.
+        """
+        openai = StubBackend("openai")
+        multi = MultiBackend(backends={"openai": openai})
+        with pytest.raises(RuntimeError, match="served only by the LangChain engine"):
+            multi._get_backend(model)
+
+    @pytest.mark.parametrize(
+        "model",
+        ["digitalocean:deepseek-v4-flash-0731", "mistral:labs-leanstral-1-5"],
+    )
+    async def test_langchain_only_prefix_makes_no_backend_call(
+        self, model: str
+    ) -> None:
+        openai = StubBackend("openai")
+        multi = MultiBackend(backends={"openai": openai})
+        with pytest.raises(RuntimeError, match="LangChain engine"):
+            await multi.complete(model, "hello")
+        with pytest.raises(RuntimeError, match="LangChain engine"):
+            await multi.complete_chat(model, [{"role": "user", "content": "hi"}])
+        assert openai.complete_calls == []
+        assert openai.chat_calls == []
+
+    def test_langchain_only_error_names_the_model(self) -> None:
+        multi = MultiBackend(backends={"openai": StubBackend("openai")})
+        with pytest.raises(RuntimeError, match="mistral:mistral-small-latest"):
+            multi._get_backend("mistral:mistral-small-latest")
+
+    def test_langchain_only_prefixes_are_not_native_prefixes(self) -> None:
+        assert not set(LANGCHAIN_ONLY_PREFIXES) & set(PREFIX_MAP)
+
+    def test_a_tagged_bare_name_still_defaults_to_openai(self) -> None:
+        """Only the listed prefixes are rejected; ``qwen3:8b`` style names are not."""
+        openai = StubBackend("openai")
+        multi = MultiBackend(backends={"openai": openai})
+        assert multi._get_backend("qwen3:8b") is openai
 
     def test_raises_when_matched_provider_not_configured(self) -> None:
         """Error when prefix matches but that provider's backend is absent."""
