@@ -409,6 +409,7 @@ describe("ModelPacksPanel", () => {
       allowed_providers: ["anthropic", "ollama", "openai"],
       capability_requirements: { "1": ["tools"], "2": ["vision"] },
       judge_model: "anthropic:haiku",
+      model_capabilities: {},
     });
   });
 
@@ -427,6 +428,79 @@ describe("ModelPacksPanel", () => {
       allowed_providers: ["anthropic", "openai"],
       capability_requirements: PACK.capability_requirements,
       judge_model: null,
+      model_capabilities: {},
+    });
+  });
+
+  describe("pack-level model_capabilities", () => {
+    // The builder has no editor for these; they must survive a save untouched
+    // and decide what the lanes say, ahead of tier settings and the probe.
+    const OVERRIDDEN: ModelPack = {
+      ...PACK,
+      tier_chains: { "1": ["anthropic:haiku"], "2": ["openai:gpt-4o", "ollama:llama3"] },
+      capability_requirements: { "2": ["tools", "vision"] },
+      model_capabilities: { "ollama:llama3": ["tools", "vision"], "anthropic:haiku": [] },
+    };
+
+    it("sends the pack's overrides back on save, so they are kept", async () => {
+      api.listModelPacks.mockResolvedValue({ ...RESPONSE, packs: [OVERRIDDEN] });
+      renderPanel();
+      await screen.findByText("Review stable");
+
+      fireEvent.click(screen.getByRole("button", { name: "Move ollama:llama3 up in tier 2" }));
+      fireEvent.click(screen.getByRole("button", { name: "Save as version 3" }));
+
+      await waitFor(() => expect(api.versionModelPack).toHaveBeenCalledTimes(1));
+      expect(api.versionModelPack.mock.calls[0]?.[1]).toMatchObject({
+        tier_chains: { "2": ["ollama:llama3", "openai:gpt-4o"] },
+        model_capabilities: { "anthropic:haiku": [], "ollama:llama3": ["tools", "vision"] },
+      });
+    });
+
+    it("judges a tier by the overrides, not by tier settings or the probe", async () => {
+      api.listModelPacks.mockResolvedValue({ ...RESPONSE, packs: [OVERRIDDEN] });
+      const { queryClient } = renderPanel();
+      // The probe gives llama3 only "thinking" and haiku "vision": both lose to the pack.
+      queryClient.setQueryData(["model-probe"], {
+        available_providers: [],
+        unavailable_providers: [],
+        tier_defaults: {},
+        no_llm_mode: false,
+        models: [
+          { id: "ollama:llama3", provider: "ollama", tier: 1, available: true, capabilities: ["thinking"] },
+          { id: "anthropic:haiku", provider: "anthropic", tier: 1, available: true, capabilities: ["vision"] },
+        ],
+      } satisfies ModelProbeResponse);
+      await screen.findByText("Review stable");
+
+      // Tier settings say gpt-4o has vision+tools and llama3 has nothing; the
+      // override makes llama3 the one model with both, so tier 2 is satisfied.
+      const tier2 = within(screen.getByRole("region", { name: "Tier 2 fallback chain" }));
+      expect(tier2.queryByText(/No (single )?model in tier 2/)).toBeNull();
+      const llama = within(chainList("2")).getAllByRole("listitem")[1];
+      expect(llama).toHaveTextContent("tools");
+      expect(llama).toHaveTextContent("vision");
+      expect(llama).not.toHaveTextContent("thinking");
+
+      // The empty override strips haiku of the "tools" tag tier settings give it.
+      const haiku = within(chainList("1")).getAllByRole("listitem")[0];
+      expect(haiku).not.toHaveTextContent("tools");
+      expect(haiku).not.toHaveTextContent("vision");
+    });
+
+    it("falls back to tier-settings tags when the pack has no overrides", async () => {
+      api.listModelPacks.mockResolvedValue({
+        ...RESPONSE,
+        packs: [{ ...OVERRIDDEN, model_capabilities: {} }],
+      });
+      renderPanel();
+      await screen.findByText("Review stable");
+
+      // Tier settings give gpt-4o both tags, so tier 2 is met by that one model...
+      expect(screen.queryByText(/No single model in tier 2/)).toBeNull();
+      // ...until it is removed and only llama3, which has no tags, is left.
+      fireEvent.click(screen.getByRole("button", { name: "Remove openai:gpt-4o from tier 2" }));
+      expect(screen.getByText("No single model in tier 2 has tools and vision")).toBeInTheDocument();
     });
   });
 

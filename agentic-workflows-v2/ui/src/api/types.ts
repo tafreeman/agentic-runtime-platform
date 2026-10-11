@@ -638,6 +638,8 @@ export interface TierModelInfo {
   provider: string;
   capabilities: string[];
   capability_overridden: boolean;
+  /** Client-only: displayed from a provider probe, not used by pack validation. */
+  capability_source?: "probe";
 }
 
 export interface TierSettingsResponse {

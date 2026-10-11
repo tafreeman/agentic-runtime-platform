@@ -16,14 +16,23 @@ gathers :class:`PriceFacts` (see :mod:`agentic_v2.models.price_annotation`) and
 
 1. ``placement`` -- runs on this machine -> ``local``; Ollama cloud -> unknown;
    an endpoint that is not the documented one -> unknown; ``openai:`` aliased
-   to NVIDIA's documented origin -> NVIDIA's declared free tier.
+   to NVIDIA's documented origin -> NVIDIA's declared free tier (the prices
+   curated for real OpenAI do not apply there, so they never outrank it) --
+   unless the entry is explicitly curated ``paid`` and no price speaks, see 4.
 2. A live published price (``facts.live``), then the curated registry price
    (``facts.curated``), both through :func:`rate_prices`.
-3. An explicit curated ``cost_lane`` of ``free`` / ``local`` (a curated
-   ``paid`` lane is a fail-closed routing default, not a price, so it says
-   nothing here).
-4. A per-source declaration (:data:`SOURCE_DECLARATIONS`).
-5. Otherwise unknown, "price not published".
+3. An explicit curated ``cost_lane`` of ``free`` / ``local``.
+4. An explicit curated ``paid`` lane beats every provider-wide declaration that
+   would say ``free`` -- NVIDIA's, the ``openai:``-to-NVIDIA alias's (when no
+   price speaks), and the operator's opt-in -- with "curated as paid". A
+   registry entry deliberately marked paid is a decision about that model; the
+   provider-wide declaration is only a default. (A declaration that says
+   ``unknown``, Gemini's, is left alone: a paid lane is a routing default, not a
+   price, and cannot confirm the free tier is off.)
+5. A per-source declaration (:data:`SOURCE_DECLARATIONS`), or -- for a provider in
+   :data:`OPT_IN_FREE_TIER_PROVIDERS` -- the operator's own free-tier declaration
+   (``PriceFacts.free_tier_declared``, read from the environment by the caller).
+6. Otherwise unknown, "price not published".
 """
 
 from __future__ import annotations
@@ -53,8 +62,10 @@ REASON_REQUEST_FEE = "per-request price above 0"
 REASON_BAD_PRICE = "price is negative or not a number"
 REASON_NOT_PUBLISHED = "price not published"
 REASON_CURATED_FREE = "curated free endpoint"
+REASON_CURATED_PAID = "curated as paid"
 REASON_NVIDIA_FREE_TIER = "free tier declared for nvidia"
-REASON_GEMINI_UNCONFIRMED = "free tier not confirmed"
+REASON_FREE_TIER_UNCONFIRMED = "free tier not confirmed"
+REASON_GEMINI_UNCONFIRMED = REASON_FREE_TIER_UNCONFIRMED
 REASON_NVIDIA_VIA_OPENAI = "free tier declared for nvidia (via OPENAI_BASE_URL)"
 
 # Whole-source declarations (providers.toml ``free = "tier"`` / ``"unconfirmed"``).
@@ -64,7 +75,14 @@ REASON_NVIDIA_VIA_OPENAI = "free tier declared for nvidia (via OPENAI_BASE_URL)"
 SOURCE_DECLARATIONS: dict[str, tuple[PriceLabel, str]] = {
     "nvidia": ("free", REASON_NVIDIA_FREE_TIER),
     "gemini": ("unknown", REASON_GEMINI_UNCONFIRMED),
+    "mistral": ("unknown", REASON_FREE_TIER_UNCONFIRMED),
 }
+
+# Providers whose free tier is a property of the *account*, which no API
+# listing can reveal. Unknown by default (the entry in SOURCE_DECLARATIONS); the
+# operator can declare the tier (``PriceFacts.free_tier_declared``), which turns
+# the label to free with a reason saying whose declaration it is.
+OPT_IN_FREE_TIER_PROVIDERS: frozenset[str] = frozenset({"mistral"})
 
 
 @dataclass(frozen=True)
@@ -90,14 +108,16 @@ class PriceFacts:
     live: Prices | None = None
     curated: Prices | None = None
     curated_lane: CuratedLane | None = None
+    free_tier_declared: bool = False
 
 
 def rate_prices(prices: Prices) -> tuple[PriceLabel, str]:
     """Label a set of published prices (af-probes' price rule, verbatim).
 
-    Any negative or non-finite price -> unknown. Any token price above 0 ->
-    paid. Both token prices exactly 0 -> paid if a per-request fee is above 0,
-    otherwise free. Anything else (a token price missing) -> unknown.
+    Any negative or non-finite price -> unknown. Any token price above 0
+    -> paid. Both token prices exactly 0 -> paid if a per-request fee is
+    above 0, otherwise free. Anything else (a token price missing) ->
+    unknown.
     """
     tokens = (prices.price_in, prices.price_out)
     if any(
@@ -115,11 +135,37 @@ def rate_prices(prices: Prices) -> tuple[PriceLabel, str]:
 
 
 def _priced_verdict(prices: Prices | None) -> tuple[PriceLabel, str] | None:
-    """``rate_prices`` unless it found nothing to go on (so the next source can speak)."""
+    """``rate_prices`` unless it found nothing to go on (so the next source can
+    speak)."""
     if prices is None:
         return None
     verdict = rate_prices(prices)
     return None if verdict == ("unknown", REASON_NOT_PUBLISHED) else verdict
+
+
+def _price_speaks(facts: PriceFacts) -> bool:
+    """Whether a live or curated price gives a verdict for this model."""
+    return any(
+        _priced_verdict(prices) is not None for prices in (facts.live, facts.curated)
+    )
+
+
+def _provider_declaration(facts: PriceFacts) -> tuple[PriceLabel, str] | None:
+    """The provider-wide declaration that applies to this model, if any."""
+    if facts.free_tier_declared and facts.provider in OPT_IN_FREE_TIER_PROVIDERS:
+        return "free", f"free tier declared for {facts.provider}"
+    return SOURCE_DECLARATIONS.get(facts.provider)
+
+
+def _nvidia_alias_verdict(facts: PriceFacts) -> tuple[PriceLabel, str]:
+    """``openai:`` aimed at NVIDIA: its free tier, unless curated explicitly paid.
+
+    The prices curated for real OpenAI never outrank the alias, but an explicit
+    ``paid`` lane with no price to speak still does.
+    """
+    if facts.curated_lane == "paid" and not _price_speaks(facts):
+        return "paid", REASON_CURATED_PAID
+    return SOURCE_DECLARATIONS["nvidia"][0], REASON_NVIDIA_VIA_OPENAI
 
 
 def label_price(facts: PriceFacts) -> tuple[PriceLabel, str]:
@@ -131,7 +177,7 @@ def label_price(facts: PriceFacts) -> tuple[PriceLabel, str]:
     if facts.placement == "unverified_address":
         return "unknown", REASON_ADDRESS
     if facts.placement == "nvidia_via_openai":
-        return SOURCE_DECLARATIONS["nvidia"][0], REASON_NVIDIA_VIA_OPENAI
+        return _nvidia_alias_verdict(facts)
     for prices in (facts.live, facts.curated):
         verdict = _priced_verdict(prices)
         if verdict is not None:
@@ -140,13 +186,16 @@ def label_price(facts: PriceFacts) -> tuple[PriceLabel, str]:
         return "free", REASON_CURATED_FREE
     if facts.curated_lane == "local":
         return "local", REASON_LOCAL
-    declared = SOURCE_DECLARATIONS.get(facts.provider)
-    if declared is not None:
-        return declared
-    return "unknown", REASON_NOT_PUBLISHED
+    declared = _provider_declaration(facts)
+    if declared is None:
+        return "unknown", REASON_NOT_PUBLISHED
+    if declared[0] == "free" and facts.curated_lane == "paid":
+        return "paid", REASON_CURATED_PAID
+    return declared
 
 
 __all__ = [
+    "OPT_IN_FREE_TIER_PROVIDERS",
     "SOURCE_DECLARATIONS",
     "CuratedLane",
     "Placement",

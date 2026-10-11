@@ -753,8 +753,8 @@ class TestEnumerateKnownModelsPriceLabels:
     def test_listing_prices_reach_a_chain_model_without_a_second_fetch(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """A model already in a tier chain still gets its live price, and the
-        probe's shared sweep is not fetched again."""
+        """A model already in a tier chain still gets its live price, and the probe's
+        shared sweep is not fetched again."""
         from agentic_v2.models.cloud_discovery import CloudModelInfo
 
         monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)

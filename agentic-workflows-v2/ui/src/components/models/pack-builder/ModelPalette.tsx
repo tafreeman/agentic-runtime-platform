@@ -125,7 +125,7 @@ function PaletteItem({
           <span className="text-micro text-el-muted">{model.provider}</span>
           <PricePill info={price} />
           {model.capabilities.map((name) => (
-            <CapabilityTag key={name} name={name} />
+            <CapabilityTag key={name} name={name} reported={model.capability_source === "probe"} />
           ))}
         </div>
         {usedIn.length > 0 && (

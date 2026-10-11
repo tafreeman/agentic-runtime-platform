@@ -13,7 +13,9 @@ from typing import get_args
 import pytest
 
 from agentic_v2.models.price_label import (
+    OPT_IN_FREE_TIER_PROVIDERS,
     SOURCE_DECLARATIONS,
+    Placement,
     PriceFacts,
     PriceLabel,
     Prices,
@@ -31,6 +33,7 @@ _DOCUMENTED_REASONS = {
     "price above 0",
     "per-request price above 0",
     "free tier declared for nvidia",
+    "free tier declared for mistral",
     "free tier not confirmed",
     "cloud model via Ollama",
     "free tier declared for nvidia (via OPENAI_BASE_URL)",
@@ -38,11 +41,12 @@ _DOCUMENTED_REASONS = {
     "address differs from the documented one",
     "price is negative or not a number",
     "curated free endpoint",
+    "curated as paid",
 }
 
 
 class TestRatePrices:
-    """af-probes' price rule applied to one set of published prices."""
+    """Af-probes' price rule applied to one set of published prices."""
 
     @pytest.mark.parametrize(
         ("prices", "expected"),
@@ -256,6 +260,157 @@ class TestPriceSources:
         )
 
 
+class TestMistralFreeTier:
+    """Mistral's free tier belongs to the account, so it is an opt-in declaration."""
+
+    def test_undeclared_is_unknown_free_tier_not_confirmed(self) -> None:
+        assert label_price(PriceFacts(provider="mistral")) == (
+            "unknown",
+            "free tier not confirmed",
+        )
+
+    def test_declared_is_free_and_names_whose_declaration_it_is(self) -> None:
+        facts = PriceFacts(provider="mistral", free_tier_declared=True)
+        assert label_price(facts) == ("free", "free tier declared for mistral")
+
+    def test_a_published_price_beats_the_declaration(self) -> None:
+        facts = PriceFacts(
+            provider="mistral", free_tier_declared=True, curated=Prices(2.0, 6.0)
+        )
+        assert label_price(facts) == ("paid", "price above 0")
+
+    def test_an_unverified_address_beats_the_declaration(self) -> None:
+        facts = PriceFacts(
+            provider="mistral",
+            placement="unverified_address",
+            free_tier_declared=True,
+        )
+        assert label_price(facts) == (
+            "unknown",
+            "address differs from the documented one",
+        )
+
+    def test_the_declaration_is_ignored_for_providers_that_cannot_opt_in(
+        self,
+    ) -> None:
+        assert {"mistral"} == OPT_IN_FREE_TIER_PROVIDERS
+        for provider in ("openai", "gemini", "anthropic"):
+            facts = PriceFacts(provider=provider, free_tier_declared=True)
+            assert label_price(facts)[0] == "unknown", provider
+
+
+class TestCuratedPaidBeatsFreeDeclarations:
+    """A registry entry deliberately marked paid is not relabelled by a default."""
+
+    _PAID = ("paid", "curated as paid")
+
+    def test_nvidia_declaration_is_overridden(self) -> None:
+        facts = PriceFacts(provider="nvidia", curated_lane="paid")
+        assert label_price(facts) == self._PAID
+
+    def test_nvidia_without_a_paid_lane_is_still_declared_free(self) -> None:
+        assert label_price(PriceFacts(provider="nvidia"))[0] == "free"
+
+    def test_openai_to_nvidia_alias_is_overridden(self) -> None:
+        facts = PriceFacts(
+            provider="openai", placement="nvidia_via_openai", curated_lane="paid"
+        )
+        assert label_price(facts) == self._PAID
+
+    def test_alias_without_a_paid_lane_is_still_nvidias_free_tier(self) -> None:
+        facts = PriceFacts(provider="openai", placement="nvidia_via_openai")
+        assert label_price(facts) == (
+            "free",
+            "free tier declared for nvidia (via OPENAI_BASE_URL)",
+        )
+
+    def test_alias_still_outranks_prices_curated_for_real_openai(self) -> None:
+        # Those prices describe another vendor, so with one speaking the alias stands.
+        facts = PriceFacts(
+            provider="openai",
+            placement="nvidia_via_openai",
+            curated=Prices(0.15, 0.6),
+            curated_lane="paid",
+        )
+        assert label_price(facts)[0] == "free"
+
+    def test_mistral_opt_in_is_overridden(self) -> None:
+        facts = PriceFacts(
+            provider="mistral", free_tier_declared=True, curated_lane="paid"
+        )
+        assert label_price(facts) == self._PAID
+
+    def test_mistral_undeclared_stays_unconfirmed_not_paid(self) -> None:
+        facts = PriceFacts(provider="mistral", curated_lane="paid")
+        assert label_price(facts) == ("unknown", "free tier not confirmed")
+
+    def test_gemini_unconfirmed_declaration_is_left_alone(self) -> None:
+        # Only declarations that claim "free" are overridden.
+        facts = PriceFacts(provider="gemini", curated_lane="paid")
+        assert label_price(facts) == ("unknown", "free tier not confirmed")
+
+    @pytest.mark.parametrize(
+        ("facts", "expected"),
+        [
+            pytest.param(
+                PriceFacts(
+                    provider="nvidia",
+                    curated=Prices(0.0, 0.0),
+                    curated_lane="paid",
+                ),
+                ("free", "both prices are 0"),
+                id="curated-zero-price",
+            ),
+            pytest.param(
+                PriceFacts(provider="nvidia", live=Prices(1.0, 2.0)),
+                ("paid", "price above 0"),
+                id="live-paid-price",
+            ),
+            pytest.param(
+                PriceFacts(
+                    provider="nvidia",
+                    curated=Prices(1.0, 2.0),
+                    curated_lane="free",
+                ),
+                ("paid", "price above 0"),
+                id="price-beats-free-lane",
+            ),
+            pytest.param(
+                PriceFacts(provider="nvidia", curated_lane="free"),
+                ("free", "curated free endpoint"),
+                id="free-lane",
+            ),
+            pytest.param(
+                PriceFacts(
+                    provider="mistral",
+                    free_tier_declared=True,
+                    live=Prices(0.4, 2.0),
+                ),
+                ("paid", "price above 0"),
+                id="mistral-live-price",
+            ),
+        ],
+    )
+    def test_prices_and_the_other_lanes_still_come_first(
+        self, facts: PriceFacts, expected: tuple[str, str]
+    ) -> None:
+        assert label_price(facts) == expected
+
+    @pytest.mark.parametrize("placement", ["unverified_address", "ollama_cloud"])
+    def test_placement_still_settles_the_label_first(
+        self, placement: Placement
+    ) -> None:
+        facts = PriceFacts(provider="nvidia", placement=placement, curated_lane="paid")
+        assert label_price(facts)[0] == "unknown"
+
+    def test_no_declaration_can_make_a_curated_paid_model_free(self) -> None:
+        for provider in (*SOURCE_DECLARATIONS, *OPT_IN_FREE_TIER_PROVIDERS):
+            facts = PriceFacts(
+                provider=provider, free_tier_declared=True, curated_lane="paid"
+            )
+            assert label_price(facts)[0] != "free", provider
+
+
 class TestMissingPriceIsNeverFree:
     """The core principle, checked across every provider and every gap."""
 
@@ -270,7 +425,16 @@ class TestMissingPriceIsNeverFree:
     @pytest.mark.parametrize(("live", "curated"), _GAPS)
     @pytest.mark.parametrize(
         "provider",
-        ["openai", "anthropic", "gh", "openrouter", "digitalocean", "azure", "gemini"],
+        [
+            "openai",
+            "anthropic",
+            "gh",
+            "openrouter",
+            "digitalocean",
+            "azure",
+            "gemini",
+            "mistral",
+        ],
     )
     def test_gap_never_yields_free(
         self, provider: str, live: Prices | None, curated: Prices | None
@@ -303,6 +467,17 @@ class TestShape:
             PriceFacts(provider="x", live=Prices(1.0, 1.0)),
             PriceFacts(provider="x", curated_lane="free"),
             PriceFacts(provider="nvidia"),
+            PriceFacts(provider="mistral"),
+            PriceFacts(provider="mistral", free_tier_declared=True),
+            PriceFacts(provider="nvidia", curated_lane="paid"),
+            PriceFacts(
+                provider="openai",
+                placement="nvidia_via_openai",
+                curated_lane="paid",
+            ),
+            PriceFacts(
+                provider="mistral", free_tier_declared=True, curated_lane="paid"
+            ),
         ]
         for facts in cases:
             label, reason = label_price(facts)

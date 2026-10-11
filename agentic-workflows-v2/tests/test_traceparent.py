@@ -279,14 +279,20 @@ class TestTraceparentMiddlewareEnabled:
     @_requires_otel
     def test_traceparent_header_injected(self) -> None:
         ctx = _make_fake_span_context()
-        app, span = self._make_app_with_span(ctx)
+        app, _span = self._make_app_with_span(ctx)
 
         with (
             patch(
                 "agentic_v2.server.middleware.tracing.is_tracing_enabled",
                 return_value=True,
             ),
-            patch("opentelemetry.trace.get_current_span", return_value=span),
+            patch(
+                "agentic_v2.server.middleware.tracing.build_traceparent",
+                return_value=(
+                    "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+                    "",
+                ),
+            ),
         ):
             with TestClient(app) as client:
                 resp = client.get("/ping")
@@ -302,14 +308,20 @@ class TestTraceparentMiddlewareEnabled:
     @_requires_otel
     def test_server_timing_header_injected(self) -> None:
         ctx = _make_fake_span_context()
-        app, span = self._make_app_with_span(ctx)
+        app, _span = self._make_app_with_span(ctx)
 
         with (
             patch(
                 "agentic_v2.server.middleware.tracing.is_tracing_enabled",
                 return_value=True,
             ),
-            patch("opentelemetry.trace.get_current_span", return_value=span),
+            patch(
+                "agentic_v2.server.middleware.tracing.build_traceparent",
+                return_value=(
+                    "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+                    "",
+                ),
+            ),
         ):
             with TestClient(app) as client:
                 resp = client.get("/ping")
@@ -323,14 +335,17 @@ class TestTraceparentMiddlewareEnabled:
     def test_no_header_when_build_traceparent_returns_none(self) -> None:
         """If no active span, headers are not injected."""
         ctx = _make_fake_span_context(is_valid=False)
-        app, span = self._make_app_with_span(ctx)
+        app, _span = self._make_app_with_span(ctx)
 
         with (
             patch(
                 "agentic_v2.server.middleware.tracing.is_tracing_enabled",
                 return_value=True,
             ),
-            patch("opentelemetry.trace.get_current_span", return_value=span),
+            patch(
+                "agentic_v2.server.middleware.tracing.build_traceparent",
+                return_value=None,
+            ),
         ):
             with TestClient(app) as client:
                 resp = client.get("/ping")

@@ -25,6 +25,12 @@ Providers probed (best-effort, only when their key env var is set):
   gateways). The full chat-compatible catalog is requested with
   ``output_modalities=all`` and TTL-cached; a static list is used only when the
   live endpoint cannot be reached.
+- **Mistral** (``mistral:``) — ``GET https://api.mistral.ai/v1/models``
+  (``MISTRAL_API_KEY``; ``MISTRAL_BASE_URL`` honored, the same variable
+  ``langchain-mistralai`` reads). Keeps exactly the entries advertising
+  ``capabilities.completion_chat``, so embeddings, OCR, moderation and
+  transcription models drop out while Labs models (``labs-…``, same listing,
+  same endpoint) stay.
 
 Best-effort by design: a missing key makes no network call for keyed providers
 other than OpenRouter's public catalog, and any probe failure (network, auth,
@@ -104,12 +110,18 @@ class CloudModelInfo:
     OpenRouter's static fallback ids). ``None`` is "unknown", never 0 -- see
     :mod:`agentic_v2.models.price_label`. ``price_in`` / ``price_out`` are USD
     per million tokens (the registry's unit); ``price_request`` is USD per call.
+
+    ``capabilities`` are the model's tags in the vocabulary of
+    :data:`agentic_v2.ui_settings.KNOWN_MODEL_CAPABILITIES` (``tools``,
+    ``vision``, ...) when the provider's listing advertises them -- today only
+    Mistral's does -- and ``()`` otherwise, meaning "not published", not "none".
     """
 
     id: str
     price_in: float | None = None
     price_out: float | None = None
     price_request: float | None = None
+    capabilities: tuple[str, ...] = ()
 
 
 def _is_chat_model_id(model_id: str) -> bool:
@@ -199,7 +211,8 @@ _OPENAI_DEFAULT_BASE = "https://api.openai.com/v1"
 
 
 def resolve_openai_base_url() -> str:
-    """Resolve the configured OpenAI base URL (``OPENAI_BASE_URL`` / ``OPENAI_API_BASE``).
+    """Resolve the configured OpenAI base URL (``OPENAI_BASE_URL`` /
+    ``OPENAI_API_BASE``).
 
     Callers needing only the *origin* should compare it with
     :func:`openai_base_is_nvidia` rather than echoing the URL: a proxy base can
@@ -610,6 +623,126 @@ def discover_openrouter_models() -> list[CloudModelInfo]:
     return discovered
 
 
+# ---------------------------------------------------------------------------
+# Mistral (La Plateforme)
+# ---------------------------------------------------------------------------
+
+_MISTRAL_DEFAULT_BASE = "https://api.mistral.ai/v1"
+
+# Mistral ``capabilities`` flag -> the tag the probe rows and pack builder use
+# (a subset of KNOWN_MODEL_CAPABILITIES). Flags with no tag there -- fine_tuning,
+# completion_fim, classification, ... -- are dropped. Order is the tag order.
+_MISTRAL_CAPABILITY_TAGS: tuple[tuple[str, str], ...] = (
+    ("function_calling", "tools"),
+    ("vision", "vision"),
+    ("reasoning", "reasoning"),
+    ("audio", "audio"),
+)
+
+
+def resolve_mistral_base_url() -> str:
+    """Resolve the Mistral ``/v1`` base URL.
+
+    Honors ``MISTRAL_BASE_URL`` (the variable ``langchain-mistralai`` reads
+    itself) for proxies/gateways; falls back to the public endpoint. The ``/v1``
+    segment is appended when the operator omits it so callers can append
+    ``/models`` unconditionally. This is the single source of truth shared by
+    discovery and :func:`agentic_v2.langchain.model_builders.build_mistral_model`,
+    so a discovered id is reachable at the host inference targets.
+    """
+    base = (os.environ.get("MISTRAL_BASE_URL") or _MISTRAL_DEFAULT_BASE).rstrip("/")
+    if not base.endswith("/v1"):
+        base = f"{base}/v1"
+    return base
+
+
+def mistral_base_is_documented() -> bool:
+    """Whether the resolved Mistral base is Mistral's documented origin.
+
+    The free-tier declaration (``MISTRAL_FREE_TIER``) describes the account at
+    Mistral's own API, not whatever sits behind a gateway, so
+    :mod:`agentic_v2.models.price_label` believes it only while this is true.
+    """
+    return _origin(resolve_mistral_base_url()) == _origin(_MISTRAL_DEFAULT_BASE)
+
+
+def _mistral_entries(payload: Any) -> list[Any]:
+    """The model cards in a ``/v1/models`` payload (``{"data": [...]}`` or a bare
+    array)."""
+    if isinstance(payload, dict):
+        payload = payload.get("data")
+    return payload if isinstance(payload, list) else []
+
+
+def _mistral_chat_id(entry: Any) -> str | None:
+    """Return the card's id when it is a live chat model, else ``None``.
+
+    The listing's own ``capabilities.completion_chat`` flag decides: it is what
+    keeps embeddings, OCR (which advertises vision and tools but not chat),
+    moderation and transcription out, and the id heuristic used elsewhere would
+    be a guess by comparison. A missing flag therefore means "not chat" and
+    ``archived`` cards are skipped. ``deprecation`` is deliberately **not** a
+    filter: a deprecated model the API still lists is still callable, and a
+    retired one is no longer listed at all.
+    """
+    if not isinstance(entry, dict):
+        return None
+    model_id = entry.get("id")
+    if not isinstance(model_id, str) or not model_id:
+        return None
+    if entry.get("archived") is True:
+        return None
+    capabilities = entry.get("capabilities")
+    if not isinstance(capabilities, dict):
+        return None
+    if capabilities.get("completion_chat") is not True:
+        return None
+    return model_id
+
+
+def _mistral_capability_tags(entry: Mapping[str, Any]) -> tuple[str, ...]:
+    """The probe tags for a chat card's literally-true capability flags."""
+    flags = entry.get("capabilities")
+    if not isinstance(flags, dict):
+        return ()
+    return tuple(
+        tag for flag, tag in _MISTRAL_CAPABILITY_TAGS if flags.get(flag) is True
+    )
+
+
+def discover_mistral_models() -> list[CloudModelInfo]:
+    """List the Mistral chat models the configured key can reach (best-effort).
+
+    Keyed: with no ``MISTRAL_API_KEY`` there is no call. The key travels only as
+    a bearer header. Every chat id the API returns is kept as its own entry --
+    ``-latest`` aliases next to dated ids, and Labs models -- because a user may
+    want a pinned id or a floating one; ids are de-duplicated, never collapsed
+    onto a canonical name. Mistral publishes no prices in this listing, so no
+    price rides along (see :mod:`agentic_v2.models.price_label`); the listing's
+    capability flags ride along as probe tags (see :class:`CloudModelInfo`).
+    """
+    api_key = os.environ.get("MISTRAL_API_KEY")
+    if not api_key:
+        return []
+    payload = _get_json(
+        f"{resolve_mistral_base_url()}/models",
+        headers={"Authorization": f"Bearer {api_key}"},
+    )
+    discovered: list[CloudModelInfo] = []
+    seen: set[str] = set()
+    for entry in _mistral_entries(payload):
+        model_id = _mistral_chat_id(entry)
+        if model_id is None or model_id in seen:
+            continue
+        seen.add(model_id)
+        discovered.append(
+            CloudModelInfo(
+                id=f"mistral:{model_id}", capabilities=_mistral_capability_tags(entry)
+            )
+        )
+    return discovered
+
+
 def discover_cloud_models() -> list[CloudModelInfo]:
     """Aggregate live cloud-provider listings (best-effort).
 
@@ -626,6 +759,7 @@ def discover_cloud_models() -> list[CloudModelInfo]:
         discover_github_models,
         discover_nvidia_models,
         discover_openrouter_models,
+        discover_mistral_models,
     )
     discovered: list[CloudModelInfo] = []
     with ThreadPoolExecutor(max_workers=len(probes)) as executor:
@@ -644,12 +778,15 @@ __all__ = [
     "discover_cloud_models",
     "discover_gemini_models",
     "discover_github_models",
+    "discover_mistral_models",
     "discover_nvidia_models",
     "discover_openai_models",
     "discover_openrouter_models",
+    "mistral_base_is_documented",
     "nvidia_base_is_documented",
     "openai_base_is_nvidia",
     "openrouter_base_is_documented",
+    "resolve_mistral_base_url",
     "resolve_nvidia_base_url",
     "resolve_openai_base_url",
     "resolve_openrouter_base_url",

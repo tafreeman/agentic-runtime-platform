@@ -64,6 +64,7 @@ selected adapter, installed extras, endpoint access, and configured model IDs.
 | NVIDIA NIM | `NVIDIA_API_KEY`; optional `NVIDIA_BASE_URL` for self-hosted NIM |
 | OpenRouter | `OPENROUTER_API_KEY`; optional `OPENROUTER_BASE_URL` |
 | DigitalOcean Serverless Inference | `DIGITALOCEAN_TOKEN` (LangChain path only; ids are `digitalocean:<catalog id>`) |
+| Mistral La Plateforme | `MISTRAL_API_KEY`; optional `MISTRAL_BASE_URL`; optional `MISTRAL_FREE_TIER=1` to declare a free account so the probe labels its models free (LangChain path only; ids are `mistral:<id>` as listed by `GET /v1/models`, Labs ids included) |
 | Azure OpenAI | `AZURE_OPENAI_API_KEY` and `AZURE_OPENAI_ENDPOINT`, or indexed pairs such as `_0`, `_1`, and matching deployment values |
 | Azure AI Foundry | `AZURE_FOUNDRY_API_KEY` and the endpoint selected by the Foundry adapter |
 | Ollama runtime | `OLLAMA_BASE_URL`, default `http://localhost:11434`; optional `OLLAMA_API_KEY` |

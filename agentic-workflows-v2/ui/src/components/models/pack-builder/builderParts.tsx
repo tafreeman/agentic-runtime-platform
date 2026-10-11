@@ -29,8 +29,8 @@ export const limitNote = (total: number): string =>
 
 /**
  * Tier-settings models plus every probed model, one entry per id. Tier
- * settings win on provider and on capabilities when they have any; a probed
- * model only fills in capabilities the tier entry lacks.
+ * settings win on provider and on capabilities when they have any. Probe-only
+ * tags remain visible, but are marked because server validation ignores them.
  */
 export function mergeModelCatalog(
   tierModels: readonly TierModelInfo[],
@@ -47,9 +47,10 @@ export function mergeModelCatalog(
         provider: model.provider,
         capabilities,
         capability_overridden: false,
+        capability_source: capabilities.length > 0 ? "probe" : undefined,
       });
-    } else if (known.capabilities.length === 0 && capabilities.length > 0) {
-      merged.set(model.id, { ...known, capabilities });
+    } else if (!known.capability_overridden && known.capabilities.length === 0 && capabilities.length > 0) {
+      merged.set(model.id, { ...known, capabilities, capability_source: "probe" });
     }
   }
   return [...merged.values()];
@@ -127,9 +128,12 @@ export function PricePill({ info }: Readonly<{ info: PriceInfo | undefined }>) {
   );
 }
 
-export function CapabilityTag({ name }: Readonly<{ name: string }>) {
+export function CapabilityTag({ name, reported = false }: Readonly<{ name: string; reported?: boolean }>) {
   return (
-    <span className="rounded-sm border border-el-divider px-1.5 py-px text-micro font-medium text-el-muted">
+    <span
+      className={`rounded-sm border px-1.5 py-px text-micro font-medium text-el-muted ${reported ? "border-dashed border-el-control-border" : "border-el-divider"}`}
+      title={reported ? "Reported by the provider; validation does not use it yet" : undefined}
+    >
       {name}
     </span>
   );

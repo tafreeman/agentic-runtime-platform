@@ -25,6 +25,8 @@ _ENV_VARS = (
     "LMSTUDIO_HOST",
     "OPENROUTER_BASE_URL",
     "NVIDIA_BASE_URL",
+    "MISTRAL_BASE_URL",
+    "MISTRAL_FREE_TIER",
 )
 
 
@@ -454,10 +456,14 @@ class TestOpenaiAliasForNvidia:
     def test_the_base_url_never_appears_in_the_row(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        secret_base = "https://user:hunter2@integrate.api.nvidia.com/v1"
-        monkeypatch.setenv("OPENAI_BASE_URL", secret_base)
+        # Built from parts so no credential-shaped literal sits in the source.
+        fake_credential = "hunter" + "2"
+        base_with_credentials = (
+            f"https://user:{fake_credential}@integrate.api.nvidia.com/v1"
+        )
+        monkeypatch.setenv("OPENAI_BASE_URL", base_with_credentials)
         (row,) = annotate_price_labels([_row("openai:some/model")])
-        assert "hunter2" not in repr(row)
+        assert fake_credential not in repr(row)
         assert "nvidia.com" not in repr(row)
 
 
@@ -499,6 +505,157 @@ class TestSourceDeclarations:
         )
 
 
+class TestMistralFreeTierSwitch:
+    """``MISTRAL_FREE_TIER`` is an opt-in declaration, off by default."""
+
+    _ID = "mistral:mistral-medium-latest"
+    _LABS = "mistral:labs-leanstral-1-5"
+
+    def test_unset_is_unknown(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        _use_registry(monkeypatch)
+        assert _verdict(_row(self._ID)) == ("unknown", "free tier not confirmed")
+
+    @pytest.mark.parametrize("value", ["1", "true", "TRUE", " True ", "yes", "on"])
+    def test_truthy_declares_every_mistral_model_free(
+        self, monkeypatch: pytest.MonkeyPatch, value: str
+    ) -> None:
+        _use_registry(monkeypatch)
+        monkeypatch.setenv("MISTRAL_FREE_TIER", value)
+        for model_id in (self._ID, self._LABS):
+            assert _verdict(_row(model_id)) == (
+                "free",
+                "free tier declared for mistral",
+            )
+
+    @pytest.mark.parametrize("value", ["", "0", "false", "no", "off", "maybe"])
+    def test_anything_else_stays_unknown(
+        self, monkeypatch: pytest.MonkeyPatch, value: str
+    ) -> None:
+        _use_registry(monkeypatch)
+        monkeypatch.setenv("MISTRAL_FREE_TIER", value)
+        assert _verdict(_row(self._ID)) == ("unknown", "free tier not confirmed")
+
+    def test_declaration_does_not_leak_to_other_providers(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _use_registry(monkeypatch)
+        monkeypatch.setenv("MISTRAL_FREE_TIER", "1")
+        assert _verdict(_row("openai:gpt-x")) == ("unknown", "price not published")
+        assert _verdict(_row("gemini:gemini-2.5-flash")) == (
+            "unknown",
+            "free tier not confirmed",
+        )
+
+    def test_gateway_base_url_voids_the_declaration(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _use_registry(monkeypatch)
+        monkeypatch.setenv("MISTRAL_FREE_TIER", "1")
+        monkeypatch.setenv("MISTRAL_BASE_URL", "http://gateway.local:8080")
+        assert _verdict(_row(self._ID)) == (
+            "unknown",
+            "address differs from the documented one",
+        )
+
+    def test_explicit_documented_base_url_keeps_the_declaration(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _use_registry(monkeypatch)
+        monkeypatch.setenv("MISTRAL_FREE_TIER", "1")
+        monkeypatch.setenv("MISTRAL_BASE_URL", "https://api.mistral.ai/v1/")
+        assert _verdict(_row(self._ID))[0] == "free"
+
+    def test_a_curated_price_beats_the_declaration(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _use_registry(
+            monkeypatch,
+            RegisteredModel(
+                id=self._ID, provider="mistral", price_in=0.4, price_out=2.0
+            ),
+        )
+        monkeypatch.setenv("MISTRAL_FREE_TIER", "1")
+        assert _verdict(_row(self._ID)) == ("paid", "price above 0")
+
+
+class TestCuratedPaidBeatsDeclarations:
+    """Registry entries marked ``cost_lane: paid`` are not shown as free."""
+
+    _PAID = ("paid", "curated as paid")
+
+    def test_nvidia_entry_curated_paid_is_paid(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _use_registry(
+            monkeypatch,
+            RegisteredModel(
+                id="nvidia:meta/llama-3.1-8b-instruct",
+                provider="nvidia",
+                cost_lane="paid",
+            ),
+        )
+        assert _verdict(_row("nvidia:meta/llama-3.1-8b-instruct")) == self._PAID
+
+    def test_uncurated_nvidia_id_is_still_the_declared_free_tier(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _use_registry(monkeypatch)
+        assert _verdict(_row("nvidia:meta/llama-3.1-8b-instruct")) == (
+            "free",
+            "free tier declared for nvidia",
+        )
+
+    def test_openai_alias_entry_curated_paid_is_paid(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("OPENAI_BASE_URL", "https://integrate.api.nvidia.com/v1")
+        _use_registry(
+            monkeypatch,
+            RegisteredModel(
+                id="openai:deepseek-ai/deepseek-v4-flash",
+                provider="openai",
+                cost_lane="paid",
+            ),
+        )
+        assert _verdict(_row("openai:deepseek-ai/deepseek-v4-flash")) == self._PAID
+
+    def test_openai_alias_entry_with_no_curation_is_still_free(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("OPENAI_BASE_URL", "https://integrate.api.nvidia.com/v1")
+        _use_registry(monkeypatch)
+        assert _verdict(_row("openai:some/model"))[0] == "free"
+
+    def test_mistral_opt_in_entry_curated_paid_is_paid(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("MISTRAL_FREE_TIER", "1")
+        _use_registry(
+            monkeypatch,
+            RegisteredModel(
+                id="mistral:mistral-large-latest", provider="mistral", cost_lane="paid"
+            ),
+        )
+        assert _verdict(_row("mistral:mistral-large-latest")) == self._PAID
+        # A model the registry says nothing about keeps the operator's declaration.
+        assert _verdict(_row("mistral:labs-leanstral-1-5"))[0] == "free"
+
+    def test_curated_price_still_decides_before_the_paid_lane(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _use_registry(
+            monkeypatch,
+            RegisteredModel(
+                id="nvidia:big/model",
+                provider="nvidia",
+                cost_lane="paid",
+                price_in=1.0,
+                price_out=2.0,
+            ),
+        )
+        assert _verdict(_row("nvidia:big/model")) == ("paid", "price above 0")
+
+
 class TestAgainstTheRealRegistry:
     """Invariants over the shipped model_registry.yaml, whatever it curates."""
 
@@ -513,6 +670,32 @@ class TestAgainstTheRealRegistry:
                 continue  # these are labelled by an explicit lane or declaration
             row = _row(entry.id, provider=entry.provider)
             assert _verdict(row)[0] != "free", entry.id
+
+    def test_an_explicit_paid_lane_is_never_labelled_free(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("MISTRAL_FREE_TIER", "1")
+        paid = [e for e in load_registry().models if e.cost_lane == "paid"]
+        assert paid
+        for entry in paid:
+            if entry.price_in is not None or entry.price_out is not None:
+                continue
+            row = _row(entry.id, provider=entry.provider)
+            assert _verdict(row)[0] != "free", entry.id
+
+    def test_curated_paid_nvidia_ids_in_the_shipped_registry_read_paid(self) -> None:
+        nvidia_paid = [
+            e
+            for e in load_registry().models
+            if e.provider == "nvidia"
+            and e.cost_lane == "paid"
+            and e.price_in is None
+            and e.price_out is None
+        ]
+        assert nvidia_paid
+        for entry in nvidia_paid:
+            row = _row(entry.id, provider=entry.provider)
+            assert _verdict(row) == ("paid", "curated as paid"), entry.id
 
     def test_every_registry_entry_gets_a_label(self) -> None:
         for entry in load_registry().models:

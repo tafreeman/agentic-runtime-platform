@@ -4,8 +4,10 @@ import {
   draftFromPack,
   draftReducer,
   draftToUpdate,
+  effectiveCapabilities,
   isDraftDirty,
   providerOf,
+  requiredCapabilities,
   unmetCapabilities,
 } from "../components/models/pack-builder/packDraft";
 import type { DraftAction, PackDraft } from "../components/models/pack-builder/packDraft";
@@ -40,6 +42,7 @@ function makeDraft(overrides: Partial<PackDraft> = {}): PackDraft {
     capabilityRequirements: { "0": ["tools", "json"] },
     allowedProviders: ["openai", "anthropic", "ollama"],
     judgeModel: G,
+    modelCapabilities: {},
     originTiers: ["0", "1", "2"],
     ...overrides,
   };
@@ -383,6 +386,36 @@ describe("draftFromPack", () => {
     expect(pack.allowed_providers).toEqual(["openai", "anthropic"]);
     expect(pack.tier_chains["0"]).toEqual([G, A]);
   });
+
+  it("carries the pack's model_capabilities, empty overrides included", () => {
+    const overrides = { [G]: ["vision"], [L]: [] };
+    const draft = draftFromPack({ ...pack, model_capabilities: overrides });
+
+    expect(draft.modelCapabilities).toEqual({ [G]: ["vision"], [L]: [] });
+    draft.modelCapabilities[G]?.push("tools");
+    expect(overrides[G]).toEqual(["vision"]);
+  });
+
+  it("treats omitted model_capabilities as no overrides", () => {
+    expect(draftFromPack(pack).modelCapabilities).toEqual({});
+  });
+
+  it("keeps the overrides through a reset and through every other edit", () => {
+    const loaded = draftFromPack({ ...pack, model_capabilities: { [G]: ["vision"] } });
+    const reset = draftReducer(makeDraft(), { type: "reset", draft: loaded });
+    expect(reset.modelCapabilities).toEqual({ [G]: ["vision"] });
+
+    const edited = [
+      draftReducer(reset, { type: "add", tier: "1", model: X }),
+      draftReducer(reset, { type: "remove", tier: "0", model: G }),
+      draftReducer(reset, { type: "toggleCapability", tier: "0", capability: "vision" }),
+      draftReducer(reset, { type: "toggleProvider", provider: "ollama" }),
+      draftReducer(reset, { type: "setJudge", model: null }),
+    ];
+    for (const next of edited) {
+      expect(next.modelCapabilities).toBe(reset.modelCapabilities);
+    }
+  });
 });
 
 describe("draftToUpdate", () => {
@@ -454,6 +487,28 @@ describe("draftToUpdate", () => {
   });
 });
 
+describe("draftToUpdate: model_capabilities", () => {
+  it("always sends the field, as {} when the pack has no overrides", () => {
+    expect(draftToUpdate(makeDraft())).toHaveProperty("model_capabilities", {});
+  });
+
+  it("sends the pack's overrides unchanged, keeping empty lists and sorting by model id", () => {
+    const update = draftToUpdate(
+      makeDraft({ modelCapabilities: { [L]: [], [G]: ["vision", "tools"], [A]: ["tools"] } }),
+    );
+
+    expect(update.model_capabilities).toEqual({ [A]: ["tools"], [G]: ["vision", "tools"], [L]: [] });
+    expect(Object.keys(update.model_capabilities)).toEqual([A, L, G]);
+  });
+
+  it("copies the lists so the payload does not alias the draft", () => {
+    const draft = makeDraft({ modelCapabilities: { [G]: ["vision"] } });
+    draftToUpdate(draft).model_capabilities[G]?.push("tools");
+
+    expect(draft.modelCapabilities[G]).toEqual(["vision"]);
+  });
+});
+
 describe("isDraftDirty", () => {
   it("is false for the same draft and for a structurally equal copy", () => {
     const state = makeDraft();
@@ -492,6 +547,13 @@ describe("isDraftDirty", () => {
       capabilityRequirements: { "0": ["tools", "json"], "1": ["vision"] },
     });
     expect(isDraftDirty(makeDraft(), added)).toBe(true);
+  });
+
+  it("is true when a model capability override changes, even to an empty list", () => {
+    const base = makeDraft({ modelCapabilities: { [G]: ["vision"] } });
+    expect(isDraftDirty(base, makeDraft({ modelCapabilities: { [G]: ["vision"] } }))).toBe(false);
+    expect(isDraftDirty(base, makeDraft({ modelCapabilities: { [G]: [] } }))).toBe(true);
+    expect(isDraftDirty(base, makeDraft())).toBe(true);
   });
 });
 
@@ -558,5 +620,125 @@ describe("unmetCapabilities", () => {
       capability: "vision",
     });
     expect(unmetCapabilities(toggled, "1", capabilities)).toEqual(["vision"]);
+  });
+
+  describe("one model must have every required capability", () => {
+    // Matches the server's capability_unsatisfied check: spread across models does not count.
+    it("is unmet when the capabilities are split across two models", () => {
+      const split: Record<string, string[]> = { [G]: ["vision"], [A]: ["tools"] };
+      const draft = makeDraft({
+        tierChains: { "0": [G, A] },
+        capabilityRequirements: { "0": ["tools", "vision"] },
+      });
+
+      // Neither model has both: the first, tied for closest, still lacks tools.
+      expect(unmetCapabilities(draft, "0", split)).toEqual(["tools"]);
+    });
+
+    it("is met when a single model has them all", () => {
+      const both: Record<string, string[]> = { [G]: ["vision", "tools"], [A]: ["tools"] };
+      const draft = makeDraft({
+        tierChains: { "0": [A, G] },
+        capabilityRequirements: { "0": ["tools", "vision"] },
+      });
+
+      expect(unmetCapabilities(draft, "0", both)).toEqual([]);
+    });
+
+    it("is met by a later model even when earlier ones fall short", () => {
+      const draft = makeDraft({ capabilityRequirements: { "0": ["tools", "vision"] } });
+      expect(unmetCapabilities(draft, "0", capabilities)).toEqual([]);
+    });
+
+    it("returns what the closest model lacks, not everything missing across the chain", () => {
+      const draft = makeDraft({
+        capabilityRequirements: { "0": ["tools", "vision", "audio"] },
+      });
+      // G lacks vision and audio, A lacks only audio, L lacks all three.
+      expect(unmetCapabilities(draft, "0", capabilities)).toEqual(["audio"]);
+    });
+
+    it("breaks a tie in favour of the model earlier in the chain", () => {
+      const draft = makeDraft({ capabilityRequirements: { "0": ["vision", "json"] } });
+      // G lacks vision, A lacks json: one each, and G comes first.
+      expect(unmetCapabilities(draft, "0", capabilities)).toEqual(["vision"]);
+    });
+  });
+
+  describe("unknown capability tags", () => {
+    const draft = makeDraft({ capabilityRequirements: { "0": ["vision", "zzz"] } });
+
+    it("count as requirements when the known set is not given", () => {
+      expect(unmetCapabilities(draft, "0", capabilities)).toEqual(["zzz"]);
+    });
+
+    it("are ignored, like the server does, once the known set is given", () => {
+      expect(unmetCapabilities(draft, "0", capabilities, ["tools", "vision"])).toEqual([]);
+      expect(requiredCapabilities(draft, "0", ["tools", "vision"])).toEqual(["vision"]);
+    });
+
+    it("leave nothing to check when every required tag is unknown", () => {
+      const onlyUnknown = makeDraft({ capabilityRequirements: { "0": ["zzz"] } });
+      expect(unmetCapabilities(onlyUnknown, "0", capabilities, ["tools"])).toEqual([]);
+    });
+  });
+
+  describe("pack-level model_capabilities", () => {
+    it("outrank the catalog: an override can supply a capability", () => {
+      const draft = makeDraft({
+        tierChains: { "0": [L] },
+        capabilityRequirements: { "0": ["vision"] },
+        modelCapabilities: { [L]: ["vision"] },
+      });
+
+      expect(unmetCapabilities(draft, "0", capabilities)).toEqual([]);
+    });
+
+    it("outrank the catalog: an override can take a capability away", () => {
+      const draft = makeDraft({
+        tierChains: { "0": [G] },
+        capabilityRequirements: { "0": ["tools"] },
+        modelCapabilities: { [G]: ["json"] },
+      });
+
+      expect(unmetCapabilities(draft, "0", capabilities)).toEqual(["tools"]);
+    });
+
+    it("win even when empty, instead of falling through to the catalog", () => {
+      const draft = makeDraft({
+        tierChains: { "0": [G] },
+        capabilityRequirements: { "0": ["tools"] },
+        modelCapabilities: { [G]: [] },
+      });
+
+      expect(unmetCapabilities(draft, "0", capabilities)).toEqual(["tools"]);
+    });
+
+    it("cover a model the catalog has never heard of", () => {
+      const draft = makeDraft({
+        tierChains: { "0": [X] },
+        capabilityRequirements: { "0": ["tools"] },
+        modelCapabilities: { [X]: ["tools"] },
+      });
+
+      expect(unmetCapabilities(draft, "0", capabilities)).toEqual([]);
+    });
+  });
+});
+
+describe("effectiveCapabilities", () => {
+  const catalog: Record<string, string[]> = { [G]: ["tools"], [A]: ["vision"] };
+
+  it("takes the pack override, then the catalog, then nothing", () => {
+    const draft = makeDraft({ modelCapabilities: { [G]: ["json"], [L]: [] } });
+
+    expect(effectiveCapabilities(draft, G, catalog)).toEqual(["json"]);
+    expect(effectiveCapabilities(draft, A, catalog)).toEqual(["vision"]);
+    expect(effectiveCapabilities(draft, L, catalog)).toEqual([]);
+    expect(effectiveCapabilities(draft, X, catalog)).toEqual([]);
+  });
+
+  it("never resolves an inherited object member as a model", () => {
+    expect(effectiveCapabilities(makeDraft(), "constructor", catalog)).toEqual([]);
   });
 });

@@ -76,6 +76,7 @@ from .model_builders import (
     build_lmstudio_model,
     build_local_api_model,
     build_local_onnx_model,
+    build_mistral_model,
     build_notebooklm_model,
     build_nvidia_model,
     build_ollama_model,
@@ -438,6 +439,10 @@ def _merge_cloud_models(
 ) -> Sequence[CloudModelInfo]:
     """Append live cloud-provider listings as tier-0 catalog entries.
 
+    A listing that advertises capabilities (Mistral's) has them copied onto its
+    row as ``capabilities``, like the Ollama and LM Studio rows; rows for
+    providers that publish none carry no ``capabilities`` key.
+
     Skipped entirely in no-LLM mode: every tier routes to the placeholder
     there, so a live listing would mislead and cost network (it also keeps the
     ``AGENTIC_NO_LLM=1`` unit suite hermetic). Availability reflects the key
@@ -457,14 +462,15 @@ def _merge_cloud_models(
         if info.id in known_ids:
             continue
         known_ids.add(info.id)
-        models.append(
-            {
-                "id": info.id,
-                "provider": provider_prefix(info.id),
-                "tier": 0,
-                "available": is_provider_available(provider_prefix(info.id)),
-            }
-        )
+        entry: dict[str, Any] = {
+            "id": info.id,
+            "provider": provider_prefix(info.id),
+            "tier": 0,
+            "available": is_provider_available(provider_prefix(info.id)),
+        }
+        if info.capabilities:
+            entry["capabilities"] = list(info.capabilities)
+        models.append(entry)
     return listing
 
 
@@ -602,6 +608,7 @@ _PREFIX_BUILDERS: tuple[tuple[str, Any], ...] = (
     ("nvidia:", build_nvidia_model),
     ("openrouter:", build_openrouter_model),
     ("digitalocean:", build_digitalocean_model),
+    ("mistral:", build_mistral_model),
     ("anthropic:", build_anthropic_model),
     ("claude:", build_anthropic_model),
     ("gemini:", build_gemini_model),
@@ -620,6 +627,7 @@ _KNOWN_PREFIXES: tuple[str, ...] = (
     "nvidia:",
     "openrouter:",
     "digitalocean:",
+    "mistral:",
     "azure:",
     "local:",
     "windows-ai:",
@@ -861,6 +869,7 @@ __all__ = [
     "build_nvidia_model",
     "build_openrouter_model",
     "build_digitalocean_model",
+    "build_mistral_model",
     "build_anthropic_model",
     "build_gemini_model",
     "build_notebooklm_model",

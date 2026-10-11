@@ -50,22 +50,35 @@ const INSTRUCTIONS =
   "To pick up a model in a tier, press space or enter on its reorder button. " +
   "Use the arrow keys to move it, then press space or enter to drop it, or escape to cancel.";
 
-/** Tier-settings models plus any id the pack already references. */
+/**
+ * The catalog plus any id the pack already references, with the pack's own
+ * capability overrides applied. Probe-only tags remain visible with their
+ * source marked; the server does not validate against those tags.
+ */
 function withPackModels(
   models: readonly TierModelInfo[],
   draft: PackDraft,
 ): TierModelInfo[] {
+  const overrides = draft.modelCapabilities;
+  const withOverride = (model: TierModelInfo): TierModelInfo => {
+    const override = Object.hasOwn(overrides, model.id) ? overrides[model.id] : undefined;
+    return override === undefined
+      ? model
+      : { ...model, capabilities: [...override], capability_source: undefined };
+  };
   const known = new Set(models.map((model) => model.id));
   const extra = [...Object.values(draft.tierChains).flat(), draft.judgeModel ?? ""]
     .filter((id) => id !== "" && !known.has(id));
   return [
-    ...models,
-    ...[...new Set(extra)].map((id) => ({
-      id,
-      provider: providerOf(id),
-      capabilities: [],
-      capability_overridden: false,
-    })),
+    ...models.map(withOverride),
+    ...[...new Set(extra)].map((id) =>
+      withOverride({
+        id,
+        provider: providerOf(id),
+        capabilities: [],
+        capability_overridden: false,
+      }),
+    ),
   ];
 }
 

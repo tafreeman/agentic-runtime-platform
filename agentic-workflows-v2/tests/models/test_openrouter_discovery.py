@@ -41,6 +41,8 @@ _ALL_KEYS = (
     "GITHUB_TOKEN",
     "NVIDIA_API_KEY",
     "NVIDIA_BASE_URL",
+    "MISTRAL_API_KEY",
+    "MISTRAL_BASE_URL",
 )
 
 

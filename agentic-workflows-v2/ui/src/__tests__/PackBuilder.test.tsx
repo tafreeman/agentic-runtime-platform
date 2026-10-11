@@ -326,6 +326,125 @@ describe("PackBuilder", () => {
     expect(lane("2").getByText("No model in tier 2 has thinking")).toBeInTheDocument();
   });
 
+  describe("capability requirements need one model with all of them", () => {
+    const EYES = "acme:eyes";
+    const HANDS = "acme:hands";
+    const BOTH = "acme:both";
+    const SPLIT_MODELS = [model(EYES, ["vision"]), model(HANDS, ["tools"]), model(BOTH, ["vision", "tools"])];
+    const draftWith = (
+      chain: string[],
+      required: string[],
+      modelCapabilities: Record<string, string[]> = {},
+    ) =>
+      draftFromPack({
+        tier_chains: { "2": chain },
+        capability_requirements: { "2": required },
+        allowed_providers: [],
+        judge_model: null,
+        model_capabilities: modelCapabilities,
+      });
+
+    it("warns when vision and tools are split across two models", () => {
+      setup({ models: SPLIT_MODELS, initial: draftWith([EYES, HANDS], ["tools", "vision"]) });
+
+      expect(lane("2").getByText("No single model in tier 2 has tools and vision")).toBeInTheDocument();
+    });
+
+    it("does not warn when one model has both", () => {
+      setup({ models: SPLIT_MODELS, initial: draftWith([EYES, BOTH], ["tools", "vision"]) });
+
+      expect(lane("2").queryByText(/No (single )?model in tier 2/)).toBeNull();
+    });
+
+    it("clears the warning when the model that has both is added", async () => {
+      const seen = setup({
+        models: SPLIT_MODELS,
+        initial: draftWith([EYES, HANDS], ["tools", "vision"]),
+      });
+      expect(lane("2").getByText(/No single model in tier 2/)).toBeInTheDocument();
+
+      const menu = await openMenu(screen.getByRole("button", { name: `Add to tier for ${BOTH}` }));
+      fireEvent.click(within(menu).getByRole("menuitem", { name: "Tier 2" }));
+
+      await waitFor(() => expect(seen.draft.tierChains["2"]).toEqual([EYES, HANDS, BOTH]));
+      expect(lane("2").queryByText(/No (single )?model in tier 2/)).toBeNull();
+    });
+
+    it("words three requirements as an and-list", () => {
+      setup({
+        models: SPLIT_MODELS,
+        initial: draftWith([EYES], ["tools", "vision", "thinking"]),
+      });
+
+      expect(
+        lane("2").getByText("No single model in tier 2 has tools, vision, and thinking"),
+      ).toBeInTheDocument();
+    });
+
+    it("keeps the single-tag wording for one requirement", () => {
+      setup({ models: SPLIT_MODELS, initial: draftWith([HANDS], ["vision"]) });
+
+      expect(lane("2").getByText("No model in tier 2 has vision")).toBeInTheDocument();
+    });
+
+    it("ignores a tag the server does not know, as the server does", () => {
+      setup({ models: SPLIT_MODELS, initial: draftWith([EYES], ["vision", "bogus"]) });
+
+      expect(lane("2").queryByText(/No (single )?model in tier 2/)).toBeNull();
+    });
+
+    it("lets the pack's own overrides decide, and shows their tags", () => {
+      // Tier settings give acme:hands only "tools"; the pack says it also has vision.
+      setup({
+        models: SPLIT_MODELS,
+        initial: draftWith([EYES, HANDS], ["tools", "vision"], { [HANDS]: ["tools", "vision"] }),
+      });
+
+      expect(lane("2").queryByText(/No (single )?model in tier 2/)).toBeNull();
+      const chips = within(screen.getByRole("list", { name: "Tier 2 models, tried in order" }));
+      expect(chips.getAllByRole("listitem")[1]).toHaveTextContent("vision");
+      // The palette shows the override too, not the tier-settings tags.
+      const row = within(screen.getByRole("list", { name: "Models" }))
+        .getAllByRole("listitem")
+        .find((item) => item.querySelector("[title]")?.getAttribute("title") === HANDS);
+      expect(row).toHaveTextContent("vision");
+    });
+
+    it("treats an empty override as having no capabilities", () => {
+      setup({
+        models: SPLIT_MODELS,
+        initial: draftWith([BOTH], ["vision"], { [BOTH]: [] }),
+      });
+
+      expect(lane("2").getByText("No model in tier 2 has vision")).toBeInTheDocument();
+    });
+
+    it("warns for a probe-only capability and marks its displayed tags", () => {
+      const probeOnly = mergeModelCatalog([], [
+        { id: "mistral:small", provider: "mistral", tier: 0, available: true, capabilities: ["tools"] },
+      ]);
+      setup({ models: probeOnly, initial: draftWith(["mistral:small"], ["tools"]) });
+
+      expect(lane("2").getByText("No model in tier 2 has tools")).toBeInTheDocument();
+      const title = "Reported by the provider; validation does not use it yet";
+      expect(lane("2").getByTitle(title)).toHaveTextContent("tools");
+      expect(screen.getByRole("list", { name: "Models" }).querySelector(`[title="${title}"]`)).toHaveTextContent("tools");
+    });
+
+    it("uses a pack override in place of probe tags", () => {
+      const probeOnly = mergeModelCatalog([], [
+        { id: "mistral:small", provider: "mistral", tier: 0, available: true, capabilities: ["vision"] },
+      ]);
+      setup({
+        models: probeOnly,
+        initial: draftWith(["mistral:small"], ["tools"], { "mistral:small": ["tools"] }),
+      });
+
+      expect(lane("2").queryByText("No model in tier 2 has tools")).toBeNull();
+      expect(lane("2").queryByTitle("Reported by the provider; validation does not use it yet")).toBeNull();
+    });
+  });
+
   it("toggles allowed providers and explains that none selected allows every provider", () => {
     const seen = setup();
     const group = within(screen.getByRole("group", { name: "Allowed providers" }));
@@ -625,6 +744,7 @@ describe("model catalog", () => {
       provider: "acme",
       capabilities: ["vision"],
       capability_overridden: false,
+      capability_source: "probe",
     });
     expect(merged.find((entry) => entry.id === "acme:bare")?.capabilities).toEqual([]);
   });
@@ -639,6 +759,22 @@ describe("model catalog", () => {
 
     expect(capabilitiesOf(GPT)).toEqual(["vision", "tools"]);
     expect(capabilitiesOf(LLAMA)).toEqual(["tools"]);
+  });
+
+  it("keeps an explicit empty tier-settings override ahead of probe tags", () => {
+    const emptyOverride = { ...model("acme:empty"), capability_overridden: true };
+    const merged = mergeModelCatalog([emptyOverride], [probed("acme:empty", ["tools"])]);
+
+    expect(merged[0]?.capabilities).toEqual([]);
+    expect(merged[0]?.capability_source).toBeUndefined();
+  });
+
+  it("keeps a probe-only model's global override ahead of provider tags", () => {
+    const globalOverride = { ...model("mistral:small", ["tools"]), capability_overridden: true };
+    const merged = mergeModelCatalog([globalOverride], [probed("mistral:small", ["vision"])]);
+
+    expect(merged[0]?.capabilities).toEqual(["tools"]);
+    expect(merged[0]?.capability_source).toBeUndefined();
   });
 
   it("does not mutate its inputs", () => {

@@ -1,5 +1,38 @@
 # Changelog
 
+## Unreleased - Mistral La Plateforme provider
+
+- **New `mistral:` prefix, probe and builder.** Ids are `mistral:<id>` exactly as
+  `GET https://api.mistral.ai/v1/models` lists them, gated on `MISTRAL_API_KEY`
+  (`PROVIDER_ENV_KEYS`, `.env.example`; optional `MISTRAL_BASE_URL`). The
+  LangChain builder uses the first-party `langchain-mistralai` (`ChatMistralAI`,
+  now in the `langchain` extra), not `ChatOpenAI`: Mistral's API is only partly
+  OpenAI-compatible. Discovery is a keyed header-auth listing that keeps exactly
+  the models advertising `capabilities.completion_chat`, so embeddings, OCR,
+  moderation and transcription models drop out while Labs models
+  (`labs-leanstral-…`, the same listing and endpoint) and `-latest` aliases stay.
+- **Price label.** Mistral's listing publishes no prices and its free tier belongs
+  to the account, so mistral models are `unknown` ("free tier not confirmed").
+  Setting `MISTRAL_FREE_TIER=1` declares a free account and labels them `free`
+  ("free tier declared for mistral"); a non-Mistral `MISTRAL_BASE_URL` voids it.
+- **Capabilities.** The listing's `function_calling`, `vision`, `reasoning` and
+  `audio` flags ride along as `tools`, `vision`, `reasoning` and `audio` tags
+  (`CloudModelInfo.capabilities`), which `enumerate_known_models` copies onto the
+  probe row as display-only `capabilities`. Pack validation uses pack overrides,
+  tier settings and registry capabilities; provider-reported tags are marked in
+  the builder and do not satisfy tier requirements until configured there.
+- **LangChain engine only**, like DigitalOcean: no native `MultiBackend` backend,
+  no `model_registry.yaml` entry and no tier-chain membership. On the native
+  engine, `mistral:` and `digitalocean:` ids now raise "served only by the
+  LangChain engine" instead of falling through to the bare-name OpenAI default,
+  which on a machine whose `OPENAI_BASE_URL` is another vendor's API would have
+  sent them to that vendor.
+- **Price label.** A registry entry explicitly curated `cost_lane: paid` now reads
+  `paid` ("curated as paid") instead of inheriting a provider-wide free
+  declaration (NVIDIA's, the `OPENAI_BASE_URL`-to-NVIDIA alias's when no price
+  speaks, or the `MISTRAL_FREE_TIER` opt-in). Live and curated prices still decide
+  first.
+
 ## Unreleased - UI design guardrails
 
 - The design rules from the accessibility pass are now enforced in CI rather

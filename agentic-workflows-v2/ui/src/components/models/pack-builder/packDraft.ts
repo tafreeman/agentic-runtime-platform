@@ -13,6 +13,12 @@ export interface PackDraft {
   capabilityRequirements: Record<string, string[]>;
   allowedProviders: string[];
   judgeModel: string | null;
+  /**
+   * The pack's own capability overrides, model id → tags. They outrank every
+   * other source (even an empty list, which means "no capabilities") and the
+   * builder has no editor for them, so they are carried through unchanged.
+   */
+  modelCapabilities: Record<string, string[]>;
   /** Tier keys present in the source pack; kept in the output even if emptied. */
   originTiers: string[];
 }
@@ -58,7 +64,8 @@ export function draftFromPack(
   pack: Pick<
     ModelPack,
     "tier_chains" | "capability_requirements" | "allowed_providers" | "judge_model"
-  >,
+  > &
+    Partial<Pick<ModelPack, "model_capabilities">>,
   tiers: readonly string[] = [],
 ): PackDraft {
   const tierChains = copyRecord(pack.tier_chains);
@@ -70,13 +77,25 @@ export function draftFromPack(
     capabilityRequirements: copyRecord(pack.capability_requirements),
     allowedProviders: [...pack.allowed_providers],
     judgeModel: normalizeJudge(pack.judge_model),
+    modelCapabilities: copyRecord(pack.model_capabilities ?? {}),
     originTiers: Object.keys(pack.tier_chains),
   };
 }
 
+/**
+ * The update payload. `model_capabilities` is always sent, even when the
+ * builder never touched it: the server fills omitted fields from the pack's
+ * latest version, which is not necessarily the version being edited, so an
+ * omitted field could silently swap in another version's overrides.
+ */
 export function draftToUpdate(
   draft: PackDraft,
-): Required<Pick<ModelPackUpdateRequest, "tier_chains" | "capability_requirements" | "allowed_providers">> &
+): Required<
+  Pick<
+    ModelPackUpdateRequest,
+    "tier_chains" | "capability_requirements" | "allowed_providers" | "model_capabilities"
+  >
+> &
   Pick<ModelPackUpdateRequest, "judge_model"> {
   const origin = new Set(draft.originTiers);
   const tierKeys = sortTierKeys([...Object.keys(draft.tierChains), ...draft.originTiers]);
@@ -96,11 +115,19 @@ export function draftToUpdate(
     }
   }
 
+  // Overrides keep their order and their empty lists: `[]` is a real override
+  // ("this model has no capabilities"), not an absent one.
+  const model_capabilities: Record<string, string[]> = {};
+  for (const model of Object.keys(draft.modelCapabilities).sort()) {
+    model_capabilities[model] = [...(lookup(draft.modelCapabilities, model) ?? [])];
+  }
+
   return {
     tier_chains,
     capability_requirements,
     allowed_providers: uniqueSorted(draft.allowedProviders),
     judge_model: normalizeJudge(draft.judgeModel),
+    model_capabilities,
   };
 }
 
@@ -111,7 +138,8 @@ export function isDraftDirty(a: PackDraft, b: PackDraft): boolean {
     left.judge_model === right.judge_model &&
     arraysEqual(left.allowed_providers, right.allowed_providers) &&
     recordsEqual(left.tier_chains, right.tier_chains) &&
-    recordsEqual(left.capability_requirements, right.capability_requirements)
+    recordsEqual(left.capability_requirements, right.capability_requirements) &&
+    recordsEqual(left.model_capabilities, right.model_capabilities)
   );
 }
 
@@ -121,26 +149,63 @@ export function providerOf(modelId: string): string {
   return colon === -1 ? modelId : modelId.slice(0, colon);
 }
 
+type CapabilityCatalog = Readonly<Record<string, readonly string[]>>;
+
 /**
- * Required capabilities on `tier` that no model in its chain provides, in
- * requirement order. Empty when the chain is empty or nothing is required.
+ * A model's capabilities as the server's pack validation reads them: the
+ * pack's own override first, then the server-confirmed catalog (tier settings
+ * and registry defaults). Probe-only tags are excluded by the caller. An
+ * override wins even when it is empty, and a model found nowhere has none.
+ */
+export function effectiveCapabilities(
+  draft: PackDraft,
+  model: string,
+  catalog: CapabilityCatalog,
+): readonly string[] {
+  return lookup(draft.modelCapabilities, model) ?? lookup(catalog, model) ?? [];
+}
+
+/**
+ * The capabilities `tier` requires, in requirement order. When
+ * `knownCapabilities` is given, tags outside it are left out: the server
+ * reports those separately as unknown and does not count them toward whether
+ * the tier can be satisfied.
+ */
+export function requiredCapabilities(
+  draft: PackDraft,
+  tier: string,
+  knownCapabilities: readonly string[] = [],
+): string[] {
+  const required = [...new Set(lookup(draft.capabilityRequirements, tier) ?? [])];
+  if (knownCapabilities.length === 0) return required;
+  return required.filter((capability) => knownCapabilities.includes(capability));
+}
+
+/**
+ * Empty when `tier` can be satisfied: its chain is empty, nothing is
+ * required, or ONE model in the chain has every required capability, which
+ * is how the server checks it (capabilities spread across models do not
+ * count). Otherwise the required capabilities missing from the chain model
+ * that comes closest, in requirement order; the first such model wins a tie.
  */
 export function unmetCapabilities(
   draft: PackDraft,
   tier: string,
-  modelCapabilities: Readonly<Record<string, readonly string[]>>,
+  catalogCapabilities: CapabilityCatalog,
+  knownCapabilities: readonly string[] = [],
 ): string[] {
-  const required = lookup(draft.capabilityRequirements, tier) ?? [];
+  const required = requiredCapabilities(draft, tier, knownCapabilities);
   const chain = lookup(draft.tierChains, tier) ?? [];
   if (required.length === 0 || chain.length === 0) return [];
 
-  const offered = new Set<string>();
+  let closest: string[] | null = null;
   for (const model of chain) {
-    for (const capability of lookup(modelCapabilities, model) ?? []) {
-      offered.add(capability);
-    }
+    const offered = new Set(effectiveCapabilities(draft, model, catalogCapabilities));
+    const missing = required.filter((capability) => !offered.has(capability));
+    if (missing.length === 0) return [];
+    if (closest === null || missing.length < closest.length) closest = missing;
   }
-  return required.filter((capability) => !offered.has(capability));
+  return closest ?? [];
 }
 
 // ---------------------------------------------------------------------------

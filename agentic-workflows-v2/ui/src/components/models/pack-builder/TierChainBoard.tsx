@@ -20,7 +20,21 @@ import {
   type PriceInfo,
 } from "./builderParts";
 import { AddModelPicker } from "./ModelPalette";
-import { unmetCapabilities, type DraftAction, type PackDraft } from "./packDraft";
+import {
+  requiredCapabilities,
+  unmetCapabilities,
+  type DraftAction,
+  type PackDraft,
+} from "./packDraft";
+
+const AND_LIST = new Intl.ListFormat("en", { style: "long", type: "conjunction" });
+
+/** The server needs ONE model with every required tag, so say "single" once there are several. */
+function unmetMessage(tier: string, required: readonly string[]): string {
+  return required.length === 1
+    ? `No model in tier ${tier} has ${required[0]}`
+    : `No single model in tier ${tier} has ${AND_LIST.format(required)}`;
+}
 
 type Mark = "before" | "after" | undefined;
 
@@ -114,7 +128,7 @@ function ChainChip({
         <span className="hidden flex-none items-center gap-1 sm:flex">
           <PricePill info={price} />
           {(info?.capabilities ?? []).map((name) => (
-            <CapabilityTag key={name} name={name} />
+            <CapabilityTag key={name} name={name} reported={info?.capability_source === "probe"} />
           ))}
         </span>
         <span className="flex flex-none gap-1">
@@ -256,11 +270,15 @@ function TierLane({
     data: { kind: "lane", tier },
     disabled,
   });
+  // Pack overrides are in the draft. Probe-only tags are display-only because
+  // the server validates against pack, tier-settings and registry data.
   const unmet = useMemo(() => {
     const offered: Record<string, string[]> = {};
-    for (const model of models) offered[model.id] = model.capabilities;
-    return unmetCapabilities(draft, tier, offered);
-  }, [draft, tier, models]);
+    for (const model of models) {
+      offered[model.id] = model.capability_source === "probe" ? [] : model.capabilities;
+    }
+    return unmetCapabilities(draft, tier, offered, capabilities);
+  }, [draft, tier, models, capabilities]);
   const target = dropTarget?.tier === tier ? dropTarget : null;
   const markAt = (index: number): Mark => {
     if (!target) return undefined;
@@ -335,11 +353,11 @@ function TierLane({
         dispatch={dispatch}
       />
       <div aria-live="polite">
-        {unmet.map((capability) => (
-          <p key={capability} className="mt-2 text-xs text-el-warning">
-            No model in tier {tier} has {capability}
+        {unmet.length > 0 && (
+          <p className="mt-2 text-xs text-el-warning">
+            {unmetMessage(tier, requiredCapabilities(draft, tier, capabilities))}
           </p>
-        ))}
+        )}
       </div>
     </section>
   );

@@ -14,6 +14,7 @@ from typing import Any
 
 from .cloud_discovery import (
     CloudModelInfo,
+    mistral_base_is_documented,
     nvidia_base_is_documented,
     openai_base_is_nvidia,
     openrouter_base_is_documented,
@@ -36,7 +37,13 @@ _ALWAYS_ON_MACHINE = frozenset({"local", "onnx"})
 _DOCUMENTED_ADDRESS_CHECKS: dict[str, Callable[[], bool]] = {
     "openrouter": openrouter_base_is_documented,
     "nvidia": nvidia_base_is_documented,
+    "mistral": mistral_base_is_documented,
 }
+
+# Providers whose free tier belongs to the account, so no listing can confirm it:
+# the operator declares it with an env var (an opt-in, off by default).
+_FREE_TIER_ENV: dict[str, str] = {"mistral": "MISTRAL_FREE_TIER"}
+_TRUTHY = frozenset({"1", "true", "yes", "on"})
 
 
 def _lmstudio_host_is_loopback() -> bool:
@@ -82,6 +89,18 @@ def _placement(model: Mapping[str, Any]) -> Placement:
     return "hosted"
 
 
+def _free_tier_declared(provider: str) -> bool:
+    """Whether the operator declared this provider's free tier.
+
+    ``MISTRAL_FREE_TIER`` set to ``1`` / ``true`` / ``yes`` / ``on`` declares it;
+    unset, empty or anything else is "not declared" (the label stays unknown).
+    """
+    env_var = _FREE_TIER_ENV.get(provider)
+    if env_var is None:
+        return False
+    return os.environ.get(env_var, "").strip().lower() in _TRUTHY
+
+
 def _live_prices(info: CloudModelInfo | None) -> Prices | None:
     """The listing's published prices, or ``None`` when it published none."""
     if info is None:
@@ -117,6 +136,7 @@ def annotate_price_labels(
             live=_live_prices(live.get(str(model["id"]))),
             curated=_curated_prices(entry),
             curated_lane=None if entry is None else entry.cost_lane,
+            free_tier_declared=_free_tier_declared(str(model["provider"])),
         )
         label, reason = label_price(facts)
         annotated.append({**model, "price_label": label, "price_reason": reason})

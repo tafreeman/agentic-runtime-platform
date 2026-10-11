@@ -147,18 +147,23 @@ httpx==0.28.1
     #   google-genai
     #   huggingface-hub
     #   langchain-core
+    #   langchain-mistralai
     #   langgraph-sdk
     #   mcp
     #   ollama
     #   openai
 httpx-sse==0.4.3
-    # via mcp
+    # via
+    #   langchain-mistralai
+    #   mcp
 httpx2==2.13.1
     # via langsmith
 httpx2-jsfetch==1.0 ; python_full_version >= '3.12' and sys_platform == 'emscripten'
     # via httpx2
 huggingface-hub==1.33.0
-    # via agentic-evalkit
+    # via
+    #   agentic-evalkit
+    #   tokenizers
 hypothesis==6.168.3
     # via agentic-workflows-v2
 identify==2.6.20
@@ -203,6 +208,7 @@ langchain-core==1.6.1
     #   langchain
     #   langchain-anthropic
     #   langchain-google-genai
+    #   langchain-mistralai
     #   langchain-ollama
     #   langchain-openai
     #   langgraph
@@ -210,6 +216,8 @@ langchain-core==1.6.1
     #   langgraph-prebuilt
     #   langgraph-sdk
 langchain-google-genai==4.2.4
+    # via agentic-workflows-v2
+langchain-mistralai==1.1.6
     # via agentic-workflows-v2
 langchain-ollama==1.1.0
     # via agentic-workflows-v2
@@ -396,6 +404,7 @@ pydantic==2.13.5
     #   langchain-anthropic
     #   langchain-core
     #   langchain-google-genai
+    #   langchain-mistralai
     #   langgraph
     #   langsmith
     #   mcp
@@ -533,6 +542,8 @@ tenacity==9.1.4
     #   langchain-core
 tiktoken==0.12.0
     # via langchain-openai
+tokenizers==0.22.2
+    # via langchain-mistralai
 tomli==2.4.1 ; python_full_version <= '3.11'
     # via coverage
 tqdm==4.70.1
