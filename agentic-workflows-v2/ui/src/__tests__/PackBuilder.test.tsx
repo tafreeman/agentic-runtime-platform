@@ -630,6 +630,19 @@ describe("PackBuilder", () => {
       await waitFor(() => expect(seen.draft.tierChains["3"]).toEqual([CUSTOM]));
     });
 
+    it("adds the exact typed id on Enter even when a catalog id contains it", async () => {
+      const seen = setup();
+      const typed = "openai:gpt-4"; // a prefix of the catalog's openai:gpt-4o
+
+      const options = await typeInPicker("3", typed);
+      const rows = options.getAllByRole("option");
+      expect(rows[0]).toHaveAccessibleName(new RegExp(`Add ${typed} to tier 3`));
+      expect(options.getByRole("option", { name: new RegExp(GPT) })).toBeInTheDocument();
+      fireEvent.keyDown(screen.getByLabelText("Search models for tier 3"), { key: "Enter" });
+
+      await waitFor(() => expect(seen.draft.tierChains["3"]).toEqual([typed]));
+    });
+
     it("offers nothing extra for text that is not a prefixed id", async () => {
       setup();
 

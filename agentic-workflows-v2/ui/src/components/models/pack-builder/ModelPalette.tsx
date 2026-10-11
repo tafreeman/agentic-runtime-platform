@@ -215,6 +215,28 @@ export function AddModelPicker({
           />
           <CommandList>
             <CommandEmpty>No models found.</CommandEmpty>
+            {/* First, so Enter adds the exact id typed rather than a catalog id
+                that merely contains it (cmdk activates the first enabled item). */}
+            {customId !== null && (
+              <CommandGroup className="border-b border-el-divider-soft">
+                <CommandItem
+                  value={`add ${customId}`}
+                  disabled={customAdded}
+                  onSelect={() => pick(customId)}
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block break-all text-xs">
+                      Add <span className="font-mono">{customId}</span> to tier {tier}
+                    </span>
+                    <span className="block text-micro text-el-muted">
+                      {customAdded
+                        ? `Already in tier ${tier}`
+                        : "Not in the catalog; validation will check it"}
+                    </span>
+                  </span>
+                </CommandItem>
+              </CommandGroup>
+            )}
             <CommandGroup>
               {matches.slice(0, LIST_LIMIT).map((model) => {
                 const added = chain.includes(model.id);
@@ -241,26 +263,6 @@ export function AddModelPicker({
               <p className="px-3 py-2 text-micro text-el-muted">
                 {limitNote(matches.length)}
               </p>
-            )}
-            {customId !== null && (
-              <CommandGroup className="border-t border-el-divider-soft">
-                <CommandItem
-                  value={`add ${customId}`}
-                  disabled={customAdded}
-                  onSelect={() => pick(customId)}
-                >
-                  <span className="min-w-0 flex-1">
-                    <span className="block break-all text-xs">
-                      Add <span className="font-mono">{customId}</span> to tier {tier}
-                    </span>
-                    <span className="block text-micro text-el-muted">
-                      {customAdded
-                        ? `Already in tier ${tier}`
-                        : "Not in the catalog; validation will check it"}
-                    </span>
-                  </span>
-                </CommandItem>
-              </CommandGroup>
             )}
           </CommandList>
         </Command>
