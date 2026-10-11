@@ -357,7 +357,7 @@ def detect_registry_drift(
     )
 
 
-def _merge_ollama_models(models: list[dict[str, Any]]) -> None:
+def _merge_ollama_models(models: list[dict[str, Any]]) -> frozenset[str]:
     """Enrich/append live Ollama discovery into ``models`` in place.
 
     Models already in the catalog get marked available and enriched with
@@ -365,8 +365,14 @@ def _merge_ollama_models(models: list[dict[str, Any]]) -> None:
     ``/api/ps`` payloads; models absent from every tier chain are
     appended at tier 0 so the console reflects everything currently
     runnable.
+
+    Returns the tag names the local daemon listed during this one discovery pass
+    (empty when it listed none or was unreachable), so price annotation can
+    answer "is this undiscovered id served locally?" without a second
+    ``/api/tags`` probe -- and without a second timeout against a dead daemon.
     """
     discovered = discover_ollama_models()
+    local_names = frozenset(info.name for info in discovered if info.served_locally)
     by_id = {info.id: info for info in discovered}
     catalog_ids = {m["id"] for m in models}
     for model in models:
@@ -390,6 +396,7 @@ def _merge_ollama_models(models: list[dict[str, Any]]) -> None:
                 "running": info.running,
             }
         )
+    return local_names
 
 
 def _enrich_local_model(model: dict[str, Any], info: LocalModelInfo) -> None:
@@ -509,11 +516,11 @@ def enumerate_known_models(
         for model_id, tier in lowest_tier.items()
     ]
 
-    _merge_ollama_models(models)
+    local_ollama_names = _merge_ollama_models(models)
     _merge_local_models(models)
     listing = _merge_cloud_models(models, cloud_listing)
 
-    models = annotate_price_labels(models, listing)
+    models = annotate_price_labels(models, listing, local_ollama_names)
     models.sort(key=lambda m: (m["tier"], str(m["provider"]), str(m["id"])))
     return models
 

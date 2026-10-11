@@ -51,9 +51,13 @@ def _row(model_id: str, **extra: Any) -> dict[str, Any]:
 
 
 def _verdict(
-    model: dict[str, Any], listing: list[CloudModelInfo] | None = None
+    model: dict[str, Any],
+    listing: list[CloudModelInfo] | None = None,
+    local_names: frozenset[str] | None = None,
 ) -> tuple[str, str]:
-    (annotated,) = annotate_price_labels([model], listing or [])
+    (annotated,) = annotate_price_labels(
+        [model], listing or [], local_ollama_names=local_names
+    )
     return annotated["price_label"], annotated["price_reason"]
 
 
@@ -158,6 +162,52 @@ class TestOllama:
 
         monkeypatch.setattr(price_annotation, "is_served_locally", _boom)
         assert _verdict(_row("ollama:qwen3:8b", cloud=False))[0] == "local"
+
+    @pytest.fixture
+    def _daemon_tripwire(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """An API key is set and any daemon lookup fails the test."""
+        monkeypatch.setenv("OLLAMA_API_KEY", "test-key")
+
+        def _boom(name: str) -> bool:
+            raise AssertionError("the discovery pass already named what is local")
+
+        monkeypatch.setattr(price_annotation, "is_served_locally", _boom)
+
+    @pytest.mark.usefixtures("_daemon_tripwire")
+    @pytest.mark.parametrize(
+        ("listed", "model_id"),
+        [
+            ("qwen3-coder:30b", "ollama:qwen3-coder:30b"),
+            # A bare request name matches its ``:latest`` alias, any case.
+            ("llama3:latest", "ollama:llama3"),
+            ("Gemma4:31B", "ollama:gemma4:31b"),
+        ],
+    )
+    def test_supplied_local_names_decide_without_asking_the_daemon(
+        self, listed: str, model_id: str
+    ) -> None:
+        assert _verdict(_row(model_id), local_names=frozenset({listed})) == (
+            "local",
+            "runs on this machine",
+        )
+
+    @pytest.mark.usefixtures("_daemon_tripwire")
+    @pytest.mark.parametrize(
+        "local_names",
+        [
+            # Discovery found nothing, or the daemon was unreachable: both mean
+            # "nothing is local" and neither may trigger a second probe.
+            frozenset(),
+            frozenset({"some-other-model:7b"}),
+        ],
+    )
+    def test_supplied_names_without_the_model_reroute_it_to_cloud(
+        self, local_names: frozenset[str]
+    ) -> None:
+        assert _verdict(_row("ollama:qwen3-coder:30b"), local_names=local_names) == (
+            "unknown",
+            "cloud model via Ollama",
+        )
 
     def test_curated_ollama_price_does_not_override_cloud(
         self, monkeypatch: pytest.MonkeyPatch

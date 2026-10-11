@@ -24,6 +24,7 @@ from __future__ import annotations
 import logging
 import os
 import time
+from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Any
 
@@ -57,6 +58,11 @@ class OllamaModelInfo:
     running: bool = False
     size: int | None = None
     remote_host: str | None = None
+    # True when this record came from the local daemon's ``/api/tags`` (proxied
+    # cloud models included), False for the hosted ollama.com catalog. Lets a
+    # caller reuse one discovery pass as the local-name set instead of probing
+    # ``/api/tags`` again; deliberately absent from :meth:`to_dict`.
+    served_locally: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         """JSON-serialisable view for API responses."""
@@ -115,6 +121,7 @@ def _parse_tags(
     running: set[str],
     *,
     force_cloud: bool = False,
+    served_locally: bool = False,
 ) -> list[OllamaModelInfo]:
     """Map an ``/api/tags`` payload to :class:`OllamaModelInfo` records."""
     models: list[OllamaModelInfo] = []
@@ -145,6 +152,7 @@ def _parse_tags(
                 running=name in running,
                 size=size if isinstance(size, int) else None,
                 remote_host=remote_host if isinstance(remote_host, str) else None,
+                served_locally=served_locally,
             )
         )
     return models
@@ -188,6 +196,19 @@ def local_model_names() -> frozenset[str]:
     return resolved
 
 
+def name_is_listed(model_name: str, names: Iterable[str]) -> bool:
+    """True when ``model_name`` matches one of the daemon tag ``names``.
+
+    The matching rule behind :func:`is_served_locally`, split out so a caller
+    that already holds a name set (one discovery pass) can apply it without
+    another ``/api/tags`` probe. A bare request name also matches its
+    ``:latest`` alias; matching is case-insensitive.
+    """
+    lowered = {name.lower() for name in names}
+    requested = model_name.lower()
+    return requested in lowered or f"{requested}:latest" in lowered
+
+
 def is_served_locally(model_name: str) -> bool:
     """True when the local daemon's ``/api/tags`` can serve ``model_name``.
 
@@ -206,9 +227,7 @@ def is_served_locally(model_name: str) -> bool:
     an ``AGENTIC_MAX_COST_LANE=local`` ceiling (ARP-IMPROVEMENTS F1) --
     both must agree, since they are answering the same question.
     """
-    names = {name.lower() for name in local_model_names()}
-    requested = model_name.lower()
-    return requested in names or f"{requested}:latest" in names
+    return name_is_listed(model_name, local_model_names())
 
 
 def discover_ollama_models() -> list[OllamaModelInfo]:
@@ -234,7 +253,7 @@ def discover_ollama_models() -> list[OllamaModelInfo]:
     running = _running_model_names(base_url)
     local_tags = _get_json(f"{base_url}{_TAGS_PATH}")
     if local_tags:
-        _add(_parse_tags(local_tags, running))
+        _add(_parse_tags(local_tags, running, served_locally=True))
 
     # Hosted cloud catalog — only with an API key; /api/ps is local-only so the
     # running set does not apply.
@@ -255,4 +274,5 @@ __all__ = [
     "discover_ollama_models",
     "is_served_locally",
     "local_model_names",
+    "name_is_listed",
 ]

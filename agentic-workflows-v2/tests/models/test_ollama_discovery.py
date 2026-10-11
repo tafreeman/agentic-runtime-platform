@@ -194,6 +194,51 @@ def test_to_dict_is_json_shaped() -> None:
 
 
 @pytest.mark.unit
+def test_only_the_local_daemons_tags_are_marked_served_locally(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Local ``/api/tags`` rows (proxied cloud ones too) are local; ollama.com's
+    hosted catalog is not -- and the flag stays out of the API payload."""
+    monkeypatch.setenv("OLLAMA_API_KEY", "secret-key")
+    routes = {
+        _LOCAL_PS: {"models": []},
+        _LOCAL_TAGS: {
+            "models": [
+                {"name": "qwen3-coder:30b"},
+                {"name": "glm-4.7", "remote_host": "ollama.com"},
+            ]
+        },
+        _CLOUD_TAGS: {"models": [{"name": "gpt-oss:120b-cloud"}]},
+    }
+    _install_fake_get(monkeypatch, routes, [])
+
+    result = {m.name: m for m in discover_ollama_models()}
+
+    assert result["qwen3-coder:30b"].served_locally is True
+    assert result["glm-4.7"].served_locally is True
+    assert result["gpt-oss:120b-cloud"].served_locally is False
+    assert "served_locally" not in result["qwen3-coder:30b"].to_dict()
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("model_name", "names", "expected"),
+    [
+        ("qwen3-coder:30b", ["qwen3-coder:30b"], True),
+        ("llama3", ["llama3:latest"], True),
+        ("Gemma4:31B", ["gemma4:31b"], True),
+        ("qwen3-coder:30b", ["qwen3-coder:8b"], False),
+        ("qwen3-coder:30b", [], False),
+    ],
+)
+def test_name_is_listed_matches_like_the_daemon(
+    model_name: str, names: list[str], expected: bool
+) -> None:
+    """Exact, ``:latest`` alias and case-insensitive matches; nothing else."""
+    assert ollama_discovery.name_is_listed(model_name, names) is expected
+
+
+@pytest.mark.unit
 def test_malformed_entries_degrade_gracefully(monkeypatch: pytest.MonkeyPatch) -> None:
     """Untrusted wire shapes never raise and never produce garbage:
 
