@@ -29,9 +29,27 @@ class TestModelRetired:
 
     @pytest.mark.parametrize(
         "message",
-        ["upstream stalled after 4100ms", "request id 84102 failed", "port 14103"],
+        [
+            "HTTP/1.1 410 Gone",
+            "upstream returned status 410",
+            "APIStatusError: status_code=410",
+            "Client error '410 Gone' for url 'https://x/v1/chat/completions'",
+        ],
     )
-    def test_410_inside_a_longer_number_is_not_retired(self, message: str) -> None:
+    def test_410_in_a_status_context_is_retired(self, message: str) -> None:
+        assert classify_error(message) == (ErrorCode.MODEL_RETIRED, False)
+
+    @pytest.mark.parametrize(
+        "message",
+        [
+            "upstream stalled after 4100ms",
+            "request id 84102 failed",
+            "port 14103",
+            "upstream timed out after 410 ms",
+            "connection reset for request 410",
+        ],
+    )
+    def test_410_outside_a_status_context_is_not_retired(self, message: str) -> None:
         assert classify_error(message) == (ErrorCode.TRANSIENT, True)
 
     def test_rate_limit_wins_over_a_stray_410(self) -> None:

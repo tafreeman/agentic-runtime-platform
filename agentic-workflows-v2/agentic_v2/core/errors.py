@@ -85,9 +85,15 @@ class ErrorCode(enum.Enum):
 
 
 # HTTP 410 Gone: the provider has retired the model for good (NVIDIA NIM answers
-# "has reached its end of life ... and is no longer available"). Word-bounded so
-# a longer number such as "4100ms" does not match.
-_GONE_STATUS_RE = re.compile(r"\b410\b")
+# "Error code: 410 - {... 'status': 410, 'detail': "... has reached its end of
+# life ..."}"). A bare 410 is not enough -- "timed out after 410 ms" or
+# "request 410" are transient -- so the number must sit in a status context
+# ("error code: 410", "status 410", "status_code=410", "'status': 410",
+# "http/1.1 410") or read "410 gone". Matched against the lowercased message.
+_GONE_STATUS_RE = re.compile(
+    r"\b(?:error code|status(?:_code)?|http(?:/\d(?:\.\d)?)?)['\"]?\s*[:=]?\s*410\b"
+    r"|\b410\s+gone\b"
+)
 _RETIRED_MARKERS = ("end of life", "end-of-life")
 
 
