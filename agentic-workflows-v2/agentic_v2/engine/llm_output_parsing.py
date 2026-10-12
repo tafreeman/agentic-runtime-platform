@@ -170,6 +170,13 @@ _ELEMENT_LINE_RE = re.compile(r'[ \t]*"(?:[^"\\\n]|\\.)*"[ \t]*,?[ \t]*(?=\r?\n|
 # repair (``at_brackets``), used when it keeps more of the text.
 _CLOSE_LINE_RE = re.compile(r"[ \t]*([}\]])[}\],\t ]*(?=\r?\n|\Z)")
 _OPEN_LINE_RE = re.compile(r"[ \t]*[{\[]")
+# After a string's closing quote valid JSON allows only these. A quote followed
+# by anything else, then the rest of a key (``name":``) or an element
+# (``value",``), opens the next value of a string a mask left open on the same
+# line, as in compact JSON.
+_AFTER_STRING = frozenset(" \t\r\n,:}]")
+_REST_OF_KEY_RE = re.compile(r'(?:[^"\\\n]|\\.)*"[ \t]*:')
+_REST_OF_ELEMENT_RE = re.compile(r'(?:[^"\\\n]|\\.)*"[ \t]*[,\]]')
 _CLOSER_FOR = {"{": "}", "[": "]"}
 _REVIEW_REPORT_VALUE_RE = re.compile(r'"review_report"\s*:\s*(?=\{)')
 
@@ -198,6 +205,19 @@ class _Repair(NamedTuple):
 
     text: str
     consumed: int  # index just past the last input character the repair kept
+
+
+def _quote_opens_next_value(text: str, index: int, closer: str) -> bool:
+    """Return whether the quote at ``text[index]`` opens a value, not ends one.
+
+    Only text that is invalid JSON qualifies: the quote must be followed by
+    a character no closing quote can be followed by.
+    """
+    following = text[index + 1 : index + 2]
+    if not following or following in _AFTER_STRING:
+        return False
+    rest = _REST_OF_KEY_RE if closer == "}" else _REST_OF_ELEMENT_RE
+    return rest.match(text, index + 1) is not None
 
 
 def _string_end_at_newline(
@@ -254,7 +274,15 @@ def _repair_json_object(
             elif ch == "\\":
                 escaped = True
             elif ch == '"':
-                in_string = False
+                if stack is not None and _quote_opens_next_value(
+                    text, index, stack.closer
+                ):
+                    # End the open string; this quote opens the next value.
+                    out.append('"')
+                    cut = (len(out), stack, index)
+                    out.append(",")
+                else:
+                    in_string = False
             elif ch == "\n" and stack is not None:
                 ending = _string_end_at_newline(
                     text, index, stack.closer, at_brackets=at_brackets
@@ -376,10 +404,11 @@ def _report_from_mapping(mapping: dict[str, Any] | None) -> dict[str, Any] | Non
 def _recover_review_report(text: str) -> dict[str, Any] | None:
     """Recover the full review report from model text, repairing damaged JSON.
 
-    Tries the shared JSON candidates first. If none parses, repairs the first
-    object in the text and then the object after the first
-    ``"review_report":`` key. Returns ``None`` when no report is found, so the
-    caller can fall back to salvaging the status alone.
+    Tries the shared JSON candidates first. If none parses, repairs the
+    objects that open at the starts from :func:`_report_starts`, then the
+    object after the first ``"review_report":`` key. Returns ``None`` when no
+    report is found, so the caller can fall back to salvaging the status
+    alone.
     """
     for candidate in extract_json_candidates(text):
         report = _report_from_mapping(_loads_dict(candidate))
@@ -387,9 +416,8 @@ def _recover_review_report(text: str) -> dict[str, Any] | None:
             return report
 
     capped = text[:_MAX_SENTINEL_INPUT_LEN]
-    first_brace = capped.find("{")
-    if first_brace != -1:
-        report = _report_from_mapping(_best_repair(capped, first_brace))
+    for start in _report_starts(capped):
+        report = _report_from_mapping(_best_repair(capped, start))
         if report is not None:
             return report
     # Only the first key: each repair can scan to the end of the text, so
@@ -398,6 +426,23 @@ def _recover_review_report(text: str) -> dict[str, Any] | None:
     if match is not None:
         return _best_repair(capped, match.end())
     return None
+
+
+def _report_starts(text: str) -> list[int]:
+    """Return where a report object may open, at most one per kind of marker.
+
+    The first ``{`` in the text, the first after the first fence and the
+    first after a ``review_report`` artifact marker, so a brace in prose
+    before the payload does not hide it. A fixed number of starts keeps the
+    repairs linear.
+    """
+    starts: list[int] = []
+    for marker in ("", _FENCE, "<<<ARTIFACT review_report>>>"):
+        at = text.find(marker)
+        brace = text.find("{", at + len(marker)) if at != -1 else -1
+        if brace != -1 and brace not in starts:
+            starts.append(brace)
+    return starts
 
 
 def _review_report_from_raw_text(raw_text: str) -> dict[str, Any]:

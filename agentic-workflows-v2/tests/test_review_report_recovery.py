@@ -599,3 +599,78 @@ def test_json_like_line_inside_a_code_string_is_not_a_repair_point(
     findings = parse(text)["review_report"]["findings"]
 
     assert findings[0] == {"code": code, "title": "Keep me"}
+
+
+# ---------------------------------------------------------------------------
+# Compact JSON: the next value on the same line as the masked string
+# ---------------------------------------------------------------------------
+
+
+@both_engines
+def test_compact_masked_member_keeps_the_next_members(parse: Any) -> None:
+    """The mask stops at the space, so the next key starts on the same line."""
+    text = _masked(
+        '```json\n{"review_report": {"overall_status": "NEEDS_FIXES", '
+        '"findings": [{"code": "token=abcdefghij", "title": "T"}], '
+        '"quality_score": 8}}\n```'
+    )
+    assert MASK + ' "title"' in text
+
+    report = parse(text)["review_report"]
+
+    finding = report["findings"][0]
+    assert finding["code"].startswith(MASK)
+    assert finding["title"] == "T"
+    assert report["quality_score"] == 8
+
+
+@both_engines
+def test_compact_masked_element_keeps_the_next_elements(parse: Any) -> None:
+    text = _masked(
+        '```json\n{"review_report": {"overall_status": "NEEDS_FIXES", '
+        '"references": ["CWE-1", "token=abcdefghij", "CWE-2"], '
+        '"quality_score": 8}}\n```'
+    )
+
+    report = parse(text)["review_report"]
+
+    references = report["references"]
+    assert references[0] == "CWE-1"
+    assert references[1].startswith(MASK)
+    assert references[2] == "CWE-2"
+    assert report["quality_score"] == 8
+
+
+def test_quote_after_a_valid_string_end_is_left_alone() -> None:
+    """A closing quote followed by ``,`` ``:`` ``}`` ``]`` or space is valid."""
+    text = '{"a": "x", "b": ["y", "z"], "c": {"d": "e"}}'
+
+    assert _repaired(text) == text
+
+
+# ---------------------------------------------------------------------------
+# A brace in prose before the report
+# ---------------------------------------------------------------------------
+
+
+@both_engines
+@pytest.mark.parametrize(
+    "opening",
+    ["```json\n", "<<<ARTIFACT review_report>>>\n"],
+    ids=["fence", "artifact"],
+)
+def test_prose_brace_does_not_hide_a_truncated_bare_report(
+    parse: Any, opening: str
+) -> None:
+    text = (
+        "Context {draft}\n"
+        + opening
+        + '{"overall_status": "APPROVED", "quality_score": 9, "summary": "ok", '
+        '"findings": [{"title": "A"}, {"title": "B'
+    )
+
+    report = parse(text)["review_report"]
+
+    assert report["overall_status"] == "APPROVED"
+    assert report["quality_score"] == 9
+    assert report["findings"][0] == {"title": "A"}
