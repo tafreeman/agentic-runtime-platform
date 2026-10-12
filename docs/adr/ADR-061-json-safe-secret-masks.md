@@ -21,10 +21,9 @@ stop at the end of the secret. In a reviewer finding's
 closing quote and the member's comma. Masking it left
 `"...;[REDACTED:env_variable]` followed by the next member, so the reply no
 longer parsed. On 2026-10-11 four `fullstack_generation` runs lost their whole
-`review_report` this way. PR #377 made the parser repair the damage it can
-reach. That repair covers only the review report, and only when the damaged
-member is not the last one in its object. Every other JSON step output stays
-exposed.
+`review_report` this way. PR #377 made the parser repair this damage, but
+only for the review report, and only by recognising the damaged lines from
+their shape. Every other JSON step output stays exposed.
 
 The `connection_string` pattern also missed the scheme spellings that generated
 code uses most: `postgresql://`, driver suffixes (`postgresql+asyncpg://`,
@@ -84,5 +83,5 @@ The finding's `location` reports the shortened span, so `scan` and
   sees it. Reordering that is a larger change to the response path than this
   defect needs.
 - **Leave the sanitizer alone and rely on the parser repair from PR #377.**
-  Rejected: that repair is limited to `review_report`, and it cannot recover a
-  damaged last member.
+  Rejected: that repair is limited to `review_report`, and it has to guess
+  from line shapes where a masked string ended.
