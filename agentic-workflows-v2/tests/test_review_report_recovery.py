@@ -11,14 +11,16 @@ fullstack_generation runs on 2026-10-11 stored the ``review_code`` step's
   JSON-path salvage overwrote it, and the sentinel path dropped an
   ``<<<ARTIFACT review_report>>>`` body that failed to parse.
 
-The logged responses are replayed through both engines' parse entrypoints.
+Run data is not committed (AGENTS.md), so the four logged reply shapes are
+rebuilt from a synthetic report: masked by the real sanitizer, then cut where
+the logged replies were cut. Each is parsed through both engines' entrypoints.
 """
 
 from __future__ import annotations
 
 import json
 import re
-from pathlib import Path
+from collections.abc import Callable
 from typing import Any
 
 import pytest
@@ -31,8 +33,6 @@ from agentic_v2.engine.llm_output_parsing import (
 from agentic_v2.langchain.graph_wiring import parse_step_outputs
 from agentic_v2.middleware.response_sanitizer import ResponseSanitizer
 
-FIXTURES = Path(__file__).parent / "fixtures"
-
 # Declared outputs of fullstack_generation.yaml's review_code step.
 REVIEW_OUTPUT_KEYS = [
     "review_report",
@@ -42,8 +42,7 @@ REVIEW_OUTPUT_KEYS = [
     "fixes",
 ]
 
-# The run logger cuts strings at 10,000 chars and appends this marker.
-_LOG_TRUNCATION_SUFFIX = re.compile(r"\.\.\. \(\d+ chars\)$")
+MASK = "[REDACTED:env_variable]"
 
 
 def _native_parse(text: str) -> dict[str, Any]:
@@ -63,111 +62,57 @@ both_engines = pytest.mark.parametrize(
 )
 
 
-def _logged_responses() -> list[dict[str, Any]]:
-    path = FIXTURES / "review_report_raw_responses.json"
-    return json.loads(path.read_text(encoding="utf-8"))["responses"]
+def _masked(text: str) -> str:
+    return ResponseSanitizer().sanitize_response_sync(text).sanitized_text or text
 
 
-LOGGED = _logged_responses()
+def _cut_inside(text: str, marker: str, keep: int) -> str:
+    """Truncate *text* *keep* characters into *marker*, as a token cap would."""
+    return text[: text.index(marker) + keep]
 
-
-def _parser_input(entry: dict[str, Any]) -> str:
-    """Strip the run logger's marker: what remains is a prefix of the reply."""
-    return _LOG_TRUNCATION_SUFFIX.sub("", entry["raw_response"])
-
-
-# ---------------------------------------------------------------------------
-# Logged responses
-# ---------------------------------------------------------------------------
-
-# (quality_score, finding count) read from each logged raw_response, keyed by
-# the run id's hash suffix.
-EXPECTED_FROM_LOG = {
-    "befa1f22": (6.8, 7),
-    "ba718cdc": (7.0, 9),
-    "2a88e1c9": (8.5, 7),
-    "41b29538": (7.8, 9),
-}
-
-
-def _run_suffix(entry: dict[str, Any]) -> str:
-    return str(entry["run_id"]).rsplit("-", 1)[-1]
-
-
-def test_fixture_records_the_reduced_report() -> None:
-    """Each fixture is a run whose stored report kept only overall_status."""
-    assert {_run_suffix(e) for e in LOGGED} == set(EXPECTED_FROM_LOG)
-    for entry in LOGGED:
-        assert entry["logged_review_report"] == {"overall_status": "NEEDS_FIXES"}
-
-
-@both_engines
-@pytest.mark.parametrize("entry", LOGGED, ids=lambda e: e["shape"])
-def test_logged_response_keeps_full_report(parse: Any, entry: dict[str, Any]) -> None:
-    report = parse(_parser_input(entry))["review_report"]
-
-    score, finding_count = EXPECTED_FROM_LOG[_run_suffix(entry)]
-    assert report["overall_status"] == "NEEDS_FIXES"
-    assert report["quality_score"] == score
-    assert set(report["summary"]) >= {"critical", "high", "medium", "low"}
-    ids = [finding["finding_id"] for finding in report["findings"]]
-    assert ids == [f"F-{n:03d}" for n in range(1, finding_count + 1)]
-
-
-@both_engines
-def test_masked_member_is_closed_without_losing_neighbours(parse: Any) -> None:
-    """A masked string is closed at the end of its line; the next members stay."""
-    entry = next(e for e in LOGGED if _run_suffix(e) == "2a88e1c9")
-
-    findings = parse(_parser_input(entry))["review_report"]["findings"]
-
-    masked = next(f for f in findings if f["finding_id"] == "F-002")
-    assert masked["code_before"].endswith("[REDACTED:env_variable]")
-    assert masked["code_after"].endswith("[REDACTED:env_variable]")
-    assert masked["references"] == ["OWASP A07:2021", "CWE-312"]
-
-
-@pytest.mark.parametrize("entry", LOGGED, ids=lambda e: e["shape"])
-def test_engines_agree_on_logged_responses(entry: dict[str, Any]) -> None:
-    text = _parser_input(entry)
-    native = _native_parse(text)["review_report"]
-    langchain = _langchain_parse(text)["review_report"]
-    assert native == langchain
-
-
-# ---------------------------------------------------------------------------
-# Complete responses masked by the real response sanitizer
-# ---------------------------------------------------------------------------
 
 REPORT: dict[str, Any] = {
     "overall_status": "NEEDS_FIXES",
-    "quality_score": 7.5,
-    "summary": {"critical": 1, "high": 1, "medium": 0, "low": 0},
+    "quality_score": 7.0,
+    "summary": {"critical": 1, "high": 1, "medium": 1, "low": 0},
     "findings": [
         {
             "finding_id": "F-001",
             "severity": "critical",
-            "title": "Hardcoded database password",
+            "title": "Connection string holds a password",
             "code_before": (
-                '"DefaultConnection": '
-                '"Host=localhost;Username=postgres;Password=postgres"'
+                '"DefaultConnection": "Host=db;Username=app;Password=app-secret"'
             ),
-            "code_after": '"DefaultConnection": "${DB_CONNECTION}"',
-            "references": ["CWE-798"],
+            "code_after": (
+                '"DefaultConnection": "Host=db;Username=app;Password=${DB_PASSWORD}"'
+            ),
+            "references": ["CWE-312"],
         },
         {
             "finding_id": "F-002",
             "severity": "high",
             "title": "Missing input validation",
+            "suggested_fix": "Validate request bodies.",
             "references": ["CWE-20"],
+        },
+        {
+            "finding_id": "F-003",
+            "severity": "medium",
+            "title": "In-memory database in production",
+            "suggested_fix": "Use a persistent provider.",
+            "code_before": "services.AddDbContext(o => o.UseInMemoryDatabase());",
+            "references": ["CWE-805", "OWASP A04:2021"],
         },
     ],
     "positive_observations": ["Async I/O throughout"],
 }
 
+FINDING_IDS = ["F-001", "F-002", "F-003"]
 
-def _wrapper(report: dict[str, Any]) -> str:
-    return "```json\n" + json.dumps({"review_report": report}, indent=2) + "\n```"
+
+def _wrapper(report: dict[str, Any], **extra: Any) -> str:
+    payload = {"review_report": report, **extra}
+    return "```json\n" + json.dumps(payload, indent=2) + "\n```"
 
 
 def _artifact(report: dict[str, Any]) -> str:
@@ -175,7 +120,117 @@ def _artifact(report: dict[str, Any]) -> str:
     return f"<<<ARTIFACT review_report>>>\n{body}\n<<<ENDARTIFACT>>>"
 
 
-SHAPES = {
+# ---------------------------------------------------------------------------
+# The four reply shapes from the 2026-10-11 run logs
+# ---------------------------------------------------------------------------
+
+
+def _prose_then_fenced_wrapper_cut_in_string() -> str:
+    """Run befa1f22: prose, a fenced wrapper, cut inside a code string."""
+    text = _masked(
+        "The input describes a .NET project, so I reviewed the code shown.\n\n"
+        "---\n\n### Review Report\n\n" + _wrapper(REPORT)
+    )
+    return _cut_inside(text, '"code_before": "services', len('"code_before": "serv'))
+
+
+def _prose_then_artifact_cut_in_array() -> str:
+    """Run ba718cdc: prose, a fenced artifact, cut inside references."""
+    text = _masked(
+        "I could not open the files, so the review covers the snippets.\n\n"
+        "---\n\n```\n" + _artifact(REPORT) + "\n```"
+    )
+    return _cut_inside(text, '"OWASP A04', len('"OWASP '))
+
+
+def _fenced_wrapper_with_trailing_members_cut() -> str:
+    """Run 2a88e1c9: a fenced wrapper plus sibling outputs, cut in the last."""
+    text = _masked(
+        _wrapper(
+            REPORT,
+            code_review={"backend": {"status": "NEEDS_FIXES"}},
+            overall_status="NEEDS_FIXES",
+            suggested_fixes=[{"finding_id": "F-001", "description": "Move it out"}],
+        )
+    )
+    return _cut_inside(text, '"description": "Move', len('"description": "Mo'))
+
+
+def _fenced_artifact_then_cut_second_artifact() -> str:
+    """Run 41b29538: a whole artifact, then a second one cut short."""
+    second = json.dumps({"backend": {"config": {"status": "NEEDS_FIXES"}}}, indent=2)
+    text = _masked(
+        "```\n" + _artifact(REPORT) + "\n\n---\n<<<ARTIFACT code_review>>>\n" + second
+    )
+    return _cut_inside(text, '"config"', len('"config"'))
+
+
+LOGGED_SHAPES: dict[str, Callable[[], str]] = {
+    "prose_then_fenced_wrapper": _prose_then_fenced_wrapper_cut_in_string,
+    "prose_then_artifact_block": _prose_then_artifact_cut_in_array,
+    "fenced_wrapper": _fenced_wrapper_with_trailing_members_cut,
+    "fenced_artifact_block": _fenced_artifact_then_cut_second_artifact,
+}
+
+
+@pytest.mark.parametrize("shape", LOGGED_SHAPES)
+def test_replica_carries_the_logged_damage(shape: str) -> None:
+    """Precondition: the mask ate a closing quote, as in the logged replies."""
+    text = LOGGED_SHAPES[shape]()
+
+    assert "Password=" not in text
+    assert re.search(re.escape(MASK) + r'\n\s+"code_after"', text)
+
+
+@both_engines
+@pytest.mark.parametrize("shape", LOGGED_SHAPES)
+def test_logged_shape_keeps_full_report(parse: Any, shape: str) -> None:
+    report = parse(LOGGED_SHAPES[shape]())["review_report"]
+
+    assert report["overall_status"] == "NEEDS_FIXES"
+    assert report["quality_score"] == 7.0
+    assert report["summary"] == REPORT["summary"]
+    assert [f["finding_id"] for f in report["findings"]] == FINDING_IDS
+    masked = report["findings"][0]
+    assert masked["code_before"].endswith(MASK)
+    assert masked["code_after"].endswith(MASK)
+    assert masked["references"] == ["CWE-312"]
+
+
+@both_engines
+def test_cut_in_a_string_drops_only_that_member(parse: Any) -> None:
+    text = _prose_then_fenced_wrapper_cut_in_string()
+
+    last = parse(text)["review_report"]["findings"][-1]
+
+    assert "code_before" not in last
+    assert last["suggested_fix"] == "Use a persistent provider."
+
+
+@both_engines
+def test_cut_in_an_array_keeps_its_complete_elements(parse: Any) -> None:
+    text = _prose_then_artifact_cut_in_array()
+
+    last = parse(text)["review_report"]["findings"][-1]
+
+    assert last["references"] == ["CWE-805"]
+
+
+@pytest.mark.parametrize("shape", LOGGED_SHAPES)
+def test_engines_agree_on_logged_shapes(shape: str) -> None:
+    text = LOGGED_SHAPES[shape]()
+
+    native = _native_parse(text)["review_report"]
+    langchain = _langchain_parse(text)["review_report"]
+
+    assert native == langchain
+
+
+# ---------------------------------------------------------------------------
+# Complete responses masked by the real response sanitizer
+# ---------------------------------------------------------------------------
+
+SHAPES: dict[str, Callable[[dict[str, Any]], str]] = {
     "fenced_wrapper": _wrapper,
     "artifact_block": _artifact,
     "prose_then_fenced_wrapper": lambda r: (
@@ -189,16 +244,11 @@ SHAPES = {
 }
 
 
-def _masked(text: str) -> str:
-    return ResponseSanitizer().sanitize_response_sync(text).sanitized_text or text
-
-
 def test_sanitizer_mask_breaks_the_report_json() -> None:
     """Precondition: masking removes the closing quote and the comma."""
     masked = _masked(json.dumps(REPORT, indent=2))
 
-    assert "Password=postgres" not in masked
-    assert re.search(r"\[REDACTED:env_variable\]\n\s+\"code_after\"", masked)
+    assert "Password=" not in masked
     with pytest.raises(json.JSONDecodeError):
         json.loads(masked, strict=False)
 
@@ -210,25 +260,11 @@ def test_masked_report_keeps_all_fields(parse: Any, shape: str) -> None:
     report = outputs["review_report"]
 
     assert report["overall_status"] == "NEEDS_FIXES"
-    assert report["quality_score"] == 7.5
+    assert report["quality_score"] == 7.0
     assert report["summary"] == REPORT["summary"]
-    assert [f["finding_id"] for f in report["findings"]] == ["F-001", "F-002"]
-    assert report["findings"][0]["references"] == ["CWE-798"]
+    assert report["findings"][1:] == REPORT["findings"][1:]
     assert report["positive_observations"] == ["Async I/O throughout"]
-    assert "Password=postgres" not in json.dumps(outputs)
-
-
-@both_engines
-def test_truncated_report_keeps_complete_members(parse: Any) -> None:
-    """An output-token cap mid-finding keeps everything before the cut."""
-    text = _wrapper(REPORT)
-    cut = text.index('"title": "Missing input validation"') + len('"title": "Miss')
-
-    report = parse(text[:cut])["review_report"]
-
-    assert report["quality_score"] == 7.5
-    assert [f["finding_id"] for f in report["findings"]] == ["F-001", "F-002"]
-    assert report["findings"][1] == {"finding_id": "F-002", "severity": "high"}
+    assert "Password=" not in json.dumps(outputs)
 
 
 # ---------------------------------------------------------------------------
@@ -243,7 +279,7 @@ def test_damaged_approved_report_stays_approved(parse: Any) -> None:
     report = parse(_masked(_wrapper(approved)))["review_report"]
 
     assert report["overall_status"] == "APPROVED"
-    assert report["quality_score"] == 7.5
+    assert report["quality_score"] == 7.0
 
 
 @both_engines
@@ -255,8 +291,8 @@ def test_bare_fenced_report_is_the_review_report(parse: Any) -> None:
     report = parse(text)["review_report"]
 
     assert report["overall_status"] == "APPROVED"
-    assert report["quality_score"] == 7.5
-    assert len(report["findings"]) == 2
+    assert report["quality_score"] == 7.0
+    assert len(report["findings"]) == 3
 
 
 @both_engines
