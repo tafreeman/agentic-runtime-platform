@@ -773,3 +773,29 @@ def test_annotated_preliminary_status_before_a_damaged_report(parse: Any) -> Non
 
     assert report["overall_status"] == "NEEDS_FIXES"
     assert report["quality_score"] == 5
+
+
+_WRAPPED_PRELIMINARY = (
+    '```json\n{"review_report": {"overall_status": "APPROVED", '
+    '"note": "preliminary"}}\n```\n'
+)
+
+
+@both_engines
+def test_wrapped_preliminary_status_does_not_outrank_the_report(parse: Any) -> None:
+    """A wrapper ranks high only when its report carries schema fields."""
+    report = parse(_WRAPPED_PRELIMINARY + _FULL_REPORT_BLOCK)["review_report"]
+
+    assert report["overall_status"] == "NEEDS_FIXES"
+    assert report["quality_score"] == 5
+
+
+@both_engines
+def test_wrapped_preliminary_status_before_a_damaged_report(parse: Any) -> None:
+    text = _WRAPPED_PRELIMINARY + _FULL_REPORT_BLOCK
+    text = text[: text.index('{"title": "B"}') + len('{"title": "B')]
+
+    report = parse(text)["review_report"]
+
+    assert report["overall_status"] == "NEEDS_FIXES"
+    assert report["quality_score"] == 5

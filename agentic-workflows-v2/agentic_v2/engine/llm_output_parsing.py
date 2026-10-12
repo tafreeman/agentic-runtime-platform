@@ -416,18 +416,26 @@ _REPORT_FIELDS = frozenset(
 def _report_rank(mapping: dict[str, Any] | None) -> int:
     """Rank how clearly *mapping* is, or wraps, a review report.
 
-    An explicit ``review_report`` (or ``review``) object ranks highest. A
-    bare report must carry one of the schema's report fields to count as
-    full: any other key, such as a ``note`` on a preliminary status, does
-    not.
+    A report counts as full only when it carries one of the schema's report
+    fields; any other key, such as a ``note`` on a preliminary status, does
+    not. A full report under ``review_report`` (or ``review``) ranks above a
+    bare one. A report without those fields, wrapped or not, ranks as a
+    status.
     """
     if mapping is None:
         return _NO_REPORT
-    if any(isinstance(mapping.get(key), dict) for key in ("review_report", "review")):
-        return _WRAPPED_REPORT
+    for key in ("review_report", "review"):
+        value = mapping.get(key)
+        if isinstance(value, dict):
+            return _wrapped_rank(value)
     if not isinstance(mapping.get("overall_status"), str):
         return _NO_REPORT
     return _FULL_REPORT if _has_report_fields(mapping) else _STATUS_ONLY
+
+
+def _wrapped_rank(report: dict[str, Any]) -> int:
+    """Rank a report found under a ``review_report`` key."""
+    return _WRAPPED_REPORT if _has_report_fields(report) else _STATUS_ONLY
 
 
 def _has_report_fields(report: dict[str, Any]) -> bool:
@@ -479,7 +487,7 @@ def _ranked_reports(text: str) -> Iterator[tuple[int, dict[str, Any]]]:
     if match is not None:
         report = _best_repair(capped, match.end())
         if report is not None:
-            yield _WRAPPED_REPORT, report
+            yield _wrapped_rank(report), report
 
 
 def _ranked(mapping: dict[str, Any] | None) -> Iterator[tuple[int, dict[str, Any]]]:
@@ -842,13 +850,21 @@ def parse_llm_json_output(
 def _fallback_report(salvaged: Any, response: str) -> tuple[int, dict[str, Any]]:
     """Pick the report for a reply that did not parse, with its rank.
 
-    *salvaged* is the value of the first ``"review_report":`` key, so an
-    object there is an explicitly wrapped report. Otherwise the best-ranked
-    report is recovered from the text.
+    *salvaged* is the value of the first ``"review_report":`` key. It is used
+    when it is a full wrapped report, or when nothing in the text ranks
+    above it. That first key may hold only a preliminary status.
     """
+    salvaged_rank = (
+        _wrapped_rank(salvaged) if isinstance(salvaged, dict) else _NO_REPORT
+    )
+    if salvaged_rank == _WRAPPED_REPORT:
+        return salvaged_rank, salvaged
+    recovered = _recover_ranked_report(response)
+    if recovered is not None and recovered[0] > salvaged_rank:
+        return recovered
     if isinstance(salvaged, dict):
-        return _WRAPPED_REPORT, salvaged
-    return _recover_ranked_report(response) or (_NO_REPORT, {})
+        return salvaged_rank, salvaged
+    return recovered or (_NO_REPORT, {})
 
 
 def _fallback_status(
