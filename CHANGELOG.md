@@ -25,8 +25,11 @@
   ignores the `chat_template_kwargs: {"thinking": false}` field every NIM
   request already carries, and on a long input it spent the judge's whole
   1,200-token budget reasoning, returning no answer. `"low"` is the lowest
-  level GLM honours. Both engines send it, and `NVIDIA_DISABLE_THINKING=0` still
-  turns all of it off. `LLMJudge` now raises a clear "returned no answer
+  level GLM honours. GLM also gets `chat_template_kwargs.clear_thinking: true`,
+  so an earlier turn's reasoning is never re-rendered into the prompt (702 vs 41
+  prompt tokens when one is present). Neither engine sends reasoning back today,
+  and a new test pins that. Both engines send these fields, and
+  `NVIDIA_DISABLE_THINKING=0` still turns all of it off. `LLMJudge` now raises a clear "returned no answer
   (finish_reason=…, max_tokens=…)" error for an empty or null reply instead of
   an `AttributeError`.
 - **Seven retired ids are gone from the NIM free-endpoint block:**

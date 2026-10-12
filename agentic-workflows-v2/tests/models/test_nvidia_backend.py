@@ -201,7 +201,7 @@ class TestNvidiaReasoningControl:
         build_nvidia_model(model, 0.0)
 
         assert captured["extra_body"] == {
-            "chat_template_kwargs": {"thinking": False},
+            "chat_template_kwargs": {"thinking": False, "clear_thinking": True},
             "reasoning_effort": "low",
         }
 
@@ -278,7 +278,10 @@ class TestNvidiaNativeReasoningControl:
         )
 
         assert sent[0]["reasoning_effort"] == "low"
-        assert sent[0]["chat_template_kwargs"] == {"thinking": False}
+        assert sent[0]["chat_template_kwargs"] == {
+            "thinking": False,
+            "clear_thinking": True,
+        }
 
     async def test_caller_reasoning_effort_overrides_the_glm_default(
         self, monkeypatch: pytest.MonkeyPatch
@@ -400,6 +403,26 @@ class TestNimReasoningContentPreserved:
 
     def test_same_class_returned_for_same_base(self) -> None:
         assert self._nim_cls() is self._nim_cls()
+
+    def test_kept_reasoning_is_not_sent_back_on_the_next_turn(self) -> None:
+        """Preserved reasoning stays local; a later request carries content only.
+
+        GLM's template re-renders any reasoning_content it is sent (702 vs 41
+        prompt tokens, probed 2026-10-12), so round-tripping it would bloat
+        every ReAct turn. ``clear_thinking`` guards GLM as well, but this
+        pins the cheaper invariant for every NIM model.
+        """
+        from langchain_core.messages import AIMessage, HumanMessage
+
+        payload = self._model()._get_request_payload(
+            [
+                HumanMessage("q1"),
+                AIMessage("a1", additional_kwargs={"reasoning_content": "prior"}),
+                HumanMessage("q2"),
+            ]
+        )
+
+        assert payload["messages"][1] == {"role": "assistant", "content": "a1"}
 
     def test_reasoning_content_lands_in_additional_kwargs(self) -> None:
         # Shape of a real NIM turn that spent its whole budget reasoning.

@@ -340,7 +340,8 @@ def build_nvidia_model(model_name: str, temperature: float) -> Any:
       reasoning on ``reasoning_effort`` instead) and by the non-reasoning
       ``nvidia/ising-calibration-1.5-31b``, whose output was byte-identical
       either way. ``z-ai/glm-*`` ignores it too, so those ids also get
-      ``reasoning_effort: "low"``, their lowest honoured level (see
+      ``reasoning_effort: "low"``, their lowest honoured level, and
+      ``clear_thinking`` (see
       :func:`agentic_v2.models.backends_cloud.nim_reasoning_payload`).
       ``NVIDIA_DISABLE_THINKING=0`` turns all of it off for a self-hosted NIM
       whose chat template is stricter.

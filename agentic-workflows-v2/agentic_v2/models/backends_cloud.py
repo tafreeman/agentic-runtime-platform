@@ -73,6 +73,12 @@ def nim_chat_template_kwargs() -> dict[str, Any]:
 # and without ``thinking: False``, ignored ``reasoning_effort: "none"``, and
 # honoured ``"low"`` (completion tokens 306 -> 112 and 189 -> 44 on the same
 # prompt). "low" is therefore the closest these models get to "off".
+#
+# GLM's chat template also re-renders an earlier assistant turn's
+# reasoning_content into the prompt unless ``clear_thinking`` is set: with a
+# prior reasoning turn in history, prompt_tokens went 702 -> 41 with it (and
+# stayed 41 -> 41 without one). Neither engine round-trips reasoning_content
+# today, so this guards against a future client that does.
 _NIM_REASONING_EFFORT_PREFIXES = ("z-ai/glm-",)
 _NIM_MIN_REASONING_EFFORT = "low"
 
@@ -82,10 +88,12 @@ def nim_reasoning_payload(model_name: str) -> dict[str, Any]:
 
     ``model_name`` is the bare NIM id (``publisher/model``, no ``nvidia:``
     prefix). Every model gets ``chat_template_kwargs``; models that gate
-    reasoning on ``reasoning_effort`` also get its lowest honoured level.
+    reasoning on ``reasoning_effort`` also get its lowest honoured level and
+    ``clear_thinking`` so earlier turns' reasoning is not re-rendered.
     """
     payload: dict[str, Any] = {"chat_template_kwargs": nim_chat_template_kwargs()}
     if model_name.startswith(_NIM_REASONING_EFFORT_PREFIXES):
+        payload["chat_template_kwargs"]["clear_thinking"] = True
         payload["reasoning_effort"] = _NIM_MIN_REASONING_EFFORT
     return payload
 
