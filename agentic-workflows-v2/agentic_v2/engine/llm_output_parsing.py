@@ -431,15 +431,22 @@ def _recover_review_report(text: str) -> dict[str, Any] | None:
 def _report_starts(text: str) -> list[int]:
     """Return where a report object may open, at most one per kind of marker.
 
-    The first ``{`` in the text, the first after the first fence and the
-    first after a ``review_report`` artifact marker, so a brace in prose
-    before the payload does not hide it. A fixed number of starts keeps the
-    repairs linear.
+    The first ``{`` in the text, the first after the first fence, the first
+    after the last fence (a truncated report is usually the final block,
+    its closing fence cut off) and the first after a ``review_report``
+    artifact marker. So neither a brace in prose nor an explanatory block
+    before the payload hides it. A fixed number of starts keeps the repairs
+    linear.
     """
+    markers = [
+        0,
+        text.find(_FENCE),
+        text.rfind(_FENCE),
+        text.find("<<<ARTIFACT review_report>>>"),
+    ]
     starts: list[int] = []
-    for marker in ("", _FENCE, "<<<ARTIFACT review_report>>>"):
-        at = text.find(marker)
-        brace = text.find("{", at + len(marker)) if at != -1 else -1
+    for at in markers:
+        brace = text.find("{", at) if at != -1 else -1
         if brace != -1 and brace not in starts:
             starts.append(brace)
     return starts
@@ -679,6 +686,30 @@ def select_json_dict(
     return first
 
 
+def parse_json_step_output(
+    text: str, expected_output_keys: list[str] | None
+) -> dict[str, Any] | None:
+    """Select and normalize the JSON object in *text*; ``None`` if none parses.
+
+    When the selected object carries none of the declared outputs (an
+    explanatory block, say) and a ``review_report`` is expected, the report
+    is recovered from the rest of the text. It may sit in a later block
+    that is too damaged to parse as it stands.
+    """
+    parsed = select_json_dict(text, expected_output_keys)
+    if parsed is None:
+        return None
+    if (
+        expected_output_keys
+        and "review_report" in expected_output_keys
+        and not _carries_declared_output(parsed, expected_output_keys)
+    ):
+        report = _recover_review_report(text)
+        if report is not None:
+            parsed = {**parsed, "review_report": report}
+    return normalize_expected_structure(parsed, expected_output_keys)
+
+
 def parse_llm_json_output(
     response: str,
     expected_output_keys: list[str] | None,
@@ -689,9 +720,9 @@ def parse_llm_json_output(
     returns ``{"raw_response": response}`` with a best-effort
     ``review_report`` salvaged from raw text (if expected).
     """
-    parsed = select_json_dict(response, expected_output_keys)
+    parsed = parse_json_step_output(response, expected_output_keys)
     if parsed is not None:
-        return normalize_expected_structure(parsed, expected_output_keys)
+        return parsed
 
     fallback: dict[str, Any] = {"raw_response": response}
 

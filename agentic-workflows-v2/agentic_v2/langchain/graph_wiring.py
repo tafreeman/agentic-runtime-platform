@@ -45,7 +45,7 @@ from ..artifact_contracts import (
 from ..artifact_overlay import overlay_code_artifacts
 from ..engine.consensus import coerce_min_agreement, majority_vote
 from ..engine.llm_output_parsing import (
-    normalize_expected_structure,
+    parse_json_step_output,
     parse_llm_json_output,
     parse_sentinel_output,
     select_json_dict,
@@ -498,9 +498,7 @@ def parse_step_outputs(
 
     parsed = parse_sentinel_output(normalized, expected_output_keys)
     if parsed is None:
-        parsed = parse_json_dict_from_text(normalized, expected_output_keys)
-        if parsed is not None and expected_output_keys:
-            parsed = normalize_expected_structure(dict(parsed), expected_output_keys)
+        parsed = parse_json_step_output(normalized, expected_output_keys)
     if parsed is None:
         # Full parse failed; parse_llm_json_output falls back to salvaging
         # declared keys out of malformed/truncated JSON-ish text.

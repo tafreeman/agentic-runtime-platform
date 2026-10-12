@@ -674,3 +674,20 @@ def test_prose_brace_does_not_hide_a_truncated_bare_report(
     assert report["overall_status"] == "APPROVED"
     assert report["quality_score"] == 9
     assert report["findings"][0] == {"title": "A"}
+
+
+@both_engines
+def test_explanatory_block_before_a_truncated_report_is_skipped(parse: Any) -> None:
+    """The explanation parses, the report after it does not; recover the report."""
+    text = (
+        '```json\n{"schema": true}\n```\nThe review:\n```json\n'
+        '{"overall_status": "APPROVED", "quality_score": 9, "summary": "ok", '
+        '"findings": [{"title": "A"}, {"title": "B'
+    )
+
+    report = parse(text)["review_report"]
+
+    assert report["overall_status"] == "APPROVED"
+    assert report["quality_score"] == 9
+    assert report["summary"] == "ok"
+    assert report["findings"][0] == {"title": "A"}
