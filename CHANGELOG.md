@@ -20,6 +20,26 @@
 - **`SecretDetector.version` is now `1.1.0`.** Sanitization results record
   it, so they show which rules produced them.
 
+## Unreleased - GitHub Models out of the tier chains
+
+- **No tier chain routes to `gh:` any more.** GitHub retired GitHub Models on
+  2026-07-30 (ADR-016), and its legacy endpoint, `models.inference.ai.azure.com`,
+  no longer resolves. `gh:openai/gpt-4o-mini` is gone from tier 1 and
+  `gh:openai/gpt-4o` from tiers 2-5. Nothing replaces them: each tier still has
+  three cloud rungs ahead of its local Ollama tail. Both ids stay in
+  `model_registry.yaml` as `deprecated` with `tiers: []` and curated `paid`, so
+  `AGENTIC_MAX_COST_LANE=free` routing does not change.
+- **A `GITHUB_TOKEN` no longer appends backup models after the local tail.**
+  `get_model_candidates_for_tier` dropped its `include_gh_backup` parameter and
+  `langchain.model_utils.GH_BACKUP_MODELS` is gone. The backup append put
+  `gh:openai/gpt-4o-mini` after `ollama:qwen3-coder:30b`. So when the local
+  model failed, the step crossed into a dead paid provider and reported
+  "last model=gh:openai/gpt-4o-mini: Connection error" in place of the real
+  failure. The tier's local tail is now always the last candidate.
+- **An explicit `gh:` model id still builds.** The provider, its discovery and
+  the `GITHUB_TOKEN` gate are unchanged, so a pinned `gh:` id fails at the
+  network, not at build time.
+
 ## Unreleased - Retired NVIDIA DeepSeek V4 models and judge default
 
 - **Tiers 2-3 now use `nvidia:z-ai/glm-5.3-flash` as their NVIDIA rung, and

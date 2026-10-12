@@ -22,11 +22,12 @@
 # against it (langchain/models.py); an entry with no cost_lane, or an id not in
 # this file at all, is treated as paid -- fail closed, never guessed free.
 #
-# gh: (GitHub Models) is curated paid despite having a nominally free tier: the
-# SWE-fix A/B campaign (agentic-workflows-v2/evals/swe_ab/) treated GITHUB_TOKEN
-# as a must-not-reach credential alongside the metered providers because its
-# rate limits and billing tie-in are undocumented for this deployment -- revisit
-# if that is confirmed otherwise.
+# gh: (GitHub Models) is out of every tier chain: GitHub retired the service on
+# 2026-07-30 (ADR-016). Its two entries stay below as `deprecated`, curated
+# paid, so an explicit gh: pin is still classified the way it always was. That
+# matches what the SWE-fix A/B campaign (agentic-workflows-v2/evals/swe_ab/)
+# assumed: it treated GITHUB_TOKEN as a must-not-reach credential alongside the
+# metered providers.
 #
 # The three nvidia: tier ids below are NOT confirmed against NVIDIA's curated
 # free-endpoint list (build.nvidia.com "Free Endpoint" label; 14 ids captured
@@ -47,11 +48,14 @@ models:
     price_in: null
     price_out: null
     context_window: null
+  # Retired with GitHub Models on 2026-07-30 (ADR-016) and removed from the
+  # tier-1 chain on 2026-10-12. The legacy endpoint, models.inference.ai.azure.com,
+  # no longer resolves in DNS, so every call ends in "Connection error".
   - id: gh:openai/gpt-4o-mini
     provider: gh
-    tiers: [1]
+    tiers: []
     capability: fast
-    status: active
+    status: deprecated
     cost_lane: paid
     price_in: null
     price_out: null
@@ -104,11 +108,12 @@ models:
     price_in: null
     price_out: null
     context_window: null
+  # Retired with GitHub Models; removed from the tier 2-5 chains on 2026-10-12.
   - id: gh:openai/gpt-4o
     provider: gh
-    tiers: [2, 3, 4, 5]
+    tiers: []
     capability: balanced
-    status: active
+    status: deprecated
     cost_lane: paid
     price_in: null
     price_out: null
@@ -359,17 +364,22 @@ models:
 # Ordered fallback chains per tier. Reconciled from the previously divergent
 # router.DEFAULT_CHAINS (escalating, cloud-only) and langchain._TIER_FALLBACK_CHAINS
 # (flat, +local). Resolution = cloud-capability-first then a local Ollama tail;
-# tiers 4-5 escalate to gemini-2.5-pro / claude-opus-4-6 (ADR-040).
+# tiers 4-5 escalate to gemini-2.5-pro / claude-opus-4-6 (ADR-040). The local
+# tail is the last candidate get_model_candidates_for_tier returns -- nothing
+# is appended after it, so a failover never crosses back out of the local lane.
+#
+# The gh: rungs were removed on 2026-10-12 and not replaced: each tier still
+# has three cloud providers ahead of its local tail. The only other keyed
+# providers were Mistral (free tier, rate-limited often) and OpenRouter (no
+# credits), and neither would make a fourth rung any more reliable.
 tiers:
   1:
     - gemini:gemini-2.5-flash-lite
-    - gh:openai/gpt-4o-mini
     - nvidia:nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
     - anthropic:claude-haiku-4-5-20251001
     - ollama:gemma4:31b
   2:
     - gemini:gemini-2.5-flash
-    - gh:openai/gpt-4o
     - nvidia:z-ai/glm-5.3-flash
     - anthropic:claude-sonnet-4-6
     - ollama:qwen3-coder:30b
@@ -377,19 +387,16 @@ tiers:
     - gemini:gemini-2.5-flash
     - anthropic:claude-sonnet-4-6
     - nvidia:z-ai/glm-5.3-flash
-    - gh:openai/gpt-4o
     - ollama:qwen3-coder:30b
   4:
     - gemini:gemini-2.5-pro
     - anthropic:claude-sonnet-4-6
     - nvidia:z-ai/glm-5.3
-    - gh:openai/gpt-4o
     - ollama:qwen3-coder:30b
   5:
     - gemini:gemini-2.5-pro
     - anthropic:claude-opus-4-6
     - nvidia:z-ai/glm-5.3
-    - gh:openai/gpt-4o
     - ollama:qwen3-coder:30b
 
 # NOTE: named-agent model selection is NOT in this registry. Agents resolve
@@ -397,9 +404,7 @@ tiers:
 # fields in agents.yaml are vestigial display config (the /api/agents route reads
 # only name/description/tier). See ADR-040.
 
-# Special-purpose ids referenced by individual call sites. (The GitHub-backup
-# fallback list stays in langchain/model_utils.GH_BACKUP_MODELS next to the
-# provider gate it belongs to; its ids are already declared in models: above.)
+# Special-purpose ids referenced by individual call sites.
 #
 # judge_default was deepseek-v4-pro, the old tier 4-5 NVIDIA rung, until NIM
 # retired it on 2026-08-07; it now names that rung's replacement. LLMJudge

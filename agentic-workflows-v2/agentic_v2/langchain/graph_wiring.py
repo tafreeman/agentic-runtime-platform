@@ -1001,7 +1001,6 @@ def _build_llm_node(
         tier,
         step.model_override,
         include_unavailable=False,
-        include_gh_backup=True,
     )
     agent_cache: dict[str, Any] = {}
 
