@@ -12,8 +12,8 @@ fullstack_generation runs on 2026-10-11 stored the ``review_code`` step's
   ``<<<ARTIFACT review_report>>>`` body that failed to parse.
 
 Run data is not committed (AGENTS.md), so the four logged reply shapes are
-rebuilt from a synthetic report: masked by the real sanitizer, then cut where
-the logged replies were cut. Each is parsed through both engines' entrypoints.
+rebuilt from a synthetic report: masked the way the sanitizer masked them on
+2026-10-11, then cut where the logged replies were cut. Each is parsed through both engines' entrypoints.
 """
 
 from __future__ import annotations
@@ -31,7 +31,6 @@ from agentic_v2.engine.llm_output_parsing import (
     parse_sentinel_output,
 )
 from agentic_v2.langchain.graph_wiring import parse_step_outputs
-from agentic_v2.middleware.response_sanitizer import ResponseSanitizer
 
 # Declared outputs of fullstack_generation.yaml's review_code step.
 REVIEW_OUTPUT_KEYS = [
@@ -62,8 +61,16 @@ both_engines = pytest.mark.parametrize(
 )
 
 
+# The env_secret mask as shipped on 2026-10-11: greedy up to whitespace, so
+# inside a JSON string it also removed the closing quote and the comma. It is
+# reproduced here so these parser tests do not depend on sanitizer changes.
+_SHIPPED_ENV_SECRET_MASK = re.compile(
+    r"(?i)(?:password|secret|token|credential)\s*[=:]\s*\S{8,}"
+)
+
+
 def _masked(text: str) -> str:
-    return ResponseSanitizer().sanitize_response_sync(text).sanitized_text or text
+    return _SHIPPED_ENV_SECRET_MASK.sub(MASK, text)
 
 
 def _cut_inside(text: str, marker: str, keep: int) -> str:
@@ -227,7 +234,7 @@ def test_engines_agree_on_logged_shapes(shape: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Complete responses masked by the real response sanitizer
+# Complete responses with the shipped mask's damage
 # ---------------------------------------------------------------------------
 
 SHAPES: dict[str, Callable[[dict[str, Any]], str]] = {
@@ -244,7 +251,7 @@ SHAPES: dict[str, Callable[[dict[str, Any]], str]] = {
 }
 
 
-def test_sanitizer_mask_breaks_the_report_json() -> None:
+def test_shipped_mask_breaks_the_report_json() -> None:
     """Precondition: masking removes the closing quote and the comma."""
     masked = _masked(json.dumps(REPORT, indent=2))
 
