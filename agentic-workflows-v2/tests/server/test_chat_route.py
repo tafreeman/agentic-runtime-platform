@@ -45,7 +45,14 @@ FULL_MODEL_ID = "openrouter:meta-llama/llama-3.1-8b-instruct:free"
 
 _SSE_DATA_PREFIX = "data: "
 
-_ERROR_CATEGORIES = {"rate_limited", "auth_error", "not_found", "transient", "unknown"}
+_ERROR_CATEGORIES = {
+    "rate_limited",
+    "auth_error",
+    "not_found",
+    "model_retired",
+    "transient",
+    "unknown",
+}
 
 
 def _chat_payload(**overrides: Any) -> dict[str, Any]:
@@ -412,6 +419,27 @@ class TestChatStreamErrors:
         assert events[0]["delta"] == "partial "
         assert events[1]["category"] == "transient"
         assert "connection refused" in events[1]["message"]
+
+    def test_retired_model_410_is_model_retired_not_transient(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """NIM's end-of-life 410 must not be labelled retryable ``transient``."""
+        fake_model = _FakeStreamingModel(
+            [],
+            error=Exception(
+                "Error code: 410 - {'title': 'Gone', 'status': 410, 'detail': "
+                "\"The model 'meta/llama-3.1-8b-instruct' has reached its end of "
+                'life and is no longer available."}'
+            ),
+        )
+        _install_fake_model(monkeypatch, fake_model)
+
+        status, _headers, events = _post_chat_events(client, _chat_payload())
+
+        assert status == 200
+        assert [e["type"] for e in events] == ["error"]
+        assert events[0]["category"] == "model_retired"
+        assert "end of life" in events[0]["message"]
 
     def test_missing_provider_key_becomes_error_frame(
         self, client: TestClient, monkeypatch: pytest.MonkeyPatch

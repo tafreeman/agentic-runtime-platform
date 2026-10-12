@@ -28,12 +28,12 @@
 # rate limits and billing tie-in are undocumented for this deployment -- revisit
 # if that is confirmed otherwise.
 #
-# The three nvidia: ids below are NOT confirmed against NVIDIA's curated
+# The three nvidia: tier ids below are NOT confirmed against NVIDIA's curated
 # free-endpoint list (build.nvidia.com "Free Endpoint" label; 14 ids captured
-# in evals/swe_ab/docs/MODEL-INVENTORY-2026-08-27.md) -- their dateless ids
-# don't string-match that list's dated ids (e.g. deepseek-v4-flash vs
-# deepseek-v4-flash-0731), so they are curated paid until a human confirms the
-# alias resolves to the same free-tier billing.
+# in evals/swe_ab/docs/MODEL-INVENTORY-2026-08-27.md) -- the deepseek ids are
+# dateless and don't string-match that list's dated ids (e.g. deepseek-v4-flash
+# vs deepseek-v4-flash-0731), and the tier-1 nemotron id is not on that list --
+# so they are curated paid until a human confirms the free-tier billing.
 version: 1
 
 models:
@@ -60,7 +60,13 @@ models:
   # ``openai:`` OpenAI ids (gpt-4o*) can never be served and were permanently
   # quarantined by the boot drift check — the NIM catalog is declared under
   # the ``nvidia:`` provider instead (ADR-051).
-  - id: nvidia:meta/llama-3.1-8b-instruct
+  #
+  # Replaces nvidia:meta/llama-3.1-8b-instruct, which NIM retired on 2026-08-26
+  # (HTTP 410 Gone, "reached its end of life"). Chat-verified 2026-10-11 through
+  # POST /api/chat under both nvidia: and the openai: alias. Its model card
+  # showed "Free Endpoint: Available" that day; it stays curated paid like the
+  # entry it replaces, so AGENTIC_MAX_COST_LANE=free routing is unchanged.
+  - id: nvidia:nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
     provider: nvidia
     tiers: [1]
     capability: fast
@@ -392,7 +398,7 @@ tiers:
   1:
     - gemini:gemini-2.5-flash-lite
     - gh:openai/gpt-4o-mini
-    - nvidia:meta/llama-3.1-8b-instruct
+    - nvidia:nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
     - anthropic:claude-haiku-4-5-20251001
     - ollama:gemma4:31b
   2:

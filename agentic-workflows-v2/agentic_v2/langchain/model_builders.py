@@ -39,13 +39,6 @@ _GH_BASE_URL = "https://models.inference.ai.azure.com"
 # API key. A non-empty value is still required by the OpenAI client.
 _LOCAL_NIM_PLACEHOLDER_KEY = "not-needed-for-local-nim"
 
-# Env escape hatch for NIM's reasoning-disable request field.  Set to a falsey
-# value to stop sending it — only needed for a self-hosted NIM whose chat
-# template rejects unknown ``chat_template_kwargs`` (the cloud endpoint does
-# not; see ``build_nvidia_model``).
-_NVIDIA_DISABLE_THINKING_ENV = "NVIDIA_DISABLE_THINKING"
-_FALSEY_ENV_VALUES = frozenset({"0", "false", "no", "off"})
-
 # Cached NIM chat-model subclass, keyed on the ``ChatOpenAI`` base it was
 # derived from so every call returns the *same* class (mirroring
 # ``_PLACEHOLDER_CHAT_MODEL_CLS``) while a swapped base still rebuilds.
@@ -216,16 +209,13 @@ def build_openai_model(model_name: str, temperature: float) -> Any:
 def _nvidia_thinking_disabled() -> bool:
     """Whether to ask NIM to skip a reasoning model's chain-of-thought phase.
 
-    Defaults to ``True``: the field is inert on every NIM model that does not
-    understand it (see :func:`build_nvidia_model`), so opting *out* is the
-    exceptional case. ``NVIDIA_DISABLE_THINKING`` set to ``0``/``false``/
-    ``no``/``off`` restores the raw pass-through for a self-hosted NIM whose
-    chat template rejects the field.
+    Delegates to the policy the native ``NvidiaBackend`` uses, so both engines
+    honour ``NVIDIA_DISABLE_THINKING`` identically (see
+    :func:`agentic_v2.models.backends_cloud.nvidia_thinking_disabled`).
     """
-    raw = os.environ.get(_NVIDIA_DISABLE_THINKING_ENV)
-    if raw is None:
-        return True
-    return raw.strip().lower() not in _FALSEY_ENV_VALUES
+    from ..models.backends_cloud import nvidia_thinking_disabled
+
+    return nvidia_thinking_disabled()
 
 
 def _nim_extra_body() -> dict[str, Any]:
@@ -234,7 +224,9 @@ def _nim_extra_body() -> dict[str, Any]:
     Returned fresh per call so the caller owns the dict rather than
     sharing module-level mutable state with every other NIM model.
     """
-    return {"chat_template_kwargs": {"thinking": False}}
+    from ..models.backends_cloud import nim_chat_template_kwargs
+
+    return {"chat_template_kwargs": nim_chat_template_kwargs()}
 
 
 def _nim_reasoning_texts(response: Any) -> list[str]:

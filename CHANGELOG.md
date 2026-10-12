@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased - Retired NVIDIA tier-1 model
+
+- **Tier 1's NVIDIA rung is now `nvidia:nvidia/nemotron-3-nano-omni-30b-a3b-reasoning`.**
+  NIM retired `meta/llama-3.1-8b-instruct` on 2026-08-26 and answers HTTP 410
+  Gone for it. The replacement was chat-verified on 2026-10-11 under both the
+  `nvidia:` prefix and the `openai:` alias, and stays curated `paid` like the
+  entry it replaces, so `AGENTIC_MAX_COST_LANE=free` routing does not change.
+- **HTTP 410 is a permanent "model retired" error.** `classify_error` returns
+  the new `ErrorCode.MODEL_RETIRED` (`model_retired`, not retryable) for a 410
+  status or end-of-life wording instead of falling through to `transient`, so
+  the `/api/chat` error frame and log name the real cause and retry loops stop.
+  `SmartModelRouter` evicts a model on a 410 status the same way it does on
+  401/403/404.
+
 ## Unreleased - Mistral La Plateforme provider
 
 - **New `mistral:` prefix, probe and builder.** Ids are `mistral:<id>` exactly as

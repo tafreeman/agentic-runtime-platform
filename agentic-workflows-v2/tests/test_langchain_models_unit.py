@@ -821,10 +821,10 @@ class TestEnumerateKnownModelsPriceLabels:
 
         monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
         monkeypatch.setenv("OPENAI_BASE_URL", "https://integrate.api.nvidia.com/v1")
-        listing = [CloudModelInfo(id="openai:meta/llama-3.1-8b-instruct")]
+        listing = [CloudModelInfo(id="openai:z-ai/glm-5.3-flash")]
         by_id = {m["id"]: m for m in enumerate_known_models(cloud_listing=listing)}
 
-        row = by_id["openai:meta/llama-3.1-8b-instruct"]
+        row = by_id["openai:z-ai/glm-5.3-flash"]
         assert row["price_label"] == "free"
         assert (
             row["price_reason"] == "free tier declared for nvidia (via OPENAI_BASE_URL)"

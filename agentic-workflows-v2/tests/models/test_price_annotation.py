@@ -413,7 +413,7 @@ class TestOpenaiAliasForNvidia:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setenv("OPENAI_BASE_URL", self._NVIDIA)
-        assert _verdict(_row("openai:meta/llama-3.1-8b-instruct")) == (
+        assert _verdict(_row("openai:z-ai/glm-5.3-flash")) == (
             "free",
             self._VIA,
         )
@@ -522,7 +522,7 @@ class TestSourceDeclarations:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         _use_registry(monkeypatch)
-        assert _verdict(_row("nvidia:meta/llama-3.1-8b-instruct")) == (
+        assert _verdict(_row("nvidia:z-ai/glm-5.3-flash")) == (
             "free",
             "free tier declared for nvidia",
         )
@@ -639,18 +639,18 @@ class TestCuratedPaidBeatsDeclarations:
         _use_registry(
             monkeypatch,
             RegisteredModel(
-                id="nvidia:meta/llama-3.1-8b-instruct",
+                id="nvidia:z-ai/glm-5.3-flash",
                 provider="nvidia",
                 cost_lane="paid",
             ),
         )
-        assert _verdict(_row("nvidia:meta/llama-3.1-8b-instruct")) == self._PAID
+        assert _verdict(_row("nvidia:z-ai/glm-5.3-flash")) == self._PAID
 
     def test_uncurated_nvidia_id_is_still_the_declared_free_tier(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         _use_registry(monkeypatch)
-        assert _verdict(_row("nvidia:meta/llama-3.1-8b-instruct")) == (
+        assert _verdict(_row("nvidia:z-ai/glm-5.3-flash")) == (
             "free",
             "free tier declared for nvidia",
         )
