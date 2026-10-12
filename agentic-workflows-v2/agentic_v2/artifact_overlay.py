@@ -35,7 +35,7 @@ def _as_file_map(value: Any) -> dict[str, str] | None:
         # agentic_v2.engine.__init__ -> engine.agent_resolver -> this module.
         from agentic_v2.engine.llm_output_parsing import extract_files_from_artifact
 
-        return extract_files_from_artifact(value) or None
+        return extract_files_from_artifact(value.strip()) or None
     return None
 
 
@@ -43,25 +43,25 @@ def overlay_code_artifact(base: Any, override: Any) -> tuple[Any, bool]:
     """Overlay one reworked artifact on its original.
 
     Returns ``(artifact, applied)``. ``applied`` is False, and *base* comes
-    back unchanged, when *override* is absent or is not a valid code artifact
-    (unsafe paths, placeholder prose, no files) — prose never replaces code.
-    When *base* is not itself a file map (some generators return nested
-    descriptions), the reworked file map is the only code-shaped version and
-    is returned as-is.
+    back unchanged, when *override* is absent or fails the ``code_artifact``
+    contract (unsafe paths, placeholder prose, no files, or a FILE/ENDFILE
+    string with commentary or a truncated block around its files) — malformed
+    output is never partially shipped. When *base* is not itself a file map
+    (some generators return nested descriptions), the reworked file map is
+    the only code-shaped version and is returned as-is.
     """
-    override_files = _as_file_map(override)
-    if override_files is None:
-        if override is not None:
-            logger.warning(
-                "Ignoring reworked artifact of type %s: not a file map or "
-                "FILE/ENDFILE payload",
-                type(override).__name__,
-            )
+    if override is None:
         return base, False
-    diagnostics = validate_code_artifact("override", override_files)
-    if diagnostics:
+    # Validate the value as given, before extraction: the lenient FILE-block
+    # extractor would drop commentary or a truncated trailing block and let
+    # the rest through.
+    diagnostics = validate_code_artifact("override", override)
+    override_files = None if diagnostics else _as_file_map(override)
+    if override_files is None:
         logger.warning(
-            "Ignoring reworked artifact that fails the code_artifact contract: %s",
+            "Ignoring reworked artifact of type %s that fails the "
+            "code_artifact contract: %s",
+            type(override).__name__,
             [item.code for item in diagnostics],
         )
         return base, False

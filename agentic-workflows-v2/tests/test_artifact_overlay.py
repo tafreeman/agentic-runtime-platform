@@ -61,6 +61,10 @@ class TestOverlayCodeArtifact:
             {"app/db.py": ""},
             "No changes were needed; see review for details.",
             {"artifact": "backend", "files": [{"path": "app/db.py"}]},
+            # A valid FILE block wrapped in commentary, or followed by a block
+            # cut off mid-file, must not be partially applied.
+            f"Here is the fix:\n{_FILE_PAYLOAD}",
+            f"{_FILE_PAYLOAD}\nFILE: app/main.py\nfrom app.db import",
             ["app/db.py"],
             {},
         ],
