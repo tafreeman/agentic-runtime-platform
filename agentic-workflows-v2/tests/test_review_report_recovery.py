@@ -356,3 +356,38 @@ def test_repair_closes_open_containers_after_truncation() -> None:
 
     assert repaired is not None
     assert json.loads(repaired) == {"a": [1, 2, {}]}
+
+
+# ---------------------------------------------------------------------------
+# Bounded work on adversarial replies
+# ---------------------------------------------------------------------------
+
+# Just under the parser's 256 KiB input cap.
+_ADVERSARIAL_LEN = 250_000
+
+
+@pytest.mark.timeout(10)
+@both_engines
+@pytest.mark.parametrize(
+    "unit",
+    ["```json {", '"review_report": {"a": "'],
+    ids=["unclosed_fences", "repeated_report_keys"],
+)
+def test_unclosed_openings_parse_in_linear_time(parse: Any, unit: str) -> None:
+    """Each opening that never closes must not rescan the rest of the reply.
+
+    A lazy DOTALL fence regex and a repair per ``"review_report":`` key were
+    both quadratic here: a reply of this size took minutes.
+    """
+    text = unit * (_ADVERSARIAL_LEN // len(unit))
+
+    report = parse(text)["review_report"]
+
+    assert report["overall_status"] == "NEEDS_FIXES"
+
+
+def test_fence_scan_finds_a_block_after_an_odd_fence() -> None:
+    """A stray inline fence must not shift which gaps are read as blocks."""
+    text = 'Wrap code in ``` fences.\n```json\n{"key": "value"}\n```\n'
+
+    assert parse_llm_json_output(text, None) == {"key": "value"}

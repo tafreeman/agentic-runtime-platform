@@ -17,6 +17,7 @@ dicts:
 
 from __future__ import annotations
 
+import itertools
 import json
 import re
 from typing import Any, cast
@@ -38,12 +39,8 @@ FILE_BLOCK_RE = re.compile(
 # Missing closing sentinels cause backtracking; capping input bounds the runtime.
 _MAX_SENTINEL_INPUT_LEN = 262144  # 256 KB
 
-# A ```json fenced object anywhere in the text, for payloads with prose (and
-# stray braces) around the fence.
-_MID_TEXT_FENCE_RE = re.compile(
-    r"```(?:json)?\s*(\{.*?\})\s*```",
-    re.DOTALL | re.IGNORECASE,
-)
+_FENCE = "```"
+_JSON_FENCE_TAG = "json"
 
 # Backward-compatibility aliases
 _ARTIFACT_RE = ARTIFACT_RE
@@ -87,6 +84,31 @@ def _bracket_span(raw: str, open_ch: str, close_ch: str) -> str | None:
     return None
 
 
+def _fenced_objects(text: str) -> list[str]:
+    """Return each ```-fenced body that is a ``{…}`` object, wherever it sits.
+
+    Covers fenced payloads with prose (and stray braces) around them.
+    Every gap between two consecutive fences is checked once, so the
+    scan stays linear however many fences an untrusted reply opens
+    without closing; a lazy DOTALL regex rescans the rest of the text
+    from each opening fence.
+    """
+    bounds: list[int] = []
+    index = text.find(_FENCE)
+    while index != -1:
+        bounds.append(index)
+        index = text.find(_FENCE, index + len(_FENCE))
+
+    objects: list[str] = []
+    for open_at, close_at in itertools.pairwise(bounds):
+        body = text[open_at + len(_FENCE) : close_at].strip()
+        if body[: len(_JSON_FENCE_TAG)].lower() == _JSON_FENCE_TAG:
+            body = body[len(_JSON_FENCE_TAG) :].lstrip()
+        if body.startswith("{") and body.endswith("}"):
+            objects.append(body)
+    return objects
+
+
 def extract_json_candidates(text: str) -> list[str]:
     """Return increasingly permissive JSON candidates from model output.
 
@@ -113,7 +135,7 @@ def extract_json_candidates(text: str) -> list[str]:
     if arr_snippet:
         candidates.append(arr_snippet)
 
-    candidates.extend(_MID_TEXT_FENCE_RE.findall(raw[:_MAX_SENTINEL_INPUT_LEN]))
+    candidates.extend(_fenced_objects(raw[:_MAX_SENTINEL_INPUT_LEN]))
 
     # Deduplicate while preserving order
     seen: set[str] = set()
@@ -234,7 +256,7 @@ def _recover_review_report(text: str) -> dict[str, Any] | None:
     """Recover the full review report from model text, repairing damaged JSON.
 
     Tries the shared JSON candidates first. If none parses, repairs the first
-    object in the text and then each object that follows a
+    object in the text and then the object after the first
     ``"review_report":`` key. Returns ``None`` when no report is found, so the
     caller can fall back to salvaging the status alone.
     """
@@ -250,10 +272,11 @@ def _recover_review_report(text: str) -> dict[str, Any] | None:
         report = _report_from_mapping(_loads_dict(repaired))
         if report is not None:
             return report
-    for match in _REVIEW_REPORT_VALUE_RE.finditer(capped):
-        report = _loads_dict(_repair_json_object(capped, match.end()))
-        if report is not None:
-            return report
+    # Only the first key: each repair can scan to the end of the text, so
+    # trying every key would be quadratic on a reply that repeats it.
+    match = _REVIEW_REPORT_VALUE_RE.search(capped)
+    if match is not None:
+        return _loads_dict(_repair_json_object(capped, match.end()))
     return None
 
 
