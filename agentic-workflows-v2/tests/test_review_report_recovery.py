@@ -738,3 +738,38 @@ def test_prose_status_does_not_gate_over_a_recovered_report(parse: Any) -> None:
 
     assert report["overall_status"] == "NEEDS_FIXES"
     assert report["summary"] == "two issues"
+
+
+@both_engines
+@pytest.mark.parametrize(
+    "preliminary",
+    [
+        '{"overall_status": "APPROVED", "note": "preliminary"}',
+        '{"overall_status": "APPROVED", "checked": ["auth"]}',
+    ],
+    ids=["note", "list"],
+)
+def test_annotated_preliminary_status_does_not_outrank_the_report(
+    parse: Any, preliminary: str
+) -> None:
+    """Only the report schema's fields make a bare object a full report."""
+    text = "```json\n" + preliminary + "\n```\n" + _FULL_REPORT_BLOCK
+
+    report = parse(text)["review_report"]
+
+    assert report["overall_status"] == "NEEDS_FIXES"
+    assert report["quality_score"] == 5
+
+
+@both_engines
+def test_annotated_preliminary_status_before_a_damaged_report(parse: Any) -> None:
+    text = (
+        '```json\n{"overall_status": "APPROVED", "note": "preliminary"}\n```\n'
+        + _FULL_REPORT_BLOCK
+    )
+    text = text[: text.index('{"title": "B"}') + len('{"title": "B')]
+
+    report = parse(text)["review_report"]
+
+    assert report["overall_status"] == "NEEDS_FIXES"
+    assert report["quality_score"] == 5
