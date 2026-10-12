@@ -61,6 +61,7 @@ def evaluate_condition(expr: str | None, state: dict[str, Any]) -> bool:
     - Comparisons: ``${inputs.review_depth} != 'quick'``
     - Boolean: ``${context.is_valid}``
     - ``in`` operator: ``${steps.review.outputs.status} in ['APPROVED']``
+    - ``coalesce()``: ``${coalesce(steps.a.outputs.x, steps.b.outputs.x)} != 'y'``
 
     An empty / ``None`` / non-string ``expr`` is treated as "no
     condition" and returns ``True`` (the step runs / the loop ends).
@@ -80,8 +81,11 @@ def evaluate_condition(expr: str | None, state: dict[str, Any]) -> bool:
 
     # Replace all ${...} references with the repr() of their resolved
     # value, yielding a literal-only Python expression (no free names).
+    # coalesce() is resolved here too, as resolve_expression() does: walking
+    # "coalesce(steps.x..." as a dotted path yields None, so a condition like
+    # ``${coalesce(...)} != 'APPROVED'`` was always True on this adapter.
     resolved = _VAR_PATTERN.sub(
-        lambda m: repr(_resolve_path(m.group(1).strip(), state)),
+        lambda m: repr(_resolve_coalesce_or_path(m.group(1).strip(), state)),
         expr,
     )
 

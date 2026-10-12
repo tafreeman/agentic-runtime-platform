@@ -42,6 +42,7 @@ from ..artifact_contracts import (
     expected_output_keys,
     validate_and_normalize_artifacts,
 )
+from ..artifact_overlay import overlay_code_artifacts
 from ..engine.consensus import coerce_min_agreement, majority_vote
 from ..engine.llm_output_parsing import (
     extract_json_candidates,
@@ -140,6 +141,25 @@ def _tier0_consensus(state: WorkflowState) -> dict[str, Any]:
     }
 
 
+def _tier0_overlay(state: WorkflowState) -> dict[str, Any]:
+    """Overlay reworked code artifacts on the originals (native semantics)."""
+    ctx = dict(state.get("context", {}))
+    base = ctx.get("base")
+    override = ctx.get("override")
+    merged, overridden = overlay_code_artifacts(
+        base if isinstance(base, dict) else {},
+        override if isinstance(override, dict) else {},
+    )
+    output = {**merged, "overridden": overridden}
+    return {
+        "context": ctx,
+        "steps": {
+            **state.get("steps", {}),
+            "__current__": {"status": "success", "outputs": output},
+        },
+    }
+
+
 def _tier0_parse_code(state: WorkflowState) -> dict[str, Any]:
     """Deterministic code parsing (no LLM)."""
     ctx = dict(state.get("context", {}))
@@ -197,6 +217,7 @@ _TIER0_REGISTRY: dict[str, Any] = {
     "tier0_process": _tier0_process_text,
     "tier0_counter": _tier0_count_text,
     "tier0_consensus": _tier0_consensus,
+    "tier0_overlay": _tier0_overlay,
 }
 
 
