@@ -19,6 +19,52 @@
 - **An explicit `gh:` model id still builds.** The provider, its discovery and
   the `GITHUB_TOKEN` gate are unchanged, so a pinned `gh:` id fails at the
   network, not at build time.
+## Unreleased - Reviewer reports survive damaged JSON
+
+- **`review_report` keeps the whole report.** Before, a reviewer reply whose
+  JSON failed to parse was stored as only `{"overall_status": ...}`, dropping
+  `quality_score`, `summary` and `findings`. Two things broke that JSON: the
+  response sanitizer's secret mask removing a string's closing quote, and
+  output-token caps cutting the reply short. The parser now repairs both
+  kinds of damage and keeps the recovered report.
+- **Gating changes.** All of these follow the reviewer's actual report:
+  - An `<<<ARTIFACT review_report>>>` block that is not valid JSON now
+    supplies the status it states. Before, it always gated as
+    `NEEDS_FIXES`.
+  - A report returned without the `review_report` wrapper (a top-level
+    `overall_status`) now gates on its own status. Before, it was replaced by
+    the `NEEDS_FIXES` default.
+  - When a damaged reply's report is recovered, the gate uses that report's
+    own `overall_status`. Before, it used the first `overall_status` anywhere
+    in the text, which could be a preliminary one stated earlier.
+  - A full report outranks a preliminary status-only block in the same reply.
+- **Both engines pick the same JSON block.** Each now reads ```json blocks
+  surrounded by prose; the native engine previously parsed them only when it
+  could salvage the declared keys one by one. When a reply holds several
+  objects, both take the one carrying the step's declared outputs, so an
+  explanatory block before the result is skipped.
+
+## Unreleased - fullstack_generation ships and re-reviews its rework
+
+- **Reworked code now ships.** `developer_rework` declares `backend_code`,
+  `frontend_code`, `migrations` and `integration_tests`. A new deterministic
+  `apply_rework` step (`tier0_overlay`, on both engines) lays the reworked
+  files over the generated ones by path, and keeps the files the rework left
+  out. `assemble_feature`, `feature_package` and `all_code` now carry the
+  merged code. Before this change they always carried the pre-rework code.
+  A reworked artifact that fails the `code_artifact` contract is ignored
+  rather than partially applied.
+- **`review_report` is now the latest review.** When the overlay applied any
+  reworked code, `re_review_code` reviews the merged code once, and the
+  workflow's `review_report` output is that re-review. Otherwise it is still
+  the first review.
+- **Rework no longer runs on APPROVED reviews under the LangGraph adapter.**
+  `when:` conditions now resolve `${coalesce(...)}` the same way step inputs
+  and the native engine do. Before, the gate always resolved to `None`, so it
+  was true for every review.
+- **Native engine: a failed rework now skips assembly.** If `developer_rework`
+  fails, its dependents cascade-skip, so `feature_package` (optional) is
+  absent. The run already reported failure in that case.
 
 ## Unreleased - Retired NVIDIA tier-1 model
 

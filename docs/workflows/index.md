@@ -20,7 +20,7 @@ reference.
 |----------|---------|------:|-------:|------------------|
 | [`code_review`](#code_review) | Fan-out / fan-in | 5 | 5 | Multi-perspective review of a single file with synthesis |
 | [`bug_resolution`](#bug_resolution) | Sequential with verification | 5 | 4 | Triage → root-cause → fix → regression check → write-up |
-| [`fullstack_generation`](#fullstack_generation) | Parallel sub-DAG with rework | 8 | 6 | Generate API + frontend + tests in parallel, then review and rework |
+| [`fullstack_generation`](#fullstack_generation) | Parallel sub-DAG with rework | 10 | 7 | Generate API + frontend + tests in parallel, then review, rework and re-review |
 | [`iterative_review`](#iterative_review) | Bounded loop with rework gate | 5 | 4 | Review/rework until quality gate passes or loop_max trips |
 | [`conditional_branching`](#conditional_branching) | Conditional fan-out with assembly | 6 | 4 | Branch on requirements; only execute the gates that matter |
 | [`consensus_review`](#consensus_review) | Ensemble with majority vote | 5 | 3 | Three independent reviewers vote; summarize only on agreement |
@@ -70,12 +70,16 @@ step writes the human-readable report.
 
 After an architecture step, four generators run in parallel for the API,
 frontend, migrations, and integration tests. A reviewer checks their output.
-A rework step handles review findings before the final assembly step packages
-the result.
+When the review does not approve, a rework step fixes the findings,
+`apply_rework` merges the changed files over the generated ones (files the
+rework left out are kept), and if the rework changed any code, the merged
+code is reviewed once more. The
+final assembly step packages the merged code, and the workflow's
+`review_report` is the latest review.
 
 - **Pattern:** Parallel sub-DAG with rework
-- **Steps:** `design_architecture` → (`generate_api` ‖ `generate_frontend` ‖ `generate_migrations` ‖ `generate_integration_tests`) → `review_code` → `developer_rework` → `assemble_feature`
-- **Agents:** `tier1_assembler`, `tier1_generator`, `tier2_coder`, `tier2_tester`, `tier3_architect`, `tier3_reviewer`
+- **Steps:** `design_architecture` → (`generate_api` ‖ `generate_frontend` ‖ `generate_migrations` ‖ `generate_integration_tests`) → `review_code` → `developer_rework` → `apply_rework` → `re_review_code` → `assemble_feature`
+- **Agents:** `tier0_overlay`, `tier1_assembler`, `tier1_generator`, `tier2_coder`, `tier2_tester`, `tier3_architect`, `tier3_reviewer`
 - **Inputs:** `feature_spec`, `tech_stack`
 - **Outputs:** `feature_package`, `review_report`, `all_code`
 - **Rubric:** `fullstack_generation_v1`
