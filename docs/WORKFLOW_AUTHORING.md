@@ -498,7 +498,7 @@ Real workflows combine all patterns. The shipped `fullstack_generation` workflow
 - A sequential setup stage (`design_architecture` runs first, with no dependencies)
 - Fan-out (`generate_api`, `generate_frontend`, and `generate_migrations` all depend only on `design_architecture` and run in parallel)
 - Staged fan-in (`generate_integration_tests` waits on `generate_api` + `generate_frontend`; `review_code` waits on all four generation steps)
-- A conditional rework pass (`developer_rework` runs only `when:` the review's `overall_status` is not `'APPROVED'`)
+- A conditional rework pass (`developer_rework` runs only `when:` the review's `overall_status` is not `'APPROVED'`), a deterministic `tier0_overlay` step (`apply_rework`) that merges the reworked files over the generated ones, and one re-review of the merged code (`re_review_code`) gated on the overlay having applied any reworked code
 - `coalesce()` throughout its inputs and outputs to fall back across alternate output keys and skipped steps
 
 ---

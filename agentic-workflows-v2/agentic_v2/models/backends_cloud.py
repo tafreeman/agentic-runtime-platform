@@ -36,6 +36,67 @@ CHAT_COMPLETIONS_PATH = "/chat/completions"
 # API key. A non-empty value is still required so the Bearer header is well-formed.
 _LOCAL_NIM_PLACEHOLDER_KEY = "not-needed-for-local-nim"
 
+# Env escape hatch for NIM's reasoning-disable request field, shared by the
+# native NvidiaBackend and the LangChain NIM builder. Set to a falsey value to
+# stop sending it -- only needed for a self-hosted NIM whose chat template
+# rejects unknown ``chat_template_kwargs`` (the cloud endpoint does not).
+NVIDIA_DISABLE_THINKING_ENV = "NVIDIA_DISABLE_THINKING"
+_FALSEY_ENV_VALUES = frozenset({"0", "false", "no", "off"})
+
+
+def nvidia_thinking_disabled() -> bool:
+    """Whether to ask NIM to skip a reasoning model's chain-of-thought phase.
+
+    Defaults to ``True``: the field is inert on every NIM model that does not
+    understand it, so opting *out* is the exceptional case.
+    ``NVIDIA_DISABLE_THINKING`` set to ``0``/``false``/``no``/``off`` restores
+    the raw pass-through for a self-hosted NIM whose chat template rejects it.
+    """
+    raw = os.environ.get(NVIDIA_DISABLE_THINKING_ENV)
+    if raw is None:
+        return True
+    return raw.strip().lower() not in _FALSEY_ENV_VALUES
+
+
+def nim_chat_template_kwargs() -> dict[str, Any]:
+    """Return a fresh ``chat_template_kwargs`` value that disables reasoning.
+
+    Fresh per call so each request owns its dict rather than sharing
+    module-level mutable state.
+    """
+    return {"thinking": False}
+
+
+# NIM models that ignore ``chat_template_kwargs.thinking`` and gate their
+# reasoning phase on ``reasoning_effort`` instead. Probed live on 2026-10-12:
+# z-ai/glm-5.3 and z-ai/glm-5.3-flash returned the same reasoning length with
+# and without ``thinking: False``, ignored ``reasoning_effort: "none"``, and
+# honoured ``"low"`` (completion tokens 306 -> 112 and 189 -> 44 on the same
+# prompt). "low" is therefore the closest these models get to "off".
+#
+# GLM's chat template also re-renders an earlier assistant turn's
+# reasoning_content into the prompt unless ``clear_thinking`` is set: with a
+# prior reasoning turn in history, prompt_tokens went 702 -> 41 with it (and
+# stayed 41 -> 41 without one). Neither engine round-trips reasoning_content
+# today, so this guards against a future client that does.
+_NIM_REASONING_EFFORT_PREFIXES = ("z-ai/glm-",)
+_NIM_MIN_REASONING_EFFORT = "low"
+
+
+def nim_reasoning_payload(model_name: str) -> dict[str, Any]:
+    """Return fresh request fields that minimise ``model_name``'s reasoning phase.
+
+    ``model_name`` is the bare NIM id (``publisher/model``, no ``nvidia:``
+    prefix). Every model gets ``chat_template_kwargs``; models that gate
+    reasoning on ``reasoning_effort`` also get its lowest honoured level and
+    ``clear_thinking`` so earlier turns' reasoning is not re-rendered.
+    """
+    payload: dict[str, Any] = {"chat_template_kwargs": nim_chat_template_kwargs()}
+    if model_name.startswith(_NIM_REASONING_EFFORT_PREFIXES):
+        payload["chat_template_kwargs"]["clear_thinking"] = True
+        payload["reasoning_effort"] = _NIM_MIN_REASONING_EFFORT
+    return payload
+
 
 def _to_anthropic_tool_choice(
     tool_choice: str | dict[str, Any],
@@ -226,7 +287,32 @@ class OpenAIBackend(LLMBackend):
         result = await self.complete_chat(
             model, messages, max_tokens, temperature, **kwargs
         )
-        return result.get("content", "")
+        # A reasoning model can spend its whole budget on chain-of-thought and
+        # leave the answer blank; degrade to the reasoning text (when the
+        # backend surfaces one) rather than to an empty string.
+        text = result.get("content") or ""
+        if not text.strip():
+            text = result.get("thinking") or ""
+        return text
+
+    def _extra_payload(self, model_name: str) -> dict[str, Any]:
+        """Provider-specific request fields; caller ``kwargs`` override them.
+
+        ``model_name`` is the id as sent on the wire (provider prefix removed).
+        """
+        return {}
+
+    def _canonical_result(self, data: dict[str, Any]) -> dict[str, Any]:
+        """Map a chat-completions response body to the canonical dict shape."""
+        choice = data.get("choices", [{}])[0]
+        message = choice.get("message", {})
+        return {
+            "content": message.get("content", ""),
+            "tool_calls": message.get("tool_calls"),
+            "finish_reason": choice.get("finish_reason"),
+            "model": data.get("model"),
+            "usage": data.get("usage", {}),
+        }
 
     async def complete_chat(
         self,
@@ -247,6 +333,7 @@ class OpenAIBackend(LLMBackend):
             "messages": messages,
             "max_tokens": max_tokens,
             "temperature": temperature,
+            **self._extra_payload(model_name),
             **kwargs,
         }
 
@@ -257,17 +344,7 @@ class OpenAIBackend(LLMBackend):
         response = await client.post(CHAT_COMPLETIONS_PATH, json=payload)
         response.raise_for_status()
 
-        data = response.json()
-        choice = data.get("choices", [{}])[0]
-        message = choice.get("message", {})
-
-        return {
-            "content": message.get("content", ""),
-            "tool_calls": message.get("tool_calls"),
-            "finish_reason": choice.get("finish_reason"),
-            "model": data.get("model"),
-            "usage": data.get("usage", {}),
-        }
+        return self._canonical_result(response.json())
 
     async def close(self) -> None:
         if self._client and not self._client.is_closed:
@@ -287,7 +364,7 @@ class NvidiaBackend(OpenAIBackend):
     (``integrate.api.nvidia.com``) and self-hosted containers, so this is just
     :class:`OpenAIBackend` with NVIDIA credentials and base-URL resolution.
 
-    Two NVIDIA-specific behaviors:
+    NVIDIA-specific behaviors:
 
     - Model ids keep their ``publisher/model`` form (e.g.
       ``meta/llama-3.3-70b-instruct``); only the ``nvidia:`` prefix is stripped,
@@ -295,6 +372,13 @@ class NvidiaBackend(OpenAIBackend):
     - The cloud endpoint requires ``NVIDIA_API_KEY``; a self-hosted NIM selected
       via ``NVIDIA_BASE_URL`` does not validate the key, so a non-secret
       placeholder is substituted there rather than raising.
+    - Reasoning models (the ``nvidia/nemotron-3`` family, ``kimi-k3``, ...) can
+      spend the whole token budget on chain-of-thought and answer blank. Each
+      request sends ``chat_template_kwargs={"thinking": False}`` (inert on
+      models that ignore it; ``NVIDIA_DISABLE_THINKING=0`` opts out), and NIM's
+      ``reasoning_content`` is surfaced as the canonical ``thinking`` key --
+      the same two accommodations the LangChain builder
+      (``build_nvidia_model``) makes.
     """
 
     _provider_prefix: ClassVar[str] = "nvidia:"
@@ -319,6 +403,16 @@ class NvidiaBackend(OpenAIBackend):
                 )
             # Self-hosted NIM ignores the key; a non-empty value keeps the header valid.
             self.api_key = _LOCAL_NIM_PLACEHOLDER_KEY
+
+    def _extra_payload(self, model_name: str) -> dict[str, Any]:
+        if not nvidia_thinking_disabled():
+            return {}
+        return nim_reasoning_payload(model_name)
+
+    def _canonical_result(self, data: dict[str, Any]) -> dict[str, Any]:
+        result = super()._canonical_result(data)
+        message = data.get("choices", [{}])[0].get("message", {})
+        return {**result, "thinking": message.get("reasoning_content") or ""}
 
 
 # ---------------------------------------------------------------------------

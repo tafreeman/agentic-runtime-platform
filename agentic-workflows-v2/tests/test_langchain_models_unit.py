@@ -301,7 +301,7 @@ class TestCostLaneCeiling:
         monkeypatch.setitem(lcm._TIER_FALLBACK_CHAINS, 1, [self._PAID])
         monkeypatch.setenv("AGENTIC_MAX_COST_LANE", "free")
         with pytest.raises(CostLaneCeilingExceededError, match="free"):
-            get_model_candidates_for_tier(1, include_gh_backup=False)
+            get_model_candidates_for_tier(1)
 
     def test_include_unavailable_bypasses_the_ceiling(
         self, monkeypatch: pytest.MonkeyPatch
@@ -562,6 +562,335 @@ class TestEnumerateKnownModelsMerge:
 
         assert "openai:should-not-appear" not in by_id
         assert called["n"] == 0  # gated before the probe runs
+
+
+class TestEnumerateKnownModelsPriceLabels:
+    """Every enumerated row carries ``price_label`` + ``price_reason``.
+
+    The rule table is in tests/models/test_price_label.py and the fact-gathering
+    in tests/models/test_price_annotation.py; this pins the wiring through
+    ``enumerate_known_models`` (the ``/api/models/probe`` ``models`` payload).
+    """
+
+    _LABELS = {"local", "free", "paid", "unknown"}
+
+    @pytest.fixture(autouse=True)
+    def _isolate(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        for var in (
+            "OLLAMA_BASE_URL",
+            "OLLAMA_API_KEY",
+            "OPENAI_BASE_URL",
+            "OPENAI_API_BASE",
+            "LMSTUDIO_HOST",
+            "OPENROUTER_BASE_URL",
+            "NVIDIA_BASE_URL",
+        ):
+            monkeypatch.delenv(var, raising=False)
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_lmstudio_models", lambda: []
+        )
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_onnx_models", lambda: []
+        )
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_ollama_models", lambda: []
+        )
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_cloud_models", lambda: []
+        )
+        monkeypatch.setattr(
+            "agentic_v2.models.price_annotation.is_served_locally", lambda name: False
+        )
+
+    def test_every_model_has_both_fields(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        from agentic_v2.models.cloud_discovery import CloudModelInfo
+        from agentic_v2.models.local_discovery import LocalModelInfo
+
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_ollama_models",
+            lambda: [
+                OllamaModelInfo(
+                    id="ollama:smollm2:135m", name="smollm2:135m", cloud=False
+                ),
+                OllamaModelInfo(
+                    id="ollama:gpt-oss:120b-cloud",
+                    name="gpt-oss:120b-cloud",
+                    cloud=True,
+                ),
+            ],
+        )
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_lmstudio_models",
+            lambda: [LocalModelInfo(id="lmstudio:gemma-3-12b-it")],
+        )
+        listing = [
+            CloudModelInfo(id="openai:gpt-4o-2099-mega"),
+            CloudModelInfo(
+                id="openrouter:vendor/free",
+                price_in=0.0,
+                price_out=0.0,
+                price_request=0.0,
+            ),
+        ]
+
+        models = enumerate_known_models(cloud_listing=listing)
+
+        assert len(models) > len(listing)
+        for model in models:
+            assert model["price_label"] in self._LABELS, model["id"]
+            assert isinstance(model["price_reason"], str), model["id"]
+            assert model["price_reason"], model["id"]
+
+    def test_every_model_has_both_fields_in_no_llm_mode(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("AGENTIC_NO_LLM", "1")
+        models = enumerate_known_models()
+        assert models
+        assert all("price_label" in m and "price_reason" in m for m in models)
+
+    def test_existing_fields_are_untouched(self) -> None:
+        for model in enumerate_known_models():
+            assert {"id", "provider", "tier", "available"} <= model.keys()
+
+    def test_local_and_cloud_ollama_models_are_told_apart(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_ollama_models",
+            lambda: [
+                OllamaModelInfo(
+                    id="ollama:smollm2:135m", name="smollm2:135m", cloud=False
+                ),
+                OllamaModelInfo(
+                    id="ollama:gpt-oss:120b-cloud",
+                    name="gpt-oss:120b-cloud",
+                    cloud=True,
+                ),
+            ],
+        )
+        by_id = {m["id"]: m for m in enumerate_known_models()}
+
+        assert by_id["ollama:smollm2:135m"]["price_label"] == "local"
+        assert by_id["ollama:smollm2:135m"]["price_reason"] == "runs on this machine"
+        assert by_id["ollama:gpt-oss:120b-cloud"]["price_label"] == "unknown"
+        assert (
+            by_id["ollama:gpt-oss:120b-cloud"]["price_reason"]
+            == "cloud model via Ollama"
+        )
+
+    _STATIC_OLLAMA = "ollama:static-undiscovered:7b"
+    _LOCAL_TAGS_URL = "http://localhost:11434/api/tags"
+
+    def _count_local_tags_requests(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        routes: dict[str, dict[str, object]],
+    ) -> list[str]:
+        """Serve ``routes`` over httpx for real discovery; return the URL log.
+
+        Wires the real ``discover_ollama_models`` and the real
+        ``is_served_locally`` (the class fixture stubs both) with a cold
+        ``/api/tags`` cache, so every request the probe makes is observable.
+        """
+        import httpx
+
+        from agentic_v2.langchain import models as lcm
+        from agentic_v2.models import ollama_discovery
+
+        calls: list[str] = []
+
+        class _Response:
+            def __init__(self, payload: dict[str, object]) -> None:
+                self._payload = payload
+
+            def raise_for_status(self) -> None:
+                return None
+
+            def json(self) -> dict[str, object]:
+                return self._payload
+
+        def _fake_get(
+            url: str, headers: dict[str, str] | None = None, timeout: object = None
+        ) -> _Response:
+            calls.append(url)
+            if url not in routes:
+                raise httpx.ConnectError(f"unreachable: {url}")
+            return _Response(routes[url])
+
+        monkeypatch.setenv("OLLAMA_API_KEY", "test-key")
+        monkeypatch.setattr(ollama_discovery.httpx, "get", _fake_get)
+        monkeypatch.setattr(ollama_discovery, "_local_tags_cache", None)
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_ollama_models",
+            ollama_discovery.discover_ollama_models,
+        )
+        monkeypatch.setattr(
+            "agentic_v2.models.price_annotation.is_served_locally",
+            ollama_discovery.is_served_locally,
+        )
+        monkeypatch.setattr(lcm, "_TIER_FALLBACK_CHAINS", {1: [self._STATIC_OLLAMA]})
+        return calls
+
+    def test_probe_asks_the_local_daemon_for_tags_once_when_it_answers(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        calls = self._count_local_tags_requests(
+            monkeypatch,
+            {
+                self._LOCAL_TAGS_URL: {"models": [{"name": "smollm2:135m"}]},
+                "http://localhost:11434/api/ps": {"models": []},
+                "https://ollama.com/api/tags": {"models": []},
+            },
+        )
+
+        by_id = {m["id"]: m for m in enumerate_known_models()}
+
+        # The static id was never discovered and the daemon does not list it, so
+        # the API key reroutes it to ollama.com -- decided from the discovery
+        # pass, not from a second /api/tags read.
+        assert by_id[self._STATIC_OLLAMA]["price_label"] == "unknown"
+        assert by_id[self._STATIC_OLLAMA]["price_reason"] == "cloud model via Ollama"
+        assert by_id["ollama:smollm2:135m"]["price_label"] == "local"
+        assert calls.count(self._LOCAL_TAGS_URL) == 1
+
+    def test_probe_does_not_retry_an_unreachable_daemon_for_annotation(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # No routes: every request raises ConnectError, like a daemon that is down.
+        calls = self._count_local_tags_requests(monkeypatch, {})
+
+        by_id = {m["id"]: m for m in enumerate_known_models()}
+
+        # A failed discovery is reused as "nothing is local" -- one timeout, not two.
+        assert by_id[self._STATIC_OLLAMA]["price_label"] == "unknown"
+        assert by_id[self._STATIC_OLLAMA]["price_reason"] == "cloud model via Ollama"
+        assert calls.count(self._LOCAL_TAGS_URL) == 1
+
+    def test_probe_resolves_a_static_alias_against_the_discovered_tags(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Discovery lists ``foo:latest``; the static id is the bare ``foo``.
+        calls = self._count_local_tags_requests(
+            monkeypatch,
+            {
+                self._LOCAL_TAGS_URL: {
+                    "models": [{"name": "static-undiscovered:7b:latest"}]
+                },
+                "http://localhost:11434/api/ps": {"models": []},
+                "https://ollama.com/api/tags": {"models": []},
+            },
+        )
+
+        by_id = {m["id"]: m for m in enumerate_known_models()}
+
+        assert by_id[self._STATIC_OLLAMA]["price_label"] == "local"
+        assert calls.count(self._LOCAL_TAGS_URL) == 1
+
+    def test_openrouter_published_price_flows_through_the_probe_payload(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from agentic_v2.models.cloud_discovery import CloudModelInfo
+
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+        listing = [
+            CloudModelInfo(
+                id="openrouter:v/free", price_in=0.0, price_out=0.0, price_request=0.0
+            ),
+            CloudModelInfo(id="openrouter:v/paid", price_in=3.0, price_out=15.0),
+            CloudModelInfo(id="openrouter:v/bare"),
+            CloudModelInfo(id="openrouter:v/free:free"),
+        ]
+        by_id = {m["id"]: m for m in enumerate_known_models(cloud_listing=listing)}
+
+        assert (
+            by_id["openrouter:v/free"]["price_label"],
+            by_id["openrouter:v/free"]["price_reason"],
+        ) == ("free", "both prices are 0")
+        assert by_id["openrouter:v/paid"]["price_label"] == "paid"
+        assert by_id["openrouter:v/bare"]["price_label"] == "unknown"
+        # A ":free" suffix is not a price.
+        assert by_id["openrouter:v/free:free"]["price_label"] == "unknown"
+        assert by_id["openrouter:v/free:free"]["price_reason"] == "price not published"
+
+    def test_openai_alias_for_nvidia_is_labelled_free_through_the_probe(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from agentic_v2.models.cloud_discovery import CloudModelInfo
+
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+        monkeypatch.setenv("OPENAI_BASE_URL", "https://integrate.api.nvidia.com/v1")
+        listing = [CloudModelInfo(id="openai:moonshotai/kimi-k3")]
+        by_id = {m["id"]: m for m in enumerate_known_models(cloud_listing=listing)}
+
+        row = by_id["openai:moonshotai/kimi-k3"]
+        assert row["price_label"] == "free"
+        assert (
+            row["price_reason"] == "free tier declared for nvidia (via OPENAI_BASE_URL)"
+        )
+
+    def test_openai_on_any_other_base_stays_unknown_through_the_probe(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from agentic_v2.models.cloud_discovery import CloudModelInfo
+
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+        monkeypatch.setenv("OPENAI_BASE_URL", "https://proxy.example/v1")
+        listing = [CloudModelInfo(id="openai:gpt-4o-2099-mega")]
+        by_id = {m["id"]: m for m in enumerate_known_models(cloud_listing=listing)}
+
+        assert by_id["openai:gpt-4o-2099-mega"]["price_label"] == "unknown"
+
+    def test_gateway_base_url_distrusts_published_prices(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from agentic_v2.models.cloud_discovery import CloudModelInfo
+
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+        monkeypatch.setenv("OPENROUTER_BASE_URL", "http://gateway.local:8080")
+        listing = [CloudModelInfo(id="openrouter:v/free", price_in=0.0, price_out=0.0)]
+        by_id = {m["id"]: m for m in enumerate_known_models(cloud_listing=listing)}
+
+        assert by_id["openrouter:v/free"]["price_label"] == "unknown"
+        assert (
+            by_id["openrouter:v/free"]["price_reason"]
+            == "address differs from the documented one"
+        )
+
+    def test_listing_prices_reach_a_chain_model_without_a_second_fetch(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A model already in a tier chain still gets its live price, and the probe's
+        shared sweep is not fetched again."""
+        from agentic_v2.models.cloud_discovery import CloudModelInfo
+
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+        calls = {"n": 0}
+
+        def _tracked() -> list[CloudModelInfo]:
+            calls["n"] += 1
+            return []
+
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_cloud_models", _tracked
+        )
+        chain_id = next(
+            m["id"]
+            for m in enumerate_known_models()
+            if m["tier"] >= 1 and m["provider"] == "anthropic"
+        )
+        calls["n"] = 0
+
+        by_id = {
+            m["id"]: m
+            for m in enumerate_known_models(
+                cloud_listing=[CloudModelInfo(id=chain_id, price_in=1.0, price_out=5.0)]
+            )
+        }
+
+        assert by_id[chain_id]["price_label"] == "paid"
+        assert calls["n"] == 0
 
 
 class TestRegistryDriftDetection:

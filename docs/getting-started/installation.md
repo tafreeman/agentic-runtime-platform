@@ -164,6 +164,7 @@ Set only the providers you intend to use. Common chat-provider variables are:
 | NVIDIA NIM | `NVIDIA_API_KEY`, or `NVIDIA_BASE_URL` for a self-hosted endpoint |
 | OpenRouter | `OPENROUTER_API_KEY` |
 | DigitalOcean Serverless Inference | `DIGITALOCEAN_TOKEN` |
+| Mistral La Plateforme | `MISTRAL_API_KEY` |
 | GitHub Models | `GITHUB_TOKEN` or `GH_TOKEN` |
 | Ollama | `OLLAMA_HOST`; `OLLAMA_API_KEY` only when the endpoint requires it |
 

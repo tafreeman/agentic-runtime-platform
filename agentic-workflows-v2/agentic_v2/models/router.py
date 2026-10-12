@@ -9,12 +9,12 @@ Provides the foundational routing layer for LLM model selection:
 - :class:`ModelRouter` — routes requests to the first available model in
   a tier's fallback chain.  Supports lazy model discovery, parallel health
   checks, and :class:`ScopedRouter` context-manager overrides.
-- ``DEFAULT_CHAINS`` — pre-configured fallback chains for each tier,
-  ordered free-tier-first (Gemini, GitHub Models) then paid (OpenAI,
-  Anthropic).
+- ``DEFAULT_CHAINS`` — pre-configured fallback chains for each tier, read
+  from the curated registry (ADR-040): cloud providers first, then a local
+  Ollama tail.
 
 Model identifiers use a ``provider:model_name`` format, e.g.
-``"gemini:gemini-2.5-flash"`` or ``"gh:openai/gpt-4o-mini"``.
+``"gemini:gemini-2.5-flash"`` or ``"ollama:qwen3-coder:30b"``.
 """
 
 import asyncio
@@ -74,8 +74,8 @@ class FallbackChain:
         Usage:
             chain = FallbackChain.build("my-chain")
                 .add("ollama:phi4")
-                .add("gh:gpt-4o-mini")
-                .add("gh:gpt-4o")
+                .add("gemini:gemini-2.5-flash")
+                .add("anthropic:claude-sonnet-4-6")
                 .done()
         """
         return ChainBuilder(name)

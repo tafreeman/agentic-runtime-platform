@@ -35,6 +35,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from ..artifact_overlay import overlay_code_artifacts
 from ..integrations.otel import get_tracer as _get_tracer
 from ..models.router import ModelTier
 from .consensus import coerce_min_agreement, majority_vote
@@ -272,12 +273,41 @@ async def _consensus_step(ctx: ExecutionContext) -> dict[str, Any]:
     }
 
 
+async def _gather_artifact_slots(ctx: ExecutionContext, name: str) -> dict[str, Any]:
+    """Read a ``{slot: artifact}`` mapping input, resolving ``${...}`` values.
+
+    Mapping-valued step inputs are stored unresolved, like ``samples``, so
+    each slot is resolved here against the live context.
+    """
+    raw = await ctx.get(name)
+    if not isinstance(raw, dict):
+        return {}
+    return {slot: _resolve_sample_item(ctx, value) for slot, value in raw.items()}
+
+
+async def _overlay_step(ctx: ExecutionContext) -> dict[str, Any]:
+    """Tier-0: overlay reworked code artifacts on the originals, file by file.
+
+    Reads two ``{slot: artifact}`` mappings from the child context, ``base``
+    and ``override``, and returns one output per slot plus ``overridden``,
+    the slots a reworked artifact was applied to (empty when the rework
+    returned no usable code, so ``when: ${steps.<name>.outputs.overridden}``
+    gates a re-review).  See :mod:`agentic_v2.artifact_overlay`.
+    """
+    merged, overridden = overlay_code_artifacts(
+        await _gather_artifact_slots(ctx, "base"),
+        await _gather_artifact_slots(ctx, "override"),
+    )
+    return {**merged, "overridden": overridden}
+
+
 # Registry of known tier-0 deterministic step implementations
 TIER0_REGISTRY: dict[str, StepFunction] = {
     "tier0_parser": _parse_code_step,
     "tier0_process": _process_text_step,
     "tier0_counter": _count_text_step,
     "tier0_consensus": _consensus_step,
+    "tier0_overlay": _overlay_step,
 }
 
 

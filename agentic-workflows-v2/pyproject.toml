@@ -89,6 +89,9 @@ langchain = [
     "langchain-openai>=1.2,<2",
     "langchain-anthropic>=1.4.6,<2",
     "langchain-google-genai>=4.2,<5",
+    # Mistral's first-party LangChain package: its API is only partly
+    # OpenAI-compatible, so mistral: ids do not go through ChatOpenAI.
+    "langchain-mistralai>=1.1,<2",
     "langchain-ollama>=1.1,<2",
     # langgraph-checkpoint is transitive but pinned explicitly: CVE-2026-27794
     # (RCE) is only fixed in 4.0.0, and CVE-2025-64439 in 3.0.0.

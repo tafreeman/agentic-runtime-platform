@@ -822,6 +822,15 @@ class LLMClientWrapper:
             elif isinstance(content, list):
                 cleaned_blocks = await self._sanitize_response_content_blocks(content)
                 response_dict = {**response_dict, "content": cleaned_blocks}
+            # The canonical reasoning channel (Ollama ``thinking``, NIM's
+            # ``reasoning_content``) is model output too and is cached and
+            # returned with the dict, so it gets the same treatment.
+            thinking = response_dict.get("thinking")
+            if isinstance(thinking, str) and thinking:
+                response_dict = {
+                    **response_dict,
+                    "thinking": await self._sanitize_response_text(thinking),
+                }
 
         # Prefer real usage from the provider; fall back to char estimate.
         usage = response_dict.get("usage") or {}

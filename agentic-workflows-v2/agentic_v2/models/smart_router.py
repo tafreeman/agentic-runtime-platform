@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 # status is preferred over message-substring matching: only these mark a model
 # permanently unavailable, so a transient "model not found" message can no
 # longer evict a healthy model (see SmartModelRouter._classify_and_record_error).
-_PERMANENT_HTTP_STATUS = frozenset({401, 403, 404})
+_PERMANENT_HTTP_STATUS = frozenset({401, 403, 404, 410})
 _RATE_LIMIT_HTTP_STATUS = 429
 _TIMEOUT_HTTP_STATUS = 408
 
@@ -935,8 +935,9 @@ class SmartModelRouter(ModelRouter):
     def _classify_and_record_error(self, model: str, error: Exception) -> None:
         """Classify a provider error and record it with the right cooldown.
 
-        HTTP status is authoritative: ``401/403/404`` mark the model permanently
-        unavailable, ``429`` is a rate limit, ``408`` is a timeout.  Message
+        HTTP status is authoritative: ``401/403/404`` and ``410`` (model retired
+        by the provider) mark the model permanently unavailable, ``429`` is a
+        rate limit, ``408`` is a timeout.  Message
         substrings are only a fallback for providers that do not surface a status
         code -- and a bare "not found"/"no access" message is treated as
         *transient*, so a briefly-unavailable model is no longer permanently

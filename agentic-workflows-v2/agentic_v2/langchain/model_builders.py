@@ -14,6 +14,7 @@ Supported providers
 - NVIDIA NIM        — ``build_nvidia_model``
 - OpenRouter        — ``build_openrouter_model``
 - DigitalOcean      — ``build_digitalocean_model``
+- Mistral           — ``build_mistral_model``
 - Anthropic         — ``build_anthropic_model``
 - Gemini            — ``build_gemini_model``
 - NotebookLM alias  — ``build_notebooklm_model`` (routes to Gemini)
@@ -37,13 +38,6 @@ _GH_BASE_URL = "https://models.inference.ai.azure.com"
 # Non-secret placeholder for self-hosted NVIDIA NIM, which does not validate the
 # API key. A non-empty value is still required by the OpenAI client.
 _LOCAL_NIM_PLACEHOLDER_KEY = "not-needed-for-local-nim"
-
-# Env escape hatch for NIM's reasoning-disable request field.  Set to a falsey
-# value to stop sending it — only needed for a self-hosted NIM whose chat
-# template rejects unknown ``chat_template_kwargs`` (the cloud endpoint does
-# not; see ``build_nvidia_model``).
-_NVIDIA_DISABLE_THINKING_ENV = "NVIDIA_DISABLE_THINKING"
-_FALSEY_ENV_VALUES = frozenset({"0", "false", "no", "off"})
 
 # Cached NIM chat-model subclass, keyed on the ``ChatOpenAI`` base it was
 # derived from so every call returns the *same* class (mirroring
@@ -215,25 +209,26 @@ def build_openai_model(model_name: str, temperature: float) -> Any:
 def _nvidia_thinking_disabled() -> bool:
     """Whether to ask NIM to skip a reasoning model's chain-of-thought phase.
 
-    Defaults to ``True``: the field is inert on every NIM model that does not
-    understand it (see :func:`build_nvidia_model`), so opting *out* is the
-    exceptional case. ``NVIDIA_DISABLE_THINKING`` set to ``0``/``false``/
-    ``no``/``off`` restores the raw pass-through for a self-hosted NIM whose
-    chat template rejects the field.
+    Delegates to the policy the native ``NvidiaBackend`` uses, so both engines
+    honour ``NVIDIA_DISABLE_THINKING`` identically (see
+    :func:`agentic_v2.models.backends_cloud.nvidia_thinking_disabled`).
     """
-    raw = os.environ.get(_NVIDIA_DISABLE_THINKING_ENV)
-    if raw is None:
-        return True
-    return raw.strip().lower() not in _FALSEY_ENV_VALUES
+    from ..models.backends_cloud import nvidia_thinking_disabled
+
+    return nvidia_thinking_disabled()
 
 
-def _nim_extra_body() -> dict[str, Any]:
-    """Request extras that disable NIM's internal reasoning phase.
+def _nim_extra_body(model_name: str = "") -> dict[str, Any]:
+    """Request extras that minimise NIM's internal reasoning phase.
 
     Returned fresh per call so the caller owns the dict rather than
-    sharing module-level mutable state with every other NIM model.
+    sharing module-level mutable state with every other NIM model. Delegates
+    to :func:`agentic_v2.models.backends_cloud.nim_reasoning_payload` so both
+    engines send the same fields for the same model.
     """
-    return {"chat_template_kwargs": {"thinking": False}}
+    from ..models.backends_cloud import nim_reasoning_payload
+
+    return nim_reasoning_payload(model_name)
 
 
 def _nim_reasoning_texts(response: Any) -> list[str]:
@@ -344,8 +339,12 @@ def build_nvidia_model(model_name: str, temperature: float) -> Any:
       ``meta/muse-glimmer-30b`` and ``openai/gpt-oss-{20b,120b}`` (which gate
       reasoning on ``reasoning_effort`` instead) and by the non-reasoning
       ``nvidia/ising-calibration-1.5-31b``, whose output was byte-identical
-      either way. ``NVIDIA_DISABLE_THINKING=0`` turns it off for a self-hosted
-      NIM whose chat template is stricter.
+      either way. ``z-ai/glm-*`` ignores it too, so those ids also get
+      ``reasoning_effort: "low"``, their lowest honoured level, and
+      ``clear_thinking`` (see
+      :func:`agentic_v2.models.backends_cloud.nim_reasoning_payload`).
+      ``NVIDIA_DISABLE_THINKING=0`` turns all of it off for a self-hosted NIM
+      whose chat template is stricter.
     - The returned class preserves NIM's ``reasoning_content`` (which stock
       ``ChatOpenAI`` discards) so an empty answer still degrades to the
       model's reasoning rather than to an empty string — see
@@ -402,7 +401,7 @@ def build_nvidia_model(model_name: str, temperature: float) -> Any:
         "temperature": temperature,
     }
     if _nvidia_thinking_disabled():
-        kwargs["extra_body"] = _nim_extra_body()
+        kwargs["extra_body"] = _nim_extra_body(model_name)
 
     logger.debug("Using NVIDIA NIM: %s at %s", model_name, base_url)
     return _get_nim_chat_model_cls(ChatOpenAI)(**kwargs)
@@ -512,6 +511,66 @@ def build_digitalocean_model(model_name: str, temperature: float) -> Any:
         model=model_name,
         base_url="https://inference.do-ai.run/v1",
         api_key=api_key,
+        temperature=temperature,
+    )
+
+
+def build_mistral_model(model_name: str, temperature: float) -> Any:
+    """Build a ChatMistralAI instance for Mistral's La Plateforme.
+
+    Mistral's chat API is only partly OpenAI-compatible, so unlike the NVIDIA /
+    OpenRouter / DigitalOcean builders this does **not** swap the ``base_url`` of
+    ``ChatOpenAI`` (which can send parameters Mistral rejects): it uses the
+    first-party ``langchain-mistralai`` package, the same arrangement as
+    Anthropic and Gemini. The base URL is resolved by
+    :func:`resolve_mistral_base_url` — the same helper discovery uses, and the
+    same ``MISTRAL_BASE_URL`` variable ``langchain-mistralai`` itself reads — so
+    a model surfaced by the probe is reachable here.
+
+    Parameters
+    ----------
+    model_name:
+        Bare model name after the ``mistral:`` prefix, verbatim as returned by
+        ``GET https://api.mistral.ai/v1/models`` (e.g. ``mistral-medium-latest``
+        or ``labs-leanstral-1-5``). Labs models are ordinary ids on the same
+        endpoint; there is no publisher segment to strip.
+    temperature:
+        Sampling temperature. ``langchain-mistralai`` rejects values outside
+        ``[0.0, 1.0]``.
+
+    Returns
+    -------
+    A ``ChatMistralAI`` instance (default 120 s timeout and 5 retries).
+
+    Raises
+    ------
+    ImportError
+        If ``langchain-mistralai`` is not installed.
+    ValueError
+        If ``MISTRAL_API_KEY`` is not set.
+    """
+    try:
+        from langchain_mistralai import ChatMistralAI
+    except ImportError as exc:
+        raise ImportError(
+            "langchain-mistralai is required for Mistral models. "
+            "Install with: pip install langchain-mistralai"
+        ) from exc
+
+    api_key = os.environ.get("MISTRAL_API_KEY")
+    if not api_key:
+        raise ValueError(
+            "MISTRAL_API_KEY environment variable is required for Mistral models."
+        )
+
+    from ..models.cloud_discovery import resolve_mistral_base_url
+
+    base_url = resolve_mistral_base_url()
+    logger.debug("Using Mistral: %s at %s", model_name, base_url)
+    return ChatMistralAI(
+        model=model_name,
+        api_key=api_key,
+        base_url=base_url,
         temperature=temperature,
     )
 

@@ -42,12 +42,13 @@ from ..artifact_contracts import (
     expected_output_keys,
     validate_and_normalize_artifacts,
 )
+from ..artifact_overlay import overlay_code_artifacts
 from ..engine.consensus import coerce_min_agreement, majority_vote
 from ..engine.llm_output_parsing import (
-    extract_json_candidates,
-    normalize_expected_structure,
+    parse_json_step_output,
     parse_llm_json_output,
     parse_sentinel_output,
+    select_json_dict,
 )
 from ..integrations.base import TraceAdapter
 from ..integrations.tracing import NullTraceAdapter
@@ -140,6 +141,25 @@ def _tier0_consensus(state: WorkflowState) -> dict[str, Any]:
     }
 
 
+def _tier0_overlay(state: WorkflowState) -> dict[str, Any]:
+    """Overlay reworked code artifacts on the originals (native semantics)."""
+    ctx = dict(state.get("context", {}))
+    base = ctx.get("base")
+    override = ctx.get("override")
+    merged, overridden = overlay_code_artifacts(
+        base if isinstance(base, dict) else {},
+        override if isinstance(override, dict) else {},
+    )
+    output = {**merged, "overridden": overridden}
+    return {
+        "context": ctx,
+        "steps": {
+            **state.get("steps", {}),
+            "__current__": {"status": "success", "outputs": output},
+        },
+    }
+
+
 def _tier0_parse_code(state: WorkflowState) -> dict[str, Any]:
     """Deterministic code parsing (no LLM)."""
     ctx = dict(state.get("context", {}))
@@ -197,6 +217,7 @@ _TIER0_REGISTRY: dict[str, Any] = {
     "tier0_process": _tier0_process_text,
     "tier0_counter": _tier0_count_text,
     "tier0_consensus": _tier0_consensus,
+    "tier0_overlay": _tier0_overlay,
 }
 
 
@@ -438,37 +459,19 @@ def coerce_message_content_to_text(content: Any) -> str:
     return str(content)
 
 
-def parse_json_dict_from_text(text: str) -> dict[str, Any] | None:
+def parse_json_dict_from_text(
+    text: str, expected_output_keys: list[str] | None = None
+) -> dict[str, Any] | None:
     """Best-effort JSON object extraction from model text output.
 
-    Candidate generation is shared with the native engine
-    (:func:`agentic_v2.engine.llm_output_parsing.extract_json_candidates`),
-    plus a mid-text fence scan for payloads with prose around ```json blocks,
-    which the shared generator (outer-fence-only) does not cover.
+    Delegates to the native engine's
+    :func:`agentic_v2.engine.llm_output_parsing.select_json_dict`, so both
+    engines pick the same object from the same reply.
     """
     raw = text.strip()
     if not raw:
         return None
-
-    candidates = list(extract_json_candidates(raw))
-    candidates.extend(
-        re.findall(
-            r"```(?:json)?\s*(\{.*?\})\s*```", raw, flags=re.DOTALL | re.IGNORECASE
-        )
-    )
-
-    for candidate in candidates:
-        try:
-            # strict=False tolerates literal control characters (bare
-            # newlines/tabs) inside JSON string values — a common LLM output
-            # quirk that strict json.loads rejects wholesale.
-            parsed = json.loads(candidate, strict=False)
-        except json.JSONDecodeError:
-            continue
-        if isinstance(parsed, dict):
-            return parsed
-
-    return None
+    return select_json_dict(raw, expected_output_keys)
 
 
 def parse_step_outputs(
@@ -495,9 +498,7 @@ def parse_step_outputs(
 
     parsed = parse_sentinel_output(normalized, expected_output_keys)
     if parsed is None:
-        parsed = parse_json_dict_from_text(normalized)
-        if parsed is not None and expected_output_keys:
-            parsed = normalize_expected_structure(dict(parsed), expected_output_keys)
+        parsed = parse_json_step_output(normalized, expected_output_keys)
     if parsed is None:
         # Full parse failed; parse_llm_json_output falls back to salvaging
         # declared keys out of malformed/truncated JSON-ish text.
@@ -1000,7 +1001,6 @@ def _build_llm_node(
         tier,
         step.model_override,
         include_unavailable=False,
-        include_gh_backup=True,
     )
     agent_cache: dict[str, Any] = {}
 

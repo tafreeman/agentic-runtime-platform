@@ -1,5 +1,178 @@
 # Changelog
 
+## Unreleased - Secret masks keep JSON replies parseable
+
+- **Masking no longer corrupts JSON replies.** The response sanitizer masks
+  secrets before step outputs are parsed. Its `password=`/`api_key=`-style
+  masks ran to the next whitespace, so a secret inside a JSON string also took
+  the string's closing quote and the following comma, and the reply stopped
+  parsing. A mask now ends at that closing quote when the secret before it is
+  long enough to match. Detection is unchanged, and a value too short before
+  the quote is masked in full as before (ADR-061).
+- **More connection strings are masked, and fewer harmless URLs.**
+  `postgresql://`, driver URLs such as `postgresql+asyncpg://` and
+  `mysql+pymysql://`, `mongodb+srv://`, `rediss://` and password-only
+  `redis://:password@host` now match `connection_string`. Before, credentials
+  in those URLs reached step outputs unmasked. A match now needs a real
+  `user:password@` before the host. So a credential-free URL with a port and
+  an `@` in its query (`postgresql://db:5432/app?contact=ops@example.com`) is
+  no longer masked.
+- **`SecretDetector.version` is now `1.1.0`.** Sanitization results record
+  it, so they show which rules produced them.
+
+## Unreleased - GitHub Models out of the tier chains
+
+- **No tier chain routes to `gh:` any more.** GitHub retired GitHub Models on
+  2026-07-30 (ADR-016), and its legacy endpoint, `models.inference.ai.azure.com`,
+  no longer resolves. `gh:openai/gpt-4o-mini` is gone from tier 1 and
+  `gh:openai/gpt-4o` from tiers 2-5. Nothing replaces them: each tier still has
+  three cloud rungs ahead of its local Ollama tail. Both ids stay in
+  `model_registry.yaml` as `deprecated` with `tiers: []` and curated `paid`, so
+  `AGENTIC_MAX_COST_LANE=free` routing does not change.
+- **A `GITHUB_TOKEN` no longer appends backup models after the local tail.**
+  `get_model_candidates_for_tier` dropped its `include_gh_backup` parameter and
+  `langchain.model_utils.GH_BACKUP_MODELS` is gone. The backup append put
+  `gh:openai/gpt-4o-mini` after `ollama:qwen3-coder:30b`. So when the local
+  model failed, the step crossed into a dead paid provider and reported
+  "last model=gh:openai/gpt-4o-mini: Connection error" in place of the real
+  failure. The tier's local tail is now always the last candidate.
+- **An explicit `gh:` model id still builds.** The provider, its discovery and
+  the `GITHUB_TOKEN` gate are unchanged, so a pinned `gh:` id fails at the
+  network, not at build time.
+
+## Unreleased - Retired NVIDIA DeepSeek V4 models and judge default
+
+- **Tiers 2-3 now use `nvidia:z-ai/glm-5.3-flash` as their NVIDIA rung, and
+  tiers 4-5 use `nvidia:z-ai/glm-5.3`.** NIM retired
+  `deepseek-ai/deepseek-v4-flash` and `deepseek-ai/deepseek-v4-pro` on
+  2026-08-07 and now answers HTTP 410 Gone for both. The boot drift check had
+  already quarantined them, so these tiers were routing around the gap without
+  saying so. Both replacements were chat-verified through `POST /api/chat` on
+  2026-10-11. `deepseek-ai/deepseek-v4.1-flash` was correct on every call, but
+  six calls in a row took 45-66s each, so it lost the tier 2-3 slot to
+  `glm-5.3-flash`. Both new rungs stay curated `paid`, like the entries they
+  replace, so `AGENTIC_MAX_COST_LANE=free` routing does not change. A new
+  registry test pins that: under a free ceiling, each tier keeps only its local
+  Ollama tail.
+- **`special.judge_default` is now `nvidia:z-ai/glm-5.3`.** The old default,
+  `deepseek-v4-pro`, made every default `LLMJudge` call fail with a 410 from
+  2026-08-07 on. Explicit-model judging has no fallback, so those runs got no
+  score at all. Judge scores from now on are not comparable with
+  `deepseek-v4-pro` scores from before that date. The SWE-fix A/B campaign is
+  not affected, because its advisory judge (`evals/swe_ab/judge_free.py`, weight
+  0.0) doesn't read this slot.
+- **NIM requests for `z-ai/glm-*` also send `reasoning_effort: "low"`.** GLM
+  ignores the `chat_template_kwargs: {"thinking": false}` field every NIM
+  request already carries, and on a long input it spent the judge's whole
+  1,200-token budget reasoning, returning no answer. `"low"` is the lowest
+  level GLM honours. GLM also gets `chat_template_kwargs.clear_thinking: true`,
+  so an earlier turn's reasoning is never re-rendered into the prompt (702 vs 41
+  prompt tokens when one is present). Neither engine sends reasoning back today,
+  and a new test pins that. Both engines send these fields, and
+  `NVIDIA_DISABLE_THINKING=0` still turns all of it off. `LLMJudge` now raises a clear "returned no answer
+  (finish_reason=…, max_tokens=…)" error for an empty or null reply instead of
+  an `AttributeError`.
+- **Seven retired ids are gone from the NIM free-endpoint block:**
+  `deepseek-v4-flash-0731`, `deepseek-v4-pro-0813`, `minimax-m3`,
+  `mistral-nemotron`, `nemotron-3-nano-30b-a3b`, `gpt-oss-120b` and
+  `step-3.7-flash`. Each returned 410 on 2026-10-11. The registry comment now
+  lists their end-of-life dates. `tools/llm/model_registry.py` also drops the
+  three retired ids it still marked `working` and lists the two replacements.
+
+## Unreleased - Reviewer reports survive damaged JSON
+
+- **`review_report` keeps the whole report.** Before, a reviewer reply whose
+  JSON failed to parse was stored as only `{"overall_status": ...}`, dropping
+  `quality_score`, `summary` and `findings`. Two things broke that JSON: the
+  response sanitizer's secret mask removing a string's closing quote, and
+  output-token caps cutting the reply short. The parser now repairs both
+  kinds of damage and keeps the recovered report.
+- **Gating changes.** All of these follow the reviewer's actual report:
+  - An `<<<ARTIFACT review_report>>>` block that is not valid JSON now
+    supplies the status it states. Before, it always gated as
+    `NEEDS_FIXES`.
+  - A report returned without the `review_report` wrapper (a top-level
+    `overall_status`) now gates on its own status. Before, it was replaced by
+    the `NEEDS_FIXES` default.
+  - When a damaged reply's report is recovered, the gate uses that report's
+    own `overall_status`. Before, it used the first `overall_status` anywhere
+    in the text, which could be a preliminary one stated earlier.
+  - A full report outranks a preliminary status-only block in the same reply.
+- **Both engines pick the same JSON block.** Each now reads ```json blocks
+  surrounded by prose; the native engine previously parsed them only when it
+  could salvage the declared keys one by one. When a reply holds several
+  objects, both take the one carrying the step's declared outputs, so an
+  explanatory block before the result is skipped.
+
+## Unreleased - fullstack_generation ships and re-reviews its rework
+
+- **Reworked code now ships.** `developer_rework` declares `backend_code`,
+  `frontend_code`, `migrations` and `integration_tests`. A new deterministic
+  `apply_rework` step (`tier0_overlay`, on both engines) lays the reworked
+  files over the generated ones by path, and keeps the files the rework left
+  out. `assemble_feature`, `feature_package` and `all_code` now carry the
+  merged code. Before this change they always carried the pre-rework code.
+  A reworked artifact that fails the `code_artifact` contract is ignored
+  rather than partially applied.
+- **`review_report` is now the latest review.** When the overlay applied any
+  reworked code, `re_review_code` reviews the merged code once, and the
+  workflow's `review_report` output is that re-review. Otherwise it is still
+  the first review.
+- **Rework no longer runs on APPROVED reviews under the LangGraph adapter.**
+  `when:` conditions now resolve `${coalesce(...)}` the same way step inputs
+  and the native engine do. Before, the gate always resolved to `None`, so it
+  was true for every review.
+- **Native engine: a failed rework now skips assembly.** If `developer_rework`
+  fails, its dependents cascade-skip, so `feature_package` (optional) is
+  absent. The run already reported failure in that case.
+
+## Unreleased - Retired NVIDIA tier-1 model
+
+- **Tier 1's NVIDIA rung is now `nvidia:nvidia/nemotron-3-nano-omni-30b-a3b-reasoning`.**
+  NIM retired `meta/llama-3.1-8b-instruct` on 2026-08-26 and answers HTTP 410
+  Gone for it. The replacement was chat-verified on 2026-10-11 under both the
+  `nvidia:` prefix and the `openai:` alias, and stays curated `paid` like the
+  entry it replaces, so `AGENTIC_MAX_COST_LANE=free` routing does not change.
+- **HTTP 410 is a permanent "model retired" error.** `classify_error` returns
+  the new `ErrorCode.MODEL_RETIRED` (`model_retired`, not retryable) for a 410
+  status or end-of-life wording instead of falling through to `transient`, so
+  the `/api/chat` error frame and log name the real cause and retry loops stop.
+  `SmartModelRouter` evicts a model on a 410 status the same way it does on
+  401/403/404.
+
+## Unreleased - Mistral La Plateforme provider
+
+- **New `mistral:` prefix, probe and builder.** Ids are `mistral:<id>` exactly as
+  `GET https://api.mistral.ai/v1/models` lists them, gated on `MISTRAL_API_KEY`
+  (`PROVIDER_ENV_KEYS`, `.env.example`; optional `MISTRAL_BASE_URL`). The
+  LangChain builder uses the first-party `langchain-mistralai` (`ChatMistralAI`,
+  now in the `langchain` extra), not `ChatOpenAI`: Mistral's API is only partly
+  OpenAI-compatible. Discovery is a keyed header-auth listing that keeps exactly
+  the models advertising `capabilities.completion_chat`, so embeddings, OCR,
+  moderation and transcription models drop out while Labs models
+  (`labs-leanstral-…`, the same listing and endpoint) and `-latest` aliases stay.
+- **Price label.** Mistral's listing publishes no prices and its free tier belongs
+  to the account, so mistral models are `unknown` ("free tier not confirmed").
+  Setting `MISTRAL_FREE_TIER=1` declares a free account and labels them `free`
+  ("free tier declared for mistral"); a non-Mistral `MISTRAL_BASE_URL` voids it.
+- **Capabilities.** The listing's `function_calling`, `vision`, `reasoning` and
+  `audio` flags ride along as `tools`, `vision`, `reasoning` and `audio` tags
+  (`CloudModelInfo.capabilities`), which `enumerate_known_models` copies onto the
+  probe row as display-only `capabilities`. Pack validation uses pack overrides,
+  tier settings and registry capabilities; provider-reported tags are marked in
+  the builder and do not satisfy tier requirements until configured there.
+- **LangChain engine only**, like DigitalOcean: no native `MultiBackend` backend,
+  no `model_registry.yaml` entry and no tier-chain membership. On the native
+  engine, `mistral:` and `digitalocean:` ids now raise "served only by the
+  LangChain engine" instead of falling through to the bare-name OpenAI default,
+  which on a machine whose `OPENAI_BASE_URL` is another vendor's API would have
+  sent them to that vendor.
+- **Price label.** A registry entry explicitly curated `cost_lane: paid` now reads
+  `paid` ("curated as paid") instead of inheriting a provider-wide free
+  declaration (NVIDIA's, the `OPENAI_BASE_URL`-to-NVIDIA alias's when no price
+  speaks, or the `MISTRAL_FREE_TIER` opt-in). Live and curated prices still decide
+  first.
+
 ## Unreleased - UI design guardrails
 
 - The design rules from the accessibility pass are now enforced in CI rather

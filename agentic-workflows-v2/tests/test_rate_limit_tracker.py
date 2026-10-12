@@ -473,6 +473,15 @@ class TestSmartModelRouterHardening:
         router._classify_and_record_error(model, error)
         assert not router.is_model_available(model)
 
+    def test_classify_error_410_gone_is_permanent(self) -> None:
+        # A provider-retired model (NIM's end-of-life 410) never comes back, so
+        # it is evicted like a 404 rather than retried after a cooldown.
+        router = self._make_router()
+        model = "nvidia:meta/llama-3.1-8b-instruct"
+        error = _StatusError("Gone: model reached its end of life", status_code=410)
+        router._classify_and_record_error(model, error)
+        assert not router.is_model_available(model)
+
     def test_classify_error_transient_not_found_not_permanent(self) -> None:
         # A bare "not found" message with no HTTP status is transient: a briefly
         # unavailable model must not be evicted permanently on a substring match.

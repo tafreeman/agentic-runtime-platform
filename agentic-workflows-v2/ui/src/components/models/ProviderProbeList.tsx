@@ -1,7 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useId, useMemo, useState } from "react";
 import { loadLmStudioModel } from "../../api/client";
-import type { ModelProbeResponse, ProbedModel } from "../../api/types";
+import type {
+  ModelProbeResponse,
+  PriceLabel,
+  ProbedModel,
+} from "../../api/types";
 import { useApiAvailability } from "../../hooks/useApiAvailability";
 import { describeApiError } from "../../lib/apiErrors";
 import {
@@ -25,6 +29,51 @@ const TAG = "flex-none rounded-sm border px-1.5 py-px font-mono text-micro";
  */
 const ROW_ACTION =
   "relative flex-none rounded-sm border border-el-divider px-2 py-0.5 font-mono text-micro text-el-secondary transition-colors hover:bg-el-hover hover:text-el-ink focus-ring after:absolute after:top-1/2 after:left-1/2 after:size-full after:min-h-9 after:min-w-9 after:-translate-x-1/2 after:-translate-y-1/2 disabled:opacity-50";
+
+/** Price pill: 11px floor, 2px radius, one line. */
+const PRICE_PILL =
+  "flex-none whitespace-nowrap rounded-sm border px-1.5 text-micro font-medium";
+const PRICE_PILL_TEXT: Record<PriceLabel, string> = {
+  local: "Local",
+  free: "Free",
+  paid: "Paid",
+  unknown: "Price unknown",
+};
+const PRICE_PILL_CLASS: Record<PriceLabel, string> = {
+  local: "border-transparent bg-el-success-soft text-el-success",
+  free: "border-transparent bg-el-success-soft text-el-success",
+  paid: "border-transparent bg-el-subtle text-el-secondary",
+  unknown: "border-dashed border-el-divider text-el-muted",
+};
+/** Labels that cost nothing to run: the "Free and local only" filter keeps these. */
+const FREE_OR_LOCAL: ReadonlySet<PriceLabel> = new Set<PriceLabel>([
+  "local",
+  "free",
+]);
+
+/** A model without a price label (older probe responses) is unknown, never free. */
+function priceLabelOf(model: ProbedModel): PriceLabel {
+  return model.price_label ?? "unknown";
+}
+
+function PriceLabelPill({ model }: Readonly<{ model: ProbedModel }>) {
+  const label = priceLabelOf(model);
+  const text = PRICE_PILL_TEXT[label];
+  const reason = model.price_reason;
+  return (
+    <span
+      className={`${PRICE_PILL} ${PRICE_PILL_CLASS[label]}`}
+      title={reason ? `${text}: ${reason}` : text}
+    >
+      {text}
+      {reason ? <span className="sr-only">: {reason}</span> : null}
+    </span>
+  );
+}
+
+/** Filter toggle: 40px tall to match the search field beside it. */
+const FILTER_TOGGLE =
+  "focus-ring flex h-10 flex-none items-center rounded-md border px-3 font-mono text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50";
 
 type ProbeStatusTone = "success" | "warning" | "danger";
 
@@ -135,6 +184,7 @@ function ProbedModelRow({
       >
         {model.id}
       </span>
+      <PriceLabelPill model={model} />
       {model.capabilities
         ?.filter((cap) => cap !== "completion")
         .map((cap) => (
@@ -228,6 +278,7 @@ export default function ProviderProbeList({
   const apiDownHintId = useId();
   const [openProvider, setOpenProvider] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [freeOnly, setFreeOnly] = useState(false);
   // Verified-outcome registry, read once per mount — the finder tab unmounts
   // on a tab switch, so playground results are fresh whenever it returns.
   const [verifications] = useState<Readonly<Record<string, ModelVerification>>>(
@@ -249,15 +300,27 @@ export default function ProviderProbeList({
   const searchActive = term !== "";
   const totalCount = probe?.models.length ?? 0;
 
+  // Older probe responses carry no price labels at all; the toggle is disabled
+  // then, and a stale "on" state is ignored rather than hiding every model.
+  const hasPriceLabels = useMemo(
+    () => (probe?.models ?? []).some((model) => model.price_label !== undefined),
+    [probe],
+  );
+  const priceFilterActive = freeOnly && hasPriceLabels;
+
   const filteredModels = useMemo(() => {
-    const all = probe?.models ?? [];
-    if (term === "") return all;
-    return all.filter(
+    const priced = priceFilterActive
+      ? (probe?.models ?? []).filter((model) =>
+          FREE_OR_LOCAL.has(priceLabelOf(model)),
+        )
+      : (probe?.models ?? []);
+    if (term === "") return priced;
+    return priced.filter(
       (model) =>
         model.id.toLowerCase().includes(term) ||
         model.provider.toLowerCase().includes(term),
     );
-  }, [probe, term]);
+  }, [probe, term, priceFilterActive]);
 
   const allProviderNames = useMemo(
     () =>
@@ -289,15 +352,18 @@ export default function ProviderProbeList({
     [allProviderNames, searchActive, term],
   );
 
-  const providerGroups = useMemo(
-    () =>
-      groupProbeByProvider(
-        filteredModels,
-        probe?.available_providers ?? [],
-        matchingProviderNames,
-      ),
-    [filteredModels, matchingProviderNames, probe],
-  );
+  const providerGroups = useMemo(() => {
+    const groups = groupProbeByProvider(
+      filteredModels,
+      probe?.available_providers ?? [],
+      matchingProviderNames,
+    );
+    // A price filter can empty a provider; drop it rather than list it as
+    // "not detected", which would read as a missing key.
+    return priceFilterActive
+      ? groups.filter((group) => group.models.length > 0)
+      : groups;
+  }, [filteredModels, matchingProviderNames, priceFilterActive, probe]);
 
   const placeholderMode = probe?.no_llm_mode ?? false;
   // An unreachable API is already announced by the shell banner, so a failed
@@ -431,11 +497,30 @@ export default function ProviderProbeList({
             placeholder="filter models by id or provider…"
             className="h-10 w-full max-w-[340px] rounded-md border border-el-control-border bg-el-raised px-2.5 font-mono text-xs text-el-ink placeholder:text-el-faint focus-ring focus-visible:border-el-focus"
           />
+          <button
+            type="button"
+            data-testid="free-only-toggle"
+            aria-pressed={priceFilterActive}
+            disabled={!hasPriceLabels}
+            title={hasPriceLabels ? undefined : "Price labels need a fresh probe"}
+            onClick={() => setFreeOnly((on) => !on)}
+            className={`${FILTER_TOGGLE} ${
+              priceFilterActive
+                ? "border-el-accent bg-el-accent-soft text-el-accent-strong"
+                : "border-el-control-border bg-el-raised text-el-secondary hover:bg-el-hover hover:text-el-ink"
+            }`}
+          >
+            Free and local only
+          </button>
+          {/* One count line: with the filter on it states the filtered total
+              rather than stacking a second "x / y" beside it. */}
           <span
             data-testid="catalog-search-count"
             className="font-mono text-micro text-el-muted"
           >
-            {filteredModels.length} / {totalCount} models
+            {priceFilterActive
+              ? `Showing ${filteredModels.length} of ${totalCount} models`
+              : `${filteredModels.length} / ${totalCount} models`}
           </span>
         </div>
       )}
@@ -455,9 +540,11 @@ export default function ProviderProbeList({
             no providers have credentials configured
           </div>
         )}
-        {probe && searchActive && providerGroups.length === 0 && (
+        {probe && (searchActive || priceFilterActive) && providerGroups.length === 0 && (
           <div className="p-6 font-mono text-xs text-el-muted">
-            no models match &ldquo;{search.trim()}&rdquo;
+            {searchActive
+              ? <>no models match &ldquo;{search.trim()}&rdquo;</>
+              : "no free or local models in this catalog"}
           </div>
         )}
         {providerGroups.map((provider, index) => {
