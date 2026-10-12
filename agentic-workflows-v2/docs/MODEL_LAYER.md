@@ -58,8 +58,12 @@ this order:
 2. `AGENTIC_MODEL_TIER_<n>`;
 3. the saved UI setting for that tier;
 4. the current probed tier default;
-5. the registry fallback chain;
-6. GitHub backup models when a GitHub token is present.
+5. the registry fallback chain, which ends in the tier's local Ollama model.
+
+Nothing is appended after the local model, so a failover never leaves the local
+lane on its last attempt. GitHub Models was retired upstream on 2026-07-30
+(ADR-016): no chain routes to `gh:`, and a `GITHUB_TOKEN` no longer adds backup
+candidates. An explicit `gh:` id still builds, then fails at the network.
 
 Duplicate and quarantined entries are removed. Fallback candidates whose
 provider does not appear configured are skipped.
@@ -82,7 +86,7 @@ The availability gate checks for configuration, not network liveness:
 | Gemini | `GOOGLE_API_KEY` or `GEMINI_API_KEY` |
 | Anthropic | `ANTHROPIC_API_KEY` |
 | OpenAI | `OPENAI_API_KEY` |
-| GitHub Models | `GITHUB_TOKEN` |
+| GitHub Models (retired upstream) | `GITHUB_TOKEN` |
 | NVIDIA | `NVIDIA_API_KEY` |
 | OpenRouter | `OPENROUTER_API_KEY` |
 | Mistral | `MISTRAL_API_KEY` |

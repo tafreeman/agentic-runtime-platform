@@ -26,9 +26,6 @@ PROVIDER_ENV_KEYS
 
 TRANSIENT_HTTP_STATUS_CODES
     Set of HTTP status codes treated as transient failures.
-
-GH_BACKUP_MODELS
-    Tuple of GitHub Models fallback model IDs.
 """
 
 from __future__ import annotations
@@ -71,11 +68,6 @@ PROVIDER_ENV_KEYS: dict[str, list[str]] = {
 
 TRANSIENT_HTTP_STATUS_CODES: frozenset[int] = frozenset(
     {408, 409, 425, 429, 500, 502, 503, 504}
-)
-
-GH_BACKUP_MODELS: tuple[str, ...] = (
-    "gh:openai/gpt-4o-mini",
-    "gh:openai/gpt-4o",
 )
 
 # ---------------------------------------------------------------------------
