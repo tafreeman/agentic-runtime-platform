@@ -391,3 +391,51 @@ def test_fence_scan_finds_a_block_after_an_odd_fence() -> None:
     text = 'Wrap code in ``` fences.\n```json\n{"key": "value"}\n```\n'
 
     assert parse_llm_json_output(text, None) == {"key": "value"}
+
+
+@pytest.mark.parametrize(
+    ("truncated", "expected"),
+    [
+        (
+            '{"r": {"s": "APPROVED", "summary": "ok"',
+            {"r": {"s": "APPROVED", "summary": "ok"}},
+        ),
+        ('{"a": 1, "flag": true', {"a": 1, "flag": True}),
+        ('{"a": 1, "refs": ["x", "y"]', {"a": 1, "refs": ["x", "y"]}),
+        ('{"a": 1, "b"', {"a": 1}),
+        ('{"a": 1, "b": ', {"a": 1}),
+    ],
+    ids=[
+        "final_string",
+        "final_literal",
+        "final_array",
+        "dangling_key",
+        "dangling_colon",
+    ],
+)
+def test_repair_keeps_a_value_completed_at_the_cut(
+    truncated: str, expected: dict[str, Any]
+) -> None:
+    repaired = _repair_json_object(truncated, 0)
+
+    assert repaired is not None
+    assert json.loads(repaired) == expected
+
+
+def test_repair_drops_a_number_that_may_be_cut_short() -> None:
+    """``7`` may be the first digit of ``7.8``; a wrong score is worse than none."""
+    repaired = _repair_json_object(
+        '{"overall_status": "APPROVED", "quality_score": 7', 0
+    )
+
+    assert repaired is not None
+    assert json.loads(repaired) == {"overall_status": "APPROVED"}
+
+
+@both_engines
+def test_report_cut_after_a_final_string_keeps_it(parse: Any) -> None:
+    text = '```json\n{"review_report": {"overall_status": "NEEDS_FIXES", "summary": "two issues"'
+
+    report = parse(text)["review_report"]
+
+    assert report == {"overall_status": "NEEDS_FIXES", "summary": "two issues"}

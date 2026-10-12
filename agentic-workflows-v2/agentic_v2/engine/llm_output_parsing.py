@@ -215,8 +215,26 @@ def _repair_json_object(text: str, start: int) -> str | None:
             cut = (len(out), tuple(stack))
     if cut is None:
         return None
+    if not in_string:
+        closed = _close_after_final_value("".join(out), stack)
+        if closed is not None:
+            return closed
     kept, still_open = cut
     return "".join(out[:kept]) + "".join(reversed(still_open))
+
+
+def _close_after_final_value(text: str, stack: list[str]) -> str | None:
+    """Close *text* as is when it was cut right after a complete value.
+
+    Keeps a final string, literal or closed container that has no comma
+    after it yet. A final number is not kept: ``7`` may be all of
+    ``7.8``'s digits that arrived, and a wrong score is worse than none.
+    """
+    tail = text.rstrip()
+    if not tail or tail[-1].isdigit():
+        return None
+    closed = tail + "".join(reversed(stack))
+    return closed if _loads_dict(closed) is not None else None
 
 
 def _loads_dict(candidate: str | None) -> dict[str, Any] | None:
