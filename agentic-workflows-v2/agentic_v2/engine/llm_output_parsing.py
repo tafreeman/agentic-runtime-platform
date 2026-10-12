@@ -17,9 +17,13 @@ dicts:
 
 from __future__ import annotations
 
+import itertools
 import json
 import re
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, NamedTuple, cast
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 # ---------------------------------------------------------------------------
 # Sentinel regex constants (shared with tool_execution.py callers)
@@ -37,6 +41,13 @@ FILE_BLOCK_RE = re.compile(
 # Maximum input length before applying DOTALL regexes on untrusted LLM output.
 # Missing closing sentinels cause backtracking; capping input bounds the runtime.
 _MAX_SENTINEL_INPUT_LEN = 262144  # 256 KB
+
+# json's decoder recurses per nesting level, so a deeply nested reply raises
+# RecursionError rather than JSONDecodeError. Either way it is not JSON we use.
+_JSON_PARSE_ERRORS = (json.JSONDecodeError, RecursionError)
+
+_FENCE = "```"
+_JSON_FENCE_TAG = "json"
 
 # Backward-compatibility aliases
 _ARTIFACT_RE = ARTIFACT_RE
@@ -80,13 +91,38 @@ def _bracket_span(raw: str, open_ch: str, close_ch: str) -> str | None:
     return None
 
 
+def _fenced_objects(text: str) -> list[str]:
+    """Return each ```-fenced body that is a ``{…}`` object, wherever it sits.
+
+    Covers fenced payloads with prose (and stray braces) around them.
+    Every gap between two consecutive fences is checked once, so the
+    scan stays linear however many fences an untrusted reply opens
+    without closing; a lazy DOTALL regex rescans the rest of the text
+    from each opening fence.
+    """
+    bounds: list[int] = []
+    index = text.find(_FENCE)
+    while index != -1:
+        bounds.append(index)
+        index = text.find(_FENCE, index + len(_FENCE))
+
+    objects: list[str] = []
+    for open_at, close_at in itertools.pairwise(bounds):
+        body = text[open_at + len(_FENCE) : close_at].strip()
+        if body[: len(_JSON_FENCE_TAG)].lower() == _JSON_FENCE_TAG:
+            body = body[len(_JSON_FENCE_TAG) :].lstrip()
+        if body.startswith("{") and body.endswith("}"):
+            objects.append(body)
+    return objects
+
+
 def extract_json_candidates(text: str) -> list[str]:
     """Return increasingly permissive JSON candidates from model output.
 
     Tries, in order: raw text, markdown-fence-stripped text (outer fence
-    only), bracket-span extraction for objects (``{…}``), and bracket-
-    span for arrays (``[…]``). Duplicates are removed while preserving
-    priority order.
+    only), bracket-span extraction for objects (``{…}``), bracket-span for
+    arrays (``[…]``), and each ```json fenced object found mid-text.
+    Duplicates are removed while preserving priority order.
     """
     candidates: list[str] = []
     raw = text.strip()
@@ -105,6 +141,8 @@ def extract_json_candidates(text: str) -> list[str]:
     arr_snippet = _bracket_span(raw, "[", "]")
     if arr_snippet:
         candidates.append(arr_snippet)
+
+    candidates.extend(_fenced_objects(raw[:_MAX_SENTINEL_INPUT_LEN]))
 
     # Deduplicate while preserving order
     seen: set[str] = set()
@@ -125,31 +163,382 @@ _extract_json_candidates = extract_json_candidates
 # ---------------------------------------------------------------------------
 
 
-def _recover_nested_review_report(raw_response: str) -> dict[str, Any] | None:
-    """Recover a nested review_report payload from a raw_response JSON blob.
+# Lines that can follow a string a mask left open. Valid JSON never continues
+# an open string onto a line that starts a member (``"key":``) or holds a whole
+# array element (``"value",``), so these two always mark the string's end.
+_MEMBER_LINE_RE = re.compile(r'[ \t]*"(?:[^"\\\n]|\\.)*"[ \t]*:')
+_ELEMENT_LINE_RE = re.compile(r'[ \t]*"(?:[^"\\\n]|\\.)*"[ \t]*,?[ \t]*(?=\r?\n|\Z)')
+# A line of closing brackets, or an array element that opens a container. A
+# multi-line code string can contain either, so they are tried only as a second
+# repair (``at_brackets``), used when it keeps more of the text.
+_CLOSE_LINE_RE = re.compile(r"[ \t]*([}\]])[}\],\t ]*(?=\r?\n|\Z)")
+_OPEN_LINE_RE = re.compile(r"[ \t]*[{\[]")
+# After a string's closing quote valid JSON allows only these. A quote followed
+# by anything else, then the rest of a key (``name":``) or an element
+# (``value",``), opens the next value of a string a mask left open on the same
+# line, as in compact JSON.
+_AFTER_STRING = frozenset(" \t\r\n,:}]")
+_REST_OF_KEY_RE = re.compile(r'(?:[^"\\\n]|\\.)*"[ \t]*:')
+_REST_OF_ELEMENT_RE = re.compile(r'(?:[^"\\\n]|\\.)*"[ \t]*[,\]]')
+_CLOSER_FOR = {"{": "}", "[": "]"}
+_REVIEW_REPORT_VALUE_RE = re.compile(r'"review_report"\s*:\s*(?=\{)')
 
-    Some model responses come wrapped as::
 
-        {"raw_response": "```json { \"review_report\": {...} } ```"}
+class _Frame(NamedTuple):
+    """One open container.
 
-    Returns the recovered report dict, or ``None`` when none is found.
+    Frames share their parents, so a snapshot is O(1).
     """
-    for candidate in extract_json_candidates(raw_response):
-        try:
-            nested_parsed = json.loads(candidate)
-        except json.JSONDecodeError:
-            continue
-        if not isinstance(nested_parsed, dict):
-            continue
-        review_report = nested_parsed.get("review_report")
-        if isinstance(review_report, dict):
-            return cast("dict[str, Any]", review_report)
-        review = nested_parsed.get("review")
-        if isinstance(review, dict):
-            return cast("dict[str, Any]", review)
-        if isinstance(nested_parsed.get("overall_status"), str):
-            return {"overall_status": nested_parsed["overall_status"]}
+
+    closer: str
+    parent: _Frame | None
+
+
+def _closers(frame: _Frame | None) -> str:
+    """Return the brackets that close every container open at *frame*."""
+    parts: list[str] = []
+    while frame is not None:
+        parts.append(frame.closer)
+        frame = frame.parent
+    return "".join(parts)
+
+
+class _Repair(NamedTuple):
+    """A repaired JSON object and how much of the input it accounts for."""
+
+    text: str
+    consumed: int  # index just past the last input character the repair kept
+
+
+def _quote_opens_next_value(text: str, index: int, closer: str) -> bool:
+    """Return whether the quote at ``text[index]`` opens a value, not ends one.
+
+    Only text that is invalid JSON qualifies: the quote must be followed by
+    a character no closing quote can be followed by.
+    """
+    following = text[index + 1 : index + 2]
+    if not following or following in _AFTER_STRING:
+        return False
+    rest = _REST_OF_KEY_RE if closer == "}" else _REST_OF_ELEMENT_RE
+    return rest.match(text, index + 1) is not None
+
+
+def _string_end_at_newline(
+    text: str, index: int, closer: str, *, at_brackets: bool
+) -> str | None:
+    """Return the text that ends a string left open at the newline ``text[index]``.
+
+    *closer* is the bracket that closes the innermost open container.
+    Returns ``None`` when the next line gives no reason to end the string.
+    """
+    after = index + 1
+    if closer == "}" and _MEMBER_LINE_RE.match(text, after):
+        return '",'
+    if closer == "]" and _ELEMENT_LINE_RE.match(text, after):
+        return '",'
+    if not at_brackets:
+        return None
+    close_line = _CLOSE_LINE_RE.match(text, after)
+    if close_line is not None and close_line.group(1) == closer:
+        return '"'
+    if closer == "]" and _OPEN_LINE_RE.match(text, after):
+        return '",'
     return None
+
+
+def _repair_json_object(
+    text: str, start: int, *, at_brackets: bool = False
+) -> _Repair | None:
+    """Repair the JSON object that opens at ``text[start]``.
+
+    Mends two kinds of damage seen in reviewer reports:
+
+    * A string left open at the end of a line. The response sanitizer masks
+      ``password=<non-space run>``, so a masked ``"…Password=x\\"",`` loses
+      the string's closing quote and the member's comma. The string is closed
+      when the next line starts a member or holds a whole array element, and,
+      with *at_brackets*, when it is the open container's closing bracket.
+    * Truncation (an output-token cap, or a prefix copied from a run log): the
+      text is cut back to the last complete value and the containers still
+      open there are closed.
+
+    Returns ``None`` for a mismatched closing bracket or nothing to keep.
+    """
+    out: list[str] = []
+    stack: _Frame | None = None
+    cut: tuple[int, _Frame | None, int] | None = None
+    in_string = escaped = False
+    end = min(len(text), start + _MAX_SENTINEL_INPUT_LEN)
+    for index in range(start, end):
+        ch = text[index]
+        if in_string:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                if stack is not None and _quote_opens_next_value(
+                    text, index, stack.closer
+                ):
+                    # End the open string; this quote opens the next value.
+                    out.append('"')
+                    cut = (len(out), stack, index)
+                    out.append(",")
+                else:
+                    in_string = False
+            elif ch == "\n" and stack is not None:
+                ending = _string_end_at_newline(
+                    text, index, stack.closer, at_brackets=at_brackets
+                )
+                if ending is not None:
+                    out.append('"')
+                    cut = (len(out), stack, index)
+                    out.append(ending[1:])
+                    in_string = False
+            out.append(ch)
+            continue
+        if ch == ",":
+            cut = (len(out), stack, index)
+        out.append(ch)
+        if ch == '"':
+            in_string = True
+        elif ch in _CLOSER_FOR:
+            stack = _Frame(_CLOSER_FOR[ch], stack)
+            cut = (len(out), stack, index + 1)
+        elif ch in "}]":
+            if stack is None or stack.closer != ch:
+                return None
+            stack = stack.parent
+            if stack is None:
+                return _Repair("".join(out), index + 1)
+            cut = (len(out), stack, index + 1)
+    if cut is None:
+        return None
+    if not in_string:
+        closed = _close_after_final_value("".join(out), _closers(stack))
+        if closed is not None:
+            return _Repair(closed, end)
+    kept, still_open, consumed = cut
+    return _Repair("".join(out[:kept]) + _closers(still_open), consumed)
+
+
+def _best_repair(text: str, start: int) -> dict[str, Any] | None:
+    """Parse the repair of the object at *start* that keeps the most input.
+
+    The bracket-line repair can end a multi-line code string early, which
+    stops it short of the object's real end, so it loses to the plain
+    repair. When a mask left an object's last member open, the plain repair
+    folds the following ``},`` and ``{`` lines into that string. Both then
+    reach the same end, and the one that kept more JSON values wins.
+    """
+    best: dict[str, Any] | None = None
+    best_rank = (-1, -1)
+    for at_brackets in (False, True):
+        repair = _repair_json_object(text, start, at_brackets=at_brackets)
+        parsed = _loads_dict(repair.text) if repair is not None else None
+        if parsed is not None and repair is not None:
+            rank = (repair.consumed, _count_values(parsed))
+            if rank > best_rank:
+                best, best_rank = parsed, rank
+    return best
+
+
+def _count_values(value: Any) -> int:
+    """Count the JSON values in *value*, itself included (no recursion)."""
+    count = 0
+    pending = [value]
+    while pending:
+        item = pending.pop()
+        count += 1
+        if isinstance(item, dict):
+            pending.extend(item.values())
+        elif isinstance(item, list):
+            pending.extend(item)
+    return count
+
+
+def _close_after_final_value(text: str, closers: str) -> str | None:
+    """Close *text* as is when it was cut right after a complete value.
+
+    Keeps a final string, literal or closed container that has no comma
+    after it yet. A final number is not kept: ``7`` may be all of
+    ``7.8``'s digits that arrived, and a wrong score is worse than none.
+    """
+    tail = text.rstrip()
+    if not tail or tail[-1].isdigit():
+        return None
+    closed = tail + closers
+    return closed if _loads_dict(closed) is not None else None
+
+
+def _loads_dict(candidate: str | None) -> dict[str, Any] | None:
+    """Parse *candidate* as a JSON object, or return ``None``."""
+    if not candidate:
+        return None
+    try:
+        parsed = json.loads(candidate, strict=False)
+    except _JSON_PARSE_ERRORS:
+        return None
+    return cast("dict[str, Any]", parsed) if isinstance(parsed, dict) else None
+
+
+def _report_from_mapping(mapping: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Return the review report carried by *mapping*, or ``None``.
+
+    Accepts the wrapped shapes (``review_report`` or ``review``) and a bare
+    report with a top-level ``overall_status``, which is what the reviewer
+    prompt's ``<<<ARTIFACT review_report>>>`` block contains.
+    """
+    if mapping is None:
+        return None
+    for key in ("review_report", "review"):
+        value = mapping.get(key)
+        if isinstance(value, dict):
+            return cast("dict[str, Any]", value)
+    if isinstance(mapping.get("overall_status"), str):
+        return {
+            k: v
+            for k, v in mapping.items()
+            if k not in {"raw_response", "review_report"}
+        }
+    return None
+
+
+# How strongly a parsed object is the step's review report. A reply may state
+# a preliminary status, even an annotated one, before its real report.
+_NO_REPORT, _STATUS_ONLY, _FULL_REPORT, _WRAPPED_REPORT = 0, 1, 2, 3
+# Fields of the reviewer prompt's report schema, beyond overall_status.
+_REPORT_FIELDS = frozenset(
+    {"quality_score", "summary", "findings", "positive_observations"}
+)
+
+
+def _report_rank(mapping: dict[str, Any] | None) -> int:
+    """Rank how clearly *mapping* is, or wraps, a review report.
+
+    A report counts as full only when it carries one of the schema's report
+    fields; any other key, such as a ``note`` on a preliminary status, does
+    not. A full report under ``review_report`` (or ``review``) ranks above a
+    bare one. A report without those fields, wrapped or not, ranks as a
+    status.
+    """
+    if mapping is None:
+        return _NO_REPORT
+    for key in ("review_report", "review"):
+        value = mapping.get(key)
+        if isinstance(value, dict):
+            return _wrapped_rank(value)
+    if not isinstance(mapping.get("overall_status"), str):
+        return _NO_REPORT
+    return _FULL_REPORT if _has_report_fields(mapping) else _STATUS_ONLY
+
+
+def _wrapped_rank(report: dict[str, Any]) -> int:
+    """Rank a report found under a ``review_report`` key."""
+    return _WRAPPED_REPORT if _has_report_fields(report) else _STATUS_ONLY
+
+
+def _has_report_fields(report: dict[str, Any]) -> bool:
+    """Return whether *report* carries any of the schema's report fields."""
+    return not _REPORT_FIELDS.isdisjoint(report)
+
+
+def _recover_ranked_report(text: str) -> tuple[int, dict[str, Any]] | None:
+    """Recover the best-ranked review report in *text*, repairing damage.
+
+    Returns the first report of the highest :func:`_report_rank` from
+    :func:`_ranked_reports`, stopping early at a wrapped one, or ``None``
+    when there is no report at all.
+    """
+    best: tuple[int, dict[str, Any]] | None = None
+    for rank, report in _ranked_reports(text):
+        if best is None or rank > best[0]:
+            best = (rank, report)
+            if rank == _WRAPPED_REPORT:
+                break
+    return best
+
+
+def _recover_review_report(text: str) -> dict[str, Any] | None:
+    """Recover the review report from model text, repairing damaged JSON.
+
+    Returns ``None`` when no report is found, so the caller can fall back to
+    salvaging the status alone.
+    """
+    ranked = _recover_ranked_report(text)
+    return ranked[1] if ranked is not None else None
+
+
+def _ranked_reports(text: str) -> Iterator[tuple[int, dict[str, Any]]]:
+    """Yield ``(rank, report)`` for each report in *text*.
+
+    Parsed candidates come first, then repaired objects. Repairs start at
+    :func:`_report_starts`, then after the first ``"review_report":`` key.
+    Only the first key is tried: each repair can scan to the end of the
+    text, so trying every key would be quadratic on a reply that repeats it.
+    """
+    for candidate in extract_json_candidates(text):
+        yield from _ranked(_loads_dict(candidate))
+
+    capped = text[:_MAX_SENTINEL_INPUT_LEN]
+    for start in _report_starts(capped):
+        yield from _ranked(_best_repair(capped, start))
+    for value_start in _report_key_starts(capped):
+        report = _best_repair(capped, value_start)
+        if report is not None:
+            yield _wrapped_rank(report), report
+
+
+def _report_key_starts(text: str) -> list[int]:
+    """Return where the first and the last ``"review_report":`` values open.
+
+    The first key may hold a preliminary status and the last the real
+    report. Trying only these two keeps the repairs linear on a reply
+    that repeats the key.
+    """
+    starts: list[int] = []
+    first = _REVIEW_REPORT_VALUE_RE.search(text)
+    if first is not None:
+        starts.append(first.end())
+    last = _REVIEW_REPORT_VALUE_RE.match(text, max(text.rfind('"review_report"'), 0))
+    if last is not None and last.end() not in starts:
+        starts.append(last.end())
+    return starts
+
+
+def _ranked(mapping: dict[str, Any] | None) -> Iterator[tuple[int, dict[str, Any]]]:
+    """Yield *mapping*'s report with its rank, if it carries one."""
+    rank = _report_rank(mapping)
+    report = _report_from_mapping(mapping)
+    if rank != _NO_REPORT and report is not None:
+        yield rank, report
+
+
+def _report_starts(text: str) -> list[int]:
+    """Return where a report object may open, at most one per kind of marker.
+
+    The first ``{`` in the text, the first after the first fence, the first
+    after the last fence (a truncated report is usually the final block,
+    its closing fence cut off), the last ``{`` that opens a line (where an
+    unfenced top-level object usually starts) and the first after a
+    ``review_report`` artifact marker. So neither a brace in prose nor a
+    preliminary or explanatory object before the payload hides it. A fixed
+    number of starts keeps the repairs linear.
+    """
+    last_line_brace = text.rfind("\n{")
+    markers = [
+        0,
+        text.find(_FENCE),
+        text.rfind(_FENCE),
+        last_line_brace + 1 if last_line_brace != -1 else -1,
+        text.find("<<<ARTIFACT review_report>>>"),
+    ]
+    starts: list[int] = []
+    for at in markers:
+        brace = text.find("{", at) if at != -1 else -1
+        if brace != -1 and brace not in starts:
+            starts.append(brace)
+    return starts
 
 
 def _review_report_from_raw_text(raw_text: str) -> dict[str, Any]:
@@ -203,12 +592,18 @@ def _normalize_review_report_key(parsed: dict[str, Any]) -> None:
         rr = parsed.get("review")
         parsed["review_report"] = rr
 
+    # A review_report artifact whose JSON did not parse arrives as a string.
+    # Recover the report from that string instead of discarding it.
+    if isinstance(rr, str):
+        rr = _recover_review_report(rr) or _review_report_from_raw_text(rr)
+
     # Recover nested reviewer payload so when-conditions can resolve.
     if not isinstance(rr, dict) and isinstance(parsed.get("raw_response"), str):
-        nested_report = _recover_nested_review_report(str(parsed.get("raw_response")))
-        if nested_report is not None:
-            rr = nested_report
-            parsed["review_report"] = rr
+        rr = _recover_review_report(str(parsed.get("raw_response")))
+
+    # The parsed object itself may be a bare report.
+    if not isinstance(rr, dict):
+        rr = _report_from_mapping(parsed)
 
     if not isinstance(rr, dict):
         rr = _review_report_from_raw_text(str(parsed.get("raw_response", "")))
@@ -265,7 +660,7 @@ def _promote_missing_keys_from_raw(
     for candidate in extract_json_candidates(nested_raw):
         try:
             nested_parsed = json.loads(candidate, strict=False)
-        except json.JSONDecodeError:
+        except _JSON_PARSE_ERRORS:
             continue
         if not isinstance(nested_parsed, dict):
             continue
@@ -332,7 +727,7 @@ def _salvage_expected_keys_from_jsonish(
                 value, _ = decoder.raw_decode(response, idx=value_start)
                 salvaged[key] = value
                 break
-            except json.JSONDecodeError:
+            except _JSON_PARSE_ERRORS:
                 continue
 
     return salvaged
@@ -343,27 +738,114 @@ def _salvage_expected_keys_from_jsonish(
 # ---------------------------------------------------------------------------
 
 
+def _carries_declared_output(
+    parsed: dict[str, Any], expected_output_keys: list[str]
+) -> bool:
+    """Return whether *parsed* holds a declared output (or a review report)."""
+    if any(key in parsed for key in expected_output_keys):
+        return True
+    return "review_report" in expected_output_keys and (
+        _report_from_mapping(parsed) is not None
+    )
+
+
+# A candidate that carries some declared output but no full report ranks as
+# a status-only report does: below a full or wrapped report.
+_DECLARED_OUTPUT = _STATUS_ONLY
+
+
+def _candidate_rank(parsed: dict[str, Any], expected_output_keys: list[str]) -> int:
+    """Rank *parsed* against the step's declared outputs.
+
+    When a ``review_report`` is expected, a wrapped or full report (see
+    :func:`_report_rank`) beats any other declared output. ``overall_status``
+    is itself a declared output in some workflows, so a preliminary status
+    block, annotated or not, would otherwise outrank the report after it.
+    """
+    if "review_report" in expected_output_keys:
+        rank = _report_rank(parsed)
+        if rank >= _FULL_REPORT:
+            return rank
+    if _carries_declared_output(parsed, expected_output_keys):
+        return _DECLARED_OUTPUT
+    return _NO_REPORT
+
+
+def select_json_dict(
+    text: str, expected_output_keys: list[str] | None = None
+) -> dict[str, Any] | None:
+    """Return the JSON object in *text* that carries the step's outputs.
+
+    Walks :func:`extract_json_candidates` in order and returns the first
+    object of the best :func:`_candidate_rank`, so an explanatory block or a
+    preliminary status before the real result is skipped. With no declared
+    keys the first object is returned. Parsing uses ``strict=False``, so
+    literal control characters (bare newlines) inside string values are
+    tolerated.
+    """
+    best: dict[str, Any] | None = None
+    best_rank = -1
+    top_rank = (
+        _WRAPPED_REPORT
+        if expected_output_keys and "review_report" in expected_output_keys
+        else _DECLARED_OUTPUT
+    )
+    for candidate in extract_json_candidates(text):
+        parsed = _loads_dict(candidate)
+        if parsed is None:
+            continue
+        rank = (
+            _candidate_rank(parsed, expected_output_keys)
+            if expected_output_keys
+            else _DECLARED_OUTPUT
+        )
+        if rank > best_rank:
+            best, best_rank = parsed, rank
+            if rank >= top_rank:
+                break
+    return best
+
+
+def parse_json_step_output(
+    text: str, expected_output_keys: list[str] | None
+) -> dict[str, Any] | None:
+    """Select and normalize the JSON object in *text*; ``None`` if none parses.
+
+    When a ``review_report`` is expected but the selected object holds no
+    full report (an explanatory block, or a preliminary status), the report
+    is recovered from the rest of the text. It may sit in a later block that
+    is too damaged to parse as it stands.
+    """
+    parsed = select_json_dict(text, expected_output_keys)
+    if parsed is None:
+        return None
+    if (
+        expected_output_keys
+        and "review_report" in expected_output_keys
+        and _candidate_rank(parsed, expected_output_keys) < _FULL_REPORT
+    ):
+        ranked = _recover_ranked_report(text)
+        if ranked is not None and (
+            ranked[0] >= _FULL_REPORT
+            or not _carries_declared_output(parsed, expected_output_keys)
+        ):
+            parsed = {**parsed, "review_report": ranked[1]}
+    return normalize_expected_structure(parsed, expected_output_keys)
+
+
 def parse_llm_json_output(
     response: str,
     expected_output_keys: list[str] | None,
 ) -> dict[str, Any]:
     """Parse model text output into a JSON dict with robust fallbacks.
 
-    Attempts each candidate from :func:`extract_json_candidates`.  If all
-    fail, returns ``{"raw_response": response}`` with a best-effort
+    Selects a candidate with :func:`select_json_dict`. If none parses,
+    returns ``{"raw_response": response}`` with a best-effort
     ``review_report`` salvaged from raw text (if expected).
-
-    Uses ``strict=False`` so that literal control characters (including bare
-    newlines) inside JSON string values — a common LLM output quirk — are
-    tolerated rather than causing a parse failure.
     """
-    for candidate in extract_json_candidates(response):
-        try:
-            parsed = json.loads(candidate, strict=False)
-            if isinstance(parsed, dict):
-                return normalize_expected_structure(parsed, expected_output_keys)
-        except json.JSONDecodeError:
-            continue
+    parsed = parse_json_step_output(response, expected_output_keys)
+    if parsed is not None:
+        return parsed
 
     fallback: dict[str, Any] = {"raw_response": response}
 
@@ -374,10 +856,48 @@ def parse_llm_json_output(
     if not (expected_output_keys and "review_report" in expected_output_keys):
         return fallback
 
-    # This step expects review_report but the model returned malformed JSON —
-    # salvage status from raw text so when-conditions still work.
-    fallback["review_report"] = _salvage_review_report_from_text(response)
+    # This step expects review_report but the model returned malformed JSON.
+    # Keep whatever report can be recovered.
+    rank, report = _fallback_report(fallback.get("review_report"), response)
+    fallback["review_report"] = {
+        **report,
+        **_fallback_status(rank, report, response),
+    }
     return fallback
+
+
+def _fallback_report(salvaged: Any, response: str) -> tuple[int, dict[str, Any]]:
+    """Pick the report for a reply that did not parse, with its rank.
+
+    *salvaged* is the value of the first ``"review_report":`` key. It is used
+    when it is a full wrapped report, or when nothing in the text ranks
+    above it. That first key may hold only a preliminary status.
+    """
+    salvaged_rank = (
+        _wrapped_rank(salvaged) if isinstance(salvaged, dict) else _NO_REPORT
+    )
+    if salvaged_rank == _WRAPPED_REPORT:
+        return salvaged_rank, salvaged
+    recovered = _recover_ranked_report(response)
+    if recovered is not None and recovered[0] > salvaged_rank:
+        return recovered
+    if isinstance(salvaged, dict):
+        return salvaged_rank, salvaged
+    return recovered or (_NO_REPORT, {})
+
+
+def _fallback_status(
+    rank: int, report: dict[str, Any], response: str
+) -> dict[str, Any]:
+    """Return a wrapped or full report's own status, else one from raw text.
+
+    The raw-text salvage takes the first ``overall_status`` in the reply,
+    which may be a preliminary one stated before the report.
+    """
+    status = report.get("overall_status")
+    if rank >= _FULL_REPORT and isinstance(status, str) and status.strip():
+        return {"overall_status": status.strip().upper().replace(" ", "_")}
+    return _salvage_review_report_from_text(response)
 
 
 def _salvage_review_report_from_text(response: str) -> dict[str, Any]:
@@ -475,9 +995,9 @@ def parse_sentinel_output(
         stripped = content.lstrip()
         if stripped.startswith(("{", "[")):
             try:
-                result[key] = json.loads(content)
+                result[key] = json.loads(content, strict=False)
                 continue
-            except json.JSONDecodeError:
+            except _JSON_PARSE_ERRORS:
                 pass
         # Keep raw string for backward compatibility
         result[key] = content
