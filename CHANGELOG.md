@@ -21,6 +21,14 @@
   `deepseek-v4-pro` scores from before that date. The SWE-fix A/B campaign is
   not affected, because its advisory judge (`evals/swe_ab/judge_free.py`, weight
   0.0) doesn't read this slot.
+- **NIM requests for `z-ai/glm-*` also send `reasoning_effort: "low"`.** GLM
+  ignores the `chat_template_kwargs: {"thinking": false}` field every NIM
+  request already carries, and on a long input it spent the judge's whole
+  1,200-token budget reasoning, returning no answer. `"low"` is the lowest
+  level GLM honours. Both engines send it, and `NVIDIA_DISABLE_THINKING=0` still
+  turns all of it off. `LLMJudge` now raises a clear "returned no answer
+  (finish_reason=…, max_tokens=…)" error for an empty or null reply instead of
+  an `AttributeError`.
 - **Seven retired ids are gone from the NIM free-endpoint block:**
   `deepseek-v4-flash-0731`, `deepseek-v4-pro-0813`, `minimax-m3`,
   `mistral-nemotron`, `nemotron-3-nano-30b-a3b`, `gpt-oss-120b` and

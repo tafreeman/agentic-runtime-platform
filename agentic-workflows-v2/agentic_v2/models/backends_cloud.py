@@ -67,6 +67,29 @@ def nim_chat_template_kwargs() -> dict[str, Any]:
     return {"thinking": False}
 
 
+# NIM models that ignore ``chat_template_kwargs.thinking`` and gate their
+# reasoning phase on ``reasoning_effort`` instead. Probed live on 2026-10-12:
+# z-ai/glm-5.3 and z-ai/glm-5.3-flash returned the same reasoning length with
+# and without ``thinking: False``, ignored ``reasoning_effort: "none"``, and
+# honoured ``"low"`` (completion tokens 306 -> 112 and 189 -> 44 on the same
+# prompt). "low" is therefore the closest these models get to "off".
+_NIM_REASONING_EFFORT_PREFIXES = ("z-ai/glm-",)
+_NIM_MIN_REASONING_EFFORT = "low"
+
+
+def nim_reasoning_payload(model_name: str) -> dict[str, Any]:
+    """Return fresh request fields that minimise ``model_name``'s reasoning phase.
+
+    ``model_name`` is the bare NIM id (``publisher/model``, no ``nvidia:``
+    prefix). Every model gets ``chat_template_kwargs``; models that gate
+    reasoning on ``reasoning_effort`` also get its lowest honoured level.
+    """
+    payload: dict[str, Any] = {"chat_template_kwargs": nim_chat_template_kwargs()}
+    if model_name.startswith(_NIM_REASONING_EFFORT_PREFIXES):
+        payload["reasoning_effort"] = _NIM_MIN_REASONING_EFFORT
+    return payload
+
+
 def _to_anthropic_tool_choice(
     tool_choice: str | dict[str, Any],
 ) -> dict[str, Any] | None:
@@ -264,8 +287,11 @@ class OpenAIBackend(LLMBackend):
             text = result.get("thinking") or ""
         return text
 
-    def _extra_payload(self) -> dict[str, Any]:
-        """Provider-specific request fields; caller ``kwargs`` override them."""
+    def _extra_payload(self, model_name: str) -> dict[str, Any]:
+        """Provider-specific request fields; caller ``kwargs`` override them.
+
+        ``model_name`` is the id as sent on the wire (provider prefix removed).
+        """
         return {}
 
     def _canonical_result(self, data: dict[str, Any]) -> dict[str, Any]:
@@ -299,7 +325,7 @@ class OpenAIBackend(LLMBackend):
             "messages": messages,
             "max_tokens": max_tokens,
             "temperature": temperature,
-            **self._extra_payload(),
+            **self._extra_payload(model_name),
             **kwargs,
         }
 
@@ -370,10 +396,10 @@ class NvidiaBackend(OpenAIBackend):
             # Self-hosted NIM ignores the key; a non-empty value keeps the header valid.
             self.api_key = _LOCAL_NIM_PLACEHOLDER_KEY
 
-    def _extra_payload(self) -> dict[str, Any]:
+    def _extra_payload(self, model_name: str) -> dict[str, Any]:
         if not nvidia_thinking_disabled():
             return {}
-        return {"chat_template_kwargs": nim_chat_template_kwargs()}
+        return nim_reasoning_payload(model_name)
 
     def _canonical_result(self, data: dict[str, Any]) -> dict[str, Any]:
         result = super()._canonical_result(data)

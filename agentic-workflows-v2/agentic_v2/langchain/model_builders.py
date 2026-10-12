@@ -218,15 +218,17 @@ def _nvidia_thinking_disabled() -> bool:
     return nvidia_thinking_disabled()
 
 
-def _nim_extra_body() -> dict[str, Any]:
-    """Request extras that disable NIM's internal reasoning phase.
+def _nim_extra_body(model_name: str = "") -> dict[str, Any]:
+    """Request extras that minimise NIM's internal reasoning phase.
 
     Returned fresh per call so the caller owns the dict rather than
-    sharing module-level mutable state with every other NIM model.
+    sharing module-level mutable state with every other NIM model. Delegates
+    to :func:`agentic_v2.models.backends_cloud.nim_reasoning_payload` so both
+    engines send the same fields for the same model.
     """
-    from ..models.backends_cloud import nim_chat_template_kwargs
+    from ..models.backends_cloud import nim_reasoning_payload
 
-    return {"chat_template_kwargs": nim_chat_template_kwargs()}
+    return nim_reasoning_payload(model_name)
 
 
 def _nim_reasoning_texts(response: Any) -> list[str]:
@@ -337,8 +339,11 @@ def build_nvidia_model(model_name: str, temperature: float) -> Any:
       ``meta/muse-glimmer-30b`` and ``openai/gpt-oss-{20b,120b}`` (which gate
       reasoning on ``reasoning_effort`` instead) and by the non-reasoning
       ``nvidia/ising-calibration-1.5-31b``, whose output was byte-identical
-      either way. ``NVIDIA_DISABLE_THINKING=0`` turns it off for a self-hosted
-      NIM whose chat template is stricter.
+      either way. ``z-ai/glm-*`` ignores it too, so those ids also get
+      ``reasoning_effort: "low"``, their lowest honoured level (see
+      :func:`agentic_v2.models.backends_cloud.nim_reasoning_payload`).
+      ``NVIDIA_DISABLE_THINKING=0`` turns all of it off for a self-hosted NIM
+      whose chat template is stricter.
     - The returned class preserves NIM's ``reasoning_content`` (which stock
       ``ChatOpenAI`` discards) so an empty answer still degrades to the
       model's reasoning rather than to an empty string — see
@@ -395,7 +400,7 @@ def build_nvidia_model(model_name: str, temperature: float) -> Any:
         "temperature": temperature,
     }
     if _nvidia_thinking_disabled():
-        kwargs["extra_body"] = _nim_extra_body()
+        kwargs["extra_body"] = _nim_extra_body(model_name)
 
     logger.debug("Using NVIDIA NIM: %s at %s", model_name, base_url)
     return _get_nim_chat_model_cls(ChatOpenAI)(**kwargs)

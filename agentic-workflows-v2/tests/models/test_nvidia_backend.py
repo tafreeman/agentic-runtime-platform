@@ -188,6 +188,35 @@ class TestNvidiaReasoningControl:
         first["chat_template_kwargs"]["thinking"] = True
         assert _nim_extra_body() == {"chat_template_kwargs": {"thinking": False}}
 
+    @pytest.mark.parametrize("model", ["z-ai/glm-5.3", "z-ai/glm-5.3-flash"])
+    def test_glm_also_gets_its_lowest_reasoning_effort(
+        self, monkeypatch: pytest.MonkeyPatch, model: str
+    ) -> None:
+        """GLM ignores ``thinking: False``; ``reasoning_effort`` is what it honours."""
+        captured = TestNvidiaModelBuilder._capture_chat_openai(monkeypatch)
+        monkeypatch.delenv("NVIDIA_DISABLE_THINKING", raising=False)
+        monkeypatch.delenv("NVIDIA_BASE_URL", raising=False)
+        monkeypatch.setenv("NVIDIA_API_KEY", "nvapi-xyz")
+
+        build_nvidia_model(model, 0.0)
+
+        assert captured["extra_body"] == {
+            "chat_template_kwargs": {"thinking": False},
+            "reasoning_effort": "low",
+        }
+
+    def test_env_opt_out_omits_glm_reasoning_effort_too(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        captured = TestNvidiaModelBuilder._capture_chat_openai(monkeypatch)
+        monkeypatch.setenv("NVIDIA_DISABLE_THINKING", "0")
+        monkeypatch.delenv("NVIDIA_BASE_URL", raising=False)
+        monkeypatch.setenv("NVIDIA_API_KEY", "nvapi-xyz")
+
+        build_nvidia_model("z-ai/glm-5.3", 0.0)
+
+        assert "extra_body" not in captured
+
 
 class TestNvidiaNativeReasoningControl:
     """The native ``NvidiaBackend`` makes the builder's two accommodations too.
@@ -233,7 +262,38 @@ class TestNvidiaNativeReasoningControl:
         await backend.complete_chat(self._MODEL, [{"role": "user", "content": "hi"}])
 
         assert sent[0]["chat_template_kwargs"] == {"thinking": False}
+        assert "reasoning_effort" not in sent[0]
         assert sent[0]["model"] == "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
+
+    async def test_glm_request_sends_its_lowest_reasoning_effort(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Tier 2-5 and the default judge reach GLM through this path."""
+        monkeypatch.delenv("NVIDIA_DISABLE_THINKING", raising=False)
+        sent: list[dict[str, Any]] = []
+        backend = self._backend(monkeypatch, {"content": "OK"}, sent)
+
+        await backend.complete_chat(
+            "nvidia:z-ai/glm-5.3", [{"role": "user", "content": "hi"}]
+        )
+
+        assert sent[0]["reasoning_effort"] == "low"
+        assert sent[0]["chat_template_kwargs"] == {"thinking": False}
+
+    async def test_caller_reasoning_effort_overrides_the_glm_default(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.delenv("NVIDIA_DISABLE_THINKING", raising=False)
+        sent: list[dict[str, Any]] = []
+        backend = self._backend(monkeypatch, {"content": "OK"}, sent)
+
+        await backend.complete_chat(
+            "nvidia:z-ai/glm-5.3-flash",
+            [{"role": "user", "content": "hi"}],
+            reasoning_effort="high",
+        )
+
+        assert sent[0]["reasoning_effort"] == "high"
 
     async def test_env_opt_out_omits_the_field(
         self, monkeypatch: pytest.MonkeyPatch
