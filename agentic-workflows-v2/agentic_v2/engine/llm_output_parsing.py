@@ -483,11 +483,27 @@ def _ranked_reports(text: str) -> Iterator[tuple[int, dict[str, Any]]]:
     capped = text[:_MAX_SENTINEL_INPUT_LEN]
     for start in _report_starts(capped):
         yield from _ranked(_best_repair(capped, start))
-    match = _REVIEW_REPORT_VALUE_RE.search(capped)
-    if match is not None:
-        report = _best_repair(capped, match.end())
+    for value_start in _report_key_starts(capped):
+        report = _best_repair(capped, value_start)
         if report is not None:
             yield _wrapped_rank(report), report
+
+
+def _report_key_starts(text: str) -> list[int]:
+    """Return where the first and the last ``"review_report":`` values open.
+
+    The first key may hold a preliminary status and the last the real
+    report. Trying only these two keeps the repairs linear on a reply
+    that repeats the key.
+    """
+    starts: list[int] = []
+    first = _REVIEW_REPORT_VALUE_RE.search(text)
+    if first is not None:
+        starts.append(first.end())
+    last = _REVIEW_REPORT_VALUE_RE.match(text, max(text.rfind('"review_report"'), 0))
+    if last is not None and last.end() not in starts:
+        starts.append(last.end())
+    return starts
 
 
 def _ranked(mapping: dict[str, Any] | None) -> Iterator[tuple[int, dict[str, Any]]]:
@@ -503,15 +519,18 @@ def _report_starts(text: str) -> list[int]:
 
     The first ``{`` in the text, the first after the first fence, the first
     after the last fence (a truncated report is usually the final block,
-    its closing fence cut off) and the first after a ``review_report``
-    artifact marker. So neither a brace in prose nor an explanatory block
-    before the payload hides it. A fixed number of starts keeps the repairs
-    linear.
+    its closing fence cut off), the last ``{`` that opens a line (where an
+    unfenced top-level object usually starts) and the first after a
+    ``review_report`` artifact marker. So neither a brace in prose nor a
+    preliminary or explanatory object before the payload hides it. A fixed
+    number of starts keeps the repairs linear.
     """
+    last_line_brace = text.rfind("\n{")
     markers = [
         0,
         text.find(_FENCE),
         text.rfind(_FENCE),
+        last_line_brace + 1 if last_line_brace != -1 else -1,
         text.find("<<<ARTIFACT review_report>>>"),
     ]
     starts: list[int] = []

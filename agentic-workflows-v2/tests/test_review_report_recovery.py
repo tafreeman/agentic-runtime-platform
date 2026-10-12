@@ -799,3 +799,33 @@ def test_wrapped_preliminary_status_before_a_damaged_report(parse: Any) -> None:
 
     assert report["overall_status"] == "NEEDS_FIXES"
     assert report["quality_score"] == 5
+
+
+_DAMAGED_WRAPPED_REPORT = (
+    '{"review_report": {"overall_status": "NEEDS_FIXES", "quality_score": 5, '
+    '"findings": [{"title": "A"}, {"title": "B'
+)
+
+
+@both_engines
+@pytest.mark.parametrize(
+    "text",
+    [
+        '{"review_report": {"overall_status": "APPROVED"}}\nActual:\n'
+        + _DAMAGED_WRAPPED_REPORT,
+        'Preliminary {"review_report": {"overall_status": "APPROVED"}} then '
+        + _DAMAGED_WRAPPED_REPORT,
+        '{"overall_status": "APPROVED"}\nActual:\n'
+        '{"overall_status": "NEEDS_FIXES", "quality_score": 5, '
+        '"findings": [{"title": "A"}, {"title": "B',
+    ],
+    ids=["wrapped_next_line", "wrapped_same_line", "bare_next_line"],
+)
+def test_unfenced_preliminary_status_before_a_damaged_report(
+    parse: Any, text: str
+) -> None:
+    """Without fences, the later damaged report must still be examined."""
+    report = parse(text)["review_report"]
+
+    assert report["overall_status"] == "NEEDS_FIXES"
+    assert report["quality_score"] == 5
