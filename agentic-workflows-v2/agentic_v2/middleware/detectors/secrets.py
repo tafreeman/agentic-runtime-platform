@@ -17,7 +17,9 @@ class SecretDetector:
     """Detects secrets and API keys via regex patterns and entropy analysis."""
 
     name: str = "secret_detector"
-    version: str = "1.0.0"
+    # 1.1.0: masks end at a JSON string terminator; connection URLs need
+    # userinfo and accept more schemes (ADR-061).
+    version: str = "1.1.0"
 
     ENTROPY_THRESHOLD: float = 4.5
     MIN_ENTROPY_LENGTH: int = 20
@@ -70,9 +72,12 @@ class SecretDetector:
             "connection_string",
             # Scheme variants seen in generated code: postgresql://,
             # driver suffixes (postgresql+asyncpg://, mysql+pymysql://),
-            # mongodb+srv:// and TLS redis (rediss://).
+            # mongodb+srv:// and TLS redis (rediss://). The credential must
+            # be the URL's userinfo (user:password@ before the host), so a
+            # port colon and an "@" later in the path or query do not count.
+            # The user may be empty, as in redis://:password@host.
             r"(?i)(?:mongodb(?:\+srv)?|postgres(?:ql)?|mysql|mariadb|rediss?)"
-            r"(?:\+\w+)?://\S+:\S+@\S+",
+            r"(?:\+\w+)?://[^\s/?#@:]*:[^\s/?#@]+@\S+",
             Severity.HIGH,
             FindingCategory.PASSWORD,
         ),

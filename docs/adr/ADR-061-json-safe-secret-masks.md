@@ -46,7 +46,16 @@ URLs reached step outputs unmasked.
    member in compact JSON. No detection masks less than the pattern
    requires.
 4. **`connection_string` accepts** `mongodb(+srv)`, `postgres(ql)`, `mysql`,
-   `mariadb` and `redis(s)`, each with an optional `+driver` suffix.
+   `mariadb` and `redis(s)`, each with an optional `+driver` suffix. **The
+   credential must be the URL's userinfo**: `user:password@` before the host,
+   with no `/`, `?` or `#` before the `@`. The user may be empty
+   (`redis://:password@host`). Before, `\S+:\S+@\S+` also matched a port
+   colon followed by an `@` in the path or query
+   (`postgresql://db:5432/app?contact=ops@example.com`) and masked a
+   credential-free URL.
+5. **`SecretDetector.version` is now `1.1.0`.** Both sanitization paths
+   record it in `SanitizationResult.detector_versions`, so results from
+   before and after these rule changes can be told apart.
 
 The finding's `location` reports the shortened span, so `scan` and
 `scan_and_mask` stay consistent.
