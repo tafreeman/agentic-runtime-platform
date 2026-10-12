@@ -26,7 +26,7 @@
   `mistral-nemotron`, `nemotron-3-nano-30b-a3b`, `gpt-oss-120b` and
   `step-3.7-flash`. Each returned 410 on 2026-10-11. The registry comment now
   lists their end-of-life dates. `tools/llm/model_registry.py` also drops the
-  three retired ids it still marked `working`.
+  three retired ids it still marked `working` and lists the two replacements.
 
 ## Unreleased - Retired NVIDIA tier-1 model
 

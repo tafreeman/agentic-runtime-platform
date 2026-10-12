@@ -725,6 +725,29 @@ REGISTRY: dict[str, ProviderEntry] = {
                 "status": "working",
                 "rate_limit": {"rpm": 40, "note": LIMIT_PER_ACCOUNT},
             },
+            # Tier-1 replacement for the retired meta/llama-3.1-8b-instruct
+            # (HTTP 410 since 2026-08-26); chat-verified 2026-10-11.
+            {
+                "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+                "capability": "chat",
+                "status": "working",
+                "rate_limit": {"rpm": 40, "note": LIMIT_PER_ACCOUNT},
+            },
+            # Tier 2-3 and tier 4-5 replacements for the retired
+            # deepseek-ai/deepseek-v4-flash and -pro (HTTP 410 since
+            # 2026-08-07); chat-verified 2026-10-11.
+            {
+                "id": "z-ai/glm-5.3-flash",
+                "capability": "chat",
+                "status": "working",
+                "rate_limit": {"rpm": 40, "note": LIMIT_PER_ACCOUNT},
+            },
+            {
+                "id": "z-ai/glm-5.3",
+                "capability": "chat",
+                "status": "working",
+                "rate_limit": {"rpm": 40, "note": LIMIT_PER_ACCOUNT},
+            },
             {
                 "id": "meta/llama-3.3-70b-instruct",
                 "capability": "chat",
