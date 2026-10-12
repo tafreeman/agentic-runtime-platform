@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased - Secret masks keep JSON replies parseable
+
+- **Masking no longer corrupts JSON replies.** The response sanitizer masks
+  secrets before step outputs are parsed. Its `password=`/`api_key=`-style
+  masks ran to the next whitespace, so a secret inside a JSON string also took
+  the string's closing quote and the following comma, and the reply stopped
+  parsing. A mask now ends at that closing quote when the secret before it is
+  long enough to match. Detection is unchanged, and a value too short before
+  the quote is masked in full as before (ADR-061).
+- **More connection strings are masked, and fewer harmless URLs.**
+  `postgresql://`, driver URLs such as `postgresql+asyncpg://` and
+  `mysql+pymysql://`, `mongodb+srv://`, `rediss://` and password-only
+  `redis://:password@host` now match `connection_string`. Before, credentials
+  in those URLs reached step outputs unmasked. A match now needs a real
+  `user:password@` before the host. So a credential-free URL with a port and
+  an `@` in its query (`postgresql://db:5432/app?contact=ops@example.com`) is
+  no longer masked.
+- **`SecretDetector.version` is now `1.1.0`.** Sanitization results record
+  it, so they show which rules produced them.
+
 ## Unreleased - GitHub Models out of the tier chains
 
 - **No tier chain routes to `gh:` any more.** GitHub retired GitHub Models on
