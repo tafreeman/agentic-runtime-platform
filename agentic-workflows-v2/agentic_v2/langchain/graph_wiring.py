@@ -443,21 +443,14 @@ def parse_json_dict_from_text(text: str) -> dict[str, Any] | None:
 
     Candidate generation is shared with the native engine
     (:func:`agentic_v2.engine.llm_output_parsing.extract_json_candidates`),
-    plus a mid-text fence scan for payloads with prose around ```json blocks,
-    which the shared generator (outer-fence-only) does not cover.
+    which also covers ```json blocks with prose around them, so both engines
+    accept the same payloads.
     """
     raw = text.strip()
     if not raw:
         return None
 
-    candidates = list(extract_json_candidates(raw))
-    candidates.extend(
-        re.findall(
-            r"```(?:json)?\s*(\{.*?\})\s*```", raw, flags=re.DOTALL | re.IGNORECASE
-        )
-    )
-
-    for candidate in candidates:
+    for candidate in extract_json_candidates(raw):
         try:
             # strict=False tolerates literal control characters (bare
             # newlines/tabs) inside JSON string values — a common LLM output

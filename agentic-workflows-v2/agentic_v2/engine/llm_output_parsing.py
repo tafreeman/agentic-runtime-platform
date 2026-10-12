@@ -38,6 +38,13 @@ FILE_BLOCK_RE = re.compile(
 # Missing closing sentinels cause backtracking; capping input bounds the runtime.
 _MAX_SENTINEL_INPUT_LEN = 262144  # 256 KB
 
+# A ```json fenced object anywhere in the text, for payloads with prose (and
+# stray braces) around the fence.
+_MID_TEXT_FENCE_RE = re.compile(
+    r"```(?:json)?\s*(\{.*?\})\s*```",
+    re.DOTALL | re.IGNORECASE,
+)
+
 # Backward-compatibility aliases
 _ARTIFACT_RE = ARTIFACT_RE
 _FILE_BLOCK_RE = FILE_BLOCK_RE
@@ -84,9 +91,9 @@ def extract_json_candidates(text: str) -> list[str]:
     """Return increasingly permissive JSON candidates from model output.
 
     Tries, in order: raw text, markdown-fence-stripped text (outer fence
-    only), bracket-span extraction for objects (``{…}``), and bracket-
-    span for arrays (``[…]``). Duplicates are removed while preserving
-    priority order.
+    only), bracket-span extraction for objects (``{…}``), bracket-span for
+    arrays (``[…]``), and each ```json fenced object found mid-text.
+    Duplicates are removed while preserving priority order.
     """
     candidates: list[str] = []
     raw = text.strip()
@@ -105,6 +112,8 @@ def extract_json_candidates(text: str) -> list[str]:
     arr_snippet = _bracket_span(raw, "[", "]")
     if arr_snippet:
         candidates.append(arr_snippet)
+
+    candidates.extend(_MID_TEXT_FENCE_RE.findall(raw[:_MAX_SENTINEL_INPUT_LEN]))
 
     # Deduplicate while preserving order
     seen: set[str] = set()
@@ -125,30 +134,126 @@ _extract_json_candidates = extract_json_candidates
 # ---------------------------------------------------------------------------
 
 
-def _recover_nested_review_report(raw_response: str) -> dict[str, Any] | None:
-    """Recover a nested review_report payload from a raw_response JSON blob.
+# A line that starts an object member: indent, a JSON string, then a colon.
+_MEMBER_LINE_RE = re.compile(r'[ \t]*"(?:[^"\\\n]|\\.)*"[ \t]*:')
+_CLOSER_FOR = {"{": "}", "[": "]"}
+_REVIEW_REPORT_VALUE_RE = re.compile(r'"review_report"\s*:\s*(?=\{)')
 
-    Some model responses come wrapped as::
 
-        {"raw_response": "```json { \"review_report\": {...} } ```"}
+def _repair_json_object(text: str, start: int) -> str | None:
+    """Return a repaired copy of the JSON object that opens at ``text[start]``.
 
-    Returns the recovered report dict, or ``None`` when none is found.
+    Mends two kinds of damage seen in reviewer reports:
+
+    * A string left open at the end of a line when the next line starts a new
+      member. The response sanitizer masks ``password=<non-space run>``, so a
+      masked ``"…Password=x\\"",`` loses the string's closing quote and the
+      member's comma. Valid JSON never continues an open string onto a line
+      that starts with ``"key":``, so text that parsed before is left as is.
+    * Truncation (an output-token cap, or a prefix copied from a run log): the
+      text is cut back to the last complete value and the containers still
+      open there are closed.
+
+    Returns ``None`` for a mismatched closing bracket or nothing to keep.
     """
-    for candidate in extract_json_candidates(raw_response):
-        try:
-            nested_parsed = json.loads(candidate)
-        except json.JSONDecodeError:
+    out: list[str] = []
+    stack: list[str] = []
+    cut: tuple[int, tuple[str, ...]] | None = None
+    in_string = escaped = False
+    for index in range(start, min(len(text), start + _MAX_SENTINEL_INPUT_LEN)):
+        ch = text[index]
+        if in_string:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                in_string = False
+            elif ch == "\n" and stack[-1:] == ["}"]:
+                if _MEMBER_LINE_RE.match(text, index + 1):
+                    out.append('"')
+                    cut = (len(out), tuple(stack))
+                    out.append(",")
+                    in_string = False
+            out.append(ch)
             continue
-        if not isinstance(nested_parsed, dict):
-            continue
-        review_report = nested_parsed.get("review_report")
-        if isinstance(review_report, dict):
-            return cast("dict[str, Any]", review_report)
-        review = nested_parsed.get("review")
-        if isinstance(review, dict):
-            return cast("dict[str, Any]", review)
-        if isinstance(nested_parsed.get("overall_status"), str):
-            return {"overall_status": nested_parsed["overall_status"]}
+        if ch == ",":
+            cut = (len(out), tuple(stack))
+        out.append(ch)
+        if ch == '"':
+            in_string = True
+        elif ch in _CLOSER_FOR:
+            stack.append(_CLOSER_FOR[ch])
+            cut = (len(out), tuple(stack))
+        elif ch in "}]":
+            if not stack or stack.pop() != ch:
+                return None
+            if not stack:
+                return "".join(out)
+            cut = (len(out), tuple(stack))
+    if cut is None:
+        return None
+    kept, still_open = cut
+    return "".join(out[:kept]) + "".join(reversed(still_open))
+
+
+def _loads_dict(candidate: str | None) -> dict[str, Any] | None:
+    """Parse *candidate* as a JSON object, or return ``None``."""
+    if not candidate:
+        return None
+    try:
+        parsed = json.loads(candidate, strict=False)
+    except json.JSONDecodeError:
+        return None
+    return cast("dict[str, Any]", parsed) if isinstance(parsed, dict) else None
+
+
+def _report_from_mapping(mapping: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Return the review report carried by *mapping*, or ``None``.
+
+    Accepts the wrapped shapes (``review_report`` or ``review``) and a bare
+    report with a top-level ``overall_status``, which is what the reviewer
+    prompt's ``<<<ARTIFACT review_report>>>`` block contains.
+    """
+    if mapping is None:
+        return None
+    for key in ("review_report", "review"):
+        value = mapping.get(key)
+        if isinstance(value, dict):
+            return cast("dict[str, Any]", value)
+    if isinstance(mapping.get("overall_status"), str):
+        return {
+            k: v
+            for k, v in mapping.items()
+            if k not in {"raw_response", "review_report"}
+        }
+    return None
+
+
+def _recover_review_report(text: str) -> dict[str, Any] | None:
+    """Recover the full review report from model text, repairing damaged JSON.
+
+    Tries the shared JSON candidates first. If none parses, repairs the first
+    object in the text and then each object that follows a
+    ``"review_report":`` key. Returns ``None`` when no report is found, so the
+    caller can fall back to salvaging the status alone.
+    """
+    for candidate in extract_json_candidates(text):
+        report = _report_from_mapping(_loads_dict(candidate))
+        if report is not None:
+            return report
+
+    capped = text[:_MAX_SENTINEL_INPUT_LEN]
+    first_brace = capped.find("{")
+    if first_brace != -1:
+        repaired = _repair_json_object(capped, first_brace)
+        report = _report_from_mapping(_loads_dict(repaired))
+        if report is not None:
+            return report
+    for match in _REVIEW_REPORT_VALUE_RE.finditer(capped):
+        report = _loads_dict(_repair_json_object(capped, match.end()))
+        if report is not None:
+            return report
     return None
 
 
@@ -203,12 +308,18 @@ def _normalize_review_report_key(parsed: dict[str, Any]) -> None:
         rr = parsed.get("review")
         parsed["review_report"] = rr
 
+    # A review_report artifact whose JSON did not parse arrives as a string.
+    # Recover the report from that string instead of discarding it.
+    if isinstance(rr, str):
+        rr = _recover_review_report(rr) or _review_report_from_raw_text(rr)
+
     # Recover nested reviewer payload so when-conditions can resolve.
     if not isinstance(rr, dict) and isinstance(parsed.get("raw_response"), str):
-        nested_report = _recover_nested_review_report(str(parsed.get("raw_response")))
-        if nested_report is not None:
-            rr = nested_report
-            parsed["review_report"] = rr
+        rr = _recover_review_report(str(parsed.get("raw_response")))
+
+    # The parsed object itself may be a bare report.
+    if not isinstance(rr, dict):
+        rr = _report_from_mapping(parsed)
 
     if not isinstance(rr, dict):
         rr = _review_report_from_raw_text(str(parsed.get("raw_response", "")))
@@ -374,9 +485,16 @@ def parse_llm_json_output(
     if not (expected_output_keys and "review_report" in expected_output_keys):
         return fallback
 
-    # This step expects review_report but the model returned malformed JSON —
-    # salvage status from raw text so when-conditions still work.
-    fallback["review_report"] = _salvage_review_report_from_text(response)
+    # This step expects review_report but the model returned malformed JSON.
+    # Keep whatever report can be recovered; the status still comes from the
+    # raw-text salvage so when-condition gating is unchanged.
+    report = fallback.get("review_report")
+    if not isinstance(report, dict):
+        report = _recover_review_report(response) or {}
+    fallback["review_report"] = {
+        **report,
+        **_salvage_review_report_from_text(response),
+    }
     return fallback
 
 
@@ -475,7 +593,7 @@ def parse_sentinel_output(
         stripped = content.lstrip()
         if stripped.startswith(("{", "[")):
             try:
-                result[key] = json.loads(content)
+                result[key] = json.loads(content, strict=False)
                 continue
             except json.JSONDecodeError:
                 pass
