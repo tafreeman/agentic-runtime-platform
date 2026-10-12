@@ -62,6 +62,21 @@ def test_production_registry_has_no_dangling_references():
         assert getattr(registry.special, slot) in ids
 
 
+def test_production_free_ceiling_leaves_each_tier_only_its_local_tail():
+    """Every cloud rung in the shipped chains is curated paid, so
+    AGENTIC_MAX_COST_LANE=free narrows each tier to its local Ollama tail.
+
+    Promoting a curated-free id (e.g. a NIM free-endpoint model) into a
+    chain changes free-ceiling routing (ADR-059). That has to be a
+    deliberate edit here, not a side effect of swapping out a retired
+    model.
+    """
+    for tier, chain in mr.load_registry().tiers.items():
+        admitted = [m for m in chain if mr.is_within_cost_lane(m, "free")]
+        assert admitted == [chain[-1]], f"tier {tier} admits {admitted}"
+        assert mr.cost_lane_for(chain[-1]) == "local"
+
+
 # ---------------------------------------------------------------------------
 # Accessors
 # ---------------------------------------------------------------------------
@@ -76,7 +91,7 @@ def test_tier_chain_order_and_escalation():
 
 
 def test_special_accessor():
-    assert mr.special("judge_default") == "nvidia:deepseek-ai/deepseek-v4-pro"
+    assert mr.special("judge_default") == "nvidia:z-ai/glm-5.3"
     assert mr.special("tier_ultimate_fallback") == "ollama:qwen3-coder:30b"
     with pytest.raises(AttributeError):
         mr.special("not_a_slot")
