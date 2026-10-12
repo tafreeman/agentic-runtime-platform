@@ -68,11 +68,18 @@ class SecretDetector:
         ),
         SecretPattern.from_raw(
             "connection_string",
-            r"(?i)(?:mongodb|postgres|mysql|redis)://\S+:\S+@\S+",
+            # Scheme variants seen in generated code: postgresql://,
+            # driver suffixes (postgresql+asyncpg://, mysql+pymysql://),
+            # mongodb+srv:// and TLS redis (rediss://).
+            r"(?i)(?:mongodb(?:\+srv)?|postgres(?:ql)?|mysql|mariadb|rediss?)"
+            r"(?:\+\w+)?://\S+:\S+@\S+",
             Severity.HIGH,
             FindingCategory.PASSWORD,
         ),
     )
+
+    # A double quote preceded by an even number (possibly zero) of backslashes.
+    _UNESCAPED_QUOTE_RE: re.Pattern[str] = re.compile(r'(?<!\\)(?:\\\\)*"')
 
     _HIGH_ENTROPY_RE: re.Pattern[str] = re.compile(
         r"(?<![A-Za-z0-9])[A-Za-z0-9+/=_\-]{20,}(?![A-Za-z0-9])"
@@ -122,7 +129,8 @@ class SecretDetector:
         # Phase 1: Pattern matching
         for secret_pattern in self.PATTERNS:
             for match in secret_pattern.pattern.finditer(text):
-                start, end = match.start(), match.end()
+                start = match.start()
+                end = self._span_end(secret_pattern.pattern, text, start, match.end())
                 matched_ranges.append((start, end))
                 detections.append(
                     (
@@ -162,6 +170,27 @@ class SecretDetector:
                     )
 
         return detections
+
+    @classmethod
+    def _span_end(
+        cls, pattern: re.Pattern[str], text: str, start: int, end: int
+    ) -> int:
+        """End the secret span at a JSON string terminator when one is in it.
+
+        The value patterns run to the next whitespace (``\\S+``), so in
+        JSON-encoded text a match such as ``Password=pw\\"",`` also covers
+        the string's closing quote and the member's comma, and masking it
+        corrupts the JSON (ADR-061). Inside a JSON string the first unescaped
+        ``"`` is the terminator, so the span stops before it when the text
+        up to it is still a full match of the same pattern. Otherwise the
+        span is left as matched, so no detection masks less than before.
+        """
+        quote = cls._UNESCAPED_QUOTE_RE.search(text, start, end)
+        if quote is not None:
+            cut = quote.end() - 1
+            if pattern.fullmatch(text, start, cut):
+                return cut
+        return end
 
     @staticmethod
     def _apply_masks(text: str, spans: list[tuple[int, int, str]]) -> str:
