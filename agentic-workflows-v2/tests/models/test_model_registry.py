@@ -239,6 +239,28 @@ def test_production_registry_every_model_has_a_curated_cost_lane():
     assert not uncurated, f"models missing a curated cost_lane: {uncurated}"
 
 
+def test_production_registry_routes_only_active_models_it_declares_tiers_for():
+    """Chains and special slots route only active ids, and ``tiers:`` matches.
+
+    A retired entry (e.g. the gh: ids; GitHub Models shut down 2026-07-30) is
+    kept as ``deprecated`` with ``tiers: []``. This pins both halves of that
+    edit: nothing a chain or special slot routes to may be non-active, and an
+    entry's ``tiers:`` must list exactly the chains it sits in.
+    """
+    registry = mr.load_registry()
+    status = {m.id: m.status for m in registry.models}
+    routed = {mid for chain in registry.tiers.values() for mid in chain}
+    routed |= {
+        getattr(registry.special, slot)
+        for slot in ("judge_default", "notebooklm_fallback", "tier_ultimate_fallback")
+    }
+    inactive = sorted(mid for mid in routed if status[mid] != "active")
+    assert not inactive, f"routed ids that are not active: {inactive}"
+    for m in registry.models:
+        in_chains = sorted(t for t, chain in registry.tiers.items() if m.id in chain)
+        assert sorted(m.tiers) == in_chains, f"{m.id}: tiers {m.tiers} vs chains"
+
+
 # ---------------------------------------------------------------------------
 # Pricing
 # ---------------------------------------------------------------------------

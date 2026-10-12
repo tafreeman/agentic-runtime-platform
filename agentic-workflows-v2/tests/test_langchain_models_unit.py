@@ -301,7 +301,7 @@ class TestCostLaneCeiling:
         monkeypatch.setitem(lcm._TIER_FALLBACK_CHAINS, 1, [self._PAID])
         monkeypatch.setenv("AGENTIC_MAX_COST_LANE", "free")
         with pytest.raises(CostLaneCeilingExceededError, match="free"):
-            get_model_candidates_for_tier(1, include_gh_backup=False)
+            get_model_candidates_for_tier(1)
 
     def test_include_unavailable_bypasses_the_ceiling(
         self, monkeypatch: pytest.MonkeyPatch
