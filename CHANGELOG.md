@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased - Reviewer reports survive damaged JSON
+
+- **`review_report` keeps the whole report.** Before, a reviewer reply whose
+  JSON failed to parse was stored as only `{"overall_status": ...}`, dropping
+  `quality_score`, `summary` and `findings`. Two things broke that JSON: the
+  response sanitizer's secret mask removing a string's closing quote, and
+  output-token caps cutting the reply short. The parser now repairs both
+  kinds of damage and keeps the recovered report. On this path the status
+  still comes from the raw text, so gating is unchanged.
+- **Two gating changes.** An `<<<ARTIFACT review_report>>>` block that is not
+  valid JSON now supplies the status it states. Before, it always gated as
+  `NEEDS_FIXES`. A report returned without the `review_report` wrapper (a
+  top-level `overall_status`) now gates on its own status. Before, it was
+  replaced by the `NEEDS_FIXES` default.
+- **Both engines read ```json blocks surrounded by prose.** The native engine
+  previously parsed them only when it could salvage the declared keys one by
+  one; the LangGraph adapter already parsed them.
+
 ## Unreleased - fullstack_generation ships and re-reviews its rework
 
 - **Reworked code now ships.** `developer_rework` declares `backend_code`,
