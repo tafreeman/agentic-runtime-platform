@@ -477,7 +477,7 @@ def parse_json_dict_from_text(text: str) -> dict[str, Any] | None:
             # newlines/tabs) inside JSON string values — a common LLM output
             # quirk that strict json.loads rejects wholesale.
             parsed = json.loads(candidate, strict=False)
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, RecursionError):
             continue
         if isinstance(parsed, dict):
             return parsed

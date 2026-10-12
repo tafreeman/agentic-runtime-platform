@@ -335,24 +335,29 @@ def test_native_parser_reads_fence_after_braced_prose() -> None:
 # ---------------------------------------------------------------------------
 
 
+def _repaired(text: str, start: int = 0) -> str | None:
+    repair = _repair_json_object(text, start)
+    return repair.text if repair is not None else None
+
+
 def test_repair_leaves_valid_json_unchanged() -> None:
     text = '{\n  "code": "if x {\n  \\"a\\": 1\n}",\n  "n": [1, {"b": 2}]\n}'
 
-    assert _repair_json_object(text, 0) == text
+    assert _repaired(text) == text
 
 
 def test_repair_stops_at_the_object_end() -> None:
     text = 'prefix {"a": 1} trailing {"b": 2}'
 
-    assert _repair_json_object(text, text.index("{")) == '{"a": 1}'
+    assert _repaired(text, text.index("{")) == '{"a": 1}'
 
 
 def test_repair_rejects_mismatched_brackets() -> None:
-    assert _repair_json_object('{"a": [1, 2}', 0) is None
+    assert _repaired('{"a": [1, 2}') is None
 
 
 def test_repair_closes_open_containers_after_truncation() -> None:
-    repaired = _repair_json_object('{"a": [1, 2, {"b": "tru', 0)
+    repaired = _repaired('{"a": [1, 2, {"b": "tru')
 
     assert repaired is not None
     assert json.loads(repaired) == {"a": [1, 2, {}]}
@@ -416,7 +421,7 @@ def test_fence_scan_finds_a_block_after_an_odd_fence() -> None:
 def test_repair_keeps_a_value_completed_at_the_cut(
     truncated: str, expected: dict[str, Any]
 ) -> None:
-    repaired = _repair_json_object(truncated, 0)
+    repaired = _repaired(truncated)
 
     assert repaired is not None
     assert json.loads(repaired) == expected
@@ -424,9 +429,7 @@ def test_repair_keeps_a_value_completed_at_the_cut(
 
 def test_repair_drops_a_number_that_may_be_cut_short() -> None:
     """``7`` may be the first digit of ``7.8``; a wrong score is worse than none."""
-    repaired = _repair_json_object(
-        '{"overall_status": "APPROVED", "quality_score": 7', 0
-    )
+    repaired = _repaired('{"overall_status": "APPROVED", "quality_score": 7')
 
     assert repaired is not None
     assert json.loads(repaired) == {"overall_status": "APPROVED"}
@@ -439,3 +442,99 @@ def test_report_cut_after_a_final_string_keeps_it(parse: Any) -> None:
     report = parse(text)["review_report"]
 
     assert report == {"overall_status": "NEEDS_FIXES", "summary": "two issues"}
+
+
+# ---------------------------------------------------------------------------
+# Strings a mask left open before a closing bracket or another element
+# ---------------------------------------------------------------------------
+
+_PW = "Pass" + "word"  # split so repo secret scanners stay quiet
+
+
+def _report_with(finding: dict[str, Any]) -> str:
+    report = {
+        "overall_status": "NEEDS_FIXES",
+        "quality_score": 7.0,
+        "findings": [finding, {"finding_id": "F-002", "title": "Next"}],
+        "positive_observations": ["Async I/O throughout"],
+    }
+    return _masked(_wrapper(report))
+
+
+@both_engines
+def test_masked_last_member_keeps_the_rest_of_the_report(parse: Any) -> None:
+    """A mask in an object's last member leaves the string open before ``}``."""
+    text = _report_with(
+        {"finding_id": "F-001", "code_after": f'conn = "Host=db;{_PW}=secret-value"'}
+    )
+    assert re.search(re.escape(MASK) + r"\n\s+\},", text)
+
+    report = parse(text)["review_report"]
+
+    assert [f["finding_id"] for f in report["findings"]] == ["F-001", "F-002"]
+    assert report["findings"][0]["code_after"] == 'conn = "Host=db;' + MASK
+    assert report["positive_observations"] == ["Async I/O throughout"]
+
+
+@both_engines
+@pytest.mark.parametrize(
+    ("references", "expected"),
+    [
+        (["CWE-1", "token=abcdefghij", "CWE-2"], ["CWE-1", MASK, "CWE-2"]),
+        (["CWE-1", "token=abcdefghij"], ["CWE-1", MASK]),
+    ],
+    ids=["middle_element", "last_element"],
+)
+def test_masked_array_element_keeps_the_rest_of_the_report(
+    parse: Any, references: list[str], expected: list[str]
+) -> None:
+    text = _report_with({"finding_id": "F-001", "references": references})
+
+    report = parse(text)["review_report"]
+
+    assert report["findings"][0]["references"] == expected
+    assert [f["finding_id"] for f in report["findings"]] == ["F-001", "F-002"]
+
+
+# A multi-line code string (literal newlines) with a line that is just "}".
+_FINDING_HEAD = (
+    '```json\n{\n  "review_report": {\n    "overall_status": "NEEDS_FIXES",\n'
+    '    "findings": [\n      {\n        "finding_id": "F-001",\n'
+    '        "code_before": "if (x) {\n}\n",\n'
+)
+
+
+@both_engines
+def test_brace_line_in_a_code_string_is_not_read_as_structure(parse: Any) -> None:
+    """A code string whose line is just ``}`` stays whole beside a repair."""
+    text = _masked(
+        _FINDING_HEAD + '        "code_after": "token=abcdefghij",\n'
+        '        "references": ["CWE-1"]\n      }\n    ]\n  }\n}\n```'
+    )
+
+    finding = parse(text)["review_report"]["findings"][0]
+
+    assert finding["code_before"] == "if (x) {\n}\n"
+    assert finding["code_after"] == MASK
+    assert finding["references"] == ["CWE-1"]
+
+
+@both_engines
+def test_truncation_after_a_brace_line_code_string_keeps_it(parse: Any) -> None:
+    """The bracket-line repair must not win by ending the code string early."""
+    text = _FINDING_HEAD + '        "title": "Bounds chec'
+
+    finding = parse(text)["review_report"]["findings"][0]
+
+    assert finding == {"finding_id": "F-001", "code_before": "if (x) {\n}\n"}
+
+
+@pytest.mark.timeout(10)
+@both_engines
+def test_deeply_nested_reply_does_not_crash(parse: Any) -> None:
+    """Deep nesting makes json raise RecursionError, not JSONDecodeError."""
+    text = '{"a": [\n' * 30_000
+
+    report = parse(text)["review_report"]
+
+    assert report["overall_status"] == "NEEDS_FIXES"

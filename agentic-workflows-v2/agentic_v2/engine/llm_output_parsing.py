@@ -20,7 +20,7 @@ from __future__ import annotations
 import itertools
 import json
 import re
-from typing import Any, cast
+from typing import Any, NamedTuple, cast
 
 # ---------------------------------------------------------------------------
 # Sentinel regex constants (shared with tool_execution.py callers)
@@ -38,6 +38,10 @@ FILE_BLOCK_RE = re.compile(
 # Maximum input length before applying DOTALL regexes on untrusted LLM output.
 # Missing closing sentinels cause backtracking; capping input bounds the runtime.
 _MAX_SENTINEL_INPUT_LEN = 262144  # 256 KB
+
+# json's decoder recurses per nesting level, so a deeply nested reply raises
+# RecursionError rather than JSONDecodeError. Either way it is not JSON we use.
+_JSON_PARSE_ERRORS = (json.JSONDecodeError, RecursionError)
 
 _FENCE = "```"
 _JSON_FENCE_TAG = "json"
@@ -156,22 +160,81 @@ _extract_json_candidates = extract_json_candidates
 # ---------------------------------------------------------------------------
 
 
-# A line that starts an object member: indent, a JSON string, then a colon.
+# Lines that can follow a string a mask left open. Valid JSON never continues
+# an open string onto a line that starts a member (``"key":``) or holds a whole
+# array element (``"value",``), so these two always mark the string's end.
 _MEMBER_LINE_RE = re.compile(r'[ \t]*"(?:[^"\\\n]|\\.)*"[ \t]*:')
+_ELEMENT_LINE_RE = re.compile(r'[ \t]*"(?:[^"\\\n]|\\.)*"[ \t]*,?[ \t]*(?=\r?\n|\Z)')
+# A line of closing brackets, or an array element that opens a container. A
+# multi-line code string can contain either, so they are tried only as a second
+# repair (``at_brackets``), used when it keeps more of the text.
+_CLOSE_LINE_RE = re.compile(r"[ \t]*([}\]])[}\],\t ]*(?=\r?\n|\Z)")
+_OPEN_LINE_RE = re.compile(r"[ \t]*[{\[]")
 _CLOSER_FOR = {"{": "}", "[": "]"}
 _REVIEW_REPORT_VALUE_RE = re.compile(r'"review_report"\s*:\s*(?=\{)')
 
 
-def _repair_json_object(text: str, start: int) -> str | None:
-    """Return a repaired copy of the JSON object that opens at ``text[start]``.
+class _Frame(NamedTuple):
+    """One open container.
+
+    Frames share their parents, so a snapshot is O(1).
+    """
+
+    closer: str
+    parent: _Frame | None
+
+
+def _closers(frame: _Frame | None) -> str:
+    """Return the brackets that close every container open at *frame*."""
+    parts: list[str] = []
+    while frame is not None:
+        parts.append(frame.closer)
+        frame = frame.parent
+    return "".join(parts)
+
+
+class _Repair(NamedTuple):
+    """A repaired JSON object and how much of the input it accounts for."""
+
+    text: str
+    consumed: int  # index just past the last input character the repair kept
+
+
+def _string_end_at_newline(
+    text: str, index: int, closer: str, *, at_brackets: bool
+) -> str | None:
+    """Return the text that ends a string left open at the newline ``text[index]``.
+
+    *closer* is the bracket that closes the innermost open container.
+    Returns ``None`` when the next line gives no reason to end the string.
+    """
+    after = index + 1
+    if closer == "}" and _MEMBER_LINE_RE.match(text, after):
+        return '",'
+    if closer == "]" and _ELEMENT_LINE_RE.match(text, after):
+        return '",'
+    if not at_brackets:
+        return None
+    close_line = _CLOSE_LINE_RE.match(text, after)
+    if close_line is not None and close_line.group(1) == closer:
+        return '"'
+    if closer == "]" and _OPEN_LINE_RE.match(text, after):
+        return '",'
+    return None
+
+
+def _repair_json_object(
+    text: str, start: int, *, at_brackets: bool = False
+) -> _Repair | None:
+    """Repair the JSON object that opens at ``text[start]``.
 
     Mends two kinds of damage seen in reviewer reports:
 
-    * A string left open at the end of a line when the next line starts a new
-      member. The response sanitizer masks ``password=<non-space run>``, so a
-      masked ``"…Password=x\\"",`` loses the string's closing quote and the
-      member's comma. Valid JSON never continues an open string onto a line
-      that starts with ``"key":``, so text that parsed before is left as is.
+    * A string left open at the end of a line. The response sanitizer masks
+      ``password=<non-space run>``, so a masked ``"…Password=x\\"",`` loses
+      the string's closing quote and the member's comma. The string is closed
+      when the next line starts a member or holds a whole array element, and,
+      with *at_brackets*, when it is the open container's closing bracket.
     * Truncation (an output-token cap, or a prefix copied from a run log): the
       text is cut back to the last complete value and the containers still
       open there are closed.
@@ -179,10 +242,11 @@ def _repair_json_object(text: str, start: int) -> str | None:
     Returns ``None`` for a mismatched closing bracket or nothing to keep.
     """
     out: list[str] = []
-    stack: list[str] = []
-    cut: tuple[int, tuple[str, ...]] | None = None
+    stack: _Frame | None = None
+    cut: tuple[int, _Frame | None, int] | None = None
     in_string = escaped = False
-    for index in range(start, min(len(text), start + _MAX_SENTINEL_INPUT_LEN)):
+    end = min(len(text), start + _MAX_SENTINEL_INPUT_LEN)
+    for index in range(start, end):
         ch = text[index]
         if in_string:
             if escaped:
@@ -191,39 +255,78 @@ def _repair_json_object(text: str, start: int) -> str | None:
                 escaped = True
             elif ch == '"':
                 in_string = False
-            elif ch == "\n" and stack[-1:] == ["}"]:
-                if _MEMBER_LINE_RE.match(text, index + 1):
+            elif ch == "\n" and stack is not None:
+                ending = _string_end_at_newline(
+                    text, index, stack.closer, at_brackets=at_brackets
+                )
+                if ending is not None:
                     out.append('"')
-                    cut = (len(out), tuple(stack))
-                    out.append(",")
+                    cut = (len(out), stack, index)
+                    out.append(ending[1:])
                     in_string = False
             out.append(ch)
             continue
         if ch == ",":
-            cut = (len(out), tuple(stack))
+            cut = (len(out), stack, index)
         out.append(ch)
         if ch == '"':
             in_string = True
         elif ch in _CLOSER_FOR:
-            stack.append(_CLOSER_FOR[ch])
-            cut = (len(out), tuple(stack))
+            stack = _Frame(_CLOSER_FOR[ch], stack)
+            cut = (len(out), stack, index + 1)
         elif ch in "}]":
-            if not stack or stack.pop() != ch:
+            if stack is None or stack.closer != ch:
                 return None
-            if not stack:
-                return "".join(out)
-            cut = (len(out), tuple(stack))
+            stack = stack.parent
+            if stack is None:
+                return _Repair("".join(out), index + 1)
+            cut = (len(out), stack, index + 1)
     if cut is None:
         return None
     if not in_string:
-        closed = _close_after_final_value("".join(out), stack)
+        closed = _close_after_final_value("".join(out), _closers(stack))
         if closed is not None:
-            return closed
-    kept, still_open = cut
-    return "".join(out[:kept]) + "".join(reversed(still_open))
+            return _Repair(closed, end)
+    kept, still_open, consumed = cut
+    return _Repair("".join(out[:kept]) + _closers(still_open), consumed)
 
 
-def _close_after_final_value(text: str, stack: list[str]) -> str | None:
+def _best_repair(text: str, start: int) -> dict[str, Any] | None:
+    """Parse the repair of the object at *start* that keeps the most input.
+
+    The bracket-line repair can end a multi-line code string early, which
+    stops it short of the object's real end, so it loses to the plain
+    repair. When a mask left an object's last member open, the plain repair
+    folds the following ``},`` and ``{`` lines into that string. Both then
+    reach the same end, and the one that kept more JSON values wins.
+    """
+    best: dict[str, Any] | None = None
+    best_rank = (-1, -1)
+    for at_brackets in (False, True):
+        repair = _repair_json_object(text, start, at_brackets=at_brackets)
+        parsed = _loads_dict(repair.text) if repair is not None else None
+        if parsed is not None and repair is not None:
+            rank = (repair.consumed, _count_values(parsed))
+            if rank > best_rank:
+                best, best_rank = parsed, rank
+    return best
+
+
+def _count_values(value: Any) -> int:
+    """Count the JSON values in *value*, itself included (no recursion)."""
+    count = 0
+    pending = [value]
+    while pending:
+        item = pending.pop()
+        count += 1
+        if isinstance(item, dict):
+            pending.extend(item.values())
+        elif isinstance(item, list):
+            pending.extend(item)
+    return count
+
+
+def _close_after_final_value(text: str, closers: str) -> str | None:
     """Close *text* as is when it was cut right after a complete value.
 
     Keeps a final string, literal or closed container that has no comma
@@ -233,7 +336,7 @@ def _close_after_final_value(text: str, stack: list[str]) -> str | None:
     tail = text.rstrip()
     if not tail or tail[-1].isdigit():
         return None
-    closed = tail + "".join(reversed(stack))
+    closed = tail + closers
     return closed if _loads_dict(closed) is not None else None
 
 
@@ -243,7 +346,7 @@ def _loads_dict(candidate: str | None) -> dict[str, Any] | None:
         return None
     try:
         parsed = json.loads(candidate, strict=False)
-    except json.JSONDecodeError:
+    except _JSON_PARSE_ERRORS:
         return None
     return cast("dict[str, Any]", parsed) if isinstance(parsed, dict) else None
 
@@ -286,15 +389,14 @@ def _recover_review_report(text: str) -> dict[str, Any] | None:
     capped = text[:_MAX_SENTINEL_INPUT_LEN]
     first_brace = capped.find("{")
     if first_brace != -1:
-        repaired = _repair_json_object(capped, first_brace)
-        report = _report_from_mapping(_loads_dict(repaired))
+        report = _report_from_mapping(_best_repair(capped, first_brace))
         if report is not None:
             return report
     # Only the first key: each repair can scan to the end of the text, so
     # trying every key would be quadratic on a reply that repeats it.
     match = _REVIEW_REPORT_VALUE_RE.search(capped)
     if match is not None:
-        return _loads_dict(_repair_json_object(capped, match.end()))
+        return _best_repair(capped, match.end())
     return None
 
 
@@ -417,7 +519,7 @@ def _promote_missing_keys_from_raw(
     for candidate in extract_json_candidates(nested_raw):
         try:
             nested_parsed = json.loads(candidate, strict=False)
-        except json.JSONDecodeError:
+        except _JSON_PARSE_ERRORS:
             continue
         if not isinstance(nested_parsed, dict):
             continue
@@ -484,7 +586,7 @@ def _salvage_expected_keys_from_jsonish(
                 value, _ = decoder.raw_decode(response, idx=value_start)
                 salvaged[key] = value
                 break
-            except json.JSONDecodeError:
+            except _JSON_PARSE_ERRORS:
                 continue
 
     return salvaged
@@ -514,7 +616,7 @@ def parse_llm_json_output(
             parsed = json.loads(candidate, strict=False)
             if isinstance(parsed, dict):
                 return normalize_expected_structure(parsed, expected_output_keys)
-        except json.JSONDecodeError:
+        except _JSON_PARSE_ERRORS:
             continue
 
     fallback: dict[str, Any] = {"raw_response": response}
@@ -636,7 +738,7 @@ def parse_sentinel_output(
             try:
                 result[key] = json.loads(content, strict=False)
                 continue
-            except json.JSONDecodeError:
+            except _JSON_PARSE_ERRORS:
                 pass
         # Keep raw string for backward compatibility
         result[key] = content
