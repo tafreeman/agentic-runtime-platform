@@ -7,16 +7,23 @@
   `quality_score`, `summary` and `findings`. Two things broke that JSON: the
   response sanitizer's secret mask removing a string's closing quote, and
   output-token caps cutting the reply short. The parser now repairs both
-  kinds of damage and keeps the recovered report. On this path the status
-  still comes from the raw text, so gating is unchanged.
-- **Two gating changes.** An `<<<ARTIFACT review_report>>>` block that is not
-  valid JSON now supplies the status it states. Before, it always gated as
-  `NEEDS_FIXES`. A report returned without the `review_report` wrapper (a
-  top-level `overall_status`) now gates on its own status. Before, it was
-  replaced by the `NEEDS_FIXES` default.
-- **Both engines read ```json blocks surrounded by prose.** The native engine
-  previously parsed them only when it could salvage the declared keys one by
-  one; the LangGraph adapter already parsed them.
+  kinds of damage and keeps the recovered report.
+- **Gating changes.** All of these follow the reviewer's actual report:
+  - An `<<<ARTIFACT review_report>>>` block that is not valid JSON now
+    supplies the status it states. Before, it always gated as
+    `NEEDS_FIXES`.
+  - A report returned without the `review_report` wrapper (a top-level
+    `overall_status`) now gates on its own status. Before, it was replaced by
+    the `NEEDS_FIXES` default.
+  - When a damaged reply's report is recovered, the gate uses that report's
+    own `overall_status`. Before, it used the first `overall_status` anywhere
+    in the text, which could be a preliminary one stated earlier.
+  - A full report outranks a preliminary status-only block in the same reply.
+- **Both engines pick the same JSON block.** Each now reads ```json blocks
+  surrounded by prose; the native engine previously parsed them only when it
+  could salvage the declared keys one by one. When a reply holds several
+  objects, both take the one carrying the step's declared outputs, so an
+  explanatory block before the result is skipped.
 
 ## Unreleased - fullstack_generation ships and re-reviews its rework
 

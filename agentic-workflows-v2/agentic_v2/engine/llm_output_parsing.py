@@ -20,7 +20,10 @@ from __future__ import annotations
 import itertools
 import json
 import re
-from typing import Any, NamedTuple, cast
+from typing import TYPE_CHECKING, Any, NamedTuple, cast
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 # ---------------------------------------------------------------------------
 # Sentinel regex constants (shared with tool_execution.py callers)
@@ -404,28 +407,49 @@ def _report_from_mapping(mapping: dict[str, Any] | None) -> dict[str, Any] | Non
 def _recover_review_report(text: str) -> dict[str, Any] | None:
     """Recover the full review report from model text, repairing damaged JSON.
 
-    Tries the shared JSON candidates first. If none parses, repairs the
-    objects that open at the starts from :func:`_report_starts`, then the
-    object after the first ``"review_report":`` key. Returns ``None`` when no
-    report is found, so the caller can fall back to salvaging the status
-    alone.
+    Returns the first full report (one with fields beyond ``overall_status``)
+    from :func:`_report_candidates`. A reply may state a preliminary status
+    before its report, so a status-only report is returned only when no
+    full one is found. Returns ``None`` when there is no report at all, so
+    the caller can fall back to salvaging the status alone.
+    """
+    status_only: dict[str, Any] | None = None
+    for report in _report_candidates(text):
+        if _is_full_report(report):
+            return report
+        if status_only is None:
+            status_only = report
+    return status_only
+
+
+def _report_candidates(text: str) -> Iterator[dict[str, Any]]:
+    """Yield the reports in *text*: parsed candidates, then repaired objects.
+
+    Repairs start at :func:`_report_starts`, then after the first
+    ``"review_report":`` key. Only the first key is tried: each repair can
+    scan to the end of the text, so trying every key would be quadratic on
+    a reply that repeats it.
     """
     for candidate in extract_json_candidates(text):
         report = _report_from_mapping(_loads_dict(candidate))
         if report is not None:
-            return report
+            yield report
 
     capped = text[:_MAX_SENTINEL_INPUT_LEN]
     for start in _report_starts(capped):
         report = _report_from_mapping(_best_repair(capped, start))
         if report is not None:
-            return report
-    # Only the first key: each repair can scan to the end of the text, so
-    # trying every key would be quadratic on a reply that repeats it.
+            yield report
     match = _REVIEW_REPORT_VALUE_RE.search(capped)
     if match is not None:
-        return _best_repair(capped, match.end())
-    return None
+        report = _best_repair(capped, match.end())
+        if report is not None:
+            yield report
+
+
+def _is_full_report(report: dict[str, Any]) -> bool:
+    """Return whether *report* holds more than an ``overall_status``."""
+    return any(key != "overall_status" for key in report)
 
 
 def _report_starts(text: str) -> list[int]:
@@ -660,30 +684,59 @@ def _carries_declared_output(
     )
 
 
+# How well a parsed candidate matches a step's declared outputs.
+_NO_OUTPUT, _DECLARED_OUTPUT, _FULL_REPORT = 0, 1, 2
+
+
+def _candidate_rank(parsed: dict[str, Any], expected_output_keys: list[str]) -> int:
+    """Rank *parsed*: a full review report beats any other declared output.
+
+    ``overall_status`` is itself a declared output in some workflows, so a
+    preliminary ``{"overall_status": ...}`` block would otherwise outrank
+    the report after it.
+    """
+    if "review_report" in expected_output_keys:
+        report = _report_from_mapping(parsed)
+        if report is not None and _is_full_report(report):
+            return _FULL_REPORT
+    if _carries_declared_output(parsed, expected_output_keys):
+        return _DECLARED_OUTPUT
+    return _NO_OUTPUT
+
+
 def select_json_dict(
     text: str, expected_output_keys: list[str] | None = None
 ) -> dict[str, Any] | None:
     """Return the JSON object in *text* that carries the step's outputs.
 
     Walks :func:`extract_json_candidates` in order and returns the first
-    object holding a declared output key, so an explanatory fenced block
-    before the real result is skipped. With no declared keys, or when no
-    object holds one, the first object is returned. Parsing uses
-    ``strict=False``, so literal control characters (bare newlines) inside
-    string values are tolerated.
+    object of the best :func:`_candidate_rank`, so an explanatory block or a
+    preliminary status before the real result is skipped. With no declared
+    keys the first object is returned. Parsing uses ``strict=False``, so
+    literal control characters (bare newlines) inside string values are
+    tolerated.
     """
-    first: dict[str, Any] | None = None
+    best: dict[str, Any] | None = None
+    best_rank = -1
+    top_rank = (
+        _FULL_REPORT
+        if expected_output_keys and "review_report" in expected_output_keys
+        else _DECLARED_OUTPUT
+    )
     for candidate in extract_json_candidates(text):
         parsed = _loads_dict(candidate)
         if parsed is None:
             continue
-        if not expected_output_keys or _carries_declared_output(
-            parsed, expected_output_keys
-        ):
-            return parsed
-        if first is None:
-            first = parsed
-    return first
+        rank = (
+            _candidate_rank(parsed, expected_output_keys)
+            if expected_output_keys
+            else _DECLARED_OUTPUT
+        )
+        if rank > best_rank:
+            best, best_rank = parsed, rank
+            if rank >= top_rank:
+                break
+    return best
 
 
 def parse_json_step_output(
@@ -691,10 +744,10 @@ def parse_json_step_output(
 ) -> dict[str, Any] | None:
     """Select and normalize the JSON object in *text*; ``None`` if none parses.
 
-    When the selected object carries none of the declared outputs (an
-    explanatory block, say) and a ``review_report`` is expected, the report
-    is recovered from the rest of the text. It may sit in a later block
-    that is too damaged to parse as it stands.
+    When a ``review_report`` is expected but the selected object holds no
+    full report (an explanatory block, or a preliminary status), the report
+    is recovered from the rest of the text. It may sit in a later block that
+    is too damaged to parse as it stands.
     """
     parsed = select_json_dict(text, expected_output_keys)
     if parsed is None:
@@ -702,10 +755,13 @@ def parse_json_step_output(
     if (
         expected_output_keys
         and "review_report" in expected_output_keys
-        and not _carries_declared_output(parsed, expected_output_keys)
+        and _candidate_rank(parsed, expected_output_keys) < _FULL_REPORT
     ):
         report = _recover_review_report(text)
-        if report is not None:
+        if report is not None and (
+            _is_full_report(report)
+            or not _carries_declared_output(parsed, expected_output_keys)
+        ):
             parsed = {**parsed, "review_report": report}
     return normalize_expected_structure(parsed, expected_output_keys)
 
@@ -734,16 +790,34 @@ def parse_llm_json_output(
         return fallback
 
     # This step expects review_report but the model returned malformed JSON.
-    # Keep whatever report can be recovered; the status still comes from the
-    # raw-text salvage so when-condition gating is unchanged.
-    report = fallback.get("review_report")
-    if not isinstance(report, dict):
-        report = _recover_review_report(response) or {}
-    fallback["review_report"] = {
-        **report,
-        **_salvage_review_report_from_text(response),
-    }
+    # Keep whatever report can be recovered.
+    report = _fallback_report(fallback.get("review_report"), response)
+    fallback["review_report"] = {**report, **_fallback_status(report, response)}
     return fallback
+
+
+def _fallback_report(salvaged: Any, response: str) -> dict[str, Any]:
+    """Pick the report for a reply that did not parse, preferring a full one."""
+    if isinstance(salvaged, dict) and _is_full_report(salvaged):
+        return salvaged
+    recovered = _recover_review_report(response)
+    if recovered is not None and (
+        _is_full_report(recovered) or not isinstance(salvaged, dict)
+    ):
+        return recovered
+    return salvaged if isinstance(salvaged, dict) else {}
+
+
+def _fallback_status(report: dict[str, Any], response: str) -> dict[str, Any]:
+    """Return a full report's own status, else one salvaged from the raw text.
+
+    The raw-text salvage takes the first ``overall_status`` in the reply,
+    which may be a preliminary one stated before the report.
+    """
+    status = report.get("overall_status")
+    if _is_full_report(report) and isinstance(status, str) and status.strip():
+        return {"overall_status": status.strip().upper().replace(" ", "_")}
+    return _salvage_review_report_from_text(response)
 
 
 def _salvage_review_report_from_text(response: str) -> dict[str, Any]:

@@ -691,3 +691,50 @@ def test_explanatory_block_before_a_truncated_report_is_skipped(parse: Any) -> N
     assert report["quality_score"] == 9
     assert report["summary"] == "ok"
     assert report["findings"][0] == {"title": "A"}
+
+
+# ---------------------------------------------------------------------------
+# A preliminary status before the report
+# ---------------------------------------------------------------------------
+
+_FULL_REPORT_BLOCK = (
+    '```json\n{"review_report": {"overall_status": "NEEDS_FIXES", '
+    '"quality_score": 5, "summary": "two issues", '
+    '"findings": [{"title": "A"}, {"title": "B"}]}}\n```'
+)
+
+
+@both_engines
+def test_full_report_outranks_a_preliminary_status_block(parse: Any) -> None:
+    """``overall_status`` is a declared output, but a full report must win."""
+    text = '```json\n{"overall_status": "APPROVED"}\n```\n' + _FULL_REPORT_BLOCK
+
+    report = parse(text)["review_report"]
+
+    assert report["overall_status"] == "NEEDS_FIXES"
+    assert report["quality_score"] == 5
+
+
+@both_engines
+def test_damaged_report_outranks_a_preliminary_status_block(parse: Any) -> None:
+    """The status block parses and the report after it does not."""
+    text = '```json\n{"overall_status": "APPROVED"}\n```\n' + _FULL_REPORT_BLOCK
+    text = text[: text.index('{"title": "B"}') + len('{"title": "B')]
+
+    report = parse(text)["review_report"]
+
+    assert report["overall_status"] == "NEEDS_FIXES"
+    assert report["quality_score"] == 5
+    assert report["findings"][0] == {"title": "A"}
+
+
+@both_engines
+def test_prose_status_does_not_gate_over_a_recovered_report(parse: Any) -> None:
+    """Nothing parses, so the status was read from the first match in the text."""
+    text = "Preliminary overall_status: APPROVED\n" + _FULL_REPORT_BLOCK
+    text = text[: text.index('{"title": "B"}') + len('{"title": "B')]
+
+    report = parse(text)["review_report"]
+
+    assert report["overall_status"] == "NEEDS_FIXES"
+    assert report["summary"] == "two issues"
