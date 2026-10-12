@@ -1,4 +1,4 @@
-import { CircleAlert } from "lucide-react";
+import { ChevronLeft, ChevronRight, CircleAlert } from "lucide-react";
 import { useState } from "react";
 import { useDatasetSamples } from "../../hooks/useDatasets";
 import type { DatasetSampleSummary } from "../../api/types";
@@ -8,7 +8,7 @@ interface SampleIndexGridProps {
   datasetSource: string;
   datasetId: string;
   selectedIndex: number | null;
-  onSelect: (index: number) => void;
+  onSelect: (index: number, trigger: HTMLButtonElement) => void;
 }
 
 /**
@@ -43,8 +43,8 @@ export default function SampleIndexGrid({
 
   if (isLoading) {
     return (
-      <div className="p-3 font-mono text-micro text-el-muted">
-        $ loading samples…
+      <div className="p-4 text-sm text-el-muted">
+        Loading samples…
       </div>
     );
   }
@@ -54,13 +54,13 @@ export default function SampleIndexGrid({
     // An unreachable API is already announced by the shell's offline banner.
     if (failure.unreachable) {
       return (
-        <div className="p-3 font-mono text-micro text-el-muted">
+        <div className="p-4 text-sm text-el-muted">
           samples unavailable while the API is unreachable
         </div>
       );
     }
     return (
-      <div role="alert" className="p-3 font-mono text-micro text-el-danger">
+      <div role="alert" className="p-4 text-sm text-el-danger">
         <span className="flex items-start gap-1.5">
           <CircleAlert aria-hidden="true" className="mt-0.5 size-3.5 flex-none" />
           <span>failed to load samples: {failure.summary}</span>
@@ -72,8 +72,8 @@ export default function SampleIndexGrid({
 
   if (!data || data.samples.length === 0) {
     return (
-      <div className="p-3 font-mono text-micro text-el-muted">
-        $ no samples in this dataset — pick another dataset
+      <div className="p-4 text-sm text-el-muted">
+        No samples in this dataset. Choose another dataset.
       </div>
     );
   }
@@ -82,7 +82,7 @@ export default function SampleIndexGrid({
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      <div className="grid grid-cols-[3rem_1fr_3rem] gap-2 border-b border-el-divider bg-el-subtle px-3 py-1.5 font-mono text-micro uppercase tracking-[1.5px] text-el-muted">
+      <div className="grid grid-cols-[3rem_1fr_3rem] gap-2 border-b border-el-divider bg-el-subtle px-3 py-1.5 text-micro font-semibold uppercase tracking-wider text-el-muted">
         <span>#</span>
         <span>title</span>
         <span className="text-right">fields</span>
@@ -99,26 +99,26 @@ export default function SampleIndexGrid({
               aria-label={`Select sample ${sample.sample_index}`}
               data-testid={`sample-row-${sample.sample_index}`}
               aria-pressed={active}
-              onClick={() => onSelect(sample.sample_index)}
-              className={`focus-ring-inset relative grid min-h-9 w-full grid-cols-[3rem_1fr_3rem] items-center gap-2 border-b border-el-divider-soft px-3 py-2 text-left transition-colors hover:bg-el-hover ${
+              onClick={(event) => onSelect(sample.sample_index, event.currentTarget)}
+              className={`focus-ring-inset relative grid min-h-14 w-full grid-cols-[3rem_1fr_3rem] items-center gap-2 border-b border-el-divider-soft px-3 py-2 text-left transition-colors hover:bg-el-hover ${
                 active ? "bg-el-subtle" : ""
               }`}
             >
               {active && (
                 <span
                   aria-hidden="true"
-                  className="absolute inset-y-0 left-0 w-[2px] bg-el-accent"
+                  className="absolute inset-y-0 left-0 w-[2px] bg-el-accent-strong"
                 />
               )}
               <span className="tabular-nums font-mono text-micro text-el-muted">
                 {sample.sample_index}
               </span>
               <span className="min-w-0">
-                <span className="block truncate font-mono text-micro text-el-ink">
+                <span className="block truncate text-sm font-medium text-el-ink">
                   {title}
                 </span>
                 {subtitle ? (
-                  <span className="block truncate font-mono text-micro text-el-muted">
+                  <span className="block truncate text-xs text-el-muted">
                     {subtitle}
                   </span>
                 ) : null}
@@ -139,7 +139,7 @@ export default function SampleIndexGrid({
           onClick={() => setOffset(Math.max(0, offset - limit))}
           className="focus-ring-inset inline-flex min-h-9 min-w-9 items-center justify-center rounded-md text-el-ink transition-colors hover:bg-el-hover disabled:cursor-not-allowed disabled:opacity-40"
         >
-          [&lt;]
+          <ChevronLeft aria-hidden="true" className="size-4" />
         </button>
         <span className="tabular-nums">
           {offset + 1}–{Math.min(offset + limit, data.sample_count)} of{" "}
@@ -152,7 +152,7 @@ export default function SampleIndexGrid({
           onClick={() => setOffset(offset + limit)}
           className="focus-ring-inset inline-flex min-h-9 min-w-9 items-center justify-center rounded-md text-el-ink transition-colors hover:bg-el-hover disabled:cursor-not-allowed disabled:opacity-40"
         >
-          [&gt;]
+          <ChevronRight aria-hidden="true" className="size-4" />
         </button>
       </div>
     </div>

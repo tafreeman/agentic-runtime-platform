@@ -16,13 +16,13 @@ import { Button } from "../ui/button";
 const CARD_CLASS = "rounded-lg border border-el-divider bg-el-surface";
 
 const FIELD_LABEL_CLASS =
-  "mb-1.5 block font-mono text-micro uppercase tracking-[0.8px] text-el-muted";
+  "mb-1.5 block text-xs font-medium text-el-muted";
 
 const INPUT_CLASS =
-  "h-10 w-full rounded-md border border-el-control-border bg-el-canvas px-2.5 font-mono text-xs text-el-ink placeholder:text-el-faint focus-ring focus-visible:border-el-focus disabled:opacity-60";
+  "h-10 w-full rounded-md border border-el-control-border bg-el-canvas px-3 text-[13px] text-el-ink placeholder:text-el-faint focus-ring focus-visible:border-el-focus disabled:opacity-60";
 
 /** Compact card action: mono micro label on the shared outline Button. */
-const CARD_ACTION_CLASS = "font-mono text-micro uppercase tracking-[0.5px]";
+const CARD_ACTION_CLASS = "text-xs font-medium";
 
 /** Valid provider id: lowercase slug, must start alphanumeric. */
 const ID_PATTERN = /^[a-z0-9][a-z0-9_-]*$/;
@@ -244,20 +244,20 @@ export default function ProviderPanel() {
 
       {error && loadErrorInfo?.unreachable && (
         // The shell banner already reports the outage — a quiet note here.
-        <p className="mb-3 font-mono text-micro text-el-muted">
+        <p className="mb-3 text-xs text-el-muted">
           provider settings unavailable — {loadErrorInfo.summary}
         </p>
       )}
       {error && !loadErrorInfo?.unreachable && (
         <div
           role="alert"
-          className="mb-3 rounded-lg border border-el-danger/40 bg-el-danger-soft p-4 font-mono text-xs text-el-danger"
+          className="mb-3 rounded-lg border border-el-danger/40 bg-el-danger-soft p-4 text-sm text-el-danger"
         >
           failed to load provider settings: {apiErrorText(error)}
         </div>
       )}
       {isLoading && (
-        <div className="p-4 font-mono text-xs text-el-muted">
+        <div className="p-4 text-sm text-el-muted">
           loading providers…
         </div>
       )}
@@ -271,7 +271,7 @@ export default function ProviderPanel() {
       {!isLoading && !error && (
         <div className="grid gap-3.5 md:grid-cols-2">
           {providers.length === 0 && (
-            <div className={`${CARD_CLASS} p-4 font-mono text-xs text-el-muted md:col-span-2`}>
+            <div className={`${CARD_CLASS} p-4 text-sm text-el-muted md:col-span-2`}>
               no provider endpoints configured — add one below
             </div>
           )}
@@ -408,7 +408,7 @@ export default function ProviderPanel() {
 
       {/* ─── add provider ─── */}
       <div className="mt-4">
-        <div className="mb-2 font-mono text-micro uppercase tracking-[1px] text-el-muted">
+        <div className="mb-2 text-xs font-medium text-el-muted">
           ADD PROVIDER
         </div>
         <div className="flex flex-wrap gap-1.5">
@@ -438,7 +438,7 @@ export default function ProviderPanel() {
               submitDraft();
             }}
           >
-            <div className="mb-3 font-mono text-micro font-semibold uppercase tracking-[1.5px] text-el-secondary">
+            <div className="mb-3 text-xs font-medium text-el-secondary">
               {editId ? "EDIT" : "NEW"} {TYPE_PRESETS[addType].label} ENDPOINT
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -489,7 +489,7 @@ export default function ProviderPanel() {
                   placeholder="OLLAMA_API_KEY (env var name, not the key)"
                   className={INPUT_CLASS}
                 />
-                <p className="mt-1 font-mono text-micro text-el-muted">
+                <p className="mt-1 text-xs text-el-muted">
                   name of the environment variable — the key itself is never
                   stored
                 </p>
@@ -497,7 +497,7 @@ export default function ProviderPanel() {
                   !ENV_NAME_PATTERN.test(draft.api_key_env.trim()) && (
                     <p
                       role="alert"
-                      className="mt-1 font-mono text-micro text-el-warning"
+                      className="mt-1 text-xs text-el-warning"
                     >
                       {KEY_WARNING_TEXT}
                     </p>
@@ -528,7 +528,7 @@ export default function ProviderPanel() {
             </div>
 
             {validationError && (
-              <div role="alert" className="mt-3 font-mono text-xs text-el-danger">
+              <div role="alert" className="mt-3 text-sm text-el-danger">
                 {validationError}
               </div>
             )}
@@ -573,14 +573,14 @@ export default function ProviderPanel() {
       </div>
 
       {saveMutation.isError && (
-        <div role="alert" className="mt-3 font-mono text-xs text-el-danger">
+        <div role="alert" className="mt-3 text-sm text-el-danger">
           save failed: {apiErrorText(saveMutation.error)}
         </div>
       )}
 
       {/* ─── env-configured strip ─── */}
       {data && data.env_configured_providers.length > 0 && (
-        <div className="mt-4 border-t border-el-divider-soft pt-2.5 font-mono text-micro text-el-muted">
+        <div className="mt-4 border-t border-el-divider-soft pt-2.5 text-xs text-el-muted">
           configured via environment:{" "}
           <span className="text-el-secondary">
             {data.env_configured_providers.join(", ")}

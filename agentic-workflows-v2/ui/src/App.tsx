@@ -65,7 +65,7 @@ export default function App() {
   return (
     <CliProvider>
     <GoNav />
-    <div className="el-app flex h-screen flex-col overflow-hidden">
+    <div className="el-app flex h-svh flex-col overflow-hidden">
       {/* Skip-to-main-content: visually hidden until focused via keyboard Tab */}
       <a
         href="#main-content"
@@ -84,7 +84,7 @@ export default function App() {
       <main
         ref={mainRef}
         id="main-content"
-        className="flex-1 overflow-hidden pb-14 focus:outline-hidden md:pb-0"
+        className="min-w-0 flex-1 overflow-hidden pb-14 focus:outline-hidden md:pb-0"
         tabIndex={-1}
       >
         <Suspense fallback={<RouteFallback />}>

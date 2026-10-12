@@ -23,20 +23,20 @@ export default function ConsoleHeader() {
   };
 
   return (
-    <header className="flex h-11 flex-none items-center gap-4 border-b border-el-divider bg-el-surface px-4">
+    <header className="flex h-(--el-header-height) flex-none items-center gap-4 border-b border-el-divider bg-el-surface px-4">
       <Link
         to="/"
         className="flex flex-none items-baseline gap-2 rounded-sm py-2.5 focus-ring"
         aria-label="console home"
       >
-        <span className="font-mono text-[13px] font-semibold tracking-tight text-el-ink">
+        <span className="text-sm font-semibold tracking-tight text-el-ink">
           Evidence Ledger
           {/* The shell's one vermilion key mark; static (no decorative loop). */}
           <span aria-hidden="true" className="text-el-accent">
             ▊
           </span>
         </span>
-        <span className="hidden font-mono text-micro text-el-muted sm:inline">
+        <span className="hidden text-xs text-el-muted sm:inline">
           / agentic runtime
         </span>
       </Link>
@@ -76,7 +76,7 @@ export default function ConsoleHeader() {
           banner carries the outage, so no (green) guess is shown. */}
       {health.data ? (
         <span
-          className={`ml-auto hidden flex-none font-mono text-micro md:inline ${
+          className={`ml-auto hidden flex-none text-xs md:inline ${
             noLlmMode ? "text-el-warning" : "text-el-success"
           }`}
           title={

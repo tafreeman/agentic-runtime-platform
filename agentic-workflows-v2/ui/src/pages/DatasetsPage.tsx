@@ -3,6 +3,7 @@ import BTopBar from "../components/layout/BTopBar";
 import DatasetBrowser from "../components/datasets/DatasetBrowser";
 import InlineError from "../components/states/InlineError";
 import EmptyState from "../components/states/EmptyState";
+import Scoreline from "../components/common/Scoreline";
 import NoData from "../components/states/NoData";
 import { describeApiError, formatApiError } from "../lib/apiErrors";
 
@@ -20,47 +21,21 @@ export default function DatasetsPage() {
     <div className="flex h-full flex-col">
       <BTopBar path="datasets" />
 
-      <div className="flex flex-1 min-h-0 flex-col gap-3 overflow-hidden p-4">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <h1 className="font-display text-[30px] leading-none tracking-[-0.5px] text-el-ink">
-              Datasets
-            </h1>
-            <div className="mt-1.5 font-mono text-micro text-el-muted">
-              {datasets ? (
-                <>
-                  $ {repoCount} repo · {localCount} local · {evalSetCount} eval
-                  sets
-                </>
-              ) : (
-                <>$ dataset catalog not loaded</>
-              )}
-            </div>
-          </div>
-          <div className="flex items-end gap-5">
-            {(
-              [
-                ["repo", repoCount],
-                ["local", localCount],
-                ["eval sets", evalSetCount],
-              ] as const
-            ).map(([label, count]) => (
-              <div key={label} className="flex flex-col items-end leading-none">
-                <span className="font-display text-[22px] tracking-[-0.5px] tabular-nums text-el-ink">
-                  {count ?? <NoData />}
-                </span>
-                <span className="mt-1 font-mono text-micro uppercase tracking-[1.5px] text-el-muted">
-                  {label}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
+      <div className="flex flex-1 min-h-0 flex-col gap-6 overflow-y-auto p-4 sm:p-6 lg:p-10">
+        <header>
+          <h1 className="font-display text-[30px] leading-tight tracking-tight text-el-ink sm:text-[40px]">Datasets</h1>
+          <p className="mt-2 max-w-prose text-sm text-el-muted">Inspect dataset samples and configure a workflow with their evidence.</p>
+        </header>
+        <Scoreline label="Dataset catalog" items={[
+          { label: "Repository", value: repoCount ?? <NoData /> },
+          { label: "Local", value: localCount ?? <NoData /> },
+          { label: "Evaluation sets", value: evalSetCount ?? <NoData /> },
+        ]} />
 
         {(() => {
           if (isLoading) {
             return (
-              <div className="flex h-32 items-center justify-center font-mono text-micro text-el-muted">
+              <div className="flex h-32 items-center justify-center text-sm text-el-muted">
                 Loading datasets...
               </div>
             );
@@ -70,14 +45,14 @@ export default function DatasetsPage() {
             return (
               <>
                 {loadFailure && (
-                  <p role="status" className="font-mono text-micro text-el-muted">
+                  <p role="status" className="text-sm text-el-muted">
                     Showing the last loaded datasets — refresh failed:{" "}
                     {loadFailure.unreachable
                       ? "the API is unreachable."
                       : formatApiError(error)}
                   </p>
                 )}
-                <div className="flex-1 min-h-0 overflow-hidden">
+                <div className="flex-1 min-h-80">
                   <DatasetBrowser datasets={datasets} />
                 </div>
               </>
@@ -88,7 +63,7 @@ export default function DatasetsPage() {
             // API; keep this to a quiet note instead of a second alert.
             if (loadFailure.unreachable) {
               return (
-                <p className="py-6 text-center font-mono text-micro text-el-muted">
+                <p className="py-6 text-center text-sm text-el-muted">
                   Datasets can't load while the API is unreachable.
                 </p>
               );

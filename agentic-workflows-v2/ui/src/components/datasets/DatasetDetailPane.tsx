@@ -3,7 +3,7 @@ import { useId, useState } from "react";
 import { Link } from "react-router-dom";
 import { useDatasetSampleDetail } from "../../hooks/useDatasets";
 import { useWorkflows } from "../../hooks/useWorkflows";
-import BPill from "../common/BPill";
+import StatusBadge from "../common/StatusBadge";
 import JsonViewer from "../common/JsonViewer";
 import { describeApiError } from "../../lib/apiErrors";
 
@@ -32,7 +32,7 @@ function RunWithSample({
 
   return (
     <div data-testid="run-with-sample">
-      <div className="mb-1.5 font-mono text-micro uppercase tracking-[1.5px] text-el-muted">
+      <div className="mb-1.5 text-xs font-medium text-el-muted">
         run with this sample
       </div>
       <div className="flex items-center gap-2">
@@ -41,7 +41,7 @@ function RunWithSample({
           data-testid="run-with-sample-workflow"
           value={effectiveWorkflow}
           onChange={(event) => setWorkflow(event.target.value)}
-          className="focus-ring min-w-0 flex-1 rounded-md border border-el-control-border bg-el-canvas px-2 py-1.5 font-mono text-micro text-el-ink"
+          className="focus-ring min-w-0 flex-1 rounded-md border border-el-control-border bg-el-canvas px-2 py-1.5 text-sm text-el-ink"
           disabled={isLoading || !workflows?.length}
         >
           {!workflows?.length ? (
@@ -61,7 +61,7 @@ function RunWithSample({
             to={runHref}
             aria-label="Configure run with this sample"
             data-testid="run-with-sample-link"
-            className="focus-ring inline-flex min-h-9 flex-none items-center rounded-md px-1 font-mono text-micro font-semibold text-el-ink underline underline-offset-2 hover:text-el-accent-strong"
+            className="focus-ring inline-flex min-h-9 flex-none items-center rounded-md px-1 text-xs font-semibold text-el-ink underline underline-offset-2 hover:text-el-accent-strong"
           >
             configure run →
           </Link>
@@ -91,12 +91,10 @@ function WorkflowPreviewBadge({ preview }: Readonly<{ preview: Record<string, un
   const compatible = Boolean(preview.compatible);
   return (
     <div>
-      <div className="mb-1.5 font-mono text-micro uppercase tracking-[1.5px] text-el-muted">
+      <div className="mb-1.5 text-xs font-medium text-el-muted">
         workflow preview
       </div>
-      <BPill tone={compatible ? "ok" : "err"}>
-        {compatible ? "[compatible]" : "[incompatible]"}
-      </BPill>
+      <StatusBadge status={compatible ? "passed" : "failed"} label={compatible ? "Compatible" : "Incompatible"} />
       {compatible && preview.adapted_inputs != null && (
         <div className="mt-2">
           <JsonViewer data={preview.adapted_inputs} />
@@ -121,8 +119,8 @@ export default function DatasetDetailPane({
 
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center font-mono text-micro text-el-muted">
-        $ loading sample…
+      <div className="flex h-full items-center justify-center text-xs text-el-muted">
+        Loading sample…
       </div>
     );
   }
@@ -132,13 +130,13 @@ export default function DatasetDetailPane({
     // An unreachable API is already announced by the shell's offline banner.
     if (failure.unreachable) {
       return (
-        <div className="p-3 font-mono text-micro text-el-muted">
+        <div className="p-3 text-xs text-el-muted">
           sample unavailable while the API is unreachable
         </div>
       );
     }
     return (
-      <div role="alert" className="p-3 font-mono text-micro text-el-danger">
+      <div role="alert" className="p-3 text-sm text-el-danger">
         <span className="flex items-start gap-1.5">
           <CircleAlert aria-hidden="true" className="mt-0.5 size-3.5 flex-none" />
           <span>failed to load sample: {failure.summary}</span>
@@ -151,14 +149,14 @@ export default function DatasetDetailPane({
   if (!data) return null;
 
   return (
-    <div className="h-full space-y-4 overflow-y-auto p-4">
+    <div className="h-full space-y-6 overflow-y-auto p-4 lg:p-6">
       {/* Header — stat numeric + identity */}
       <div className="flex items-end gap-3 border-b border-el-divider-soft pb-3">
         <span className="font-display text-[34px] leading-none tracking-[-1px] tabular-nums text-el-ink">
           {data.sample_index}
         </span>
         <div className="min-w-0 pb-0.5">
-          <div className="font-mono text-micro uppercase tracking-[1.5px] text-el-muted">
+          <div className="text-xs font-medium text-el-muted">
             sample
           </div>
           <div className="truncate font-mono text-micro text-el-ink">
@@ -171,7 +169,7 @@ export default function DatasetDetailPane({
       </div>
 
       {data.summary && (
-        <div className="font-mono text-micro text-el-secondary">
+        <div className="text-sm text-el-secondary">
           {data.summary}
         </div>
       )}
@@ -180,10 +178,10 @@ export default function DatasetDetailPane({
       <div className="space-y-2.5">
         {Object.entries(data.sample).map(([key, value]) => (
           <div key={key}>
-            <div className="mb-1 font-mono text-micro uppercase tracking-[1.5px] text-el-muted">
+            <div className="mb-1 text-xs font-medium text-el-muted">
               {key}
             </div>
-            <div className="font-mono text-micro leading-relaxed text-el-ink">
+            <div className="font-mono text-xs leading-relaxed text-el-ink">
               <FieldValue value={value} />
             </div>
           </div>
@@ -205,9 +203,9 @@ export default function DatasetDetailPane({
           aria-expanded={metaOpen}
           aria-controls={metaPanelId}
           onClick={() => setMetaOpen((v) => !v)}
-          className="focus-ring inline-flex min-h-9 items-center rounded-md px-1 font-mono text-micro text-el-muted transition-colors hover:text-el-ink"
+          className="focus-ring inline-flex min-h-9 items-center rounded-md px-1 text-xs text-el-muted transition-colors hover:text-el-ink"
         >
-          {metaOpen ? "[meta -]" : "[meta +]"}
+          {metaOpen ? "Hide dataset metadata" : "Show dataset metadata"}
         </button>
         {metaOpen && (
           <div

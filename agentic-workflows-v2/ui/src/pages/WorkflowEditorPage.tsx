@@ -49,7 +49,7 @@ const PANEL_CLASS = "rounded-lg border border-el-divider bg-el-surface";
 
 /** Small tracked overline label (type floor: text-micro). */
 const OVERLINE_CLASS =
-  "font-mono text-micro uppercase tracking-[1.5px] text-el-muted";
+  "text-xs font-medium text-el-muted";
 
 const API_REASON_ID = "workflow-editor-api-reason";
 
@@ -307,21 +307,21 @@ export default function WorkflowEditorPage() {
           </Button>
 
           <div className="flex items-center gap-2.5">
-            <span className="font-mono text-micro uppercase tracking-[1.2px] text-el-muted">
+            <span className="text-xs font-medium text-el-muted">
               Workflow
             </span>
             <h1 className="truncate font-display text-xl font-semibold text-el-ink">
               {name}
             </h1>
             {data?.read_only && (
-              <span className="inline-flex items-center rounded-md bg-el-warning-soft px-1.5 py-px font-mono text-micro uppercase tracking-[0.5px] text-el-warning">
+              <span className="inline-flex items-center rounded-md bg-el-warning-soft px-1.5 py-px text-xs font-medium text-el-warning">
                 read only
               </span>
             )}
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="font-mono text-micro uppercase tracking-[1.2px] text-el-muted">
+            <span className="text-xs font-medium text-el-muted">
               Mode
             </span>
             <ModePill
@@ -337,7 +337,7 @@ export default function WorkflowEditorPage() {
           </div>
 
           <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-2">
-            <span className="font-mono text-micro text-el-muted">
+            <span className="text-xs text-el-muted">
               {stepCount} steps · {edgeCount} edges
             </span>
             <span
@@ -350,12 +350,12 @@ export default function WorkflowEditorPage() {
               {validText}
             </span>
             {lastSavedAt && (
-              <span className="font-mono text-micro text-el-muted">
+              <span className="text-xs text-el-muted">
                 Last saved {new Date(lastSavedAt).toLocaleString()}
               </span>
             )}
             {isDirty && (
-              <span className="inline-flex items-center rounded-md bg-el-info-soft px-1.5 py-px font-mono text-micro uppercase tracking-[0.5px] text-el-info">
+              <span className="inline-flex items-center rounded-md bg-el-info-soft px-1.5 py-px text-xs font-medium text-el-info">
                 Unsaved changes
               </span>
             )}
@@ -406,7 +406,7 @@ export default function WorkflowEditorPage() {
           {apiDown && (
             <p
               id={API_REASON_ID}
-              className="w-full text-right font-mono text-micro text-el-muted"
+              className="w-full text-right text-xs text-el-muted"
             >
               {apiReason}
             </p>
@@ -417,17 +417,17 @@ export default function WorkflowEditorPage() {
       {(() => {
         if (isLoading) {
           return (
-            <div className="flex flex-1 items-center justify-center font-mono text-xs text-el-muted">
+            <div className="flex flex-1 items-center justify-center text-sm text-el-muted">
               Loading workflow editor...
             </div>
           );
         }
         if (isError) {
           return (
-            <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center font-mono text-xs text-el-danger">
+            <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center text-sm text-el-danger">
               <TriangleAlert aria-hidden="true" className="h-5 w-5" />
               <div>Unable to load workflow editor.</div>
-              <div className="font-mono text-micro text-el-secondary">
+              <div className="text-xs text-el-secondary">
                 {formatApiError(error)}
               </div>
             </div>
@@ -435,7 +435,7 @@ export default function WorkflowEditorPage() {
         }
         if (!data) {
           return (
-            <div className="flex flex-1 items-center justify-center font-mono text-xs text-el-muted">
+            <div className="flex flex-1 items-center justify-center text-sm text-el-muted">
               No workflow editor data available.
             </div>
           );
@@ -495,7 +495,7 @@ export default function WorkflowEditorPage() {
                 <span className={OVERLINE_CLASS}>Steps</span>
                 <div className="mt-2.5 flex flex-wrap gap-1.5">
                   {graph.nodes.length === 0 && (
-                    <div className="py-2 font-mono text-micro text-el-muted">
+                    <div className="py-2 text-xs text-el-muted">
                       no steps defined
                     </div>
                   )}
@@ -514,7 +514,7 @@ export default function WorkflowEditorPage() {
                             : "border-el-divider bg-el-canvas hover:bg-el-hover"
                         }`}
                       >
-                        <span className="font-mono text-micro text-el-muted">
+                        <span className="text-xs text-el-muted">
                           {index + 1}
                         </span>
                         <span className="text-xs font-medium text-el-ink">
@@ -544,11 +544,11 @@ export default function WorkflowEditorPage() {
                 className="absolute inset-x-0 top-0 h-0.5 bg-el-accent"
               />
               <div className="flex items-center gap-2.5">
-                <h2 className="font-mono text-micro font-semibold uppercase tracking-[1.5px] text-el-ink">
+                <h2 className="text-xs font-medium text-el-ink">
                   {selection?.kind === "edge" ? "Configure edge" : "Configure step"}
                 </h2>
                 {selection && (
-                  <span className="font-mono text-micro text-el-muted">
+                  <span className="text-xs text-el-muted">
                     {selection.id}
                   </span>
                 )}
@@ -557,7 +557,7 @@ export default function WorkflowEditorPage() {
               {mode === "yaml" && (
                 <div className="rounded-md border border-el-divider bg-el-canvas">
                   <div className="border-b border-el-divider px-3 py-2">
-                    <span className="flex items-center justify-between font-mono text-micro uppercase tracking-[0.8px] text-el-muted">
+                    <span className="flex items-center justify-between text-xs font-medium text-el-muted">
                       Workflow source (YAML)
                       <span className="text-el-faint">
                         {draftSource.length} chars
@@ -648,7 +648,7 @@ export default function WorkflowEditorPage() {
               )}
 
               {mode === "visual" && !selectedStep && selection?.kind !== "edge" && (
-                <div className="rounded-md border border-dashed border-el-divider px-4 py-6 text-center font-mono text-xs text-el-muted">
+                <div className="rounded-md border border-dashed border-el-divider px-4 py-6 text-center text-sm text-el-muted">
                   Select a step or edge in the graph to configure it.
                 </div>
               )}
@@ -670,17 +670,17 @@ export default function WorkflowEditorPage() {
               </div>
 
               {validateMutation.isError && (
-                <div className="mb-2 rounded-md border border-el-danger/40 bg-el-danger-soft px-3 py-2 font-mono text-xs text-el-danger">
+                <div className="mb-2 rounded-md border border-el-danger/40 bg-el-danger-soft px-3 py-2 text-sm text-el-danger">
                   {formatApiError(validateMutation.error)}
                 </div>
               )}
               {saveMutation.isError && (
-                <div className="mb-2 rounded-md border border-el-danger/40 bg-el-danger-soft px-3 py-2 font-mono text-xs text-el-danger">
+                <div className="mb-2 rounded-md border border-el-danger/40 bg-el-danger-soft px-3 py-2 text-sm text-el-danger">
                   {formatApiError(saveMutation.error)}
                 </div>
               )}
               {issueCount === 0 && !validateMutation.isPending && (
-                <div className="rounded-md border border-el-divider-soft bg-el-subtle px-3 py-2 font-mono text-xs text-el-muted">
+                <div className="rounded-md border border-el-divider-soft bg-el-subtle px-3 py-2 text-sm text-el-muted">
                   No validation messages yet. Run validation to preview schema and
                   graph issues.
                 </div>

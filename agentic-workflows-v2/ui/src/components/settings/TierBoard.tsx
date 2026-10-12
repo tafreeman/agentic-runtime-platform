@@ -219,25 +219,25 @@ export default function TierBoard() {
 
       {error && loadErrorInfo?.unreachable && (
         // The shell banner already reports the outage — a quiet note here.
-        <p className="mb-3 font-mono text-micro text-el-muted">
+        <p className="mb-3 text-xs text-el-muted">
           tier settings unavailable — {loadErrorInfo.summary}
         </p>
       )}
       {error && !loadErrorInfo?.unreachable && (
         <div
           role="alert"
-          className="mb-3 rounded-lg border border-el-danger/40 bg-el-danger-soft p-4 font-mono text-xs text-el-danger"
+          className="mb-3 rounded-lg border border-el-danger/40 bg-el-danger-soft p-4 text-sm text-el-danger"
         >
           failed to load tier settings: {apiErrorText(error)}
         </div>
       )}
       {isLoading && (
-        <div className="p-4 font-mono text-xs text-el-muted">
+        <div className="p-4 text-sm text-el-muted">
           loading tiers…
         </div>
       )}
       {saveMutation.isError && (
-        <div role="alert" className="mb-3 font-mono text-xs text-el-danger">
+        <div role="alert" className="mb-3 text-sm text-el-danger">
           save failed: {apiErrorText(saveMutation.error)}
         </div>
       )}
@@ -290,7 +290,7 @@ export default function TierBoard() {
                   <span className="sr-only">Tier {tier.tier} — capability tier</span>
                 </span>
                 {tier.tier === 0 && (
-                  <span className="font-mono text-micro text-el-muted">
+                  <span className="text-xs text-el-muted">
                     deterministic
                   </span>
                 )}
@@ -308,7 +308,7 @@ export default function TierBoard() {
                         tier_overrides: { [String(tier.tier)]: [] },
                       })
                     }
-                    className="ml-auto font-mono text-micro uppercase tracking-[0.5px] text-el-secondary"
+                    className="ml-auto text-xs font-medium text-el-secondary"
                   >
                     reset to default
                   </Button>
@@ -316,7 +316,7 @@ export default function TierBoard() {
               </div>
 
               {order.length === 0 ? (
-                <p className="mt-2.5 font-mono text-xs text-el-muted">
+                <p className="mt-2.5 text-sm text-el-muted">
                   {tier.tier === 0
                     ? "no model chain — tier 0 runs deterministic (non-LLM) steps"
                     : "no models in this chain"}
@@ -343,7 +343,7 @@ export default function TierBoard() {
                         />
                         {expanded && editor && (
                           <div className="ml-8 mt-1.5 rounded-md border border-el-divider-soft bg-el-canvas px-3 py-2.5">
-                            <div className="mb-2 font-mono text-micro uppercase tracking-[0.8px] text-el-muted">
+                            <div className="mb-2 text-xs font-medium text-el-muted">
                               CAPABILITIES · {modelId}
                               {modelById.get(modelId)?.capability_overridden && (
                                 <span className="ml-2 text-el-warning">overridden</span>
