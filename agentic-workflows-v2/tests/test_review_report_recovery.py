@@ -538,3 +538,64 @@ def test_deeply_nested_reply_does_not_crash(parse: Any) -> None:
     report = parse(text)["review_report"]
 
     assert report["overall_status"] == "NEEDS_FIXES"
+
+
+# ---------------------------------------------------------------------------
+# Which fenced object is the result
+# ---------------------------------------------------------------------------
+
+
+@both_engines
+def test_explanatory_block_before_the_report_is_skipped(parse: Any) -> None:
+    text = (
+        'The schema I followed:\n```json\n{"schema": true}\n```\n'
+        "The review:\n```json\n"
+        '{"review_report": {"overall_status": "APPROVED", "quality_score": 9}}'
+        "\n```"
+    )
+
+    report = parse(text)["review_report"]
+
+    assert report == {"overall_status": "APPROVED", "quality_score": 9}
+
+
+def test_block_with_a_declared_key_wins_on_both_engines() -> None:
+    text = (
+        '```json\n{"note": "draft"}\n```\n'
+        '```json\n{"api_spec": {"style": "REST"}}\n```'
+    )
+
+    assert parse_llm_json_output(text, ["api_spec"])["api_spec"] == {"style": "REST"}
+    assert parse_step_outputs(text, ["api_spec"])["api_spec"] == {"style": "REST"}
+
+
+def test_first_block_is_kept_when_none_has_a_declared_key() -> None:
+    text = '```json\n{"a": 1}\n```\n```json\n{"b": 2}\n```'
+
+    assert parse_llm_json_output(text, ["missing"]) == {"a": 1}
+
+
+# ---------------------------------------------------------------------------
+# Lines inside multi-line strings
+# ---------------------------------------------------------------------------
+
+
+@both_engines
+def test_json_like_line_inside_a_code_string_is_not_a_repair_point(
+    parse: Any,
+) -> None:
+    """A quote inside a JSON string is escaped, so the line starts with ``\\``.
+
+    The member-line rule needs an unescaped ``"`` at the start of the line,
+    which inside valid JSON would already have ended the string.
+    """
+    code = 'before\n  "foo": "bar"\nafter'
+    text = (
+        '```json\n{"review_report": {"overall_status": "NEEDS_FIXES", '
+        '"findings": [{"code": "before\n  \\"foo\\": \\"bar\\"\nafter", '
+        '"title": "Keep me"}, {"title": "cut her'
+    )
+
+    findings = parse(text)["review_report"]["findings"]
+
+    assert findings[0] == {"code": code, "title": "Keep me"}

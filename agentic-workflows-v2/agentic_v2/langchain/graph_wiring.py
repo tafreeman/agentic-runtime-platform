@@ -45,10 +45,10 @@ from ..artifact_contracts import (
 from ..artifact_overlay import overlay_code_artifacts
 from ..engine.consensus import coerce_min_agreement, majority_vote
 from ..engine.llm_output_parsing import (
-    extract_json_candidates,
     normalize_expected_structure,
     parse_llm_json_output,
     parse_sentinel_output,
+    select_json_dict,
 )
 from ..integrations.base import TraceAdapter
 from ..integrations.tracing import NullTraceAdapter
@@ -459,30 +459,19 @@ def coerce_message_content_to_text(content: Any) -> str:
     return str(content)
 
 
-def parse_json_dict_from_text(text: str) -> dict[str, Any] | None:
+def parse_json_dict_from_text(
+    text: str, expected_output_keys: list[str] | None = None
+) -> dict[str, Any] | None:
     """Best-effort JSON object extraction from model text output.
 
-    Candidate generation is shared with the native engine
-    (:func:`agentic_v2.engine.llm_output_parsing.extract_json_candidates`),
-    which also covers ```json blocks with prose around them, so both engines
-    accept the same payloads.
+    Delegates to the native engine's
+    :func:`agentic_v2.engine.llm_output_parsing.select_json_dict`, so both
+    engines pick the same object from the same reply.
     """
     raw = text.strip()
     if not raw:
         return None
-
-    for candidate in extract_json_candidates(raw):
-        try:
-            # strict=False tolerates literal control characters (bare
-            # newlines/tabs) inside JSON string values — a common LLM output
-            # quirk that strict json.loads rejects wholesale.
-            parsed = json.loads(candidate, strict=False)
-        except (json.JSONDecodeError, RecursionError):
-            continue
-        if isinstance(parsed, dict):
-            return parsed
-
-    return None
+    return select_json_dict(raw, expected_output_keys)
 
 
 def parse_step_outputs(
@@ -509,7 +498,7 @@ def parse_step_outputs(
 
     parsed = parse_sentinel_output(normalized, expected_output_keys)
     if parsed is None:
-        parsed = parse_json_dict_from_text(normalized)
+        parsed = parse_json_dict_from_text(normalized, expected_output_keys)
         if parsed is not None and expected_output_keys:
             parsed = normalize_expected_structure(dict(parsed), expected_output_keys)
     if parsed is None:

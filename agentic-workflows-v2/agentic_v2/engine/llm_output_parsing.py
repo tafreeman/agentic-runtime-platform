@@ -597,27 +597,56 @@ def _salvage_expected_keys_from_jsonish(
 # ---------------------------------------------------------------------------
 
 
+def _carries_declared_output(
+    parsed: dict[str, Any], expected_output_keys: list[str]
+) -> bool:
+    """Return whether *parsed* holds a declared output (or a review report)."""
+    if any(key in parsed for key in expected_output_keys):
+        return True
+    return "review_report" in expected_output_keys and (
+        _report_from_mapping(parsed) is not None
+    )
+
+
+def select_json_dict(
+    text: str, expected_output_keys: list[str] | None = None
+) -> dict[str, Any] | None:
+    """Return the JSON object in *text* that carries the step's outputs.
+
+    Walks :func:`extract_json_candidates` in order and returns the first
+    object holding a declared output key, so an explanatory fenced block
+    before the real result is skipped. With no declared keys, or when no
+    object holds one, the first object is returned. Parsing uses
+    ``strict=False``, so literal control characters (bare newlines) inside
+    string values are tolerated.
+    """
+    first: dict[str, Any] | None = None
+    for candidate in extract_json_candidates(text):
+        parsed = _loads_dict(candidate)
+        if parsed is None:
+            continue
+        if not expected_output_keys or _carries_declared_output(
+            parsed, expected_output_keys
+        ):
+            return parsed
+        if first is None:
+            first = parsed
+    return first
+
+
 def parse_llm_json_output(
     response: str,
     expected_output_keys: list[str] | None,
 ) -> dict[str, Any]:
     """Parse model text output into a JSON dict with robust fallbacks.
 
-    Attempts each candidate from :func:`extract_json_candidates`.  If all
-    fail, returns ``{"raw_response": response}`` with a best-effort
+    Selects a candidate with :func:`select_json_dict`. If none parses,
+    returns ``{"raw_response": response}`` with a best-effort
     ``review_report`` salvaged from raw text (if expected).
-
-    Uses ``strict=False`` so that literal control characters (including bare
-    newlines) inside JSON string values — a common LLM output quirk — are
-    tolerated rather than causing a parse failure.
     """
-    for candidate in extract_json_candidates(response):
-        try:
-            parsed = json.loads(candidate, strict=False)
-            if isinstance(parsed, dict):
-                return normalize_expected_structure(parsed, expected_output_keys)
-        except _JSON_PARSE_ERRORS:
-            continue
+    parsed = select_json_dict(response, expected_output_keys)
+    if parsed is not None:
+        return normalize_expected_structure(parsed, expected_output_keys)
 
     fallback: dict[str, Any] = {"raw_response": response}
 
