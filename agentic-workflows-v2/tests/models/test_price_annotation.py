@@ -413,7 +413,7 @@ class TestOpenaiAliasForNvidia:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setenv("OPENAI_BASE_URL", self._NVIDIA)
-        assert _verdict(_row("openai:z-ai/glm-5.3-flash")) == (
+        assert _verdict(_row("openai:moonshotai/kimi-k3")) == (
             "free",
             self._VIA,
         )
@@ -522,7 +522,7 @@ class TestSourceDeclarations:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         _use_registry(monkeypatch)
-        assert _verdict(_row("nvidia:z-ai/glm-5.3-flash")) == (
+        assert _verdict(_row("nvidia:moonshotai/kimi-k3")) == (
             "free",
             "free tier declared for nvidia",
         )
@@ -639,18 +639,18 @@ class TestCuratedPaidBeatsDeclarations:
         _use_registry(
             monkeypatch,
             RegisteredModel(
-                id="nvidia:z-ai/glm-5.3-flash",
+                id="nvidia:moonshotai/kimi-k3",
                 provider="nvidia",
                 cost_lane="paid",
             ),
         )
-        assert _verdict(_row("nvidia:z-ai/glm-5.3-flash")) == self._PAID
+        assert _verdict(_row("nvidia:moonshotai/kimi-k3")) == self._PAID
 
     def test_uncurated_nvidia_id_is_still_the_declared_free_tier(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         _use_registry(monkeypatch)
-        assert _verdict(_row("nvidia:z-ai/glm-5.3-flash")) == (
+        assert _verdict(_row("nvidia:moonshotai/kimi-k3")) == (
             "free",
             "free tier declared for nvidia",
         )
@@ -662,12 +662,12 @@ class TestCuratedPaidBeatsDeclarations:
         _use_registry(
             monkeypatch,
             RegisteredModel(
-                id="openai:deepseek-ai/deepseek-v4-flash",
+                id="openai:deepseek-ai/deepseek-v4.1-flash",
                 provider="openai",
                 cost_lane="paid",
             ),
         )
-        assert _verdict(_row("openai:deepseek-ai/deepseek-v4-flash")) == self._PAID
+        assert _verdict(_row("openai:deepseek-ai/deepseek-v4.1-flash")) == self._PAID
 
     def test_openai_alias_entry_with_no_curation_is_still_free(
         self, monkeypatch: pytest.MonkeyPatch

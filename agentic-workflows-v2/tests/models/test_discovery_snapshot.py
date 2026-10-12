@@ -319,14 +319,14 @@ def test_nim_curated_free_endpoint_is_free_uncurated_id_fails_closed_to_paid(
         cloud_discovery,
         "discover_cloud_models",
         lambda: [
-            cloud_discovery.CloudModelInfo(id="nvidia:minimaxai/minimax-m3"),
+            cloud_discovery.CloudModelInfo(id="nvidia:openai/gpt-oss-20b"),
             cloud_discovery.CloudModelInfo(id="nvidia:some/uncurated-model"),
         ],
     )
 
     result = discover_all_models()
     by_id = {m.id: m for m in result}
-    assert by_id["nvidia:minimaxai/minimax-m3"].cost_lane == "free"
+    assert by_id["nvidia:openai/gpt-oss-20b"].cost_lane == "free"
     assert by_id["nvidia:some/uncurated-model"].cost_lane == "paid"
 
 

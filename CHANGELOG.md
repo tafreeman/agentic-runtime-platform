@@ -1,5 +1,44 @@
 # Changelog
 
+## Unreleased - Retired NVIDIA DeepSeek V4 models and judge default
+
+- **Tiers 2-3 now use `nvidia:z-ai/glm-5.3-flash` as their NVIDIA rung, and
+  tiers 4-5 use `nvidia:z-ai/glm-5.3`.** NIM retired
+  `deepseek-ai/deepseek-v4-flash` and `deepseek-ai/deepseek-v4-pro` on
+  2026-08-07 and now answers HTTP 410 Gone for both. The boot drift check had
+  already quarantined them, so these tiers were routing around the gap without
+  saying so. Both replacements were chat-verified through `POST /api/chat` on
+  2026-10-11. `deepseek-ai/deepseek-v4.1-flash` was correct on every call, but
+  six calls in a row took 45-66s each, so it lost the tier 2-3 slot to
+  `glm-5.3-flash`. Both new rungs stay curated `paid`, like the entries they
+  replace, so `AGENTIC_MAX_COST_LANE=free` routing does not change. A new
+  registry test pins that: under a free ceiling, each tier keeps only its local
+  Ollama tail.
+- **`special.judge_default` is now `nvidia:z-ai/glm-5.3`.** The old default,
+  `deepseek-v4-pro`, made every default `LLMJudge` call fail with a 410 from
+  2026-08-07 on. Explicit-model judging has no fallback, so those runs got no
+  score at all. Judge scores from now on are not comparable with
+  `deepseek-v4-pro` scores from before that date. The SWE-fix A/B campaign is
+  not affected, because its advisory judge (`evals/swe_ab/judge_free.py`, weight
+  0.0) doesn't read this slot.
+- **NIM requests for `z-ai/glm-*` also send `reasoning_effort: "low"`.** GLM
+  ignores the `chat_template_kwargs: {"thinking": false}` field every NIM
+  request already carries, and on a long input it spent the judge's whole
+  1,200-token budget reasoning, returning no answer. `"low"` is the lowest
+  level GLM honours. GLM also gets `chat_template_kwargs.clear_thinking: true`,
+  so an earlier turn's reasoning is never re-rendered into the prompt (702 vs 41
+  prompt tokens when one is present). Neither engine sends reasoning back today,
+  and a new test pins that. Both engines send these fields, and
+  `NVIDIA_DISABLE_THINKING=0` still turns all of it off. `LLMJudge` now raises a clear "returned no answer
+  (finish_reason=…, max_tokens=…)" error for an empty or null reply instead of
+  an `AttributeError`.
+- **Seven retired ids are gone from the NIM free-endpoint block:**
+  `deepseek-v4-flash-0731`, `deepseek-v4-pro-0813`, `minimax-m3`,
+  `mistral-nemotron`, `nemotron-3-nano-30b-a3b`, `gpt-oss-120b` and
+  `step-3.7-flash`. Each returned 410 on 2026-10-11. The registry comment now
+  lists their end-of-life dates. `tools/llm/model_registry.py` also drops the
+  three retired ids it still marked `working` and lists the two replacements.
+
 ## Unreleased - Reviewer reports survive damaged JSON
 
 - **`review_report` keeps the whole report.** Before, a reviewer reply whose
