@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased - Secret masks keep JSON replies parseable
+
+- **Masking no longer corrupts JSON replies.** The response sanitizer masks
+  secrets before step outputs are parsed. Its `password=`/`api_key=`-style
+  masks ran to the next whitespace, so a secret inside a JSON string also took
+  the string's closing quote and the following comma, and the reply stopped
+  parsing. A mask now ends at that closing quote when the secret before it is
+  long enough to match. Detection is unchanged, and a value too short before
+  the quote is masked in full as before (ADR-061).
+- **More connection strings are masked.** `postgresql://`, driver URLs such
+  as `postgresql+asyncpg://` and `mysql+pymysql://`, `mongodb+srv://` and
+  `rediss://` now match `connection_string`. Before, credentials in those URLs
+  reached step outputs unmasked.
+
 ## Unreleased - fullstack_generation ships and re-reviews its rework
 
 - **Reworked code now ships.** `developer_rework` declares `backend_code`,
