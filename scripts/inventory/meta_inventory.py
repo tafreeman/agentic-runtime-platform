@@ -24,8 +24,11 @@ from _common import (
 
 GH_REPO = "tafreeman/agentic-runtime-platform"
 WF_DIR = "agentic-workflows-v2/agentic_v2/workflows/definitions"
+# Matches "Status: Accepted", "**Status:** Accepted", and the table row
+# "| **Status** | 🟡 Proposed |", skipping an optional leading pipe and status glyph.
 ADR_STATUS_RE = re.compile(
-    r"^\*{0,2}Status\*{0,2}\s*[:|]\s*\**\s*([A-Za-z -]+)", re.I | re.M
+    r"^\|?\s*\**Status\**\s*[:|]\s*\**\s*(?:[^\w\s]+\s*)?([A-Za-z][A-Za-z -]*)",
+    re.I | re.M,
 )
 LINK_RE = re.compile(r"\]\(([^)#\s]+)")
 
