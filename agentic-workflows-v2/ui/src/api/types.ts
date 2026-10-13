@@ -783,7 +783,9 @@ export interface EvalComparisonResponse {
 // Chat playground — POST /api/chat (SSE stream)
 // ---------------------------------------------------------------------------
 // Hand-maintained mirror of the Pydantic contract in
-// `agentic_v2/contracts/chat.py`. The endpoint answers HTTP 200 with
+// `agentic_v2/contracts/chat.py`, held to the generated wire types
+// (`chat_request.generated.ts`, `chat_stream_event.generated.ts`) by the
+// compile-time checks in `chatWireContract.ts`. The endpoint answers HTTP 200 with
 // `text/event-stream` frames (`data: <json>\n\n`); every stream terminates
 // with exactly one `done` OR one `error` event. Provider failures (unknown
 // prefix, missing key, 401, 429, connection refused) arrive as in-stream
