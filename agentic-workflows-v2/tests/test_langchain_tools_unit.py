@@ -269,3 +269,22 @@ class TestDirectoryToolsFileBase:
         assert "a.py" in search_files.invoke(
             {"directory": str(tmp_path), "query": "token"}
         )
+
+    def test_escaping_glob_pattern_is_filtered(self, tmp_path, monkeypatch):
+        from agentic_v2.langchain.tools import file_list, search_files
+
+        base = tmp_path / "base"
+        outside = tmp_path / "outside"
+        base.mkdir()
+        outside.mkdir()
+        (base / "ok.py").write_text("token = 1\n", encoding="utf-8")
+        (outside / "secret.py").write_text("token = 2\n", encoding="utf-8")
+        monkeypatch.setenv("AGENTIC_FILE_BASE_DIR", str(base))
+
+        listed = file_list.invoke({"directory": str(base), "pattern": "../outside/*.py"})
+        searched = search_files.invoke(
+            {"directory": str(base), "query": "", "file_pattern": "../outside/*.py"}
+        )
+
+        assert "secret.py" not in listed
+        assert "secret.py" not in searched

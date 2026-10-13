@@ -296,6 +296,22 @@ def _outside_file_base(path: str) -> str | None:
     return None
 
 
+def _match_within_file_base(match: Path) -> bool:
+    """True when a glob match stays inside ``AGENTIC_FILE_BASE_DIR`` (if set).
+
+    A glob pattern such as ``../outside/*.py`` can leave a validated directory,
+    so every match is checked after resolution, which also covers symlinks.
+    """
+    base_dir = os.environ.get("AGENTIC_FILE_BASE_DIR")
+    if not base_dir:
+        return True
+    try:
+        ensure_within_base(str(match), base_dir)
+    except ValueError:
+        return False
+    return True
+
+
 @tool
 def file_list(directory: str, pattern: str = "*") -> str:
     """List files in a directory matching a glob pattern.
@@ -311,7 +327,11 @@ def file_list(directory: str, pattern: str = "*") -> str:
     if not p.is_dir():
         return f"ERROR: Not a directory: {directory}"
     try:
-        files = sorted(str(f.relative_to(p)) for f in p.glob(pattern) if f.is_file())
+        files = sorted(
+            str(f.relative_to(p))
+            for f in p.glob(pattern)
+            if f.is_file() and _match_within_file_base(f)
+        )
         return json.dumps(files[:200])
     except Exception as e:
         return f"ERROR: {e}"
@@ -470,7 +490,7 @@ def search_files(
     query_lower = query.lower()
     try:
         for filepath in p.rglob(file_pattern):
-            if not filepath.is_file():
+            if not filepath.is_file() or not _match_within_file_base(filepath):
                 continue
             if _scan_file_for_query(filepath, p, query_lower, results, max_results):
                 break
