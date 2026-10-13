@@ -31,12 +31,17 @@ except ImportError:
 # Optional dependency: LLM-based evaluator
 # ---------------------------------------------------------------------------
 try:
-    from tools.agents.benchmarks.llm_evaluator import (
-        EvaluationResult,
-        evaluate_with_llm,
+    # Reporting helpers moved to evaluator_reporting; importing them from
+    # llm_evaluator raised ImportError, which this guard swallowed and left the
+    # LLM-judge path permanently disabled.
+    from tools.agents.benchmarks.evaluator_reporting import (
         print_evaluation_report,
         save_evaluation_report,
         summarize_batch_results,
+    )
+    from tools.agents.benchmarks.llm_evaluator import (
+        EvaluationResult,
+        evaluate_with_llm,
     )
 
     HAS_LLM_EVALUATOR = True
