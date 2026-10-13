@@ -4,7 +4,8 @@ Run with the markdown package available but without touching the project venv:
     uv run --with markdown python scripts/inventory/render_html.py
 
 Input:  docs/inventory/ARP-REPO-INVENTORY-<date>.md (from assemble.py)
-        .superdesign/tmp/template.html (Superdesign draft, fetched with get-design)
+        scripts/inventory/templates/superdesign_report.html (committed copy of the
+        Superdesign draft, so a fresh clone can render without the local .superdesign/)
 Output: docs/inventory/ARP-REPO-INVENTORY-<date>.html (also importable as a draft version)
 """
 
@@ -26,7 +27,7 @@ from _common import HOME_REPO, OUT_DIR
 
 INV = HOME_REPO / "docs" / "inventory"
 _REF_IDS = itertools.count(1)  # page-wide: anchor ids must be unique
-TEMPLATE = HOME_REPO / ".superdesign" / "tmp" / "template.html"
+TEMPLATE = HERE / "templates" / "superdesign_report.html"
 GH_BLOB = "https://github.com/tafreeman/agentic-runtime-platform/blob/{rev}/{path}"
 GH_PR = "https://github.com/tafreeman/agentic-runtime-platform/pull/{n}"
 

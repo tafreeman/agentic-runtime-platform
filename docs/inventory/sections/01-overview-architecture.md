@@ -33,7 +33,7 @@ Source of truth: clean `origin/main` worktree at revision `c3b2d328` (2026-10-12
 
 #### Shipped workflow definitions (`agentic-workflows-v2/agentic_v2/workflows/definitions/`)
 
-`bug_resolution`, `code_review`, `conditional_branching`, `consensus_review`, `fullstack_generation`, `iterative_review`, `plan_tribunal`, `test_deterministic`, `test_workflow` (9 YAML files on disk; `meta_inventory.json` `workflows` has 12 entries, the extra 3 are from other trees, unverified which).
+`bug_resolution`, `code_review`, `conditional_branching`, `consensus_review`, `fullstack_generation`, `iterative_review`, `plan_tribunal`, `test_deterministic`, `test_workflow` (9 YAML files at the pinned revision; `meta_inventory.json` `workflows` lists the same 9).
 
 UI pages (`agentic-workflows-v2/ui/src/pages/`): Dashboard, Workflows, WorkflowDetail, WorkflowEditor, Runs, RunDetail, Live, Evaluations, Datasets, ModelFinder, Settings, PrototypeLab.
 

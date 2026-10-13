@@ -54,7 +54,8 @@ def _orphan_pycache_dirs() -> list[str]:
 
 def _dir_size(path: Path) -> int:
     total = 0
-    for dirpath, _dirs, files in os.walk(path):
+    for dirpath, dirnames, files in os.walk(path):
+        dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
         for f in files:
             try:
                 total += (Path(dirpath) / f).stat().st_size

@@ -192,14 +192,17 @@ def _deps(files: list[str]) -> dict[str, object]:
 
 
 def _gh(*args: str) -> object:
-    proc = subprocess.run(
-        ["gh", *args, "-R", GH_REPO],
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
+    try:
+        proc = subprocess.run(
+            ["gh", *args, "-R", GH_REPO],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+        )
+    except OSError as exc:  # gh not installed: FileNotFoundError on launch
+        return {"error": f"gh unavailable: {exc}"[:300]}
     try:
         return (
             json.loads(proc.stdout)

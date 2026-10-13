@@ -222,7 +222,14 @@ def main() -> None:
             modules.append(info)
     test_paths = [p for p in files if p.endswith(".py") and p.startswith(TEST_ROOTS)]
     test_texts = {p: read_text(REPO / p) for p in test_paths}
-    extra = [p for p in files if p.endswith((".py", ".toml", ".yaml", ".yml", ".md"))]
+    # Generated reports describe previous results; counting them would make
+    # each rerun change the analysis it is reporting on.
+    extra = [
+        p
+        for p in files
+        if p.endswith((".py", ".toml", ".yaml", ".yml", ".md"))
+        and not p.startswith("docs/inventory/")
+    ]
     all_text = "\n".join(read_text(REPO / p) for p in extra)
     _usage(modules, test_texts, all_text)
 
