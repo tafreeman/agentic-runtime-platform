@@ -213,10 +213,10 @@ def _stats() -> list[tuple[str, str, str]]:
     prs = meta["git"]["open_prs"]
 
     return [
-        (f'{sum(int(m.get("loc", 0)) for m in src):,}', "Python source LOC", "ink"),
-        (f'{py["test_totals"]["functions"]:,}', "Python test functions", "ink"),
+        (f"{sum(int(m.get('loc', 0)) for m in src):,}", "Python source LOC", "ink"),
+        (f"{py['test_totals']['functions']:,}", "Python test functions", "ink"),
         (
-            f'{sum(r["loc"] for r in ui["files"] if not r["is_test"]):,}',
+            f"{sum(r['loc'] for r in ui['files'] if not r['is_test']):,}",
             "UI source LOC",
             "ink",
         ),
@@ -261,8 +261,46 @@ def _page(
     )
 
 
+def _set_span(tpl: str, sd_id: int, text: str) -> str:
+    """Replace the text of the element tagged ``data-sd-id`` (first match only)."""
+    return re.sub(
+        rf'(data-sd-id="{sd_id}">)[^<]*(<)',
+        lambda m: m.group(1) + html.escape(text, quote=False) + m.group(2),
+        tpl,
+        count=1,
+    )
+
+
+def _fill_cover(tpl: str) -> str:
+    """Populate the cover from the data so it cannot describe another revision."""
+    meta = json.loads((OUT_DIR / "meta_inventory.json").read_text(encoding="utf-8"))
+    py = json.loads((OUT_DIR / "py_inventory.json").read_text(encoding="utf-8"))
+    ui = json.loads((OUT_DIR / "ui_inventory.json").read_text(encoding="utf-8"))
+    short, _, rest = str(meta["revision"]).partition(" ")
+    day = rest[:10]
+    src = [m for m in py["modules"] if not m.get("is_test")]
+    tpl = _set_span(tpl, 5, f"Repository Inventory · {day}")
+    tpl = _set_span(tpl, 9, f"rev {short}")
+    tpl = _set_span(tpl, 11, f"{len(src)} Python modules")
+    tpl = _set_span(tpl, 13, f"{len(ui['files'])} UI files")
+    tpl = _set_span(tpl, 15, f"{len(meta['workflows'])} workflows")
+    tpl = _set_span(tpl, 17, f"{len(meta['ci'])} CI jobs")
+    tpl = _set_span(tpl, 19, f"{len(meta['adrs'])} ADRs")
+    tpl = re.sub(
+        r"Snapshot taken [0-9/\-]+ against",
+        f"Snapshot taken {day} against",
+        tpl,
+        count=1,
+    )
+    return re.sub(
+        r"(<code[^>]*>)c3b2d328(</code>)",
+        lambda m: m.group(1) + short + m.group(2),
+        tpl,
+    )
+
+
 def _base_template() -> str:
-    tpl = TEMPLATE.read_text(encoding="utf-8")
+    tpl = _fill_cover(TEMPLATE.read_text(encoding="utf-8"))
     tiles = "".join(
         f'<div><div class="text-3xl font-display text-el-{tone}">{val}</div>'
         f'<div class="text-micro uppercase font-mono text-el-ink-muted mt-1 tracking-wider">{label}</div></div>'
@@ -270,9 +308,11 @@ def _base_template() -> str:
     )
     tpl = re.sub(
         r"(<!-- Stat Tiles -->\s*<div[^>]*>).*?(</div>\s*</div>\s*</div>\s*<!-- Main Layout -->)",
-        lambda m: m.group(1)
-        + tiles
-        + "</div>\n      </div>\n    </div>\n\n    <!-- Main Layout -->",
+        lambda m: (
+            m.group(1)
+            + tiles
+            + "</div>\n      </div>\n    </div>\n\n    <!-- Main Layout -->"
+        ),
         tpl,
         flags=re.S,
     )

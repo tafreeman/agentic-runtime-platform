@@ -115,7 +115,7 @@ def main() -> None:
 
     top_level = []
     for entry in sorted(REPO.iterdir()):
-        if entry.name in {".git", "node_modules", ".venv"}:
+        if entry.name in SKIP_DIRS:
             size = None
         else:
             size = (
