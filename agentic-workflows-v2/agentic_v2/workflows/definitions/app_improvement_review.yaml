@@ -323,6 +323,8 @@ steps:
       disclose that fact. Rank changes by user impact, risk reduction, effort,
       reversibility, dependencies, and evidence confidence. Select an explicit
       direction consistent with change_appetite and preserve minority views.
+      Never rank, score or recommend an option listed in discarded_ideas; the
+      challenge step rejected it as unsupported.
     depends_on: [challenge_analysis]
     tools: []
     inputs:
@@ -337,6 +339,7 @@ steps:
         performance_cost: ${steps.performance_cost_lens.outputs.score}
       validated_findings: ${steps.challenge_analysis.outputs.validated_findings}
       disagreements: ${steps.challenge_analysis.outputs.disagreements}
+      discarded_ideas: ${steps.challenge_analysis.outputs.discarded_ideas}
       architecture_options: ${steps.architecture_lens.outputs.options}
       product_ux_options: ${steps.product_ux_lens.outputs.options}
       reliability_security_options: ${steps.reliability_security_lens.outputs.options}
@@ -379,6 +382,8 @@ steps:
       recommended direction, then present evidence, disagreements, ranked
       changes, the minimum first slice, the roadmap, rethink options, and
       limitations. Do not introduce findings that were not validated upstream.
+      Return rethink_options with every entry listed in discarded_ideas
+      removed.
     depends_on: [score_and_prioritize, build_roadmap]
     tools: []
     inputs:
@@ -390,6 +395,7 @@ steps:
       validated_findings: ${steps.challenge_analysis.outputs.validated_findings}
       disagreements: ${steps.challenge_analysis.outputs.disagreements}
       rethink_options: ${steps.reinvention_lens.outputs.rethink_options}
+      discarded_ideas: ${steps.challenge_analysis.outputs.discarded_ideas}
       roadmap: ${steps.build_roadmap.outputs.roadmap}
       success_metrics: ${steps.build_roadmap.outputs.success_metrics}
       kill_criteria: ${steps.build_roadmap.outputs.kill_criteria}
@@ -398,6 +404,7 @@ steps:
     outputs:
       executive_summary: executive_summary
       report: full_report
+      rethink_options: rethink_options
 
 outputs:
   executive_summary:
@@ -413,7 +420,7 @@ outputs:
   roadmap:
     from: ${steps.build_roadmap.outputs.roadmap}
   rethink_options:
-    from: ${steps.reinvention_lens.outputs.rethink_options}
+    from: ${steps.assemble_report.outputs.rethink_options}
   evidence_gaps:
     from: ${steps.challenge_analysis.outputs.evidence_gaps}
   full_report:

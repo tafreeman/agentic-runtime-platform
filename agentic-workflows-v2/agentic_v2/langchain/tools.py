@@ -11,8 +11,10 @@ import ast
 import asyncio
 import json
 import os
+import re
 import shlex
 import subprocess
+from collections.abc import Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urljoin
@@ -326,6 +328,60 @@ def _match_within_file_base(match: Path) -> bool:
     return True
 
 
+def _glob_to_regex(pattern: str, recursive: bool) -> re.Pattern[str]:
+    """Compile a ``/``-separated glob into a full-match regex over relative paths.
+
+    ``**`` spans any number of directories, ``*`` and ``?`` stay within one
+    segment, and ``[...]`` classes are kept. *recursive* mirrors ``rglob``,
+    matching the pattern at any depth.
+    """
+    parts: list[str] = ["(?:[^/]+/)*"] if recursive else []
+    segments = pattern.split("/")
+    for index, segment in enumerate(segments):
+        if segment == "**":
+            parts.append("(?:[^/]+/)*" if index < len(segments) - 1 else "[^/]+")
+            continue
+        out: list[str] = []
+        i = 0
+        while i < len(segment):
+            ch = segment[i]
+            if ch == "*":
+                out.append("[^/]*")
+            elif ch == "?":
+                out.append("[^/]")
+            elif ch == "[" and (close := segment.find("]", i + 2)) != -1:
+                body = segment[i + 1 : close]
+                body = "^" + body[1:] if body.startswith("!") else body
+                out.append("[" + body.replace("\\", "\\\\") + "]")
+                i = close
+            else:
+                out.append(re.escape(ch))
+            i += 1
+        parts.append("".join(out) + ("/" if index < len(segments) - 1 else ""))
+    flags = re.IGNORECASE if os.name == "nt" else 0
+    return re.compile("".join(parts), flags)
+
+
+def _iter_glob(root: Path, pattern: str, recursive: bool = False) -> Iterator[Path]:
+    """Yield files under *root* matching *pattern*.
+
+    Without ``AGENTIC_FILE_BASE_DIR`` this is plain ``glob``/``rglob``. With it
+    the tree is walked without following directory symlinks, so a link inside
+    the base cannot lead the traversal into a large outside tree before the
+    per-match containment check runs.
+    """
+    if not os.environ.get("AGENTIC_FILE_BASE_DIR"):
+        yield from root.rglob(pattern) if recursive else root.glob(pattern)
+        return
+    matcher = _glob_to_regex(pattern, recursive)
+    for dirpath, _dirnames, filenames in os.walk(root, followlinks=False):
+        rel_dir = Path(dirpath).relative_to(root).as_posix()
+        for name in filenames:
+            rel = name if rel_dir == "." else f"{rel_dir}/{name}"
+            if matcher.fullmatch(rel):
+                yield Path(dirpath) / name
+
+
 @tool
 def file_list(directory: str, pattern: str = "*") -> str:
     """List files in a directory matching a glob pattern.
@@ -343,7 +399,7 @@ def file_list(directory: str, pattern: str = "*") -> str:
     try:
         files = sorted(
             str(f.relative_to(p))
-            for f in p.glob(pattern)
+            for f in _iter_glob(p, pattern)
             if f.is_file() and _match_within_file_base(f)
         )
         return json.dumps(files[:200])
@@ -503,7 +559,7 @@ def search_files(
 
     query_lower = query.lower()
     try:
-        for filepath in p.rglob(file_pattern):
+        for filepath in _iter_glob(p, file_pattern, recursive=True):
             if not filepath.is_file() or not _match_within_file_base(filepath):
                 continue
             if _scan_file_for_query(filepath, p, query_lower, results, max_results):

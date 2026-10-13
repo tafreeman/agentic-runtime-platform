@@ -307,3 +307,49 @@ class TestDirectoryToolsFileBase:
             assert tools.search_files.invoke(
                 {"directory": str(tmp_path), "query": "x", "file_pattern": pattern}
             ).startswith("ERROR: Pattern escapes")
+
+    def test_directory_symlink_is_not_traversed(self, tmp_path, monkeypatch):
+        from agentic_v2.langchain.tools import file_list, search_files
+
+        base = tmp_path / "base"
+        outside = tmp_path / "outside"
+        base.mkdir()
+        outside.mkdir()
+        (outside / "secret.py").write_text("token = 2\n", encoding="utf-8")
+        (base / "ok.py").write_text("token = 1\n", encoding="utf-8")
+        try:
+            (base / "link").symlink_to(outside, target_is_directory=True)
+        except (OSError, NotImplementedError):
+            pytest.skip("directory symlinks unavailable")
+        monkeypatch.setenv("AGENTIC_FILE_BASE_DIR", str(base))
+
+        listed = file_list.invoke({"directory": str(base), "pattern": "link/**/*"})
+        everything = file_list.invoke({"directory": str(base), "pattern": "**/*.py"})
+        searched = search_files.invoke({"directory": str(base), "query": ""})
+
+        assert "secret.py" not in listed
+        assert "secret.py" not in everything
+        assert "secret.py" not in searched
+        assert "ok.py" in everything and "ok.py" in searched
+
+    @pytest.mark.parametrize(
+        "pattern",
+        ["*.py", "**/*.py", "pkg/*.py", "pkg/**/*.py", "*/*.py", "m?.py", "[ab].py"],
+    )
+    def test_confined_glob_matches_pathlib(self, tmp_path, monkeypatch, pattern):
+        from agentic_v2.langchain.tools import file_list
+
+        for rel in ("a.py", "b.py", "m1.py", "x.txt", "pkg/c.py", "pkg/sub/d.py"):
+            f = tmp_path / rel
+            f.parent.mkdir(parents=True, exist_ok=True)
+            f.write_text("x", encoding="utf-8")
+        expected = sorted(
+            f.relative_to(tmp_path).as_posix()
+            for f in tmp_path.glob(pattern)
+            if f.is_file()
+        )
+        monkeypatch.setenv("AGENTIC_FILE_BASE_DIR", str(tmp_path))
+
+        got = json.loads(file_list.invoke({"directory": str(tmp_path), "pattern": pattern}))
+
+        assert sorted(p.replace("\\", "/") for p in got) == expected

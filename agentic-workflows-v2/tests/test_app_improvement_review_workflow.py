@@ -77,3 +77,19 @@ def test_app_improvement_review_compiles_for_langchain_adapter() -> None:
 
     assert len(config.steps) == 11
     assert compile_workflow(config, validate_only=True) is not None
+
+
+def test_discarded_ideas_reach_ranking_and_the_report() -> None:
+    """Options the challenge step rejects cannot re-enter downstream steps."""
+    workflow = WorkflowLoader().load("app_improvement_review")
+    discarded = "${steps.challenge_analysis.outputs.discarded_ideas}"
+
+    for name in ("score_and_prioritize", "assemble_report"):
+        assert workflow.dag.steps[name].input_mapping["discarded_ideas"] == discarded
+
+    # The published rethink options are the report step's filtered list, not
+    # the raw reinvention-lens output.
+    assert (
+        workflow.outputs["rethink_options"].from_expr
+        == "${steps.assemble_report.outputs.rethink_options}"
+    )
