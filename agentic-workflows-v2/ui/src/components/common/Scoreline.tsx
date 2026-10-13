@@ -29,8 +29,8 @@ const CELL = "flex min-w-0 flex-col gap-2 py-4";
  */
 export default function Scoreline({ items, label, className = "" }: Readonly<ScorelineProps>) {
   // Two metrics stay side by side at every width (ruled between them);
-  // three or four collapse to one/two columns on phones, unruled.
-  let cols = "grid-cols-1 sm:grid-cols-3";
+  // three stay compact; four collapse to two columns on phones, unruled.
+  let cols = "grid-cols-3";
   let pad = "px-1 sm:px-5 sm:first:pl-0";
   if (items.length >= 4) cols = "grid-cols-2 sm:grid-cols-4";
   else if (items.length === 2) {

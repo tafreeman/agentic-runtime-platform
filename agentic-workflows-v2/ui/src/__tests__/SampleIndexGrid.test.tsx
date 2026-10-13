@@ -114,7 +114,7 @@ describe("SampleIndexGrid", () => {
     const row = screen.getByRole("button", { name: "Select sample 0" });
     expect(row).toHaveAttribute("type", "button");
     fireEvent.click(row);
-    expect(onSelect).toHaveBeenCalledWith(0);
+    expect(onSelect).toHaveBeenCalledWith(0, row);
   });
 
   it("surfaces the server detail with a remedy when samples fail to load", () => {

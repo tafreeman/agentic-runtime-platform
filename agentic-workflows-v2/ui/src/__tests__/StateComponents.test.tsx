@@ -8,14 +8,15 @@ import NoData from "../components/states/NoData";
 import NotFoundPage from "../components/states/NotFoundPage";
 
 describe("EmptyState", () => {
-  it("renders '$ no <entity> yet' message", () => {
+  it("renders an empty-state heading without terminal decoration", () => {
     render(
       <MemoryRouter>
         <EmptyState entity="runs" />
       </MemoryRouter>
     );
     expect(screen.getByText("no runs yet")).toBeInTheDocument();
-    expect(screen.getByText("$")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "no runs yet" })).toBeInTheDocument();
+    expect(screen.queryByText("$")).not.toBeInTheDocument();
   });
 
   it("renders optional action slot", () => {

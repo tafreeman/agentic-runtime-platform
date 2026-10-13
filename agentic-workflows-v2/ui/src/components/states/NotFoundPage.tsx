@@ -1,37 +1,16 @@
 import { Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
-/**
- * Terminal-style 404 page.
- * Rendered when the router hits the catch-all "*" route.
- */
+/** The catch-all route keeps a readable heading and a safe return path. */
 export default function NotFoundPage() {
   return (
-    <div className="flex flex-col items-center justify-center gap-4 py-24 font-mono">
-      <pre
-        aria-hidden="true"
-        className="select-none text-center text-xs leading-tight text-el-muted"
-      >
-        {[
-          "  ╔════════════════════╗  ",
-          "  ║  404 not found     ║  ",
-          "  ╚════════════════════╝  ",
-        ].join("\n")}
-      </pre>
-      <div className="text-[13px] text-el-secondary">
-        <span className="text-el-muted">$</span>{" "}
-        <span>route not found</span>
-      </div>
-      {/* Breadcrumb back to root */}
-      <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 font-mono text-micro text-el-muted">
-        <Link
-          to="/"
-          className="focus-ring inline-flex min-h-9 items-center rounded-md px-1 text-el-accent-strong underline-offset-2 hover:underline"
-        >
-          ~/dashboard
-        </Link>
-        <span aria-hidden="true">/</span>
-        <span aria-current="page">404</span>
-      </nav>
+    <div className="flex h-full flex-col items-center justify-center gap-4 overflow-y-auto px-5 py-16 text-center">
+      <h1 className="font-display text-[40px] text-el-ink">404 not found</h1>
+      <p className="text-sm text-el-muted">route not found</p>
+      <p className="max-w-prose text-sm leading-relaxed text-el-secondary">This address does not match an application page. Return to the dashboard to find your workflows and runs.</p>
+      <Link to="/" className="focus-ring inline-flex min-h-10 items-center gap-2 rounded-md border border-el-control-border px-4 text-sm text-el-ink transition-colors hover:bg-el-hover">
+        <ArrowLeft aria-hidden="true" className="size-4" />Return to dashboard
+      </Link>
     </div>
   );
 }

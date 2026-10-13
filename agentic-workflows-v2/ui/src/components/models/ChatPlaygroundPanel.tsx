@@ -248,7 +248,7 @@ function ChatMessageRow({
                 }
                 className="max-h-80 w-full object-contain"
               />
-              <figcaption className="truncate border-t border-el-divider-soft px-2 py-1 font-mono text-micro text-el-muted">
+              <figcaption className="truncate border-t border-el-divider-soft px-2 py-1 text-xs text-el-muted">
                 {asset.name}
               </figcaption>
             </figure>
@@ -519,7 +519,7 @@ export default function ChatPlaygroundPanel({
       {probeError && probeErrorInfo?.unreachable && (
         <p
           data-testid="playground-probe-error"
-          className="font-mono text-micro text-el-muted"
+          className="text-xs text-el-muted"
         >
           probe unavailable — {probeErrorInfo.summary}
         </p>
@@ -527,7 +527,7 @@ export default function ChatPlaygroundPanel({
       {probeError && !probeErrorInfo?.unreachable && (
         <div
           role="alert" data-testid="playground-probe-error"
-          className="rounded-lg border border-el-danger/40 bg-el-danger-soft p-3 font-mono text-xs text-el-danger"
+          className="rounded-lg border border-el-danger/40 bg-el-danger-soft p-3 text-sm text-el-danger"
         >
           probe failed: {apiErrorText(probeError)}
         </div>
@@ -624,7 +624,7 @@ export default function ChatPlaygroundPanel({
       {error && (
         <div
           role="alert" data-testid="chat-error"
-          className="flex flex-wrap items-center gap-2 rounded-lg border border-el-danger/60 bg-el-danger-soft p-3 font-mono text-xs text-el-danger"
+          className="flex flex-wrap items-center gap-2 rounded-lg border border-el-danger/60 bg-el-danger-soft p-3 text-sm text-el-danger"
         >
           <span className="font-semibold uppercase tracking-[0.5px]">stream failed</span>
           {error.category && (

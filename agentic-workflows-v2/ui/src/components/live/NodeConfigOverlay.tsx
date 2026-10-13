@@ -15,7 +15,7 @@ const FIELD_CLASS =
 
 /** Field label: small tracked overline above the control. */
 const LABEL_CLASS =
-  "mb-2 block font-mono text-micro uppercase tracking-[0.5px] text-el-muted";
+  "mb-2 block text-xs font-medium text-el-muted";
 
 interface NodeConfig {
   model?: string;
@@ -179,7 +179,7 @@ export default function NodeConfigOverlay({
               >
                 Configure Step
               </h2>
-              <p className="font-mono text-micro text-el-secondary">{stepName}</p>
+              <p className="text-xs text-el-secondary">{stepName}</p>
             </div>
           </div>
           <Button
@@ -223,7 +223,7 @@ export default function NodeConfigOverlay({
           {/* System Prompt */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label htmlFor="node-config-system-prompt" className="block font-mono text-micro uppercase tracking-[0.5px] text-el-muted">
+              <label htmlFor="node-config-system-prompt" className="block text-xs font-medium text-el-muted">
                 System Prompt / Instructions
               </label>
               {config.system_prompt && (
@@ -361,7 +361,7 @@ export default function NodeConfigOverlay({
                       }}
                       className="focus-ring rounded-sm border-el-divider accent-el-action"
                     />
-                    <span className="font-mono text-micro text-el-secondary">{tool}</span>
+                    <span className="text-xs text-el-secondary">{tool}</span>
                   </label>
                 ))}
               </div>

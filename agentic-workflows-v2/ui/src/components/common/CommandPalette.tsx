@@ -218,7 +218,7 @@ export default function CommandPalette() {
         role="dialog"
         aria-modal="true"
         aria-label="Command palette"
-        className="relative w-full max-w-lg rounded-lg border border-el-divider bg-el-raised font-mono shadow-(--el-shadow-raised)"
+        className="relative w-full max-w-lg rounded-lg border border-el-divider bg-el-raised font-sans shadow-(--el-shadow-raised)"
       >
         {/* Search row. The input draws no outline of its own: the row shows a
             full-strength 2px inset ring while the input has focus. */}

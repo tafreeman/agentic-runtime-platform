@@ -104,7 +104,7 @@ const CAPABILITY_TIERS: readonly CapabilityTier[] = [
 
 const CARD_CLASS = "rounded-lg border border-el-divider bg-el-surface";
 const SELECT_CLASS =
-  "h-10 rounded-md border border-el-control-border bg-el-raised px-2 font-mono text-xs text-el-ink focus-ring focus-visible:border-el-focus";
+  "h-10 rounded-md border border-el-control-border bg-el-raised px-3 text-[13px] text-el-ink focus-ring focus-visible:border-el-focus";
 /** >=36x36px centred ::after hit area for visually compact controls. */
 const HIT_AREA =
   "relative after:absolute after:top-1/2 after:left-1/2 after:size-full after:min-h-9 after:min-w-9 after:-translate-x-1/2 after:-translate-y-1/2";
@@ -289,7 +289,7 @@ export default function ModelFinderPage() {
           disabled={probing || refreshing}
           aria-busy={probing || refreshing}
           aria-label="Rescan providers"
-          className="font-mono text-micro font-normal text-el-secondary"
+          className="text-xs font-normal text-el-secondary"
         >
           <SlidersHorizontal
             aria-hidden="true"
@@ -407,7 +407,7 @@ export default function ModelFinderPage() {
 
           {error && describeApiError(error).unreachable && (
             // The shell banner already reports the outage — a quiet note.
-            <p className="font-mono text-micro text-el-muted">
+            <p className="text-xs text-el-muted">
               model recommendations unavailable —{" "}
               {describeApiError(error).summary}
             </p>
@@ -415,7 +415,7 @@ export default function ModelFinderPage() {
           {error && !describeApiError(error).unreachable && (
             <div
               role="alert"
-              className="rounded-lg border border-el-danger/40 bg-el-danger-soft p-4 font-mono text-xs text-el-danger"
+              className="rounded-lg border border-el-danger/40 bg-el-danger-soft p-4 text-sm text-el-danger"
             >
               failed to load model recommendations: {apiErrorText(error)}
             </div>
@@ -501,7 +501,7 @@ export default function ModelFinderPage() {
                       <span className="text-xs text-el-secondary">
                         {tier.label}
                       </span>
-                      <span className="ml-auto font-mono text-micro text-el-muted">
+                      <span className="ml-auto text-xs text-el-muted">
                         {tier.desc}
                       </span>
                     </div>
@@ -513,7 +513,7 @@ export default function ModelFinderPage() {
                           target="_blank"
                           rel="noreferrer"
                           title={`${model.name} · ${model.fit_score}% fit`}
-                          className={`${HIT_AREA} inline-flex min-h-8 max-w-[200px] items-center gap-1.5 rounded-sm border bg-el-subtle px-2 py-1 font-mono text-micro text-el-secondary underline-offset-2 transition-colors hover:text-el-ink hover:underline focus-ring ${tier.borderClass}`}
+                          className={`${HIT_AREA} inline-flex min-h-8 max-w-[200px] items-center gap-1.5 rounded-sm border bg-el-subtle px-2 py-1 text-xs text-el-secondary underline-offset-2 transition-colors hover:text-el-ink hover:underline focus-ring ${tier.borderClass}`}
                         >
                           <span className="truncate">{model.name}</span>
                           <span className="flex-none text-el-muted">
@@ -537,7 +537,7 @@ export default function ModelFinderPage() {
                   <span
                     key={tier.key}
                     data-testid={`fit-band-empty-${tier.key}`}
-                    className="font-mono text-micro text-el-muted"
+                    className="text-xs text-el-muted"
                   >
                     <span className={tier.textClass}>{tier.letter}</span>{" "}
                     {tier.label} — none
@@ -548,7 +548,7 @@ export default function ModelFinderPage() {
             {allFitWithHeadroom && (
               <p
                 data-testid="fit-headroom-caption"
-                className="mt-2 font-mono text-micro text-el-muted"
+                className="mt-2 text-xs text-el-muted"
               >
                 all matches fit with headroom on this machine
               </p>
@@ -564,7 +564,7 @@ export default function ModelFinderPage() {
           />
 
           {data?.profile.notes.map((note) => (
-            <p key={note} className="font-mono text-micro text-el-muted">
+            <p key={note} className="text-xs text-el-muted">
               note: {note}
             </p>
           ))}

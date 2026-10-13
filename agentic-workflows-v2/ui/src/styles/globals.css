@@ -275,13 +275,16 @@
     @apply bg-background text-foreground;
   }
 
-  h1,
+  h1 {
+    font-family: var(--el-font-display);
+  }
+
   h2,
   h3,
   h4,
   h5,
   h6 {
-    font-family: var(--el-font-display);
+    font-family: var(--el-font-sans);
   }
 
   ::-webkit-scrollbar {
@@ -293,7 +296,7 @@
   }
   ::-webkit-scrollbar-thumb {
     background: var(--el-scroll-thumb);
-    border-radius: 3px;
+    border-radius: var(--el-radius-sm);
   }
 }
 
@@ -347,7 +350,7 @@
   border: 1px solid rgb(var(--el-divider)) !important;
   border-radius: 0 !important;
   opacity: 0.8;
-  transition: opacity 0.2s;
+  transition: opacity var(--el-motion-fast);
 }
 
 .react-flow__minimap:hover {
@@ -403,7 +406,7 @@
 }
 
 .react-flow__viewport {
-  transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform var(--el-motion-slow) ease-out;
 }
 
 @keyframes dash-flow {
@@ -455,12 +458,12 @@
 
 .react-flow__edge path {
   transition:
-    stroke 0.4s ease,
-    stroke-opacity 0.4s ease;
+    stroke var(--el-motion-standard) ease,
+    stroke-opacity var(--el-motion-standard) ease;
 }
 
 .react-flow__node {
-  transition: opacity 0.3s ease;
+  transition: opacity var(--el-motion-standard) ease;
 }
 
 /* ──────────────────────────────────────────────────────────────

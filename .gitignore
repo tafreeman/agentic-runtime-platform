@@ -530,3 +530,6 @@ tools/llm/filename.json
 
 # Lean build products
 proofs/.lake/
+
+# Local Evidence Ledger design reference bundle
+/evidence-ledger-design-system/
