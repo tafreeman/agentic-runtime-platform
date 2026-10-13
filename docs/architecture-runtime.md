@@ -102,7 +102,7 @@ dag.add(StepDefinition("summarize", func=summarize_fn, depends_on=["load_data"])
 
 Source: `langchain/` package (adapter: `adapters/langchain/engine.py`)
 
-The LangGraph engine compiles a YAML workflow configuration into a LangGraph `StateGraph`. Each YAML step becomes a graph node; `depends_on` edges become conditional graph edges. The graph is compiled once, then executed via `graph.ainvoke()`.
+The LangGraph engine compiles a YAML workflow configuration into a LangGraph `StateGraph`. Each YAML step becomes a graph node. A step's `depends_on` list becomes one edge into it: a waiting edge when it has several dependencies, so it runs once, after all of them, as on the native executor ([ADR-062](adr/ADR-062-langgraph-join-once-semantics.md)). The graph is compiled once, then executed via `graph.ainvoke()`.
 
 **Characteristics:**
 

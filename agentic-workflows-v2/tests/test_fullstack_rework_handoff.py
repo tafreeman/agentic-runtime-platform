@@ -83,6 +83,7 @@ class _Run:
     calls: Counter[str]
     assemble_backend: Any
     outputs: dict[str, Any]
+    review_tests: Any
 
 
 def _run_native(replies: dict[str, dict[str, Any]]) -> _Run:
@@ -106,6 +107,7 @@ def _run_native(replies: dict[str, dict[str, Any]]) -> _Run:
         calls=calls,
         assemble_backend=steps["assemble_feature"].input_data.get("backend"),
         outputs=result.final_output,
+        review_tests=steps["review_code"].input_data.get("tests"),
     )
 
 
@@ -144,6 +146,7 @@ def _run_langchain(
             name: resolve_expression(output.from_expr, final)
             for name, output in config.outputs.items()
         },
+        review_tests=final["steps"]["review_code"]["inputs"]["tests"],
     )
 
 
@@ -162,12 +165,23 @@ def test_rework_is_merged_packaged_and_re_reviewed(run_workflow) -> None:
 
     for name in (*_REWORK_PATH, "assemble_feature"):
         assert run.statuses[name] == "success", name
-    assert run.calls["re_review_code"] >= 1
+    assert run.calls["re_review_code"] == 1
     assert run.assemble_backend == _MERGED_BACKEND
     assert run.outputs["all_code"]["backend"] == _MERGED_BACKEND
     assert run.outputs["all_code"]["frontend"] == _FRONTEND
     # The final verdict is the re-review of the shipped code, not the first.
     assert run.outputs["review_report"]["overall_status"] == "APPROVED"
+
+
+def test_every_step_runs_once_after_all_its_dependencies(run_workflow) -> None:
+    # review_code joins four generators that finish at different depths; the
+    # LangGraph adapter used to run it (and everything after it) twice, the
+    # first time before generate_integration_tests had produced its tests.
+    replies = _replies("NEEDS_FIXES", rework_code=True)
+    run = run_workflow(replies)
+
+    assert run.calls == Counter(dict.fromkeys(replies, 1))
+    assert run.review_tests == replies["generate_integration_tests"]["e2e_tests"]
 
 
 def test_approved_review_skips_the_whole_rework_path(run_workflow) -> None:
