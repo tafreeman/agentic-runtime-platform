@@ -3,7 +3,7 @@ import { Button } from "../ui/button";
 import type { EdgeInfo } from "./documentModel";
 
 const FIELD_LABEL_CLASS =
-  "mb-1.5 block font-mono text-micro uppercase tracking-[0.8px] text-el-muted";
+  "mb-1.5 block text-xs font-medium text-el-muted";
 
 // focus-ring: the 2px --el-focus outline replaces the old 50%-tint ring.
 const INPUT_CLASS =
@@ -56,7 +56,7 @@ export default function EdgeInspector({
           remove edge
         </Button>
       </div>
-      <p className="mt-1 font-mono text-micro text-el-muted">
+      <p className="mt-1 text-xs text-el-muted">
         dependency edge — {edge.target} runs after {edge.source}
       </p>
 
@@ -65,7 +65,7 @@ export default function EdgeInspector({
           Data flowing along this edge
         </span>
         {edge.mappings.length === 0 && (
-          <p className="font-mono text-micro text-el-muted">
+          <p className="text-xs text-el-muted">
             ordering-only dependency — {edge.target} reads no outputs from{" "}
             {edge.source}
           </p>
@@ -74,7 +74,7 @@ export default function EdgeInspector({
           {edge.mappings.map((mapping) => (
             <div key={mapping.key}>
               <label
-                className="mb-1 block font-mono text-micro text-el-secondary"
+                className="mb-1 block text-xs text-el-secondary"
                 htmlFor={`mapping-${edge.source}-${edge.target}-${mapping.key}`}
               >
                 {mapping.key}

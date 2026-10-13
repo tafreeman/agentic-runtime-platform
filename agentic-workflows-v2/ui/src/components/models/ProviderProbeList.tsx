@@ -12,6 +12,7 @@ import {
   loadVerifications,
   type ModelVerification,
 } from "../../lib/modelVerification";
+import StatusBadge from "../common/StatusBadge";
 import { apiErrorText } from "../common/apiErrorText";
 
 // PROVIDER BACKENDS section of the model router — the full probed catalog
@@ -20,7 +21,7 @@ import { apiErrorText } from "../common/apiErrorText";
 // "chat" action that deep-links into the playground tab.
 
 const SECTION_LABEL =
-  "font-mono text-micro uppercase tracking-[1.2px] text-el-muted";
+  "text-xs font-medium text-el-muted";
 /** Small tag (tier / capability / cloud): 2px radius, 11px floor. */
 const TAG = "flex-none rounded-sm border px-1.5 py-px font-mono text-micro";
 /**
@@ -28,7 +29,7 @@ const TAG = "flex-none rounded-sm border px-1.5 py-px font-mono text-micro";
  * (rows are min-h-10, so neighbouring rows' targets never overlap).
  */
 const ROW_ACTION =
-  "relative flex-none rounded-sm border border-el-divider px-2 py-0.5 font-mono text-micro text-el-secondary transition-colors hover:bg-el-hover hover:text-el-ink focus-ring after:absolute after:top-1/2 after:left-1/2 after:size-full after:min-h-9 after:min-w-9 after:-translate-x-1/2 after:-translate-y-1/2 disabled:opacity-50";
+  "relative flex-none rounded-sm border border-el-divider px-2 py-0.5 text-xs text-el-secondary transition-colors hover:bg-el-hover hover:text-el-ink focus-ring after:absolute after:top-1/2 after:left-1/2 after:size-full after:min-h-9 after:min-w-9 after:-translate-x-1/2 after:-translate-y-1/2 disabled:opacity-50";
 
 /** Price pill: 11px floor, 2px radius, one line. */
 const PRICE_PILL =
@@ -77,17 +78,17 @@ const FILTER_TOGGLE =
 
 type ProbeStatusTone = "success" | "warning" | "danger";
 
+const STATUS_FILL_CLASS: Record<ProbeStatusTone, string> = {
+  success: "bg-el-success", warning: "bg-el-warning", danger: "bg-el-danger",
+};
+
 /** Provider status → token classes (status text always accompanies color). */
 const STATUS_TEXT_CLASS: Record<ProbeStatusTone, string> = {
   success: "text-el-success",
   warning: "text-el-warning",
   danger: "text-el-danger",
 };
-const STATUS_FILL_CLASS: Record<ProbeStatusTone, string> = {
-  success: "bg-el-success",
-  warning: "bg-el-warning",
-  danger: "bg-el-danger",
-};
+
 
 /**
  * Placeholder mode or no models → warning; missing credentials → danger;
@@ -405,7 +406,7 @@ export default function ProviderProbeList({
       {probeError && probeErrorInfo?.unreachable && (
         <p
           data-testid="probe-error-note"
-          className="mb-3 font-mono text-micro text-el-muted"
+          className="mb-3 text-xs text-el-muted"
         >
           probe unavailable — {probeErrorInfo.summary}
           {probe ? " Showing the last probe." : ""}
@@ -414,7 +415,7 @@ export default function ProviderProbeList({
       {probeError && !probeErrorInfo?.unreachable && (
         <div
           role="alert"
-          className="mb-3 rounded-lg border border-el-danger/40 bg-el-danger-soft p-4 font-mono text-xs text-el-danger"
+          className="mb-3 rounded-lg border border-el-danger/40 bg-el-danger-soft p-4 text-sm text-el-danger"
         >
           probe failed: {apiErrorText(probeError)}
         </div>
@@ -423,14 +424,14 @@ export default function ProviderProbeList({
       {loadMutation.error && (
         <div
           role="alert"
-          className="mb-3 rounded-lg border border-el-danger/40 bg-el-danger-soft p-4 font-mono text-xs text-el-danger"
+          className="mb-3 rounded-lg border border-el-danger/40 bg-el-danger-soft p-4 text-sm text-el-danger"
         >
           LM Studio load failed: {apiErrorText(loadMutation.error)}
         </div>
       )}
 
       {probe && apiDown && (
-        <p id={apiDownHintId} className="mb-3 font-mono text-micro text-el-muted">
+        <p id={apiDownHintId} className="mb-3 text-xs text-el-muted">
           Loading models is unavailable: {apiDownReason}
         </p>
       )}
@@ -438,7 +439,7 @@ export default function ProviderProbeList({
       {probe && (
         <div
           data-testid="provider-card-grid"
-          className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-2.5"
+          className="mb-6 divide-y divide-el-divider-soft border-y border-el-divider"
         >
           {allProviderGroups.map((provider) => {
             const tone = providerStatusTone(placeholderMode, provider);
@@ -453,33 +454,11 @@ export default function ProviderProbeList({
               <article
                 key={provider.name}
                 data-testid={`provider-card-${provider.name}`}
-                className="relative min-w-0 overflow-hidden rounded-lg border border-el-divider bg-el-surface p-3.5"
+                className="grid min-h-14 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 py-3 sm:grid-cols-[minmax(0,1fr)_1fr_1fr]"
               >
-                <span
-                  aria-hidden="true"
-                  className={`absolute inset-y-0 left-0 w-[2px] ${STATUS_FILL_CLASS[tone]}`}
-                />
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <h3 className="truncate font-mono text-xs font-semibold text-el-ink">
-                      {provider.name}
-                    </h3>
-                    <p className="mt-1 font-mono text-micro text-el-muted">
-                      {provider.models.length} detected model
-                      {provider.models.length === 1 ? "" : "s"}
-                    </p>
-                  </div>
-                  <span
-                    aria-hidden="true"
-                    className={`mt-0.5 h-2 w-2 flex-none rounded-full ${STATUS_FILL_CLASS[tone]}`}
-                    title={statusText}
-                  />
-                </div>
-                <div
-                  className={`mt-3 font-mono text-micro uppercase tracking-[0.8px] ${STATUS_TEXT_CLASS[tone]}`}
-                >
-                  {statusText}
-                </div>
+                <h3 className="truncate font-sans text-sm font-semibold text-el-ink">{provider.name}</h3>
+                <p className="text-xs tabular-nums text-el-muted">{provider.models.length} detected model{provider.models.length === 1 ? "" : "s"}</p>
+                <StatusBadge status={tone === "success" ? "passed" : tone === "danger" ? "failed" : "review"} label={statusText} />
               </article>
             );
           })}
@@ -495,7 +474,7 @@ export default function ProviderProbeList({
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="filter models by id or provider…"
-            className="h-10 w-full max-w-[340px] rounded-md border border-el-control-border bg-el-raised px-2.5 font-mono text-xs text-el-ink placeholder:text-el-faint focus-ring focus-visible:border-el-focus"
+            className="h-10 w-full max-w-[340px] rounded-md border border-el-control-border bg-el-raised px-3 text-[13px] text-el-ink placeholder:text-el-faint focus-ring focus-visible:border-el-focus"
           />
           <button
             type="button"
@@ -516,7 +495,7 @@ export default function ProviderProbeList({
               rather than stacking a second "x / y" beside it. */}
           <span
             data-testid="catalog-search-count"
-            className="font-mono text-micro text-el-muted"
+            className="text-xs text-el-muted"
           >
             {priceFilterActive
               ? `Showing ${filteredModels.length} of ${totalCount} models`

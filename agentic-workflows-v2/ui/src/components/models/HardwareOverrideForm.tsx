@@ -21,7 +21,7 @@ import { apiErrorText } from "../common/apiErrorText";
 
 const CARD_CLASS = "rounded-lg border border-el-divider bg-el-surface p-4";
 const FIELD_CLASS =
-  "h-10 w-full rounded-md border border-el-control-border bg-el-raised px-2.5 font-mono text-xs text-el-ink placeholder:text-el-faint focus-ring focus-visible:border-el-focus";
+  "h-10 w-full rounded-md border border-el-control-border bg-el-raised px-3 text-[13px] text-el-ink placeholder:text-el-faint focus-ring focus-visible:border-el-focus";
 const CAPTION_LABEL = "mb-1 block text-xs font-medium text-el-secondary";
 
 /** Parse a numeric field: empty → null, non-numeric → null (field ignored). */
@@ -298,7 +298,7 @@ export default function HardwareOverrideForm({
 
   if (isLoading) {
     return (
-      <div className={`${CARD_CLASS} font-mono text-xs text-el-muted`}>
+      <div className={`${CARD_CLASS} text-sm text-el-muted`}>
         loading hardware override…
       </div>
     );
@@ -307,7 +307,7 @@ export default function HardwareOverrideForm({
     // Unreachable API: the shell banner already says so — keep this quiet.
     if (describeApiError(error).unreachable) {
       return (
-        <div className={`${CARD_CLASS} font-mono text-xs text-el-muted`}>
+        <div className={`${CARD_CLASS} text-sm text-el-muted`}>
           hardware override unavailable — {describeApiError(error).summary}
         </div>
       );
@@ -315,7 +315,7 @@ export default function HardwareOverrideForm({
     return (
       <div
         role="alert"
-        className="rounded-lg border border-el-danger/40 bg-el-danger-soft p-4 font-mono text-xs text-el-danger"
+        className="rounded-lg border border-el-danger/40 bg-el-danger-soft p-4 text-sm text-el-danger"
       >
         failed to load hardware override: {apiErrorText(error)}
       </div>

@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { MoreHorizontal, X } from "lucide-react";
+import { Moon, Sun, MoreHorizontal, X } from "lucide-react";
 import {
   Sheet,
   SheetClose,
@@ -9,6 +9,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "../ui/sheet";
+import { useTheme } from "../../hooks/useTheme";
 import { NAV_ITEMS, isNavItemActive } from "./navigation";
 
 const PRIMARY_ITEMS = NAV_ITEMS.filter((item) => item.mobilePrimary);
@@ -36,6 +37,7 @@ function BarRail() {
  */
 export default function MobileNav() {
   const { pathname } = useLocation();
+  const [theme, setTheme] = useTheme();
   const [open, setOpen] = useState(false);
   // Set when the sheet closes because a destination was picked: focus then
   // follows the route change into <main> instead of returning to "More".
@@ -154,6 +156,12 @@ export default function MobileNav() {
               })}
             </ul>
           </nav>
+          <div className="mx-4 mt-2 border-t border-el-divider pt-2">
+            <button type="button" onClick={() => setTheme(theme === "dark" ? "paper" : "dark")} className="focus-ring flex min-h-11 w-full items-center gap-3 rounded-md px-2 text-sm text-el-secondary hover:bg-el-hover">
+              {theme === "dark" ? <Sun aria-hidden="true" className="size-4" /> : <Moon aria-hidden="true" className="size-4" />}
+              Switch to {theme === "dark" ? "light" : "dark"} theme
+            </button>
+          </div>
         </SheetContent>
       </Sheet>
     </nav>

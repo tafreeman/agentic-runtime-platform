@@ -58,6 +58,8 @@
   --color-el-raised: rgb(var(--el-surface-raised));
   --color-el-subtle: rgb(var(--el-surface-subtle));
   --color-el-hover: rgb(var(--el-surface-hover));
+  /* Recessed instruments: streamed output, raw logs, the event log. */
+  --color-el-surface-sunken: rgb(var(--el-surface-sunken));
   --color-el-ink: rgb(var(--el-ink));
   --color-el-secondary: rgb(var(--el-ink-secondary));
   --color-el-muted: rgb(var(--el-ink-muted));
@@ -69,9 +71,15 @@
   --color-el-control-border: rgb(var(--el-control-border));
   --color-el-action: rgb(var(--el-action));
   --color-el-action-ink: rgb(var(--el-action-ink));
+  /* Orange accent: brand mark, replay playhead, cascade marker only. Fills and
+     marks, never text; accent text uses accent-strong. */
   --color-el-accent: rgb(var(--el-accent));
   --color-el-accent-strong: rgb(var(--el-accent-strong));
   --color-el-accent-soft: rgb(var(--el-accent-soft));
+  /* Selection and links (blue): the chosen row/node/strip ring, active tab,
+     selected-row tint. Keyboard focus carries the same blue, not orange. */
+  --color-el-select: rgb(var(--el-select));
+  --color-el-select-soft: rgb(var(--el-select-soft));
   --color-el-focus: rgb(var(--el-focus));
 
   /* Status (text-safe) and their soft backgrounds. */
@@ -84,6 +92,14 @@
   --color-el-info: rgb(var(--el-info));
   --color-el-info-soft: rgb(var(--el-info-soft));
   --color-el-neutral: rgb(var(--el-neutral));
+
+  /* Solid status-pill fills (same in both themes) and their white text, >= 4.5:1. */
+  --color-el-badge-success: rgb(var(--el-badge-success));
+  --color-el-badge-danger: rgb(var(--el-badge-danger));
+  --color-el-badge-info: rgb(var(--el-badge-info));
+  --color-el-badge-warning: rgb(var(--el-badge-warning));
+  --color-el-badge-neutral: rgb(var(--el-badge-neutral));
+  --color-el-on-badge: rgb(var(--el-on-badge));
 
   /* Categorical hues (never status). */
   --color-el-plum: rgb(var(--el-plum));
@@ -192,9 +208,10 @@
 }
 
 /*
-  Keyboard focus (design system §7.4/§16): a 2px --el-focus outline with a 2px
-  offset, shown on :focus-visible only. Geometry lives in tokens.css
-  (--el-focus-ring-width / --el-focus-ring-offset).
+  Keyboard focus (design system §7.4/§16): a 2px --el-focus outline (the select
+  blue, never the orange accent) with a 2px offset, shown on :focus-visible
+  only. Geometry lives in tokens.css (--el-focus-ring-width /
+  --el-focus-ring-offset).
 
     focus-ring        — explicit ring; use on any custom interactive element
                         that previously used `focus:outline-hidden focus:ring-*`
@@ -258,13 +275,16 @@
     @apply bg-background text-foreground;
   }
 
-  h1,
+  h1 {
+    font-family: var(--el-font-display);
+  }
+
   h2,
   h3,
   h4,
   h5,
   h6 {
-    font-family: var(--el-font-display);
+    font-family: var(--el-font-sans);
   }
 
   ::-webkit-scrollbar {
@@ -276,7 +296,7 @@
   }
   ::-webkit-scrollbar-thumb {
     background: var(--el-scroll-thumb);
-    border-radius: 3px;
+    border-radius: var(--el-radius-sm);
   }
 }
 
@@ -330,7 +350,7 @@
   border: 1px solid rgb(var(--el-divider)) !important;
   border-radius: 0 !important;
   opacity: 0.8;
-  transition: opacity 0.2s;
+  transition: opacity var(--el-motion-fast);
 }
 
 .react-flow__minimap:hover {
@@ -386,7 +406,7 @@
 }
 
 .react-flow__viewport {
-  transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform var(--el-motion-slow) ease-out;
 }
 
 @keyframes dash-flow {
@@ -438,12 +458,12 @@
 
 .react-flow__edge path {
   transition:
-    stroke 0.4s ease,
-    stroke-opacity 0.4s ease;
+    stroke var(--el-motion-standard) ease,
+    stroke-opacity var(--el-motion-standard) ease;
 }
 
 .react-flow__node {
-  transition: opacity 0.3s ease;
+  transition: opacity var(--el-motion-standard) ease;
 }
 
 /* ──────────────────────────────────────────────────────────────

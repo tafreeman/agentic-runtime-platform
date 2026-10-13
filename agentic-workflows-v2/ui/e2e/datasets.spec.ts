@@ -9,7 +9,7 @@ import { expect, test } from '@playwright/test';
  * three-pane browser (list → sample index → sample detail). This spec proves
  * the route resolves from the sidebar, the header + count strip render, and the
  * browser body reflects the API payload: the grouped sections/rows when the
- * catalog is populated, or the "$ no datasets available" strip when it is empty.
+ * catalog is populated, or the "No datasets found" message when it is empty.
  *
  * DatasetsPage / DatasetBrowser expose no `data-testid`s, so the surface is
  * anchored on the h1 heading, the mono count strip, and the browser's own
@@ -29,13 +29,15 @@ test.describe('datasets', () => {
     await nav.getByRole('link', { name: /datasets/i }).click();
     await expect(page).toHaveURL(/\/datasets$/);
 
-    // Page shell: the h1 and the mono "$ N repo · N local · N eval sets" strip.
-    // Assert the strip's *structure* (three labelled counts) rather than exact
-    // numbers so it holds whether the catalog is empty or populated.
+    // Page shell: the h1 and the dataset-catalog scoreline (Repository, Local,
+    // Evaluation sets). Assert its *structure* (three labelled counts) rather
+    // than exact numbers so it holds whether the catalog is empty or populated.
     await expect(page.getByRole('heading', { level: 1, name: /datasets/i })).toBeVisible();
     await expect(
-      page.getByText(/\d+ repo · \d+ local · \d+ eval sets/),
-    ).toBeVisible({ timeout: 15_000 });
+      page.locator('section[aria-label="Dataset catalog"]').first(),
+    ).toContainText(/Repository\s*\d+\s*Local\s*\d+\s*Evaluation sets\s*\d+/, {
+      timeout: 15_000,
+    });
   });
 
   test('renders repository / local / eval-set sections from the API, or a clear empty state', async ({
@@ -64,10 +66,12 @@ test.describe('datasets', () => {
     // The browser mounts once the query resolves: with nothing selected, the
     // middle/right panes show their static prompts regardless of catalog size.
     // This is the robust "surface rendered" anchor (empty OR populated).
-    await expect(page.getByText('$ select a dataset')).toBeVisible({
-      timeout: 30_000,
-    });
-    await expect(page.getByText('$ select a sample')).toBeVisible();
+    await expect(
+      page.getByText('Select a dataset to inspect its samples.'),
+    ).toBeVisible({ timeout: 30_000 });
+    await expect(
+      page.getByText('Select a sample to inspect its evidence.'),
+    ).toBeVisible();
 
     // Names shown as left-pane rows/entries across every source (repository +
     // local rows, eval-set entries). Read from the same response so the check
@@ -84,7 +88,7 @@ test.describe('datasets', () => {
       // reconciles *exactly* with the API's repository count — the catalog is a
       // static server-side list that no spec mutates, so an exact match is safe
       // and stronger than mere presence, and `exact` keeps it off the page's
-      // abbreviated "N repo" count strip.
+      // catalog scoreline.
       if (payload.repository.length > 0) {
         await expect(
           page.getByText(`repository · ${payload.repository.length}`, {
@@ -95,10 +99,10 @@ test.describe('datasets', () => {
       await expect(page.getByText(listedNames[0]).first()).toBeVisible({
         timeout: 15_000,
       });
-      await expect(page.getByText('$ no datasets available')).toHaveCount(0);
+      await expect(page.getByText(/No datasets found/)).toHaveCount(0);
     } else {
-      // Empty: the browser's left pane shows its terminal-style empty strip.
-      await expect(page.getByText('$ no datasets available')).toBeVisible();
+      // Empty: the browser's left pane shows its empty-state message.
+      await expect(page.getByText(/No datasets found/)).toBeVisible();
     }
   });
 });

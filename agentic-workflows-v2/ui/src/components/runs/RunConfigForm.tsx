@@ -78,7 +78,7 @@ const CONTROL_CLASS =
 
 /** Small uppercase field label (the 11px `label` tier). */
 const FIELD_LABEL_CLASS =
-  "font-mono text-micro uppercase tracking-[0.5px] text-el-muted";
+  "text-xs font-medium text-el-muted";
 
 /** Input schema types that render a file picker instead of a text field. */
 const FILE_INPUT_TYPES = new Set(["image", "audio", "file"]);
@@ -204,7 +204,7 @@ function FileInputField({
           <span className="min-w-0 flex-1 truncate font-mono text-micro text-el-ink">
             {state.meta.name}
           </span>
-          <span className="flex-none font-mono text-micro text-el-muted">
+          <span className="flex-none text-xs text-el-muted">
             {humanFileSize(state.meta.size)}
           </span>
           <button
@@ -450,14 +450,14 @@ export default function RunConfigForm({
             <div className="font-mono text-micro uppercase tracking-wider text-el-success">
               $ inputs from dataset
             </div>
-            <div className="truncate font-mono text-micro text-el-muted">
+            <div className="truncate text-xs text-el-muted">
               {activeDatasetLabel} · sample {sampleText}
             </div>
             <div className="flex flex-wrap gap-1.5 pt-1">
               {inputs.map((inp) => (
                 <span
                   key={inp.name}
-                  className="rounded-sm border border-el-divider bg-el-canvas px-1.5 py-0.5 font-mono text-micro text-el-muted"
+                  className="rounded-sm border border-el-divider bg-el-canvas px-1.5 py-0.5 text-xs text-el-muted"
                 >
                   {inp.name}
                   {inp.required ? (
@@ -710,7 +710,7 @@ export default function RunConfigForm({
                   ))}
                 </select>
               ) : (
-                <div className="flex items-center rounded-md border border-el-divider bg-el-canvas px-2 py-1.5 font-mono text-xs text-el-muted">
+                <div className="flex items-center rounded-md border border-el-divider bg-el-canvas px-2 py-1.5 text-sm text-el-muted">
                   no dataset
                 </div>
               )}
@@ -738,7 +738,7 @@ export default function RunConfigForm({
             {previewSource ? (
               <div data-testid="sample-preview" className="mt-2 space-y-0.5">
                 {samplePreviewQuery.isLoading ? (
-                  <div className="font-mono text-micro text-el-muted">
+                  <div className="text-xs text-el-muted">
                     loading samples…
                   </div>
                 ) : samplePreviewQuery.isError ? (
@@ -752,7 +752,7 @@ export default function RunConfigForm({
                     <div
                       key={index}
                       data-testid={`sample-preview-line-${index}`}
-                      className="truncate font-mono text-micro text-el-muted"
+                      className="truncate text-xs text-el-muted"
                     >
                       {samplePreviewLine(index, previewSamples)}
                     </div>
@@ -768,7 +768,7 @@ export default function RunConfigForm({
                 onRetry={() => void datasetsQuery.refetch()}
               />
             ) : datasets ? (
-              <div className="mt-2 font-mono text-micro text-el-muted">
+              <div className="mt-2 text-xs text-el-muted">
                 {datasets.repository.length} repository · {datasets.local.length} local ·{" "}
                 {datasets.eval_sets.length} eval sets
               </div>

@@ -12,7 +12,7 @@ interface BTopBarProps {
 export default function BTopBar({ path, children }: Readonly<BTopBarProps>) {
   const segments = path.split("/").filter(Boolean);
   return (
-    <div className="flex h-9 min-w-0 items-center gap-2 border-b border-el-divider bg-el-surface px-4 text-xs">
+    <div className="flex min-h-10 flex-none min-w-0 items-center gap-2 border-b border-el-divider bg-el-surface px-4 text-xs">
       {/* Long paths (run filenames) truncate on one line instead of wrapping
           out of the 36px bar; the full path stays available as a tooltip. */}
       <span className="min-w-0 truncate text-el-muted" title={path}>

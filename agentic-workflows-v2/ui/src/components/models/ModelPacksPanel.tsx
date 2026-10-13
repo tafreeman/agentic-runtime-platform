@@ -529,7 +529,7 @@ export default function ModelPacksPanel() {
                     {pack.name}
                     {active && <CheckCircle2 className="h-4 w-4 text-el-success" aria-label="Active" />}
                   </span>
-                  <span className="mt-1 block font-mono text-micro text-el-muted">
+                  <span className="mt-1 block text-xs text-el-muted">
                     {pack.id}@{pack.version} · {pack.source}
                     {pack.archived ? " · archived" : ""}
                   </span>
@@ -548,7 +548,7 @@ export default function ModelPacksPanel() {
             <div className="space-y-7">
               <div className="flex flex-wrap items-start justify-between gap-4 border-b border-el-divider pb-5">
                 <div>
-                  <div className="font-mono text-micro text-el-muted">
+                  <div className="text-xs text-el-muted">
                     {selected.id}@{selected.version}
                   </div>
                   <h2 className="mt-1 text-[22px] font-semibold text-el-ink">{selected.name}</h2>

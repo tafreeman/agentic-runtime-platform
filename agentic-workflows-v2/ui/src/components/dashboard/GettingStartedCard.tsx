@@ -104,7 +104,7 @@ export default function GettingStartedCard({
     return (
       <button
         onClick={handleReopen}
-        className="focus-ring inline-flex min-h-9 items-center gap-2 rounded-md px-2 font-mono text-micro text-el-secondary underline-offset-2 transition-colors hover:text-el-ink hover:underline"
+        className="focus-ring inline-flex min-h-9 items-center gap-2 rounded-md px-2 text-xs text-el-secondary underline-offset-2 transition-colors hover:text-el-ink hover:underline"
         type="button"
       >
         <Lightbulb aria-hidden="true" className="size-3.5" />
@@ -132,7 +132,7 @@ export default function GettingStartedCard({
           >
             Get Started with Agentic
           </h2>
-          <p className="mt-1 font-mono text-micro text-el-muted">
+          <p className="mt-1 text-xs text-el-muted">
             Complete these steps to unlock the full platform
           </p>
         </div>
@@ -169,11 +169,11 @@ export default function GettingStartedCard({
                   {step.title}
                 </div>
               )}
-              <p className="mt-1 font-mono text-micro text-el-secondary">
+              <p className="mt-1 text-xs text-el-secondary">
                 {step.description}
               </p>
               {step.inlineGuidance && (
-                <div className="mt-2 flex items-start gap-1.5 rounded-md border border-el-divider-soft bg-el-surface px-2 py-1.5 font-mono text-micro text-el-secondary">
+                <div className="mt-2 flex items-start gap-1.5 rounded-md border border-el-divider-soft bg-el-surface px-2 py-1.5 text-xs text-el-secondary">
                   <Info aria-hidden="true" className="mt-px size-3.5 flex-none text-el-info" />
                   <span>{step.inlineGuidance}</span>
                 </div>

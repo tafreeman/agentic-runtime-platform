@@ -1,5 +1,10 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render as renderUI, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { MemoryRouter } from "react-router-dom";
+import type { ReactElement } from "react";
+
+const render = (ui: ReactElement) => renderUI(ui, { wrapper: MemoryRouter });
+
 import DatasetsPage from "../pages/DatasetsPage";
 
 const mockUseEvaluationDatasets = vi.fn();
