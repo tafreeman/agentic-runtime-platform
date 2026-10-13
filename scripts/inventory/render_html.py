@@ -284,7 +284,9 @@ def _fill_cover(tpl: str) -> str:
     tpl = _set_span(tpl, 11, f"{len(src)} Python modules")
     tpl = _set_span(tpl, 13, f"{len(ui['files'])} UI files")
     tpl = _set_span(tpl, 15, f"{len(meta['workflows'])} workflows")
-    tpl = _set_span(tpl, 17, f"{len(meta['ci'])} CI jobs")
+    # meta["ci"] holds one record per workflow file; the cover counts its jobs.
+    ci_jobs = sum(len(wf.get("jobs") or []) for wf in meta["ci"])
+    tpl = _set_span(tpl, 17, f"{ci_jobs} CI jobs")
     tpl = _set_span(tpl, 19, f"{len(meta['adrs'])} ADRs")
     tpl = re.sub(
         r"Snapshot taken [0-9/\-]+ against",
