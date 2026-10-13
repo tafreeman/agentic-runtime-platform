@@ -182,6 +182,8 @@ NVIDIA_NIM_FREE_ENDPOINT_CATALOG: tuple[str, ...] = (
     "meta/llama-3.2-11b-vision-instruct", "meta/llama-3.2-90b-vision-instruct",
     "google/google-paligemma",
 )
+# Hosted API origin; the Free Endpoint catalog only describes this host.
+NVIDIA_NIM_HOSTED_HOST = "integrate.api.nvidia.com"
 # Catalog slug -> ID /v1/models actually returns, where the two differ.
 NVIDIA_NIM_CATALOG_ALIASES: dict[str, str] = {
     "z-ai/glm-5-3": "z-ai/glm-5.3",

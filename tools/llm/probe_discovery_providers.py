@@ -16,6 +16,7 @@ import sys
 import urllib.request
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 from tools.llm.llm_client import LLMClient
 from tools.llm.probe_config import (
@@ -53,6 +54,7 @@ from tools.llm.probe_config import (
     ENV_NVIDIA_NIM_API_KEY,
     ENV_NVIDIA_NIM_HOST,
     NVIDIA_NIM_CATALOG_ALIASES,
+    NVIDIA_NIM_HOSTED_HOST,
     NVIDIA_NIM_FREE_ENDPOINT_CATALOG,
     ENV_OLLAMA_API_KEY,
     ENV_OLLAMA_HOST,
@@ -679,15 +681,22 @@ def _probe_nvidia() -> dict[str, Any]:
     except Exception as e:
         nvidia_error = f"NVIDIA NIM not reachable at {base}: {str(e)[:100]}"
 
-    # Cross-check the build.nvidia.com "Free Endpoint" catalog against /v1/models.
-    live_ids = {m.split(":", 1)[1] for m in nvidia_models}
+    # The Free Endpoint catalog describes NVIDIA's hosted API only. Classify
+    # against it solely after a successful probe of that origin; an on-prem
+    # NIM or a failed /models call leaves the free status unknown.
+    hosted = urlparse(base).hostname == NVIDIA_NIM_HOSTED_HOST
     free_available: list[str] = []
     free_catalog_only: list[str] = []
-    for slug in NVIDIA_NIM_FREE_ENDPOINT_CATALOG:
-        api_id = NVIDIA_NIM_CATALOG_ALIASES.get(slug, slug)
-        (free_available if api_id in live_ids else free_catalog_only).append(api_id)
+    free_status = "unknown"
+    if hosted and nvidia_reachable:
+        live_ids = {m.split(":", 1)[1] for m in nvidia_models}
+        for slug in NVIDIA_NIM_FREE_ENDPOINT_CATALOG:
+            api_id = NVIDIA_NIM_CATALOG_ALIASES.get(slug, slug)
+            (free_available if api_id in live_ids else free_catalog_only).append(api_id)
+        free_status = "classified"
 
     return {
+        "free_status": free_status,
         "configured": bool(nvidia_host),
         "host": base,
         "reachable": nvidia_reachable,
