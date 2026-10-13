@@ -12,6 +12,7 @@
 // still fails:
 //  - `requested_tier` / `tier`: the UI narrows to 1-5; the schema says number
 //    (the 1-5 bound is a Pydantic validator, not expressible in the schema).
+//    Pinned: the wire type must stay exactly `number`.
 //  - `messages` / `content`: the schema emits bounded tuples; the UI uses
 //    arrays, so those are compared element-wise instead.
 // ---------------------------------------------------------------------------
@@ -19,6 +20,7 @@
 import type * as WireRequest from "./chat_request.generated";
 import type * as WireEvent from "./chat_stream_event.generated";
 import type {
+  ChatContentPart,
   ChatDoneEvent,
   ChatErrorEvent,
   ChatImagePart,
@@ -58,9 +60,20 @@ type SameShape<A, B, Allowed extends PropertyKey = never> =
 /** The UI value is accepted by the server-side schema. */
 type Accepted<Ui, Wire> = [Ui] extends [Wire] ? true : false;
 
+/** Wire message content: plain string, or a bounded tuple of content parts. */
+type WireContent = WireRequest.ChatMessage["content"];
+/** One element of the wire content-part tuples. */
+type WireContentPart = Exclude<WireContent, string>[number];
+
 export type ChatWireConformance = [
   // Stream frames (server → UI).
   Expect<SameShape<Sent<WireEvent.ChatRouteEvent>, ChatRouteEvent, "requested_tier">>,
+  // ...and the tier exception is pinned to exactly "UI 1-5 narrowing of a
+  // schema number", so any other change to the field still fails.
+  Expect<Equals<Sent<WireEvent.ChatRouteEvent>["requested_tier"], number>>,
+  Expect<
+    Accepted<ChatRouteEvent["requested_tier"], Sent<WireEvent.ChatRouteEvent>["requested_tier"]>
+  >,
   Expect<SameShape<Sent<WireEvent.ChatTokenEvent>, ChatTokenEvent>>,
   Expect<SameShape<Sent<WireEvent.ChatMediaEvent>, ChatMediaEvent>>,
   Expect<SameShape<Sent<WireEvent.ChatDoneEvent>, ChatDoneEvent>>,
@@ -76,6 +89,13 @@ export type ChatWireConformance = [
   // Request body (UI → server).
   Expect<Equals<keyof WireRequest.ChatMessage, keyof ChatMessage>>,
   Expect<Equals<WireRequest.ChatMessage["role"], ChatRole>>,
+  Expect<Equals<WireRequest.ModelChatRequest["messages"][number], WireRequest.ChatMessage>>,
+  Expect<Equals<WireRequest.TierChatRequest["messages"][number], WireRequest.ChatMessage>>,
+  // `content`, element-wise: both sides allow a plain string, and every UI
+  // content part is accepted as a wire tuple element with the same `type` set.
+  Expect<Equals<Extract<WireContent, string>, Extract<ChatMessage["content"], string>>>,
+  Expect<Accepted<ChatContentPart, WireContentPart>>,
+  Expect<Equals<Sent<WireContentPart>["type"], ChatContentPart["type"]>>,
   Expect<Accepted<ChatTextPart, WireRequest.ChatTextPart>>,
   Expect<Accepted<ChatImagePart, WireRequest.ChatImagePart>>,
   Expect<Equals<keyof WireRequest.ChatTextPart, keyof ChatTextPart>>,
@@ -94,4 +114,5 @@ export type ChatWireConformance = [
       Pick<WireRequest.TierChatRequest, "tier" | "temperature">
     >
   >,
+  Expect<Equals<WireRequest.TierChatRequest["tier"], number>>,
 ];
