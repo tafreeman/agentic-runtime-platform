@@ -157,3 +157,16 @@ def test_unset_host_reports_catalog_count(monkeypatch: pytest.MonkeyPatch) -> No
     assert result["free_endpoint_catalog_count"] == len(
         NVIDIA_NIM_FREE_ENDPOINT_CATALOG
     )
+
+
+def test_malformed_port_does_not_abort_discovery(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("NVIDIA_NIM_HOST", "https://integrate.api.nvidia.com:bogus/v1")
+
+    with patch(URLOPEN, return_value=_models_response(["z-ai/glm-5.3"])):
+        result = _probe_nvidia()
+
+    assert result["reachable"] is True
+    assert result["free_status"] == "unknown"
+    assert result["free_available"] == []

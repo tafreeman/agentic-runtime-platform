@@ -688,10 +688,14 @@ def _probe_nvidia() -> dict[str, Any]:
     # The Free Endpoint catalog describes NVIDIA's hosted API only. Classify
     # against it solely after a successful probe of that origin; an on-prem
     # NIM or a failed /models call leaves the free status unknown.
-    parsed = urlparse(base)
-    scheme = parsed.scheme.lower()
-    port = parsed.port or {"https": 443, "http": 80}.get(scheme)
-    hosted = (scheme, (parsed.hostname or "").lower(), port) == NVIDIA_NIM_HOSTED_ORIGIN
+    try:
+        parsed = urlparse(base)
+        scheme = parsed.scheme.lower()
+        port = parsed.port or {"https": 443, "http": 80}.get(scheme)
+        origin = (scheme, (parsed.hostname or "").lower(), port)
+    except ValueError:  # malformed authority, e.g. a non-numeric port
+        origin = None
+    hosted = origin == NVIDIA_NIM_HOSTED_ORIGIN
     free_available: list[str] = []
     free_catalog_only: list[str] = []
     free_status = "unknown"
