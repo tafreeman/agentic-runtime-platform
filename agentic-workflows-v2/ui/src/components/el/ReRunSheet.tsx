@@ -115,7 +115,7 @@ export function ReRunSheet({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false} className="gap-4 sm:max-w-[520px]">
         <DialogTitle className="text-xl leading-7 font-bold [&_code]:font-mono [&_code]:text-[0.9em]">
-          {fix ? "Fix &amp; re-run from" : "Re-run from"} <code>{fromStep}</code>
+          {fix ? "Fix & re-run from" : "Re-run from"} <code>{fromStep}</code>
         </DialogTitle>
         <DialogDescription className="text-sm leading-[22px] text-el-secondary">
           {reason ?? DEFAULT_LEDE}
