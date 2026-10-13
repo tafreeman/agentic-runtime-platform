@@ -11,8 +11,10 @@ import ast
 import asyncio
 import json
 import os
+import re
 import shlex
 import subprocess
+from collections.abc import Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urljoin
@@ -284,6 +286,109 @@ def file_write(path: str, content: str) -> str:
         return f"ERROR: {e}"
 
 
+def _outside_file_base(path: str) -> str | None:
+    """Return an ERROR string when ``AGENTIC_FILE_BASE_DIR`` excludes *path*."""
+    base_dir = os.environ.get("AGENTIC_FILE_BASE_DIR")
+    if not base_dir:
+        return None
+    try:
+        ensure_within_base(path, base_dir)
+    except ValueError as e:
+        return f"ERROR: {e}"
+    return None
+
+
+def _escaping_pattern(pattern: str) -> str | None:
+    """Return an ERROR string for a glob that could leave the file base.
+
+    Checked before any traversal starts: filtering matches afterwards would
+    still let a pattern such as ``../../**/*`` walk the host filesystem.
+    """
+    if not os.environ.get("AGENTIC_FILE_BASE_DIR"):
+        return None
+    parts = pattern.replace("\\", "/").split("/")
+    if ".." in parts or Path(pattern).is_absolute() or pattern.startswith("/"):
+        return f"ERROR: Pattern escapes base directory: {pattern}"
+    return None
+
+
+def _match_within_file_base(match: Path) -> bool:
+    """True when a glob match stays inside ``AGENTIC_FILE_BASE_DIR`` (if set).
+
+    A glob pattern such as ``../outside/*.py`` can leave a validated directory,
+    so every match is checked after resolution, which also covers symlinks.
+    """
+    base_dir = os.environ.get("AGENTIC_FILE_BASE_DIR")
+    if not base_dir:
+        return True
+    try:
+        ensure_within_base(str(match), base_dir)
+    except ValueError:
+        return False
+    return True
+
+
+def _glob_to_regex(pattern: str, recursive: bool) -> re.Pattern[str]:
+    """Compile a ``/``-separated glob into a full-match regex over relative paths.
+
+    ``**`` spans any number of directories, ``*`` and ``?`` stay within one
+    segment, and ``[...]`` classes are kept. *recursive* mirrors ``rglob``,
+    matching the pattern at any depth.
+    """
+    parts: list[str] = ["(?:[^/]+/)*"] if recursive else []
+    segments = pattern.split("/")
+    for index, segment in enumerate(segments):
+        if segment == "**":
+            parts.append("(?:[^/]+/)*" if index < len(segments) - 1 else "[^/]+")
+            continue
+        out: list[str] = []
+        i = 0
+        while i < len(segment):
+            ch = segment[i]
+            if ch == "*":
+                out.append("[^/]*")
+            elif ch == "?":
+                out.append("[^/]")
+            elif ch == "[" and (close := segment.find("]", i + 2)) != -1:
+                body = segment[i + 1 : close]
+                body = "^" + body[1:] if body.startswith("!") else body
+                out.append("[" + body.replace("\\", "\\\\") + "]")
+                i = close
+            else:
+                out.append(re.escape(ch))
+            i += 1
+        parts.append("".join(out) + ("/" if index < len(segments) - 1 else ""))
+    flags = re.IGNORECASE if os.name == "nt" else 0
+    return re.compile("".join(parts), flags)
+
+
+def _iter_glob(root: Path, pattern: str, recursive: bool = False) -> Iterator[Path]:
+    """Yield files under *root* matching *pattern*.
+
+    Without ``AGENTIC_FILE_BASE_DIR`` this is plain ``glob``/``rglob``. With it
+    the tree is walked without following directory symlinks, so a link inside
+    the base cannot lead the traversal into a large outside tree before the
+    per-match containment check runs.
+    """
+    if not os.environ.get("AGENTIC_FILE_BASE_DIR"):
+        yield from root.rglob(pattern) if recursive else root.glob(pattern)
+        return
+    matcher = _glob_to_regex(pattern, recursive)
+    segments = pattern.split("/")
+    # Without ``**`` (or rglob's any-depth match) a pattern reaches only as
+    # deep as it has segments, so stop descending there, as ``Path.glob`` does.
+    max_depth = None if recursive or "**" in segments else len(segments) - 1
+    for dirpath, dirnames, filenames in os.walk(root, followlinks=False):
+        rel_dir = Path(dirpath).relative_to(root).as_posix()
+        depth = 0 if rel_dir == "." else rel_dir.count("/") + 1
+        if max_depth is not None and depth >= max_depth:
+            dirnames.clear()
+        for name in filenames:
+            rel = name if rel_dir == "." else f"{rel_dir}/{name}"
+            if matcher.fullmatch(rel):
+                yield Path(dirpath) / name
+
+
 @tool
 def file_list(directory: str, pattern: str = "*") -> str:
     """List files in a directory matching a glob pattern.
@@ -292,11 +397,18 @@ def file_list(directory: str, pattern: str = "*") -> str:
         directory: Directory path to list.
         pattern: Glob pattern (default ``*``).
     """
+    denied = _outside_file_base(directory) or _escaping_pattern(pattern)
+    if denied:
+        return denied
     p = Path(directory)
     if not p.is_dir():
         return f"ERROR: Not a directory: {directory}"
     try:
-        files = sorted(str(f.relative_to(p)) for f in p.glob(pattern) if f.is_file())
+        files = sorted(
+            str(f.relative_to(p))
+            for f in _iter_glob(p, pattern)
+            if f.is_file() and _match_within_file_base(f)
+        )
         return json.dumps(files[:200])
     except Exception as e:
         return f"ERROR: {e}"
@@ -444,6 +556,9 @@ def search_files(
         file_pattern: Glob pattern for files to search (default ``*.py``).
         max_results: Maximum number of results to return.
     """
+    denied = _outside_file_base(directory) or _escaping_pattern(file_pattern)
+    if denied:
+        return denied
     results: list[dict] = []
     p = Path(directory)
     if not p.is_dir():
@@ -451,8 +566,8 @@ def search_files(
 
     query_lower = query.lower()
     try:
-        for filepath in p.rglob(file_pattern):
-            if not filepath.is_file():
+        for filepath in _iter_glob(p, file_pattern, recursive=True):
+            if not filepath.is_file() or not _match_within_file_base(filepath):
                 continue
             if _scan_file_for_query(filepath, p, query_lower, results, max_results):
                 break
