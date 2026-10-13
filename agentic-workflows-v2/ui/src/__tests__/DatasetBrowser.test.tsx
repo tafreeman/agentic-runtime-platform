@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { EvaluationDatasetsResponse } from "../api/types";
@@ -50,6 +50,14 @@ describe("Dataset browser navigation", () => {
     expect(screen.getByRole("button", { name: "Select dataset First dataset" })).toHaveAttribute("aria-pressed", "true");
     fireEvent.keyDown(screen.getByRole("button", { name: "Select sample 0" }), { key: "Escape" });
     expect(screen.getByLabelText("Current URL")).toHaveTextContent("?context=review");
+  });
+
+  it("keeps focus in the pane when a deep-linked selection is dismissed", async () => {
+    setup("/datasets?source=repository&dataset=first&sample=0");
+    fireEvent.click(screen.getByRole("button", { name: "Back to samples" }));
+    await waitFor(() => expect(screen.getByRole("region", { name: "Dataset samples" })).toHaveFocus());
+    fireEvent.click(screen.getByRole("button", { name: "All datasets" }));
+    await waitFor(() => expect(screen.getByLabelText("Dataset catalog", { selector: "div" })).toHaveFocus());
   });
 
   it("resets pagination when switching datasets", () => {

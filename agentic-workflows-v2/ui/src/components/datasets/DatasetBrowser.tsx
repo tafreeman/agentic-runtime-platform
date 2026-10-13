@@ -74,6 +74,10 @@ export default function DatasetBrowser({ datasets }: Readonly<DatasetBrowserProp
   const [params, setParams] = useSearchParams();
   const datasetTrigger = useRef<HTMLButtonElement | null>(null);
   const sampleTrigger = useRef<HTMLButtonElement | null>(null);
+  // Fallback focus targets for selections restored from the URL, where no row
+  // was clicked and so no trigger was recorded.
+  const catalogPane = useRef<HTMLDivElement | null>(null);
+  const samplePane = useRef<HTMLElement | null>(null);
   const source = params.get("source");
   const selectedSource: SelectedSource = source === "repository" || source === "local" ? source : null;
   const selectedDatasetId = selectedSource && datasets[selectedSource].some((dataset) => dataset.id === params.get("dataset"))
@@ -100,13 +104,18 @@ export default function DatasetBrowser({ datasets }: Readonly<DatasetBrowserProp
       if (toCatalog) { next.delete("source"); next.delete("dataset"); }
       return next;
     });
-    requestAnimationFrame(() => (toCatalog ? datasetTrigger : sampleTrigger).current?.focus());
+    requestAnimationFrame(() => {
+      const trigger = (toCatalog ? datasetTrigger : sampleTrigger).current;
+      (trigger ?? (toCatalog ? catalogPane : samplePane).current)?.focus();
+    });
   }
 
   return (
     <div className="flex h-full min-h-80 min-w-0 border-y border-el-divider bg-el-surface" onKeyDown={(event) => { if (event.key === "Escape" && selectedDatasetId) { event.stopPropagation(); goBack(selectedSampleIndex === null); } }}>
       {/* Left pane — dataset list */}
       <div
+        ref={catalogPane}
+        tabIndex={-1}
         aria-label="Dataset catalog" className={`min-w-0 flex-1 overflow-y-auto lg:w-1/4 lg:flex-none lg:border-r lg:border-el-divider ${selectedDatasetId ? "hidden lg:block" : "block"}`}
       >
         {datasets.repository.length > 0 && (
@@ -177,7 +186,7 @@ export default function DatasetBrowser({ datasets }: Readonly<DatasetBrowserProp
       </div>
 
       {/* Middle pane — sample index */}
-      <section aria-label="Dataset samples" className={`min-w-0 flex-1 flex-col lg:flex lg:w-1/3 lg:flex-none lg:border-r lg:border-el-divider ${selectedDatasetId && selectedSampleIndex === null ? "flex" : "hidden"}`}>
+      <section ref={samplePane} tabIndex={-1} aria-label="Dataset samples" className={`min-w-0 flex-1 flex-col lg:flex lg:w-1/3 lg:flex-none lg:border-r lg:border-el-divider ${selectedDatasetId && selectedSampleIndex === null ? "flex" : "hidden"}`}>
         <div className="border-b border-el-divider-soft p-2 lg:hidden">
           <Button variant="ghost" onClick={() => goBack(true)}><ArrowLeft aria-hidden="true" />All datasets</Button>
         </div>
