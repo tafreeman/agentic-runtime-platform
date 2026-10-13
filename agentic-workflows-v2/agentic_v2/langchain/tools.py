@@ -374,8 +374,15 @@ def _iter_glob(root: Path, pattern: str, recursive: bool = False) -> Iterator[Pa
         yield from root.rglob(pattern) if recursive else root.glob(pattern)
         return
     matcher = _glob_to_regex(pattern, recursive)
-    for dirpath, _dirnames, filenames in os.walk(root, followlinks=False):
+    segments = pattern.split("/")
+    # Without ``**`` (or rglob's any-depth match) a pattern reaches only as
+    # deep as it has segments, so stop descending there, as ``Path.glob`` does.
+    max_depth = None if recursive or "**" in segments else len(segments) - 1
+    for dirpath, dirnames, filenames in os.walk(root, followlinks=False):
         rel_dir = Path(dirpath).relative_to(root).as_posix()
+        depth = 0 if rel_dir == "." else rel_dir.count("/") + 1
+        if max_depth is not None and depth >= max_depth:
+            dirnames.clear()
         for name in filenames:
             rel = name if rel_dir == "." else f"{rel_dir}/{name}"
             if matcher.fullmatch(rel):

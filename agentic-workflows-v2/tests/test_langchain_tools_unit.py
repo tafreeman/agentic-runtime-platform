@@ -353,3 +353,28 @@ class TestDirectoryToolsFileBase:
         got = json.loads(file_list.invoke({"directory": str(tmp_path), "pattern": pattern}))
 
         assert sorted(p.replace("\\", "/") for p in got) == expected
+
+    def test_nonrecursive_pattern_does_not_descend(self, tmp_path, monkeypatch):
+        import os as _os
+
+        from agentic_v2.langchain import tools
+
+        (tmp_path / "top.py").write_text("x", encoding="utf-8")
+        deep = tmp_path / "a" / "b"
+        deep.mkdir(parents=True)
+        (deep / "deep.py").write_text("x", encoding="utf-8")
+        monkeypatch.setenv("AGENTIC_FILE_BASE_DIR", str(tmp_path))
+        visited: list[str] = []
+        real_walk = _os.walk
+
+        def spy(*args, **kwargs):
+            for dirpath, dirnames, filenames in real_walk(*args, **kwargs):
+                visited.append(dirpath)
+                yield dirpath, dirnames, filenames
+
+        monkeypatch.setattr(tools.os, "walk", spy)
+
+        listed = tools.file_list.invoke({"directory": str(tmp_path)})
+
+        assert "top.py" in listed and "deep.py" not in listed
+        assert visited == [str(tmp_path)]
