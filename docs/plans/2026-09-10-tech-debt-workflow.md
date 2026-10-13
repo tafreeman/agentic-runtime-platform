@@ -23,7 +23,10 @@ no runs: its operational effectiveness still needs evidence.
 Two end-state decisions were selected for this plan:
 
 * Retain both native and LangGraph engines. Share orchestration and lifecycle;
-  do not replace either engine with the other.
+  do not replace either engine with the other. This reverses the convergence
+  direction in `docs/adr/ADR-001-002-003-architecture-decisions.md`, which
+  remains authoritative until a new ADR (or an amendment) records the
+  reversal. That ADR must be accepted before G3 or G4 acts on this decision.
 * ARP owns its required deterministic gate without an EvalKit or legacy-package
   dependency. EvalKit retains its abstention-aware grading semantics. Runtime
   step evidence remains advisory unless an independently authorized policy

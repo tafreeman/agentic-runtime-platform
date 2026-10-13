@@ -63,7 +63,7 @@ real change.
 
 ## Migration and verification
 
-Complete scoring-package removal and server decomposition before enforcing the
+Complete legacy evaluation-package (`agentic-v2-eval`) removal and server decomposition before enforcing the
 new package rules. Small changes can run in parallel when they edit different
 files.
 
