@@ -98,12 +98,14 @@ export default function DatasetBrowser({ datasets }: Readonly<DatasetBrowserProp
   }
 
   function goBack(toCatalog: boolean) {
+    // Replace, don't push: drilling up should not add a history entry that the
+    // browser Back button would then use to reopen what was just dismissed.
     setParams((previous) => {
       const next = new URLSearchParams(previous);
       next.delete("sample");
       if (toCatalog) { next.delete("source"); next.delete("dataset"); }
       return next;
-    });
+    }, { replace: true });
     requestAnimationFrame(() => {
       const trigger = (toCatalog ? datasetTrigger : sampleTrigger).current;
       (trigger ?? (toCatalog ? catalogPane : samplePane).current)?.focus();

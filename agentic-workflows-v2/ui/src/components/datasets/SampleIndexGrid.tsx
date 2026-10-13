@@ -37,8 +37,11 @@ export default function SampleIndexGrid({
   selectedIndex,
   onSelect,
 }: Readonly<SampleIndexGridProps>) {
-  const [offset, setOffset] = useState(0);
   const limit = 20;
+  // A deep-linked sample can sit past the first page; open on the page that holds it.
+  const [offset, setOffset] = useState(() =>
+    selectedIndex === null ? 0 : Math.floor(selectedIndex / limit) * limit,
+  );
   const { data, isLoading, error } = useDatasetSamples(datasetSource, datasetId, offset, limit);
 
   if (isLoading) {

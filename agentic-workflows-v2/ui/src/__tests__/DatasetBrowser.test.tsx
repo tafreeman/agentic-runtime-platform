@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter, useLocation } from "react-router-dom";
+import { MemoryRouter, useLocation, useNavigationType } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { EvaluationDatasetsResponse } from "../api/types";
 import DatasetBrowser from "../components/datasets/DatasetBrowser";
@@ -20,7 +20,12 @@ const datasets: EvaluationDatasetsResponse = {
 };
 
 function Location() {
-  return <output aria-label="Current URL">{useLocation().search}</output>;
+  return (
+    <>
+      <output aria-label="Current URL">{useLocation().search}</output>
+      <output aria-label="Navigation type">{useNavigationType()}</output>
+    </>
+  );
 }
 
 function setup(url = "/datasets") {
@@ -58,6 +63,19 @@ describe("Dataset browser navigation", () => {
     await waitFor(() => expect(screen.getByRole("region", { name: "Dataset samples" })).toHaveFocus());
     fireEvent.click(screen.getByRole("button", { name: "All datasets" }));
     await waitFor(() => expect(screen.getByLabelText("Dataset catalog", { selector: "div" })).toHaveFocus());
+  });
+
+  it("opens on the page that holds a deep-linked sample", () => {
+    setup("/datasets?source=repository&dataset=first&sample=23");
+    expect(samples).toHaveBeenCalledWith("repository", "first", 20, 20);
+  });
+
+  it("drilling up replaces the history entry instead of adding one", () => {
+    setup("/datasets?source=repository&dataset=first&sample=0");
+    fireEvent.click(screen.getByRole("button", { name: "Back to samples" }));
+    expect(screen.getByLabelText("Navigation type")).toHaveTextContent("REPLACE");
+    fireEvent.click(screen.getByRole("button", { name: "All datasets" }));
+    expect(screen.getByLabelText("Navigation type")).toHaveTextContent("REPLACE");
   });
 
   it("resets pagination when switching datasets", () => {
