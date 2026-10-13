@@ -585,6 +585,20 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 1
 
+    # Validate every case's own bar up front so a live-mode skip (no key, or
+    # AGENTIC_NO_LLM) cannot hide a malformed threshold behind exit 0.
+    for index, case in enumerate(loaded):
+        if isinstance(case, dict) and case.get("threshold") is not None:
+            try:
+                _validate_threshold(case["threshold"])
+            except (TypeError, ValueError, OverflowError) as err:
+                case_id = case.get("id", f"#{index}")
+                print(
+                    f"ERROR: case {case_id}: invalid threshold: {err}",
+                    file=sys.stderr,
+                )
+                return 1
+
     if args.live:
         from agentic_v2.settings import is_agentic_no_llm_enabled
 

@@ -65,6 +65,17 @@ def test_invalid_global_thresholds_fail_even_on_live_skip(gate, monkeypatch, val
     assert gate.main(["--threshold=" + value, "--live"]) == 1
 
 
+@pytest.mark.parametrize("value", [True, 1.1, -0.1, "bad", float("nan")])
+def test_invalid_case_thresholds_fail_even_on_live_skip(
+    gate, case, tmp_path, monkeypatch, value
+):
+    monkeypatch.setenv("AGENTIC_NO_LLM", "1")
+    case["threshold"] = value
+    manifest = tmp_path / "cases.json"
+    manifest.write_text(json.dumps([case]), encoding="utf-8")
+    assert gate.main(["--cases", str(manifest), "--live"]) == 1
+
+
 @pytest.mark.parametrize("field", ["success_rate", "total_retries"])
 @pytest.mark.parametrize(
     "value", [float("nan"), float("inf"), -float("inf"), "bad", None, True, {}]
