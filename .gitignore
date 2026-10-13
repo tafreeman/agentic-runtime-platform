@@ -490,6 +490,13 @@ docs/ui/_impeccable/
 docs/ui/.impeccable/
 docs/ui/superdesign-local/
 docs/ui/*.html
+# The exported design-system bundle (tokens, previews, index.html) and its
+# tarball are local porting references; the tracked .md docs describe it.
+docs/ui/design-system/
+docs/ui/_design-system.tgz
+
+# Local Evidence Ledger design reference bundle at the repo root
+/evidence-ledger-design-system/
 
 # MkDocs local build output and plugin cache
 site/
