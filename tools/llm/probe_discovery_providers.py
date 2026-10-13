@@ -52,6 +52,8 @@ from tools.llm.probe_config import (
     ENV_LOCAL_OPENAI_BASE_URL,
     ENV_NVIDIA_NIM_API_KEY,
     ENV_NVIDIA_NIM_HOST,
+    NVIDIA_NIM_CATALOG_ALIASES,
+    NVIDIA_NIM_FREE_ENDPOINT_CATALOG,
     ENV_OLLAMA_API_KEY,
     ENV_OLLAMA_HOST,
     ENV_OPENROUTER_API_KEY,
@@ -677,12 +679,23 @@ def _probe_nvidia() -> dict[str, Any]:
     except Exception as e:
         nvidia_error = f"NVIDIA NIM not reachable at {base}: {str(e)[:100]}"
 
+    # Cross-check the build.nvidia.com "Free Endpoint" catalog against /v1/models.
+    live_ids = {m.split(":", 1)[1] for m in nvidia_models}
+    free_available: list[str] = []
+    free_catalog_only: list[str] = []
+    for slug in NVIDIA_NIM_FREE_ENDPOINT_CATALOG:
+        api_id = NVIDIA_NIM_CATALOG_ALIASES.get(slug, slug)
+        (free_available if api_id in live_ids else free_catalog_only).append(api_id)
+
     return {
         "configured": bool(nvidia_host),
         "host": base,
         "reachable": nvidia_reachable,
         "available": nvidia_models,
         "count": len(nvidia_models),
+        "free_endpoint_catalog_count": len(NVIDIA_NIM_FREE_ENDPOINT_CATALOG),
+        "free_available": free_available,
+        "free_catalog_only": free_catalog_only,
         "key_accounts": len(nvidia_keys),
         "rotation_keys": rotation_keys,
         "error": nvidia_error,
