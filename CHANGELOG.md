@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased - Benchmark LLM judge runs again
+
+- **The benchmark pipeline's LLM-judge path was silently off, and is back.**
+  `tools/agents/benchmarks/evaluation_pipeline.py` imported its report helpers
+  from `llm_evaluator` after they had moved to `evaluator_reporting`. The
+  optional-import guard swallowed the `ImportError`, so `HAS_LLM_EVALUATOR`
+  was always `False` and every `evaluate_task_output_llm` call fell back to
+  legacy pattern matching. It now makes the LLM-judge call again. Benchmark
+  scores produced from here on are judge scores, not pattern-match scores, and
+  each scored task costs one extra provider call, so compare runs only within
+  one side of this change.
+- **Ten `tools/tests` cases gate again.** They were deselected in the
+  `tools-tests` CI job as "stale"; they were catching this bug. A new test
+  fails if the import guard masks a broken in-repo import. One unrelated case
+  stays deselected (`docs/KNOWN_LIMITATIONS.md` §4.15).
+
 ## Unreleased - Eval gate scores through the runtime, and rejects bad inputs
 
 - **`eval-golden-gate` no longer needs `agentic-v2-eval`.** `scripts/eval_gate.py`

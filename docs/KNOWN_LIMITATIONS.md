@@ -2,7 +2,7 @@
 
 > **Audience:** Operators, auditors, and contributors reading failing CI or trying to understand why something "works but not quite."
 > **Outcome:** After reading, you know what is intentionally unfinished and what the next sprint is expected to address.
-> **Last verified:** 2026-07-28
+> **Last verified:** 2026-10-12
 
 This page records limitations confirmed in the current checkout. Some describe
 accepted design boundaries; others describe work that is not complete. Check
