@@ -223,7 +223,7 @@ LangChain local ONNX builder do not call it.
 
 ---
 
-### 4.15 Eleven `tools/tests` cases assert an API that no longer exists
+### 4.15 One `tools/tests` case asserts an API that no longer exists
 
 `tools/tests` holds 17 test files that **no CI job had ever collected**. The whole-repo
 coverage step measures `--cov=tools` but only collects `agentic-workflows-v2/tests` and
@@ -236,17 +236,19 @@ because nothing ever ran them:
 
 - `test_errors.py::TestClassifyError::test_return_code_param_accepted` calls
   `classify_error(..., return_code=124)`; the parameter no longer exists.
-- Ten cases across `test_benchmark_pipeline.py` and `test_evaluation_pipeline.py`
-  (`TestEvaluateTaskOutputLlm`) patch `evaluation_pipeline.print_evaluation_report`,
-  a symbol the module no longer defines.
+- ~~Ten cases across `test_benchmark_pipeline.py` and `test_evaluation_pipeline.py`
+  (`TestEvaluateTaskOutputLlm`)~~ — **resolved.** These were not stale tests but a real
+  bug: `evaluation_pipeline` imported the reporting helpers from `llm_evaluator` after they
+  had moved to `evaluator_reporting`, the optional-import guard swallowed the
+  `ImportError`, and `HAS_LLM_EVALUATOR` was always `False`, silently disabling the
+  LLM-judge path. The import is fixed, the ten cases pass and are no longer deselected,
+  and `test_llm_evaluator_imports_resolve` now fails if the guard masks a broken import.
 
-- **Surface:** `tools/tests/test_errors.py`, `tools/tests/test_benchmark_pipeline.py`,
-  `tools/tests/test_evaluation_pipeline.py`; the `tools-tests` job in `.github/workflows/ci.yml`.
-- **Risk:** Low for runtime behaviour — the implementations are current and the other 410
-  cases pass. The real cost is that these three files' intent is now unverified, so a
-  regression in the surrounding code would not be caught by them.
-- **Workaround:** None needed; the 11 are deselected by node id in the CI job, so the
-  remaining cases in those same files still gate.
+- **Surface:** `tools/tests/test_errors.py`; the `tools-tests` job in `.github/workflows/ci.yml`.
+- **Risk:** Low for runtime behaviour — the implementation is current and every other case
+  passes. The cost is that this one case's intent is unverified.
+- **Workaround:** None needed; it is deselected by node id in the CI job, so the
+  remaining cases in that file still gate.
 - **Status:** Accepted, short-term. Deselecting by node id rather than by file is
   deliberate — it keeps the debt greppable and keeps the rest of each file enforcing.
 - **Upstream fix:** Decide per case whether the test or the API is right, then either

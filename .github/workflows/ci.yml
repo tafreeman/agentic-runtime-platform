@@ -653,13 +653,11 @@ jobs:
     # and agentic-v2-eval. So tools/ was measured but never exercised, and the
     # redaction tests guarding the clear-text CodeQL fixes would never run.
     #
-    # 11 tests are deselected below. They are not flaky — they are stale, and
-    # they are stale *because* nothing ever ran them: they assert an API that no
-    # longer exists (classify_error() lost its return_code parameter;
-    # evaluation_pipeline lost print_evaluation_report, which the mocks patch).
-    # They are listed individually rather than excluded by file so the debt is
-    # greppable and the surviving tests in those same files still gate. Fixing
-    # them is tracked in docs/KNOWN_LIMITATIONS.md.
+    # 1 test is deselected below. It is not flaky — it is stale, and stale
+    # *because* nothing ever ran it: it asserts an API that no longer exists
+    # (classify_error() lost its return_code parameter). It is listed by node id
+    # rather than excluded by file so the debt is greppable and the surviving
+    # tests in that file still gate. Tracked in docs/KNOWN_LIMITATIONS.md §4.15.
     name: tools/ tests
     runs-on: ubuntu-latest
     steps:
@@ -678,13 +676,3 @@ jobs:
           set -euo pipefail
           python -m pytest tools/tests -q --timeout=120 \
             --deselect tools/tests/test_errors.py::TestClassifyError::test_return_code_param_accepted \
-            --deselect tools/tests/test_benchmark_pipeline.py::TestEvaluateTaskOutputLlm::test_successful_evaluation \
-            --deselect tools/tests/test_benchmark_pipeline.py::TestEvaluateTaskOutputLlm::test_saves_report_when_output_dir \
-            --deselect tools/tests/test_benchmark_pipeline.py::TestEvaluateTaskOutputLlm::test_creates_minimal_gold_when_none_found \
-            --deselect tools/tests/test_evaluation_pipeline.py::TestEvaluateTaskOutputLlm::test_creates_minimal_gold_data_when_none_found \
-            --deselect tools/tests/test_evaluation_pipeline.py::TestEvaluateTaskOutputLlm::test_uses_existing_gold_data_when_found \
-            --deselect tools/tests/test_evaluation_pipeline.py::TestEvaluateTaskOutputLlm::test_returns_eval_dict \
-            --deselect tools/tests/test_evaluation_pipeline.py::TestEvaluateTaskOutputLlm::test_saves_report_when_output_dir_given \
-            --deselect tools/tests/test_evaluation_pipeline.py::TestEvaluateTaskOutputLlm::test_does_not_save_report_when_output_dir_none \
-            --deselect tools/tests/test_evaluation_pipeline.py::TestEvaluateTaskOutputLlm::test_verbose_calls_print_evaluation_report \
-            --deselect tools/tests/test_evaluation_pipeline.py::TestEvaluateTaskOutputLlm::test_passes_evaluator_model_to_evaluate_with_llm
