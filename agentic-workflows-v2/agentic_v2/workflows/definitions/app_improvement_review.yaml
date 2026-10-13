@@ -3,7 +3,11 @@ description: >-
   Analyze an existing application through independent architecture, product,
   reliability, delivery, performance, and clean-sheet lenses; challenge the
   evidence; score the current app; and produce a prioritized improvement or
-  redesign roadmap.
+  redesign roadmap. Run it with the default langchain adapter: the native
+  adapter has no ``file_list``, ``search_files`` or ``code_analyze`` tool, so
+  the inventory and every lens would have only ``file_read`` and could not
+  discover files under ``app_path``. Set ``AGENTIC_FILE_BASE_DIR`` to confine
+  inspection to the workspace.
 version: "1.0"
 
 capabilities:

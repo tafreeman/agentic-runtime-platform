@@ -238,3 +238,34 @@ class TestToolRegistryHelpers:
         """TIER_TOOLS covers tiers 0 through 5."""
         for tier in range(6):
             assert tier in TIER_TOOLS
+
+
+class TestDirectoryToolsFileBase:
+    """file_list and search_files honour AGENTIC_FILE_BASE_DIR like file_read."""
+
+    def test_outside_base_is_denied(self, tmp_path, monkeypatch):
+        from agentic_v2.langchain.tools import file_list, search_files
+
+        base = tmp_path / "base"
+        outside = tmp_path / "outside"
+        base.mkdir()
+        outside.mkdir()
+        (outside / "secret.py").write_text("token = 1\n", encoding="utf-8")
+        monkeypatch.setenv("AGENTIC_FILE_BASE_DIR", str(base))
+
+        listed = file_list.invoke({"directory": str(outside)})
+        searched = search_files.invoke({"directory": str(outside), "query": "token"})
+
+        assert listed.startswith("ERROR: Path escapes base directory")
+        assert searched.startswith("ERROR: Path escapes base directory")
+
+    def test_inside_base_still_works(self, tmp_path, monkeypatch):
+        from agentic_v2.langchain.tools import file_list, search_files
+
+        (tmp_path / "a.py").write_text("token = 1\n", encoding="utf-8")
+        monkeypatch.setenv("AGENTIC_FILE_BASE_DIR", str(tmp_path))
+
+        assert "a.py" in file_list.invoke({"directory": str(tmp_path)})
+        assert "a.py" in search_files.invoke(
+            {"directory": str(tmp_path), "query": "token"}
+        )

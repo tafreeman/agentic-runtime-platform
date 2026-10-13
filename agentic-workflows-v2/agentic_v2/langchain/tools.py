@@ -284,6 +284,18 @@ def file_write(path: str, content: str) -> str:
         return f"ERROR: {e}"
 
 
+def _outside_file_base(path: str) -> str | None:
+    """Return an ERROR string when ``AGENTIC_FILE_BASE_DIR`` excludes *path*."""
+    base_dir = os.environ.get("AGENTIC_FILE_BASE_DIR")
+    if not base_dir:
+        return None
+    try:
+        ensure_within_base(path, base_dir)
+    except ValueError as e:
+        return f"ERROR: {e}"
+    return None
+
+
 @tool
 def file_list(directory: str, pattern: str = "*") -> str:
     """List files in a directory matching a glob pattern.
@@ -292,6 +304,9 @@ def file_list(directory: str, pattern: str = "*") -> str:
         directory: Directory path to list.
         pattern: Glob pattern (default ``*``).
     """
+    denied = _outside_file_base(directory)
+    if denied:
+        return denied
     p = Path(directory)
     if not p.is_dir():
         return f"ERROR: Not a directory: {directory}"
@@ -444,6 +459,9 @@ def search_files(
         file_pattern: Glob pattern for files to search (default ``*.py``).
         max_results: Maximum number of results to return.
     """
+    denied = _outside_file_base(directory)
+    if denied:
+        return denied
     results: list[dict] = []
     p = Path(directory)
     if not p.is_dir():
