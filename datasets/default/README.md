@@ -10,7 +10,8 @@ python scripts/eval_gate.py `
   --threshold 0.80
 ```
 
-The command uses the real `agentic_v2_eval.Scorer`, but it does not call a
+The command scores with the runtime's `CriterionScorer`
+(`agentic_v2/scoring/criterion_aggregation.py`), but it does not call a
 model or rerun the workflow engine. It scores stable fields in the saved JSON.
 
 ## Contents

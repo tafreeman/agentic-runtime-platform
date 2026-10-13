@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased - Eval gate scores through the runtime, and rejects bad inputs
+
+- **`eval-golden-gate` no longer needs `agentic-v2-eval`.** `scripts/eval_gate.py`
+  scores through the new `agentic_v2/scoring/criterion_aggregation.py`, and the
+  evalkit bridge uses the same arithmetic (ADR-042). A missing criterion keeps
+  its weight in the average, where EvalKit drops it. The CI job installs the
+  runtime package instead of the legacy one and also runs the gate-independence
+  and mocked-live tests. The legacy package is not removed yet.
+- **The gate now fails on bad score inputs instead of scoring them 0.** A null,
+  boolean, malformed or non-finite score in a manifest or golden result, a
+  missing rubric criterion, and a threshold outside `[0, 1]` each fail the
+  run. Before, they were coerced to 0 and could still pass. If a dataset
+  maintained outside this repo relied on that, fix its scores.
+
 ## Unreleased - Secret masks keep JSON replies parseable
 
 - **Masking no longer corrupts JSON replies.** The response sanitizer masks
