@@ -16,6 +16,7 @@ import sys
 import urllib.request
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 from tools.llm.llm_client import LLMClient
 from tools.llm.probe_config import (
@@ -52,6 +53,9 @@ from tools.llm.probe_config import (
     ENV_LOCAL_OPENAI_BASE_URL,
     ENV_NVIDIA_NIM_API_KEY,
     ENV_NVIDIA_NIM_HOST,
+    NVIDIA_NIM_CATALOG_ALIASES,
+    NVIDIA_NIM_HOSTED_ORIGIN,
+    NVIDIA_NIM_FREE_ENDPOINT_CATALOG,
     ENV_OLLAMA_API_KEY,
     ENV_OLLAMA_HOST,
     ENV_OPENROUTER_API_KEY,
@@ -650,6 +654,10 @@ def _probe_nvidia() -> dict[str, Any]:
             "reachable": False,
             "available": [],
             "count": 0,
+            "free_status": "unknown",
+            "free_endpoint_catalog_count": len(NVIDIA_NIM_FREE_ENDPOINT_CATALOG),
+            "free_available": [],
+            "free_catalog_only": [],
             "key_accounts": len(nvidia_keys),
             "rotation_keys": rotation_keys,
             "error": "NVIDIA_NIM_HOST not set",
@@ -677,12 +685,38 @@ def _probe_nvidia() -> dict[str, Any]:
     except Exception as e:
         nvidia_error = f"NVIDIA NIM not reachable at {base}: {str(e)[:100]}"
 
+    # The Free Endpoint catalog describes NVIDIA's hosted API only. Classify
+    # against it solely after a successful probe of that origin; an on-prem
+    # NIM or a failed /models call leaves the free status unknown.
+    try:
+        parsed = urlparse(base)
+        scheme = parsed.scheme.lower()
+        port = parsed.port or {"https": 443, "http": 80}.get(scheme)
+        origin = (scheme, (parsed.hostname or "").lower(), port)
+    except ValueError:  # malformed authority, e.g. a non-numeric port
+        origin = None
+    hosted = origin == NVIDIA_NIM_HOSTED_ORIGIN
+    free_available: list[str] = []
+    free_catalog_only: list[str] = []
+    free_status = "unknown"
+    if hosted and nvidia_reachable:
+        live_ids = {m.split(":", 1)[1] for m in nvidia_models}
+        for slug in NVIDIA_NIM_FREE_ENDPOINT_CATALOG:
+            api_id = NVIDIA_NIM_CATALOG_ALIASES.get(slug, slug)
+            entry = f"nvidia:{api_id}"  # same prefix as ``available``
+            (free_available if api_id in live_ids else free_catalog_only).append(entry)
+        free_status = "classified"
+
     return {
+        "free_status": free_status,
         "configured": bool(nvidia_host),
         "host": base,
         "reachable": nvidia_reachable,
         "available": nvidia_models,
         "count": len(nvidia_models),
+        "free_endpoint_catalog_count": len(NVIDIA_NIM_FREE_ENDPOINT_CATALOG),
+        "free_available": free_available,
+        "free_catalog_only": free_catalog_only,
         "key_accounts": len(nvidia_keys),
         "rotation_keys": rotation_keys,
         "error": nvidia_error,

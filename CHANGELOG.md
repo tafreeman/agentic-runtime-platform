@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased - NVIDIA free-tier discovery reports what the catalog says
+
+- **`model_probe --discover` no longer lists every hosted NVIDIA model as free.**
+  `/v1/models` has no free-tier flag, so the NVIDIA entry now checks the
+  build.nvidia.com "Free Endpoint" catalog (38 entries) against the live list.
+  The entry reports `free_available` (catalog models the API serves),
+  `free_catalog_only` (catalog models the API does not serve), and
+  `free_endpoint_catalog_count`. Consumers of `-o` output that read the old
+  `available` list as "free" should read `free_available` instead.
+  The IDs in both lists carry the same `nvidia:` prefix as `available`.
+- **The free status is `unknown` unless the hosted API answered.** A self-hosted
+  `NVIDIA_NIM_HOST`, an unset host, or a failed `/models` call sets
+  `free_status` to `unknown` with empty free lists, rather than classifying
+  on-prem or unavailable models.
+
 ## Unreleased - Eval gate scores through the runtime, and rejects bad inputs
 
 - **`eval-golden-gate` no longer needs `agentic-v2-eval`.** `scripts/eval_gate.py`
