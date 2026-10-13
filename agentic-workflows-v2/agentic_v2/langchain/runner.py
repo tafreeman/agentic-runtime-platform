@@ -40,6 +40,7 @@ from .config import (
 )
 from .expressions import resolve_expression
 from .graph import compile_workflow
+from .graph_wiring import is_loop_exit_node
 from .result_builder import (
     build_workflow_result,
     extract_metadata,
@@ -60,6 +61,19 @@ class _ProgressCallbackError(Exception):
     def __init__(self, error: Exception) -> None:
         super().__init__(str(error))
         self.error = error
+
+
+def _is_loop_exit_event(event: Any) -> bool:
+    """Whether a stream update comes only from synthetic loop-exit nodes.
+
+    Those nodes are wiring, not workflow steps, so callers never see
+    them.
+    """
+    return (
+        isinstance(event, Mapping)
+        and bool(event)
+        and all(isinstance(key, str) and is_loop_exit_node(key) for key in event)
+    )
 
 
 def _is_workflow_path(workflow: str | Path) -> bool:
@@ -679,7 +693,9 @@ class WorkflowRunner:
         stream_error = ""
 
         try:
-            yield from graph.stream(state, config=langgraph_config)
+            for event in graph.stream(state, config=langgraph_config):
+                if not _is_loop_exit_event(event):
+                    yield event
         except Exception as e:
             stream_failed = True
             stream_error = str(e)
@@ -765,7 +781,8 @@ class WorkflowRunner:
 
         try:
             async for event in graph.astream(state, config=langgraph_config):
-                yield event
+                if not _is_loop_exit_event(event):
+                    yield event
         except Exception as e:
             stream_failed = True
             stream_error = str(e)
@@ -974,7 +991,7 @@ class WorkflowRunner:
                 async for mode, payload in events:
                     if mode == "values":
                         final = payload
-                    elif mode == "tasks":
+                    elif mode == "tasks" and not is_loop_exit_node(payload["name"]):
                         if "input" in payload:
                             active_tasks[payload["id"]] = payload
                         else:
