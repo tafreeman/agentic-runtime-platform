@@ -301,7 +301,7 @@ class TestCostLaneCeiling:
         monkeypatch.setitem(lcm._TIER_FALLBACK_CHAINS, 1, [self._PAID])
         monkeypatch.setenv("AGENTIC_MAX_COST_LANE", "free")
         with pytest.raises(CostLaneCeilingExceededError, match="free"):
-            get_model_candidates_for_tier(1, include_gh_backup=False)
+            get_model_candidates_for_tier(1)
 
     def test_include_unavailable_bypasses_the_ceiling(
         self, monkeypatch: pytest.MonkeyPatch
@@ -821,10 +821,10 @@ class TestEnumerateKnownModelsPriceLabels:
 
         monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
         monkeypatch.setenv("OPENAI_BASE_URL", "https://integrate.api.nvidia.com/v1")
-        listing = [CloudModelInfo(id="openai:z-ai/glm-5.3-flash")]
+        listing = [CloudModelInfo(id="openai:moonshotai/kimi-k3")]
         by_id = {m["id"]: m for m in enumerate_known_models(cloud_listing=listing)}
 
-        row = by_id["openai:z-ai/glm-5.3-flash"]
+        row = by_id["openai:moonshotai/kimi-k3"]
         assert row["price_label"] == "free"
         assert (
             row["price_reason"] == "free tier declared for nvidia (via OPENAI_BASE_URL)"

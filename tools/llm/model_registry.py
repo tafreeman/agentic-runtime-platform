@@ -733,6 +733,21 @@ REGISTRY: dict[str, ProviderEntry] = {
                 "status": "working",
                 "rate_limit": {"rpm": 40, "note": LIMIT_PER_ACCOUNT},
             },
+            # Tier 2-3 and tier 4-5 replacements for the retired
+            # deepseek-ai/deepseek-v4-flash and -pro (HTTP 410 since
+            # 2026-08-07); chat-verified 2026-10-11.
+            {
+                "id": "z-ai/glm-5.3-flash",
+                "capability": "chat",
+                "status": "working",
+                "rate_limit": {"rpm": 40, "note": LIMIT_PER_ACCOUNT},
+            },
+            {
+                "id": "z-ai/glm-5.3",
+                "capability": "chat",
+                "status": "working",
+                "rate_limit": {"rpm": 40, "note": LIMIT_PER_ACCOUNT},
+            },
             {
                 "id": "meta/llama-3.3-70b-instruct",
                 "capability": "chat",
@@ -788,18 +803,6 @@ REGISTRY: dict[str, ProviderEntry] = {
                 "rate_limit": {"rpm": 40, "note": LIMIT_PER_ACCOUNT},
             },
             {
-                "id": "deepseek-ai/deepseek-v4-flash",
-                "capability": "chat",
-                "status": "working",
-                "rate_limit": {"rpm": 40, "note": LIMIT_PER_ACCOUNT},
-            },
-            {
-                "id": "deepseek-ai/deepseek-v4-pro",
-                "capability": "chat",
-                "status": "working",
-                "rate_limit": {"rpm": 40, "note": LIMIT_PER_ACCOUNT},
-            },
-            {
                 "id": "qwen/qwen3.5-397b-a17b",
                 "capability": "chat",
                 "status": "working",
@@ -849,12 +852,6 @@ REGISTRY: dict[str, ProviderEntry] = {
             },
             {
                 "id": "moonshotai/kimi-k2.6",
-                "capability": "chat",
-                "status": "working",
-                "rate_limit": {"rpm": 40, "note": LIMIT_PER_ACCOUNT},
-            },
-            {
-                "id": "openai/gpt-oss-120b",
                 "capability": "chat",
                 "status": "working",
                 "rate_limit": {"rpm": 40, "note": LIMIT_PER_ACCOUNT},

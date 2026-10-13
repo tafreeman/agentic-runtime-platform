@@ -690,11 +690,19 @@ class LLMJudge:
                     temperature=self.temperature,
                 )
             )
-            raw = response.get("content", "")
-            if isinstance(response, dict):
-                model_version = response.get("model")
-                if isinstance(model_version, str) and model_version.strip():
-                    self.model_version = model_version
+            content = response.get("content")
+            if not isinstance(content, str) or not content.strip():
+                # A reasoning model can spend the whole budget thinking and
+                # return content=null; name that instead of failing on None.
+                raise ValueError(
+                    f"Judge model {self.model} returned no answer "
+                    f"(finish_reason={response.get('finish_reason')}, "
+                    f"max_tokens={self.max_tokens})"
+                )
+            raw = content
+            model_version = response.get("model")
+            if isinstance(model_version, str) and model_version.strip():
+                self.model_version = model_version
 
         payload: dict[str, Any]
         if isinstance(raw, dict):

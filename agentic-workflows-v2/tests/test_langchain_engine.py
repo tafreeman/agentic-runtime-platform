@@ -996,12 +996,26 @@ class TestModelRegistry:
         assert model is not None
         assert model._llm_type == "local-onnx"
 
-    def test_model_candidates_include_gh_backup_with_token(self, monkeypatch):
+    @pytest.mark.parametrize("tier", [1, 2, 3, 4, 5])
+    def test_model_candidates_end_at_local_tail_with_github_token(
+        self, monkeypatch, tier
+    ):
+        """A GITHUB_TOKEN no longer appends gh: backups after the local tail.
+
+        GitHub Models was retired upstream (ADR-016). The old backup append
+        put gh:openai/gpt-4o-mini after ollama:qwen3-coder:30b, so a failed
+        local attempt crossed into a dead paid provider and the step reported
+        "last model=gh:openai/gpt-4o-mini: Connection error" instead of the
+        real failure (fullstack_generation run 44f1b8c8, 2026-10-11).
+        """
         monkeypatch.setenv("GITHUB_TOKEN", "fake-token")
         from agentic_v2.langchain.models import get_model_candidates_for_tier
+        from agentic_v2.models import model_registry as mr
 
-        candidates = get_model_candidates_for_tier(3)
-        assert "gh:openai/gpt-4o-mini" in candidates
+        candidates = get_model_candidates_for_tier(tier)
+        assert not [m for m in candidates if m.startswith("gh:")]
+        assert candidates[-1] == mr.tier_chain(tier)[-1]
+        assert mr.cost_lane_for(candidates[-1]) == "local"
 
 
 class TestGraphResponseParsing:

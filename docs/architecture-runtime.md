@@ -102,7 +102,7 @@ dag.add(StepDefinition("summarize", func=summarize_fn, depends_on=["load_data"])
 
 Source: `langchain/` package (adapter: `adapters/langchain/engine.py`)
 
-The LangGraph engine compiles a YAML workflow configuration into a LangGraph `StateGraph`. Each YAML step becomes a graph node; `depends_on` edges become conditional graph edges. The graph is compiled once, then executed via `graph.ainvoke()`.
+The LangGraph engine compiles a YAML workflow configuration into a LangGraph `StateGraph`. Each YAML step becomes a graph node. A step's `depends_on` list becomes one edge into it: a waiting edge when it has several dependencies, so it runs once, after all of them, as on the native executor ([ADR-062](adr/ADR-062-langgraph-join-once-semantics.md)). The graph is compiled once, then executed via `graph.ainvoke()`.
 
 **Characteristics:**
 
@@ -307,7 +307,7 @@ Extended or domain-specific agent implementations live in `agents/implementation
 | `TIER_4` | Cloud models — most capable |
 | `TIER_5` | Premium cloud models |
 
-Per-tier fallback chains are built at import time from the curated model registry (`models/model_registry.py`, ADR-040), ordered free-tier-first (Gemini, GitHub Models) then paid. A custom chain can override any tier via `register_chain()`. There is no YAML tier config file — the registry is the single source of truth.
+Per-tier fallback chains are built at import time from the curated model registry (`models/model_registry.py`, ADR-040): cloud providers first, then a local Ollama tail that is always the last candidate. A custom chain can override any tier via `register_chain()`. There is no YAML tier config file — the registry is the single source of truth.
 
 ### Provider backends
 
@@ -592,7 +592,7 @@ All environment variables are routed through a single `pydantic-settings` class 
 | `GEMINI_API_KEY` | Google Gemini key | — |
 | `AZURE_OPENAI_API_KEY_0` | Azure OpenAI key (supports `_0`..`_n` for failover) | — |
 | `AZURE_OPENAI_ENDPOINT_0` | Azure OpenAI endpoint | — |
-| `GITHUB_TOKEN` | GitHub Models access token (default E2E LLM provider) | — |
+| `GITHUB_TOKEN` | GitHub Models access token. The service was retired upstream on 2026-07-30 (ADR-016), and no tier chain routes to `gh:` | — |
 | `LOCAL_MODEL_PATH` | Local ONNX model path (auto-detected from `~/.cache/aigallery`) | — |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP exporter endpoint (used when tracing is enabled) | `http://localhost:4317` |
 

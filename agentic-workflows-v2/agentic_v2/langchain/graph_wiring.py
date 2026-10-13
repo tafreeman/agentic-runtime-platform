@@ -7,7 +7,8 @@ populated (but not yet compiled) ``StateGraph``:
 - LLM-backed node factory (``make_step_node``) with multi-model failover
 - Conditional self-skip wrapper (``wrap_with_skip_check``)
 - All ``add_*`` / ``wire_*`` / ``build_*`` helpers that populate nodes
-  and edges
+  and edges (``wire_graph_edges`` applies them in order; see ADR-062 for
+  the join and loop-exit semantics)
 - The low-level ``compile_graph`` wrapper
 
 The public entry point used by ``graph.py`` is ``build_graph``, which calls
@@ -23,7 +24,6 @@ import ast as python_ast
 import json
 import logging
 import re
-from collections import defaultdict
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Callable
@@ -45,10 +45,10 @@ from ..artifact_contracts import (
 from ..artifact_overlay import overlay_code_artifacts
 from ..engine.consensus import coerce_min_agreement, majority_vote
 from ..engine.llm_output_parsing import (
-    extract_json_candidates,
-    normalize_expected_structure,
+    parse_json_step_output,
     parse_llm_json_output,
     parse_sentinel_output,
+    select_json_dict,
 )
 from ..integrations.base import TraceAdapter
 from ..integrations.tracing import NullTraceAdapter
@@ -459,37 +459,19 @@ def coerce_message_content_to_text(content: Any) -> str:
     return str(content)
 
 
-def parse_json_dict_from_text(text: str) -> dict[str, Any] | None:
+def parse_json_dict_from_text(
+    text: str, expected_output_keys: list[str] | None = None
+) -> dict[str, Any] | None:
     """Best-effort JSON object extraction from model text output.
 
-    Candidate generation is shared with the native engine
-    (:func:`agentic_v2.engine.llm_output_parsing.extract_json_candidates`),
-    plus a mid-text fence scan for payloads with prose around ```json blocks,
-    which the shared generator (outer-fence-only) does not cover.
+    Delegates to the native engine's
+    :func:`agentic_v2.engine.llm_output_parsing.select_json_dict`, so both
+    engines pick the same object from the same reply.
     """
     raw = text.strip()
     if not raw:
         return None
-
-    candidates = list(extract_json_candidates(raw))
-    candidates.extend(
-        re.findall(
-            r"```(?:json)?\s*(\{.*?\})\s*```", raw, flags=re.DOTALL | re.IGNORECASE
-        )
-    )
-
-    for candidate in candidates:
-        try:
-            # strict=False tolerates literal control characters (bare
-            # newlines/tabs) inside JSON string values — a common LLM output
-            # quirk that strict json.loads rejects wholesale.
-            parsed = json.loads(candidate, strict=False)
-        except json.JSONDecodeError:
-            continue
-        if isinstance(parsed, dict):
-            return parsed
-
-    return None
+    return select_json_dict(raw, expected_output_keys)
 
 
 def parse_step_outputs(
@@ -516,9 +498,7 @@ def parse_step_outputs(
 
     parsed = parse_sentinel_output(normalized, expected_output_keys)
     if parsed is None:
-        parsed = parse_json_dict_from_text(normalized)
-        if parsed is not None and expected_output_keys:
-            parsed = normalize_expected_structure(dict(parsed), expected_output_keys)
+        parsed = parse_json_step_output(normalized, expected_output_keys)
     if parsed is None:
         # Full parse failed; parse_llm_json_output falls back to salvaging
         # declared keys out of malformed/truncated JSON-ish text.
@@ -1021,7 +1001,6 @@ def _build_llm_node(
         tier,
         step.model_override,
         include_unavailable=False,
-        include_gh_backup=True,
     )
     agent_cache: dict[str, Any] = {}
 
@@ -1291,52 +1270,69 @@ def validate_dependencies(config: WorkflowConfig, step_names: set[str]) -> None:
                 raise ValueError(f"Step '{step.name}' depends on unknown step '{dep}'")
 
 
-def build_outgoing_map(config: WorkflowConfig) -> dict[str, list[StepConfig]]:
-    """Build mapping of source-step to dependents."""
-    outgoing: dict[str, list[StepConfig]] = defaultdict(list)
-    for step in config.steps:
-        for dep in step.depends_on:
-            outgoing[dep].append(step)
-    return outgoing
+LOOP_EXIT_NODE_PREFIX = "__loop_exit__"
+"""Reserved name prefix of the synthetic node a loop step routes to on exit."""
 
 
-def add_fan_out_edges(
-    graph: StateGraph,
-    source: str,
-    unconditional: list[StepConfig],
-    conditional: list[StepConfig],
-) -> None:
-    """Wire fan-out edges from one source to multiple dependents.
+def loop_exit_node_name(step_name: str) -> str:
+    """Return the synthetic loop-exit node name for loop step *step_name*."""
+    return f"{LOOP_EXIT_NODE_PREFIX}{step_name}"
 
-    All targets are always routed to.  Conditional targets self-skip
-    inside their node function (via ``wrap_with_skip_check``) when
-    their ``when`` expression evaluates to False.  This ensures that
-    skipped nodes still fire their outgoing edges so downstream
-    join-nodes are never orphaned.
+
+def is_loop_exit_node(node_name: str) -> bool:
+    """Whether *node_name* is a synthetic loop-exit node, not a workflow step."""
+    return node_name.startswith(LOOP_EXIT_NODE_PREFIX)
+
+
+def build_loop_exit_map(config: WorkflowConfig) -> dict[str, str]:
+    """Map each loop step that has dependents to its synthetic exit node.
+
+    A loop step runs once per iteration, and every run fires its outgoing
+    edges, so its dependents cannot wait on it directly. They wait on the
+    exit node instead, which the loop router reaches once, when the loop
+    finishes (see ``add_loop_edge``).
     """
-    all_names = [s.name for s in unconditional] + [s.name for s in conditional]
+    has_dependents = {dep for step in config.steps for dep in step.depends_on}
+    return {
+        step.name: loop_exit_node_name(step.name)
+        for step in config.steps
+        if step.loop_until and step.name in has_dependents
+    }
 
-    path_map: dict[str, str] = {n: n for n in all_names}
 
-    def _route(_state: WorkflowState) -> list[str]:
-        return list(all_names)
+def _loop_exit_node(_state: WorkflowState) -> dict[str, Any]:
+    """Pass-through: completes once per loop so dependents can wait on it."""
+    return {}
 
-    graph.add_conditional_edges(source, _route, path_map)
+
+def add_loop_exit_nodes(graph: StateGraph, loop_exits: dict[str, str]) -> None:
+    """Add one pass-through node per entry of ``build_loop_exit_map``."""
+    for exit_node in loop_exits.values():
+        graph.add_node(exit_node, _loop_exit_node)
 
 
 def wire_dependency_edges(
     graph: StateGraph,
-    outgoing: dict[str, list[StepConfig]],
+    config: WorkflowConfig,
+    loop_exits: dict[str, str],
 ) -> None:
-    """Wire dependency edges from the outgoing map."""
-    for source, dependents in outgoing.items():
-        unconditional = [s for s in dependents if not s.when]
-        conditional = [s for s in dependents if s.when]
-        if not conditional:
-            for step in unconditional:
-                graph.add_edge(source, step.name)
-            continue
-        add_fan_out_edges(graph, source, unconditional, conditional)
+    """Make every step wait for all of its dependencies, then run once.
+
+    A step with several dependencies gets one waiting edge
+    (``add_edge([dep, ...], step)``): LangGraph runs it once, in the
+    superstep after its last dependency finishes. One single-source edge
+    per dependency would instead run it once per superstep in which any
+    dependency finished — twice or more when dependencies finish at
+    different depths — which the native executor's in-degree counting
+    never does. Conditional dependencies still fire their edges because
+    they self-skip (``wrap_with_skip_check``) rather than not running.
+    """
+    for step in config.steps:
+        sources = list(dict.fromkeys(loop_exits.get(d, d) for d in step.depends_on))
+        if len(sources) == 1:
+            graph.add_edge(sources[0], step.name)
+        elif sources:
+            graph.add_edge(sources, step.name)
 
 
 def add_terminal_edges(graph: StateGraph, config: WorkflowConfig) -> None:
@@ -1355,41 +1351,67 @@ def add_terminal_edges(graph: StateGraph, config: WorkflowConfig) -> None:
             graph.add_edge(step_name, END)
 
 
-def add_loop_edge(graph: StateGraph, step: StepConfig) -> None:
-    """Add a self-loop: step re-runs until loop_until is True or loop_max."""
+def add_loop_edge(
+    graph: StateGraph, step: StepConfig, exit_node: str | None = None
+) -> None:
+    """Add a self-loop: step re-runs until loop_until is True or loop_max.
+
+    On exit the router goes to *exit_node* (the step's synthetic loop-exit
+    node, when it has dependents) or to END.
+    """
     loop_expr = step.loop_until
+    exit_target = exit_node or END
 
     def _loop_route(state: WorkflowState) -> str:
         step_data = state.get("steps", {}).get(step.name, {})
 
-        # If the step was self-skipped, don't loop — proceed to END
+        # If the step was self-skipped, don't loop — exit
         if step_data.get("status") == "skipped":
-            return END
+            return exit_target
 
         # Check iteration count
         iteration = step_data.get("loop_iteration", 0)
         max_iters = resolve_loop_max(step, state)
 
         if iteration >= max_iters:
-            return END
+            return exit_target
 
         if evaluate_condition(loop_expr, dict(state)):
-            return END  # Condition met, stop looping
+            return exit_target  # Condition met, stop looping
 
         return step.name  # Loop back
 
     graph.add_conditional_edges(
         step.name,
         _loop_route,
-        {step.name: step.name, END: END},
+        {step.name: step.name, exit_target: exit_target},
     )
 
 
-def add_loop_edges(graph: StateGraph, config: WorkflowConfig) -> None:
+def add_loop_edges(
+    graph: StateGraph,
+    config: WorkflowConfig,
+    loop_exits: dict[str, str] | None = None,
+) -> None:
     """Add self-loop wiring for loop-enabled steps."""
+    exits = loop_exits or {}
     for step in config.steps:
         if step.loop_until:
-            add_loop_edge(graph, step)
+            add_loop_edge(graph, step, exits.get(step.name))
+
+
+def wire_graph_edges(graph: StateGraph, config: WorkflowConfig) -> None:
+    """Add every edge, plus any loop-exit nodes, for *config* to *graph*.
+
+    Expects one node per step to be present already (``add_step_nodes``).
+    """
+    validate_dependencies(config, {s.name for s in config.steps})
+    add_start_edges(graph, [s.name for s in config.steps if not s.depends_on])
+    loop_exits = build_loop_exit_map(config)
+    add_loop_exit_nodes(graph, loop_exits)
+    wire_dependency_edges(graph, config, loop_exits)
+    add_terminal_edges(graph, config)
+    add_loop_edges(graph, config, loop_exits)
 
 
 def compile_graph(graph: StateGraph, checkpointer: Any = None) -> Any:
@@ -1438,8 +1460,6 @@ def build_graph(
     ``compile_graph()`` (or ``graph.compile()`` directly).
     """
     graph: StateGraph = StateGraph(WorkflowState)
-    step_names = {s.name for s in config.steps}
-    root_steps = [s.name for s in config.steps if not s.depends_on]
 
     add_step_nodes(
         graph,
@@ -1449,10 +1469,6 @@ def build_graph(
         _create_agent_fn=_create_agent_fn,
         _get_candidates_fn=_get_candidates_fn,
     )
-    add_start_edges(graph, root_steps)
-    validate_dependencies(config, step_names)
-    wire_dependency_edges(graph, build_outgoing_map(config))
-    add_terminal_edges(graph, config)
-    add_loop_edges(graph, config)
+    wire_graph_edges(graph, config)
 
     return graph

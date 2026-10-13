@@ -6,7 +6,7 @@ of truth for:
 - which model ids serve which tier (the fallback chains),
 - which model each named agent (architect, coder, …) defaults to,
 - a handful of special-purpose ids (judge default, NotebookLM fallback, the
-  ultimate tier fallback, the GitHub backup models), and
+  ultimate tier fallback), and
 - a per-Mtok price table.
 
 ``models/router.py`` and ``langchain/models.py`` read their chains from here, and

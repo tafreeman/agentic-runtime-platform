@@ -1,7 +1,7 @@
 """Model provider registry for the LangChain workflow engine.
 
 Supported providers:
-- GitHub Models          (prefix ``gh:``)            via OpenAI-compatible API
+- GitHub Models          (prefix ``gh:``)            retired upstream 2026-07-30 (ADR-016)
 - Ollama                 (prefix ``ollama:``)        local or remote Ollama
 - OpenAI                 (prefix ``openai:``)        direct OpenAI API
 - Anthropic              (prefix ``anthropic:`` / ``claude:``)
@@ -14,7 +14,8 @@ Supported providers:
 Environment variables
 ---------------------
 GITHUB_TOKEN
-    Personal access token for GitHub Models API.
+    Personal access token for the retired GitHub Models API. Only an explicit
+    ``gh:`` model id reads it; no tier chain does.
 OLLAMA_BASE_URL
     Override Ollama server URL (default: ``http://localhost:11434``).
 OPENAI_API_KEY
@@ -26,7 +27,7 @@ GOOGLE_API_KEY / GEMINI_API_KEY
 NOTEBOOKLM_MODEL / NOTEBOOKLM_GEMINI_MODEL
     Optional default Gemini model used by ``notebooklm:`` alias.
 AGENTIC_MODEL_TIER_{N}
-    Force a specific model ID for tier N (e.g. ``AGENTIC_MODEL_TIER_2=gh:openai/gpt-4o``).
+    Force a specific model ID for tier N (e.g. ``AGENTIC_MODEL_TIER_2=gemini:gemini-2.5-flash``).
 AGENTIC_MAX_COST_LANE
     ``local``, ``free``, or ``paid`` (default). Ceiling enforced by
     :func:`get_model_candidates_for_tier` against each candidate's curated
@@ -85,7 +86,6 @@ from .model_builders import (
     build_placeholder_model,
 )
 from .model_utils import (
-    GH_BACKUP_MODELS,
     PROVIDER_ENV_KEYS,
     dedupe_keep_order,
     is_provider_available,
@@ -723,7 +723,6 @@ def get_model_for_tier(
         tier,
         model_override,
         include_unavailable=False,
-        include_gh_backup=True,
     )
     last_err: Exception | None = None
     for model_id in chain:
@@ -778,7 +777,6 @@ def get_model_candidates_for_tier(
     model_override: str | None = None,
     *,
     include_unavailable: bool = False,
-    include_gh_backup: bool = True,
     max_cost_lane: Literal["local", "free", "paid"] | None = None,
 ) -> list[str]:
     """Return ordered candidate model IDs for a tier, including fallbacks.
@@ -789,8 +787,8 @@ def get_model_candidates_for_tier(
     3. UI settings tier override (``agentic_v2.ui_settings``, set via the
        settings API / web UI)
     4. Probed tier default from ``_TIER_DEFAULTS``
-    5. Tier fallback chain from ``_TIER_FALLBACK_CHAINS``
-    6. GitHub backup models (when ``GITHUB_TOKEN`` is configured)
+    5. Tier fallback chain from ``_TIER_FALLBACK_CHAINS``, which ends in the
+       tier's local tail; nothing is appended after it
 
     A cost-lane ceiling is then enforced (unless ``include_unavailable``):
     ``max_cost_lane`` when given, otherwise ``AGENTIC_MAX_COST_LANE``
@@ -825,9 +823,6 @@ def get_model_candidates_for_tier(
         pinned.append(default_id)
 
     fallback = list(_TIER_FALLBACK_CHAINS.get(tier, _TIER_FALLBACK_CHAINS.get(2, [])))
-
-    if include_gh_backup and os.environ.get("GITHUB_TOKEN"):
-        fallback.extend(GH_BACKUP_MODELS)
 
     ordered_pinned = dedupe_keep_order(pinned)
     ordered_fallback = dedupe_keep_order(fallback)
@@ -892,5 +887,4 @@ __all__ = [
     "dedupe_keep_order",
     "resolve_model_override",
     "PROVIDER_ENV_KEYS",
-    "GH_BACKUP_MODELS",
 ]

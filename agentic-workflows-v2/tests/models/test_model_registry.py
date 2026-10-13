@@ -62,6 +62,21 @@ def test_production_registry_has_no_dangling_references():
         assert getattr(registry.special, slot) in ids
 
 
+def test_production_free_ceiling_leaves_each_tier_only_its_local_tail():
+    """Every cloud rung in the shipped chains is curated paid, so
+    AGENTIC_MAX_COST_LANE=free narrows each tier to its local Ollama tail.
+
+    Promoting a curated-free id (e.g. a NIM free-endpoint model) into a
+    chain changes free-ceiling routing (ADR-059). That has to be a
+    deliberate edit here, not a side effect of swapping out a retired
+    model.
+    """
+    for tier, chain in mr.load_registry().tiers.items():
+        admitted = [m for m in chain if mr.is_within_cost_lane(m, "free")]
+        assert admitted == [chain[-1]], f"tier {tier} admits {admitted}"
+        assert mr.cost_lane_for(chain[-1]) == "local"
+
+
 # ---------------------------------------------------------------------------
 # Accessors
 # ---------------------------------------------------------------------------
@@ -76,7 +91,7 @@ def test_tier_chain_order_and_escalation():
 
 
 def test_special_accessor():
-    assert mr.special("judge_default") == "nvidia:deepseek-ai/deepseek-v4-pro"
+    assert mr.special("judge_default") == "nvidia:z-ai/glm-5.3"
     assert mr.special("tier_ultimate_fallback") == "ollama:qwen3-coder:30b"
     with pytest.raises(AttributeError):
         mr.special("not_a_slot")
@@ -237,6 +252,28 @@ def test_production_registry_every_model_has_a_curated_cost_lane():
     registry = mr.load_registry()
     uncurated = sorted(m.id for m in registry.models if m.cost_lane is None)
     assert not uncurated, f"models missing a curated cost_lane: {uncurated}"
+
+
+def test_production_registry_routes_only_active_models_it_declares_tiers_for():
+    """Chains and special slots route only active ids, and ``tiers:`` matches.
+
+    A retired entry (e.g. the gh: ids; GitHub Models shut down 2026-07-30) is
+    kept as ``deprecated`` with ``tiers: []``. This pins both halves of that
+    edit: nothing a chain or special slot routes to may be non-active, and an
+    entry's ``tiers:`` must list exactly the chains it sits in.
+    """
+    registry = mr.load_registry()
+    status = {m.id: m.status for m in registry.models}
+    routed = {mid for chain in registry.tiers.values() for mid in chain}
+    routed |= {
+        getattr(registry.special, slot)
+        for slot in ("judge_default", "notebooklm_fallback", "tier_ultimate_fallback")
+    }
+    inactive = sorted(mid for mid in routed if status[mid] != "active")
+    assert not inactive, f"routed ids that are not active: {inactive}"
+    for m in registry.models:
+        in_chains = sorted(t for t, chain in registry.tiers.items() if m.id in chain)
+        assert sorted(m.tiers) == in_chains, f"{m.id}: tiers {m.tiers} vs chains"
 
 
 # ---------------------------------------------------------------------------
