@@ -286,5 +286,24 @@ class TestDirectoryToolsFileBase:
             {"directory": str(base), "query": "", "file_pattern": "../outside/*.py"}
         )
 
-        assert "secret.py" not in listed
-        assert "secret.py" not in searched
+        assert listed.startswith("ERROR: Pattern escapes base directory")
+        assert searched.startswith("ERROR: Pattern escapes base directory")
+
+    def test_escaping_pattern_is_rejected_before_traversal(self, tmp_path, monkeypatch):
+        from agentic_v2.langchain import tools
+
+        monkeypatch.setenv("AGENTIC_FILE_BASE_DIR", str(tmp_path))
+
+        def boom(*_a, **_k):
+            raise AssertionError("glob traversal started")
+
+        monkeypatch.setattr(tools.Path, "glob", boom)
+        monkeypatch.setattr(tools.Path, "rglob", boom)
+
+        for pattern in ("../../**/*", "sub/../../x", "/etc/*", r"..\..\*"):
+            assert tools.file_list.invoke(
+                {"directory": str(tmp_path), "pattern": pattern}
+            ).startswith("ERROR: Pattern escapes")
+            assert tools.search_files.invoke(
+                {"directory": str(tmp_path), "query": "x", "file_pattern": pattern}
+            ).startswith("ERROR: Pattern escapes")

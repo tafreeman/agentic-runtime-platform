@@ -296,6 +296,20 @@ def _outside_file_base(path: str) -> str | None:
     return None
 
 
+def _escaping_pattern(pattern: str) -> str | None:
+    """Return an ERROR string for a glob that could leave the file base.
+
+    Checked before any traversal starts: filtering matches afterwards would
+    still let a pattern such as ``../../**/*`` walk the host filesystem.
+    """
+    if not os.environ.get("AGENTIC_FILE_BASE_DIR"):
+        return None
+    parts = pattern.replace("\\", "/").split("/")
+    if ".." in parts or Path(pattern).is_absolute() or pattern.startswith("/"):
+        return f"ERROR: Pattern escapes base directory: {pattern}"
+    return None
+
+
 def _match_within_file_base(match: Path) -> bool:
     """True when a glob match stays inside ``AGENTIC_FILE_BASE_DIR`` (if set).
 
@@ -320,7 +334,7 @@ def file_list(directory: str, pattern: str = "*") -> str:
         directory: Directory path to list.
         pattern: Glob pattern (default ``*``).
     """
-    denied = _outside_file_base(directory)
+    denied = _outside_file_base(directory) or _escaping_pattern(pattern)
     if denied:
         return denied
     p = Path(directory)
@@ -479,7 +493,7 @@ def search_files(
         file_pattern: Glob pattern for files to search (default ``*.py``).
         max_results: Maximum number of results to return.
     """
-    denied = _outside_file_base(directory)
+    denied = _outside_file_base(directory) or _escaping_pattern(file_pattern)
     if denied:
         return denied
     results: list[dict] = []
