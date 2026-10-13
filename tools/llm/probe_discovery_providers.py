@@ -54,7 +54,7 @@ from tools.llm.probe_config import (
     ENV_NVIDIA_NIM_API_KEY,
     ENV_NVIDIA_NIM_HOST,
     NVIDIA_NIM_CATALOG_ALIASES,
-    NVIDIA_NIM_HOSTED_HOST,
+    NVIDIA_NIM_HOSTED_ORIGIN,
     NVIDIA_NIM_FREE_ENDPOINT_CATALOG,
     ENV_OLLAMA_API_KEY,
     ENV_OLLAMA_HOST,
@@ -655,6 +655,7 @@ def _probe_nvidia() -> dict[str, Any]:
             "available": [],
             "count": 0,
             "free_status": "unknown",
+            "free_endpoint_catalog_count": len(NVIDIA_NIM_FREE_ENDPOINT_CATALOG),
             "free_available": [],
             "free_catalog_only": [],
             "key_accounts": len(nvidia_keys),
@@ -687,7 +688,10 @@ def _probe_nvidia() -> dict[str, Any]:
     # The Free Endpoint catalog describes NVIDIA's hosted API only. Classify
     # against it solely after a successful probe of that origin; an on-prem
     # NIM or a failed /models call leaves the free status unknown.
-    hosted = urlparse(base).hostname == NVIDIA_NIM_HOSTED_HOST
+    parsed = urlparse(base)
+    scheme = parsed.scheme.lower()
+    port = parsed.port or {"https": 443, "http": 80}.get(scheme)
+    hosted = (scheme, (parsed.hostname or "").lower(), port) == NVIDIA_NIM_HOSTED_ORIGIN
     free_available: list[str] = []
     free_catalog_only: list[str] = []
     free_status = "unknown"
@@ -695,7 +699,8 @@ def _probe_nvidia() -> dict[str, Any]:
         live_ids = {m.split(":", 1)[1] for m in nvidia_models}
         for slug in NVIDIA_NIM_FREE_ENDPOINT_CATALOG:
             api_id = NVIDIA_NIM_CATALOG_ALIASES.get(slug, slug)
-            (free_available if api_id in live_ids else free_catalog_only).append(api_id)
+            entry = f"nvidia:{api_id}"  # same prefix as ``available``
+            (free_available if api_id in live_ids else free_catalog_only).append(entry)
         free_status = "classified"
 
     return {

@@ -9,6 +9,7 @@
   `free_catalog_only` (catalog models the API does not serve), and
   `free_endpoint_catalog_count`. Consumers of `-o` output that read the old
   `available` list as "free" should read `free_available` instead.
+  The IDs in both lists carry the same `nvidia:` prefix as `available`.
 - **The free status is `unknown` unless the hosted API answered.** A self-hosted
   `NVIDIA_NIM_HOST`, an unset host, or a failed `/models` call sets
   `free_status` to `unknown` with empty free lists, rather than classifying

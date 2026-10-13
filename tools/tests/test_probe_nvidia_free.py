@@ -66,11 +66,11 @@ def test_hosted_success_classifies_and_maps_aliases(
     assert result["reachable"] is True
     # The catalog slug is z-ai/glm-5-3; the served id is z-ai/glm-5.3.
     assert NVIDIA_NIM_CATALOG_ALIASES["z-ai/glm-5-3"] == "z-ai/glm-5.3"
-    assert "z-ai/glm-5.3" in result["free_available"]
-    assert "z-ai/glm-5-3" not in result["free_available"]
-    assert "nvidia/nemotron-3-embed-1b" in result["free_available"]
-    assert "some/unrelated-model" not in result["free_available"]
-    assert "nvidia/kumo-tabular" in result["free_catalog_only"]
+    assert "nvidia:z-ai/glm-5.3" in result["free_available"]
+    assert "nvidia:z-ai/glm-5-3" not in result["free_available"]
+    assert "nvidia:nvidia/nemotron-3-embed-1b" in result["free_available"]
+    assert "nvidia:some/unrelated-model" not in result["free_available"]
+    assert "nvidia:nvidia/kumo-tabular" in result["free_catalog_only"]
     assert len(result["free_available"]) + len(result["free_catalog_only"]) == len(
         NVIDIA_NIM_FREE_ENDPOINT_CATALOG
     )
@@ -125,3 +125,35 @@ def test_host_not_set_is_unknown(monkeypatch: pytest.MonkeyPatch) -> None:
     opened.assert_not_called()
     assert result["configured"] is False
     assert result["free_status"] == "unknown"
+
+
+@pytest.mark.parametrize(
+    "host",
+    [
+        "http://integrate.api.nvidia.com/v1",
+        "https://integrate.api.nvidia.com:8443/v1",
+        "https://proxy.example.com/integrate.api.nvidia.com/v1",
+    ],
+    ids=["plain-http", "other-port", "other-host"],
+)
+def test_lookalike_origins_are_unknown(
+    monkeypatch: pytest.MonkeyPatch, host: str
+) -> None:
+    monkeypatch.setenv("NVIDIA_NIM_HOST", host)
+
+    with patch(URLOPEN, return_value=_models_response(["z-ai/glm-5.3"])):
+        result = _probe_nvidia()
+
+    assert result["reachable"] is True
+    assert result["free_status"] == "unknown"
+    assert result["free_available"] == []
+
+
+def test_unset_host_reports_catalog_count(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("NVIDIA_NIM_HOST", raising=False)
+
+    result = _probe_nvidia()
+
+    assert result["free_endpoint_catalog_count"] == len(
+        NVIDIA_NIM_FREE_ENDPOINT_CATALOG
+    )
