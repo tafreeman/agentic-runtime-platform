@@ -1,6 +1,6 @@
 ## 7. Folder-by-folder inventory
 
-**Basis.** Committed facts come from the clean `origin/main` worktree (`C:/tmp/arp-main-inventory`, rev `c3b2d328`) via `data/fs_inventory.json`. Local-only facts come from the live checkout (branch `relock-382`) via `data/fs_local_checkout.json`. Sizes are KB on disk. "Stale" means last commit older than 90 days, and it describes age, not disuse. Nothing under `node_modules/`, `.venv/`, `.git/`, `.mypy_cache/` or `.cache/` was recursed into. Where the JSON reports no size for those, the cell says "not measured".
+**Basis.** Committed facts come from the clean `origin/main` worktree (`../arp-main-inventory`, rev `c3b2d328`) via `data/fs_inventory.json`. Local-only facts come from the live checkout (branch `relock-382`) via a local-only extract (`fs_inventory.py` run against the live checkout; not committed, because it describes one machine). Sizes are KB on disk. "Stale" means last commit older than 90 days, and it describes age, not disuse. Nothing under `node_modules/`, `.venv/`, `.git/`, `.mypy_cache/` or `.cache/` was recursed into. Where the JSON reports no size for those, the cell says "not measured".
 
 ### 7.1 Top-level map (committed and local-only)
 
@@ -232,7 +232,7 @@ Hold, because they hold user data or work product: `runs/`, both `.agentic_repla
 | `agentic-workflows-v2/dist/` | No | Wheel and sdist for `agentic_workflows_v2 0.1.0` (Jul 16) | Safe to delete |
 | `dist/` (root) | No | Wheel and sdist for `agentic_tools 0.1.0` | Safe to delete |
 | `eval_pipeline.png` (root) | Yes | No tracked references | Reference it or remove it |
-| `evidence-ledger-design-system.zip` | Not at repo root | Two copies sit in `C:/Users/tandf/Downloads/` (`evidence-ledger-design-system.zip` and `_1.zip`). The task brief expected a root copy, which does not exist | Keep one copy outside the repo, or delete the duplicates after review |
+| `evidence-ledger-design-system.zip` | Not at repo root | Two copies sit in `<downloads>/` (`evidence-ledger-design-system.zip` and `_1.zip`). The task brief expected a root copy, which does not exist | Keep one copy outside the repo, or delete the duplicates after review |
 | `.coverage` duplicates | No | `.coverage` exists at root, `agentic-v2-eval/`, and `agentic-workflows-v2/` | Delete stale copies |
 
 Large tracked files (origin/main, over 1 MB, 11 files, about 18.4 MB total):
@@ -244,13 +244,13 @@ There are no LFS filters in `.gitattributes`. Moving the eval reports out of the
 
 ### 7.5 Untracked work in the live checkout
 
-The live checkout has 372 untracked entries in `fs_local_checkout.json`. None are in origin/main.
+The live checkout has 372 untracked entries in the local-only extract. None are in origin/main.
 
 | Folder | Untracked files | What they are | Examples |
 |---|---|---|---|
 | `docs/ui/` | 353 | Design exports and working files, about 10 MB. Mostly HTML mockups plus `design-system/`, `superdesign-local/`, `_impeccable/` and `_design-system.tgz` | `Run Inspector*.html` (6 variants), `Live execution*.html`, `Dispatch - Tier board.html`, `Dossier - Run record.html`, `designd.html` to `designg.html`, `.impeccable/critique/*.md` |
 | `agentic-workflows-v2/ui/src/components/el/` and `lib/` | 9 | Evidence Ledger components, the in-progress UI work (relates to committed commits `13e5101f`, `1f0140a5`, `3dbfae10`) | `ApprovalGate.tsx`, `EventLog.tsx`, `LiveSteps.tsx`, `ModelChain.tsx`, `ReRunSheet.tsx`, `TierLanes.tsx`, `Waterfall.tsx`, `timeScale.ts`, `lib/runSentence.ts` |
 | `scripts/inventory/` | 6 | Generators for this inventory (`_common.py`, `fs_inventory.py`, `meta_inventory.py`, and siblings) | `fs_inventory.py` |
-| `docs/inventory/` | 4 plus this `sections/` directory | Inventory JSON data and the section drafts | `data/fs_inventory.json`, `data/fs_local_checkout.json` |
+| `docs/inventory/` | 4 plus this `sections/` directory | Inventory JSON data and the section drafts | `data/fs_inventory.json` |
 
 Ignored-but-present items inside tracked folders are covered in 7.3. The git status snapshot also lists four modified tracked files (`.env.example`, `.gitignore`, `tools/llm/probe_config.py`, `tools/llm/probe_discovery_providers.py`). Those are edits, not untracked work.

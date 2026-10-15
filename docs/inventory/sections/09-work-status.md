@@ -24,12 +24,12 @@
 | Item | Branch / PR | Size | State | Next step |
 |---|---|---|---|---|
 | Evidence Ledger UI redesign — tokens, primitives, DataTable, FilterBar (ADR-054 follow-on) | `feature/evidence_ledger_port` / tafreeman/agentic-runtime-platform#388 | +3,152 / -123, 17 files | OPEN, `mergeable: MERGEABLE`, `mergeStateStatus: BLOCKED`, 0 failing checks, 1 pending, no review decision. Local checkout is `ahead 3, behind 14` of `origin/main` (head `3dbfae10`, 2026-10-10); origin copy `74123cb4` already merged main | Wait for checks, get the single review (global rule: one approval, PRs <~400 lines — this one is ~8x over), then merge. Consider splitting tokens vs components if review stalls |
-| Evidence Ledger screen restyle (existing screens re-themed) | `feature/el_screen_restyle` @ `1d28dce3`, no PR | +466 / -551, 36 files; 15 commits behind main | Pushed, worktree `C:/Users/tandf/.codex/worktrees/evidence-ledger-ui/agentic-runtime-platform`. Stacked on #388 (carries its commits `a9ba66a3`, `9ad6bca3`, `1572d32a`) | Hold until #388 merges, rebase, open PR |
+| Evidence Ledger screen restyle (existing screens re-themed) | `feature/el_screen_restyle` @ `1d28dce3`, no PR | +466 / -551, 36 files; 15 commits behind main | Pushed, worktree `<codex-home>/worktrees/evidence-ledger-ui/agentic-runtime-platform`. Stacked on #388 (carries its commits `a9ba66a3`, `9ad6bca3`, `1572d32a`) | Hold until #388 merges, rebase, open PR |
 | Local ignore rules for design-tool scratch under `docs/ui/` | `chore/ignore_docs_ui_scratch` / #389 | +18, 1 file | OPEN, BLOCKED (1 check pending) | Merge as soon as checks go green; it is what stops the ~350 untracked `docs/ui` files from polluting `git status` |
-| `app_improvement_review` workflow (evidence-based app review) | `feature/app_improvement_review` / #390 | +639 / -2, 8 files; 3 commits (`65890f36`, `57a8c879`, `adddb23f`) | OPEN, BLOCKED; branch is 0 behind main. Worktree `C:/tmp/arp-appreview` | Review + merge; confirm shipped-workflow gate registration (commit `57a8c879`) |
+| `app_improvement_review` workflow (evidence-based app review) | `feature/app_improvement_review` / #390 | +639 / -2, 8 files; 3 commits (`65890f36`, `57a8c879`, `adddb23f`) | OPEN, BLOCKED; branch is 0 behind main. Worktree `<tmp>/arp-appreview` | Review + merge; confirm shipped-workflow gate registration (commit `57a8c879`) |
 | Criterion aggregation + independent eval gate (G1 of tech-debt plan) | `feature/criterion_aggregation` (no PR) | local `a6ee2520`: +854 / -141, 12 files; origin copy `32180ede`: +1,373 / -201, 16 files | Local branch was **rebased onto main during this session** (0 behind main) but is `ahead 63, behind 1` of its own origin copy — push needed (force-with-lease, owner's call) | See §9.2: effectively stalled until pushed and a PR opened |
 | Dependabot `pip-root-llm` (15 updates) | `dependabot/pip/pip-root-llm-06dfaa602f` / #382 | +18 / -18, 3 files | OPEN, `reviewDecision: APPROVED`, 0 failing, 1 pending, BLOCKED on pending check. Relocked in `eba4f777` (local branch `relock-382`) | Merge when the last check lands (needs explicit authorization per global rule) |
-| Tech-debt delivery plan G0–G7 | `docs/tech_debt_plans` @ `8e61318c` in `C:/tmp/arp-plans`, 1 commit ahead of main, unpushed, no PR | +460, 4 docs (`docs/plans/2026-09-10-tech-debt-workflow.md` + 3 addenda) | Planning docs only; the plan itself says "does not assert that the planned changes ... have completed" | Push + PR the docs (small), then start G0 baseline reconciliation |
+| Tech-debt delivery plan G0–G7 | `docs/tech_debt_plans` @ `8e61318c` in `<tmp>/arp-plans`, 1 commit ahead of main, unpushed, no PR | +460, 4 docs (`docs/plans/2026-09-10-tech-debt-workflow.md` + 3 addenda) | Planning docs only; the plan itself says "does not assert that the planned changes ... have completed" | Push + PR the docs (small), then start G0 baseline reconciliation |
 | Probe-tooling edits (uncommitted) | live checkout, no branch of its own | +47 / -1: `tools/llm/probe_config.py` (+28), `tools/llm/probe_discovery_providers.py` (+13), `.env.example`, `.gitignore` | Uncommitted tracked modifications on `feature/evidence_ledger_port` — unrelated to the UI branch they sit on | Move to a `chore/` branch or stash before the next `git checkout`; do not let them ride into #388 |
 | Untracked Evidence Ledger components (live checkout) | live checkout, untracked | `agentic-workflows-v2/ui/src/components/el/{ApprovalGate,EventLog,LiveSteps,ModelChain,ReRunSheet,TierLanes,Waterfall}.tsx`, `el/timeScale.ts`, `ui/src/lib/runSentence.ts` (~2.1k lines per brief) | Not committed anywhere; exists only on this machine | Commit to a branch (follow-up to #388) or it is one `git clean` from loss |
 | Model-pack builder follow-ups (ADR-054) | merged #373, #374 | — | Shipped 2026-10-10/11; no open follow-up PR found | None open |
@@ -59,33 +59,33 @@ Local branches (9) and remote heads (11). Origin `gh-pages` and `slo-data` are b
 | Branch | Where | State | Verdict |
 |---|---|---|---|
 | `main` | local | `behind 1` of origin (local `d0c07a13`, origin `c3b2d328`) | fast-forward |
-| `fix/langgraph_fanin_join` | local + origin + worktree `C:/tmp/arp-fanin` | content merged as #387 (squash; branch still shows `ahead 1` of main by SHA) | **delete** branch + worktree |
+| `fix/langgraph_fanin_join` | local + origin + worktree `<tmp>/arp-fanin` | content merged as #387 (squash; branch still shows `ahead 1` of main by SHA) | **delete** branch + worktree |
 | `relock-382` | local | tracks `origin/dependabot/pip/pip-root-llm-06dfaa602f` (relock `eba4f777`) | keep until #382 merges, then delete |
-| `chore/ignore_docs_ui_scratch` | local + origin + worktree `C:/tmp/arp-chore` | #389 open | keep until merged |
-| `feature/app_improvement_review` | local + origin + worktree `C:/tmp/arp-appreview` | #390 open | keep until merged |
+| `chore/ignore_docs_ui_scratch` | local + origin + worktree `<tmp>/arp-chore` | #389 open | keep until merged |
+| `feature/app_improvement_review` | local + origin + worktree `<tmp>/arp-appreview` | #390 open | keep until merged |
 | `feature/el_screen_restyle` | local + origin + codex worktree | no PR | keep, open PR after #388 |
-| `feature/criterion_aggregation` | local + origin + worktree `C:/Users/tandf/source/agentic-runtime-platform-f5-f6` | see §9.2 | keep |
-| `docs/tech_debt_plans` | local + worktree `C:/tmp/arp-plans` | unpushed | push or discard |
+| `feature/criterion_aggregation` | local + origin + worktree `<workspace>/agentic-runtime-platform-f5-f6` | see §9.2 | keep |
+| `docs/tech_debt_plans` | local + worktree `<tmp>/arp-plans` | unpushed | push or discard |
 | `feature/evidence_ledger_port` | local (checked out in live checkout) + origin | #388 open | keep |
 | `origin/dependabot/pip/pip-root-{llm,rest,tooling}-*` | origin | #382/#383/#384 | closed by merge/close of PRs |
 | `origin/gh-pages` | origin | 94 commits; mkdocs deploy | leave |
 | `origin/slo-data` | origin | nightly bot commits `[skip ci]` | leave |
 
-Already cleaned during this session (listed in the brief, no longer present): local branches and worktrees for `fix/secret_mask_json` (#380), `fix/review_report_extraction` (#377), `fix/fullstack_rework` (#379), `fix/retire-github-models` (#378), `fix/nvidia-deepseek-v4-eol` (#376), `fix/nvidia-llama-31-8b-eol` (#375), and `.claude/worktrees/{deepseek-v4-eol,epic-yonath-0c6f8e}`, `C:/Users/tandf/source/arp-model-pack-builder`, copilot worktrees — `git worktree list` at write time shows none of them. Verified with `git branch --list` (empty for the three `fix/*` names checked).
+Already cleaned during this session (listed in the brief, no longer present): local branches and worktrees for `fix/secret_mask_json` (#380), `fix/review_report_extraction` (#377), `fix/fullstack_rework` (#379), `fix/retire-github-models` (#378), `fix/nvidia-deepseek-v4-eol` (#376), `fix/nvidia-llama-31-8b-eol` (#375), and `.claude/worktrees/{deepseek-v4-eol,epic-yonath-0c6f8e}`, `<workspace>/arp-model-pack-builder`, copilot worktrees — `git worktree list` at write time shows none of them. Verified with `git branch --list` (empty for the three `fix/*` names checked).
 
 #### Worktrees (9 live)
 
 | Path | Branch | Disposition |
 |---|---|---|
-| `C:/Users/tandf/source/agentic-runtime-platform` | `feature/evidence_ledger_port` | primary checkout; dirty (see below) |
-| `C:/tmp/arp-appreview` | `feature/app_improvement_review` | keep until #390 merges |
-| `C:/tmp/arp-chore` | `chore/ignore_docs_ui_scratch` | keep until #389 merges |
-| `C:/tmp/arp-el-port` | detached `74123cb4` (merge of main into #388 head) | **remove** — redundant with the live checkout |
-| `C:/tmp/arp-fanin` | `fix/langgraph_fanin_join` | **remove** — #387 merged |
-| `C:/tmp/arp-main-inventory` | detached `c3b2d328` | remove after the inventory is finished |
-| `C:/tmp/arp-plans` | `docs/tech_debt_plans` | keep (unpushed work) |
-| `C:/Users/tandf/.codex/worktrees/evidence-ledger-ui/agentic-runtime-platform` | `feature/el_screen_restyle` | keep; owned by Codex |
-| `C:/Users/tandf/source/agentic-runtime-platform-f5-f6` | `feature/criterion_aggregation` | keep |
+| `<workspace>/agentic-runtime-platform` | `feature/evidence_ledger_port` | primary checkout; dirty (see below) |
+| `<tmp>/arp-appreview` | `feature/app_improvement_review` | keep until #390 merges |
+| `<tmp>/arp-chore` | `chore/ignore_docs_ui_scratch` | keep until #389 merges |
+| `<tmp>/arp-el-port` | detached `74123cb4` (merge of main into #388 head) | **remove** — redundant with the live checkout |
+| `<tmp>/arp-fanin` | `fix/langgraph_fanin_join` | **remove** — #387 merged |
+| `../arp-main-inventory` | detached `c3b2d328` | remove after the inventory is finished |
+| `<tmp>/arp-plans` | `docs/tech_debt_plans` | keep (unpushed work) |
+| `<codex-home>/worktrees/evidence-ledger-ui/agentic-runtime-platform` | `feature/el_screen_restyle` | keep; owned by Codex |
+| `<workspace>/agentic-runtime-platform-f5-f6` | `feature/criterion_aggregation` | keep |
 
 Note (memory `nested-worktree-loads-real-env`): none of these is under `.claude/worktrees` any more, so the live-`.env`-at-import hazard does not apply to the current set.
 
@@ -105,7 +105,7 @@ Note (memory `nested-worktree-loads-real-env`): none of these is under `.claude/
 
 ### 9.4 Code-level debt markers
 
-Method: `grep -rnE "\b(TODO|FIXME|XXX|HACK|DEPRECATED)\b"` over `py/ts/tsx/yaml/yml/lean` in `C:/tmp/arp-main-inventory` (excluding `node_modules`, `.venv`, `docs/`, `*.generated.*`). `py_inventory.json` `modules[].markers` reports only the one TODO; the grep widened the scope to YAML, TSX and string literals and found the rest — all but one are not actionable debt.
+Method: `grep -rnE "\b(TODO|FIXME|XXX|HACK|DEPRECATED)\b"` over `py/ts/tsx/yaml/yml/lean` in `../arp-main-inventory` (excluding `node_modules`, `.venv`, `docs/`, `*.generated.*`). `py_inventory.json` `modules[].markers` reports only the one TODO; the grep widened the scope to YAML, TSX and string literals and found the rest — all but one are not actionable debt.
 
 #### Summary
 
@@ -186,7 +186,7 @@ Each row is verified against main (`c3b2d328`) unless noted.
 
 ### 9.6 Cross-repo follow-ups (open items touching ARP)
 
-Sources: `C:/Users/tandf/source/_audit/remediation-progress-2026-09-23.md` (newest remediation file; `remediation-progress-2026-08-04.md` and `-07-25.md` older), `net-new-triage-revalidation-2026-08-09.md`, `net-new-sweep-2026-07-25.md`. The newest net-new file is the 2026-08-09 revalidation; no newer dated file exists.
+Sources: `<workspace>/_audit/remediation-progress-2026-09-23.md` (newest remediation file; `remediation-progress-2026-08-04.md` and `-07-25.md` older), `net-new-triage-revalidation-2026-08-09.md`, `net-new-sweep-2026-07-25.md`. The newest net-new file is the 2026-08-09 revalidation; no newer dated file exists.
 
 | Item | Source | Status at 2026-10-12 |
 |---|---|---|

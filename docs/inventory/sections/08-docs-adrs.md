@@ -1,6 +1,6 @@
 ## 8. Documentation & architecture decision records
 
-Source of truth: clean `origin/main` worktree at `C:/tmp/arp-main-inventory`, revision `c3b2d328`. Ages are days since last commit, measured against 2026-10-12. Line counts are from `docs/inventory/data/meta_inventory.json`. Read-only audit; nothing in the worktree was modified.
+Source of truth: clean `origin/main` worktree at `../arp-main-inventory`, revision `c3b2d328`. Ages are days since last commit, measured against 2026-10-12. Line counts are from `docs/inventory/data/meta_inventory.json`. Read-only audit; nothing in the worktree was modified.
 
 Status legend: **Current** (no contrary evidence found), **Aging** (75-90 days, fast-moving area), **Stale >90d** (age over 90 days), **Stale content** (text contradicts code, CI or an ADR regardless of age), **Duplicate** (copy or mirror of another doc), **Stub** (redirect or pointer only), **Broken link**, **Working note** (agent or process artifact, not reference material), **Orphan** (builds under mkdocs but is not in `nav`).
 
