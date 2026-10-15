@@ -24,8 +24,11 @@ from _common import (
 
 GH_REPO = "tafreeman/agentic-runtime-platform"
 WF_DIR = "agentic-workflows-v2/agentic_v2/workflows/definitions"
+# Matches "Status: Accepted", "**Status:** Accepted", and the table row
+# "| **Status** | 🟡 Proposed |", skipping an optional leading pipe and status glyph.
 ADR_STATUS_RE = re.compile(
-    r"^\*{0,2}Status\*{0,2}\s*[:|]\s*\**\s*([A-Za-z -]+)", re.I | re.M
+    r"^\|?\s*\**Status\**\s*[:|]\s*\**\s*(?:[^\w\s]+\s*)?([A-Za-z][A-Za-z -]*)",
+    re.I | re.M,
 )
 LINK_RE = re.compile(r"\]\(([^)#\s]+)")
 
@@ -192,14 +195,17 @@ def _deps(files: list[str]) -> dict[str, object]:
 
 
 def _gh(*args: str) -> object:
-    proc = subprocess.run(
-        ["gh", *args, "-R", GH_REPO],
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
+    try:
+        proc = subprocess.run(
+            ["gh", *args, "-R", GH_REPO],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+        )
+    except OSError as exc:  # gh not installed: FileNotFoundError on launch
+        return {"error": f"gh unavailable: {exc}"[:300]}
     try:
         return (
             json.loads(proc.stdout)

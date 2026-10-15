@@ -1,0 +1,3487 @@
+{
+  "revision": "c3b2d328 2026-10-12T20:09:39-05:00 fix(langchain): run each step once, after all its dependencies (#387)",
+  "workflows": [
+    {
+      "path": "agentic-workflows-v2/agentic_v2/workflows/definitions/bug_resolution.yaml",
+      "name": "bug_resolution",
+      "description": "Bug and defect resolution workflow \u2014 triage, root cause analysis, fix generation, and verification",
+      "inputs": [
+        "bug_report",
+        "code_file",
+        "resolution_depth"
+      ],
+      "outputs": [
+        "root_cause",
+        "fix",
+        "verification_report"
+      ],
+      "steps": [
+        {
+          "name": "triage",
+          "agent": "tier0_parser",
+          "tier": null,
+          "depends_on": null,
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "root_cause_analysis",
+          "agent": "tier2_reviewer",
+          "tier": null,
+          "depends_on": [
+            "triage"
+          ],
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "generate_fix",
+          "agent": "tier2_reviewer",
+          "tier": null,
+          "depends_on": [
+            "root_cause_analysis"
+          ],
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "regression_check",
+          "agent": "tier1_analyzer",
+          "tier": null,
+          "depends_on": [
+            "generate_fix"
+          ],
+          "has_when": true,
+          "has_loop": false
+        },
+        {
+          "name": "generate_verification",
+          "agent": "tier2_summarizer",
+          "tier": null,
+          "depends_on": [
+            "generate_fix",
+            "regression_check"
+          ],
+          "has_when": true,
+          "has_loop": false
+        }
+      ]
+    },
+    {
+      "path": "agentic-workflows-v2/agentic_v2/workflows/definitions/code_review.yaml",
+      "name": "code_review",
+      "description": "Automated code review workflow with tiered models",
+      "inputs": [
+        "code_file",
+        "review_depth"
+      ],
+      "outputs": [
+        "review",
+        "summary"
+      ],
+      "steps": [
+        {
+          "name": "parse_code",
+          "agent": "tier0_parser",
+          "tier": null,
+          "depends_on": null,
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "style_check",
+          "agent": "tier1_linter",
+          "tier": null,
+          "depends_on": [
+            "parse_code"
+          ],
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "complexity_analysis",
+          "agent": "tier1_analyzer",
+          "tier": null,
+          "depends_on": [
+            "parse_code"
+          ],
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "review_code",
+          "agent": "tier2_reviewer",
+          "tier": null,
+          "depends_on": [
+            "style_check",
+            "complexity_analysis"
+          ],
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "generate_summary",
+          "agent": "tier2_summarizer",
+          "tier": null,
+          "depends_on": [
+            "review_code"
+          ],
+          "has_when": true,
+          "has_loop": false
+        }
+      ]
+    },
+    {
+      "path": "agentic-workflows-v2/agentic_v2/workflows/definitions/conditional_branching.yaml",
+      "name": "conditional_branching",
+      "description": "Example workflow demonstrating conditional step execution with when: gates. Steps activate or skip based on input parameters at runtime.",
+      "inputs": [
+        "feature_spec",
+        "review_depth",
+        "target_env"
+      ],
+      "outputs": [
+        "analysis_report"
+      ],
+      "steps": [
+        {
+          "name": "parse_requirements",
+          "agent": "tier2_coder",
+          "tier": null,
+          "depends_on": null,
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "quick_review",
+          "agent": "tier2_coder",
+          "tier": null,
+          "depends_on": [
+            "parse_requirements"
+          ],
+          "has_when": true,
+          "has_loop": false
+        },
+        {
+          "name": "deep_analysis",
+          "agent": "tier3_architect",
+          "tier": null,
+          "depends_on": [
+            "parse_requirements"
+          ],
+          "has_when": true,
+          "has_loop": false
+        },
+        {
+          "name": "security_scan",
+          "agent": "tier3_reviewer",
+          "tier": null,
+          "depends_on": [
+            "parse_requirements"
+          ],
+          "has_when": true,
+          "has_loop": false
+        },
+        {
+          "name": "deployment_readiness",
+          "agent": "tier3_reviewer",
+          "tier": null,
+          "depends_on": [
+            "deep_analysis",
+            "security_scan"
+          ],
+          "has_when": true,
+          "has_loop": false
+        },
+        {
+          "name": "assemble_report",
+          "agent": "tier1_assembler",
+          "tier": null,
+          "depends_on": [
+            "quick_review",
+            "deep_analysis",
+            "security_scan",
+            "deployment_readiness"
+          ],
+          "has_when": false,
+          "has_loop": false
+        }
+      ]
+    },
+    {
+      "path": "agentic-workflows-v2/agentic_v2/workflows/definitions/consensus_review.yaml",
+      "name": "consensus_review",
+      "description": "Self-consistency / ensemble review pattern. Three independent reviewers answer the SAME prompt in parallel; a deterministic tier-0 aggregator majority-votes their verdicts; a final summary step runs only when the vote clears the agreement t",
+      "inputs": [
+        "code_file",
+        "min_agreement"
+      ],
+      "outputs": [
+        "verdict",
+        "agreement",
+        "summary"
+      ],
+      "steps": [
+        {
+          "name": "reviewer_a",
+          "agent": "tier2_reviewer",
+          "tier": null,
+          "depends_on": null,
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "reviewer_b",
+          "agent": "tier2_reviewer",
+          "tier": null,
+          "depends_on": null,
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "reviewer_c",
+          "agent": "tier2_reviewer",
+          "tier": null,
+          "depends_on": null,
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "vote",
+          "agent": "tier0_consensus",
+          "tier": null,
+          "depends_on": [
+            "reviewer_a",
+            "reviewer_b",
+            "reviewer_c"
+          ],
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "summarize",
+          "agent": "tier2_summarizer",
+          "tier": null,
+          "depends_on": [
+            "vote"
+          ],
+          "has_when": true,
+          "has_loop": false
+        }
+      ]
+    },
+    {
+      "path": "agentic-workflows-v2/agentic_v2/workflows/definitions/fullstack_generation.yaml",
+      "name": "fullstack_generation",
+      "description": "Generate a complete fullstack feature with parallel frontend/backend development",
+      "inputs": [
+        "feature_spec",
+        "tech_stack"
+      ],
+      "outputs": [
+        "feature_package",
+        "review_report",
+        "all_code"
+      ],
+      "steps": [
+        {
+          "name": "design_architecture",
+          "agent": "tier3_architect",
+          "tier": null,
+          "depends_on": null,
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "generate_api",
+          "agent": "tier2_coder",
+          "tier": null,
+          "depends_on": [
+            "design_architecture"
+          ],
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "generate_frontend",
+          "agent": "tier2_coder",
+          "tier": null,
+          "depends_on": [
+            "design_architecture"
+          ],
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "generate_migrations",
+          "agent": "tier1_generator",
+          "tier": null,
+          "depends_on": [
+            "design_architecture"
+          ],
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "generate_integration_tests",
+          "agent": "tier2_tester",
+          "tier": null,
+          "depends_on": [
+            "generate_api",
+            "generate_frontend"
+          ],
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "review_code",
+          "agent": "tier3_reviewer",
+          "tier": null,
+          "depends_on": [
+            "generate_api",
+            "generate_frontend",
+            "generate_migrations",
+            "generate_integration_tests"
+          ],
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "developer_rework",
+          "agent": "tier2_coder",
+          "tier": null,
+          "depends_on": [
+            "review_code"
+          ],
+          "has_when": true,
+          "has_loop": false
+        },
+        {
+          "name": "apply_rework",
+          "agent": "tier0_overlay",
+          "tier": null,
+          "depends_on": [
+            "developer_rework"
+          ],
+          "has_when": true,
+          "has_loop": false
+        },
+        {
+          "name": "re_review_code",
+          "agent": "tier3_reviewer",
+          "tier": null,
+          "depends_on": [
+            "apply_rework"
+          ],
+          "has_when": true,
+          "has_loop": false
+        },
+        {
+          "name": "assemble_feature",
+          "agent": "tier1_assembler",
+          "tier": null,
+          "depends_on": [
+            "re_review_code"
+          ],
+          "has_when": false,
+          "has_loop": false
+        }
+      ]
+    },
+    {
+      "path": "agentic-workflows-v2/agentic_v2/workflows/definitions/iterative_review.yaml",
+      "name": "iterative_review",
+      "description": "Example workflow demonstrating bounded review-rework loops with loop_until and loop_max. Code is generated, reviewed, and reworked iteratively until approved or the maximum round count is reached.",
+      "inputs": [
+        "feature_spec",
+        "max_review_rounds"
+      ],
+      "outputs": [
+        "final_package",
+        "review_history"
+      ],
+      "steps": [
+        {
+          "name": "design",
+          "agent": "tier3_architect",
+          "tier": null,
+          "depends_on": null,
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "implement",
+          "agent": "tier2_coder",
+          "tier": null,
+          "depends_on": [
+            "design"
+          ],
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "review_rework_loop",
+          "agent": "tier3_reviewer",
+          "tier": null,
+          "depends_on": [
+            "implement"
+          ],
+          "has_when": false,
+          "has_loop": true
+        },
+        {
+          "name": "escalation_notice",
+          "agent": "tier1_assembler",
+          "tier": null,
+          "depends_on": [
+            "review_rework_loop"
+          ],
+          "has_when": true,
+          "has_loop": false
+        },
+        {
+          "name": "package",
+          "agent": "tier1_assembler",
+          "tier": null,
+          "depends_on": [
+            "review_rework_loop",
+            "escalation_notice"
+          ],
+          "has_when": false,
+          "has_loop": false
+        }
+      ]
+    },
+    {
+      "path": "agentic-workflows-v2/agentic_v2/workflows/definitions/plan_tribunal.yaml",
+      "name": "plan_tribunal",
+      "description": "Multi-judge review of proposed implementation plans. A brief step distils the source documents into a candidate slate (P1..Pn) plus a shared domain brief; five persona judges (verification, concurrency, pragmatist, governance, adversary) ea",
+      "inputs": [
+        "plan_paths",
+        "grounding_paths",
+        "focus",
+        "min_agreement"
+      ],
+      "outputs": [
+        "first_candidate",
+        "agreement",
+        "approval",
+        "approval_met",
+        "report"
+      ],
+      "steps": [
+        {
+          "name": "brief",
+          "agent": "tier2_analyst",
+          "tier": null,
+          "depends_on": null,
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "research_verification",
+          "agent": "tier2_researcher",
+          "tier": null,
+          "depends_on": [
+            "brief"
+          ],
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "extend_slate",
+          "agent": "tier2_analyst",
+          "tier": null,
+          "depends_on": [
+            "research_verification",
+            "research_concurrency",
+            "research_pragmatist",
+            "research_governance",
+            "research_adversary"
+          ],
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "verdict_verification",
+          "agent": "tier2_reviewer",
+          "tier": null,
+          "depends_on": [
+            "extend_slate"
+          ],
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "research_concurrency",
+          "agent": "tier2_researcher",
+          "tier": null,
+          "depends_on": [
+            "brief"
+          ],
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "verdict_concurrency",
+          "agent": "tier2_reviewer",
+          "tier": null,
+          "depends_on": [
+            "extend_slate"
+          ],
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "research_pragmatist",
+          "agent": "tier2_researcher",
+          "tier": null,
+          "depends_on": [
+            "brief"
+          ],
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "verdict_pragmatist",
+          "agent": "tier2_reviewer",
+          "tier": null,
+          "depends_on": [
+            "extend_slate"
+          ],
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "research_governance",
+          "agent": "tier2_researcher",
+          "tier": null,
+          "depends_on": [
+            "brief"
+          ],
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "verdict_governance",
+          "agent": "tier2_reviewer",
+          "tier": null,
+          "depends_on": [
+            "extend_slate"
+          ],
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "research_adversary",
+          "agent": "tier2_researcher",
+          "tier": null,
+          "depends_on": [
+            "brief"
+          ],
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "verdict_adversary",
+          "agent": "tier2_reviewer",
+          "tier": null,
+          "depends_on": [
+            "extend_slate"
+          ],
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "vote_pick",
+          "agent": "tier0_consensus",
+          "tier": null,
+          "depends_on": [
+            "verdict_verification",
+            "verdict_concurrency",
+            "verdict_pragmatist",
+            "verdict_governance",
+            "verdict_adversary"
+          ],
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "ratify_verification",
+          "agent": "tier2_reviewer",
+          "tier": null,
+          "depends_on": [
+            "vote_pick"
+          ],
+          "has_when": true,
+          "has_loop": false
+        },
+        {
+          "name": "ratify_concurrency",
+          "agent": "tier2_reviewer",
+          "tier": null,
+          "depends_on": [
+            "vote_pick"
+          ],
+          "has_when": true,
+          "has_loop": false
+        },
+        {
+          "name": "ratify_pragmatist",
+          "agent": "tier2_reviewer",
+          "tier": null,
+          "depends_on": [
+            "vote_pick"
+          ],
+          "has_when": true,
+          "has_loop": false
+        },
+        {
+          "name": "ratify_governance",
+          "agent": "tier2_reviewer",
+          "tier": null,
+          "depends_on": [
+            "vote_pick"
+          ],
+          "has_when": true,
+          "has_loop": false
+        },
+        {
+          "name": "ratify_adversary",
+          "agent": "tier2_reviewer",
+          "tier": null,
+          "depends_on": [
+            "vote_pick"
+          ],
+          "has_when": true,
+          "has_loop": false
+        },
+        {
+          "name": "vote_stance",
+          "agent": "tier0_consensus",
+          "tier": null,
+          "depends_on": [
+            "ratify_verification",
+            "ratify_concurrency",
+            "ratify_pragmatist",
+            "ratify_governance",
+            "ratify_adversary"
+          ],
+          "has_when": true,
+          "has_loop": false
+        },
+        {
+          "name": "synthesis",
+          "agent": "tier3_synthesizer",
+          "tier": null,
+          "depends_on": [
+            "vote_stance"
+          ],
+          "has_when": true,
+          "has_loop": false
+        }
+      ]
+    },
+    {
+      "path": "agentic-workflows-v2/agentic_v2/workflows/definitions/test_deterministic.yaml",
+      "name": "test_deterministic",
+      "description": "Simple deterministic workflow for testing (no LLM calls)",
+      "inputs": [
+        "input_text"
+      ],
+      "outputs": [
+        "processed_text",
+        "step_count"
+      ],
+      "steps": [
+        {
+          "name": "step1",
+          "agent": "tier0_process",
+          "tier": null,
+          "depends_on": null,
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "step2",
+          "agent": "tier0_counter",
+          "tier": null,
+          "depends_on": [
+            "step1"
+          ],
+          "has_when": false,
+          "has_loop": false
+        }
+      ]
+    },
+    {
+      "path": "agentic-workflows-v2/agentic_v2/workflows/definitions/test_workflow.yaml",
+      "name": "test_workflow",
+      "description": "Simple deterministic workflow for server and evaluation tests",
+      "inputs": [
+        "input_text"
+      ],
+      "outputs": [
+        "processed_text",
+        "step_count"
+      ],
+      "steps": [
+        {
+          "name": "step1",
+          "agent": "tier0_process",
+          "tier": null,
+          "depends_on": null,
+          "has_when": false,
+          "has_loop": false
+        },
+        {
+          "name": "step2",
+          "agent": "tier0_counter",
+          "tier": null,
+          "depends_on": [
+            "step1"
+          ],
+          "has_when": false,
+          "has_loop": false
+        }
+      ]
+    }
+  ],
+  "ci": [
+    {
+      "file": ".github/workflows/ci.yml",
+      "name": "CI",
+      "triggers": [
+        "push",
+        "pull_request"
+      ],
+      "jobs": [
+        {
+          "id": "python-smoke",
+          "name": null,
+          "needs": null
+        },
+        {
+          "id": "frontend-build",
+          "name": null,
+          "needs": null
+        },
+        {
+          "id": "frontend-test",
+          "name": null,
+          "needs": null
+        },
+        {
+          "id": "lint",
+          "name": null,
+          "needs": null
+        },
+        {
+          "id": "suppression-ratchet",
+          "name": "Suppression ratchet (ruff ignores + mypy overrides)",
+          "needs": null
+        },
+        {
+          "id": "typecheck-core-contracts",
+          "name": "Mypy (strict engine + contracts)",
+          "needs": null
+        },
+        {
+          "id": "test-coverage",
+          "name": null,
+          "needs": null
+        },
+        {
+          "id": "claude-subscription-tests",
+          "name": "Claude subscription backend tests",
+          "needs": null
+        },
+        {
+          "id": "ek-delegation-tests",
+          "name": "EK step-delegation (approval-gate) tests",
+          "needs": null
+        },
+        {
+          "id": "evalkit-bridge-tests",
+          "name": "EvalKit bridge (eval extra) tests",
+          "needs": null
+        },
+        {
+          "id": "wire-format-drift",
+          "name": null,
+          "needs": null
+        },
+        {
+          "id": "e2e-streaming",
+          "name": null,
+          "needs": null
+        },
+        {
+          "id": "no-llm-smoke",
+          "name": null,
+          "needs": null
+        },
+        {
+          "id": "validate-workflows",
+          "name": "Validate workflow YAMLs",
+          "needs": null
+        },
+        {
+          "id": "check-doc-drift",
+          "name": "Documentation and ADR governance drift",
+          "needs": null
+        },
+        {
+          "id": "doc-stats-drift",
+          "name": "docs/index.md derived stats in sync",
+          "needs": null
+        },
+        {
+          "id": "pydocstyle",
+          "name": "pydocstyle (core + contracts)",
+          "needs": null
+        },
+        {
+          "id": "lockfile-constraints",
+          "name": "ci-constraints.txt in sync with uv.lock",
+          "needs": null
+        },
+        {
+          "id": "dockerfile-constraints",
+          "name": "Dockerfile pip installs pin to ci-constraints.txt",
+          "needs": null
+        },
+        {
+          "id": "tools-tests",
+          "name": "tools/ tests",
+          "needs": null
+        }
+      ]
+    },
+    {
+      "file": ".github/workflows/codeql.yml",
+      "name": "CodeQL",
+      "triggers": [
+        "push",
+        "pull_request",
+        "schedule"
+      ],
+      "jobs": [
+        {
+          "id": "analyze",
+          "name": "Analyze (${{ matrix.language }})",
+          "needs": null
+        }
+      ]
+    },
+    {
+      "file": ".github/workflows/dependabot-auto-merge.yml",
+      "name": "Dependabot auto-merge",
+      "triggers": "pull_request",
+      "jobs": [
+        {
+          "id": "auto-merge",
+          "name": null,
+          "needs": null
+        }
+      ]
+    },
+    {
+      "file": ".github/workflows/dependabot-relock.yml",
+      "name": "Relock Dependabot pip PR",
+      "triggers": [
+        "workflow_dispatch",
+        "schedule"
+      ],
+      "jobs": [
+        {
+          "id": "relock",
+          "name": "Relock uv.lock + ci-constraints.txt (manual)",
+          "needs": null
+        },
+        {
+          "id": "discover-relock-candidates",
+          "name": "Find open Dependabot pip/uv PRs",
+          "needs": null
+        },
+        {
+          "id": "relock-scheduled",
+          "name": "Relock uv.lock + ci-constraints.txt (PR",
+          "needs": "discover-relock-candidates"
+        }
+      ]
+    },
+    {
+      "file": ".github/workflows/dependency-audit.yml",
+      "name": "Dependency Audit",
+      "triggers": [
+        "push",
+        "schedule",
+        "workflow_dispatch"
+      ],
+      "jobs": [
+        {
+          "id": "python-audit",
+          "name": "pip-audit (Python packages)",
+          "needs": null
+        },
+        {
+          "id": "npm-audit",
+          "name": "npm audit (UI)",
+          "needs": null
+        }
+      ]
+    },
+    {
+      "file": ".github/workflows/dependency-drift-check.yml",
+      "name": "Dependency Drift Check",
+      "triggers": [
+        "schedule",
+        "workflow_dispatch"
+      ],
+      "jobs": [
+        {
+          "id": "ek-delegation-drift",
+          "name": "EK step-delegation drift check (unpinned ek extra)",
+          "needs": null
+        },
+        {
+          "id": "evalkit-bridge-drift",
+          "name": "EvalKit bridge drift check (unpinned eval extra)",
+          "needs": null
+        }
+      ]
+    },
+    {
+      "file": ".github/workflows/dependency-review.yml",
+      "name": "Dependency review",
+      "triggers": [
+        "pull_request",
+        "workflow_dispatch"
+      ],
+      "jobs": [
+        {
+          "id": "dependency-review",
+          "name": null,
+          "needs": null
+        }
+      ]
+    },
+    {
+      "file": ".github/workflows/deploy.yml",
+      "name": "Release Pipeline",
+      "triggers": [
+        "push",
+        "pull_request",
+        "workflow_dispatch"
+      ],
+      "jobs": [
+        {
+          "id": "build-release-assets",
+          "name": "Build release assets",
+          "needs": null
+        },
+        {
+          "id": "attest-release-assets",
+          "name": "Attest release assets",
+          "needs": "build-release-assets"
+        },
+        {
+          "id": "publish-release",
+          "name": "Publish GitHub Release",
+          "needs": [
+            "build-release-assets",
+            "attest-release-assets"
+          ]
+        }
+      ]
+    },
+    {
+      "file": ".github/workflows/devcontainer-validate.yml",
+      "name": "Devcontainer Validate",
+      "triggers": [
+        "pull_request"
+      ],
+      "jobs": [
+        {
+          "id": "validate-devcontainer",
+          "name": "Build and test devcontainer",
+          "needs": null
+        }
+      ]
+    },
+    {
+      "file": ".github/workflows/docs.yml",
+      "name": "Deploy docs to GitHub Pages",
+      "triggers": [
+        "push",
+        "workflow_dispatch"
+      ],
+      "jobs": [
+        {
+          "id": "deploy",
+          "name": null,
+          "needs": null
+        }
+      ]
+    },
+    {
+      "file": ".github/workflows/eval-package-ci.yml",
+      "name": "Eval Package CI",
+      "triggers": [
+        "workflow_dispatch",
+        "push",
+        "pull_request",
+        "schedule"
+      ],
+      "jobs": [
+        {
+          "id": "test",
+          "name": null,
+          "needs": null
+        },
+        {
+          "id": "lint",
+          "name": null,
+          "needs": null
+        },
+        {
+          "id": "type-check",
+          "name": null,
+          "needs": null
+        },
+        {
+          "id": "build",
+          "name": null,
+          "needs": [
+            "test",
+            "lint",
+            "type-check"
+          ]
+        },
+        {
+          "id": "eval-golden-gate",
+          "name": null,
+          "needs": null
+        },
+        {
+          "id": "eval-live-gate",
+          "name": null,
+          "needs": null
+        }
+      ]
+    },
+    {
+      "file": ".github/workflows/infra-deploy.yml",
+      "name": "infra-deploy (reference \u2014 never run)",
+      "triggers": [
+        "workflow_dispatch"
+      ],
+      "jobs": [
+        {
+          "id": "validate",
+          "name": "bicep build + lint (no cloud)",
+          "needs": null
+        },
+        {
+          "id": "deploy",
+          "name": "what-if + deploy (gated, OIDC)",
+          "needs": "validate"
+        }
+      ]
+    },
+    {
+      "file": ".github/workflows/lean-proofs.yml",
+      "name": "Lean scheduler model and replay",
+      "triggers": [
+        "push",
+        "pull_request",
+        "schedule",
+        "workflow_dispatch"
+      ],
+      "jobs": [
+        {
+          "id": "lean-replay",
+          "name": null,
+          "needs": null
+        }
+      ]
+    },
+    {
+      "file": ".github/workflows/load-report-pages.yml",
+      "name": "Deploy load-report to GitHub Pages",
+      "triggers": [
+        "push",
+        "workflow_dispatch"
+      ],
+      "jobs": [
+        {
+          "id": "render-and-deploy",
+          "name": null,
+          "needs": null
+        }
+      ]
+    },
+    {
+      "file": ".github/workflows/nightly.yml",
+      "name": "Nightly E2E Reliability",
+      "triggers": [
+        "schedule",
+        "workflow_dispatch"
+      ],
+      "jobs": [
+        {
+          "id": "streaming-50x",
+          "name": null,
+          "needs": null
+        },
+        {
+          "id": "performance-regression",
+          "name": null,
+          "needs": null
+        }
+      ]
+    },
+    {
+      "file": ".github/workflows/sbom.yml",
+      "name": "SBOM Generation",
+      "triggers": [
+        "release",
+        "schedule",
+        "workflow_dispatch"
+      ],
+      "jobs": [
+        {
+          "id": "generate-sbom",
+          "name": null,
+          "needs": null
+        }
+      ]
+    },
+    {
+      "file": ".github/workflows/upstream-compatibility.yml",
+      "name": "Upstream compatibility",
+      "triggers": [
+        "schedule",
+        "workflow_dispatch"
+      ],
+      "jobs": [
+        {
+          "id": "latest-stable",
+          "name": "Latest stable ${{ matrix.package }}",
+          "needs": null
+        }
+      ]
+    },
+    {
+      "file": ".github/workflows/windows-workflows-ci.yml",
+      "name": "Windows Workflow Verification",
+      "triggers": [
+        "push",
+        "pull_request"
+      ],
+      "jobs": [
+        {
+          "id": "verify-workflows",
+          "name": "Verify 6 bundled workflows on Windows",
+          "needs": null
+        }
+      ]
+    }
+  ],
+  "adrs": [
+    {
+      "file": "docs/adr/ADR-001-002-003-architecture-decisions.md",
+      "title": "Architectural decision records for agentic-workflows-v2",
+      "status": "?",
+      "last_commit": "2026-09-10"
+    },
+    {
+      "file": "docs/adr/ADR-007-classification-matrix-stop-policy.md",
+      "title": "ADR-007: Multidimensional Classification Matrix and Stop Policy for Iterative Deep Research",
+      "status": "?",
+      "last_commit": "2026-05-27"
+    },
+    {
+      "file": "docs/adr/ADR-008-testing-approach-overhaul.md",
+      "title": "ADR-008: Testing Approach Overhaul \u2014 Value-Driven Test Quality and Coverage Strategy",
+      "status": "?",
+      "last_commit": "2026-07-27"
+    },
+    {
+      "file": "docs/adr/ADR-009-scoring-enhancements.md",
+      "title": "ADR-009: Deep Research Scoring Enhancements \u2014 Exponential Decay, Lexicographic Selection, and Immutable Contracts",
+      "status": "?",
+      "last_commit": "2026-07-27"
+    },
+    {
+      "file": "docs/adr/ADR-010-eval-harness-methodology.md",
+      "title": "ADR-010: Commit-Driven A/B Agent Evaluation Harness \u2014 Methodology & Design",
+      "status": "?",
+      "last_commit": "2026-07-27"
+    },
+    {
+      "file": "docs/adr/ADR-011-eval-harness-api-interface.md",
+      "title": "ADR-011: A/B Evaluation Harness \u2014 API & Interface Design",
+      "status": "?",
+      "last_commit": "2026-07-27"
+    },
+    {
+      "file": "docs/adr/ADR-012-ui-evaluation-hub.md",
+      "title": "ADR-012: UI Overhaul \u2014 Evaluation Hub & A/B Comparison Interface",
+      "status": "?",
+      "last_commit": "2026-05-27"
+    },
+    {
+      "file": "docs/adr/ADR-014-pydantic-wire-format.md",
+      "title": "ADR-014: Pydantic Discriminated Union as the Execution Event Wire Format",
+      "status": "Accepted",
+      "last_commit": "2026-07-27"
+    },
+    {
+      "file": "docs/adr/ADR-015-slo-in-git-rolling-window.md",
+      "title": "ADR-015: SLO Rolling Window Stored in Git",
+      "status": "Accepted",
+      "last_commit": "2026-05-27"
+    },
+    {
+      "file": "docs/adr/ADR-016-github-token-as-default-e2e-llm.md",
+      "title": "ADR-016: GitHub Models via `GITHUB_TOKEN` as Default E2E LLM Provider",
+      "status": "Superseded",
+      "last_commit": "2026-10-12"
+    },
+    {
+      "file": "docs/adr/ADR-017-dataset-id-query-params.md",
+      "title": "ADR-017: Dataset Identifiers as Query Parameters, Not Path Segments",
+      "status": "Accepted",
+      "last_commit": "2026-07-27"
+    },
+    {
+      "file": "docs/adr/ADR-018-api-rate-limiting-and-auth-throttle.md",
+      "title": "ADR-018: API Rate Limiting and Per-IP Auth Throttle",
+      "status": "Accepted",
+      "last_commit": "2026-05-27"
+    },
+    {
+      "file": "docs/adr/ADR-019-dag-executor-top-level-timeout.md",
+      "title": "ADR-019: DAG Executor Top-Level Timeout Watchdog",
+      "status": "Accepted",
+      "last_commit": "2026-07-27"
+    },
+    {
+      "file": "docs/adr/ADR-020-langchain-adapter-eager-validation.md",
+      "title": "ADR-020: LangChain Adapter Eager Validation at FastAPI Startup",
+      "status": "Accepted",
+      "last_commit": "2026-05-27"
+    },
+    {
+      "file": "docs/adr/ADR-021-jwt-oidc-authentication.md",
+      "title": "ADR-021: JWT OIDC Authentication for API Routes",
+      "status": "Accepted",
+      "last_commit": "2026-07-27"
+    },
+    {
+      "file": "docs/adr/ADR-022-tenant-isolation.md",
+      "title": "ADR-022: Tenant-Scoped Run and Dataset Isolation",
+      "status": "Accepted",
+      "last_commit": "2026-05-27"
+    },
+    {
+      "file": "docs/adr/ADR-023-executionkit-runtime-contract-relationship.md",
+      "title": "ADR-023: ExecutionKit \u2194 Runtime Execution-Contract Relationship",
+      "status": "Accepted",
+      "last_commit": "2026-07-27"
+    },
+    {
+      "file": "docs/adr/ADR-024-expression-evaluator-ast-sandbox.md",
+      "title": "ADR-024: Expression Evaluation via AST Interpreter (Eliminate eval())",
+      "status": "Accepted",
+      "last_commit": "2026-06-14"
+    },
+    {
+      "file": "docs/adr/ADR-025-sdk-task-orchestration.md",
+      "title": "ADR-025: SDK-Native `Task` Orchestration vs. the asyncio Orchestrator",
+      "status": "Accepted",
+      "last_commit": "2026-07-27"
+    },
+    {
+      "file": "docs/adr/ADR-026-resume-vs-summary-session.md",
+      "title": "ADR-026: `--resume` and `fork_session` \u2014 and why a summary-seeded session often wins",
+      "status": "Accepted",
+      "last_commit": "2026-07-27"
+    },
+    {
+      "file": "docs/adr/ADR-027-forced-tool-choice.md",
+      "title": "ADR-027: Forced / `any` / `auto` `tool_choice` and the cross-role `verify_fact` tool",
+      "status": "Accepted",
+      "last_commit": "2026-06-14"
+    },
+    {
+      "file": "docs/adr/ADR-028-tool-descriptions-as-selection-mechanism.md",
+      "title": "ADR-028: Tool descriptions are the primary tool-selection mechanism",
+      "status": "Accepted",
+      "last_commit": "2026-06-14"
+    },
+    {
+      "file": "docs/adr/ADR-029-adaptive-decomposition.md",
+      "title": "ADR-029: Adaptive Decomposition \u2014 Investigate, Per-File, then Cross-File",
+      "status": "Accepted",
+      "last_commit": "2026-06-14"
+    },
+    {
+      "file": "docs/adr/ADR-030-unconditional-connection-pinning.md",
+      "title": "ADR-030: SSRF Guard Pins the Connection Target in Both Modes",
+      "status": "Accepted",
+      "last_commit": "2026-06-16"
+    },
+    {
+      "file": "docs/adr/ADR-031-native-dag-single-engine.md",
+      "title": "ADR-031: Native DAG as Single Supported Execution Engine (salvaged)",
+      "status": "Superseded",
+      "last_commit": "2026-06-16"
+    },
+    {
+      "file": "docs/adr/ADR-032-extract-scoring-package.md",
+      "title": "ADR-032: Extract the Scoring/Judge Domain into `agentic_v2.scoring`",
+      "status": "Accepted",
+      "last_commit": "2026-06-24"
+    },
+    {
+      "file": "docs/adr/ADR-033-eval-config-project-root-resolution.md",
+      "title": "ADR-033: Defensive Import-Time Project-Root Resolution in the Scoring Eval-Config Loader",
+      "status": "Accepted",
+      "last_commit": "2026-07-27"
+    },
+    {
+      "file": "docs/adr/ADR-034-path-first-workflow-io-contracts.md",
+      "title": "ADR-034: Path-First File I/O Contracts for Multi-Step Workflows",
+      "status": "Proposed",
+      "last_commit": "2026-07-27"
+    },
+    {
+      "file": "docs/adr/ADR-035-rag-pipeline-architecture.md",
+      "title": "ADR-035: RAG Pipeline Architecture (LanceDB + Voyage 4 Hybrid Search)",
+      "status": "Superseded",
+      "last_commit": "2026-08-29"
+    },
+    {
+      "file": "docs/adr/ADR-036-ollama-sdk-backend.md",
+      "title": "ADR-036: OllamaBackend Uses the Official `ollama` Client",
+      "status": "Accepted",
+      "last_commit": "2026-06-22"
+    },
+    {
+      "file": "docs/adr/ADR-037-live-ollama-model-discovery.md",
+      "title": "ADR-037: Live Ollama Model Discovery via the Raw REST API",
+      "status": "Accepted",
+      "last_commit": "2026-06-22"
+    },
+    {
+      "file": "docs/adr/ADR-038-lmstudio-onnx-discovery.md",
+      "title": "ADR-038: Live Discovery for LM Studio and ONNX Local Models",
+      "status": "Accepted",
+      "last_commit": "2026-07-18"
+    },
+    {
+      "file": "docs/adr/ADR-039-cloud-model-discovery.md",
+      "title": "ADR-039: Live Model Discovery for Keyed Cloud Providers",
+      "status": "Accepted",
+      "last_commit": "2026-07-27"
+    },
+    {
+      "file": "docs/adr/ADR-040-curated-model-registry.md",
+      "title": "ADR-040: Curated Single-Source Model Registry",
+      "status": "Accepted",
+      "last_commit": "2026-10-12"
+    },
+    {
+      "file": "docs/adr/ADR-041-approval-gate-timeout.md",
+      "title": "ADR-041: Bounded Human-Approval Gate Timeout (Fail-Closed)",
+      "status": "Accepted",
+      "last_commit": "2026-06-30"
+    },
+    {
+      "file": "docs/adr/ADR-042-agentic-evalkit-adoption.md",
+      "title": "ADR-042: Adopt `agentic-evalkit` as ARP's Evaluation Framework (Sliced Migration)",
+      "status": "Accepted",
+      "last_commit": "2026-09-10"
+    },
+    {
+      "file": "docs/adr/ADR-043-configurable-workflow-ui.md",
+      "title": "ADR-043: Configurable Workflow UI \u2014 Per-Step Node Config, UI Settings Store, and Run Comparison",
+      "status": "Accepted",
+      "last_commit": "2026-07-27"
+    },
+    {
+      "file": "docs/adr/ADR-044-evaluation-scoring-visibility.md",
+      "title": "ADR-044: Evaluation scoring visibility \u2014 golden resolution, judge-skip policy, replay rehydration",
+      "status": "Accepted",
+      "last_commit": "2026-07-08"
+    },
+    {
+      "file": "docs/adr/ADR-045-build-app-approval-gate.md",
+      "title": "ADR-045: BuildAppTool Requires Human Approval (Gated Shell Execution)",
+      "status": "Accepted",
+      "last_commit": "2026-07-08"
+    },
+    {
+      "file": "docs/adr/ADR-046-response-entropy-masking.md",
+      "title": "ADR-046: Response-Path Masking of High-Entropy-Only Secrets",
+      "status": "Accepted",
+      "last_commit": "2026-07-08"
+    },
+    {
+      "file": "docs/adr/ADR-047-structural-tool-approval-gate.md",
+      "title": "ADR-047: Tool Approval Gate Enforced Structurally in `BaseTool.execute`",
+      "status": "Accepted",
+      "last_commit": "2026-07-27"
+    },
+    {
+      "file": "docs/adr/ADR-048-process-wide-token-budget.md",
+      "title": "ADR-048: Process-Wide Token Budget on the Shared LLM Client",
+      "status": "Accepted",
+      "last_commit": "2026-07-09"
+    },
+    {
+      "file": "docs/adr/ADR-050-chat-playground-sse-and-openrouter-provider.md",
+      "title": "ADR-050: SSE Chat Playground Endpoint and a First-Class OpenRouter Provider",
+      "status": "Accepted",
+      "last_commit": "2026-07-27"
+    },
+    {
+      "file": "docs/adr/ADR-051-ollama-cloud-execution-routing.md",
+      "title": "ADR-051: Local-First Ollama Cloud Execution Routing and NVIDIA Registry Rungs",
+      "status": "Accepted",
+      "last_commit": "2026-07-27"
+    },
+    {
+      "file": "docs/adr/ADR-052-typed-step-artifact-contracts.md",
+      "title": "ADR-052: Typed Step Artifact Contracts",
+      "status": "Accepted",
+      "last_commit": "2026-07-16"
+    },
+    {
+      "file": "docs/adr/ADR-054-evidence-ledger-ui-and-model-packs.md",
+      "title": "ADR-054: Evidence Ledger UI and versioned model packs",
+      "status": "?",
+      "last_commit": "2026-07-18"
+    },
+    {
+      "file": "docs/adr/ADR-055-file-size-exception-register.md",
+      "title": "ADR-055: File-Size Exception Register",
+      "status": "Accepted",
+      "last_commit": "2026-07-18"
+    },
+    {
+      "file": "docs/adr/ADR-056-prompt-versioning-registry.md",
+      "title": "ADR-056: Prompt-Versioning Registry",
+      "status": "Accepted",
+      "last_commit": "2026-07-18"
+    },
+    {
+      "file": "docs/adr/ADR-057-remove-rag-package.md",
+      "title": "ADR-057: Remove the `agentic_v2.rag` Package (Superseded by groundkit)",
+      "status": "Accepted",
+      "last_commit": "2026-08-29"
+    },
+    {
+      "file": "docs/adr/ADR-058-claude-subscription-backend.md",
+      "title": "ADR-058: Claude Subscription Backend",
+      "status": "Accepted",
+      "last_commit": "2026-08-20"
+    },
+    {
+      "file": "docs/adr/ADR-059-model-cost-lane-ceiling.md",
+      "title": "ADR-059: Curated Cost Lane and a Fail-Closed Failover Ceiling",
+      "status": "Accepted",
+      "last_commit": "2026-08-28"
+    },
+    {
+      "file": "docs/adr/ADR-060-scheduler-guarantees-lean.md",
+      "title": "ADR-060: One Set of Scheduling Rules, Proved in Lean 4",
+      "status": "Accepted",
+      "last_commit": "2026-09-30"
+    },
+    {
+      "file": "docs/adr/ADR-061-json-safe-secret-masks.md",
+      "title": "ADR-061: Secret Masks End at a JSON String Terminator",
+      "status": "Accepted",
+      "last_commit": "2026-10-12"
+    },
+    {
+      "file": "docs/adr/ADR-062-langgraph-join-once-semantics.md",
+      "title": "ADR-062: The LangGraph Adapter Runs Each Step Once, After All Its Dependencies",
+      "status": "Accepted",
+      "last_commit": "2026-10-12"
+    },
+    {
+      "file": "docs/adr/ADR-INDEX.md",
+      "title": "ADR index \u2014 Agentic Runtime Platform",
+      "status": "?",
+      "last_commit": "2026-10-12"
+    }
+  ],
+  "docs": [
+    {
+      "file": ".claude/rules/ci.md",
+      "lines": 84,
+      "last_commit": "2026-08-02",
+      "age_days": 71,
+      "stale": false,
+      "title": "CI gates and local validation",
+      "broken_relative_links": []
+    },
+    {
+      "file": ".claude/rules/portfolio-context.md",
+      "lines": 51,
+      "last_commit": "2026-08-02",
+      "age_days": 71,
+      "stale": false,
+      "title": "Portfolio context and CI gotchas",
+      "broken_relative_links": []
+    },
+    {
+      "file": ".claude/rules/testing.md",
+      "lines": 68,
+      "last_commit": "2026-08-02",
+      "age_days": 71,
+      "stale": false,
+      "title": "Test conventions",
+      "broken_relative_links": []
+    },
+    {
+      "file": ".claude/rules/ui-design.md",
+      "lines": 51,
+      "last_commit": "2026-10-09",
+      "age_days": 3,
+      "stale": false,
+      "title": "UI design rules (Evidence Ledger)",
+      "broken_relative_links": []
+    },
+    {
+      "file": ".github/ISSUE_TEMPLATE/bug_report.md",
+      "lines": 34,
+      "last_commit": "2026-05-27",
+      "age_days": 138,
+      "stale": true,
+      "title": "Bug Description",
+      "broken_relative_links": []
+    },
+    {
+      "file": ".github/ISSUE_TEMPLATE/feature_request.md",
+      "lines": 32,
+      "last_commit": "2026-05-27",
+      "age_days": 138,
+      "stale": true,
+      "title": "Problem Statement",
+      "broken_relative_links": []
+    },
+    {
+      "file": ".github/PULL_REQUEST_TEMPLATE.md",
+      "lines": 25,
+      "last_commit": "2026-05-27",
+      "age_days": 138,
+      "stale": true,
+      "title": "Summary",
+      "broken_relative_links": []
+    },
+    {
+      "file": "AGENTS.md",
+      "lines": 32,
+      "last_commit": "2026-09-02",
+      "age_days": 40,
+      "stale": false,
+      "title": "Repository Guidelines",
+      "broken_relative_links": []
+    },
+    {
+      "file": "AI_EVIDENCE_STANDARD.md",
+      "lines": 259,
+      "last_commit": "2026-09-04",
+      "age_days": 38,
+      "stale": false,
+      "title": "AI implementation evidence standard",
+      "broken_relative_links": []
+    },
+    {
+      "file": "CHANGELOG.md",
+      "lines": 712,
+      "last_commit": "2026-10-12",
+      "age_days": 0,
+      "stale": false,
+      "title": "Changelog",
+      "broken_relative_links": []
+    },
+    {
+      "file": "CLAUDE.md",
+      "lines": 57,
+      "last_commit": "2026-08-02",
+      "age_days": 71,
+      "stale": false,
+      "title": "agentic-runtime-platform",
+      "broken_relative_links": []
+    },
+    {
+      "file": "CONTRIBUTING.md",
+      "lines": 309,
+      "last_commit": "2026-09-04",
+      "age_days": 38,
+      "stale": false,
+      "title": "Contributing",
+      "broken_relative_links": []
+    },
+    {
+      "file": "DESIGN.md",
+      "lines": 210,
+      "last_commit": "2026-10-09",
+      "age_days": 3,
+      "stale": false,
+      "title": "Design System: Agentic Runtime Platform Dashboard",
+      "broken_relative_links": []
+    },
+    {
+      "file": "PRODUCT.md",
+      "lines": 34,
+      "last_commit": "2026-10-09",
+      "age_days": 3,
+      "stale": false,
+      "title": "Product",
+      "broken_relative_links": []
+    },
+    {
+      "file": "README.md",
+      "lines": 332,
+      "last_commit": "2026-10-10",
+      "age_days": 1,
+      "stale": false,
+      "title": "Agentic Runtime Platform",
+      "broken_relative_links": []
+    },
+    {
+      "file": "SECURITY.md",
+      "lines": 53,
+      "last_commit": "2026-09-23",
+      "age_days": 19,
+      "stale": false,
+      "title": "Security policy",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-v2-eval/README.md",
+      "lines": 197,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Agentic v2 evaluation",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-v2-eval/src/agentic_v2_eval/README.md",
+      "lines": 37,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "`agentic_v2_eval` package",
+      "broken_relative_links": [
+        "../../../docs/evaluation/index.md"
+      ]
+    },
+    {
+      "file": "agentic-workflows-v2/.github/PULL_REQUEST_TEMPLATE.md",
+      "lines": 46,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Summary",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/CODE_OF_CONDUCT.md",
+      "lines": 39,
+      "last_commit": "2026-05-27",
+      "age_days": 138,
+      "stale": true,
+      "title": "Code of Conduct",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/CONTRIBUTING.md",
+      "lines": 117,
+      "last_commit": "2026-09-04",
+      "age_days": 38,
+      "stale": false,
+      "title": "Contributing to Agentic Workflows v2",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/README.md",
+      "lines": 220,
+      "last_commit": "2026-10-01",
+      "age_days": 12,
+      "stale": false,
+      "title": "Agentic Workflows v2",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/SECURITY.md",
+      "lines": 8,
+      "last_commit": "2026-09-23",
+      "age_days": 19,
+      "stale": false,
+      "title": "Security policy",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/SUPPORT.md",
+      "lines": 36,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Support",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/agentic_v2/integrations/mcp/README.md",
+      "lines": 173,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "MCP client library",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/agentic_v2/prompts/architect.md",
+      "lines": 173,
+      "last_commit": "2026-06-25",
+      "age_days": 109,
+      "stale": true,
+      "title": "Your Expertise",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/agentic_v2/prompts/coder.md",
+      "lines": 348,
+      "last_commit": "2026-05-27",
+      "age_days": 138,
+      "stale": true,
+      "title": "Your Expertise",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/agentic_v2/prompts/judges/plan_judge_adversary.md",
+      "lines": 24,
+      "last_commit": "2026-10-01",
+      "age_days": 12,
+      "stale": false,
+      "title": "Your lens",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/agentic_v2/prompts/judges/plan_judge_concurrency.md",
+      "lines": 24,
+      "last_commit": "2026-10-01",
+      "age_days": 12,
+      "stale": false,
+      "title": "Your lens",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/agentic_v2/prompts/judges/plan_judge_governance.md",
+      "lines": 24,
+      "last_commit": "2026-10-01",
+      "age_days": 12,
+      "stale": false,
+      "title": "Your lens",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/agentic_v2/prompts/judges/plan_judge_pragmatist.md",
+      "lines": 24,
+      "last_commit": "2026-10-01",
+      "age_days": 12,
+      "stale": false,
+      "title": "Your lens",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/agentic_v2/prompts/judges/plan_judge_verification.md",
+      "lines": 24,
+      "last_commit": "2026-10-01",
+      "age_days": 12,
+      "stale": false,
+      "title": "Your lens",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/agentic_v2/prompts/orchestrator.md",
+      "lines": 211,
+      "last_commit": "2026-05-27",
+      "age_days": 138,
+      "stale": true,
+      "title": "Your Expertise",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/agentic_v2/prompts/planner.md",
+      "lines": 79,
+      "last_commit": "2026-05-27",
+      "age_days": 138,
+      "stale": true,
+      "title": "Your Expertise",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/agentic_v2/prompts/reviewer.md",
+      "lines": 230,
+      "last_commit": "2026-05-27",
+      "age_days": 138,
+      "stale": true,
+      "title": "Your Expertise",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/agentic_v2/prompts/tester.md",
+      "lines": 196,
+      "last_commit": "2026-05-27",
+      "age_days": 138,
+      "stale": true,
+      "title": "Your Expertise",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/agentic_v2/prompts/validator.md",
+      "lines": 93,
+      "last_commit": "2026-05-27",
+      "age_days": 138,
+      "stale": true,
+      "title": "Your Expertise",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/docs/API_REFERENCE.md",
+      "lines": 98,
+      "last_commit": "2026-09-04",
+      "age_days": 38,
+      "stale": false,
+      "title": "Runtime API reference",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/docs/ARCHITECTURE.md",
+      "lines": 98,
+      "last_commit": "2026-09-04",
+      "age_days": 38,
+      "stale": false,
+      "title": "Runtime package architecture",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/docs/DEVELOPMENT.md",
+      "lines": 118,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Runtime package development",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/docs/DOCS_BEST_PRACTICES.md",
+      "lines": 88,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Documentation rules",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/docs/MODEL_LAYER.md",
+      "lines": 212,
+      "last_commit": "2026-10-12",
+      "age_days": 0,
+      "stale": false,
+      "title": "Model routing and discovery",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/docs/NODE_CONFIG_OVERLAY.md",
+      "lines": 90,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Node configuration overlay status",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/docs/README.md",
+      "lines": 45,
+      "last_commit": "2026-09-04",
+      "age_days": 38,
+      "stale": false,
+      "title": "Runtime package documentation",
+      "broken_relative_links": [
+        "../DEVELOPMENT.md"
+      ]
+    },
+    {
+      "file": "agentic-workflows-v2/docs/REPO_MAP.md",
+      "lines": 63,
+      "last_commit": "2026-09-04",
+      "age_days": 38,
+      "stale": false,
+      "title": "Runtime package map",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/docs/WORKFLOWS.md",
+      "lines": 48,
+      "last_commit": "2026-10-01",
+      "age_days": 11,
+      "stale": false,
+      "title": "Built-in workflows",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/docs/adr/0001-package-structure.md",
+      "lines": 17,
+      "last_commit": "2026-07-27",
+      "age_days": 77,
+      "stale": false,
+      "title": "ADR 0001 \u2014 Package Structure: Agents and Workflows in same package",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/docs/adr/0002-evaluation-package.md",
+      "lines": 17,
+      "last_commit": "2026-05-27",
+      "age_days": 138,
+      "stale": true,
+      "title": "ADR 0002 \u2014 Evaluation as a Separate Optional Package",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/docs/adr/0003-server-optional.md",
+      "lines": 17,
+      "last_commit": "2026-05-27",
+      "age_days": 138,
+      "stale": true,
+      "title": "ADR 0003 \u2014 Server as Optional Install",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/docs/adr/0007-extract-scoring-package.md",
+      "lines": 74,
+      "last_commit": "2026-06-16",
+      "age_days": 118,
+      "stale": true,
+      "title": "ADR 0007 \u2014 Extract Scoring/Judge Domain into `agentic_v2.scoring`",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/docs/tutorials/building_workflow.md",
+      "lines": 57,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Build a Python workflow",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/docs/tutorials/creating_agent.md",
+      "lines": 121,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Create an agent",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/docs/tutorials/getting_started.md",
+      "lines": 63,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "First native DAG",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/examples/README.md",
+      "lines": 71,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Runtime examples",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/fixtures/README.md",
+      "lines": 32,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Runtime fixtures",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/tests/fixtures/backend_responses/README.md",
+      "lines": 63,
+      "last_commit": "2026-06-22",
+      "age_days": 112,
+      "stale": true,
+      "title": "Backend Response Fixtures",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/tests/integrations/mcp/README.md",
+      "lines": 45,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "MCP integration tests",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/ui/README.md",
+      "lines": 112,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Runtime dashboard",
+      "broken_relative_links": []
+    },
+    {
+      "file": "agentic-workflows-v2/ui/e2e/README.md",
+      "lines": 73,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "UI end-to-end tests",
+      "broken_relative_links": []
+    },
+    {
+      "file": "datasets/default/README.md",
+      "lines": 120,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Default golden evaluation dataset",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/404.md",
+      "lines": 31,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "404 \u2014 Page not found",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/AI_RISK_MANAGEMENT.md",
+      "lines": 231,
+      "last_commit": "2026-08-31",
+      "age_days": 42,
+      "stale": false,
+      "title": "AI risk management",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/ARCHITECTURE.md",
+      "lines": 189,
+      "last_commit": "2026-08-31",
+      "age_days": 42,
+      "stale": false,
+      "title": "Architecture",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/CHANGELOG.md",
+      "lines": 30,
+      "last_commit": "2026-07-05",
+      "age_days": 99,
+      "stale": true,
+      "title": "Changelog",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/CODING_STANDARDS.md",
+      "lines": 137,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Coding standards",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/CONTRIBUTING.md",
+      "lines": 313,
+      "last_commit": "2026-08-31",
+      "age_days": 42,
+      "stale": false,
+      "title": "Contributing",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/DEMO.md",
+      "lines": 113,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Five-minute local demo",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/GLOSSARY.md",
+      "lines": 244,
+      "last_commit": "2026-08-31",
+      "age_days": 42,
+      "stale": false,
+      "title": "Glossary",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/HANDOFF.md",
+      "lines": 66,
+      "last_commit": "2026-09-26",
+      "age_days": 16,
+      "stale": false,
+      "title": "Proof handoff \u2014 2026-09-26",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/KNOWN_LIMITATIONS.md",
+      "lines": 283,
+      "last_commit": "2026-09-04",
+      "age_days": 38,
+      "stale": false,
+      "title": "Known Limitations",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/MIGRATIONS.md",
+      "lines": 165,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Migrations",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/NO_LLM_MODE.md",
+      "lines": 137,
+      "last_commit": "2026-09-03",
+      "age_days": 38,
+      "stale": false,
+      "title": "Development without a model provider",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/ONBOARDING.md",
+      "lines": 272,
+      "last_commit": "2026-08-31",
+      "age_days": 42,
+      "stale": false,
+      "title": "Contributor onboarding",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/OWASP_LLM_THREAT_MODEL.md",
+      "lines": 145,
+      "last_commit": "2026-08-31",
+      "age_days": 42,
+      "stale": false,
+      "title": "OWASP LLM threat review",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/PATTERN_CATALOG.md",
+      "lines": 181,
+      "last_commit": "2026-08-31",
+      "age_days": 42,
+      "stale": false,
+      "title": "Runtime pattern catalog",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/PROOF_LEDGER.md",
+      "lines": 97,
+      "last_commit": "2026-09-26",
+      "age_days": 16,
+      "stale": false,
+      "title": "Proof ledger",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/ROADMAP.md",
+      "lines": 162,
+      "last_commit": "2026-09-23",
+      "age_days": 18,
+      "stale": false,
+      "title": "Roadmap",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/SUPPLY_CHAIN.md",
+      "lines": 116,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Local model integrity",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/WORKFLOW_AUTHORING.md",
+      "lines": 903,
+      "last_commit": "2026-10-12",
+      "age_days": 0,
+      "stale": false,
+      "title": "Workflow authoring guide",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/api-contracts-runtime.md",
+      "lines": 811,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Runtime API contracts",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/architecture-eval.md",
+      "lines": 453,
+      "last_commit": "2026-09-10",
+      "age_days": 32,
+      "stale": false,
+      "title": "Architecture: agentic-v2-eval",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/architecture-runtime.md",
+      "lines": 711,
+      "last_commit": "2026-10-12",
+      "age_days": 0,
+      "stale": false,
+      "title": "Runtime architecture \u2014 `agentic-workflows-v2`",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/architecture-tools.md",
+      "lines": 400,
+      "last_commit": "2026-08-31",
+      "age_days": 42,
+      "stale": false,
+      "title": "Architecture: agentic-tools",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/architecture-ui.md",
+      "lines": 163,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "UI architecture \u2014 Evidence Ledger",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/cli-reference.md",
+      "lines": 250,
+      "last_commit": "2026-08-31",
+      "age_days": 42,
+      "stale": false,
+      "title": "CLI reference",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/component-inventory-ui.md",
+      "lines": 136,
+      "last_commit": "2026-09-27",
+      "age_days": 16,
+      "stale": false,
+      "title": "UI component inventory \u2014 Evidence Ledger",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/configuration.md",
+      "lines": 379,
+      "last_commit": "2026-10-10",
+      "age_days": 1,
+      "stale": false,
+      "title": "Configuration reference",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/data-models-runtime.md",
+      "lines": 191,
+      "last_commit": "2026-08-31",
+      "age_days": 42,
+      "stale": false,
+      "title": "Runtime data contracts",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/deep-dive-agentic-v2-eval.md",
+      "lines": 410,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "agentic-v2-eval \u2014 Deep dive",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/deep-dive-agents.md",
+      "lines": 221,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Agents",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/deep-dive-server.md",
+      "lines": 597,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Deep-dive: server internals",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/deployment-guide.md",
+      "lines": 257,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Deployment guide",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/development-guide.md",
+      "lines": 281,
+      "last_commit": "2026-08-31",
+      "age_days": 42,
+      "stale": false,
+      "title": "Development guide",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/evaluation/datasets.md",
+      "lines": 151,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Evaluation datasets",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/evaluation/gating.md",
+      "lines": 182,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Runtime evaluation gates",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/evaluation/judge.md",
+      "lines": 182,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Model-backed judges",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/evaluation/rubrics.md",
+      "lines": 165,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Rubrics",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/evaluation/runners.md",
+      "lines": 174,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Evaluation runners",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/flagship.md",
+      "lines": 23,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Load and shared-state evidence",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/getting-started/first-workflow.md",
+      "lines": 233,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "First workflow",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/getting-started/index.md",
+      "lines": 89,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Getting started",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/getting-started/installation.md",
+      "lines": 252,
+      "last_commit": "2026-10-10",
+      "age_days": 1,
+      "stale": false,
+      "title": "Installation",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/getting-started/quickstart.md",
+      "lines": 185,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Quick start",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/index.md",
+      "lines": 185,
+      "last_commit": "2026-10-12",
+      "age_days": 0,
+      "stale": false,
+      "title": "Agentic Runtime Platform",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/integration-architecture.md",
+      "lines": 317,
+      "last_commit": "2026-08-31",
+      "age_days": 42,
+      "stale": false,
+      "title": "Integration architecture \u2014 Agentic Runtime Platform",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/load-report.md",
+      "lines": 73,
+      "last_commit": "2026-07-18",
+      "age_days": 86,
+      "stale": false,
+      "title": "Load proof: Redis-CAS + horizontal scale",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/operations/index.md",
+      "lines": 47,
+      "last_commit": "2026-08-31",
+      "age_days": 42,
+      "stale": false,
+      "title": "Operations",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/operations/security-hardening.md",
+      "lines": 302,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Security hardening",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/operations/troubleshooting.md",
+      "lines": 332,
+      "last_commit": "2026-08-31",
+      "age_days": 42,
+      "stale": false,
+      "title": "Troubleshooting",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/project-context.md",
+      "lines": 163,
+      "last_commit": "2026-08-31",
+      "age_days": 42,
+      "stale": false,
+      "title": "Project context",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/project-overview.md",
+      "lines": 139,
+      "last_commit": "2026-08-31",
+      "age_days": 42,
+      "stale": false,
+      "title": "Project overview",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/superpowers/specs/2026-07-02-evaluation-framework-design.md",
+      "lines": 714,
+      "last_commit": "2026-07-27",
+      "age_days": 77,
+      "stale": false,
+      "title": "Evaluation Framework and Dynamic Benchmark Integration Design",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/tools/benchmarks.md",
+      "lines": 164,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Model and agent benchmarks",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/tools/index.md",
+      "lines": 78,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Shared tools package",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/tools/llm-client.md",
+      "lines": 174,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Shared LLM client",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/tools/local-models.md",
+      "lines": 167,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Local ONNX models",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/tools/model-probing.md",
+      "lines": 170,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Model probing",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/tools/provider-limits.md",
+      "lines": 143,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Provider checks and model ranking",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/tools/windows-ai.md",
+      "lines": 135,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Windows AI and Phi Silica",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/ui/api-integration.md",
+      "lines": 143,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "UI API integration",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/ui/evidence-ledger-design-system.md",
+      "lines": 769,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "stale": false,
+      "title": "Evidence Ledger Design System",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/ui/evidence-ledger-full-rewrite-goal-prompt.md",
+      "lines": 859,
+      "last_commit": "2026-07-27",
+      "age_days": 77,
+      "stale": false,
+      "title": "ARP Evidence Ledger UI Full-Rewrite Goal Prompt",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/ui/evidence-ledger-migration.md",
+      "lines": 108,
+      "last_commit": "2026-07-18",
+      "age_days": 86,
+      "stale": false,
+      "title": "Evidence Ledger migration record",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/ui/impeccable-context-changes.md",
+      "lines": 13,
+      "last_commit": "2026-10-09",
+      "age_days": 3,
+      "stale": false,
+      "title": "Impeccable context changes",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/ui/pages.md",
+      "lines": 150,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Evidence Ledger page guide",
+      "broken_relative_links": []
+    },
+    {
+      "file": "docs/workflows/index.md",
+      "lines": 219,
+      "last_commit": "2026-10-12",
+      "age_days": 0,
+      "stale": false,
+      "title": "Workflow reference",
+      "broken_relative_links": []
+    },
+    {
+      "file": "examples/README.md",
+      "lines": 98,
+      "last_commit": "2026-08-29",
+      "age_days": 44,
+      "stale": false,
+      "title": "Python examples",
+      "broken_relative_links": []
+    },
+    {
+      "file": "infra/azure/README.md",
+      "lines": 52,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Azure reference template",
+      "broken_relative_links": []
+    },
+    {
+      "file": "load/README.md",
+      "lines": 112,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Local load harness",
+      "broken_relative_links": []
+    },
+    {
+      "file": "proofs/README.md",
+      "lines": 334,
+      "last_commit": "2026-09-30",
+      "age_days": 12,
+      "stale": false,
+      "title": "DAG scheduler model and replay",
+      "broken_relative_links": []
+    },
+    {
+      "file": "tools/README.md",
+      "lines": 53,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Shared Python tools",
+      "broken_relative_links": []
+    },
+    {
+      "file": "tools/agents/benchmarks/README.md",
+      "lines": 97,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Agent benchmark runner",
+      "broken_relative_links": []
+    },
+    {
+      "file": "tools/llm/windows_ai_bridge/PHI_SILICA_STATUS.md",
+      "lines": 122,
+      "last_commit": "2026-07-29",
+      "age_days": 75,
+      "stale": false,
+      "title": "Phi Silica bridge status",
+      "broken_relative_links": []
+    }
+  ],
+  "deps": {
+    "agentic-v2-eval/pyproject.toml": {
+      "name": "agentic-v2-eval",
+      "version": "0.3.0",
+      "requires_python": ">=3.11",
+      "dependencies": [
+        "pyyaml>=6.0",
+        "agentic-tools"
+      ],
+      "optional": {
+        "dev": [
+          "pytest>=7.0",
+          "pytest-cov>=4.0",
+          "pytest-asyncio>=0.21.0",
+          "mypy>=1.0",
+          "ruff>=0.1.0",
+          "types-PyYAML"
+        ]
+      },
+      "scripts": {
+        "agentic-v2-eval": "agentic_v2_eval.__main__:main"
+      }
+    },
+    "agentic-workflows-v2/pyproject.toml": {
+      "name": "agentic-workflows-v2",
+      "version": "0.1.0",
+      "requires_python": ">=3.11",
+      "dependencies": [
+        "pydantic>=2.0,<3",
+        "pydantic-settings>=2.14.2,<3",
+        "httpx>=0.25,<1",
+        "ollama>=0.5.1,<1",
+        "jinja2>=3.0,<4",
+        "jmespath>=1.0,<2",
+        "pyyaml>=6.0,<7",
+        "aiofiles>=23.0,<26",
+        "aiohttp>=3.14.3,<4",
+        "filelock>=3.0,<5",
+        "cachetools>=5.0,<8",
+        "typer>=0.9,<1",
+        "rich>=13.0,<16",
+        "python-json-logger>=3.0,<5",
+        "agentic-tools"
+      ],
+      "optional": {
+        "ek": [
+          "executionkit>=0.4.0,<0.5.0"
+        ],
+        "eval": [
+          "agentic-evalkit>=0.4.1,<0.5.0"
+        ],
+        "swe-ab": [
+          "pandas>=3.0.5,<4"
+        ],
+        "dev": [
+          "pytest>=7.0",
+          "hypothesis>=6,<7",
+          "pytest-asyncio>=0.21",
+          "pytest-cov>=4.0",
+          "pytest-mock>=3.12",
+          "pytest-timeout>=2.2",
+          "black>=23.0",
+          "ruff>=0.1.0",
+          "mypy>=1.19",
+          "fakeredis[lua]>=2.21,<3",
+          "jsonschema>=4.18",
+          "pydocstyle>=6.3"
+        ],
+        "server": [
+          "fastapi>=0.100,<1",
+          "uvicorn[standard]>=0.23,<1",
+          "python-multipart>=0.0.31,<1",
+          "slowapi>=0.1.9,<1",
+          "pyjwt[crypto]>=2.13,<3"
+        ],
+        "langchain": [
+          "langchain>=1.3.9,<2",
+          "langchain-core>=1.3,<2",
+          "langgraph>=1.2,<2",
+          "langchain-openai>=1.2,<2",
+          "langchain-anthropic>=1.4.6,<2",
+          "langchain-google-genai>=4.2,<5",
+          "langchain-mistralai>=1.1,<2",
+          "langchain-ollama>=1.1,<2",
+          "langgraph-checkpoint>=4.0.3,<5",
+          "langgraph-checkpoint-sqlite>=3.1.1,<4",
+          "langsmith>=0.8.18,<1"
+        ],
+        "tracing": [
+          "opentelemetry-sdk>=1.20,<2",
+          "opentelemetry-exporter-otlp-proto-grpc>=1.20,<2",
+          "opentelemetry-exporter-otlp-proto-http>=1.20,<2",
+          "opentelemetry-exporter-prometheus>=0.48b0,<1",
+          "prometheus-client>=0.17,<1"
+        ],
+        "claude": [
+          "anthropic>=0.40,<2",
+          "claude-agent-sdk>=0.1,<1"
+        ],
+        "devex": [
+          "psutil>=6.0"
+        ],
+        "mcp": [
+          "websockets>=12.0,<18"
+        ],
+        "redis": [
+          "redis[hiredis]>=5.0,<9"
+        ],
+        "sqlite": [
+          "aiosqlite>=0.19,<1"
+        ],
+        "postgres": [
+          "langgraph-checkpoint-postgres>=3.1.1,<4",
+          "psycopg[binary]>=3.1,<4"
+        ]
+      },
+      "scripts": {
+        "agentic": "agentic_v2.cli:main"
+      }
+    },
+    "agentic-workflows-v2/ui/package.json": {
+      "name": "agentic-workflows-ui",
+      "dependencies": {
+        "@dnd-kit/core": "^6.3.1",
+        "@dnd-kit/sortable": "^10.0.0",
+        "@dnd-kit/utilities": "^3.2.2",
+        "@fontsource-variable/geist": "^5.3.0",
+        "@opentelemetry/api": "^1.9.0",
+        "@opentelemetry/exporter-trace-otlp-http": "^0.223.0",
+        "@opentelemetry/instrumentation": "^0.223.0",
+        "@opentelemetry/instrumentation-fetch": "^0.223.0",
+        "@opentelemetry/resources": "^2.12.0",
+        "@opentelemetry/sdk-trace-web": "^2.12.0",
+        "@opentelemetry/semantic-conventions": "^1.43.0",
+        "@tanstack/react-query": "^5.104.1",
+        "@xyflow/react": "^12.12.0",
+        "class-variance-authority": "^0.7.1",
+        "clsx": "^2.1.1",
+        "cmdk": "^1.1.1",
+        "lucide-react": "^1.54.0",
+        "radix-ui": "^1.7.0",
+        "react": "^19.3.0",
+        "react-dom": "^19.3.0",
+        "react-resizable-panels": "^4.14.3",
+        "react-router-dom": "^7.18.4",
+        "sonner": "^2.0.8",
+        "tailwind-merge": "^3.7.0"
+      },
+      "devDependencies": {
+        "@playwright/test": "^1.64.0",
+        "@tailwindcss/postcss": "^4.3.3",
+        "@testing-library/jest-dom": "^7.0.1",
+        "@testing-library/react": "^16.3.3",
+        "@types/node": "^26.6.4",
+        "@types/react": "^19.3.0",
+        "@types/react-dom": "^19.3.0",
+        "@vitejs/plugin-react": "^6.1.2",
+        "@vitest/coverage-v8": "^5.0.3",
+        "jsdom": "^30.1.2",
+        "json-schema-to-typescript": "^16.0.0",
+        "postcss": "^8.5.29",
+        "tailwindcss": "^4.3.3",
+        "typescript": "^7.0.2",
+        "vite": "^8.3.4",
+        "vitest": "^5.0.1"
+      },
+      "scripts": {
+        "dev": "vite",
+        "build": "tsc -b && vite build",
+        "preview": "vite preview",
+        "test": "vitest run",
+        "test:coverage": "vitest run --coverage",
+        "test:watch": "vitest",
+        "test:e2e": "playwright test",
+        "test:e2e:5x": "node scripts/run-e2e-5x.mjs",
+        "test:e2e:ui": "playwright test --ui",
+        "generate:types": "node scripts/generate-ts-types.mjs",
+        "generate:types:check": "node scripts/generate-ts-types.mjs && git diff --exit-code -- src/api/events.generated.ts"
+      }
+    },
+    "package.json": {
+      "name": "agentic-runtime-platform",
+      "dependencies": {
+        "@playwright/test": "^1.62.1"
+      },
+      "devDependencies": null,
+      "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+      }
+    },
+    "pyproject.toml": {
+      "name": "agentic-tools",
+      "version": "0.1.0",
+      "requires_python": ">=3.11",
+      "dependencies": [
+        "pyyaml>=6.0.3",
+        "aiohttp>=3.14.3",
+        "pydantic>=2.13.5",
+        "langchain-core>=1.6.5,<2",
+        "anthropic>=1.8.0,<2",
+        "openai>=3.19.2,<4",
+        "numpy>=2.4.6,<3"
+      ],
+      "optional": {
+        "dev": [
+          "pytest>=9.1.1"
+        ]
+      },
+      "scripts": {}
+    }
+  },
+  "env_example_keys": [
+    "AGENTIC_API_KEY",
+    "AGENTIC_APPROVAL_REQUIRED_TOOLS",
+    "AGENTIC_APPROVAL_TIMEOUT_SECONDS",
+    "AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS",
+    "AGENTIC_AUTH_LOCKOUT_THRESHOLD",
+    "AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS",
+    "AGENTIC_BLOCK_PRIVATE_IPS",
+    "AGENTIC_CHECKPOINTER_URL",
+    "AGENTIC_CORS_ORIGINS",
+    "AGENTIC_DEFAULT_ADAPTER",
+    "AGENTIC_EK_PROVIDER",
+    "AGENTIC_EXTERNAL_AGENTS_DIR",
+    "AGENTIC_FILE_BASE_DIR",
+    "AGENTIC_MEMORY_PATH",
+    "AGENTIC_METRICS",
+    "AGENTIC_MODEL_TIER_1",
+    "AGENTIC_MODEL_TIER_2",
+    "AGENTIC_MODEL_TIER_3",
+    "AGENTIC_MODEL_TIER_4",
+    "AGENTIC_NO_LLM",
+    "AGENTIC_OIDC_ALGORITHMS",
+    "AGENTIC_OIDC_AUDIENCE",
+    "AGENTIC_OIDC_ENABLED",
+    "AGENTIC_OIDC_ISSUER",
+    "AGENTIC_OIDC_JWKS_CACHE_SECONDS",
+    "AGENTIC_OIDC_JWKS_TIMEOUT_SECONDS",
+    "AGENTIC_OIDC_JWKS_URL",
+    "AGENTIC_OIDC_LEEWAY_SECONDS",
+    "AGENTIC_RATE_LIMIT_DEFAULT",
+    "AGENTIC_RATE_LIMIT_DISABLED",
+    "AGENTIC_REGISTRY_STRICT",
+    "AGENTIC_REQUIRE_TOOL_APPROVAL",
+    "AGENTIC_SANITIZER_FAIL_OPEN",
+    "AGENTIC_SANITIZE_AGENT_LOOP",
+    "AGENTIC_SHELL_ALLOWED_COMMANDS",
+    "AGENTIC_STRICT_MODEL_VERIFY",
+    "AGENTIC_TOKEN_BUDGET",
+    "AGENTIC_TRACE_SENSITIVE",
+    "AGENTIC_TRACING",
+    "AGENTIC_TRUSTED_MODEL_HASHES",
+    "AIGALLERY_CACHE",
+    "ANTHROPIC_API_KEY",
+    "AUDIT_LOG_BACKEND",
+    "AUDIT_LOG_ENABLED",
+    "AUDIT_LOG_FILE_PATH",
+    "AUDIT_LOG_MAX_EVENTS",
+    "AUDIT_LOG_REDIS_STREAM",
+    "AZURE_AI_SERVICES_ENDPOINT",
+    "AZURE_COGNITIVE_ENDPOINT",
+    "AZURE_FOUNDRY_API_KEY",
+    "AZURE_FOUNDRY_ENDPOINT",
+    "AZURE_FOUNDRY_ENDPOINT_1",
+    "AZURE_OPENAI_API_KEY",
+    "AZURE_OPENAI_API_KEY_0",
+    "AZURE_OPENAI_API_VERSION",
+    "AZURE_OPENAI_DEPLOYMENT",
+    "AZURE_OPENAI_DEPLOYMENT_0",
+    "AZURE_OPENAI_ENDPOINT",
+    "AZURE_OPENAI_ENDPOINT_0",
+    "DIGITALOCEAN_TOKEN",
+    "GEMINI_API_KEY",
+    "GH_TOKEN",
+    "GITHUB_TOKEN",
+    "GOOGLE_API_KEY",
+    "LMSTUDIO_HOST",
+    "LM_API_TOKEN",
+    "LOCAL_MODEL_PATH",
+    "LOG_FORMAT",
+    "MAX_MCP_OUTPUT_TOKENS",
+    "MISTRAL_API_KEY",
+    "MISTRAL_BASE_URL",
+    "MISTRAL_FREE_TIER",
+    "NVIDIA_API_KEY",
+    "NVIDIA_BASE_URL",
+    "NVIDIA_DISABLE_THINKING",
+    "OLLAMA_API_KEY",
+    "OLLAMA_BASE_URL",
+    "OLLAMA_HOST",
+    "ONNX_MODEL_DIR",
+    "OPENAI_API_KEY",
+    "OPENAI_BASE_URL",
+    "OPENROUTER_API_KEY",
+    "OPENROUTER_BASE_URL",
+    "OTEL_EXPORTER_OTLP_ENDPOINT",
+    "OTEL_EXPORTER_OTLP_PROTOCOL",
+    "OTEL_SERVICE_NAME",
+    "PHI_SILICA_LAF_ATTESTATION",
+    "PHI_SILICA_LAF_FEATURE_ID",
+    "PHI_SILICA_LAF_TOKEN",
+    "REDIS_CIRCUIT_BREAKER_PREFIX",
+    "REDIS_CIRCUIT_BREAKER_TTL",
+    "REDIS_URL",
+    "REPLAY_SQLITE_PATH",
+    "REPLAY_STORE_BACKEND",
+    "REPLAY_STORE_MAX_EVENTS",
+    "REPLAY_STORE_RETENTION_SECONDS",
+    "REPLAY_STORE_TTL",
+    "SHELL",
+    "VOYAGE_API_KEY"
+  ],
+  "git": {
+    "head": "2d8f822a",
+    "branches": [
+      {
+        "branch": "docs/tech_debt_plans",
+        "last_commit": "2026-10-12",
+        "track": "",
+        "subject": "docs(plans): add the remaining tech-debt delivery workflow plan",
+        "ahead_of_main": 1,
+        "residual_diff_vs_main": "4 files changed, 460 insertions(+)",
+        "age_days": 1
+      },
+      {
+        "branch": "feature/app_improvement_review",
+        "last_commit": "2026-10-12",
+        "track": "",
+        "subject": "docs: regenerate derived stats for app_improvement_review",
+        "ahead_of_main": 3,
+        "residual_diff_vs_main": "8 files changed, 639 insertions(+), 2 deletions(-)",
+        "age_days": 1
+      },
+      {
+        "branch": "feature/criterion_aggregation",
+        "last_commit": "2026-10-12",
+        "track": "[ahead 63, behind 1]",
+        "subject": "feat(scoring): criterion aggregation and an independent eval gate",
+        "ahead_of_main": 1,
+        "residual_diff_vs_main": "12 files changed, 854 insertions(+), 141 deletions(-)",
+        "age_days": 1
+      },
+      {
+        "branch": "feature/el_screen_restyle",
+        "last_commit": "2026-10-12",
+        "track": "[ahead 4, behind 19]",
+        "subject": "feat(ui): restyle existing screens to the Evidence Ledger theme",
+        "ahead_of_main": 4,
+        "residual_diff_vs_main": "36 files changed, 469 insertions(+), 589 deletions(-)",
+        "age_days": 1
+      },
+      {
+        "branch": "feature/evidence_ledger_port",
+        "last_commit": "2026-10-10",
+        "track": "[ahead 3, behind 17]",
+        "subject": "feat(ui): add Evidence Ledger DataTable and FilterBar",
+        "ahead_of_main": 3,
+        "residual_diff_vs_main": "",
+        "age_days": 3
+      },
+      {
+        "branch": "main",
+        "last_commit": "2026-10-12",
+        "track": "[behind 4]",
+        "subject": "chore(deps): bump node (#386)",
+        "ahead_of_main": 0,
+        "residual_diff_vs_main": "",
+        "age_days": 1
+      },
+      {
+        "branch": "relock-382",
+        "last_commit": "2026-10-12",
+        "track": "",
+        "subject": "chore(deps): relock uv.lock and ci-constraints for pip-root-llm group",
+        "ahead_of_main": 3,
+        "residual_diff_vs_main": "",
+        "age_days": 1
+      },
+      {
+        "branch": "origin/chore/ignore_docs_ui_scratch",
+        "last_commit": "2026-10-12",
+        "track": "",
+        "subject": "chore: ignore the exported design-system bundle and its tarball",
+        "ahead_of_main": 2,
+        "residual_diff_vs_main": "",
+        "age_days": 1
+      },
+      {
+        "branch": "origin/dependabot/pip/pip-root-llm-06dfaa602f",
+        "last_commit": "2026-10-12",
+        "track": "",
+        "subject": "chore(deps): relock uv.lock and ci-constraints for pip-root-llm group",
+        "ahead_of_main": 3,
+        "residual_diff_vs_main": "",
+        "age_days": 1
+      },
+      {
+        "branch": "origin/dependabot/pip/pip-root-rest-e77d3306eb",
+        "last_commit": "2026-10-12",
+        "track": "",
+        "subject": "chore(deps): bump the pip-root-rest group with 38 updates",
+        "ahead_of_main": 1,
+        "residual_diff_vs_main": "2 files changed, 46 insertions(+), 46 deletions(-)",
+        "age_days": 1
+      },
+      {
+        "branch": "origin/dependabot/pip/pip-root-tooling-14cf8b93de",
+        "last_commit": "2026-10-12",
+        "track": "",
+        "subject": "chore(deps): bump the pip-root-tooling group with 4 updates",
+        "ahead_of_main": 1,
+        "residual_diff_vs_main": "2 files changed, 11 insertions(+), 11 deletions(-)",
+        "age_days": 1
+      },
+      {
+        "branch": "origin/docs/tech_debt_plans",
+        "last_commit": "2026-10-12",
+        "track": "",
+        "subject": "docs(plans): add the remaining tech-debt delivery workflow plan",
+        "ahead_of_main": 1,
+        "residual_diff_vs_main": "4 files changed, 460 insertions(+)",
+        "age_days": 1
+      },
+      {
+        "branch": "origin/feature/app_improvement_review",
+        "last_commit": "2026-10-12",
+        "track": "",
+        "subject": "docs: regenerate derived stats for app_improvement_review",
+        "ahead_of_main": 3,
+        "residual_diff_vs_main": "8 files changed, 639 insertions(+), 2 deletions(-)",
+        "age_days": 1
+      },
+      {
+        "branch": "origin/feature/criterion_aggregation",
+        "last_commit": "2026-10-10",
+        "track": "",
+        "subject": "feat(scoring): criterion aggregation and an independent eval gate",
+        "ahead_of_main": 1,
+        "residual_diff_vs_main": "16 files changed, 1373 insertions(+), 201 deletions(-)",
+        "age_days": 3
+      },
+      {
+        "branch": "origin/feature/el_screen_restyle",
+        "last_commit": "2026-10-12",
+        "track": "",
+        "subject": "feat(ui): restyle existing screens to the Evidence Ledger theme",
+        "ahead_of_main": 1,
+        "residual_diff_vs_main": "35 files changed, 371 insertions(+), 315 deletions(-)",
+        "age_days": 1
+      },
+      {
+        "branch": "origin/feature/evidence_ledger_port",
+        "last_commit": "2026-10-12",
+        "track": "",
+        "subject": "Merge remote-tracking branch 'origin/main' into HEAD",
+        "ahead_of_main": 5,
+        "residual_diff_vs_main": "",
+        "age_days": 1
+      },
+      {
+        "branch": "origin/fix/langgraph_fanin_join",
+        "last_commit": "2026-10-12",
+        "track": "",
+        "subject": "fix(langchain): run each step once, after all its dependencies",
+        "ahead_of_main": 1,
+        "residual_diff_vs_main": "",
+        "age_days": 1
+      },
+      {
+        "branch": "origin/gh-pages",
+        "last_commit": "2026-10-08",
+        "track": "",
+        "subject": "Deployed 311cc14 with MkDocs version: 1.6.1",
+        "ahead_of_main": 94,
+        "residual_diff_vs_main": "",
+        "age_days": 5
+      },
+      {
+        "branch": "origin/main",
+        "last_commit": "2026-10-12",
+        "track": "",
+        "subject": "chore: ignore design-tool working material under docs/ui/ (#389)",
+        "ahead_of_main": 0,
+        "residual_diff_vs_main": "",
+        "age_days": 1
+      },
+      {
+        "branch": "origin/slo-data",
+        "last_commit": "2026-10-12",
+        "track": "",
+        "subject": "chore(slo): nightly data update [skip ci]",
+        "ahead_of_main": 1,
+        "residual_diff_vs_main": "3 files changed, 857 insertions(+), 4 deletions(-)",
+        "age_days": 1
+      }
+    ],
+    "worktrees": [
+      "C:/Users/tandf/source/agentic-runtime-platform                              3dbfae10 [feature/evidence_ledger_port]",
+      "C:/tmp/arp-appreview                                                        adddb23f [feature/app_improvement_review]",
+      "C:/tmp/arp-main-inventory                                                   c3b2d328 (detached HEAD)",
+      "C:/tmp/arp-plans                                                            8e61318c [docs/tech_debt_plans]",
+      "C:/tmp/arp-restyle                                                          a5fba9de (detached HEAD)",
+      "C:/Users/tandf/.codex/worktrees/evidence-ledger-ui/agentic-runtime-platform 1d28dce3 [feature/el_screen_restyle]",
+      "C:/Users/tandf/source/agentic-runtime-platform-f5-f6                        a6ee2520 [feature/criterion_aggregation]"
+    ],
+    "stash_count": 3,
+    "open_prs": [
+      {
+        "createdAt": "2026-10-13T01:32:37Z",
+        "headRefName": "dependabot/pip/pip-root-rest-6c841e809d",
+        "isDraft": false,
+        "mergeStateStatus": "BLOCKED",
+        "number": 394,
+        "title": "chore(deps): bump the pip-root-rest group across 1 directory with 40 updates"
+      },
+      {
+        "createdAt": "2026-10-13T01:28:56Z",
+        "headRefName": "feature/el_screen_restyle",
+        "isDraft": false,
+        "mergeStateStatus": "BLOCKED",
+        "number": 393,
+        "title": "feat(ui): restyle existing screens to the Evidence Ledger theme"
+      },
+      {
+        "createdAt": "2026-10-13T01:26:41Z",
+        "headRefName": "docs/tech_debt_plans",
+        "isDraft": false,
+        "mergeStateStatus": "CLEAN",
+        "number": 392,
+        "title": "docs(plans): add the remaining tech-debt delivery workflow plan"
+      },
+      {
+        "createdAt": "2026-10-13T01:26:36Z",
+        "headRefName": "feature/criterion_aggregation",
+        "isDraft": false,
+        "mergeStateStatus": "UNSTABLE",
+        "number": 391,
+        "title": "feat(scoring): criterion aggregation and an independent eval gate"
+      },
+      {
+        "createdAt": "2026-10-13T01:20:58Z",
+        "headRefName": "feature/app_improvement_review",
+        "isDraft": false,
+        "mergeStateStatus": "UNKNOWN",
+        "number": 390,
+        "title": "feat(workflows): add app_improvement_review evidence-based app review"
+      },
+      {
+        "createdAt": "2026-10-12T16:24:23Z",
+        "headRefName": "dependabot/pip/pip-root-tooling-14cf8b93de",
+        "isDraft": false,
+        "mergeStateStatus": "UNKNOWN",
+        "number": 383,
+        "title": "chore(deps): bump the pip-root-tooling group with 4 updates"
+      }
+    ],
+    "recent_merged_prs": [
+      {
+        "mergedAt": "2026-10-13T01:27:18Z",
+        "number": 389,
+        "title": "chore: ignore design-tool working material under docs/ui/"
+      },
+      {
+        "mergedAt": "2026-10-13T01:22:46Z",
+        "number": 388,
+        "title": "feat(ui): Evidence Ledger tokens, primitives, DataTable and FilterBar"
+      },
+      {
+        "mergedAt": "2026-10-13T01:09:40Z",
+        "number": 387,
+        "title": "fix(langchain): run each step once, after all its dependencies"
+      },
+      {
+        "mergedAt": "2026-10-12T19:46:29Z",
+        "number": 386,
+        "title": "chore(deps): bump node from 26.10-bookworm-slim to 26.11-bookworm-slim in the docker group"
+      },
+      {
+        "mergedAt": "2026-10-12T18:33:31Z",
+        "number": 385,
+        "title": "chore(deps): bump the ui-npm group in /agentic-workflows-v2/ui with 14 updates"
+      },
+      {
+        "mergedAt": "2026-10-13T01:23:48Z",
+        "number": 382,
+        "title": "chore(deps): bump the pip-root-llm group with 15 updates"
+      },
+      {
+        "mergedAt": "2026-10-12T15:29:35Z",
+        "number": 381,
+        "title": "chore(deps): bump astral-sh/setup-uv from 10.2.0 to 10.3.0 in the github-actions group"
+      },
+      {
+        "mergedAt": "2026-10-12T17:58:37Z",
+        "number": 380,
+        "title": "fix(middleware): stop secret masks from breaking JSON outputs"
+      },
+      {
+        "mergedAt": "2026-10-12T13:22:47Z",
+        "number": 379,
+        "title": "fix(workflows): ship and re-review fullstack rework output"
+      },
+      {
+        "mergedAt": "2026-10-12T17:46:56Z",
+        "number": 378,
+        "title": "fix(models): drop retired GitHub Models rungs and GH backup tail"
+      },
+      {
+        "mergedAt": "2026-10-12T17:20:40Z",
+        "number": 377,
+        "title": "fix(engine): keep the full review_report when reviewer JSON is damaged"
+      },
+      {
+        "mergedAt": "2026-10-12T17:32:56Z",
+        "number": 376,
+        "title": "fix(models): replace retired NIM DeepSeek V4 rungs and judge default"
+      },
+      {
+        "mergedAt": "2026-10-12T01:43:32Z",
+        "number": 375,
+        "title": "fix(models): replace retired NIM tier-1 model, classify 410 as retired"
+      },
+      {
+        "mergedAt": "2026-10-11T05:39:10Z",
+        "number": 374,
+        "title": "fix: typed model ids in the pack builder and one Ollama tags call per probe"
+      },
+      {
+        "mergedAt": "2026-10-11T01:59:45Z",
+        "number": 373,
+        "title": "feat: drag-and-drop model pack builder and free/paid probe labels"
+      },
+      {
+        "mergedAt": "2026-10-10T15:47:14Z",
+        "number": 372,
+        "title": "test(ui): catch font shorthand sizes and any-order transition properties"
+      },
+      {
+        "mergedAt": "2026-10-09T19:36:58Z",
+        "number": 371,
+        "title": "test(ui): enforce design rules in CI and track the design context"
+      },
+      {
+        "mergedAt": "2026-10-08T08:32:28Z",
+        "number": 370,
+        "title": "fix(ui): critique and audit remediation (contrast, focus, nav, states, tokens)"
+      },
+      {
+        "mergedAt": "2026-10-07T06:02:34Z",
+        "number": 369,
+        "title": "chore(deps-dev): bump source-map-js from 1.2.1 to 1.2.2 in /agentic-workflows-v2/ui"
+      },
+      {
+        "mergedAt": "2026-10-05T06:20:33Z",
+        "number": 368,
+        "title": "chore(deps): bump the ui-npm group in /agentic-workflows-v2/ui with 7 updates"
+      },
+      {
+        "mergedAt": "2026-10-07T05:52:32Z",
+        "number": 367,
+        "title": "chore(deps): bump the pip-root-rest group across 1 directory with 24 updates"
+      },
+      {
+        "mergedAt": "2026-10-11T05:39:44Z",
+        "number": 366,
+        "title": "chore(deps): bump the pip-root-tooling group across 1 directory with 6 updates"
+      },
+      {
+        "mergedAt": "2026-10-01T03:04:55Z",
+        "number": 365,
+        "title": "fix(workflows): plan_tribunal review follow-up (stance on the panel's pick, docs, changelog)"
+      },
+      {
+        "mergedAt": "2026-10-01T03:12:17Z",
+        "number": 364,
+        "title": "test(orchestrator): address review of the differential test (#362)"
+      },
+      {
+        "mergedAt": "2026-10-01T00:49:09Z",
+        "number": 363,
+        "title": "feat(workflows): add plan_tribunal multi-judge plan review"
+      },
+      {
+        "mergedAt": "2026-10-01T00:43:00Z",
+        "number": 362,
+        "title": "test(orchestrator): pin the second scheduler to DAGExecutor on generated plans"
+      },
+      {
+        "mergedAt": "2026-10-01T00:33:25Z",
+        "number": 361,
+        "title": "test(proofs): replay every legal schedule of small plans against the Lean model"
+      },
+      {
+        "mergedAt": "2026-09-28T06:33:34Z",
+        "number": 360,
+        "title": "chore(deps): bump node from 26.9-bookworm-slim to 26.10-bookworm-slim in the docker group"
+      },
+      {
+        "mergedAt": "2026-09-28T06:21:10Z",
+        "number": 359,
+        "title": "chore(deps): bump the ui-npm group in /agentic-workflows-v2/ui with 6 updates"
+      },
+      {
+        "mergedAt": "2026-10-11T05:40:05Z",
+        "number": 357,
+        "title": "chore(deps): bump the pip-root-llm group across 1 directory with 14 updates"
+      },
+      {
+        "mergedAt": "2026-09-27T00:03:32Z",
+        "number": 355,
+        "title": "docs: regenerate the derived backend test count"
+      },
+      {
+        "mergedAt": "2026-09-26T23:38:24Z",
+        "number": 354,
+        "title": "feat(proofs): prove timeout cleanup always fails closed"
+      },
+      {
+        "mergedAt": "2026-09-26T23:31:40Z",
+        "number": 353,
+        "title": "fix(engine): make DAG.validate's cycle check iterative"
+      },
+      {
+        "mergedAt": "2026-09-26T00:53:58Z",
+        "number": 352,
+        "title": "feat(proofs): model DAG.validate and prove it accepts exactly ranked plans"
+      },
+      {
+        "mergedAt": "2026-09-25T17:02:33Z",
+        "number": 351,
+        "title": "feat(proofs): prove ADR-060 safety, no duplicate starts and completeness"
+      },
+      {
+        "mergedAt": "2026-09-25T13:03:42Z",
+        "number": 350,
+        "title": "fix: address the #349 review \u2014 cost-lane preflight and cancelled-attempt telemetry"
+      },
+      {
+        "mergedAt": "2026-09-25T12:34:47Z",
+        "number": 349,
+        "title": "feat: study telemetry, SWE-AB ledger active-trial fix, and Arm B completion run"
+      },
+      {
+        "mergedAt": "2026-09-25T14:25:52Z",
+        "number": 348,
+        "title": "fix(engine): keep cancellation when an observer masks it"
+      },
+      {
+        "mergedAt": "2026-09-25T11:01:58Z",
+        "number": 347,
+        "title": "feat(proofs): land the ADR-060 stack (#337-#343) on main"
+      },
+      {
+        "mergedAt": "2026-09-25T14:26:12Z",
+        "number": 345,
+        "title": "chore(pre-commit): make pre-commit run --all-files pass on main again"
+      }
+    ],
+    "open_issues": []
+  }
+}

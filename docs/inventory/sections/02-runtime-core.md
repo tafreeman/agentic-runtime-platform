@@ -1,6 +1,6 @@
 ## 2. Runtime backend — components & data structures (agentic_v2)
 
-Scope: `agentic-workflows-v2/agentic_v2/` at origin/main `c3b2d328` (clean worktree `../arp-main-inventory`). 244 Python modules, 61,892 LOC (inventory counts, `__init__` files included). Only console script: `[project.scripts] agentic = "agentic_v2.cli:main"` (`agentic-workflows-v2/pyproject.toml:130-131`). Section 3 covers the HTTP/WS API; section 5 covers the YAML workflow definitions; this section covers the Python components behind them.
+Scope: `agentic-workflows-v2/agentic_v2/` at origin/main `c3b2d328` (clean worktree `C:/tmp/arp-main-inventory`). 244 Python modules, 61,892 LOC (inventory counts, `__init__` files included). Only console script: `[project.scripts] agentic = "agentic_v2.cli:main"` (`agentic-workflows-v2/pyproject.toml:130-131`). Section 3 covers the HTTP/WS API; section 5 covers the YAML workflow definitions; this section covers the Python components behind them.
 
 ### 2.0 How to read the tables
 

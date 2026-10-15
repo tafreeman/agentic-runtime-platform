@@ -1,6 +1,6 @@
 ## 7. Folder-by-folder inventory
 
-**Basis.** Committed facts come from the clean `origin/main` worktree (`../arp-main-inventory`, rev `c3b2d328`) via `data/fs_inventory.json`. Local-only facts come from the live checkout (branch `relock-382`) via `data/fs_local_checkout.json`. Sizes are KB on disk. "Stale" means last commit older than 90 days, and it describes age, not disuse. Nothing under `node_modules/`, `.venv/`, `.git/`, `.mypy_cache/` or `.cache/` was recursed into. Where the JSON reports no size for those, the cell says "not measured".
+**Basis.** Committed facts come from the clean `origin/main` worktree (`C:/tmp/arp-main-inventory`, rev `c3b2d328`) via `data/fs_inventory.json`. Local-only facts come from the live checkout (branch `relock-382`) via `data/fs_local_checkout.json`. Sizes are KB on disk. "Stale" means last commit older than 90 days, and it describes age, not disuse. Nothing under `node_modules/`, `.venv/`, `.git/`, `.mypy_cache/` or `.cache/` was recursed into. Where the JSON reports no size for those, the cell says "not measured".
 
 ### 7.1 Top-level map (committed and local-only)
 
@@ -232,7 +232,7 @@ Hold, because they hold user data or work product: `runs/`, both `.agentic_repla
 | `agentic-workflows-v2/dist/` | No | Wheel and sdist for `agentic_workflows_v2 0.1.0` (Jul 16) | Safe to delete |
 | `dist/` (root) | No | Wheel and sdist for `agentic_tools 0.1.0` | Safe to delete |
 | `eval_pipeline.png` (root) | Yes | No tracked references | Reference it or remove it |
-| `evidence-ledger-design-system.zip` | Not at repo root | Two copies sit in `<downloads>/` (`evidence-ledger-design-system.zip` and `_1.zip`). The task brief expected a root copy, which does not exist | Keep one copy outside the repo, or delete the duplicates after review |
+| `evidence-ledger-design-system.zip` | Not at repo root | Two copies sit in `C:/Users/tandf/Downloads/` (`evidence-ledger-design-system.zip` and `_1.zip`). The task brief expected a root copy, which does not exist | Keep one copy outside the repo, or delete the duplicates after review |
 | `.coverage` duplicates | No | `.coverage` exists at root, `agentic-v2-eval/`, and `agentic-workflows-v2/` | Delete stale copies |
 
 Large tracked files (origin/main, over 1 MB, 11 files, about 18.4 MB total):

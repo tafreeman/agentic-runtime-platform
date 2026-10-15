@@ -4,7 +4,8 @@ Run with the markdown package available but without touching the project venv:
     uv run --with markdown python scripts/inventory/render_html.py
 
 Input:  docs/inventory/ARP-REPO-INVENTORY-<date>.md (from assemble.py)
-        docs/inventory/template.html (Superdesign layout draft, fetched with get-design)
+        scripts/inventory/templates/superdesign_report.html (committed copy of the
+        Superdesign draft, so a fresh clone can render without the local .superdesign/)
 Output: docs/inventory/ARP-REPO-INVENTORY-<date>.html (also importable as a draft version)
 """
 
@@ -26,7 +27,7 @@ from _common import HOME_REPO, OUT_DIR
 
 INV = HOME_REPO / "docs" / "inventory"
 _REF_IDS = itertools.count(1)  # page-wide: anchor ids must be unique
-TEMPLATE = INV / "template.html"  # Superdesign draft 166afdc5, v1
+TEMPLATE = HERE / "templates" / "superdesign_report.html"
 GH_BLOB = "https://github.com/tafreeman/agentic-runtime-platform/blob/{rev}/{path}"
 GH_PR = "https://github.com/tafreeman/agentic-runtime-platform/pull/{n}"
 
@@ -69,9 +70,8 @@ TONE_CLS = {
 EXTRA_HEAD = (
     "<style>{css}</style>\n"
     '<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js" '
-    'integrity="sha384-WmdflGW9aGfoBdHc4rRyWzYuAjEmDwMdGdiPNacbwfGKxBW/SO6guzuQ76qjnSlr" '  # pragma: allowlist secret
-    # SRI hash, not a secret; the comment keeps detect-secrets quiet on the output.
-    'crossorigin="anonymous"></script><!-- pragma: allowlist secret -->\n'
+    'integrity="sha384-WmdflGW9aGfoBdHc4rRyWzYuAjEmDwMdGdiPNacbwfGKxBW/SO6guzuQ76qjnSlr" '
+    'crossorigin="anonymous"></script>\n'
     '<script>document.addEventListener("DOMContentLoaded",()=>{{'
     'const dark=document.documentElement.dataset.theme==="dark";'
     'mermaid.initialize({{startOnLoad:true,theme:dark?"dark":"neutral",'
@@ -213,10 +213,10 @@ def _stats() -> list[tuple[str, str, str]]:
     prs = meta["git"]["open_prs"]
 
     return [
-        (f'{sum(int(m.get("loc", 0)) for m in src):,}', "Python source LOC", "ink"),
-        (f'{py["test_totals"]["functions"]:,}', "Python test functions", "ink"),
+        (f"{sum(int(m.get('loc', 0)) for m in src):,}", "Python source LOC", "ink"),
+        (f"{py['test_totals']['functions']:,}", "Python test functions", "ink"),
         (
-            f'{sum(r["loc"] for r in ui["files"] if not r["is_test"]):,}',
+            f"{sum(r['loc'] for r in ui['files'] if not r['is_test']):,}",
             "UI source LOC",
             "ink",
         ),
@@ -261,8 +261,46 @@ def _page(
     )
 
 
+def _set_span(tpl: str, sd_id: int, text: str) -> str:
+    """Replace the text of the element tagged ``data-sd-id`` (first match only)."""
+    return re.sub(
+        rf'(data-sd-id="{sd_id}">)[^<]*(<)',
+        lambda m: m.group(1) + html.escape(text, quote=False) + m.group(2),
+        tpl,
+        count=1,
+    )
+
+
+def _fill_cover(tpl: str) -> str:
+    """Populate the cover from the data so it cannot describe another revision."""
+    meta = json.loads((OUT_DIR / "meta_inventory.json").read_text(encoding="utf-8"))
+    py = json.loads((OUT_DIR / "py_inventory.json").read_text(encoding="utf-8"))
+    ui = json.loads((OUT_DIR / "ui_inventory.json").read_text(encoding="utf-8"))
+    short, _, rest = str(meta["revision"]).partition(" ")
+    day = rest[:10]
+    src = [m for m in py["modules"] if not m.get("is_test")]
+    tpl = _set_span(tpl, 5, f"Repository Inventory · {day}")
+    tpl = _set_span(tpl, 9, f"rev {short}")
+    tpl = _set_span(tpl, 11, f"{len(src)} Python modules")
+    tpl = _set_span(tpl, 13, f"{len(ui['files'])} UI files")
+    tpl = _set_span(tpl, 15, f"{len(meta['workflows'])} workflows")
+    tpl = _set_span(tpl, 17, f"{len(meta['ci'])} CI jobs")
+    tpl = _set_span(tpl, 19, f"{len(meta['adrs'])} ADRs")
+    tpl = re.sub(
+        r"Snapshot taken [0-9/\-]+ against",
+        f"Snapshot taken {day} against",
+        tpl,
+        count=1,
+    )
+    return re.sub(
+        r"(<code[^>]*>)c3b2d328(</code>)",
+        lambda m: m.group(1) + short + m.group(2),
+        tpl,
+    )
+
+
 def _base_template() -> str:
-    tpl = TEMPLATE.read_text(encoding="utf-8")
+    tpl = _fill_cover(TEMPLATE.read_text(encoding="utf-8"))
     tiles = "".join(
         f'<div><div class="text-3xl font-display text-el-{tone}">{val}</div>'
         f'<div class="text-micro uppercase font-mono text-el-ink-muted mt-1 tracking-wider">{label}</div></div>'
@@ -270,9 +308,11 @@ def _base_template() -> str:
     )
     tpl = re.sub(
         r"(<!-- Stat Tiles -->\s*<div[^>]*>).*?(</div>\s*</div>\s*</div>\s*<!-- Main Layout -->)",
-        lambda m: m.group(1)
-        + tiles
-        + "</div>\n      </div>\n    </div>\n\n    <!-- Main Layout -->",
+        lambda m: (
+            m.group(1)
+            + tiles
+            + "</div>\n      </div>\n    </div>\n\n    <!-- Main Layout -->"
+        ),
         tpl,
         flags=re.S,
     )

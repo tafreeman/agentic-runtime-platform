@@ -58,8 +58,8 @@ A tier-routed, multi-agent LLM workflow runtime. YAML workflows compile to a DAG
 All counts come from scripts committed alongside this document. Re-run them against a fresh `origin/main` worktree:
 
 ```bash
-git worktree add --detach ../arp-main-inventory origin/main
-ARP_INVENTORY_REPO=../arp-main-inventory .venv/Scripts/python.exe scripts/inventory/run_all.py
+git worktree add --detach C:/tmp/arp-main-inventory origin/main
+ARP_INVENTORY_REPO=C:/tmp/arp-main-inventory .venv/Scripts/python.exe scripts/inventory/run_all.py
 .venv/Scripts/python.exe scripts/inventory/assemble.py
 uv run --no-project --with markdown python scripts/inventory/render_html.py
 ```
@@ -126,7 +126,7 @@ Source of truth: clean `origin/main` worktree at revision `c3b2d328` (2026-10-12
 
 #### Shipped workflow definitions (`agentic-workflows-v2/agentic_v2/workflows/definitions/`)
 
-`bug_resolution`, `code_review`, `conditional_branching`, `consensus_review`, `fullstack_generation`, `iterative_review`, `plan_tribunal`, `test_deterministic`, `test_workflow` (9 YAML files on disk; `meta_inventory.json` `workflows` has 12 entries, the extra 3 are from other trees, unverified which).
+`bug_resolution`, `code_review`, `conditional_branching`, `consensus_review`, `fullstack_generation`, `iterative_review`, `plan_tribunal`, `test_deterministic`, `test_workflow` (9 YAML files at the pinned revision; `meta_inventory.json` `workflows` lists the same 9).
 
 UI pages (`agentic-workflows-v2/ui/src/pages/`): Dashboard, Workflows, WorkflowDetail, WorkflowEditor, Runs, RunDetail, Live, Evaluations, Datasets, ModelFinder, Settings, PrototypeLab.
 
@@ -225,7 +225,7 @@ flowchart LR
 | "8 Pydantic models -> 8 JSON Schemas -> 8 `.generated.ts`" (`.claude/rules/portfolio-context.md`) | 8 `*.generated.ts` in `ui/src/api/` (chat_request, chat_stream_event, dag_response, events, runs_summary, step_result, workflow_editor_step, workflow_input_schema) | Agrees |
 | `docs/ARCHITECTURE.md`: dashboard "imports generated TypeScript rather than maintaining a separate handwritten copy" | `docs/KNOWN_LIMITATIONS.md` 1.1: only eight shapes generated/gated; other payloads manually mirrored in `ui/src/api/types.ts` | **Docs disagree with each other**; ARCHITECTURE overstates, KNOWN_LIMITATIONS is accurate |
 | `.claude/rules/portfolio-context.md`: "`ci.yml` defines 17 blocking jobs" | `meta_inventory.json` lists 20 job ids in `.github/workflows/ci.yml`: python-smoke, frontend-build, frontend-test, lint, suppression-ratchet, typecheck-core-contracts, test-coverage, claude-subscription-tests, ek-delegation-tests, evalkit-bridge-tests, wire-format-drift, e2e-streaming, no-llm-smoke, validate-workflows, check-doc-drift, doc-stats-drift, pydocstyle, lockfile-constraints, dockerfile-constraints, tools-tests | **Stale count** (how many are "blocking" is unverified) |
-| Workspace `<workspace>/CLAUDE.md` s.7: EK and EVK pinned `>=0.3.0,<0.4.0` | `agentic-workflows-v2/pyproject.toml`: `ek = executionkit>=0.4.0,<0.5.0`, `eval = agentic-evalkit>=0.4.1,<0.5.0` | **Workspace CLAUDE.md stale** (outside the repo) |
+| Workspace `C:/Users/tandf/source/CLAUDE.md` s.7: EK and EVK pinned `>=0.3.0,<0.4.0` | `agentic-workflows-v2/pyproject.toml`: `ek = executionkit>=0.4.0,<0.5.0`, `eval = agentic-evalkit>=0.4.1,<0.5.0` | **Workspace CLAUDE.md stale** (outside the repo) |
 | ADR-031 title "native DAG single engine" | Status Superseded; header says proposal **not adopted**, LangGraph adapter retained | Filename misleading; dual-engine is current (ADR-001, ADR-020, ADR-062) |
 | `docs/ARCHITECTURE.md`: runtime scoring and `agentic-v2-eval` need not import each other | `scoring/evalkit_bridge.py` couples runtime scoring to external `agentic-evalkit` (extra `eval`, ADR-042) | Not a contradiction, but ARCHITECTURE omits the evalkit bridge |
 | Native engine "dependency-light" | `server/lifespan.py:73-83`: default adapter is `langchain`; without the `langchain` extra the server warns and tells you to set `AGENTIC_DEFAULT_ADAPTER=native` | Matches ADR-020; the default is not the lightweight engine |
@@ -411,7 +411,7 @@ Removed or superseded concepts (do not expect code): RAG pipeline (ADR-035 Super
 
 ## 2. Runtime backend — components & data structures (agentic_v2)
 
-Scope: `agentic-workflows-v2/agentic_v2/` at origin/main `c3b2d328` (clean worktree `../arp-main-inventory`). 244 Python modules, 61,892 LOC (inventory counts, `__init__` files included). Only console script: `[project.scripts] agentic = "agentic_v2.cli:main"` (`agentic-workflows-v2/pyproject.toml:130-131`). Section 3 covers the HTTP/WS API; section 5 covers the YAML workflow definitions; this section covers the Python components behind them.
+Scope: `agentic-workflows-v2/agentic_v2/` at origin/main `c3b2d328` (clean worktree `C:/tmp/arp-main-inventory`). 244 Python modules, 61,892 LOC (inventory counts, `__init__` files included). Only console script: `[project.scripts] agentic = "agentic_v2.cli:main"` (`agentic-workflows-v2/pyproject.toml:130-131`). Section 3 covers the HTTP/WS API; section 5 covers the YAML workflow definitions; this section covers the Python components behind them.
 
 ### 2.0 How to read the tables
 
@@ -1035,7 +1035,7 @@ Other observations from this pass:
 
 ## 3. Interfaces — HTTP/WebSocket API, CLI, contracts, configuration
 
-Source of truth: clean `origin/main` worktree at revision `c3b2d328` (`../arp-main-inventory`). All paths are repo-relative. `S/` = `agentic-workflows-v2/agentic_v2/server/`, `R/` = `agentic-workflows-v2/agentic_v2/server/routes/`.
+Source of truth: clean `origin/main` worktree at revision `c3b2d328` (`C:/tmp/arp-main-inventory`). All paths are repo-relative. `S/` = `agentic-workflows-v2/agentic_v2/server/`, `R/` = `agentic-workflows-v2/agentic_v2/server/routes/`.
 
 ### 3.1 HTTP API surface
 
@@ -1374,7 +1374,7 @@ All other `.env.example` keys are consumed, either by direct `os.environ` reads 
 | `CLAUDE_API_KEY`, `ANTHROPIC_API_KEY_0`, `AZURE_FOUNDRY_ENDPOINT_2`, `OLLAMA_TIMEOUT_SECONDS`, `PROMPTS_GH_RATE_LIMIT_STRATEGY` | `tools/llm/*` | Root `tools/` package only (provider adapters / limit checks) |
 | `PROMPTEVAL_ALLOW_REMOTE`, `PROMPTS_CACHE_ENABLED`, `GEN_MODEL`, `REF_MODEL`, `REV_MODEL`, `PYTHONIOENCODING` | `tools/core/*`, `tools/llm/llm_client.py` | Root `tools/` package only |
 
-Documentation-adjacent gaps among documented keys: `.env.example` documents `OLLAMA_HOST`, `OLLAMA_API_KEY`, `LMSTUDIO_HOST`, `LM_API_TOKEN`, `DIGITALOCEAN_TOKEN`, `GITHUB_TOKEN`; their readers go through provider tables and `get_secret`, not literal `os.environ` calls, so they were not re-verified one by one (unverified). <!-- pragma: allowlist secret -->
+Documentation-adjacent gaps among documented keys: `.env.example` documents `OLLAMA_HOST`, `OLLAMA_API_KEY`, `LMSTUDIO_HOST`, `LM_API_TOKEN`, `DIGITALOCEAN_TOKEN`, `GITHUB_TOKEN`; their readers go through provider tables and `get_secret`, not literal `os.environ` calls, so they were not re-verified one by one (unverified).
 
 Operational toggles worth knowing (all documented): `AGENTIC_API_KEY` (auth on/off), `AGENTIC_NO_LLM=1` (deterministic placeholder model, supported no-key baseline), `AGENTIC_DEFAULT_ADAPTER`, `AGENTIC_RATE_LIMIT_*`, `AGENTIC_SANITIZER_FAIL_OPEN`, `AGENTIC_REGISTRY_STRICT`, `AGENTIC_STRICT_MODEL_VERIFY`, `AGENTIC_SHELL_ALLOWED_COMMANDS`, `AGENTIC_TRUSTED_MODEL_HASHES`.
 
@@ -1390,7 +1390,7 @@ Operational toggles worth knowing (all documented): `AGENTIC_API_KEY` (auth on/o
 
 ## 4. Frontend — ARP Console (React UI)
 
-Source of truth: `origin/main` @ `c3b2d328` (clean worktree `../arp-main-inventory`). UI root: `agentic-workflows-v2/ui/`. Counts come from `docs/inventory/data/ui_inventory.json` (203 files under `ui/src/`: 135 non-test, 68 test; ~23.4k non-test LOC, ~16.1k test LOC as reported by the extractor; LOC = extractor's count, not `wc -l`). "Prod importers" = distinct non-test files importing the module; "test importers" = distinct test files importing it directly (indirect coverage via a parent render is not counted).
+Source of truth: `origin/main` @ `c3b2d328` (clean worktree `C:/tmp/arp-main-inventory`). UI root: `agentic-workflows-v2/ui/`. Counts come from `docs/inventory/data/ui_inventory.json` (203 files under `ui/src/`: 135 non-test, 68 test; ~23.4k non-test LOC, ~16.1k test LOC as reported by the extractor; LOC = extractor's count, not `wc -l`). "Prod importers" = distinct non-test files importing the module; "test importers" = distinct test files importing it directly (indirect coverage via a parent render is not counted).
 
 ### 4.1 Stack and build
 
@@ -1902,7 +1902,7 @@ Observations: `settings.spec.ts` e2e still targets provider/tier controls althou
 
 ## 5. Workflows, prompts, agents, evaluation & shared tools
 
-Source of truth: clean `origin/main` worktree at revision `c3b2d328` (`../arp-main-inventory`). All paths are repo-relative. Static-analysis columns (importers, test refs, orphan flags) come from `docs/inventory/data/py_inventory.json`; every orphan/"broken" claim below was re-checked by grep or by an import run against the clean tree (read-only, `PYTHONDONTWRITEBYTECODE=1`). Anything not re-checked is marked "(unverified)".
+Source of truth: clean `origin/main` worktree at revision `c3b2d328` (`C:/tmp/arp-main-inventory`). All paths are repo-relative. Static-analysis columns (importers, test refs, orphan flags) come from `docs/inventory/data/py_inventory.json`; every orphan/"broken" claim below was re-checked by grep or by an import run against the clean tree (read-only, `PYTHONDONTWRITEBYTECODE=1`). Anything not re-checked is marked "(unverified)".
 
 ### 5.0 Section summary
 
@@ -2301,7 +2301,7 @@ TODO/FIXME markers in these areas are nearly absent (one real marker: `workflows
 
 ## 6. Build, CI/CD, infrastructure & operations
 
-Basis: clean worktree `../arp-main-inventory` at `c3b2d328` (origin/main). Workflow metadata cross-checked against `docs/inventory/data/meta_inventory.json`. "Blocks PRs" is inferred from triggers, job wiring and `continue-on-error`. Branch-protection and required-check settings are not stored in the repo, so any claim about them is marked (unverified).
+Basis: clean worktree `C:/tmp/arp-main-inventory` at `c3b2d328` (origin/main). Workflow metadata cross-checked against `docs/inventory/data/meta_inventory.json`. "Blocks PRs" is inferred from triggers, job wiring and `continue-on-error`. Branch-protection and required-check settings are not stored in the repo, so any claim about them is marked (unverified).
 
 ### 6.1 CI workflows
 
@@ -2488,7 +2488,7 @@ Resources in `main.bicep`: Log Analytics workspace (line 82), Application Insigh
 - `mkdocs.yml`: `site_url` `https://tafreeman.github.io/agentic-runtime-platform/`. `docs_dir` is the default `docs/`. All 60 `.md` nav entries exist under `docs/` (checked by script). Three extra stylesheets (`tokens.css`, `console.css`, `landing.css`).
 - `exclude_docs` removes `OWASP_LLM_THREAT_MODEL.md` because of broken `docs/`-prefixed links (comment in `mkdocs.yml`).
 - Two workflows publish to Pages with `gh-deploy --force`: `docs.yml` and `load-report-pages.yml`. Both build the full site, so they overwrite each other's output (observed design, not tested).
-- `site/` exists in the user checkout (`<workspace>/agentic-runtime-platform/site/`) but not in the clean worktree. Treat it as a local build output (its `.gitignore` status is unverified).
+- `site/` exists in the user checkout (`C:/Users/tandf/source/agentic-runtime-platform/site/`) but not in the clean worktree. Treat it as a local build output (its `.gitignore` status is unverified).
 
 ### 6.9 Stale, dead and inconsistent items
 
@@ -2511,7 +2511,7 @@ Resources in `main.bicep`: Log Analytics workspace (line 82), Application Insigh
 
 ## 7. Folder-by-folder inventory
 
-**Basis.** Committed facts come from the clean `origin/main` worktree (`../arp-main-inventory`, rev `c3b2d328`) via `data/fs_inventory.json`. Local-only facts come from the live checkout (branch `relock-382`) via `data/fs_local_checkout.json`. Sizes are KB on disk. "Stale" means last commit older than 90 days, and it describes age, not disuse. Nothing under `node_modules/`, `.venv/`, `.git/`, `.mypy_cache/` or `.cache/` was recursed into. Where the JSON reports no size for those, the cell says "not measured".
+**Basis.** Committed facts come from the clean `origin/main` worktree (`C:/tmp/arp-main-inventory`, rev `c3b2d328`) via `data/fs_inventory.json`. Local-only facts come from the live checkout (branch `relock-382`) via `data/fs_local_checkout.json`. Sizes are KB on disk. "Stale" means last commit older than 90 days, and it describes age, not disuse. Nothing under `node_modules/`, `.venv/`, `.git/`, `.mypy_cache/` or `.cache/` was recursed into. Where the JSON reports no size for those, the cell says "not measured".
 
 ### 7.1 Top-level map (committed and local-only)
 
@@ -2743,7 +2743,7 @@ Hold, because they hold user data or work product: `runs/`, both `.agentic_repla
 | `agentic-workflows-v2/dist/` | No | Wheel and sdist for `agentic_workflows_v2 0.1.0` (Jul 16) | Safe to delete |
 | `dist/` (root) | No | Wheel and sdist for `agentic_tools 0.1.0` | Safe to delete |
 | `eval_pipeline.png` (root) | Yes | No tracked references | Reference it or remove it |
-| `evidence-ledger-design-system.zip` | Not at repo root | Two copies sit in `<downloads>/` (`evidence-ledger-design-system.zip` and `_1.zip`). The task brief expected a root copy, which does not exist | Keep one copy outside the repo, or delete the duplicates after review |
+| `evidence-ledger-design-system.zip` | Not at repo root | Two copies sit in `C:/Users/tandf/Downloads/` (`evidence-ledger-design-system.zip` and `_1.zip`). The task brief expected a root copy, which does not exist | Keep one copy outside the repo, or delete the duplicates after review |
 | `.coverage` duplicates | No | `.coverage` exists at root, `agentic-v2-eval/`, and `agentic-workflows-v2/` | Delete stale copies |
 
 Large tracked files (origin/main, over 1 MB, 11 files, about 18.4 MB total):
@@ -2768,7 +2768,7 @@ Ignored-but-present items inside tracked folders are covered in 7.3. The git sta
 
 ## 8. Documentation & architecture decision records
 
-Source of truth: clean `origin/main` worktree at `../arp-main-inventory`, revision `c3b2d328`. Ages are days since last commit, measured against 2026-10-12. Line counts are from `docs/inventory/data/meta_inventory.json`. Read-only audit; nothing in the worktree was modified.
+Source of truth: clean `origin/main` worktree at `C:/tmp/arp-main-inventory`, revision `c3b2d328`. Ages are days since last commit, measured against 2026-10-12. Line counts are from `docs/inventory/data/meta_inventory.json`. Read-only audit; nothing in the worktree was modified.
 
 Status legend: **Current** (no contrary evidence found), **Aging** (75-90 days, fast-moving area), **Stale >90d** (age over 90 days), **Stale content** (text contradicts code, CI or an ADR regardless of age), **Duplicate** (copy or mirror of another doc), **Stub** (redirect or pointer only), **Broken link**, **Working note** (agent or process artifact, not reference material), **Orphan** (builds under mkdocs but is not in `nav`).
 
@@ -3162,12 +3162,12 @@ Also worth refreshing, below the top 10:
 | Item | Branch / PR | Size | State | Next step |
 |---|---|---|---|---|
 | Evidence Ledger UI redesign — tokens, primitives, DataTable, FilterBar (ADR-054 follow-on) | `feature/evidence_ledger_port` / tafreeman/agentic-runtime-platform#388 | +3,152 / -123, 17 files | OPEN, `mergeable: MERGEABLE`, `mergeStateStatus: BLOCKED`, 0 failing checks, 1 pending, no review decision. Local checkout is `ahead 3, behind 14` of `origin/main` (head `3dbfae10`, 2026-10-10); origin copy `74123cb4` already merged main | Wait for checks, get the single review (global rule: one approval, PRs <~400 lines — this one is ~8x over), then merge. Consider splitting tokens vs components if review stalls |
-| Evidence Ledger screen restyle (existing screens re-themed) | `feature/el_screen_restyle` @ `1d28dce3`, no PR | +466 / -551, 36 files; 15 commits behind main | Pushed, worktree `<codex-home>/worktrees/evidence-ledger-ui/agentic-runtime-platform`. Stacked on #388 (carries its commits `a9ba66a3`, `9ad6bca3`, `1572d32a`) | Hold until #388 merges, rebase, open PR |
+| Evidence Ledger screen restyle (existing screens re-themed) | `feature/el_screen_restyle` @ `1d28dce3`, no PR | +466 / -551, 36 files; 15 commits behind main | Pushed, worktree `C:/Users/tandf/.codex/worktrees/evidence-ledger-ui/agentic-runtime-platform`. Stacked on #388 (carries its commits `a9ba66a3`, `9ad6bca3`, `1572d32a`) | Hold until #388 merges, rebase, open PR |
 | Local ignore rules for design-tool scratch under `docs/ui/` | `chore/ignore_docs_ui_scratch` / #389 | +18, 1 file | OPEN, BLOCKED (1 check pending) | Merge as soon as checks go green; it is what stops the ~350 untracked `docs/ui` files from polluting `git status` |
-| `app_improvement_review` workflow (evidence-based app review) | `feature/app_improvement_review` / #390 | +639 / -2, 8 files; 3 commits (`65890f36`, `57a8c879`, `adddb23f`) | OPEN, BLOCKED; branch is 0 behind main. Worktree `<tmp>/arp-appreview` | Review + merge; confirm shipped-workflow gate registration (commit `57a8c879`) |
+| `app_improvement_review` workflow (evidence-based app review) | `feature/app_improvement_review` / #390 | +639 / -2, 8 files; 3 commits (`65890f36`, `57a8c879`, `adddb23f`) | OPEN, BLOCKED; branch is 0 behind main. Worktree `C:/tmp/arp-appreview` | Review + merge; confirm shipped-workflow gate registration (commit `57a8c879`) |
 | Criterion aggregation + independent eval gate (G1 of tech-debt plan) | `feature/criterion_aggregation` (no PR) | local `a6ee2520`: +854 / -141, 12 files; origin copy `32180ede`: +1,373 / -201, 16 files | Local branch was **rebased onto main during this session** (0 behind main) but is `ahead 63, behind 1` of its own origin copy — push needed (force-with-lease, owner's call) | See §9.2: effectively stalled until pushed and a PR opened |
 | Dependabot `pip-root-llm` (15 updates) | `dependabot/pip/pip-root-llm-06dfaa602f` / #382 | +18 / -18, 3 files | OPEN, `reviewDecision: APPROVED`, 0 failing, 1 pending, BLOCKED on pending check. Relocked in `eba4f777` (local branch `relock-382`) | Merge when the last check lands (needs explicit authorization per global rule) |
-| Tech-debt delivery plan G0–G7 | `docs/tech_debt_plans` @ `8e61318c` in `<tmp>/arp-plans`, 1 commit ahead of main, unpushed, no PR | +460, 4 docs (`docs/plans/2026-09-10-tech-debt-workflow.md` + 3 addenda) | Planning docs only; the plan itself says "does not assert that the planned changes ... have completed" | Push + PR the docs (small), then start G0 baseline reconciliation |
+| Tech-debt delivery plan G0–G7 | `docs/tech_debt_plans` @ `8e61318c` in `C:/tmp/arp-plans`, 1 commit ahead of main, unpushed, no PR | +460, 4 docs (`docs/plans/2026-09-10-tech-debt-workflow.md` + 3 addenda) | Planning docs only; the plan itself says "does not assert that the planned changes ... have completed" | Push + PR the docs (small), then start G0 baseline reconciliation |
 | Probe-tooling edits (uncommitted) | live checkout, no branch of its own | +47 / -1: `tools/llm/probe_config.py` (+28), `tools/llm/probe_discovery_providers.py` (+13), `.env.example`, `.gitignore` | Uncommitted tracked modifications on `feature/evidence_ledger_port` — unrelated to the UI branch they sit on | Move to a `chore/` branch or stash before the next `git checkout`; do not let them ride into #388 |
 | Untracked Evidence Ledger components (live checkout) | live checkout, untracked | `agentic-workflows-v2/ui/src/components/el/{ApprovalGate,EventLog,LiveSteps,ModelChain,ReRunSheet,TierLanes,Waterfall}.tsx`, `el/timeScale.ts`, `ui/src/lib/runSentence.ts` (~2.1k lines per brief) | Not committed anywhere; exists only on this machine | Commit to a branch (follow-up to #388) or it is one `git clean` from loss |
 | Model-pack builder follow-ups (ADR-054) | merged #373, #374 | — | Shipped 2026-10-10/11; no open follow-up PR found | None open |
@@ -3197,33 +3197,33 @@ Local branches (9) and remote heads (11). Origin `gh-pages` and `slo-data` are b
 | Branch | Where | State | Verdict |
 |---|---|---|---|
 | `main` | local | `behind 1` of origin (local `d0c07a13`, origin `c3b2d328`) | fast-forward |
-| `fix/langgraph_fanin_join` | local + origin + worktree `<tmp>/arp-fanin` | content merged as #387 (squash; branch still shows `ahead 1` of main by SHA) | **delete** branch + worktree |
+| `fix/langgraph_fanin_join` | local + origin + worktree `C:/tmp/arp-fanin` | content merged as #387 (squash; branch still shows `ahead 1` of main by SHA) | **delete** branch + worktree |
 | `relock-382` | local | tracks `origin/dependabot/pip/pip-root-llm-06dfaa602f` (relock `eba4f777`) | keep until #382 merges, then delete |
-| `chore/ignore_docs_ui_scratch` | local + origin + worktree `<tmp>/arp-chore` | #389 open | keep until merged |
-| `feature/app_improvement_review` | local + origin + worktree `<tmp>/arp-appreview` | #390 open | keep until merged |
+| `chore/ignore_docs_ui_scratch` | local + origin + worktree `C:/tmp/arp-chore` | #389 open | keep until merged |
+| `feature/app_improvement_review` | local + origin + worktree `C:/tmp/arp-appreview` | #390 open | keep until merged |
 | `feature/el_screen_restyle` | local + origin + codex worktree | no PR | keep, open PR after #388 |
-| `feature/criterion_aggregation` | local + origin + worktree `<workspace>/agentic-runtime-platform-f5-f6` | see §9.2 | keep |
-| `docs/tech_debt_plans` | local + worktree `<tmp>/arp-plans` | unpushed | push or discard |
+| `feature/criterion_aggregation` | local + origin + worktree `C:/Users/tandf/source/agentic-runtime-platform-f5-f6` | see §9.2 | keep |
+| `docs/tech_debt_plans` | local + worktree `C:/tmp/arp-plans` | unpushed | push or discard |
 | `feature/evidence_ledger_port` | local (checked out in live checkout) + origin | #388 open | keep |
 | `origin/dependabot/pip/pip-root-{llm,rest,tooling}-*` | origin | #382/#383/#384 | closed by merge/close of PRs |
 | `origin/gh-pages` | origin | 94 commits; mkdocs deploy | leave |
 | `origin/slo-data` | origin | nightly bot commits `[skip ci]` | leave |
 
-Already cleaned during this session (listed in the brief, no longer present): local branches and worktrees for `fix/secret_mask_json` (#380), `fix/review_report_extraction` (#377), `fix/fullstack_rework` (#379), `fix/retire-github-models` (#378), `fix/nvidia-deepseek-v4-eol` (#376), `fix/nvidia-llama-31-8b-eol` (#375), and `.claude/worktrees/{deepseek-v4-eol,epic-yonath-0c6f8e}`, `<workspace>/arp-model-pack-builder`, copilot worktrees — `git worktree list` at write time shows none of them. Verified with `git branch --list` (empty for the three `fix/*` names checked).
+Already cleaned during this session (listed in the brief, no longer present): local branches and worktrees for `fix/secret_mask_json` (#380), `fix/review_report_extraction` (#377), `fix/fullstack_rework` (#379), `fix/retire-github-models` (#378), `fix/nvidia-deepseek-v4-eol` (#376), `fix/nvidia-llama-31-8b-eol` (#375), and `.claude/worktrees/{deepseek-v4-eol,epic-yonath-0c6f8e}`, `C:/Users/tandf/source/arp-model-pack-builder`, copilot worktrees — `git worktree list` at write time shows none of them. Verified with `git branch --list` (empty for the three `fix/*` names checked).
 
 #### Worktrees (9 live)
 
 | Path | Branch | Disposition |
 |---|---|---|
-| `<workspace>/agentic-runtime-platform` | `feature/evidence_ledger_port` | primary checkout; dirty (see below) |
-| `<tmp>/arp-appreview` | `feature/app_improvement_review` | keep until #390 merges |
-| `<tmp>/arp-chore` | `chore/ignore_docs_ui_scratch` | keep until #389 merges |
-| `<tmp>/arp-el-port` | detached `74123cb4` (merge of main into #388 head) | **remove** — redundant with the live checkout |
-| `<tmp>/arp-fanin` | `fix/langgraph_fanin_join` | **remove** — #387 merged |
-| `../arp-main-inventory` | detached `c3b2d328` | remove after the inventory is finished |
-| `<tmp>/arp-plans` | `docs/tech_debt_plans` | keep (unpushed work) |
-| `<codex-home>/worktrees/evidence-ledger-ui/agentic-runtime-platform` | `feature/el_screen_restyle` | keep; owned by Codex |
-| `<workspace>/agentic-runtime-platform-f5-f6` | `feature/criterion_aggregation` | keep |
+| `C:/Users/tandf/source/agentic-runtime-platform` | `feature/evidence_ledger_port` | primary checkout; dirty (see below) |
+| `C:/tmp/arp-appreview` | `feature/app_improvement_review` | keep until #390 merges |
+| `C:/tmp/arp-chore` | `chore/ignore_docs_ui_scratch` | keep until #389 merges |
+| `C:/tmp/arp-el-port` | detached `74123cb4` (merge of main into #388 head) | **remove** — redundant with the live checkout |
+| `C:/tmp/arp-fanin` | `fix/langgraph_fanin_join` | **remove** — #387 merged |
+| `C:/tmp/arp-main-inventory` | detached `c3b2d328` | remove after the inventory is finished |
+| `C:/tmp/arp-plans` | `docs/tech_debt_plans` | keep (unpushed work) |
+| `C:/Users/tandf/.codex/worktrees/evidence-ledger-ui/agentic-runtime-platform` | `feature/el_screen_restyle` | keep; owned by Codex |
+| `C:/Users/tandf/source/agentic-runtime-platform-f5-f6` | `feature/criterion_aggregation` | keep |
 
 Note (memory `nested-worktree-loads-real-env`): none of these is under `.claude/worktrees` any more, so the live-`.env`-at-import hazard does not apply to the current set.
 
@@ -3243,7 +3243,7 @@ Note (memory `nested-worktree-loads-real-env`): none of these is under `.claude/
 
 ### 9.4 Code-level debt markers
 
-Method: `grep -rnE "\b(TODO|FIXME|XXX|HACK|DEPRECATED)\b"` over `py/ts/tsx/yaml/yml/lean` in `../arp-main-inventory` (excluding `node_modules`, `.venv`, `docs/`, `*.generated.*`). `py_inventory.json` `modules[].markers` reports only the one TODO; the grep widened the scope to YAML, TSX and string literals and found the rest — all but one are not actionable debt.
+Method: `grep -rnE "\b(TODO|FIXME|XXX|HACK|DEPRECATED)\b"` over `py/ts/tsx/yaml/yml/lean` in `C:/tmp/arp-main-inventory` (excluding `node_modules`, `.venv`, `docs/`, `*.generated.*`). `py_inventory.json` `modules[].markers` reports only the one TODO; the grep widened the scope to YAML, TSX and string literals and found the rest — all but one are not actionable debt.
 
 #### Summary
 
@@ -3324,7 +3324,7 @@ Each row is verified against main (`c3b2d328`) unless noted.
 
 ### 9.6 Cross-repo follow-ups (open items touching ARP)
 
-Sources: `<workspace>/_audit/remediation-progress-2026-09-23.md` (newest remediation file; `remediation-progress-2026-08-04.md` and `-07-25.md` older), `net-new-triage-revalidation-2026-08-09.md`, `net-new-sweep-2026-07-25.md`. The newest net-new file is the 2026-08-09 revalidation; no newer dated file exists.
+Sources: `C:/Users/tandf/source/_audit/remediation-progress-2026-09-23.md` (newest remediation file; `remediation-progress-2026-08-04.md` and `-07-25.md` older), `net-new-triage-revalidation-2026-08-09.md`, `net-new-sweep-2026-07-25.md`. The newest net-new file is the 2026-08-09 revalidation; no newer dated file exists.
 
 | Item | Source | Status at 2026-10-12 |
 |---|---|---|

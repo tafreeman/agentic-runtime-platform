@@ -1,6 +1,6 @@
 ## 6. Build, CI/CD, infrastructure & operations
 
-Basis: clean worktree `../arp-main-inventory` at `c3b2d328` (origin/main). Workflow metadata cross-checked against `docs/inventory/data/meta_inventory.json`. "Blocks PRs" is inferred from triggers, job wiring and `continue-on-error`. Branch-protection and required-check settings are not stored in the repo, so any claim about them is marked (unverified).
+Basis: clean worktree `C:/tmp/arp-main-inventory` at `c3b2d328` (origin/main). Workflow metadata cross-checked against `docs/inventory/data/meta_inventory.json`. "Blocks PRs" is inferred from triggers, job wiring and `continue-on-error`. Branch-protection and required-check settings are not stored in the repo, so any claim about them is marked (unverified).
 
 ### 6.1 CI workflows
 
@@ -187,7 +187,7 @@ Resources in `main.bicep`: Log Analytics workspace (line 82), Application Insigh
 - `mkdocs.yml`: `site_url` `https://tafreeman.github.io/agentic-runtime-platform/`. `docs_dir` is the default `docs/`. All 60 `.md` nav entries exist under `docs/` (checked by script). Three extra stylesheets (`tokens.css`, `console.css`, `landing.css`).
 - `exclude_docs` removes `OWASP_LLM_THREAT_MODEL.md` because of broken `docs/`-prefixed links (comment in `mkdocs.yml`).
 - Two workflows publish to Pages with `gh-deploy --force`: `docs.yml` and `load-report-pages.yml`. Both build the full site, so they overwrite each other's output (observed design, not tested).
-- `site/` exists in the user checkout (`<workspace>/agentic-runtime-platform/site/`) but not in the clean worktree. Treat it as a local build output (its `.gitignore` status is unverified).
+- `site/` exists in the user checkout (`C:/Users/tandf/source/agentic-runtime-platform/site/`) but not in the clean worktree. Treat it as a local build output (its `.gitignore` status is unverified).
 
 ### 6.9 Stale, dead and inconsistent items
 

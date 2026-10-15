@@ -170,7 +170,7 @@
 nav.toc-rail{max-height:calc(100vh - 4rem);overflow-y:auto}
 @media print{nav,#theme-toggle{display:none}main{border:0}}
 </style>
-<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js" integrity="sha384-WmdflGW9aGfoBdHc4rRyWzYuAjEmDwMdGdiPNacbwfGKxBW/SO6guzuQ76qjnSlr" crossorigin="anonymous"></script><!-- pragma: allowlist secret -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js" integrity="sha384-WmdflGW9aGfoBdHc4rRyWzYuAjEmDwMdGdiPNacbwfGKxBW/SO6guzuQ76qjnSlr" crossorigin="anonymous"></script>
 <script>document.addEventListener("DOMContentLoaded",()=>{const dark=document.documentElement.dataset.theme==="dark";mermaid.initialize({startOnLoad:true,theme:dark?"dark":"neutral",fontFamily:"ui-monospace, Consolas, monospace"});const links=[...document.querySelectorAll(".toc-link")];const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle("is-active",l.dataset.toc===e.target.id));}}),{rootMargin:"-10% 0px -80% 0px"});document.querySelectorAll("main section[id]").forEach(s=>obs.observe(s));});</script>
 </head>
 <body>
@@ -300,8 +300,8 @@ nav.toc-rail{max-height:calc(100vh - 4rem);overflow-y:auto}
 </ol>
 <h3>How this inventory was produced</h3>
 <p>All counts come from scripts committed alongside this document. Re-run them against a fresh <code>origin/main</code> worktree:</p>
-<pre><code class="language-bash">git worktree add --detach ../arp-main-inventory origin/main
-ARP_INVENTORY_REPO=../arp-main-inventory .venv/Scripts/python.exe scripts/inventory/run_all.py
+<pre><code class="language-bash">git worktree add --detach C:/tmp/arp-main-inventory origin/main
+ARP_INVENTORY_REPO=C:/tmp/arp-main-inventory .venv/Scripts/python.exe scripts/inventory/run_all.py
 .venv/Scripts/python.exe scripts/inventory/assemble.py
 uv run --no-project --with markdown python scripts/inventory/render_html.py
 </code></pre>
@@ -473,7 +473,7 @@ uv run --no-project --with markdown python scripts/inventory/render_html.py
 </tbody>
 </table></div>
 <h4>Shipped workflow definitions (<code>agentic-workflows-v2/agentic_v2/workflows/definitions/</code>)</h4>
-<p><code>bug_resolution</code>, <code>code_review</code>, <code>conditional_branching</code>, <code>consensus_review</code>, <code>fullstack_generation</code>, <code>iterative_review</code>, <code>plan_tribunal</code>, <code>test_deterministic</code>, <code>test_workflow</code> (9 YAML files on disk; <code>meta_inventory.json</code> <code>workflows</code> has 12 entries, the extra 3 are from other trees, unverified which).</p>
+<p><code>bug_resolution</code>, <code>code_review</code>, <code>conditional_branching</code>, <code>consensus_review</code>, <code>fullstack_generation</code>, <code>iterative_review</code>, <code>plan_tribunal</code>, <code>test_deterministic</code>, <code>test_workflow</code> (9 YAML files at the pinned revision; <code>meta_inventory.json</code> <code>workflows</code> lists the same 9).</p>
 <p>UI pages (<code>agentic-workflows-v2/ui/src/pages/</code>): Dashboard, Workflows, WorkflowDetail, WorkflowEditor, Runs, RunDetail, Live, Evaluations, Datasets, ModelFinder, Settings, PrototypeLab.</p>
 <h3>1.2 Architecture</h3>
 <h4>Layers</h4>
@@ -661,7 +661,7 @@ uv run --no-project --with markdown python scripts/inventory/render_html.py
 <td><strong>Stale count</strong> (how many are "blocking" is unverified)</td>
 </tr>
 <tr>
-<td>Workspace <code>&lt;workspace&gt;/CLAUDE.md</code> s.7: EK and EVK pinned <code>&gt;=0.3.0,&lt;0.4.0</code></td>
+<td>Workspace <code>C:/Users/tandf/source/CLAUDE.md</code> s.7: EK and EVK pinned <code>&gt;=0.3.0,&lt;0.4.0</code></td>
 <td><code>agentic-workflows-v2/pyproject.toml</code>: <code>ek = executionkit&gt;=0.4.0,&lt;0.5.0</code>, <code>eval = agentic-evalkit&gt;=0.4.1,&lt;0.5.0</code></td>
 <td><strong>Workspace CLAUDE.md stale</strong> (outside the repo)</td>
 </tr>
@@ -1551,7 +1551,7 @@ uv run --no-project --with markdown python scripts/inventory/render_html.py
 </tr>
 </tbody>
 </table></div></section>
-<section id="s2" class="scroll-mt-8 mb-16"><div class="mb-8"><div class="text-micro font-mono uppercase tracking-widest text-el-ink-muted mb-2">Section 2</div><h2 class="text-3xl font-display text-el-ink pb-4 border-b border-el-divider">Runtime backend — components &amp; data structures (agentic_v2)</h2></div><p>Scope: <code>agentic-workflows-v2/agentic_v2/</code> at origin/main <code>c3b2d328</code> (clean worktree <code>../arp-main-inventory</code>). 244 Python modules, 61,892 LOC (inventory counts, <code>__init__</code> files included). Only console script: <code>[project.scripts] agentic = "agentic_v2.cli:main"</code> (<code>agentic-workflows-v2/pyproject.toml:130-131</code>). Section 3 covers the HTTP/WS API; section 5 covers the YAML workflow definitions; this section covers the Python components behind them.</p>
+<section id="s2" class="scroll-mt-8 mb-16"><div class="mb-8"><div class="text-micro font-mono uppercase tracking-widest text-el-ink-muted mb-2">Section 2</div><h2 class="text-3xl font-display text-el-ink pb-4 border-b border-el-divider">Runtime backend — components &amp; data structures (agentic_v2)</h2></div><p>Scope: <code>agentic-workflows-v2/agentic_v2/</code> at origin/main <code>c3b2d328</code> (clean worktree <code>C:/tmp/arp-main-inventory</code>). 244 Python modules, 61,892 LOC (inventory counts, <code>__init__</code> files included). Only console script: <code>[project.scripts] agentic = "agentic_v2.cli:main"</code> (<code>agentic-workflows-v2/pyproject.toml:130-131</code>). Section 3 covers the HTTP/WS API; section 5 covers the YAML workflow definitions; this section covers the Python components behind them.</p>
 <h3>2.0 How to read the tables</h3>
 <ul>
 <li><strong>LOC</strong> — physical lines from <code>docs/inventory/data/py_inventory.json</code>.</li>
@@ -4918,7 +4918,7 @@ uv run --no-project --with markdown python scripts/inventory/render_html.py
 <li><strong>Two runners:</strong> <code>workflows/runner.py</code> (<code>WorkflowRunner</code>, 423 LOC) and <code>langchain/runner.py</code> (<code>WorkflowRunner</code>, 971 LOC) share a class name across packages.</li>
 <li><strong>Stale doc:</strong> <code>agentic-workflows-v2/docs/REPO_MAP.md:40</code> lists a nonexistent <code>memoryctl/</code> package.</li>
 </ul></section>
-<section id="s3" class="scroll-mt-8 mb-16"><div class="mb-8"><div class="text-micro font-mono uppercase tracking-widest text-el-ink-muted mb-2">Section 3</div><h2 class="text-3xl font-display text-el-ink pb-4 border-b border-el-divider">Interfaces — HTTP/WebSocket API, CLI, contracts, configuration</h2></div><p>Source of truth: clean <code>origin/main</code> worktree at revision <code>c3b2d328</code> (<code>../arp-main-inventory</code>). All paths are repo-relative. <code>S/</code> = <code>agentic-workflows-v2/agentic_v2/server/</code>, <code>R/</code> = <code>agentic-workflows-v2/agentic_v2/server/routes/</code>.</p>
+<section id="s3" class="scroll-mt-8 mb-16"><div class="mb-8"><div class="text-micro font-mono uppercase tracking-widest text-el-ink-muted mb-2">Section 3</div><h2 class="text-3xl font-display text-el-ink pb-4 border-b border-el-divider">Interfaces — HTTP/WebSocket API, CLI, contracts, configuration</h2></div><p>Source of truth: clean <code>origin/main</code> worktree at revision <code>c3b2d328</code> (<code>C:/tmp/arp-main-inventory</code>). All paths are repo-relative. <code>S/</code> = <code>agentic-workflows-v2/agentic_v2/server/</code>, <code>R/</code> = <code>agentic-workflows-v2/agentic_v2/server/routes/</code>.</p>
 <h3>3.1 HTTP API surface</h3>
 <p>The app factory is <code>create_app()</code> in <code>S/app.py</code>. Every router in <code>R/</code> is mounted with <code>prefix="/api"</code> (<code>S/app.py:158-167</code>) except the WebSocket router (<code>/ws/...</code>, no prefix, <code>S/app.py:168</code>), the optional Prometheus mount at <code>/metrics</code>, and the SPA catch-all. That gives <strong>55 decorated route handlers</strong> (<code>py_inventory.json</code>): 53 under <code>/api</code>, 1 WebSocket, 1 SPA fallback.</p>
 <p><strong>Auth column legend:</strong> <code>key</code> = requires <code>AGENTIC_API_KEY</code> bearer/<code>X-API-Key</code> <em>when that env var is set</em> (otherwise the server is open and <code>S/lifespan.py:263-266</code> logs a warning); <code>public</code> = exempt in <code>is_public_path</code> (<code>S/auth.py:54-57, 257-269</code>); <code>tenant</code> = also resolves <code>Depends(get_tenant_context)</code> (<code>agentic_v2/core/tenant.py:64</code>, header-based tenant id).</p>
@@ -6277,7 +6277,7 @@ uv run --no-project --with markdown python scripts/inventory/render_html.py
 </tr>
 </tbody>
 </table></div>
-<p>Documentation-adjacent gaps among documented keys: <code>.env.example</code> documents <code>OLLAMA_HOST</code>, <code>OLLAMA_API_KEY</code>, <code>LMSTUDIO_HOST</code>, <code>LM_API_TOKEN</code>, <code>DIGITALOCEAN_TOKEN</code>, <code>GITHUB_TOKEN</code>; their readers go through provider tables and <code>get_secret</code>, not literal <code>os.environ</code> calls, so they were not re-verified one by one (unverified). <!-- pragma: allowlist secret --></p>
+<p>Documentation-adjacent gaps among documented keys: <code>.env.example</code> documents <code>OLLAMA_HOST</code>, <code>OLLAMA_API_KEY</code>, <code>LMSTUDIO_HOST</code>, <code>LM_API_TOKEN</code>, <code>DIGITALOCEAN_TOKEN</code>, <code>GITHUB_TOKEN</code>; their readers go through provider tables and <code>get_secret</code>, not literal <code>os.environ</code> calls, so they were not re-verified one by one (unverified).</p>
 <p>Operational toggles worth knowing (all documented): <code>AGENTIC_API_KEY</code> (auth on/off), <code>AGENTIC_NO_LLM=1</code> (deterministic placeholder model, supported no-key baseline), <code>AGENTIC_DEFAULT_ADAPTER</code>, <code>AGENTIC_RATE_LIMIT_*</code>, <code>AGENTIC_SANITIZER_FAIL_OPEN</code>, <code>AGENTIC_REGISTRY_STRICT</code>, <code>AGENTIC_STRICT_MODEL_VERIFY</code>, <code>AGENTIC_SHELL_ALLOWED_COMMANDS</code>, <code>AGENTIC_TRUSTED_MODEL_HASHES</code>.</p>
 <h3>3.10 Findings summary (for the inventory rollup)</h3>
 <div class="tbl"><table>
@@ -6316,7 +6316,7 @@ uv run --no-project --with markdown python scripts/inventory/render_html.py
 </tr>
 </tbody>
 </table></div></section>
-<section id="s4" class="scroll-mt-8 mb-16"><div class="mb-8"><div class="text-micro font-mono uppercase tracking-widest text-el-ink-muted mb-2">Section 4</div><h2 class="text-3xl font-display text-el-ink pb-4 border-b border-el-divider">Frontend — ARP Console (React UI)</h2></div><p>Source of truth: <code>origin/main</code> @ <code>c3b2d328</code> (clean worktree <code>../arp-main-inventory</code>). UI root: <code>agentic-workflows-v2/ui/</code>. Counts come from <code>docs/inventory/data/ui_inventory.json</code> (203 files under <code>ui/src/</code>: 135 non-test, 68 test; ~23.4k non-test LOC, ~16.1k test LOC as reported by the extractor; LOC = extractor's count, not <code>wc -l</code>). "Prod importers" = distinct non-test files importing the module; "test importers" = distinct test files importing it directly (indirect coverage via a parent render is not counted).</p>
+<section id="s4" class="scroll-mt-8 mb-16"><div class="mb-8"><div class="text-micro font-mono uppercase tracking-widest text-el-ink-muted mb-2">Section 4</div><h2 class="text-3xl font-display text-el-ink pb-4 border-b border-el-divider">Frontend — ARP Console (React UI)</h2></div><p>Source of truth: <code>origin/main</code> @ <code>c3b2d328</code> (clean worktree <code>C:/tmp/arp-main-inventory</code>). UI root: <code>agentic-workflows-v2/ui/</code>. Counts come from <code>docs/inventory/data/ui_inventory.json</code> (203 files under <code>ui/src/</code>: 135 non-test, 68 test; ~23.4k non-test LOC, ~16.1k test LOC as reported by the extractor; LOC = extractor's count, not <code>wc -l</code>). "Prod importers" = distinct non-test files importing the module; "test importers" = distinct test files importing it directly (indirect coverage via a parent render is not counted).</p>
 <h3>4.1 Stack and build</h3>
 <div class="tbl"><table>
 <thead>
@@ -8551,7 +8551,7 @@ uv run --no-project --with markdown python scripts/inventory/render_html.py
 </tr>
 </tbody>
 </table></div></section>
-<section id="s5" class="scroll-mt-8 mb-16"><div class="mb-8"><div class="text-micro font-mono uppercase tracking-widest text-el-ink-muted mb-2">Section 5</div><h2 class="text-3xl font-display text-el-ink pb-4 border-b border-el-divider">Workflows, prompts, agents, evaluation &amp; shared tools</h2></div><p>Source of truth: clean <code>origin/main</code> worktree at revision <code>c3b2d328</code> (<code>../arp-main-inventory</code>). All paths are repo-relative. Static-analysis columns (importers, test refs, orphan flags) come from <code>docs/inventory/data/py_inventory.json</code>; every orphan/"broken" claim below was re-checked by grep or by an import run against the clean tree (read-only, <code>PYTHONDONTWRITEBYTECODE=1</code>). Anything not re-checked is marked "(unverified)".</p>
+<section id="s5" class="scroll-mt-8 mb-16"><div class="mb-8"><div class="text-micro font-mono uppercase tracking-widest text-el-ink-muted mb-2">Section 5</div><h2 class="text-3xl font-display text-el-ink pb-4 border-b border-el-divider">Workflows, prompts, agents, evaluation &amp; shared tools</h2></div><p>Source of truth: clean <code>origin/main</code> worktree at revision <code>c3b2d328</code> (<code>C:/tmp/arp-main-inventory</code>). All paths are repo-relative. Static-analysis columns (importers, test refs, orphan flags) come from <code>docs/inventory/data/py_inventory.json</code>; every orphan/"broken" claim below was re-checked by grep or by an import run against the clean tree (read-only, <code>PYTHONDONTWRITEBYTECODE=1</code>). Anything not re-checked is marked "(unverified)".</p>
 <h3>5.0 Section summary</h3>
 <div class="tbl"><table>
 <thead>
@@ -9971,7 +9971,7 @@ uv run --no-project --with markdown python scripts/inventory/render_html.py
 </tr>
 </tbody>
 </table></div></section>
-<section id="s6" class="scroll-mt-8 mb-16"><div class="mb-8"><div class="text-micro font-mono uppercase tracking-widest text-el-ink-muted mb-2">Section 6</div><h2 class="text-3xl font-display text-el-ink pb-4 border-b border-el-divider">Build, CI/CD, infrastructure &amp; operations</h2></div><p>Basis: clean worktree <code>../arp-main-inventory</code> at <code>c3b2d328</code> (origin/main). Workflow metadata cross-checked against <code>docs/inventory/data/meta_inventory.json</code>. "Blocks PRs" is inferred from triggers, job wiring and <code>continue-on-error</code>. Branch-protection and required-check settings are not stored in the repo, so any claim about them is marked (unverified).</p>
+<section id="s6" class="scroll-mt-8 mb-16"><div class="mb-8"><div class="text-micro font-mono uppercase tracking-widest text-el-ink-muted mb-2">Section 6</div><h2 class="text-3xl font-display text-el-ink pb-4 border-b border-el-divider">Build, CI/CD, infrastructure &amp; operations</h2></div><p>Basis: clean worktree <code>C:/tmp/arp-main-inventory</code> at <code>c3b2d328</code> (origin/main). Workflow metadata cross-checked against <code>docs/inventory/data/meta_inventory.json</code>. "Blocks PRs" is inferred from triggers, job wiring and <code>continue-on-error</code>. Branch-protection and required-check settings are not stored in the repo, so any claim about them is marked (unverified).</p>
 <h3>6.1 CI workflows</h3>
 <p>18 files in <code>.github/workflows/</code> (paths are repo-relative).</p>
 <div class="tbl"><table>
@@ -10673,7 +10673,7 @@ uv run --no-project --with markdown python scripts/inventory/render_html.py
 <li><code>mkdocs.yml</code>: <code>site_url</code> <code>https://tafreeman.github.io/agentic-runtime-platform/</code>. <code>docs_dir</code> is the default <code>docs/</code>. All 60 <code>.md</code> nav entries exist under <code>docs/</code> (checked by script). Three extra stylesheets (<code>tokens.css</code>, <code>console.css</code>, <code>landing.css</code>).</li>
 <li><code>exclude_docs</code> removes <code>OWASP_LLM_THREAT_MODEL.md</code> because of broken <code>docs/</code>-prefixed links (comment in <code>mkdocs.yml</code>).</li>
 <li>Two workflows publish to Pages with <code>gh-deploy --force</code>: <code>docs.yml</code> and <code>load-report-pages.yml</code>. Both build the full site, so they overwrite each other's output (observed design, not tested).</li>
-<li><code>site/</code> exists in the user checkout (<code>&lt;workspace&gt;/agentic-runtime-platform/site/</code>) but not in the clean worktree. Treat it as a local build output (its <code>.gitignore</code> status is unverified).</li>
+<li><code>site/</code> exists in the user checkout (<code>C:/Users/tandf/source/agentic-runtime-platform/site/</code>) but not in the clean worktree. Treat it as a local build output (its <code>.gitignore</code> status is unverified).</li>
 </ul>
 <h3>6.9 Stale, dead and inconsistent items</h3>
 <div class="tbl"><table>
@@ -10772,7 +10772,7 @@ uv run --no-project --with markdown python scripts/inventory/render_html.py
 </tr>
 </tbody>
 </table></div></section>
-<section id="s7" class="scroll-mt-8 mb-16"><div class="mb-8"><div class="text-micro font-mono uppercase tracking-widest text-el-ink-muted mb-2">Section 7</div><h2 class="text-3xl font-display text-el-ink pb-4 border-b border-el-divider">Folder-by-folder inventory</h2></div><p><strong>Basis.</strong> Committed facts come from the clean <code>origin/main</code> worktree (<code>../arp-main-inventory</code>, rev <code>c3b2d328</code>) via <code>data/fs_inventory.json</code>. Local-only facts come from the live checkout (branch <code>relock-382</code>) via <code>data/fs_local_checkout.json</code>. Sizes are KB on disk. "Stale" means last commit older than 90 days, and it describes age, not disuse. Nothing under <code>node_modules/</code>, <code>.venv/</code>, <code>.git/</code>, <code>.mypy_cache/</code> or <code>.cache/</code> was recursed into. Where the JSON reports no size for those, the cell says "not measured".</p>
+<section id="s7" class="scroll-mt-8 mb-16"><div class="mb-8"><div class="text-micro font-mono uppercase tracking-widest text-el-ink-muted mb-2">Section 7</div><h2 class="text-3xl font-display text-el-ink pb-4 border-b border-el-divider">Folder-by-folder inventory</h2></div><p><strong>Basis.</strong> Committed facts come from the clean <code>origin/main</code> worktree (<code>C:/tmp/arp-main-inventory</code>, rev <code>c3b2d328</code>) via <code>data/fs_inventory.json</code>. Local-only facts come from the live checkout (branch <code>relock-382</code>) via <code>data/fs_local_checkout.json</code>. Sizes are KB on disk. "Stale" means last commit older than 90 days, and it describes age, not disuse. Nothing under <code>node_modules/</code>, <code>.venv/</code>, <code>.git/</code>, <code>.mypy_cache/</code> or <code>.cache/</code> was recursed into. Where the JSON reports no size for those, the cell says "not measured".</p>
 <h3>7.1 Top-level map (committed and local-only)</h3>
 <p>Committed rows show origin/main sizes. Local-only rows show live-checkout sizes. The live <code>tools/</code>, <code>agentic-workflows-v2/</code>, <code>docs/</code> and <code>proofs/</code> rows are larger than origin because ignored or untracked subtrees sit inside tracked folders (see 7.3).</p>
 <div class="tbl"><table>
@@ -12303,7 +12303,7 @@ uv run --no-project --with markdown python scripts/inventory/render_html.py
 <tr>
 <td><code>evidence-ledger-design-system.zip</code></td>
 <td>Not at repo root</td>
-<td>Two copies sit in <code>&lt;downloads&gt;/</code> (<code>evidence-ledger-design-system.zip</code> and <code>_1.zip</code>). The task brief expected a root copy, which does not exist</td>
+<td>Two copies sit in <code>C:/Users/tandf/Downloads/</code> (<code>evidence-ledger-design-system.zip</code> and <code>_1.zip</code>). The task brief expected a root copy, which does not exist</td>
 <td>Keep one copy outside the repo, or delete the duplicates after review</td>
 </tr>
 <tr>
@@ -12359,7 +12359,7 @@ uv run --no-project --with markdown python scripts/inventory/render_html.py
 </tbody>
 </table></div>
 <p>Ignored-but-present items inside tracked folders are covered in 7.3. The git status snapshot also lists four modified tracked files (<code>.env.example</code>, <code>.gitignore</code>, <code>tools/llm/probe_config.py</code>, <code>tools/llm/probe_discovery_providers.py</code>). Those are edits, not untracked work.</p></section>
-<section id="s8" class="scroll-mt-8 mb-16"><div class="mb-8"><div class="text-micro font-mono uppercase tracking-widest text-el-ink-muted mb-2">Section 8</div><h2 class="text-3xl font-display text-el-ink pb-4 border-b border-el-divider">Documentation &amp; architecture decision records</h2></div><p>Source of truth: clean <code>origin/main</code> worktree at <code>../arp-main-inventory</code>, revision <code>c3b2d328</code>. Ages are days since last commit, measured against 2026-10-12. Line counts are from <code>docs/inventory/data/meta_inventory.json</code>. Read-only audit; nothing in the worktree was modified.</p>
+<section id="s8" class="scroll-mt-8 mb-16"><div class="mb-8"><div class="text-micro font-mono uppercase tracking-widest text-el-ink-muted mb-2">Section 8</div><h2 class="text-3xl font-display text-el-ink pb-4 border-b border-el-divider">Documentation &amp; architecture decision records</h2></div><p>Source of truth: clean <code>origin/main</code> worktree at <code>C:/tmp/arp-main-inventory</code>, revision <code>c3b2d328</code>. Ages are days since last commit, measured against 2026-10-12. Line counts are from <code>docs/inventory/data/meta_inventory.json</code>. Read-only audit; nothing in the worktree was modified.</p>
 <p>Status legend: <strong>Current</strong> (no contrary evidence found), <strong>Aging</strong> (75-90 days, fast-moving area), <strong>Stale &gt;90d</strong> (age over 90 days), <strong>Stale content</strong> (text contradicts code, CI or an ADR regardless of age), <strong>Duplicate</strong> (copy or mirror of another doc), <strong>Stub</strong> (redirect or pointer only), <strong>Broken link</strong>, <strong>Working note</strong> (agent or process artifact, not reference material), <strong>Orphan</strong> (builds under mkdocs but is not in <code>nav</code>).</p>
 <h3>8.1 Documentation map</h3>
 <p>Counts: 205 markdown files are in the tree (excluding <code>node_modules</code>, <code>.venv</code>, <code>_audit</code>). Excluded from this map: <code>agentic_v2/prompts/*.md</code> (LLM prompt payloads, not docs), <code>.claude/rules/*.md</code> (agent rules, listed under process), and <code>docs/adr/</code> (covered in 8.5).</p>
@@ -14153,7 +14153,7 @@ uv run --no-project --with markdown python scripts/inventory/render_html.py
 <td>Evidence Ledger screen restyle (existing screens re-themed)</td>
 <td><code>feature/el_screen_restyle</code> @ <code>1d28dce3</code>, no PR</td>
 <td>+466 / -551, 36 files; 15 commits behind main</td>
-<td>Pushed, worktree <code>&lt;codex-home&gt;/worktrees/evidence-ledger-ui/agentic-runtime-platform</code>. Stacked on #388 (carries its commits <code>a9ba66a3</code>, <code>9ad6bca3</code>, <code>1572d32a</code>)</td>
+<td>Pushed, worktree <code>C:/Users/tandf/.codex/worktrees/evidence-ledger-ui/agentic-runtime-platform</code>. Stacked on #388 (carries its commits <code>a9ba66a3</code>, <code>9ad6bca3</code>, <code>1572d32a</code>)</td>
 <td>Hold until #388 merges, rebase, open PR</td>
 </tr>
 <tr>
@@ -14167,7 +14167,7 @@ uv run --no-project --with markdown python scripts/inventory/render_html.py
 <td><code>app_improvement_review</code> workflow (evidence-based app review)</td>
 <td><code>feature/app_improvement_review</code> / #390</td>
 <td>+639 / -2, 8 files; 3 commits (<code>65890f36</code>, <code>57a8c879</code>, <code>adddb23f</code>)</td>
-<td>OPEN, BLOCKED; branch is 0 behind main. Worktree <code>&lt;tmp&gt;/arp-appreview</code></td>
+<td>OPEN, BLOCKED; branch is 0 behind main. Worktree <code>C:/tmp/arp-appreview</code></td>
 <td>Review + merge; confirm shipped-workflow gate registration (commit <code>57a8c879</code>)</td>
 </tr>
 <tr>
@@ -14186,7 +14186,7 @@ uv run --no-project --with markdown python scripts/inventory/render_html.py
 </tr>
 <tr>
 <td>Tech-debt delivery plan G0–G7</td>
-<td><code>docs/tech_debt_plans</code> @ <code>8e61318c</code> in <code>&lt;tmp&gt;/arp-plans</code>, 1 commit ahead of main, unpushed, no PR</td>
+<td><code>docs/tech_debt_plans</code> @ <code>8e61318c</code> in <code>C:/tmp/arp-plans</code>, 1 commit ahead of main, unpushed, no PR</td>
 <td>+460, 4 docs (<code>docs/plans/2026-09-10-tech-debt-workflow.md</code> + 3 addenda)</td>
 <td>Planning docs only; the plan itself says "does not assert that the planned changes ... have completed"</td>
 <td>Push + PR the docs (small), then start G0 baseline reconciliation</td>
@@ -14292,7 +14292,7 @@ uv run --no-project --with markdown python scripts/inventory/render_html.py
 </tr>
 <tr>
 <td><code>fix/langgraph_fanin_join</code></td>
-<td>local + origin + worktree <code>&lt;tmp&gt;/arp-fanin</code></td>
+<td>local + origin + worktree <code>C:/tmp/arp-fanin</code></td>
 <td>content merged as #387 (squash; branch still shows <code>ahead 1</code> of main by SHA)</td>
 <td><strong>delete</strong> branch + worktree</td>
 </tr>
@@ -14304,13 +14304,13 @@ uv run --no-project --with markdown python scripts/inventory/render_html.py
 </tr>
 <tr>
 <td><code>chore/ignore_docs_ui_scratch</code></td>
-<td>local + origin + worktree <code>&lt;tmp&gt;/arp-chore</code></td>
+<td>local + origin + worktree <code>C:/tmp/arp-chore</code></td>
 <td>#389 open</td>
 <td>keep until merged</td>
 </tr>
 <tr>
 <td><code>feature/app_improvement_review</code></td>
-<td>local + origin + worktree <code>&lt;tmp&gt;/arp-appreview</code></td>
+<td>local + origin + worktree <code>C:/tmp/arp-appreview</code></td>
 <td>#390 open</td>
 <td>keep until merged</td>
 </tr>
@@ -14322,13 +14322,13 @@ uv run --no-project --with markdown python scripts/inventory/render_html.py
 </tr>
 <tr>
 <td><code>feature/criterion_aggregation</code></td>
-<td>local + origin + worktree <code>&lt;workspace&gt;/agentic-runtime-platform-f5-f6</code></td>
+<td>local + origin + worktree <code>C:/Users/tandf/source/agentic-runtime-platform-f5-f6</code></td>
 <td>see §9.2</td>
 <td>keep</td>
 </tr>
 <tr>
 <td><code>docs/tech_debt_plans</code></td>
-<td>local + worktree <code>&lt;tmp&gt;/arp-plans</code></td>
+<td>local + worktree <code>C:/tmp/arp-plans</code></td>
 <td>unpushed</td>
 <td>push or discard</td>
 </tr>
@@ -14358,7 +14358,7 @@ uv run --no-project --with markdown python scripts/inventory/render_html.py
 </tr>
 </tbody>
 </table></div>
-<p>Already cleaned during this session (listed in the brief, no longer present): local branches and worktrees for <code>fix/secret_mask_json</code> (#380), <code>fix/review_report_extraction</code> (#377), <code>fix/fullstack_rework</code> (#379), <code>fix/retire-github-models</code> (#378), <code>fix/nvidia-deepseek-v4-eol</code> (#376), <code>fix/nvidia-llama-31-8b-eol</code> (#375), and <code>.claude/worktrees/{deepseek-v4-eol,epic-yonath-0c6f8e}</code>, <code>&lt;workspace&gt;/arp-model-pack-builder</code>, copilot worktrees — <code>git worktree list</code> at write time shows none of them. Verified with <code>git branch --list</code> (empty for the three <code>fix/*</code> names checked).</p>
+<p>Already cleaned during this session (listed in the brief, no longer present): local branches and worktrees for <code>fix/secret_mask_json</code> (#380), <code>fix/review_report_extraction</code> (#377), <code>fix/fullstack_rework</code> (#379), <code>fix/retire-github-models</code> (#378), <code>fix/nvidia-deepseek-v4-eol</code> (#376), <code>fix/nvidia-llama-31-8b-eol</code> (#375), and <code>.claude/worktrees/{deepseek-v4-eol,epic-yonath-0c6f8e}</code>, <code>C:/Users/tandf/source/arp-model-pack-builder</code>, copilot worktrees — <code>git worktree list</code> at write time shows none of them. Verified with <code>git branch --list</code> (empty for the three <code>fix/*</code> names checked).</p>
 <h4>Worktrees (9 live)</h4>
 <div class="tbl"><table>
 <thead>
@@ -14370,47 +14370,47 @@ uv run --no-project --with markdown python scripts/inventory/render_html.py
 </thead>
 <tbody>
 <tr>
-<td><code>&lt;workspace&gt;/agentic-runtime-platform</code></td>
+<td><code>C:/Users/tandf/source/agentic-runtime-platform</code></td>
 <td><code>feature/evidence_ledger_port</code></td>
 <td>primary checkout; dirty (see below)</td>
 </tr>
 <tr>
-<td><code>&lt;tmp&gt;/arp-appreview</code></td>
+<td><code>C:/tmp/arp-appreview</code></td>
 <td><code>feature/app_improvement_review</code></td>
 <td>keep until #390 merges</td>
 </tr>
 <tr>
-<td><code>&lt;tmp&gt;/arp-chore</code></td>
+<td><code>C:/tmp/arp-chore</code></td>
 <td><code>chore/ignore_docs_ui_scratch</code></td>
 <td>keep until #389 merges</td>
 </tr>
 <tr>
-<td><code>&lt;tmp&gt;/arp-el-port</code></td>
+<td><code>C:/tmp/arp-el-port</code></td>
 <td>detached <code>74123cb4</code> (merge of main into #388 head)</td>
 <td><strong>remove</strong> — redundant with the live checkout</td>
 </tr>
 <tr>
-<td><code>&lt;tmp&gt;/arp-fanin</code></td>
+<td><code>C:/tmp/arp-fanin</code></td>
 <td><code>fix/langgraph_fanin_join</code></td>
 <td><strong>remove</strong> — #387 merged</td>
 </tr>
 <tr>
-<td><code>../arp-main-inventory</code></td>
+<td><code>C:/tmp/arp-main-inventory</code></td>
 <td>detached <code>c3b2d328</code></td>
 <td>remove after the inventory is finished</td>
 </tr>
 <tr>
-<td><code>&lt;tmp&gt;/arp-plans</code></td>
+<td><code>C:/tmp/arp-plans</code></td>
 <td><code>docs/tech_debt_plans</code></td>
 <td>keep (unpushed work)</td>
 </tr>
 <tr>
-<td><code>&lt;codex-home&gt;/worktrees/evidence-ledger-ui/agentic-runtime-platform</code></td>
+<td><code>C:/Users/tandf/.codex/worktrees/evidence-ledger-ui/agentic-runtime-platform</code></td>
 <td><code>feature/el_screen_restyle</code></td>
 <td>keep; owned by Codex</td>
 </tr>
 <tr>
-<td><code>&lt;workspace&gt;/agentic-runtime-platform-f5-f6</code></td>
+<td><code>C:/Users/tandf/source/agentic-runtime-platform-f5-f6</code></td>
 <td><code>feature/criterion_aggregation</code></td>
 <td>keep</td>
 </tr>
@@ -14463,7 +14463,7 @@ uv run --no-project --with markdown python scripts/inventory/render_html.py
 <h4>Stashes: 3 (see §9.2).</h4>
 <hr />
 <h3>9.4 Code-level debt markers</h3>
-<p>Method: <code>grep -rnE "\b(TODO|FIXME|XXX|HACK|DEPRECATED)\b"</code> over <code>py/ts/tsx/yaml/yml/lean</code> in <code>../arp-main-inventory</code> (excluding <code>node_modules</code>, <code>.venv</code>, <code>docs/</code>, <code>*.generated.*</code>). <code>py_inventory.json</code> <code>modules[].markers</code> reports only the one TODO; the grep widened the scope to YAML, TSX and string literals and found the rest — all but one are not actionable debt.</p>
+<p>Method: <code>grep -rnE "\b(TODO|FIXME|XXX|HACK|DEPRECATED)\b"</code> over <code>py/ts/tsx/yaml/yml/lean</code> in <code>C:/tmp/arp-main-inventory</code> (excluding <code>node_modules</code>, <code>.venv</code>, <code>docs/</code>, <code>*.generated.*</code>). <code>py_inventory.json</code> <code>modules[].markers</code> reports only the one TODO; the grep widened the scope to YAML, TSX and string literals and found the rest — all but one are not actionable debt.</p>
 <h4>Summary</h4>
 <div class="tbl"><table>
 <thead>
@@ -14769,7 +14769,7 @@ uv run --no-project --with markdown python scripts/inventory/render_html.py
 <p><code>CHANGELOG.md</code> has <strong>seven consecutive <code>## Unreleased - ...</code> headings</strong> (L3-L176): secret masks (#380), GitHub Models retirement (#378), DeepSeek V4 retirement (#376), reviewer reports (#377), fullstack rework (#379), NIM tier-1 retirement (#375), Mistral provider, UI design guardrails. There is no <code>[Unreleased]</code> section header; the file's 0.3.0 → 0.4.0-rc.1 cut has not been made since 2026-07-14. A release-cut task is implicit: collapse these into a version heading.</p>
 <hr />
 <h3>9.6 Cross-repo follow-ups (open items touching ARP)</h3>
-<p>Sources: <code>&lt;workspace&gt;/_audit/remediation-progress-2026-09-23.md</code> (newest remediation file; <code>remediation-progress-2026-08-04.md</code> and <code>-07-25.md</code> older), <code>net-new-triage-revalidation-2026-08-09.md</code>, <code>net-new-sweep-2026-07-25.md</code>. The newest net-new file is the 2026-08-09 revalidation; no newer dated file exists.</p>
+<p>Sources: <code>C:/Users/tandf/source/_audit/remediation-progress-2026-09-23.md</code> (newest remediation file; <code>remediation-progress-2026-08-04.md</code> and <code>-07-25.md</code> older), <code>net-new-triage-revalidation-2026-08-09.md</code>, <code>net-new-sweep-2026-07-25.md</code>. The newest net-new file is the 2026-08-09 revalidation; no newer dated file exists.</p>
 <div class="tbl"><table>
 <thead>
 <tr>

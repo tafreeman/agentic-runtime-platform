@@ -196,8 +196,11 @@ def _usage(
         m["imported_by"] = sorted(users)
         stem = name.rsplit(".", 1)[-1]
         m["test_refs"] = sorted(p for p, t in test_texts.items() if name in t)[:8]
-        # string references catch importlib/entry-point/registry wiring
-        m["string_refs"] = all_text.count(name) - 1
+        # string references catch importlib/entry-point/registry wiring. Remove
+        # only the module's own mentions; a module that never names itself keeps
+        # its full count, so a single real reference is not turned into zero.
+        own = read_text(REPO / str(m["path"])) if m.get("path") else ""
+        m["string_refs"] = all_text.count(name) - own.count(name)
         is_test = ".tests" in name or stem.startswith(("test_", "conftest"))
         m["is_test"] = is_test
         m["orphan_candidate"] = (
@@ -222,7 +225,14 @@ def main() -> None:
             modules.append(info)
     test_paths = [p for p in files if p.endswith(".py") and p.startswith(TEST_ROOTS)]
     test_texts = {p: read_text(REPO / p) for p in test_paths}
-    extra = [p for p in files if p.endswith((".py", ".toml", ".yaml", ".yml", ".md"))]
+    # Generated reports describe previous results; counting them would make
+    # each rerun change the analysis it is reporting on.
+    extra = [
+        p
+        for p in files
+        if p.endswith((".py", ".toml", ".yaml", ".yml", ".md"))
+        and not p.startswith("docs/inventory/")
+    ]
     all_text = "\n".join(read_text(REPO / p) for p in extra)
     _usage(modules, test_texts, all_text)
 
