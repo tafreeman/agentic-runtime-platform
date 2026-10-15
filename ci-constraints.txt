@@ -49,7 +49,7 @@ attrs==26.1.0
     #   aiohttp
     #   jsonschema
     #   referencing
-black==26.5.1
+black==26.10.1
     # via agentic-workflows-v2
 cachetools==7.2.0
     # via agentic-workflows-v2
