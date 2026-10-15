@@ -1,6 +1,6 @@
 ## 3. Interfaces — HTTP/WebSocket API, CLI, contracts, configuration
 
-Source of truth: clean `origin/main` worktree at revision `c3b2d328` (`C:/tmp/arp-main-inventory`). All paths are repo-relative. `S/` = `agentic-workflows-v2/agentic_v2/server/`, `R/` = `agentic-workflows-v2/agentic_v2/server/routes/`.
+Source of truth: clean `origin/main` worktree at revision `c3b2d328` (`../arp-main-inventory`). All paths are repo-relative. `S/` = `agentic-workflows-v2/agentic_v2/server/`, `R/` = `agentic-workflows-v2/agentic_v2/server/routes/`.
 
 ### 3.1 HTTP API surface
 
@@ -339,7 +339,7 @@ All other `.env.example` keys are consumed, either by direct `os.environ` reads 
 | `CLAUDE_API_KEY`, `ANTHROPIC_API_KEY_0`, `AZURE_FOUNDRY_ENDPOINT_2`, `OLLAMA_TIMEOUT_SECONDS`, `PROMPTS_GH_RATE_LIMIT_STRATEGY` | `tools/llm/*` | Root `tools/` package only (provider adapters / limit checks) |
 | `PROMPTEVAL_ALLOW_REMOTE`, `PROMPTS_CACHE_ENABLED`, `GEN_MODEL`, `REF_MODEL`, `REV_MODEL`, `PYTHONIOENCODING` | `tools/core/*`, `tools/llm/llm_client.py` | Root `tools/` package only |
 
-Documentation-adjacent gaps among documented keys: `.env.example` documents `OLLAMA_HOST`, `OLLAMA_API_KEY`, `LMSTUDIO_HOST`, `LM_API_TOKEN`, `DIGITALOCEAN_TOKEN`, `GITHUB_TOKEN`; their readers go through provider tables and `get_secret`, not literal `os.environ` calls, so they were not re-verified one by one (unverified).
+Documentation-adjacent gaps among documented keys: `.env.example` documents `OLLAMA_HOST`, `OLLAMA_API_KEY`, `LMSTUDIO_HOST`, `LM_API_TOKEN`, `DIGITALOCEAN_TOKEN`, `GITHUB_TOKEN`; their readers go through provider tables and `get_secret`, not literal `os.environ` calls, so they were not re-verified one by one (unverified). <!-- pragma: allowlist secret -->
 
 Operational toggles worth knowing (all documented): `AGENTIC_API_KEY` (auth on/off), `AGENTIC_NO_LLM=1` (deterministic placeholder model, supported no-key baseline), `AGENTIC_DEFAULT_ADAPTER`, `AGENTIC_RATE_LIMIT_*`, `AGENTIC_SANITIZER_FAIL_OPEN`, `AGENTIC_REGISTRY_STRICT`, `AGENTIC_STRICT_MODEL_VERIFY`, `AGENTIC_SHELL_ALLOWED_COMMANDS`, `AGENTIC_TRUSTED_MODEL_HASHES`.
 

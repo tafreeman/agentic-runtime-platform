@@ -3221,13 +3221,13 @@
       }
     ],
     "worktrees": [
-      "C:/Users/tandf/source/agentic-runtime-platform                              3dbfae10 [feature/evidence_ledger_port]",
-      "C:/tmp/arp-appreview                                                        adddb23f [feature/app_improvement_review]",
-      "C:/tmp/arp-main-inventory                                                   c3b2d328 (detached HEAD)",
-      "C:/tmp/arp-plans                                                            8e61318c [docs/tech_debt_plans]",
-      "C:/tmp/arp-restyle                                                          a5fba9de (detached HEAD)",
-      "C:/Users/tandf/.codex/worktrees/evidence-ledger-ui/agentic-runtime-platform 1d28dce3 [feature/el_screen_restyle]",
-      "C:/Users/tandf/source/agentic-runtime-platform-f5-f6                        a6ee2520 [feature/criterion_aggregation]"
+      "<workspace>/agentic-runtime-platform                              3dbfae10 [feature/evidence_ledger_port]",
+      "<tmp>/arp-appreview                                                        adddb23f [feature/app_improvement_review]",
+      "../arp-main-inventory                                                   c3b2d328 (detached HEAD)",
+      "<tmp>/arp-plans                                                            8e61318c [docs/tech_debt_plans]",
+      "<tmp>/arp-restyle                                                          a5fba9de (detached HEAD)",
+      "<codex-home>/worktrees/evidence-ledger-ui/agentic-runtime-platform 1d28dce3 [feature/el_screen_restyle]",
+      "<workspace>/agentic-runtime-platform-f5-f6                        a6ee2520 [feature/criterion_aggregation]"
     ],
     "stash_count": 3,
     "open_prs": [

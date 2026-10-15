@@ -1,8 +1,9 @@
 """Run every inventory extractor and print a one-screen digest.
 
-Usage (inventory a clean origin/main worktree, write JSON into this checkout):
-    git worktree add --detach C:/tmp/arp-main-inventory origin/main
-    ARP_INVENTORY_REPO=C:/tmp/arp-main-inventory python scripts/inventory/run_all.py
+Usage (inventory a clean origin/main worktree, write JSON into this
+checkout):     git worktree add --detach ../arp-main-inventory
+origin/main     ARP_INVENTORY_REPO=../arp-main-inventory python
+scripts/inventory/run_all.py
 """
 
 from __future__ import annotations

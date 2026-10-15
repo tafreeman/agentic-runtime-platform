@@ -70,8 +70,9 @@ TONE_CLS = {
 EXTRA_HEAD = (
     "<style>{css}</style>\n"
     '<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js" '
-    'integrity="sha384-WmdflGW9aGfoBdHc4rRyWzYuAjEmDwMdGdiPNacbwfGKxBW/SO6guzuQ76qjnSlr" '
-    'crossorigin="anonymous"></script>\n'
+    'integrity="sha384-WmdflGW9aGfoBdHc4rRyWzYuAjEmDwMdGdiPNacbwfGKxBW/SO6guzuQ76qjnSlr" '  # pragma: allowlist secret
+    # SRI hash, not a secret; the comment keeps detect-secrets quiet on the output.
+    'crossorigin="anonymous"></script><!-- pragma: allowlist secret -->\n'
     '<script>document.addEventListener("DOMContentLoaded",()=>{{'
     'const dark=document.documentElement.dataset.theme==="dark";'
     'mermaid.initialize({{startOnLoad:true,theme:dark?"dark":"neutral",'

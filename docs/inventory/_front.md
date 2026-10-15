@@ -58,8 +58,8 @@ A tier-routed, multi-agent LLM workflow runtime. YAML workflows compile to a DAG
 All counts come from scripts committed alongside this document. Re-run them against a fresh `origin/main` worktree:
 
 ```bash
-git worktree add --detach C:/tmp/arp-main-inventory origin/main
-ARP_INVENTORY_REPO=C:/tmp/arp-main-inventory .venv/Scripts/python.exe scripts/inventory/run_all.py
+git worktree add --detach ../arp-main-inventory origin/main
+ARP_INVENTORY_REPO=../arp-main-inventory .venv/Scripts/python.exe scripts/inventory/run_all.py
 .venv/Scripts/python.exe scripts/inventory/assemble.py
 uv run --no-project --with markdown python scripts/inventory/render_html.py
 ```

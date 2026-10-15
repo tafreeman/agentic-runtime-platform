@@ -1,6 +1,6 @@
 ## 5. Workflows, prompts, agents, evaluation & shared tools
 
-Source of truth: clean `origin/main` worktree at revision `c3b2d328` (`C:/tmp/arp-main-inventory`). All paths are repo-relative. Static-analysis columns (importers, test refs, orphan flags) come from `docs/inventory/data/py_inventory.json`; every orphan/"broken" claim below was re-checked by grep or by an import run against the clean tree (read-only, `PYTHONDONTWRITEBYTECODE=1`). Anything not re-checked is marked "(unverified)".
+Source of truth: clean `origin/main` worktree at revision `c3b2d328` (`../arp-main-inventory`). All paths are repo-relative. Static-analysis columns (importers, test refs, orphan flags) come from `docs/inventory/data/py_inventory.json`; every orphan/"broken" claim below was re-checked by grep or by an import run against the clean tree (read-only, `PYTHONDONTWRITEBYTECODE=1`). Anything not re-checked is marked "(unverified)".
 
 ### 5.0 Section summary
 
