@@ -44,6 +44,16 @@ jobs:
             -m "not integration and not slow" \
             --ignore=tests/e2e \
             -x --timeout=120 2>&1 | tail -30
+      - name: Pytest swe_ab tool tests
+        # The A/B kit's tool tests live beside the scripts in evals/swe_ab/tools,
+        # so pytest's rootdir insertion puts tools/ on sys.path the way the
+        # scripts import each other. They are outside the runtime's `tests/`
+        # path above and ran nowhere in CI before this step. Offline: docker and
+        # the datasets loader are faked.
+        run: |
+          set -euo pipefail
+          cd agentic-workflows-v2/evals/swe_ab
+          python -m pytest tools -q --timeout=120 2>&1 | tail -30
 
   frontend-build:
     runs-on: ubuntu-latest
