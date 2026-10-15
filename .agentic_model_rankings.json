@@ -1,0 +1,477 @@
+{
+  "status": "ready",
+  "ranked_with": "gemini:gemini-2.5-flash",
+  "grounded": true,
+  "updated_at": "2026-07-13T06:46:07.309696+00:00",
+  "error": null,
+  "families": {
+    "gliner-pii": {
+      "score": 10,
+      "reasoning": "No public benchmark presence found for agentic coding workflows."
+    },
+    "glm-4.7": {
+      "score": 75,
+      "reasoning": "Strong open-source model for agentic coding, 73.8% on SWE-bench, 41% on Terminal-Bench 2.0, optimized for long-horizon tasks."
+    },
+    "glm-5": {
+      "score": 85,
+      "reasoning": "Significant improvement over GLM-4.7, best-in-class open-source on reasoning, coding, and agentic tasks, 77.8% SWE-Bench Verified."
+    },
+    "glm-5.1": {
+      "score": 90,
+      "reasoning": "Flagship for agentic engineering, SOTA on SWE-Bench Pro (58.4%), leads GLM-5 on NL2Repo & Terminal-Bench 2.0."
+    },
+    "glm-5.2": {
+      "score": 95,
+      "reasoning": "Best open-weight model on coding/agentic benchmarks, 81.0 Terminal-Bench 2.1, 62.1 SWE-bench Pro, 1M context."
+    },
+    "gpt-4.1": {
+      "score": 70,
+      "reasoning": "Matches/outpaces previous OpenAI on coding benchmarks (52-54.6% SWE-bench), excels in agentic behavior, 1M token context."
+    },
+    "gpt-4.1-mini": {
+      "score": 55,
+      "reasoning": "Smaller variant of GPT-4.1, likely good for lightweight agentic tools, but specific coding benchmarks are limited."
+    },
+    "gpt-4.1-nano": {
+      "score": 50,
+      "reasoning": "Smallest GPT-4.1 variant, suitable for fast classification/autocompletion, limited agentic coding benchmarks."
+    },
+    "gpt-4o": {
+      "score": 65,
+      "reasoning": "General-purpose model with strong capabilities, but specific agentic coding benchmarks are less emphasized than newer models."
+    },
+    "gpt-4o-mini": {
+      "score": 60,
+      "reasoning": "Cost-effective, but specific agentic coding benchmarks for this variant are not prominently featured."
+    },
+    "gpt-4o-mini-search-preview": {
+      "score": 55,
+      "reasoning": "Preview version of mini with search, but no specific agentic coding benchmarks found."
+    },
+    "gpt-4o-search-preview": {
+      "score": 60,
+      "reasoning": "Preview version of 4o with search, but no specific agentic coding benchmarks found."
+    },
+    "gpt-5": {
+      "score": 88,
+      "reasoning": "Substantial leap in agentic task performance, coding, and tool use, 74.9% SWE-bench Verified."
+    },
+    "gpt-5-chat": {
+      "score": 80,
+      "reasoning": "Likely strong general agentic capabilities, but specific coding benchmarks for this chat variant are not distinct."
+    },
+    "gpt-5-mini": {
+      "score": 70,
+      "reasoning": "Expected to be a smaller, faster version of GPT-5, with reduced but still capable agentic coding performance."
+    },
+    "gpt-5-nano": {
+      "score": 65,
+      "reasoning": "Smallest GPT-5 variant, optimized for speed and cost, but agentic coding capabilities likely limited compared to full model."
+    },
+    "gpt-5.6-terra": {
+      "score": 92,
+      "reasoning": "New product built on GPT-5.6 and Codex technology, designed for autonomous complex projects for hours."
+    },
+    "gpt-5.6-terra-pro": {
+      "score": 93,
+      "reasoning": "Professional tier of GPT-5.6 Terra, likely enhanced for more demanding agentic coding workflows and scale."
+    },
+    "gpt-oss": {
+      "score": 68,
+      "reasoning": "Open-weight models (120b, 20b) with strong reasoning and agentic workflows, good tool use."
+    },
+    "gpt-oss-120b": {
+      "score": 72,
+      "reasoning": "Open-weight, outperforms o3-mini, matches/exceeds o4-mini on coding/agentic benchmarks, strong tool use."
+    },
+    "gpt-oss-20b": {
+      "score": 65,
+      "reasoning": "Open-weight, similar to o3-mini on benchmarks, runs on edge devices, strong tool use."
+    },
+    "granite-3.0-3b-a800m-instruct": {
+      "score": 15,
+      "reasoning": "No public benchmark presence found for agentic coding workflows."
+    },
+    "granite-3.0-8b-instruct": {
+      "score": 15,
+      "reasoning": "No public benchmark presence found for agentic coding workflows."
+    },
+    "granite-34b-code-instruct": {
+      "score": 20,
+      "reasoning": "No specific public benchmark presence found for agentic coding workflows, but 'code-instruct' suggests some capability."
+    },
+    "granite-8b-code-instruct": {
+      "score": 18,
+      "reasoning": "No specific public benchmark presence found for agentic coding workflows, but 'code-instruct' suggests some capability."
+    },
+    "grok-build-0.1": {
+      "score": 78,
+      "reasoning": "xAI's fast coding model for agentic workflows, 256K context, optimized for multi-step tasks."
+    },
+    "hermes-3-llama-3.1-405b": {
+      "score": 10,
+      "reasoning": "No public benchmark presence found for agentic coding workflows."
+    },
+    "hy3": {
+      "score": 10,
+      "reasoning": "No public benchmark presence found for agentic coding workflows."
+    },
+    "ising-calibration-1-35b-a3b": {
+      "score": 10,
+      "reasoning": "No public benchmark presence found for agentic coding workflows."
+    },
+    "jamba-1.5-large-instruct": {
+      "score": 10,
+      "reasoning": "No public benchmark presence found for agentic coding workflows."
+    },
+    "kimi-k2.5": {
+      "score": 70,
+      "reasoning": "MoE model with 1.04T parameters, strong on agentic benchmarks, 76% cheaper than Claude Opus."
+    },
+    "kimi-k2.6": {
+      "score": 90,
+      "reasoning": "Production agentic coding model, 262K context, 12-hour autonomous runs, SWE-Bench Pro 58.6%."
+    },
+    "kimi-k2.7-code": {
+      "score": 92,
+      "reasoning": "Expected to be an advancement over K2.6, specifically for coding, likely top-tier agentic performance."
+    },
+    "kosmos-2": {
+      "score": 10,
+      "reasoning": "No public benchmark presence found for agentic coding workflows."
+    },
+    "laguna-m.1": {
+      "score": 75,
+      "reasoning": "Flagship agentic coding model, 225B MoE, 256K context, competitive on SWE-bench Pro (49.2%)."
+    },
+    "laguna-xs-2.1": {
+      "score": 68,
+      "reasoning": "Smaller open-weight model (33B total, 3B active) for agentic coding, stands up against larger models."
+    },
+    "lfm-2.5-1.2b-instruct": {
+      "score": 10,
+      "reasoning": "No public benchmark presence found for agentic coding workflows."
+    },
+    "lfm-2.5-1.2b-thinking": {
+      "score": 10,
+      "reasoning": "No public benchmark presence found for agentic coding workflows."
+    },
+    "llama-3.1-70b-instruct": {
+      "score": 10,
+      "reasoning": "No specific public benchmark presence found for agentic coding workflows."
+    },
+    "llama-3.1-8b-instruct": {
+      "score": 10,
+      "reasoning": "No specific public benchmark presence found for agentic coding workflows."
+    },
+    "llama-3.1-nemoguard-8b-content-safety": {
+      "score": 10,
+      "reasoning": "Specialized safety model, not for general agentic coding workflows."
+    },
+    "llama-3.1-nemoguard-8b-topic-control": {
+      "score": 10,
+      "reasoning": "Specialized safety model, not for general agentic coding workflows."
+    },
+    "llama-3.1-nemotron-51b-instruct": {
+      "score": 65,
+      "reasoning": "NVIDIA Nemotron instruct models are generally capable, but specific coding benchmarks for this variant are limited."
+    },
+    "llama-3.1-nemotron-70b-instruct": {
+      "score": 68,
+      "reasoning": "NVIDIA Nemotron instruct models are generally capable, but specific coding benchmarks for this variant are limited."
+    },
+    "llama-3.1-nemotron-nano-8b-v1": {
+      "score": 40,
+      "reasoning": "Smaller 'nano' model, likely less capable for complex agentic coding tasks."
+    },
+    "llama-3.1-nemotron-nano-vl-8b-v1": {
+      "score": 45,
+      "reasoning": "Smaller 'nano' model with vision, but core coding for agentic tasks likely limited by size."
+    },
+    "llama-3.1-nemotron-safety-guard-8b-v3": {
+      "score": 10,
+      "reasoning": "Specialized safety model, not for general agentic coding workflows."
+    },
+    "llama-3.1-nemotron-ultra-253b-v1": {
+      "score": 80,
+      "reasoning": "NVIDIA's 'Ultra' model, Nemotron 3 Ultra is noted on Artificial Analysis Agentic Index."
+    },
+    "llama-3.2-11b-vision-instruct": {
+      "score": 60,
+      "reasoning": "Newer Llama 3.2 vision model, but 11B size suggests moderate coding capability for agentic tasks."
+    },
+    "llama-3.2-1b-instruct": {
+      "score": 25,
+      "reasoning": "Very small model, limited capability for complex agentic coding workflows."
+    },
+    "llama-3.2-3b-instruct": {
+      "score": 30,
+      "reasoning": "Small model, limited capability for complex agentic coding workflows."
+    },
+    "llama-3.2-90b-vision-instruct": {
+      "score": 75,
+      "reasoning": "Larger Llama 3.2 vision model, expected strong performance for agentic coding."
+    },
+    "llama-3.3-70b-instruct": {
+      "score": 85,
+      "reasoning": "Newer Llama 3.3 generation, 70B size suggests strong performance for agentic coding."
+    },
+    "llama-3.3-nemotron-super-49b-v1": {
+      "score": 70,
+      "reasoning": "NVIDIA Nemotron 'Super' variant, expected good performance for agentic coding."
+    },
+    "llama-3.3-nemotron-super-49b-v1.5": {
+      "score": 72,
+      "reasoning": "Incremental update to Nemotron 'Super' v1, expected slightly improved performance."
+    },
+    "llama-4-maverick-17b-128e-instruct": {
+      "score": 45,
+      "reasoning": "Mixed public benchmarks; Meta claims strong, but independent coding/agentic leaderboards show low performance."
+    },
+    "llama-4-maverick-17b-128e-instruct-fp8": {
+      "score": 42,
+      "reasoning": "FP8 quantized version of Maverick, slightly lower performance than base model on mixed benchmarks."
+    },
+    "llama-4-scout": {
+      "score": 40,
+      "reasoning": "Mixed public benchmarks; Meta claims strong, but independent coding/agentic leaderboards show very low performance."
+    },
+    "llama-4-scout-17b-16e-instruct": {
+      "score": 40,
+      "reasoning": "Mixed public benchmarks; Meta claims strong, but independent coding/agentic leaderboards show very low performance."
+    },
+    "llama-guard-4-12b": {
+      "score": 10,
+      "reasoning": "Specialized safety model, not for general agentic coding workflows."
+    },
+    "llama2-70b": {
+      "score": 55,
+      "reasoning": "Older generation, but still a capable model for general coding tasks."
+    },
+    "llama3-chatqa-1.5-70b": {
+      "score": 60,
+      "reasoning": "Specific Llama 3 variant; no direct public coding benchmarks found for agentic workflows."
+    },
+    "lyria-3-pro-preview": {
+      "score": 5,
+      "reasoning": "No public benchmark presence found for agentic coding workflows."
+    },
+    "meta-llama-3.1-405b-instruct": {
+      "score": 90,
+      "reasoning": "Flagship Llama 3.1 model, strong performance on coding and agentic benchmarks."
+    },
+    "meta-llama-3.1-8b-instruct": {
+      "score": 65,
+      "reasoning": "Capable smaller Llama 3.1 model, good for less complex agentic coding tasks."
+    },
+    "minimax-m2.1": {
+      "score": 85,
+      "reasoning": "Strong performance on SWE-bench Verified (74%) and agentic coding, excels in multilingual coding."
+    },
+    "minimax-m2.5": {
+      "score": 87,
+      "reasoning": "Builds on M2.1's coding expertise, strong intelligence and coding index scores."
+    },
+    "minimax-m2.7": {
+      "score": 88,
+      "reasoning": "Predecessor to M3, noted as already strong for agentic coding workflows."
+    },
+    "minimax-m3": {
+      "score": 95,
+      "reasoning": "Frontier coding and agentic capabilities, strong on SWE-Bench Pro and Terminal-Bench, competitive with top models."
+    },
+    "ministral-14b-instruct-2512": {
+      "score": 60,
+      "reasoning": "Likely a Mistral variant; limited specific public benchmark presence for agentic coding."
+    },
+    "ministral-3": {
+      "score": 55,
+      "reasoning": "Likely a Mistral variant; limited specific public benchmark presence for agentic coding."
+    },
+    "ministral-3b": {
+      "score": 50,
+      "reasoning": "Likely a Mistral variant; limited specific public benchmark presence for agentic coding."
+    },
+    "mistral-7b-instruct-v0.2-cpu-int4-rtn-block-32": {
+      "score": 65,
+      "reasoning": "Quantized Mistral 7B, good for efficient coding on CPU, slightly lower raw performance."
+    },
+    "mistral-7b-instruct-v0.2-cpu-int4-rtn-block-32-acc-level-4": {
+      "score": 67,
+      "reasoning": "Highly optimized quantized Mistral 7B, good for efficient coding on CPU, slightly lower raw performance."
+    },
+    "mistral-7b-instruct-v0.3": {
+      "score": 70,
+      "reasoning": "Latest 7B instruct model, strong performance for its size in coding tasks."
+    },
+    "mistral-large": {
+      "score": 75,
+      "reasoning": "Strong generalist, but newer models outperform it in specific coding benchmarks."
+    },
+    "mistral-large-2-instruct": {
+      "score": 92,
+      "reasoning": "Very strong in coding and math, matches/exceeds top models on HumanEval and supports 80+ languages."
+    },
+    "mistral-large-2512": {
+      "score": 75,
+      "reasoning": "Specific version of Mistral Large; general strong performance for coding."
+    },
+    "mistral-large-3": {
+      "score": 85,
+      "reasoning": "Flagship MoE model for agentic/instruction tasks, but some coding benchmarks show lower scores."
+    },
+    "mistral-large-3-675b-instruct-2512": {
+      "score": 88,
+      "reasoning": "Large MoE model designed for agentic/instruction tasks, strong capabilities despite some lower coding benchmarks."
+    },
+    "palmyra-fin-70b-32k": {
+      "score": 10,
+      "reasoning": "No public benchmark presence found for agentic coding workflows."
+    },
+    "palmyra-med-70b": {
+      "score": 10,
+      "reasoning": "No public benchmark presence found for agentic coding workflows."
+    },
+    "palmyra-med-70b-32k": {
+      "score": 10,
+      "reasoning": "No public benchmark presence found for agentic coding workflows."
+    },
+    "phi-3-vision-128k-instruct": {
+      "score": 35,
+      "reasoning": "Multimodal model with coding data in training, but lacks specific agentic coding benchmarks."
+    },
+    "phi-3.5-moe-instruct": {
+      "score": 65,
+      "reasoning": "Excels in reasoning, math, coding (HumanEval 70.7, MBPP 80.8), and multilingual tasks."
+    },
+    "phi-4": {
+      "score": 50,
+      "reasoning": "Scores 5 on Artificial Analysis Intelligence Index, with 46.4/100 in coding. Agentic tool use is lower."
+    },
+    "phi-4-mini-instruct": {
+      "score": 60,
+      "reasoning": "Strong in reasoning, math, and competitive in coding (HumanEval +6% over Phi-3.5 Mini)."
+    },
+    "phi-4-mini-reasoning": {
+      "score": 65,
+      "reasoning": "Optimized for mathematical reasoning and step-by-step problem-solving, strong coding assistant potential."
+    },
+    "phi-4-multimodal-instruct": {
+      "score": 30,
+      "reasoning": "Multimodal model with some coding mentions, but low on Artificial Analysis Coding Index."
+    },
+    "phi-4-reasoning": {
+      "score": 70,
+      "reasoning": "Strong performance in math, scientific reasoning, coding (HumanEvalPlus), and algorithmic problem-solving."
+    },
+    "phi-4-reasoning-14.7b-qnn": {
+      "score": 68,
+      "reasoning": "Part of the Phi-4 reasoning family, expected strong coding and agentic capabilities."
+    },
+    "qwen3-coder": {
+      "score": 75,
+      "reasoning": "Agent-ready with MCP protocol, strong in code generation/repair, comparable to Claude Sonnet."
+    },
+    "qwen3-coder-next": {
+      "score": 85,
+      "reasoning": "Achieves 70.6% on SWE-Bench Verified, strong on SWE-Bench Pro (44.3%), efficient MoE architecture."
+    },
+    "qwen3-next-80b-a3b-instruct": {
+      "score": 80,
+      "reasoning": "Base for Qwen3-Coder-Next, strong agentic training signals for coding."
+    },
+    "qwen3.5": {
+      "score": 78,
+      "reasoning": "Built for agentic AI, strong on Terminal-Bench 2.0 (52.5), competitive on SWE-bench."
+    },
+    "qwen3.5-122b-a10b": {
+      "score": 82,
+      "reasoning": "Achieves 72.4% on SWE-bench Verified, 41.6% on Terminal-Bench 2.0, strong for agentic workflows."
+    },
+    "qwen3.5-397b-a17b": {
+      "score": 80,
+      "reasoning": "Delivers frontier-level reasoning, coding, and visual agentic performance. Scores 45 on AA Intelligence Index."
+    },
+    "qwen3.6-27b-gguf": {
+      "score": 88,
+      "reasoning": "Achieves 90.0% on SWE-bench Verified with agent stack, strong open-weight option."
+    },
+    "qwen3.7-plus": {
+      "score": 90,
+      "reasoning": "Multimodal agent model, excels in agentic coding in terminal, mobile navigation, and GUI grounding."
+    },
+    "recurrentgemma-2b": {
+      "score": 45,
+      "reasoning": "Competitive on HumanEval (21.3-22.0) and MBPP (28.8-29.2), with efficient inference for long sequences."
+    },
+    "riva-translate-4b-instruct": {
+      "score": 10,
+      "reasoning": "No public benchmark presence found for agentic coding workflows."
+    },
+    "riva-translate-4b-instruct-v1.1": {
+      "score": 10,
+      "reasoning": "No public benchmark presence found for agentic coding workflows."
+    },
+    "sarvam-m": {
+      "score": 55,
+      "reasoning": "17.6% boost on programming benchmarks, superior reasoning, hybrid thinking mode for coding tasks."
+    },
+    "sea-lion-7b-instruct": {
+      "score": 10,
+      "reasoning": "No public benchmark presence found for agentic coding workflows."
+    },
+    "seed-oss-36b-instruct": {
+      "score": 70,
+      "reasoning": "Excels in agentic tasks (SWE-Bench Verified 56, HumanEval 78.8), tool-using, and long-context."
+    },
+    "solar-10.7b-instruct": {
+      "score": 40,
+      "reasoning": "Fine-tuned for instruction-following, surpasses Mixtral-8x7B-Instruct, but lacks specific agentic coding benchmarks."
+    },
+    "starcoder2-15b": {
+      "score": 70,
+      "reasoning": "Best-performing large model on code completion, 72.6% on HumanEval, strong code reasoning."
+    },
+    "step-3.5-flash": {
+      "score": 80,
+      "reasoning": "Achieves 74.4% on SWE-bench Verified and 51.0% on Terminal-Bench 2.0, purpose-built for agentic tasks."
+    },
+    "step-3.7-flash": {
+      "score": 85,
+      "reasoning": "Scores 56.3 on SWE-Bench PRO, leads ClawEval-1.1 (67.1), strong multimodal agentic capabilities."
+    },
+    "stockmark-2-100b-instruct": {
+      "score": 30,
+      "reasoning": "Trained with 10% code, 128k context, but lacks specific agentic coding benchmarks."
+    },
+    "v2": {
+      "score": 10,
+      "reasoning": "No public benchmark presence found for agentic coding workflows."
+    },
+    "v3": {
+      "score": 10,
+      "reasoning": "No public benchmark presence found for agentic coding workflows."
+    },
+    "v4": {
+      "score": 10,
+      "reasoning": "No public benchmark presence found for agentic coding workflows."
+    },
+    "v5": {
+      "score": 10,
+      "reasoning": "No public benchmark presence found for agentic coding workflows."
+    },
+    "vila": {
+      "score": 10,
+      "reasoning": "No public benchmark presence found for agentic coding workflows."
+    },
+    "yi-large": {
+      "score": 10,
+      "reasoning": "No public benchmark presence found for agentic coding workflows."
+    },
+    "zamba2-7b-instruct": {
+      "score": 35,
+      "reasoning": "Strong instruction-following and reasoning, suitable for agentic AI, but lacks specific coding agent benchmarks."
+    }
+  }
+}

@@ -387,17 +387,10 @@ class TestBuildInventory:
     @patch("tools.llm.model_inventory.shutil.which", return_value=None)
     def test_import_failure_returns_error(self, mock_which, mock_dns, mock_dotenv):
         """When llm_client cannot be imported, inventory reports failure."""
-        with (
-            patch.dict("sys.modules", {"llm_client": None}),
-            patch(
-                "builtins.__import__",
-                side_effect=ImportError("no module"),
-            ),
-        ):
+        with patch.dict("sys.modules", {"tools.llm.llm_client": None}):
             result = build_inventory(active_probes=False)
-            # If llm_client import fails, ok=False
-            if not result.get("ok"):
-                assert "error" in result
+        assert result["ok"] is False
+        assert "Failed to import llm_client" in result["error"]
 
     @patch("tools.llm.model_inventory._load_dotenv")
     @patch("tools.llm.model_inventory._dns_resolves", return_value=False)
@@ -429,28 +422,13 @@ class TestBuildInventory:
             monkeypatch.delenv(f"AZURE_OPENAI_API_KEY_{i}", raising=False)
             monkeypatch.delenv(f"AZURE_OPENAI_DEPLOYMENT_{i}", raising=False)
 
-        mock_llm = MagicMock()
-        mock_llm.LOCAL_MODELS = {}
-        with patch.dict("sys.modules", {"llm_client": mock_llm}):
-            with patch(
-                "tools.llm.model_inventory.build_inventory.__module__",
-                create=True,
-            ):
-                # Patch the lazy import inside build_inventory
-                with patch(
-                    "builtins.__import__",
-                    side_effect=lambda name, *a, **kw: (
-                        mock_llm
-                        if name == "llm_client"
-                        else __builtins__["__import__"](name, *a, **kw)  # type: ignore[index]
-                    ),
-                ):
-                    # Direct approach: just call and check shape if ok
-                    result = build_inventory(active_probes=False)
-                    if result.get("ok"):
-                        assert "providers" in result
-                        assert "platform" in result
-                        assert "python" in result
+        result = build_inventory(active_probes=False)
+
+        assert result["ok"] is True
+        assert Path(result["root"]) == Path(__file__).resolve().parents[2]
+        assert "providers" in result
+        assert "platform" in result
+        assert "python" in result
 
 
 # ---------------------------------------------------------------------------

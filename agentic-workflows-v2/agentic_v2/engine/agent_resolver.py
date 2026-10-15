@@ -180,6 +180,18 @@ async def _noop_step(_ctx: ExecutionContext) -> dict[str, Any]:
     return {}
 
 
+async def _process_text_step(ctx: ExecutionContext) -> dict[str, Any]:
+    """Tier-0: Return the supplied text unchanged."""
+    text = await ctx.get("text")
+    return {"result": "" if text is None else str(text)}
+
+
+async def _count_text_step(ctx: ExecutionContext) -> dict[str, Any]:
+    """Tier-0: Count characters in the supplied text."""
+    text = await ctx.get("text")
+    return {"count": len("" if text is None else str(text))}
+
+
 def _resolve_sample_item(ctx: ExecutionContext, item: Any) -> Any:
     """Resolve a single ``samples`` entry, expanding ``${...}`` expressions.
 
@@ -273,6 +285,8 @@ async def _consensus_step(ctx: ExecutionContext) -> dict[str, Any]:
 TIER0_REGISTRY: dict[str, StepFunction] = {
     "tier0_parser": _parse_code_step,
     "tier0_consensus": _consensus_step,
+    "tier0_process": _process_text_step,
+    "tier0_counter": _count_text_step,
 }
 
 

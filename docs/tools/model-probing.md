@@ -137,24 +137,23 @@ when the default does not match the local server.
 Discovery also checks common local OpenAI-compatible ports. Do not run active
 discovery on an untrusted network.
 
-## Inventory limitation
+## Build a capability inventory
 
-`tools.llm.model_inventory` is intended to create a passive or active
-capability inventory. In the current source it imports `llm_client` as a
-top-level module, so:
+Run a passive inventory to inspect configuration and locally available models
+without contacting providers:
 
 ```powershell
 python -m tools.llm.model_inventory
 ```
 
-can return:
+Add `--active` to query configured providers and local model servers:
 
-```text
-Failed to import llm_client: No module named 'llm_client'
+```powershell
+python -m tools.llm.model_inventory --active
 ```
 
-Use `model_probe --discover` for a working repository-wide inventory until the
-package-relative import is fixed.
+Active checks may use provider quota. The command reports whether credentials
+are present but does not print their values.
 
 ## Interpret results
 

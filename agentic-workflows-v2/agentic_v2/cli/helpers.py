@@ -200,7 +200,7 @@ def _run_via_adapter(
     loader = WorkflowLoader()
     workflow_def = loader.load(workflow_name)
     dag = workflow_def.dag
-    ctx = ExecutionContext(variables=dict(input_data))
+    ctx = ExecutionContext(variables={"inputs": dict(input_data)})
 
     engine = get_registry().get_adapter(adapter_name)
 

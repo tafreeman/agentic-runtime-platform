@@ -262,21 +262,7 @@ enumerate a directory.
   collection, and make both commands reopen the same index. Remove or implement
   directory ingestion and collection selection as part of that change.
 
-### 4.12 The model inventory command fails from the repository root
-
-`python -m tools.llm.model_inventory` imports `llm_client` as a top-level
-module. In the installed repository package, that module is
-`tools.llm.llm_client`, so the command exits with
-`No module named 'llm_client'`.
-
-- **Surface:** `tools/llm/model_inventory.py`.
-- **Risk:** A model discovery run fails before checking any provider.
-- **Workaround:** Use `python -m tools.llm.model_probe` for live discovery.
-- **Status:** Known command defect.
-- **Upstream fix:** Change the command to package-relative imports and add a
-  repository-root CLI smoke test.
-
-### 4.13 The model catalog exposes `onnx:` IDs that exact-model chat cannot use
+### 4.12 The model catalog exposes `onnx:` IDs that exact-model chat cannot use
 
 ONNX discovery emits `onnx:<relative-path>` IDs and the native model backend
 supports that prefix. The LangChain model builder uses `local:` for its ONNX
@@ -295,7 +281,7 @@ provider error.
 - **Upstream fix:** Normalize the prefix contract across discovery and both
   execution paths, then add an end-to-end discovered-model chat test.
 
-### 4.14 Strict model-weight verification is not wired into every model loader
+### 4.13 Strict model-weight verification is not wired into every model loader
 
 The SHA-256 verifier and strict-mode behavior are implemented in
 `agentic_v2/models/weight_integrity.py`. The shared-tools local provider calls

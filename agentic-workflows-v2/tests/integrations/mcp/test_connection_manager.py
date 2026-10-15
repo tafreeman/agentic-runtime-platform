@@ -87,7 +87,7 @@ class TestServerSignature:
 class TestMcpConnectionManager:
     """Test McpConnectionManager connection lifecycle."""
 
-    def test_manager_creation(self):
+    async def test_manager_creation(self):
         """Test creating connection manager."""
         manager = McpConnectionManager()
         assert manager is not None

@@ -16,7 +16,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from typer.testing import CliRunner
 
-from agentic_v2.cli.helpers import _run_adapter
+from agentic_v2.cli.helpers import _run_adapter, _run_via_adapter
 from agentic_v2.cli.main import _LANGCHAIN_AVAILABLE, app
 from agentic_v2.core.errors import AdapterNotFoundError
 from agentic_v2.workflows.loader import WorkflowLoader
@@ -233,6 +233,14 @@ class TestCompareNativeAdapter:
 
         assert summary["status"] == "success"
         assert summary["step_count"] == expected_steps
+
+        result = _run_via_adapter(
+            "native",
+            DETERMINISTIC_WORKFLOW,
+            {"input_text": "hello world"},
+        )
+        assert result.outputs["processed_text"] == "hello world"
+        assert result.outputs["count_value"] == 11
 
     def test_unregistered_adapter_raises_instead_of_reporting_failed(self):
         """A typo'd adapter name surfaces the registry error, not a failed row.

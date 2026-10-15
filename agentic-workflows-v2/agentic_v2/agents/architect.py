@@ -318,6 +318,10 @@ class ArchitectAgent(BaseAgent[ArchitectureInput, ArchitectureOutput]):
                 tech_stack[key] = TechStackChoice(name=str(value), justification="")
 
         return ArchitectureOutput(
+            # ``TaskOutput.success`` is required and has no default; omitting it
+            # made every call raise ValidationError. A response we could not
+            # recover any tech-stack entry from is not a successful design.
+            success=bool(tech_stack),
             tech_stack=tech_stack,
             component_diagram=architecture.get("component_diagram", ""),
             api_strategy=architecture.get("api_strategy", {}),

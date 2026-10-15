@@ -30,15 +30,15 @@ Run command modules from the repository root:
 
 ```powershell
 python -m tools.llm.model_probe --help
+python -m tools.llm.model_inventory
 python -m tools.llm.model_bakeoff --help
 python -m tools.llm.rank_models --help
 python -m tools.llm.check_provider_limits --help
 python -m tools.agents.benchmarks.runner --help
 ```
 
-The current `tools.llm.model_inventory` entry point has an import-path defect
-and exits with `No module named 'llm_client'`. Use `model_probe` for live
-discovery until that command is fixed.
+`model_inventory` performs passive checks by default. Add `--active` only when
+you intend to contact configured providers and local model servers.
 
 Some commands contact model providers, download datasets, or write reports.
 Inspect `--help`, start with a small limit, and keep secrets and private data

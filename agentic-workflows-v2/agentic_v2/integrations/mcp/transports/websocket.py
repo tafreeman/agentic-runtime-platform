@@ -5,13 +5,13 @@ Uses the `websockets` library for async WebSocket client implementation.
 """
 
 import asyncio
+import inspect
 import json
 import logging
+from typing import Any
 
-# Note: websockets library needs to be added to dependencies
 try:
     import websockets
-    from websockets.client import WebSocketClientProtocol
 except ImportError as _ws_import_err:
     raise ImportError(
         "websockets library required for WebSocket transport. "
@@ -53,7 +53,7 @@ class WebSocketTransport(McpTransport):
 
         self.url = url
         self.headers = headers or {}
-        self._ws: WebSocketClientProtocol | None = None
+        self._ws: Any | None = None
         self._receive_task: asyncio.Task | None = None
 
     async def start(self) -> None:
@@ -71,11 +71,17 @@ class WebSocketTransport(McpTransport):
         logger.debug(f"Connecting to WebSocket: {self.url}")
 
         try:
+            header_parameter = (
+                "additional_headers"
+                if "additional_headers"
+                in inspect.signature(websockets.connect).parameters
+                else "extra_headers"
+            )
             self._ws = await websockets.connect(
                 self.url,
-                additional_headers=self.headers,
                 ping_interval=20,  # Send ping every 20s to keep alive
                 ping_timeout=10,  # Wait 10s for pong before considering dead
+                **{header_parameter: self.headers},
             )
         except Exception as e:
             raise ConnectionError(f"WebSocket connection failed: {e}") from e
@@ -97,7 +103,7 @@ class WebSocketTransport(McpTransport):
         """
         self._ensure_started()
 
-        if not self._ws or self._ws.closed:
+        if self._ws is None:
             raise RuntimeError("WebSocket connection is closed")
 
         try:
@@ -116,7 +122,7 @@ class WebSocketTransport(McpTransport):
 
         logger.debug("Closing WebSocket transport")
 
-        if self._ws and not self._ws.closed:
+        if self._ws is not None:
             try:
                 await self._ws.close()
             except Exception as e:

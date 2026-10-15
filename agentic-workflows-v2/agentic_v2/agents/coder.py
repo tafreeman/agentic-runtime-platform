@@ -203,7 +203,13 @@ This is a placeholder implementation."""}
         """Extract code blocks from markdown."""
         # Pattern for ```language\ncode\n```
         if language:
-            pattern = rf"```(?:{language}|{language.lower()})?\s*\n(.*?)```"
+            # ``language`` is caller-supplied (``CodeGenerationInput.language``
+            # accepts any non-empty string), so it must be escaped before it is
+            # interpolated into the pattern. Unescaped, "c++" silently became a
+            # possessive quantifier and never matched a ```c++ fence, and names
+            # containing "(", "[", "*" or "\" raised ``re.error`` outright.
+            lang = re.escape(language)
+            pattern = rf"```(?:{lang}|{lang.lower()})?\s*\n(.*?)```"
         else:
             pattern = r"```(?:\w+)?\s*\n(.*?)```"
 

@@ -172,6 +172,8 @@ class MockBackend(LLMBackend):
                 "method": "complete",
                 "model": model,
                 "prompt": prompt,
+                "max_tokens": max_tokens,
+                "temperature": temperature,
                 "kwargs": kwargs,
             }
         )
@@ -198,6 +200,8 @@ class MockBackend(LLMBackend):
                 "method": "complete_chat",
                 "model": model,
                 "messages": messages,
+                "max_tokens": max_tokens,
+                "temperature": temperature,
                 "tools": tools,
                 "kwargs": kwargs,
             }

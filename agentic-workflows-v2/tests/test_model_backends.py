@@ -325,6 +325,19 @@ class TestMockBackend:
         assert entry["model"] == "model-x"
         assert entry["prompt"] == "prompt-y"
         assert entry["kwargs"] == {"extra_key": "ev"}
+        # Defaults are recorded too: max_tokens/temperature bind to named
+        # parameters, so they never land in kwargs and were previously
+        # unobservable through the backend.
+        assert entry["max_tokens"] == 4096
+        assert entry["temperature"] == 0.7
+
+    async def test_complete_records_sampling_params(self) -> None:
+        """Explicit max_tokens/temperature are captured in call_history."""
+        mock = MockBackend()
+        await mock.complete("m", "p", max_tokens=128, temperature=0.2)
+        entry = mock.call_history[0]
+        assert entry["max_tokens"] == 128
+        assert entry["temperature"] == 0.2
 
     async def test_complete_chat_returns_default_with_correct_structure(self) -> None:
         mock = MockBackend()
@@ -363,6 +376,17 @@ class TestMockBackend:
         assert entry["method"] == "complete_chat"
         assert entry["tools"] == tools
         assert entry["kwargs"] == {"extra": "v"}
+        assert entry["max_tokens"] == 4096
+        assert entry["temperature"] == 0.7
+
+    async def test_complete_chat_records_sampling_params(self) -> None:
+        """Explicit max_tokens/temperature are captured in call_history."""
+        mock = MockBackend()
+        msgs = [{"role": "user", "content": "q"}]
+        await mock.complete_chat("m", msgs, max_tokens=64, temperature=0.0)
+        entry = mock.call_history[0]
+        assert entry["max_tokens"] == 64
+        assert entry["temperature"] == 0.0
 
 
 # ---------------------------------------------------------------------------

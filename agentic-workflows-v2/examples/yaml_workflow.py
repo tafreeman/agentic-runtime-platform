@@ -51,7 +51,7 @@ SAMPLE_YAML = dedent("""\
         agent: tier0_parser
         description: Parse input text and extract structure
         inputs:
-          code_file: ${workflow_inputs.input_text}
+          code_file: ${inputs.input_text}
         outputs:
           result: parsed_ast
 """)
@@ -82,8 +82,10 @@ async def main() -> None:
         ctx = ExecutionContext(workflow_id="yaml-demo-001")
         # Provide a small Python snippet as input text
         ctx.set_sync(
-            "input_text",
-            "def greet(name):\n    return f'Hello, {name}!'\n",
+            "inputs",
+            {
+                "input_text": "def greet(name):\n    return f'Hello, {name}!'\n",
+            },
         )
 
         executor = DAGExecutor()

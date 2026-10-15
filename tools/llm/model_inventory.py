@@ -33,12 +33,9 @@ from typing import Any, Callable
 
 logger = logging.getLogger(__name__)
 
-logger = logging.getLogger(__name__)
-
 
 def _repo_root() -> Path:
-    # prompts/tools/model_inventory.py -> prompts/
-    return Path(__file__).resolve().parents[1]
+    return Path(__file__).resolve().parents[2]
 
 
 def _apply_dotenv_line(raw_line: str) -> None:
@@ -449,7 +446,9 @@ def _inv_windows_ai(root: Path, active_probes: bool) -> dict[str, Any]:
     """Inventory Windows AI / Phi Silica via the optional .NET bridge."""
     # We do not attempt to import WinRT from Python here; instead we can
     # optionally ask the .NET bridge for info.
-    bridge_proj = root / "tools" / "windows_ai_bridge" / "PhiSilicaBridge.csproj"
+    bridge_proj = (
+        root / "tools" / "llm" / "windows_ai_bridge" / "PhiSilicaBridge.csproj"
+    )
     dotnet_on_path = bool(shutil.which("dotnet"))
 
     windows_ai_info: dict[str, Any] = {
@@ -501,7 +500,7 @@ def build_inventory(active_probes: bool = False) -> dict[str, Any]:
 
     # Import lazily to avoid heavy import chains.
     try:
-        from llm_client import LLMClient
+        from tools.llm.llm_client import LLMClient
     except Exception as e:
         return {
             "ok": False,

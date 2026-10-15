@@ -35,7 +35,7 @@ def _adapter(name: str = "test_tool", timeout: float | None = None) -> McpToolAd
 class TestMcpToolAdapter:
     """Test McpToolAdapter functionality."""
 
-    def test_adapter_creation(self):
+    async def test_adapter_creation(self):
         """Test creating a tool adapter."""
         tool = ToolDescriptor(
             name="test_tool",
@@ -54,7 +54,7 @@ class TestMcpToolAdapter:
         assert adapter.description == "A test tool"
         assert adapter.input_schema == tool.input_schema
 
-    def test_schema_passthrough(self):
+    async def test_schema_passthrough(self):
         """Test that JSON Schema is preserved verbatim (not reconstructed)."""
         original_schema = {
             "type": "object",
@@ -237,7 +237,7 @@ class TestMcpToolAdapter:
         # Should return some indication of no output
         assert len(result) > 0  # Not empty string
 
-    def test_to_dict_serialization(self):
+    async def test_to_dict_serialization(self):
         """Test adapter can serialize to dict for registry."""
         tool = ToolDescriptor(
             name="test_tool",
@@ -257,7 +257,7 @@ class TestMcpToolAdapter:
         assert tool_dict["input_schema"] == tool.input_schema
         assert "execute" in tool_dict  # Callable present
 
-    def test_namespacing_prevents_collisions(self):
+    async def test_namespacing_prevents_collisions(self):
         """Test tool namespacing prevents name collisions across servers."""
         tool = ToolDescriptor(
             name="common_tool",

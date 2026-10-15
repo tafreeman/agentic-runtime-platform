@@ -120,6 +120,8 @@ class TestGenerationOutput(TaskOutput):
         raw_response: Unprocessed model response for debugging.
     """
 
+    __test__ = False  # Not a pytest test class
+
     test_files: list[TestFile] = Field(default_factory=list)
     total_tests: int = Field(default=0)
     coverage_estimate: int = Field(default=0)
@@ -417,6 +419,11 @@ Generated 3 tests with ~80% estimated coverage.
         test_summary = self._generate_summary(test_files, task)
 
         return TestGenerationOutput(
+            # ``TaskOutput.success`` is required and has no default; omitting it
+            # made every call raise ValidationError. Mirrors CoderAgent's
+            # ``success=bool(code)``: a response we could not parse any test
+            # file out of is not a successful generation.
+            success=bool(test_files),
             test_files=test_files,
             total_tests=total_tests,
             coverage_estimate=coverage_estimate,
