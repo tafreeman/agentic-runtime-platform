@@ -429,20 +429,15 @@ def _materialize_file_input(
 
     looks_python = any(marker in value for marker in ("def ", "class ", "import "))
 
-    if looks_python:
-        suffix = ".py"
-        file_path = artifacts_root / f"{run_id}_{input_name}{suffix}"
-        file_path.write_text(value, encoding="utf-8")
-        return str(file_path)
-
-    candidate: Path | None = None
-    if any(sep in value for sep in ("/", "\\")) or value.endswith((".py", ".txt")):
+    if not looks_python and (
+        any(sep in value for sep in ("/", "\\")) or value.endswith((".py", ".txt"))
+    ):
         try:
             candidate = ensure_within_base(artifacts_root / value, artifacts_root)
             if candidate.is_file():
                 return str(candidate)
         except (ValueError, OSError):
-            candidate = None
+            pass
 
     suffix = ".py" if looks_python else ".txt"
     file_path = artifacts_root / f"{run_id}_{input_name}{suffix}"
