@@ -51,11 +51,6 @@ router = APIRouter(tags=["workflows"])
 run_logger = RunLogger()
 
 
-def _is_within_base(path, base_dir) -> bool:
-    """Compatibility shim for tests importing this helper directly."""
-    return is_within_base(path, base_dir)
-
-
 def _tenant_run_logger(tenant: TenantContext) -> RunLogger:
     return run_logger.for_tenant(tenant.tenant_id)
 
@@ -64,7 +59,7 @@ def _resolve_run_or_404(identifier: str, tenant: TenantContext) -> Path:
     """Resolve a run filename or run id to an on-disk JSON path."""
     tenant_logger = _tenant_run_logger(tenant)
     resolved = tenant_logger.resolve_run_path(identifier)
-    if resolved is None or not _is_within_base(
+    if resolved is None or not is_within_base(
         resolved.resolve(), tenant_logger.base_runs_dir
     ):
         raise HTTPException(status_code=404, detail=f"Run not found: {identifier}")
