@@ -12,9 +12,6 @@ import signal
 from agentic_v2.integrations.mcp.transports.base import McpTransport
 from agentic_v2.integrations.mcp.types import (
     JsonRpcMessage,
-    JsonRpcNotification,
-    JsonRpcRequest,
-    JsonRpcResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -162,23 +159,6 @@ class StdioTransport(McpTransport):
             # Process died or closed
             if not self._closed:
                 self._emit_close()
-
-    def _parse_json_rpc(self, data: dict) -> JsonRpcMessage:
-        """Parse raw JSON into typed JSON-RPC message.
-
-        Args:
-            data: Deserialized JSON object
-
-        Returns:
-            Typed JsonRpcMessage (request, response, or notification)
-        """
-        if "id" in data:
-            if "method" in data:
-                return JsonRpcRequest(**data)
-            else:
-                return JsonRpcResponse(**data)
-        else:
-            return JsonRpcNotification(**data)
 
     async def _terminate_process(self) -> None:
         """Gracefully terminate subprocess with escalation.
