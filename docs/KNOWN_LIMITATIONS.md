@@ -2,7 +2,7 @@
 
 > **Audience:** Operators, auditors, and contributors reading failing CI or trying to understand why something "works but not quite."
 > **Outcome:** After reading, you know what is intentionally unfinished and what the next sprint is expected to address.
-> **Last verified:** 2026-07-28
+> **Last verified:** 2026-10-17
 
 This page records limitations confirmed in the current checkout. Some describe
 accepted design boundaries; others describe work that is not complete. Check
@@ -170,13 +170,6 @@ ARP behavior because the package and command surface were removed. The removal,
 migration boundary, and historical defects remain recorded in
 [ADR-057](adr/ADR-057-remove-rag-package.md) and the changelog.
 
-### 4.12 The model inventory command failed from the repository root - resolved
-
-`python -m tools.llm.model_inventory` imported `llm_client` as a top-level module and
-resolved the repository root one level too shallow. It now imports
-`tools.llm.llm_client` and finds the repo root, `.env` and the Windows AI bridge
-project correctly; `tools/tests/test_model_inventory.py` covers the layout.
-
 ### 4.13 The model catalog exposes `onnx:` IDs that exact-model chat cannot use
 
 ONNX discovery emits `onnx:<relative-path>` IDs and the native model backend
@@ -215,20 +208,6 @@ LangChain local ONNX builder do not call it.
   add strict-mode tests for every local model backend.
 
 ---
-
-### 4.15 `tools/tests` stale cases — resolved
-
-`tools/tests` holds 17 test files that **no CI job had ever collected** until the
-`tools-tests` job in `ci.yml` was added. Its first runs surfaced stale cases, all now
-resolved with nothing deselected:
-
-- `test_errors.py::TestClassifyError::test_return_code_param_accepted` — `classify_error`
-  had lost its `return_code` parameter; the keyword is restored (accepted, currently
-  unused) and the `--deselect` is removed.
-- Ten `TestEvaluateTaskOutputLlm` cases — a broken optional import in
-  `evaluation_pipeline` (reporting helpers moved to `evaluator_reporting`) silently
-  disabled the LLM-judge path; the import is fixed and
-  `test_llm_evaluator_imports_resolve` fails if the guard masks it again.
 
 ## 5. Documentation and process
 
