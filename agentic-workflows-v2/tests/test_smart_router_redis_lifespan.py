@@ -164,12 +164,13 @@ async def test_installed_redis_router_persists_via_cas(
 
     # Record a success → fire-and-forget CAS save task is scheduled.
     router.record_success("ollama:phi4", latency_ms=42.0)
-    await router.aclose()  # drain the background save
+    await router.drain_background_tasks()  # let the background save land
 
     # The stats are now in the (fake) Redis store under the model key.
     stored = await fake_store.get("ollama:phi4")
     assert stored is not None, "circuit-breaker stats must be persisted to Redis"
     assert stored.get("success_count", 0) >= 1
+    await router.aclose()
 
 
 # ---------------------------------------------------------------------------
