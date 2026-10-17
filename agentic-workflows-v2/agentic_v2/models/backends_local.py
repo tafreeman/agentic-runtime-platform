@@ -265,6 +265,11 @@ class OnnxBackend(LLMBackend):
     _lock: threading.Lock = field(
         default_factory=threading.Lock, init=False, compare=False, repr=False
     )
+    # Held for a whole generation so cache eviction can never unload a model
+    # another thread is still generating with (generation is serialized).
+    _generation_lock: threading.Lock = field(
+        default_factory=threading.Lock, init=False, compare=False, repr=False
+    )
 
     def _candidate_roots(self) -> list[Path]:
         """Roots to resolve ``onnx:`` ids against (discovered == runnable).
@@ -340,6 +345,12 @@ class OnnxBackend(LLMBackend):
         return "\n".join(parts)
 
     def _generate_sync(
+        self, model: str, prompt: str, max_tokens: int, temperature: float
+    ) -> str:
+        with self._generation_lock:
+            return self._generate_locked(model, prompt, max_tokens, temperature)
+
+    def _generate_locked(
         self, model: str, prompt: str, max_tokens: int, temperature: float
     ) -> str:
         og, loaded, tokenizer = self._get_model(model)

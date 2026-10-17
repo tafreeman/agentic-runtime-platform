@@ -364,3 +364,48 @@ class TestOnnxBackendModelFolderAndCache:
         backend._get_model("onnx:b")
         assert len(backend._models) == 1
         assert next(iter(backend._models)).endswith("b")
+
+
+def test_generation_is_serialized_so_eviction_cannot_unload_active_model(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+) -> None:
+    import threading
+
+    monkeypatch.setattr(
+        "agentic_v2.models.backends_local._load_onnxruntime_genai", lambda: _FakeOg
+    )
+    monkeypatch.setattr(
+        "agentic_v2.models.backends_local._verify_weights", lambda p: None
+    )
+    for name in ("a", "b"):
+        (tmp_path / name).mkdir()
+        (tmp_path / name / "genai_config.json").write_text("{}", encoding="utf-8")
+    backend = OnnxBackend(model_dir=str(tmp_path), max_cached_models=1)
+    active = 0
+    peak = 0
+    guard = threading.Lock()
+    original = backend._generate_locked
+
+    def _tracked(*args: Any) -> str:
+        nonlocal active, peak
+        with guard:
+            active += 1
+            peak = max(peak, active)
+        try:
+            return original(*args)
+        finally:
+            with guard:
+                active -= 1
+
+    monkeypatch.setattr(backend, "_generate_locked", _tracked)
+    threads = [
+        threading.Thread(
+            target=backend._generate_sync, args=(f"onnx:{n}", "hi", 8, 0.0)
+        )
+        for n in ("a", "b", "a", "b")
+    ]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert peak == 1
