@@ -581,3 +581,19 @@ class TestRunLoggerHardening:
         finally:
             os.umask(old)
         assert target.stat().st_mode & 0o777 == 0o664
+
+    @pytest.mark.skipif(__import__("sys").platform == "win32", reason="POSIX metadata")
+    def test_atomic_write_copies_extended_metadata(self, tmp_path, monkeypatch):
+        import shutil
+
+        from agentic_v2.workflows.run_logger import _write_json_atomic
+
+        target = tmp_path / "rec.json"
+        target.write_text("{}", encoding="utf-8")
+        seen = []
+        real = shutil.copystat
+        monkeypatch.setattr(
+            shutil, "copystat", lambda *a, **k: (seen.append(a), real(*a, **k))[1]
+        )
+        _write_json_atomic(target, {"ok": 1})
+        assert seen and seen[0][0] == target

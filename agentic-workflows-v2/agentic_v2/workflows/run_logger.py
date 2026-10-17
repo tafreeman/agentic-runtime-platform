@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import shutil
 import stat
 import uuid
 from datetime import UTC, datetime, timedelta
@@ -38,6 +39,30 @@ def _sanitize_filename_segment(value: str) -> str:
     )
 
 
+def _copy_access_metadata(src: Path, temp_path: Path, fd: int, mode: int) -> None:
+    """Carry the original record's access controls onto its replacement.
+
+    Restores the exact mode bits (``os.open`` is umask-filtered), then makes a
+    best-effort copy of extended attributes (which hold POSIX ACLs and security
+    labels) and ownership. Ownership needs privilege and is skipped silently
+    when not permitted; mode is always restored.
+    """
+    if hasattr(os, "fchmod"):
+        os.fchmod(fd, mode)
+    try:
+        shutil.copystat(src, temp_path)  # includes xattrs/ACLs on Linux
+    except OSError as exc:
+        logger.debug("Could not copy run-record metadata for %s: %s", src, exc)
+    if hasattr(os, "fchown"):
+        try:
+            info = src.stat()
+            os.fchown(fd, info.st_uid, info.st_gid)
+        except OSError as exc:
+            logger.debug("Could not preserve run-record ownership: %s", exc)
+    if hasattr(os, "fchmod"):
+        os.fchmod(fd, mode)  # chown/copystat may clear bits
+
+
 def _write_json_atomic(path: Path, record: dict[str, Any]) -> None:
     """Write ``record`` to ``path`` via a temp file (no half-written reads)."""
     # Short independent basename: the destination may already be near the
@@ -55,10 +80,8 @@ def _write_json_atomic(path: Path, record: dict[str, Any]) -> None:
     payload = json.dumps(record, indent=2, default=_safe_serialize)
     try:
         fd = os.open(temp_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, mode)
-        if existing_mode is not None and hasattr(os, "fchmod"):
-            # os.open's mode is umask-filtered; restore the exact original
-            # bits (still before any content is written).
-            os.fchmod(fd, existing_mode)
+        if existing_mode is not None:
+            _copy_access_metadata(path, temp_path, fd, existing_mode)
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
             handle.write(payload)
         temp_path.replace(path)
