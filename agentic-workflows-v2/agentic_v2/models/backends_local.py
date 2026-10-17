@@ -292,12 +292,20 @@ class OnnxBackend(LLMBackend):
                 f"Invalid ONNX model path (must be a relative folder): {name!r}"
             )
         roots = self._candidate_roots()
+        shadow: Path | None = None
         for root in roots:
             candidate = root / rel
-            if candidate.exists():
-                if not candidate.resolve().is_relative_to(root.resolve()):
-                    raise ValueError(f"ONNX model path escapes its root: {name!r}")
+            if not candidate.exists():
+                continue
+            if not candidate.resolve().is_relative_to(root.resolve()):
+                raise ValueError(f"ONNX model path escapes its root: {name!r}")
+            if (candidate / "genai_config.json").is_file():
                 return str(candidate)
+            # An ordinary folder shadowing a model in a later root: keep
+            # looking, and only fall back to it for a clear load-time error.
+            shadow = shadow or candidate
+        if shadow is not None:
+            return str(shadow)
         # Not present under any root yet: return a deterministic, expanded path
         # under the first root so load errors point somewhere sensible and the
         # per-path model cache stays stable across calls.

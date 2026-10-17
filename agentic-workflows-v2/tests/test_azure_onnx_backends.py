@@ -409,3 +409,15 @@ def test_generation_is_serialized_so_eviction_cannot_unload_active_model(
     for t in threads:
         t.join()
     assert peak == 1
+
+
+def test_resolve_path_skips_shadow_directory_in_earlier_root(tmp_path: Any) -> None:
+    first, second = tmp_path / "r1", tmp_path / "r2"
+    (first / "phi").mkdir(parents=True)  # ordinary folder, not a model
+    (second / "phi").mkdir(parents=True)
+    (second / "phi" / "genai_config.json").write_text("{}", encoding="utf-8")
+    import os
+
+    backend = OnnxBackend(model_dir=f"{first}{os.pathsep}{second}")
+    resolved = backend._resolve_path("onnx:phi")
+    assert resolved == str(second / "phi")
