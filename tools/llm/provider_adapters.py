@@ -232,6 +232,13 @@ def call_local(
 
     if model_path_obj is not None:
         _verify_local_model_weights(model_path_obj)
+    elif _strict_verify_requested():
+        # LocalModel would fall back to whichever model is installed, which
+        # would load weights that were never verified.
+        raise RuntimeError(
+            f"Local model {model_key!r} could not be resolved to a path; "
+            "refusing to load an unverified fallback in strict mode"
+        )
 
     try:
         from tools.llm.model_locks import create_model_lock

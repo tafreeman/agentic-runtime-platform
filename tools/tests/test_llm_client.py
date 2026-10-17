@@ -204,3 +204,17 @@ class TestStrictWeightVerification:
         monkeypatch.setenv("AGENTIC_STRICT_MODEL_VERIFY", "1")
         with pytest.raises(RuntimeError, match="strict mode"):
             pa._verify_local_model_weights(tmp_path)
+
+    def test_unresolved_local_model_refused_in_strict_mode(self, monkeypatch):
+        pytest.importorskip("tools.llm.local_model")
+        from tools.llm import provider_adapters as pa
+
+        monkeypatch.setenv("AGENTIC_STRICT_MODEL_VERIFY", "1")
+        with pytest.raises(RuntimeError, match="unverified fallback"):
+            pa.call_local(
+                "local:phi4mini",
+                "hi",
+                None,
+                local_models={"phi4mini": "spec"},
+                resolve_model_path=lambda key: None,
+            )
