@@ -524,14 +524,25 @@ class RedisCircuitBreakerStore:
             self._connected = False
 
     async def close(self) -> None:
-        """Close the Redis connection pool."""
-        if self._client is not None:
-            await self._client.aclose()
-            self._client = None
-        if self._pool is not None:
-            await self._pool.disconnect()
-            self._pool = None
+        """Close the Redis connection pool.
+
+        Teardown errors are logged, not raised, so one failing step cannot
+        abort shutdown or leave the remaining resources open.
+        """
+        client, pool = self._client, self._pool
+        self._client = None
+        self._pool = None
         self._connected = False
+        if client is not None:
+            try:
+                await client.aclose()
+            except Exception as exc:
+                logger.warning("Redis client close failed: %s", exc)
+        if pool is not None:
+            try:
+                await pool.disconnect()
+            except Exception as exc:
+                logger.warning("Redis pool disconnect failed: %s", exc)
 
     async def health_check(self) -> bool:
         """Verify Redis connectivity.
