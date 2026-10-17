@@ -978,6 +978,8 @@ def build_onnx_model(model_name: str, temperature: float) -> Any:
 
     class OnnxChatModel(BaseChatModel):
         default_temperature: float = temperature
+        # A real field so apply_model_params() can set model_params.max_tokens.
+        max_tokens: int = 4096
 
         @property
         def _llm_type(self) -> str:
@@ -1000,7 +1002,7 @@ def build_onnx_model(model_name: str, temperature: float) -> Any:
             text = backend.generate_chat_sync(
                 model_ref,
                 chat,
-                max_tokens=int(kwargs.get("max_tokens", 4096)),
+                max_tokens=int(kwargs.get("max_tokens", self.max_tokens)),
                 temperature=float(kwargs.get("temperature", self.default_temperature)),
             )
             for token in stop or []:

@@ -1349,3 +1349,25 @@ def test_onnx_builder_reuses_one_backend() -> None:
     from agentic_v2.langchain.model_builders import _shared_onnx_backend
 
     assert _shared_onnx_backend() is _shared_onnx_backend()
+
+
+def test_onnx_model_honors_max_tokens_param(monkeypatch: pytest.MonkeyPatch) -> None:
+    pytest.importorskip("langchain_core")
+    from langchain_core.messages import HumanMessage
+
+    from agentic_v2.langchain.model_builders import build_onnx_model
+    from agentic_v2.langchain.models import apply_model_params
+    from agentic_v2.models import backends_local
+
+    seen: dict[str, object] = {}
+
+    def _fake_generate(self: object, model: str, messages: object, **kw: object) -> str:
+        seen.update(kw)
+        return "ok"
+
+    monkeypatch.setattr(
+        backends_local.OnnxBackend, "generate_chat_sync", _fake_generate
+    )
+    chat = apply_model_params(build_onnx_model("phi", 0.0), {"max_tokens": 64})
+    chat.invoke([HumanMessage("hi")])
+    assert seen["max_tokens"] == 64
