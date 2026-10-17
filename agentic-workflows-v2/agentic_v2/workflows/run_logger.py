@@ -11,6 +11,10 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import shutil
+import stat
+import uuid
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -33,6 +37,56 @@ def _sanitize_filename_segment(value: str) -> str:
     return "".join(
         char if char.isalnum() or char in {"-", "_"} else "_" for char in value
     )
+
+
+def _copy_access_metadata(src: Path, temp_path: Path, fd: int, mode: int) -> None:
+    """Carry the original record's access controls onto its replacement.
+
+    Restores the exact mode bits (``os.open`` is umask-filtered), then makes a
+    best-effort copy of extended attributes (which hold POSIX ACLs and security
+    labels) and ownership. Ownership needs privilege and is skipped silently
+    when not permitted; mode is always restored.
+    """
+    if hasattr(os, "fchmod"):
+        os.fchmod(fd, mode)
+    try:
+        shutil.copystat(src, temp_path)  # includes xattrs/ACLs on Linux
+    except OSError as exc:
+        logger.debug("Could not copy run-record metadata for %s: %s", src, exc)
+    if hasattr(os, "fchown"):
+        try:
+            info = src.stat()
+            os.fchown(fd, info.st_uid, info.st_gid)
+        except OSError as exc:
+            logger.debug("Could not preserve run-record ownership: %s", exc)
+    if hasattr(os, "fchmod"):
+        os.fchmod(fd, mode)  # chown/copystat may clear bits
+
+
+def _write_json_atomic(path: Path, record: dict[str, Any]) -> None:
+    """Write ``record`` to ``path`` via a temp file (no half-written reads)."""
+    # Short independent basename: the destination may already be near the
+    # filesystem's filename-length limit.
+    temp_path = path.with_name(f".{uuid.uuid4().hex[:12]}.tmp")
+    # Replacing swaps the inode, so the temp file must be *created* with the
+    # record's existing permissions (never wider, even briefly); new records
+    # get the umask-filtered default.
+    existing_mode: int | None
+    try:
+        existing_mode = stat.S_IMODE(path.stat().st_mode)
+    except FileNotFoundError:
+        existing_mode = None
+    mode = 0o666 if existing_mode is None else existing_mode
+    payload = json.dumps(record, indent=2, default=_safe_serialize)
+    try:
+        fd = os.open(temp_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, mode)
+        if existing_mode is not None:
+            _copy_access_metadata(path, temp_path, fd, existing_mode)
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(payload)
+        temp_path.replace(path)
+    finally:
+        temp_path.unlink(missing_ok=True)
 
 
 def _safe_serialize(obj: Any) -> Any:
@@ -369,20 +423,34 @@ class RunLogger:
         filename = f"{ts}_{workflow_name}_{run_id}_{status}{_JSON_SUFFIX}"
         path = self._runs_dir / filename
 
-        path.write_text(
-            json.dumps(record, indent=2, default=_safe_serialize),
-            encoding="utf-8",
-        )
+        _write_json_atomic(path, record)
         logger.info("Run logged: %s", path)
         return path
 
     def list_runs(self, workflow_name: str | None = None) -> list[Path]:
         """List all logged run files, optionally filtered by workflow name."""
-        pattern = f"*_{workflow_name}_*.json" if workflow_name else "*.json"
+        safe_name = _sanitize_filename_segment(workflow_name) if workflow_name else ""
+        pattern = f"*_{safe_name}_*.json" if workflow_name else "*.json"
         paths: list[Path] = []
         for directory in self._search_dirs():
             paths.extend(directory.glob(pattern))
-        return sorted(set(paths))
+        matched = sorted(set(paths))
+        if workflow_name and safe_name != workflow_name:
+            # Sanitizing is lossy ("a/b" and "a_b" collide), so confirm the
+            # recorded name rather than trusting the filename segment.
+            matched = [p for p in matched if self._recorded_name(p) == workflow_name]
+        return matched
+
+    def _recorded_name(self, path: Path) -> str | None:
+        """Return the ``workflow_name`` stored in a run record, if readable."""
+        try:
+            record = self.load_run(path)
+        except (OSError, ValueError):
+            return None
+        if not isinstance(record, dict):
+            return None
+        name = record.get("workflow_name")
+        return name if isinstance(name, str) else None
 
     def load_run(self, path: Path) -> dict[str, Any]:
         """Load a run record from disk."""
@@ -412,10 +480,7 @@ class RunLogger:
         score = _extract_evaluation_score(record["extra"])
         if score is not None:
             record["score"] = score
-        path.write_text(
-            json.dumps(record, indent=2, default=_safe_serialize),
-            encoding="utf-8",
-        )
+        _write_json_atomic(path, record)
         logger.info("Run evaluation annotated: %s", path)
         return record
 
