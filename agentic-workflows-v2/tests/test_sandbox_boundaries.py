@@ -126,6 +126,14 @@ def test_file_read_inside_base_still_works(file_base: Path) -> None:
     assert lc_tools.file_read.invoke({"path": str(file_base / "a.txt")}) == "hello"
 
 
+@pytest.fixture
+def shell_base(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Run shell_run from inside a configured file base (cwd is validated)."""
+    monkeypatch.setenv("AGENTIC_FILE_BASE_DIR", str(tmp_path))
+    monkeypatch.chdir(tmp_path)
+    return tmp_path
+
+
 # ---------------------------------------------------------------------------
 # langchain/tools.py: shell_run policy + env
 # ---------------------------------------------------------------------------
@@ -139,7 +147,7 @@ def test_shell_run_disabled_without_allowlist(monkeypatch: pytest.MonkeyPatch) -
 
 
 def test_shell_run_rejects_command_outside_allowlist(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch, shell_base: Path
 ) -> None:
     monkeypatch.setenv("AGENTIC_SHELL_ALLOWED_COMMANDS", "python")
     out = lc_tools.shell_run.invoke({"command": "whoami"})
@@ -148,7 +156,7 @@ def test_shell_run_rejects_command_outside_allowlist(
 
 
 def test_shell_run_rejects_shell_metacharacters(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch, shell_base: Path
 ) -> None:
     monkeypatch.setenv("AGENTIC_SHELL_ALLOWED_COMMANDS", "python")
     out = lc_tools.shell_run.invoke({"command": "python --version | cat"})
@@ -157,7 +165,7 @@ def test_shell_run_rejects_shell_metacharacters(
 
 
 def test_shell_run_child_does_not_inherit_secrets(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, shell_base: Path
 ) -> None:
     script = tmp_path / "probe.py"
     script.write_text(
