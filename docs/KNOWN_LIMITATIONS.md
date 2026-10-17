@@ -170,19 +170,12 @@ ARP behavior because the package and command surface were removed. The removal,
 migration boundary, and historical defects remain recorded in
 [ADR-057](adr/ADR-057-remove-rag-package.md) and the changelog.
 
-### 4.12 The model inventory command fails from the repository root
+### 4.12 The model inventory command failed from the repository root - resolved
 
-`python -m tools.llm.model_inventory` imports `llm_client` as a top-level
-module. In the installed repository package, that module is
-`tools.llm.llm_client`, so the command exits with
-`No module named 'llm_client'`.
-
-- **Surface:** `tools/llm/model_inventory.py`.
-- **Risk:** A model discovery run fails before checking any provider.
-- **Workaround:** Use `python -m tools.llm.model_probe` for live discovery.
-- **Status:** Known command defect.
-- **Upstream fix:** Change the command to package-relative imports and add a
-  repository-root CLI smoke test.
+`python -m tools.llm.model_inventory` imported `llm_client` as a top-level module and
+resolved the repository root one level too shallow. It now imports
+`tools.llm.llm_client` and finds the repo root, `.env` and the Windows AI bridge
+project correctly; `tools/tests/test_model_inventory.py` covers the layout.
 
 ### 4.13 The model catalog exposes `onnx:` IDs that exact-model chat cannot use
 

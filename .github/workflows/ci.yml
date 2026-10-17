@@ -678,5 +678,4 @@ jobs:
       - name: Run the tools suite
         run: |
           set -euo pipefail
-          python -m pytest tools/tests -q --timeout=120 \
-            --deselect tools/tests/test_errors.py::TestClassifyError::test_return_code_param_accepted \
+          python -m pytest tools/tests -q --timeout=120
