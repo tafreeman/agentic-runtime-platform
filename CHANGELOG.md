@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased - Run logger filters safely and writes records atomically
+
+- **`RunLogger.list_runs(workflow_name)` no longer treats the name as a glob.**
+  The name is sanitized like the filename segment, and when sanitizing is lossy
+  (for example `team/flow` vs `team_flow`) the recorded `workflow_name` is
+  confirmed, so unrelated runs are not returned. Non-run JSON files are skipped.
+- **Run records are written atomically.** `log()` and `annotate_run()` write a
+  temp file and replace the record, so readers never see a partial file. The
+  replacement keeps the original mode bits, extended attributes/ACLs and (when
+  permitted) ownership.
+
 ## Unreleased - Tools inventory command and classify_error repaired
 
 - **`python -m tools.llm.model_inventory` works from the repository root.** It
