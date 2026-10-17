@@ -12,8 +12,10 @@ from ..base import BaseTool, ToolResult
 logger = logging.getLogger(__name__)
 
 
-def _regex_search(pattern: str, content: str, file_path: Path) -> list[dict]:
-    """Perform regex search."""
+def _regex_search(
+    pattern: str, content: str, file_path: Path, *, ignorecase: bool = True
+) -> list[dict]:
+    """Perform regex search (MULTILINE; IGNORECASE unless *ignorecase* is False)."""
     # Guard against ReDoS — reject overly complex patterns
     if len(pattern) > 500:
         return [
@@ -27,7 +29,8 @@ def _regex_search(pattern: str, content: str, file_path: Path) -> list[dict]:
             }
         ]
     try:
-        regex = re.compile(pattern, re.MULTILINE | re.IGNORECASE)
+        flags = re.MULTILINE | (re.IGNORECASE if ignorecase else 0)
+        regex = re.compile(pattern, flags)
         matches = []
 
         for i, line in enumerate(content.splitlines(), 1):
@@ -107,6 +110,7 @@ async def _run_search(
     recursive: bool = False,
     file_pattern: str = "*",
     max_results: int = 100,
+    ignorecase: bool = True,
 ) -> ToolResult:
     """Search files under *path* and return a ``ToolResult``.
 
@@ -144,7 +148,9 @@ async def _run_search(
                 files_searched += 1
 
                 if mode == "regex":
-                    matches = _regex_search(pattern, content, file_path)
+                    matches = _regex_search(
+                        pattern, content, file_path, ignorecase=ignorecase
+                    )
                     results.extend(matches)
 
                 elif mode == "fuzzy":
@@ -394,8 +400,6 @@ class GrepTool(BaseTool):
         """Execute grep search."""
         # Escape regex special chars for literal search
         escaped_pattern = re.escape(pattern)
-        if not case_sensitive:
-            escaped_pattern = f"(?i){escaped_pattern}"
 
         return await _run_search(
             pattern=escaped_pattern,
@@ -403,4 +407,5 @@ class GrepTool(BaseTool):
             mode="regex",
             recursive=True,
             max_results=100,
+            ignorecase=not case_sensitive,
         )
