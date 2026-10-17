@@ -45,6 +45,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Optional
 
+from tools.core._encoding import _is_already_wrapped as _is_already_wrapped
+from tools.core._encoding import _is_pytest_running as _is_pytest_running
+from tools.core._encoding import safe_print as safe_print
+from tools.core._encoding import safe_str as safe_str
 from tools.core.errors import ErrorCode, classify_error
 from tools.core.model_availability import is_model_available
 
@@ -55,32 +59,7 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 
 
-def _is_pytest_running() -> bool:
-    """Check if we're running under pytest (avoid breaking capture)."""
-    return "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ
-
-
-def _is_already_wrapped(stream) -> bool:
-    """Check if stream is already a TextIOWrapper with UTF-8."""
-    return (
-        isinstance(stream, io.TextIOWrapper)
-        and getattr(stream, "encoding", "").lower() == "utf-8"
-    )
-
-
-if sys.platform == "win32" and not _is_pytest_running():
-    os.environ["PYTHONIOENCODING"] = "utf-8"
-    try:
-        if not _is_already_wrapped(sys.stdout):
-            sys.stdout = io.TextIOWrapper(
-                sys.stdout.buffer, encoding="utf-8", errors="replace"
-            )
-        if not _is_already_wrapped(sys.stderr):
-            sys.stderr = io.TextIOWrapper(
-                sys.stderr.buffer, encoding="utf-8", errors="replace"
-            )
-    except (OSError, AttributeError):
-        pass  # Already wrapped or not available
+# Applied on import of tools.core._encoding (once-only guarded there).
 
 
 # =============================================================================
@@ -93,19 +72,7 @@ if sys.platform == "win32" and not _is_pytest_running():
 # =============================================================================
 
 
-def safe_str(text: Any) -> str:
-    """Ensure value is a string safe for console output."""
-    if not isinstance(text, str):
-        text = str(text)
-    return text.encode("utf-8", errors="replace").decode("utf-8")
-
-
-def safe_print(text: str = "", **kwargs):
-    """Print text safely, handling Unicode errors."""
-    try:
-        print(text, **kwargs)
-    except UnicodeEncodeError:
-        print(safe_str(text), **kwargs)
+# safe_str / safe_print are re-exported from tools.core._encoding (see imports).
 
 
 # =============================================================================

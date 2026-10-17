@@ -145,6 +145,11 @@ def contamination_risk(created_at: str, cutoff: str) -> str:
     return "low" if date > cutoff else "high"
 
 
+def created_date(row: dict[str, Any]) -> str:
+    """The `YYYY-MM-DD` prefix of `created_at`, or '' when absent."""
+    return (row.get("created_at") or "")[:10]
+
+
 def difficulty_of(meta: dict[str, Any]) -> tuple[int | None, str]:
     """Dataset-supplied difficulty. Absent on the leaderboard subset."""
     score = ((meta or {}).get("llm_score") or {}).get("difficulty_score")
@@ -186,7 +191,7 @@ def load_rows(source: str, split: str, config: str | None) -> Iterator[dict[str,
 def passes_filters(row: dict[str, Any], args: argparse.Namespace) -> str | None:
     """Return a rejection reason, or None if the row is acceptable."""
     meta = row.get("meta") or {}
-    created = (row.get("created_at") or "")[:10]
+    created = created_date(row)
     if args.after and created and created < args.after:
         return "created before --after"
     if args.before and created and created > args.before:
@@ -217,8 +222,12 @@ def passes_filters(row: dict[str, Any], args: argparse.Namespace) -> str | None:
     return None
 
 
-def build_case(row: dict[str, Any], args: argparse.Namespace) -> dict[str, Any] | None:
-    """Materialise one case directory and return its jsonl row."""
+def fetch_source(row: dict[str, Any]) -> tuple[str, str, str, str] | None:
+    """Pull the instance image and read the target file out of it.
+
+    Returns (target, image, workdir, source), or None after printing why the
+    instance was skipped.
+    """
     instance_id = row["instance_id"]
     targets = patched_files(row.get("patch") or "")
     if len(targets) != 1:
@@ -245,22 +254,38 @@ def build_case(row: dict[str, Any], args: argparse.Namespace) -> dict[str, Any] 
         )
         return None
     workdir, source = found
+    return target, image, workdir, source
 
+
+def write_case_dir(
+    case_dir: Path, source: str, patch: str, test_patch: str, oracle: dict[str, Any]
+) -> None:
+    case_dir.mkdir(parents=True, exist_ok=True)
+    (case_dir / "broken.py").write_text(source, encoding="utf-8")
+    (case_dir / "gold.patch").write_text(patch, encoding="utf-8")
+    (case_dir / "test.patch").write_text(test_patch, encoding="utf-8")
+    (case_dir / "oracle.json").write_text(
+        json.dumps(oracle, indent=2), encoding="utf-8"
+    )
+
+
+def build_case(row: dict[str, Any], args: argparse.Namespace) -> dict[str, Any] | None:
+    """Materialise one case directory and return its jsonl row."""
+    fetched = fetch_source(row)
+    if fetched is None:
+        return None
+    target, image, workdir, source = fetched
+
+    instance_id = row["instance_id"]
     fail_to_pass = as_list(row.get("FAIL_TO_PASS"))
     pass_to_pass = as_list(row.get("PASS_TO_PASS"))
-    meta = row.get("meta") or {}
-    score, label = difficulty_of(meta)
+    score, label = difficulty_of(row.get("meta"))
     patch_text = row.get("patch") or ""
     band = size_band(patch_text)
-    created = (row.get("created_at") or "")[:10]
+    created = created_date(row)
     risk = contamination_risk(created, args.model_cutoff)
 
     case_dir = CASES_DIR / instance_id
-    case_dir.mkdir(parents=True, exist_ok=True)
-    (case_dir / "broken.py").write_text(source, encoding="utf-8")
-    (case_dir / "gold.patch").write_text(row.get("patch") or "", encoding="utf-8")
-    (case_dir / "test.patch").write_text(row.get("test_patch") or "", encoding="utf-8")
-
     oracle = {
         "case_id": instance_id,
         "kind": "SWEREBENCH",
@@ -292,9 +317,7 @@ def build_case(row: dict[str, Any], args: argparse.Namespace) -> dict[str, Any] 
             "verifier_timeout_sec": row.get("harbor_verifier_timeout_sec"),
         },
     }
-    (case_dir / "oracle.json").write_text(
-        json.dumps(oracle, indent=2), encoding="utf-8"
-    )
+    write_case_dir(case_dir, source, patch_text, row.get("test_patch") or "", oracle)
 
     print(
         f"    + {instance_id}  {target}  ({len(source)} chars, "
@@ -326,6 +349,19 @@ def build_case(row: dict[str, Any], args: argparse.Namespace) -> dict[str, Any] 
             "retrieval": "oracle",
         },
     }
+
+
+def dry_run_row(row: dict[str, Any], model_cutoff: str) -> dict[str, Any]:
+    """Print what would be built and return a stub row for the summary."""
+    _, label = difficulty_of(row.get("meta"))
+    created = created_date(row)
+    risk = contamination_risk(created, model_cutoff)
+    print(
+        f"  would build {row['instance_id']}  difficulty={label} "
+        f"{size_band(row.get('patch') or '')} created={created} "
+        f"contamination={risk}"
+    )
+    return {"sample_id": row["instance_id"], "metadata": {"contamination_risk": risk}}
 
 
 def parse_args() -> argparse.Namespace:
@@ -404,23 +440,7 @@ def main() -> int:
             skipped_offset += 1
             continue
         if args.dry_run:
-            _, label = difficulty_of(row.get("meta") or {})
-            created = (row.get("created_at") or "")[:10]
-            print(
-                f"  would build {row['instance_id']}  difficulty={label} "
-                f"{size_band(row.get('patch') or '')} created={created} "
-                f"contamination={contamination_risk(created, args.model_cutoff)}"
-            )
-            rows.append(
-                {
-                    "sample_id": row["instance_id"],
-                    "metadata": {
-                        "contamination_risk": contamination_risk(
-                            created, args.model_cutoff
-                        )
-                    },
-                }
-            )
+            rows.append(dry_run_row(row, args.model_cutoff))
             continue
         case = build_case(row, args)
         if case:
