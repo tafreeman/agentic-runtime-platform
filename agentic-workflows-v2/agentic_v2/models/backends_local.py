@@ -257,6 +257,9 @@ class OnnxBackend(LLMBackend):
         ),
     )
     max_tokens_cap: int = 4096
+    # Most-recently-used models kept loaded; older ones are evicted so a
+    # long-lived process cannot accumulate every model it has ever served.
+    max_cached_models: int = 1
     # Cache of resolved path -> (og_module, model, tokenizer).
     _models: dict[str, tuple[Any, Any, Any]] = field(default_factory=dict, repr=False)
     _lock: threading.Lock = field(
@@ -298,14 +301,24 @@ class OnnxBackend(LLMBackend):
     def _get_model(self, model: str) -> tuple[Any, Any, Any]:
         path = self._resolve_path(model)
         with self._lock:
-            cached = self._models.get(path)
+            cached = self._models.pop(path, None)
             if cached is None:
+                model_dir = Path(path)
+                if (
+                    model_dir.exists()
+                    and not (model_dir / "genai_config.json").is_file()
+                ):
+                    raise ValueError(
+                        f"Not an onnxruntime-genai model folder (no genai_config.json): {path}"
+                    )
                 og = _load_onnxruntime_genai()
                 _verify_weights(path)
                 loaded = og.Model(path)
                 tokenizer = og.Tokenizer(loaded)
                 cached = (og, loaded, tokenizer)
-                self._models[path] = cached
+            self._models[path] = cached  # re-insert: most recently used last
+            while len(self._models) > max(1, self.max_cached_models):
+                del self._models[next(iter(self._models))]
             return cached
 
     @staticmethod

@@ -270,6 +270,7 @@ class TestOnnxBackendWeightVerification:
         folder = tmp_path / "phi4"
         folder.mkdir()
         (folder / "model.onnx").write_bytes(b"weights")
+        (folder / "genai_config.json").write_text("{}", encoding="utf-8")
         backend = OnnxBackend(model_dir=str(tmp_path))
         backend.loaded = loaded  # type: ignore[attr-defined]
         return backend
@@ -326,3 +327,40 @@ class TestOnnxBackendHardening:
         monkeypatch.setenv("AGENTIC_STRICT_MODEL_VERIFY", "1")
         with pytest.raises(PermissionError):
             backends_local._verify_weights(str(tmp_path))
+
+
+class TestOnnxBackendModelFolderAndCache:
+    def test_non_model_directory_rejected_before_hashing(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+    ) -> None:
+        monkeypatch.setattr(
+            "agentic_v2.models.backends_local._load_onnxruntime_genai",
+            lambda: _FakeOg,
+        )
+        calls: list[str] = []
+        monkeypatch.setattr(
+            "agentic_v2.models.backends_local._verify_weights", calls.append
+        )
+        backend = OnnxBackend(model_dir=str(tmp_path))
+        with pytest.raises(ValueError, match="genai_config.json"):
+            backend._get_model("onnx:.")
+        assert calls == []
+
+    def test_cache_evicts_least_recently_used(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+    ) -> None:
+        monkeypatch.setattr(
+            "agentic_v2.models.backends_local._load_onnxruntime_genai",
+            lambda: _FakeOg,
+        )
+        monkeypatch.setattr(
+            "agentic_v2.models.backends_local._verify_weights", lambda p: None
+        )
+        for name in ("a", "b"):
+            (tmp_path / name).mkdir()
+            (tmp_path / name / "genai_config.json").write_text("{}", encoding="utf-8")
+        backend = OnnxBackend(model_dir=str(tmp_path), max_cached_models=1)
+        backend._get_model("onnx:a")
+        backend._get_model("onnx:b")
+        assert len(backend._models) == 1
+        assert next(iter(backend._models)).endswith("b")
