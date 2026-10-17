@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+import uuid
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -33,6 +34,19 @@ def _sanitize_filename_segment(value: str) -> str:
     return "".join(
         char if char.isalnum() or char in {"-", "_"} else "_" for char in value
     )
+
+
+def _write_json_atomic(path: Path, record: dict[str, Any]) -> None:
+    """Write ``record`` to ``path`` via a temp file so readers never see a half-written file."""
+    temp_path = path.with_name(f"{path.name}.{uuid.uuid4().hex}.tmp")
+    try:
+        temp_path.write_text(
+            json.dumps(record, indent=2, default=_safe_serialize),
+            encoding="utf-8",
+        )
+        temp_path.replace(path)
+    finally:
+        temp_path.unlink(missing_ok=True)
 
 
 def _safe_serialize(obj: Any) -> Any:
@@ -369,20 +383,31 @@ class RunLogger:
         filename = f"{ts}_{workflow_name}_{run_id}_{status}{_JSON_SUFFIX}"
         path = self._runs_dir / filename
 
-        path.write_text(
-            json.dumps(record, indent=2, default=_safe_serialize),
-            encoding="utf-8",
-        )
+        _write_json_atomic(path, record)
         logger.info("Run logged: %s", path)
         return path
 
     def list_runs(self, workflow_name: str | None = None) -> list[Path]:
         """List all logged run files, optionally filtered by workflow name."""
-        pattern = f"*_{workflow_name}_*.json" if workflow_name else "*.json"
+        safe_name = _sanitize_filename_segment(workflow_name) if workflow_name else ""
+        pattern = f"*_{safe_name}_*.json" if workflow_name else "*.json"
         paths: list[Path] = []
         for directory in self._search_dirs():
             paths.extend(directory.glob(pattern))
-        return sorted(set(paths))
+        matched = sorted(set(paths))
+        if workflow_name and safe_name != workflow_name:
+            # Sanitizing is lossy ("a/b" and "a_b" collide), so confirm the
+            # recorded name rather than trusting the filename segment.
+            matched = [p for p in matched if self._recorded_name(p) == workflow_name]
+        return matched
+
+    def _recorded_name(self, path: Path) -> str | None:
+        """Return the ``workflow_name`` stored in a run record, if readable."""
+        try:
+            name = self.load_run(path).get("workflow_name")
+        except (OSError, ValueError):
+            return None
+        return name if isinstance(name, str) else None
 
     def load_run(self, path: Path) -> dict[str, Any]:
         """Load a run record from disk."""
@@ -412,10 +437,7 @@ class RunLogger:
         score = _extract_evaluation_score(record["extra"])
         if score is not None:
             record["score"] = score
-        path.write_text(
-            json.dumps(record, indent=2, default=_safe_serialize),
-            encoding="utf-8",
-        )
+        _write_json_atomic(path, record)
         logger.info("Run evaluation annotated: %s", path)
         return record
 
