@@ -55,11 +55,11 @@ logger = logging.getLogger(__name__)
 
 YAML_EXTENSION = ".yaml"
 
-# LangChain imports — deferred so the CLI module loads even when
+# LangChain imports — guarded so the CLI module loads even when
 # langchain extras are not installed.  Commands that need LangChain
-# call _get_runner() and catch the error at that point.
+# call _require_langchain() first.
 try:
-    from ..langchain import WorkflowRunner, load_workflow_config
+    from ..langchain import load_workflow_config
     from ..langchain.graph import compile_workflow
 
     _LANGCHAIN_AVAILABLE = True
@@ -77,7 +77,6 @@ console = Console()
 
 # Initialize tracing adapter (respects AGENTIC_TRACING env var)
 _trace_adapter = create_trace_adapter()
-_runner = None  # lazily initialized by _get_runner()
 
 # Register shutdown hook for tracing cleanup
 atexit.register(shutdown_tracing)
@@ -96,13 +95,9 @@ def _require_langchain() -> None:
         raise typer.Exit(code=1)
 
 
-def _get_runner():
-    """Lazily initialize the WorkflowRunner."""
-    global _runner
-    _require_langchain()
-    if _runner is None:
-        _runner = WorkflowRunner(trace_adapter=_trace_adapter)
-    return _runner
+def _is_yaml_path(workflow: str) -> bool:
+    """Return True when *workflow* names a YAML file rather than a workflow."""
+    return workflow.endswith((YAML_EXTENSION, ".yml"))
 
 
 def _resolve_workflow_source(workflow: str) -> tuple[str, Path | None]:
@@ -110,7 +105,7 @@ def _resolve_workflow_source(workflow: str) -> tuple[str, Path | None]:
 
     Exits with an error if a ``.yaml``/``.yml`` path is given but missing.
     """
-    if workflow.endswith((YAML_EXTENSION, ".yml")):
+    if _is_yaml_path(workflow):
         workflow_path = Path(workflow)
         if not workflow_path.exists():
             console.print(f"[red]Error:[/red] Workflow file not found: {workflow}")
@@ -133,7 +128,6 @@ def _execute_run(
     adapter: str,
     workflow_name: str,
     workflow_def: Any,
-    definitions_dir: Path | None,
     input_data: dict,
 ) -> Any:
     """Execute the workflow under a progress spinner and return the result."""
@@ -260,9 +254,7 @@ def run(
             console.print("\n[yellow]Dry run - skipping execution[/yellow]")
             return
 
-        result = _execute_run(
-            adapter, workflow_name, workflow_def, definitions_dir, input_data
-        )
+        result = _execute_run(adapter, workflow_name, workflow_def, input_data)
 
         # Display results
         _show_results(result, verbose)
@@ -315,11 +307,7 @@ def compare(
     from rich.table import Table
 
     try:
-        if not input_file.exists():
-            console.print(f"[red]Error:[/red] Input file not found: {input_file}")
-            raise typer.Exit(1)
-
-        input_data = json.loads(input_file.read_text())
+        input_data = _load_run_input(input_file)
         workflow_def = load_workflow_config(workflow)
 
         adapter_names = [a.strip() for a in adapters.split(",") if a.strip()]
@@ -547,7 +535,7 @@ def validate(
     from ..devex.workflow_linter import lint_workflow_by_name, lint_workflow_file
 
     # Tier 1: fast structural lint (no extras required)
-    if workflow.endswith((YAML_EXTENSION, ".yml")):
+    if _is_yaml_path(workflow):
         lint_violations = lint_workflow_file(Path(workflow))
     else:
         lint_violations = lint_workflow_by_name(workflow)
@@ -565,7 +553,7 @@ def validate(
     try:
         definitions_dir: Path | None = None
         workflow_name = workflow
-        if workflow.endswith((YAML_EXTENSION, ".yml")):
+        if _is_yaml_path(workflow):
             workflow_path = Path(workflow)
             if not workflow_path.exists():
                 console.print(f"[red]Error:[/red] File not found: {workflow}")

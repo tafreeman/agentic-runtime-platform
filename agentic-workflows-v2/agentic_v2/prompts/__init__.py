@@ -19,15 +19,13 @@ from pathlib import Path
 
 from .registry import (
     PROMPT_VERSIONS,
+    PROMPTS_DIR,
     PromptRecord,
     PromptRegistry,
     compute_content_hash,
     default_registry,
     normalize_prompt_text,
 )
-
-# Directory containing prompt templates
-PROMPTS_DIR = Path(__file__).parent
 
 
 def load_prompt(name: str) -> str:
@@ -49,11 +47,10 @@ def load_prompt(name: str) -> str:
     if record is not None:
         return record.content
 
-    prompt_path = PROMPTS_DIR / f"{stem}.md"
-    if not prompt_path.exists():
-        raise FileNotFoundError(f"Prompt not found: {stem}.md")
-
-    return prompt_path.read_text(encoding="utf-8")
+    try:
+        return (PROMPTS_DIR / f"{stem}.md").read_text(encoding="utf-8")
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Prompt not found: {stem}.md") from None
 
 
 def list_prompts() -> list[str]:

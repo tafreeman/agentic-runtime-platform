@@ -8,6 +8,7 @@ from agentic_v2.contracts.sanitization import (
     FindingCategory,
     Severity,
 )
+from agentic_v2.middleware.detectors.base import build_preview
 
 
 class PIIDetector:
@@ -51,8 +52,4 @@ class PIIDetector:
         return tuple(findings)
 
     def _build_preview(self, text: str, start: int, end: int) -> str:
-        ctx_start = max(0, start - self.PREVIEW_CONTEXT)
-        ctx_end = min(len(text), end + self.PREVIEW_CONTEXT)
-        prefix = text[ctx_start:start]
-        suffix = text[end:ctx_end]
-        return f"{prefix}[REDACTED]{suffix}"
+        return build_preview(text, start, end, self.PREVIEW_CONTEXT, "[REDACTED]")

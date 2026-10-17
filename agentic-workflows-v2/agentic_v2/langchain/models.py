@@ -90,6 +90,7 @@ from .model_utils import (
     dedupe_keep_order,
     is_provider_available,
     is_retryable_model_error,
+    probe_available_providers,
     provider_prefix,
     resolve_model_override,
 )
@@ -166,11 +167,6 @@ _resolve_model_override = resolve_model_override
 # ---------------------------------------------------------------------------
 # Provider availability probe
 # ---------------------------------------------------------------------------
-
-
-def probe_available_providers() -> dict[str, bool]:
-    """Probe which LLM providers have credentials configured."""
-    return {prov: is_provider_available(prov) for prov in PROVIDER_ENV_KEYS}
 
 
 def probe_and_update_tier_defaults(
