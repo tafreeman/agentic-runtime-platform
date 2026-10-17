@@ -541,3 +541,25 @@ class TestRunLoggerHardening:
         path.chmod(0o600)
         rl.annotate_run(path, evaluation={"overall_score": 0.5})
         assert path.stat().st_mode & 0o777 == 0o600
+
+    @pytest.mark.skipif(
+        __import__("sys").platform == "win32", reason="POSIX permission bits"
+    )
+    def test_temp_file_created_with_existing_mode(self, tmp_path, monkeypatch):
+        import os
+
+        from agentic_v2.workflows.run_logger import _write_json_atomic
+
+        target = tmp_path / "rec.json"
+        target.write_text("{}", encoding="utf-8")
+        target.chmod(0o600)
+        modes = []
+        real_open = os.open
+
+        def _spy(path, flags, mode=0o777):
+            modes.append(mode)
+            return real_open(path, flags, mode)
+
+        monkeypatch.setattr(os, "open", _spy)
+        _write_json_atomic(target, {"ok": 1})
+        assert modes == [0o600]

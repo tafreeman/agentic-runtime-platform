@@ -11,7 +11,8 @@ from __future__ import annotations
 
 import json
 import logging
-import shutil
+import os
+import stat
 import uuid
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -38,18 +39,22 @@ def _sanitize_filename_segment(value: str) -> str:
 
 
 def _write_json_atomic(path: Path, record: dict[str, Any]) -> None:
-    """Write ``record`` to ``path`` via a temp file so readers never see a half-written file."""
+    """Write ``record`` to ``path`` via a temp file (no half-written reads)."""
     # Short independent basename: the destination may already be near the
     # filesystem's filename-length limit.
     temp_path = path.with_name(f".{uuid.uuid4().hex[:12]}.tmp")
+    # Replacing swaps the inode, so the temp file must be *created* with the
+    # record's existing permissions (never wider, even briefly); new records
+    # get the umask-filtered default.
     try:
-        temp_path.write_text(
-            json.dumps(record, indent=2, default=_safe_serialize),
-            encoding="utf-8",
-        )
-        if path.exists():
-            # Replacing swaps the inode; keep the record's existing permissions.
-            shutil.copymode(path, temp_path)
+        mode = stat.S_IMODE(path.stat().st_mode)
+    except FileNotFoundError:
+        mode = 0o666
+    payload = json.dumps(record, indent=2, default=_safe_serialize)
+    try:
+        fd = os.open(temp_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, mode)
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(payload)
         temp_path.replace(path)
     finally:
         temp_path.unlink(missing_ok=True)
