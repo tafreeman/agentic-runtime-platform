@@ -223,37 +223,19 @@ LangChain local ONNX builder do not call it.
 
 ---
 
-### 4.15 One `tools/tests` case asserts an API that no longer exists
+### 4.15 `tools/tests` stale cases — resolved
 
-`tools/tests` holds 17 test files that **no CI job had ever collected**. The whole-repo
-coverage step measures `--cov=tools` but only collects `agentic-workflows-v2/tests` and
-`agentic-v2-eval/tests`, so `tools/` was *measured* but never *exercised* — its coverage
-number was whatever the workflow suites happened to import.
+`tools/tests` holds 17 test files that **no CI job had ever collected** until the
+`tools-tests` job in `ci.yml` was added. Its first runs surfaced stale cases, all now
+resolved with nothing deselected:
 
-The `tools-tests` job in `ci.yml` now collects them. Running them for the first time
-surfaced 11 failures. They are not flaky; they are stale, and they are stale precisely
-because nothing ever ran them:
-
-- `test_errors.py::TestClassifyError::test_return_code_param_accepted` calls
-  `classify_error(..., return_code=124)`; the parameter no longer exists.
-- ~~Ten cases across `test_benchmark_pipeline.py` and `test_evaluation_pipeline.py`
-  (`TestEvaluateTaskOutputLlm`)~~ — **resolved.** These were not stale tests but a real
-  bug: `evaluation_pipeline` imported the reporting helpers from `llm_evaluator` after they
-  had moved to `evaluator_reporting`, the optional-import guard swallowed the
-  `ImportError`, and `HAS_LLM_EVALUATOR` was always `False`, silently disabling the
-  LLM-judge path. The import is fixed, the ten cases pass and are no longer deselected,
-  and `test_llm_evaluator_imports_resolve` now fails if the guard masks a broken import.
-
-- **Surface:** `tools/tests/test_errors.py`; the `tools-tests` job in `.github/workflows/ci.yml`.
-- **Risk:** Low for runtime behaviour — the implementation is current and every other case
-  passes. The cost is that this one case's intent is unverified.
-- **Workaround:** None needed; it is deselected by node id in the CI job, so the
-  remaining cases in that file still gate.
-- **Status:** Accepted, short-term. Deselecting by node id rather than by file is
-  deliberate — it keeps the debt greppable and keeps the rest of each file enforcing.
-- **Upstream fix:** Decide per case whether the test or the API is right, then either
-  update the assertions or delete the case. Once the list is empty, drop the `--deselect`
-  flags so the whole suite gates unconditionally.
+- `test_errors.py::TestClassifyError::test_return_code_param_accepted` — `classify_error`
+  had lost its `return_code` parameter; the keyword is restored (accepted, currently
+  unused) and the `--deselect` is removed.
+- Ten `TestEvaluateTaskOutputLlm` cases — a broken optional import in
+  `evaluation_pipeline` (reporting helpers moved to `evaluator_reporting`) silently
+  disabled the LLM-judge path; the import is fixed and
+  `test_llm_evaluator_imports_resolve` fails if the guard masks it again.
 
 ## 5. Documentation and process
 
