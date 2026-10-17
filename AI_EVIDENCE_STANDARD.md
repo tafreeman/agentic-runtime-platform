@@ -225,8 +225,6 @@ These limits must remain visible in public summaries:
 
 - ARP ships no retrieval package or command; external retrieval evidence must
   name and verify the integrated system separately.
-- `tools.llm.model_inventory` currently fails to import its legacy
-  `llm_client` dependency.
 - ONNX discovery and exact-model LangChain chat do not use the same model-ID
   prefix contract.
 - Local-model weight verification is not wired into every model load path.
