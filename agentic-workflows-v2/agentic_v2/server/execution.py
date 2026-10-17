@@ -541,6 +541,7 @@ async def _run_and_evaluate(
     """
     try:
         logger.info("Starting background execution for run_id=%s", run_id)
+        websocket.manager.bind_run_tenant(run_id, tenant_id)
         await websocket.manager.broadcast(
             run_id,
             {
@@ -588,6 +589,9 @@ async def _run_and_evaluate(
                     else 0.0
                 ),
                 "errors": workflow_errors,
+                # Tells SSE consumers whether evaluation events follow, so
+                # they keep the stream open past workflow_end.
+                "evaluation_enabled": bool(evaluation and evaluation.enabled),
                 "timestamp": datetime.now(UTC).isoformat(),
             },
         )
