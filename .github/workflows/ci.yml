@@ -662,12 +662,6 @@ jobs:
     # coverage step measures --cov=tools but only collects agentic-workflows-v2
     # and agentic-v2-eval. So tools/ was measured but never exercised, and the
     # redaction tests guarding the clear-text CodeQL fixes would never run.
-    #
-    # 1 test is deselected below. It is not flaky — it is stale, and stale
-    # *because* nothing ever ran it: it asserts an API that no longer exists
-    # (classify_error() lost its return_code parameter). It is listed by node id
-    # rather than excluded by file so the debt is greppable and the surviving
-    # tests in that file still gate. Tracked in docs/KNOWN_LIMITATIONS.md §4.15.
     name: tools/ tests
     runs-on: ubuntu-latest
     steps:
@@ -684,5 +678,4 @@ jobs:
       - name: Run the tools suite
         run: |
           set -euo pipefail
-          python -m pytest tools/tests -q --timeout=120 \
-            --deselect tools/tests/test_errors.py::TestClassifyError::test_return_code_param_accepted \
+          python -m pytest tools/tests -q --timeout=120

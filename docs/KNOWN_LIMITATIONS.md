@@ -2,7 +2,7 @@
 
 > **Audience:** Operators, auditors, and contributors reading failing CI or trying to understand why something "works but not quite."
 > **Outcome:** After reading, you know what is intentionally unfinished and what the next sprint is expected to address.
-> **Last verified:** 2026-07-28
+> **Last verified:** 2026-10-17
 
 This page records limitations confirmed in the current checkout. Some describe
 accepted design boundaries; others describe work that is not complete. Check
@@ -170,68 +170,7 @@ ARP behavior because the package and command surface were removed. The removal,
 migration boundary, and historical defects remain recorded in
 [ADR-057](adr/ADR-057-remove-rag-package.md) and the changelog.
 
-### 4.12 The model inventory command fails from the repository root
-
-`python -m tools.llm.model_inventory` imports `llm_client` as a top-level
-module. In the installed repository package, that module is
-`tools.llm.llm_client`, so the command exits with
-`No module named 'llm_client'`.
-
-- **Surface:** `tools/llm/model_inventory.py`.
-- **Risk:** A model discovery run fails before checking any provider.
-- **Workaround:** Use `python -m tools.llm.model_probe` for live discovery.
-- **Status:** Known command defect.
-- **Upstream fix:** Change the command to package-relative imports and add a
-  repository-root CLI smoke test.
-
-### 4.13 `onnx:` catalog IDs in exact-model chat - resolved
-
-Discovered `onnx:<relative-path>` IDs now route through `build_onnx_model`, a
-LangChain wrapper over `OnnxBackend`, so `POST /api/chat` can run them. The
-wrapper is prompt-only (no structured tool-calling), and ids must be relative
-folders under the configured ONNX roots.
-
-### 4.14 Strict model-weight verification - resolved
-
-`verify_model_weights()` (`agentic_v2/models/weight_integrity.py`) runs before
-every local weight load: the shared-tools local provider and the runtime's
-native `OnnxBackend` (once per cached path), which also backs the LangChain
-`onnx:` builder. With `AGENTIC_STRICT_MODEL_VERIFY=1` unverified models are
-refused; otherwise problems only log warnings.
-
 ---
-
-### 4.15 One `tools/tests` case asserts an API that no longer exists
-
-`tools/tests` holds 17 test files that **no CI job had ever collected**. The whole-repo
-coverage step measures `--cov=tools` but only collects `agentic-workflows-v2/tests` and
-`agentic-v2-eval/tests`, so `tools/` was *measured* but never *exercised* — its coverage
-number was whatever the workflow suites happened to import.
-
-The `tools-tests` job in `ci.yml` now collects them. Running them for the first time
-surfaced 11 failures. They are not flaky; they are stale, and they are stale precisely
-because nothing ever ran them:
-
-- `test_errors.py::TestClassifyError::test_return_code_param_accepted` calls
-  `classify_error(..., return_code=124)`; the parameter no longer exists.
-- ~~Ten cases across `test_benchmark_pipeline.py` and `test_evaluation_pipeline.py`
-  (`TestEvaluateTaskOutputLlm`)~~ — **resolved.** These were not stale tests but a real
-  bug: `evaluation_pipeline` imported the reporting helpers from `llm_evaluator` after they
-  had moved to `evaluator_reporting`, the optional-import guard swallowed the
-  `ImportError`, and `HAS_LLM_EVALUATOR` was always `False`, silently disabling the
-  LLM-judge path. The import is fixed, the ten cases pass and are no longer deselected,
-  and `test_llm_evaluator_imports_resolve` now fails if the guard masks a broken import.
-
-- **Surface:** `tools/tests/test_errors.py`; the `tools-tests` job in `.github/workflows/ci.yml`.
-- **Risk:** Low for runtime behaviour — the implementation is current and every other case
-  passes. The cost is that this one case's intent is unverified.
-- **Workaround:** None needed; it is deselected by node id in the CI job, so the
-  remaining cases in that file still gate.
-- **Status:** Accepted, short-term. Deselecting by node id rather than by file is
-  deliberate — it keeps the debt greppable and keeps the rest of each file enforcing.
-- **Upstream fix:** Decide per case whether the test or the API is right, then either
-  update the assertions or delete the case. Once the list is empty, drop the `--deselect`
-  flags so the whole suite gates unconditionally.
 
 ## 5. Documentation and process
 
