@@ -563,3 +563,21 @@ class TestRunLoggerHardening:
         monkeypatch.setattr(os, "open", _spy)
         _write_json_atomic(target, {"ok": 1})
         assert modes == [0o600]
+
+    @pytest.mark.skipif(
+        __import__("sys").platform == "win32", reason="POSIX permission bits"
+    )
+    def test_atomic_write_preserves_mode_under_restrictive_umask(self, tmp_path):
+        import os
+
+        from agentic_v2.workflows.run_logger import _write_json_atomic
+
+        target = tmp_path / "rec.json"
+        target.write_text("{}", encoding="utf-8")
+        target.chmod(0o664)
+        old = os.umask(0o077)
+        try:
+            _write_json_atomic(target, {"ok": 1})
+        finally:
+            os.umask(old)
+        assert target.stat().st_mode & 0o777 == 0o664

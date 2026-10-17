@@ -46,13 +46,19 @@ def _write_json_atomic(path: Path, record: dict[str, Any]) -> None:
     # Replacing swaps the inode, so the temp file must be *created* with the
     # record's existing permissions (never wider, even briefly); new records
     # get the umask-filtered default.
+    existing_mode: int | None
     try:
-        mode = stat.S_IMODE(path.stat().st_mode)
+        existing_mode = stat.S_IMODE(path.stat().st_mode)
     except FileNotFoundError:
-        mode = 0o666
+        existing_mode = None
+    mode = 0o666 if existing_mode is None else existing_mode
     payload = json.dumps(record, indent=2, default=_safe_serialize)
     try:
         fd = os.open(temp_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, mode)
+        if existing_mode is not None and hasattr(os, "fchmod"):
+            # os.open's mode is umask-filtered; restore the exact original
+            # bits (still before any content is written).
+            os.fchmod(fd, existing_mode)
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
             handle.write(payload)
         temp_path.replace(path)
