@@ -531,3 +531,13 @@ class TestRunLoggerHardening:
         target = tmp_path / ("a" * 250 + ".json")
         _write_json_atomic(target, {"ok": True})
         assert json.loads(target.read_text(encoding="utf-8")) == {"ok": True}
+
+    @pytest.mark.skipif(
+        __import__("sys").platform == "win32", reason="POSIX permission bits"
+    )
+    def test_annotate_preserves_record_permissions(self, tmp_path):
+        rl = RunLogger(runs_dir=tmp_path)
+        path = rl.log(_result())
+        path.chmod(0o600)
+        rl.annotate_run(path, evaluation={"overall_score": 0.5})
+        assert path.stat().st_mode & 0o777 == 0o600

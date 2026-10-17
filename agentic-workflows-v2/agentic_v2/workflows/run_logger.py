@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+import shutil
 import uuid
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -46,6 +47,9 @@ def _write_json_atomic(path: Path, record: dict[str, Any]) -> None:
             json.dumps(record, indent=2, default=_safe_serialize),
             encoding="utf-8",
         )
+        if path.exists():
+            # Replacing swaps the inode; keep the record's existing permissions.
+            shutil.copymode(path, temp_path)
         temp_path.replace(path)
     finally:
         temp_path.unlink(missing_ok=True)
