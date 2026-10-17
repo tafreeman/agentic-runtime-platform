@@ -102,7 +102,30 @@ class CodeExecutionTool(BaseTool):
             "io",
             "builtins",
             "pathlib",
+            # Private/low-level aliases and process-capable stdlib modules.
+            "_io",
+            "_os",
+            "_posixsubprocess",
+            "_winapi",
+            "_thread",
+            "asyncio",
+            "runpy",
+            "types",
+            "gc",
+            "inspect",
+            "marshal",
+            "pickle",
+            "pty",
+            "fcntl",
+            "msvcrt",
+            "code",
         }
+    )
+
+    # Attribute names that re-expose os/sys or the globals/class hierarchy
+    # (e.g. ``random._os.spawnv``, ``f.__globals__``).
+    _DANGEROUS_ATTRS = frozenset(
+        {"_os", "_sys", "_io", "__globals__", "__base__", "__builtins__", "__dict__"}
     )
 
     _DANGEROUS_BUILTINS = frozenset(
@@ -179,6 +202,8 @@ class CodeExecutionTool(BaseTool):
         import ast
 
         for node in ast.walk(tree):
+            if isinstance(node, ast.Attribute) and node.attr in self._DANGEROUS_ATTRS:
+                return f"Blocked: access to restricted attribute '{node.attr}'"
             if isinstance(node, ast.Import):
                 blocked = self._first_blocked_import(alias.name for alias in node.names)
                 if blocked:

@@ -478,6 +478,10 @@ def shell_run(command: str, cwd: str | None = None, timeout: int = 30) -> str:
         return denied
     if _is_dangerous_command(command):
         return "ERROR: Command blocked by security policy."
+    if cwd is not None:
+        denied = _outside_file_base(cwd)
+        if denied:
+            return denied
     try:
         argv = _split_command(command)
     except ValueError as e:

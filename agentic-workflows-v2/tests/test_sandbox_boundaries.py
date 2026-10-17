@@ -241,3 +241,29 @@ async def test_code_analysis_from_file_inside_base_works(file_base: Path) -> Non
     f.write_text("def a():\n    pass\n", encoding="utf-8")
     result = await CodeAnalysisTool().execute(source=str(f), from_file=True)
     assert result.success
+
+
+@pytest.mark.parametrize(
+    "code",
+    [
+        "import random\nrandom._os.spawnv",
+        "import _io",
+        "import asyncio",
+        "def f(): pass\nf.__globals__",
+    ],
+)
+def test_reexported_os_and_private_modules_are_blocked(code: str) -> None:
+    assert CodeExecutionTool(sandbox=True)._check_code_safety(code) is not None
+
+
+def test_shell_run_cwd_must_be_inside_file_base(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    base = tmp_path / "base"
+    base.mkdir()
+    monkeypatch.setenv("AGENTIC_FILE_BASE_DIR", str(base))
+    monkeypatch.setenv("AGENTIC_SHELL_ALLOWED_COMMANDS", "python")
+    out = lc_tools.shell_run.invoke(
+        {"command": "python --version", "cwd": str(tmp_path)}
+    )
+    assert out.startswith("ERROR")
