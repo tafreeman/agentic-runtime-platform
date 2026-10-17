@@ -1255,9 +1255,6 @@ def add_step_nodes(
 
 def add_start_edges(graph: StateGraph, root_steps: list[str]) -> None:
     """Wire START to all root steps."""
-    if len(root_steps) == 1:
-        graph.add_edge(START, root_steps[0])
-        return
     for root in root_steps:
         graph.add_edge(START, root)
 

@@ -287,18 +287,17 @@ async def evaluate_tool_approval(
     # missing provider. A non-positive timeout disables the bound (wait forever).
     timeout_s = get_settings().agentic_approval_timeout_seconds
     try:
-        if timeout_s > 0:
-            # asyncio.wait_for cancels the provider coroutine at the deadline and
-            # awaits its cleanup, so a provider that suppresses or shields
-            # cancellation can still block past timeout_s. Providers are an
-            # external contract and MUST be cancellable for this bound to hold
-            # (see ADR-041); abandoning the task on deadline was considered and
-            # rejected because it leaks the provider coroutine and its resources.
-            decision = await asyncio.wait_for(
-                provider.request_approval(request), timeout=timeout_s
-            )
-        else:
-            decision = await provider.request_approval(request)
+        # asyncio.wait_for cancels the provider coroutine at the deadline and
+        # awaits its cleanup, so a provider that suppresses or shields
+        # cancellation can still block past timeout_s. Providers are an
+        # external contract and MUST be cancellable for this bound to hold
+        # (see ADR-041); abandoning the task on deadline was considered and
+        # rejected because it leaks the provider coroutine and its resources.
+        # ``timeout=None`` (non-positive setting) awaits without a bound.
+        decision = await asyncio.wait_for(
+            provider.request_approval(request),
+            timeout=timeout_s if timeout_s > 0 else None,
+        )
     except TimeoutError:
         logger.warning(
             "Approval timed out after %ss for tool %r (call_id=%s, provider=%s); "

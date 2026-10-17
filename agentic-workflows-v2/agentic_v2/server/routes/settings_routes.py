@@ -16,7 +16,7 @@ import logging
 import os
 import time
 from datetime import UTC, datetime
-from typing import get_args
+from typing import Any, get_args
 from urllib.parse import urljoin
 
 import httpx
@@ -466,9 +466,7 @@ async def create_model_pack(request: ModelPackCreateRequest) -> ModelPack:
             judge_model=request.judge_model,
             source=request.source,
         )
-        updated = UiSettings.model_validate(
-            {**settings.model_dump(), "model_packs": [*settings.model_packs, pack]}
-        )
+        updated = _updated(settings, model_packs=[*settings.model_packs, pack])
     except ValidationError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     _save_or_503(updated)
@@ -501,9 +499,7 @@ async def version_model_pack(
             }
         )
         pack = ModelPack.model_validate(pack.model_dump())
-        updated = UiSettings.model_validate(
-            {**settings.model_dump(), "model_packs": [*settings.model_packs, pack]}
-        )
+        updated = _updated(settings, model_packs=[*settings.model_packs, pack])
     except ValidationError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     _save_or_503(updated)
@@ -540,9 +536,7 @@ async def duplicate_model_pack(
             "source": "duplicate",
         }
     )
-    updated = UiSettings.model_validate(
-        {**settings.model_dump(), "model_packs": [*settings.model_packs, duplicate]}
-    )
+    updated = _updated(settings, model_packs=[*settings.model_packs, duplicate])
     _save_or_503(updated)
     return duplicate
 
@@ -574,9 +568,7 @@ async def activate_model_pack(
         raise HTTPException(
             status_code=409, detail="Only a valid, active pack can be activated"
         )
-    updated = UiSettings.model_validate(
-        {**settings.model_dump(), "active_model_pack": ref.model_dump()}
-    )
+    updated = _updated(settings, active_model_pack=ref.model_dump())
     _save_or_503(updated)
     return _pack_list_response(updated)
 
@@ -595,9 +587,7 @@ async def deactivate_model_pack() -> ModelPackListResponse:
     untouched; clear those via the bindings routes.
     """
     settings = load_ui_settings()
-    updated = UiSettings.model_validate(
-        {**settings.model_dump(), "active_model_pack": None}
-    )
+    updated = _updated(settings, active_model_pack=None)
     _save_or_503(updated)
     return _pack_list_response(updated)
 
@@ -624,9 +614,7 @@ async def bind_model_pack(
     if workflow_name not in list_workflows():
         raise HTTPException(status_code=404, detail="Workflow not found")
     bindings = {**settings.workflow_model_packs, workflow_name: ref}
-    updated = UiSettings.model_validate(
-        {**settings.model_dump(), "workflow_model_packs": bindings}
-    )
+    updated = _updated(settings, workflow_model_packs=bindings)
     _save_or_503(updated)
     return _pack_list_response(updated)
 
@@ -639,9 +627,7 @@ async def clear_model_pack_binding(workflow_name: str) -> ModelPackListResponse:
     settings = load_ui_settings()
     bindings = dict(settings.workflow_model_packs)
     bindings.pop(workflow_name, None)
-    updated = UiSettings.model_validate(
-        {**settings.model_dump(), "workflow_model_packs": bindings}
-    )
+    updated = _updated(settings, workflow_model_packs=bindings)
     _save_or_503(updated)
     return _pack_list_response(updated)
 
@@ -712,7 +698,7 @@ async def archive_model_pack(
         archived if item.id == pack.id and item.version == pack.version else item
         for item in settings.model_packs
     ]
-    updated = UiSettings.model_validate({**settings.model_dump(), "model_packs": packs})
+    updated = _updated(settings, model_packs=packs)
     _save_or_503(updated)
     return archived
 
@@ -737,6 +723,11 @@ async def export_model_pack(
 async def import_model_pack(request: ModelPackImportRequest) -> ModelPack:
     pack_request = request.pack.model_copy(update={"source": "imported"})
     return await create_model_pack(pack_request)
+
+
+def _updated(settings: UiSettings, **fields: Any) -> UiSettings:
+    """Return *settings* with *fields* replaced, re-validated as a whole."""
+    return UiSettings.model_validate({**settings.model_dump(), **fields})
 
 
 def _save_or_503(settings: UiSettings) -> None:

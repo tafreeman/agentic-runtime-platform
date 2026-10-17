@@ -20,6 +20,7 @@ from typing import Any
 from agentic_v2_eval.interfaces import LLMClientProtocol
 from agentic_v2_eval.rubrics import load_rubric
 
+from ._judge_json import parse_judge_json
 from .base import EvaluatorRegistry
 
 
@@ -315,26 +316,4 @@ class PatternEvaluator:
 
     def _parse_json_response(self, text: str) -> dict[str, Any] | None:
         """Extract and parse JSON from text (handles markdown blocks)."""
-        # Guard against ReDoS on pathological untrusted input (LLM output).
-        _MAX_PARSE_LEN = 262144  # 256 KB — ample for any realistic LLM response
-        if len(text) > _MAX_PARSE_LEN:
-            text = text[:_MAX_PARSE_LEN]
-        # remove markdown code blocks
-        match = re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL)
-        if match:
-            text = match.group(1)
-
-        try:
-            parsed: dict[str, Any] = json.loads(text)
-            return parsed
-        except json.JSONDecodeError:
-            # Fallback: find first { and last }
-            start = text.find("{")
-            end = text.rfind("}")
-            if start != -1 and end != -1:
-                try:
-                    fallback: dict[str, Any] = json.loads(text[start : end + 1])
-                    return fallback
-                except json.JSONDecodeError:
-                    pass
-            return None
+        return parse_judge_json(text)

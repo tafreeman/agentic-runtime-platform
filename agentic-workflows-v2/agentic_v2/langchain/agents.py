@@ -12,11 +12,11 @@ from __future__ import annotations
 
 import logging
 import re
-from pathlib import Path
 from typing import Any
 
 from langgraph.prebuilt import create_react_agent
 
+from ..prompts import PROMPTS_DIR
 from .config import ModelParamsConfig
 from .models import apply_model_params, get_model_for_tier
 from .personas import resolve_persona_prompt
@@ -25,7 +25,7 @@ from .tools import get_tools_by_name, get_tools_for_tier
 logger = logging.getLogger(__name__)
 
 # Directory containing agent persona prompts (Markdown files)
-_PROMPTS_DIR = Path(__file__).parent.parent / "prompts"
+_PROMPTS_DIR = PROMPTS_DIR
 
 # Agent name pattern: tier{N}_{role}
 _AGENT_PATTERN = re.compile(r"tier(\d+)_(.+)")

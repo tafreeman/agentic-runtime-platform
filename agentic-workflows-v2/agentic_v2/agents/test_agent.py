@@ -452,15 +452,6 @@ Generated 3 tests with ~80% estimated coverage.
 
             if first_line.startswith(prefix) or first_line.endswith(f".{ext}"):
                 filename = first_line
-            elif first_line in (
-                language,
-                "python",
-                "typescript",
-                "javascript",
-                "go",
-                "rust",
-            ):
-                filename = f"{prefix}generated.{ext}"
             else:
                 filename = f"{prefix}generated.{ext}"
 

@@ -125,16 +125,7 @@ class PromptRegistry:
         Returns:
             The newly created, frozen :class:`PromptRecord`.
         """
-        normalized = normalize_prompt_text(text)
-        record = PromptRecord(
-            name=name,
-            declared_version=declared_version,
-            content=normalized,
-            content_sha256=compute_content_hash(normalized),
-            source=f"inline:{name}",
-        )
-        self._records[name] = record
-        return record
+        return self._register(name, text, declared_version, f"inline:{name}")
 
     def register_file(
         self, name: str, path: Path, *, declared_version: str
@@ -150,13 +141,18 @@ class PromptRegistry:
             The newly created, frozen :class:`PromptRecord`.
         """
         raw = path.read_text(encoding="utf-8")
+        return self._register(name, raw, declared_version, f"file:{path.name}")
+
+    def _register(
+        self, name: str, raw: str, declared_version: str, source: str
+    ) -> PromptRecord:
         normalized = normalize_prompt_text(raw)
         record = PromptRecord(
             name=name,
             declared_version=declared_version,
             content=normalized,
-            content_sha256=compute_content_hash(normalized),
-            source=f"file:{path.name}",
+            content_sha256=sha256(normalized.encode("utf-8")).hexdigest(),
+            source=source,
         )
         self._records[name] = record
         return record
@@ -208,7 +204,8 @@ PROMPT_VERSIONS: dict[str, str] = {
     "validator": "v1",
 }
 
-_PROMPTS_DIR = Path(__file__).parent
+#: Directory holding the ``<role>.md`` prompt files.
+PROMPTS_DIR = Path(__file__).parent
 
 
 @lru_cache(maxsize=1)
@@ -224,13 +221,14 @@ def default_registry() -> PromptRegistry:
     for role_name, declared_version in PROMPT_VERSIONS.items():
         registry.register_file(
             role_name,
-            _PROMPTS_DIR / f"{role_name}.md",
+            PROMPTS_DIR / f"{role_name}.md",
             declared_version=declared_version,
         )
     return registry
 
 
 __all__ = [
+    "PROMPTS_DIR",
     "PROMPT_VERSIONS",
     "PromptRecord",
     "PromptRegistry",

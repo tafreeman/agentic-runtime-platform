@@ -16,11 +16,15 @@ from pathlib import Path
 from typing import Any
 
 from ..contracts import StepResult, StepResultRecord, StepStatus, WorkflowResult
-from ..core.tenant import DEFAULT_TENANT_ID, sanitize_tenant_id, tenant_run_dir
+from ..core.tenant import (
+    _DEFAULT_RUNS_DIR,
+    DEFAULT_TENANT_ID,
+    sanitize_tenant_id,
+    tenant_run_dir,
+)
 
 logger = logging.getLogger(__name__)
 
-_DEFAULT_RUNS_DIR = Path(__file__).resolve().parents[3] / "runs"
 _JSON_SUFFIX = ".json"
 
 
