@@ -17,6 +17,8 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Mapping
 
+from ...evaluation.normalization import clamp01
+
 RESEARCH_DIMENSIONS: tuple[str, ...] = (
     "coverage",
     "source_quality",
@@ -58,10 +60,6 @@ class GateResult:
     reason: str = ""
 
 
-def _clamp_score(value: float) -> float:
-    return max(0.0, min(1.0, float(value)))
-
-
 def compute_ci(
     scores: Mapping[str, float],
     *,
@@ -79,19 +77,19 @@ def compute_ci(
 
     if method == "arithmetic":
         total = sum(
-            _clamp_score(scores.get(dim, 0.0)) * float(effective_weights.get(dim, 0.0))
+            clamp01(scores.get(dim, 0.0)) * float(effective_weights.get(dim, 0.0))
             for dim in RESEARCH_DIMENSIONS
         )
-        return _clamp_score(total / total_weight)
+        return clamp01(total / total_weight)
 
     if method == "geometric":
         product = 1.0
         for dim in RESEARCH_DIMENSIONS:
-            score = _clamp_score(scores.get(dim, 0.0))
+            score = clamp01(scores.get(dim, 0.0))
             if math.isclose(score, 0.0, abs_tol=1e-10):
                 return 0.0
             product *= score ** float(effective_weights.get(dim, 0.0))
-        return _clamp_score(product ** (1.0 / total_weight))
+        return clamp01(product ** (1.0 / total_weight))
 
     raise ValueError(f"Unsupported CI method: {method}")
 
@@ -111,7 +109,7 @@ def check_gate(
     low_dimensions = [
         dim
         for dim in RESEARCH_DIMENSIONS
-        if _clamp_score(scores.get(dim, 0.0)) < high_threshold
+        if clamp01(scores.get(dim, 0.0)) < high_threshold
     ]
     all_dimensions_high = not low_dimensions
     sources_floor_passed = recent_source_count >= min_recent_sources
@@ -196,7 +194,7 @@ def recency_decay(
     )
     if half_life <= 0:
         return 0.0
-    return _clamp_score(math.exp(-math.log(2) / half_life * age_days))
+    return clamp01(math.exp(-math.log(2) / half_life * age_days))
 
 
 __all__ = [

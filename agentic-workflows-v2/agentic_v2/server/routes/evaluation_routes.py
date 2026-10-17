@@ -456,8 +456,7 @@ async def get_dataset_sample_detail(
 
 def _validate_sample_list_params(source: str, offset: int, limit: int) -> None:
     """Validate pagination/source params for the sample-list endpoint."""
-    if source not in ("repository", "local"):
-        raise HTTPException(status_code=422, detail=f"Invalid source: {source!r}")
+    _validate_sample_detail_source(source)
     if limit < 1 or limit > 100:
         raise HTTPException(status_code=422, detail="limit must be between 1 and 100")
     if offset < 0:

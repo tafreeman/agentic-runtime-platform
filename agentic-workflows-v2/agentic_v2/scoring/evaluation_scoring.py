@@ -44,7 +44,7 @@ from ..workflows.loader import (
     WorkflowOutput,
 )
 from .dataset_matching import match_workflow_dataset
-from .eval_config import _load_eval_config
+from .eval_config import _load_eval_config, scoring_section
 from .judge import JudgeEvaluationResult, LLMJudge
 
 # Re-export everything from scoring_criteria so callers that import from
@@ -155,7 +155,7 @@ def _scoring_weights() -> dict[str, float]:
         Mapping of criterion name to weight (should sum to ~1.0).
     """
     config = _load_eval_config()
-    raw = ((config.get("evaluation") or {}).get("scoring") or {}).get("weights", {})
+    raw = scoring_section(config).get("weights", {})
     if not isinstance(raw, dict):
         return dict(_DEFAULT_WEIGHTS)
 
@@ -180,9 +180,7 @@ def pass_threshold() -> float:
         Pass threshold as a float in the 0--100 scale.
     """
     config = _load_eval_config()
-    raw = ((config.get("evaluation") or {}).get("scoring") or {}).get(
-        "pass_threshold", _DEFAULT_PASS_THRESHOLD
-    )
+    raw = scoring_section(config).get("pass_threshold", _DEFAULT_PASS_THRESHOLD)
     try:
         return float(raw)
     except (ValueError, TypeError):
@@ -203,7 +201,7 @@ def judge_required() -> bool:
         True if the judge is required, False otherwise.
     """
     config = _load_eval_config()
-    scoring = (config.get("evaluation") or {}).get("scoring") or {}
+    scoring = scoring_section(config)
     # _is_true_like, not bool(): a quoted "false"/"no"/"0" from a config
     # overlay must not silently enable hard-fail mode.
     return _is_true_like(scoring.get("judge_required", False))
@@ -321,10 +319,7 @@ def _validate_rubric_weights(
     if not weights:
         raise ValueError("Rubric weights cannot be empty.")
 
-    if known_criteria:
-        unknown = sorted(set(weights.keys()) - known_criteria)
-    else:
-        unknown = []
+    unknown = sorted(set(weights) - known_criteria) if known_criteria else []
     if unknown:
         raise ValueError(
             f"Rubric references unknown criteria: {', '.join(unknown)}. "
@@ -350,12 +345,7 @@ def _step_scores(result: WorkflowResult) -> list[dict[str, Any]]:
     """
     scores: list[dict[str, Any]] = []
     for step in result.steps:
-        if step.status == StepStatus.SUCCESS:
-            score = 100.0
-        elif step.status == StepStatus.SKIPPED:
-            score = 0.0
-        else:
-            score = 0.0
+        score = 100.0 if step.status == StepStatus.SUCCESS else 0.0
         scores.append(
             {
                 "step_name": step.step_name,
