@@ -57,29 +57,6 @@ MAX_TOOL_ROUNDS = 8
 MAX_TOOL_CALLS_PER_ROUND = 12
 MAX_TOOL_RESULT_CHARS = 12000
 
-# Backward-compatibility aliases
-_MAX_TOOL_ROUNDS = MAX_TOOL_ROUNDS
-_MAX_TOOL_CALLS_PER_ROUND = MAX_TOOL_CALLS_PER_ROUND
-_MAX_TOOL_RESULT_CHARS = MAX_TOOL_RESULT_CHARS
-
-
-def _classify_router_error(router: Any, model: str, exc: Exception) -> None:
-    """Record model-call failures using SmartModelRouter classification when present."""
-    classifier = getattr(router, "_classify_and_record_error", None)
-    if callable(classifier):
-        classifier(model, exc)
-        return
-
-    error_str = str(exc).lower()
-    if "rate limit" in error_str or "429" in error_str:
-        router.record_rate_limit(model)
-    elif "timeout" in error_str:
-        router.record_timeout(model)
-    elif "not found" in error_str or "no access" in error_str:
-        router.record_failure(model, "permanent", is_permanent=True)
-    else:
-        router.record_failure(model, type(exc).__name__)
-
 
 # ---------------------------------------------------------------------------
 # Tool contract resolution
@@ -310,10 +287,6 @@ def extract_usage_tokens(usage: Any) -> int:
     return 0
 
 
-# Backward-compatibility alias
-_extract_usage_tokens = extract_usage_tokens
-
-
 def messages_to_text(messages: list[dict[str, Any]]) -> str:
     """Flatten chat messages for fallback token estimation."""
     parts: list[str] = []
@@ -325,10 +298,6 @@ def messages_to_text(messages: list[dict[str, Any]]) -> str:
         else:
             parts.append(f"{role}:{json.dumps(content, default=str)}")
     return "\n".join(parts)
-
-
-# Backward-compatibility alias
-_messages_to_text = messages_to_text
 
 
 # ---------------------------------------------------------------------------
@@ -354,10 +323,6 @@ def parse_tool_args(raw_args: Any) -> dict[str, Any]:
     return {}
 
 
-# Backward-compatibility alias
-_parse_tool_args = parse_tool_args
-
-
 def call_id_for(tool_name: str, tool_args: dict[str, Any]) -> str:
     """Deterministic, process-stable call id for a tool call.
 
@@ -370,10 +335,6 @@ def call_id_for(tool_name: str, tool_args: dict[str, Any]) -> str:
     return f"tool-{digest}"
 
 
-# Backward-compatibility / internal alias (kept for existing imports).
-_call_id_for = call_id_for
-
-
 def normalize_tool_call(call: dict[str, Any]) -> tuple[str, str, dict[str, Any]]:
     """Normalize provider-specific tool call shape.
 
@@ -384,25 +345,20 @@ def normalize_tool_call(call: dict[str, Any]) -> tuple[str, str, dict[str, Any]]
     Returns:
         A ``(call_id, tool_name, tool_args)`` triple.
     """
+    call_id = str(call.get("id", "")).strip()
     fn = call.get("function")
     if isinstance(fn, dict):
         name = str(fn.get("name", "")).strip()
         args = parse_tool_args(fn.get("arguments"))
-        call_id = str(call.get("id", "")).strip()
     else:
         # Anthropic-style blocks: {"type":"tool_use","name":"...","input":{...}}
         name = str(call.get("name", "")).strip()
         args = parse_tool_args(call.get("input"))
-        call_id = str(call.get("id", "")).strip()
 
     if not call_id:
         call_id = call_id_for(name, args)
 
     return call_id, name, args
-
-
-# Backward-compatibility alias
-_normalize_tool_call = normalize_tool_call
 
 
 # ---------------------------------------------------------------------------
@@ -417,10 +373,6 @@ def truncate_tool_result(text: str) -> str:
     return text[:MAX_TOOL_RESULT_CHARS] + "\n[truncated]"
 
 
-# Backward-compatibility alias
-_truncate_tool_result = truncate_tool_result
-
-
 def serialize_tool_result(tool_result: Any) -> str:
     """Serialize a ToolResult-like object as compact JSON."""
     payload = {
@@ -432,10 +384,6 @@ def serialize_tool_result(tool_result: Any) -> str:
         "tool_name": getattr(tool_result, "tool_name", ""),
     }
     return truncate_tool_result(json.dumps(payload, default=str))
-
-
-# Backward-compatibility alias
-_serialize_tool_result = serialize_tool_result
 
 
 # ---------------------------------------------------------------------------

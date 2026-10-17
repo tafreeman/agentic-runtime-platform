@@ -171,10 +171,6 @@ class CoderAgent(
         # Check if we have a configured backend
         if self.llm_client.backend is None:
             # Fall back to mock response for testing
-            for msg in reversed(messages):
-                if msg.get("role") == "user":
-                    break
-
             return {"content": """Here's the code you requested:
 
 ```python
