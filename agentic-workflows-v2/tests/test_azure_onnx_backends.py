@@ -298,3 +298,31 @@ class TestOnnxBackendWeightVerification:
         await backend.complete("onnx:phi4", "again")
         assert len(calls) == 1
         assert len(backend.loaded) == 1  # type: ignore[attr-defined]
+
+
+class TestOnnxBackendHardening:
+    @pytest.mark.parametrize(
+        "name", ["onnx:/", "onnx:../outside", "onnx:a/../../b", ""]
+    )
+    def test_resolve_path_rejects_escapes(self, tmp_path: Any, name: str) -> None:
+        backend = OnnxBackend(model_dir=str(tmp_path))
+        with pytest.raises(ValueError):
+            backend._resolve_path(name)
+
+    def test_non_strict_verifier_errors_fail_open(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+    ) -> None:
+        from agentic_v2.models import backends_local
+
+        monkeypatch.delenv("AGENTIC_STRICT_MODEL_VERIFY", raising=False)
+
+        def _boom(path: Any) -> None:
+            raise PermissionError("unreadable")
+
+        monkeypatch.setattr(
+            "agentic_v2.models.weight_integrity.verify_model_weights", _boom
+        )
+        backends_local._verify_weights(str(tmp_path))  # must not raise
+        monkeypatch.setenv("AGENTIC_STRICT_MODEL_VERIFY", "1")
+        with pytest.raises(PermissionError):
+            backends_local._verify_weights(str(tmp_path))

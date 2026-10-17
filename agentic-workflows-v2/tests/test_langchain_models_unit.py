@@ -1342,3 +1342,10 @@ class TestOnnxPrefixRouting:
         assert out.content == "hello"
         assert captured["model"] == "onnx:phi/cpu-int4"
         assert [m["role"] for m in captured["messages"]] == ["system", "user"]  # type: ignore[index]
+
+
+def test_onnx_builder_reuses_one_backend() -> None:
+    pytest.importorskip("langchain_core")
+    from agentic_v2.langchain.model_builders import _shared_onnx_backend
+
+    assert _shared_onnx_backend() is _shared_onnx_backend()

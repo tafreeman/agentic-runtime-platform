@@ -21,6 +21,7 @@ call time.
 from __future__ import annotations
 
 import asyncio
+import logging
 import threading
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -31,6 +32,8 @@ import ollama
 from .backends_base import LLMBackend
 from .local_discovery import onnx_roots, parse_onnx_roots
 from .secrets import get_first_secret
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Ollama
@@ -216,12 +219,23 @@ def _verify_weights(path: str) -> None:
     ``ModelWeightVerificationError`` (a ``RuntimeError``); otherwise problems
     only log warnings. A path that does not exist is skipped.
     """
-    from .weight_integrity import verify_model_weights
+    from .weight_integrity import (
+        ModelWeightVerificationError,
+        _strict_model_verify_enabled,
+        verify_model_weights,
+    )
 
     model_path = Path(path)
     if not model_path.exists():
         return  # Nothing to hash; the runtime load reports the missing path.
-    verify_model_weights(model_path)
+    try:
+        verify_model_weights(model_path)
+    except ModelWeightVerificationError:
+        raise
+    except Exception as exc:
+        if _strict_model_verify_enabled():
+            raise
+        logger.warning("Model weight verification skipped for %s: %s", path, exc)
 
 
 @dataclass
@@ -264,14 +278,22 @@ class OnnxBackend(LLMBackend):
 
     def _resolve_path(self, model: str) -> str:
         name = model.removeprefix("onnx:")
+        rel = Path(name)
+        if not name or rel.is_absolute() or rel.drive or ".." in rel.parts:
+            raise ValueError(
+                f"Invalid ONNX model path (must be a relative folder): {name!r}"
+            )
         roots = self._candidate_roots()
         for root in roots:
-            if (root / name).exists():
-                return str(root / name)
+            candidate = root / rel
+            if candidate.exists():
+                if not candidate.resolve().is_relative_to(root.resolve()):
+                    raise ValueError(f"ONNX model path escapes its root: {name!r}")
+                return str(candidate)
         # Not present under any root yet: return a deterministic, expanded path
         # under the first root so load errors point somewhere sensible and the
         # per-path model cache stays stable across calls.
-        return str(roots[0] / name) if roots else name
+        return str(roots[0] / rel) if roots else name
 
     def _get_model(self, model: str) -> tuple[Any, Any, Any]:
         path = self._resolve_path(model)

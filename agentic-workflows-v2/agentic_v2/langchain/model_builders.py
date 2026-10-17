@@ -26,6 +26,7 @@ Supported providers
 
 from __future__ import annotations
 
+import functools
 import logging
 import os
 from typing import Any
@@ -939,6 +940,14 @@ def build_local_onnx_model(model_name: str, temperature: float) -> Any:
     return LocalOnnxChatModel()
 
 
+@functools.lru_cache(maxsize=1)
+def _shared_onnx_backend() -> Any:
+    """One ``OnnxBackend`` per process so its loaded-model cache is reused."""
+    from ..models.backends_local import OnnxBackend
+
+    return OnnxBackend()
+
+
 def build_onnx_model(model_name: str, temperature: float) -> Any:
     """Build a chat wrapper over ``OnnxBackend`` for a discovered ``onnx:`` id.
 
@@ -963,9 +972,7 @@ def build_onnx_model(model_name: str, temperature: float) -> Any:
             "Install with: pip install langchain-core"
         ) from exc
 
-    from ..models.backends_local import OnnxBackend
-
-    backend = OnnxBackend()
+    backend = _shared_onnx_backend()
     model_ref = f"onnx:{model_name}"
     role_by_type = {"system": "system", "human": "user", "ai": "assistant"}
 
