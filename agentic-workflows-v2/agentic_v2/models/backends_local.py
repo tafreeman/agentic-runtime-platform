@@ -209,6 +209,21 @@ def _load_onnxruntime_genai() -> Any:
     return og
 
 
+def _verify_weights(path: str) -> None:
+    """Run weight-integrity verification before the model folder is loaded.
+
+    Honors ``AGENTIC_STRICT_MODEL_VERIFY``: strict mode raises
+    ``ModelWeightVerificationError`` (a ``RuntimeError``); otherwise problems
+    only log warnings. A path that does not exist is skipped.
+    """
+    from .weight_integrity import verify_model_weights
+
+    model_path = Path(path)
+    if not model_path.exists():
+        return  # Nothing to hash; the runtime load reports the missing path.
+    verify_model_weights(model_path)
+
+
 @dataclass
 class OnnxBackend(LLMBackend):
     """Backend for local ONNX models via onnxruntime-genai.
@@ -264,6 +279,7 @@ class OnnxBackend(LLMBackend):
             cached = self._models.get(path)
             if cached is None:
                 og = _load_onnxruntime_genai()
+                _verify_weights(path)
                 loaded = og.Model(path)
                 tokenizer = og.Tokenizer(loaded)
                 cached = (og, loaded, tokenizer)
@@ -312,6 +328,18 @@ class OnnxBackend(LLMBackend):
         # decode only the newly generated tail.
         new_tokens = output[len(input_tokens) :]
         return str(tokenizer.decode(new_tokens))
+
+    def generate_chat_sync(
+        self,
+        model: str,
+        messages: list[dict[str, Any]],
+        max_tokens: int = 4096,
+        temperature: float = 0.7,
+    ) -> str:
+        """Blocking chat completion for synchronous callers (e.g. LangChain)."""
+        return self._generate_sync(
+            model, self._messages_to_prompt(messages), max_tokens, temperature
+        )
 
     async def complete(
         self,

@@ -1289,3 +1289,56 @@ class TestBuildOllamaModelRouting:
         expected = {"headers": {"Authorization": "Bearer test-key"}}
         assert model.client_kwargs == expected
         assert model.async_client_kwargs == expected
+
+
+class TestOnnxPrefixRouting:
+    def test_onnx_prefix_routes_to_onnx_builder_not_ollama(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from agentic_v2.langchain import models as m
+
+        seen: list[tuple[str, float]] = []
+        sentinel = object()
+
+        def _fake_builder(name: str, temperature: float) -> object:
+            seen.append((name, temperature))
+            return sentinel
+
+        monkeypatch.setattr(
+            m,
+            "_PREFIX_BUILDERS",
+            tuple(
+                (p, _fake_builder if p == "onnx:" else b) for p, b in m._PREFIX_BUILDERS
+            ),
+        )
+        monkeypatch.setattr(
+            m, "build_ollama_model", lambda *a: pytest.fail("fell through to ollama")
+        )
+        assert m._build_model_by_prefix("onnx:phi/cpu-int4", 0.2) is sentinel
+        assert seen == [("phi/cpu-int4", 0.2)]
+
+    def test_onnx_chat_model_generates_via_backend(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        pytest.importorskip("langchain_core")
+        from langchain_core.messages import HumanMessage, SystemMessage
+
+        from agentic_v2.langchain.model_builders import build_onnx_model
+        from agentic_v2.models import backends_local
+
+        captured: dict[str, object] = {}
+
+        def _fake_generate(
+            self: object, model: str, messages: list[dict[str, str]], **kw: object
+        ) -> str:
+            captured.update(model=model, messages=messages)
+            return "hello"
+
+        monkeypatch.setattr(
+            backends_local.OnnxBackend, "generate_chat_sync", _fake_generate
+        )
+        chat = build_onnx_model("phi/cpu-int4", 0.0)
+        out = chat.invoke([SystemMessage("sys"), HumanMessage("hi")])
+        assert out.content == "hello"
+        assert captured["model"] == "onnx:phi/cpu-int4"
+        assert [m["role"] for m in captured["messages"]] == ["system", "user"]  # type: ignore[index]

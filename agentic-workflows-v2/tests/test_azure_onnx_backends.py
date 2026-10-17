@@ -252,3 +252,49 @@ class TestOnnxBackend:
         monkeypatch.setattr(builtins, "__import__", fake_import)
         with pytest.raises(RuntimeError, match="onnxruntime-genai is not installed"):
             _load_onnxruntime_genai()
+
+
+class TestOnnxBackendWeightVerification:
+    """OnnxBackend must honor AGENTIC_STRICT_MODEL_VERIFY before loading."""
+
+    def _backend(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Any) -> OnnxBackend:
+        loaded: list[str] = []
+
+        class _TrackingOg(_FakeOg):
+            Model = staticmethod(lambda path: loaded.append(path) or {"path": path})
+
+        monkeypatch.setattr(
+            "agentic_v2.models.backends_local._load_onnxruntime_genai",
+            lambda: _TrackingOg,
+        )
+        folder = tmp_path / "phi4"
+        folder.mkdir()
+        (folder / "model.onnx").write_bytes(b"weights")
+        backend = OnnxBackend(model_dir=str(tmp_path))
+        backend.loaded = loaded  # type: ignore[attr-defined]
+        return backend
+
+    async def test_strict_mode_blocks_unverified_model(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+    ) -> None:
+        from agentic_v2.models.weight_integrity import ModelWeightVerificationError
+
+        backend = self._backend(monkeypatch, tmp_path)
+        monkeypatch.setenv("AGENTIC_STRICT_MODEL_VERIFY", "1")
+        with pytest.raises(ModelWeightVerificationError):
+            await backend.complete("onnx:phi4", "hi")
+        assert backend.loaded == []  # type: ignore[attr-defined]
+
+    async def test_verification_runs_once_per_cached_path(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+    ) -> None:
+        backend = self._backend(monkeypatch, tmp_path)
+        monkeypatch.delenv("AGENTIC_STRICT_MODEL_VERIFY", raising=False)
+        calls: list[str] = []
+        monkeypatch.setattr(
+            "agentic_v2.models.backends_local._verify_weights", calls.append
+        )
+        await backend.complete("onnx:phi4", "hi")
+        await backend.complete("onnx:phi4", "again")
+        assert len(calls) == 1
+        assert len(backend.loaded) == 1  # type: ignore[attr-defined]

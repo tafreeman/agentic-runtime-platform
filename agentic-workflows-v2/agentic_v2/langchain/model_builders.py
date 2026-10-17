@@ -939,6 +939,77 @@ def build_local_onnx_model(model_name: str, temperature: float) -> Any:
     return LocalOnnxChatModel()
 
 
+def build_onnx_model(model_name: str, temperature: float) -> Any:
+    """Build a chat wrapper over ``OnnxBackend`` for a discovered ``onnx:`` id.
+
+    ``model_name`` is the folder relpath emitted by
+    :func:`~agentic_v2.models.local_discovery.discover_onnx_models`; the
+    backend resolves it against the same ONNX roots, so discovered == runnable.
+    Weights are verified (``AGENTIC_STRICT_MODEL_VERIFY``) on first load. The
+    path is prompt-only and does not support structured tool-calling.
+
+    Raises
+    ------
+    ImportError
+        If ``langchain-core`` is not installed.
+    """
+    try:
+        from langchain_core.language_models.chat_models import BaseChatModel
+        from langchain_core.messages import AIMessage, BaseMessage
+        from langchain_core.outputs import ChatGeneration, ChatResult
+    except ImportError as exc:
+        raise ImportError(
+            "langchain-core is required for the ONNX chat wrapper. "
+            "Install with: pip install langchain-core"
+        ) from exc
+
+    from ..models.backends_local import OnnxBackend
+
+    backend = OnnxBackend()
+    model_ref = f"onnx:{model_name}"
+    role_by_type = {"system": "system", "human": "user", "ai": "assistant"}
+
+    class OnnxChatModel(BaseChatModel):
+        default_temperature: float = temperature
+
+        @property
+        def _llm_type(self) -> str:
+            return "onnx"
+
+        def bind_tools(self, tools: Any, **kwargs: Any) -> Any:
+            return self
+
+        def _generate(
+            self,
+            messages: list[BaseMessage],
+            stop: list[str] | None = None,
+            run_manager: Any | None = None,
+            **kwargs: Any,
+        ) -> Any:
+            chat = [
+                {"role": role_by_type.get(m.type, "user"), "content": str(m.content)}
+                for m in messages
+            ]
+            text = backend.generate_chat_sync(
+                model_ref,
+                chat,
+                max_tokens=int(kwargs.get("max_tokens", 4096)),
+                temperature=float(kwargs.get("temperature", self.default_temperature)),
+            )
+            for token in stop or []:
+                if token and token in text:
+                    text = text.split(token, 1)[0]
+                    break
+            return ChatResult(generations=[ChatGeneration(message=AIMessage(text))])
+
+    logger.warning(
+        "Using ONNX wrapper for 'onnx:%s'. This path is prompt-only and "
+        "does not support structured tool-calling.",
+        model_name,
+    )
+    return OnnxChatModel()
+
+
 def _get_placeholder_chat_model_cls() -> Any:
     """Return the module-level ``PlaceholderChatModel`` class, building it lazily.
 
