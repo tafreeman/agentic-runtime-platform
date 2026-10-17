@@ -172,9 +172,9 @@ class NativeEngine:
     ) -> dict[str, Any] | None:
         """Retrieve the latest checkpoint state for a workflow thread.
 
-        Runs the async :meth:`CheckpointStore.read` synchronously via
-        a new event-loop invocation so that the method signature matches
-        the :class:`SupportsCheckpointing` protocol (which is sync).
+        Calls the blocking :meth:`CheckpointStore.read_sync` directly so the
+        method matches the sync :class:`SupportsCheckpointing` protocol
+        without spinning up an event loop.
 
         Args:
             workflow: Workflow definition (unused; present for protocol
@@ -188,28 +188,7 @@ class NativeEngine:
         """
         if self._checkpoint_store is None:
             return None
-
-        # Use asyncio.run in a sync context, or get the running loop
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            loop = None
-
-        if loop is not None and loop.is_running():
-            # We're inside an async context — create a future and run it
-            import concurrent.futures
-
-            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-                state = pool.submit(
-                    asyncio.run,
-                    self._checkpoint_store.read(thread_id),
-                ).result()
-        else:
-            state = asyncio.run(self._checkpoint_store.read(thread_id))
-
-        if not state:
-            return None
-        return state
+        return self._checkpoint_store.read_sync(thread_id) or None
 
     async def resume(
         self,

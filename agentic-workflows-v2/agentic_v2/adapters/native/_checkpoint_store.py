@@ -128,8 +128,8 @@ class CheckpointStore:
         finally:
             conn.close()
 
-    def _read_sync(self, thread_id: str) -> dict[str, dict[str, Any]]:
-        """Synchronous read — called from a background thread."""
+    def read_sync(self, thread_id: str) -> dict[str, dict[str, Any]]:
+        """Blocking read; :meth:`read` runs it in a worker thread."""
         if not self._initialized and not self._db_path.exists():
             return {}
         self._ensure_table()
@@ -202,7 +202,7 @@ class CheckpointStore:
             Mapping of ``{step_name: {status, output_data, workflow_name,
             created_at}}``.  Returns an empty dict if no checkpoints exist.
         """
-        return await asyncio.to_thread(self._read_sync, thread_id)
+        return await asyncio.to_thread(self.read_sync, thread_id)
 
     async def clear(self, thread_id: str) -> None:
         """Remove all checkpoint rows for a given thread.

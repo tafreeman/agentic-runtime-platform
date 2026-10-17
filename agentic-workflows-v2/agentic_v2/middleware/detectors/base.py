@@ -6,6 +6,13 @@ from dataclasses import dataclass
 from agentic_v2.contracts.sanitization import FindingCategory, Severity
 
 
+def build_preview(text: str, start: int, end: int, context: int, marker: str) -> str:
+    """Return *text* around ``[start:end]`` with the match replaced by *marker*."""
+    prefix = text[max(0, start - context) : start]
+    suffix = text[end : min(len(text), end + context)]
+    return f"{prefix}{marker}{suffix}"
+
+
 @dataclass(frozen=True)
 class SecretPattern:
     """A compiled regex pattern for detecting secrets."""

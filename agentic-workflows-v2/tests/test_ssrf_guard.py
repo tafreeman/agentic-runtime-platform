@@ -991,6 +991,19 @@ class TestValidateUrlAsync:
         assert result is not None
 
     @pytest.mark.asyncio
+    async def test_async_dns_empty_result_fail_closed(self, monkeypatch):
+        """An empty getaddrinfo result is blocked, matching the sync guard."""
+        import socket as socket_mod
+
+        from agentic_v2.security.url_guard import validate_url_async
+
+        monkeypatch.setattr(socket_mod, "getaddrinfo", lambda *a, **k: [])
+
+        result = await validate_url_async("http://empty.example/", block_private=True)
+        assert result is not None
+        assert "no usable addresses" in result
+
+    @pytest.mark.asyncio
     async def test_async_dns_metadata_blocked_when_private_allowed(self, monkeypatch):
         """C-10 regression: block_private=False must still resolve DNS and block
         a hostname that aliases the cloud-metadata IP (169.254.169.254)."""
