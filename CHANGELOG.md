@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased - Discovered ONNX models run in chat, with weight verification
+
+- **`onnx:<folder>` model ids now work in `/api/chat` and `get_chat_model`.**
+  They route to a new `build_onnx_model` over `OnnxBackend` (prompt-only, no
+  tool-calling) instead of falling through to Ollama. Ids must be relative
+  folders containing `genai_config.json` under the configured ONNX roots; the
+  backend keeps one model loaded at a time.
+- **`AGENTIC_STRICT_MODEL_VERIFY=1` now covers `OnnxBackend`.** Weights are
+  verified once per cached path before loading; non-strict mode only logs.
+
 ## Unreleased - Run logger filters safely and writes records atomically
 
 - **`RunLogger.list_runs(workflow_name)` no longer treats the name as a glob.**

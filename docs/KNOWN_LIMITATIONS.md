@@ -170,43 +170,6 @@ ARP behavior because the package and command surface were removed. The removal,
 migration boundary, and historical defects remain recorded in
 [ADR-057](adr/ADR-057-remove-rag-package.md) and the changelog.
 
-### 4.13 The model catalog exposes `onnx:` IDs that exact-model chat cannot use
-
-ONNX discovery emits `onnx:<relative-path>` IDs and the native model backend
-supports that prefix. The LangChain model builder uses `local:` for its ONNX
-path and has no `onnx:` prefix builder. `POST /api/chat` uses the LangChain
-builder, so selecting a discovered `onnx:` entry there produces an unsupported
-provider error.
-
-- **Surface:** `agentic_v2/models/local_discovery.py`,
-  `agentic_v2/models/backends.py`, `agentic_v2/langchain/models.py`, and
-  `agentic_v2/server/routes/chat.py`.
-- **Risk:** The model page can list a local model that its chat playground
-  cannot test.
-- **Workaround:** Use the native backend for `onnx:` models. Use `local:` only
-  where the LangChain ONNX builder's path contract is appropriate.
-- **Status:** Known cross-adapter mismatch.
-- **Upstream fix:** Normalize the prefix contract across discovery and both
-  execution paths, then add an end-to-end discovered-model chat test.
-
-### 4.14 Strict model-weight verification is not wired into every model loader
-
-The SHA-256 verifier and strict-mode behavior are implemented in
-`agentic_v2/models/weight_integrity.py`. The shared-tools local provider calls
-it before loading a local model. The runtime's native `OnnxBackend` and
-LangChain local ONNX builder do not call it.
-
-- **Surface:** `tools/llm/provider_adapters.py`,
-  `agentic_v2/models/backends_local.py`, and
-  `agentic_v2/langchain/model_builders.py`.
-- **Risk:** `AGENTIC_STRICT_MODEL_VERIFY=1` can be set while a runtime ONNX
-  load still proceeds without consulting the trusted hash file.
-- **Workaround:** Call `verify_model_weights()` explicitly before starting the
-  runtime and restrict the model directory against later changes.
-- **Status:** Partial enforcement.
-- **Upstream fix:** Put verification in the common runtime load boundary and
-  add strict-mode tests for every local model backend.
-
 ---
 
 ## 5. Documentation and process
