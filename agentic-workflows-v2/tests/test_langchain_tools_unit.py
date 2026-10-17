@@ -40,6 +40,12 @@ def _auto_approve_provider():
         set_approval_provider(None)
 
 
+@pytest.fixture(autouse=True)
+def _file_base_dir(tmp_path, monkeypatch):
+    """File tools fail closed without a base dir; confine them to tmp_path."""
+    monkeypatch.setenv("AGENTIC_FILE_BASE_DIR", str(tmp_path))
+
+
 class TestFileReadTool:
     """Tests for file_read tool."""
 
@@ -281,7 +287,9 @@ class TestDirectoryToolsFileBase:
         (outside / "secret.py").write_text("token = 2\n", encoding="utf-8")
         monkeypatch.setenv("AGENTIC_FILE_BASE_DIR", str(base))
 
-        listed = file_list.invoke({"directory": str(base), "pattern": "../outside/*.py"})
+        listed = file_list.invoke(
+            {"directory": str(base), "pattern": "../outside/*.py"}
+        )
         searched = search_files.invoke(
             {"directory": str(base), "query": "", "file_pattern": "../outside/*.py"}
         )
@@ -350,7 +358,9 @@ class TestDirectoryToolsFileBase:
         )
         monkeypatch.setenv("AGENTIC_FILE_BASE_DIR", str(tmp_path))
 
-        got = json.loads(file_list.invoke({"directory": str(tmp_path), "pattern": pattern}))
+        got = json.loads(
+            file_list.invoke({"directory": str(tmp_path), "pattern": pattern})
+        )
 
         assert sorted(p.replace("\\", "/") for p in got) == expected
 
