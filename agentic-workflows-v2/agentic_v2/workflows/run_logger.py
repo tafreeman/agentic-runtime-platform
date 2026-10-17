@@ -38,7 +38,9 @@ def _sanitize_filename_segment(value: str) -> str:
 
 def _write_json_atomic(path: Path, record: dict[str, Any]) -> None:
     """Write ``record`` to ``path`` via a temp file so readers never see a half-written file."""
-    temp_path = path.with_name(f"{path.name}.{uuid.uuid4().hex}.tmp")
+    # Short independent basename: the destination may already be near the
+    # filesystem's filename-length limit.
+    temp_path = path.with_name(f".{uuid.uuid4().hex[:12]}.tmp")
     try:
         temp_path.write_text(
             json.dumps(record, indent=2, default=_safe_serialize),
@@ -404,9 +406,12 @@ class RunLogger:
     def _recorded_name(self, path: Path) -> str | None:
         """Return the ``workflow_name`` stored in a run record, if readable."""
         try:
-            name = self.load_run(path).get("workflow_name")
+            record = self.load_run(path)
         except (OSError, ValueError):
             return None
+        if not isinstance(record, dict):
+            return None
+        name = record.get("workflow_name")
         return name if isinstance(name, str) else None
 
     def load_run(self, path: Path) -> dict[str, Any]:

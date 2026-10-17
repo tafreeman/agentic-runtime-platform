@@ -516,3 +516,18 @@ class TestRunLoggerHardening:
             rl.annotate_run(path, evaluation={"overall_score": 0.5})
         assert path.read_text(encoding="utf-8") == before
         assert [p.name for p in tmp_path.iterdir()] == [path.name]
+
+    def test_list_runs_skips_non_mapping_json(self, tmp_path):
+        rl = RunLogger(runs_dir=tmp_path)
+        rl.log(_result(workflow_name="team/flow", workflow_id="t1"))
+        (tmp_path / "20260101T000000Z_team_flow_x_success.json").write_text(
+            "[1, 2]", encoding="utf-8"
+        )
+        assert len(rl.list_runs("team/flow")) == 1
+
+    def test_atomic_write_works_for_near_limit_filenames(self, tmp_path):
+        from agentic_v2.workflows.run_logger import _write_json_atomic
+
+        target = tmp_path / ("a" * 250 + ".json")
+        _write_json_atomic(target, {"ok": True})
+        assert json.loads(target.read_text(encoding="utf-8")) == {"ok": True}
