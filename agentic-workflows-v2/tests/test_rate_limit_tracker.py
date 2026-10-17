@@ -1026,3 +1026,14 @@ class TestAdaptiveThrottleFactor:
             tracker.record_error("gh:gpt-4o-mini")
         factor = tracker.compute_throttle_factor("gh:gpt-4o-mini")
         assert factor == pytest.approx(0.5, abs=0.01)
+
+
+class TestRouterAclose:
+    async def test_aclose_closes_redis_store(self) -> None:
+        from unittest.mock import AsyncMock
+
+        router = SmartModelRouter()
+        store = AsyncMock()
+        router._redis_store = store
+        await router.aclose()
+        store.close.assert_awaited_once()
