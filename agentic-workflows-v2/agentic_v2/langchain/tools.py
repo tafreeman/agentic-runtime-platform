@@ -281,9 +281,20 @@ def file_write(path: str, content: str) -> str:
         return f"ERROR: {e}"
 
 
+def _file_base_dir() -> str | None:
+    """Return the file sandbox root from the environment or application settings.
+
+    ``Settings`` also loads ``AGENTIC_FILE_BASE_DIR`` from ``.env`` without
+    exporting it, so the process environment alone would miss that config.
+    """
+    return (
+        os.environ.get("AGENTIC_FILE_BASE_DIR") or get_settings().agentic_file_base_dir
+    )
+
+
 def _outside_file_base(path: str) -> str | None:
     """Return an ERROR string when ``AGENTIC_FILE_BASE_DIR`` excludes *path*."""
-    base_dir = os.environ.get("AGENTIC_FILE_BASE_DIR")
+    base_dir = _file_base_dir()
     if not base_dir:
         # Fail closed, matching tools/builtin/file_ops.py ``_validate_path``.
         return "ERROR: AGENTIC_FILE_BASE_DIR is not set; file access is disabled"
@@ -300,7 +311,7 @@ def _escaping_pattern(pattern: str) -> str | None:
     Checked before any traversal starts: filtering matches afterwards would
     still let a pattern such as ``../../**/*`` walk the host filesystem.
     """
-    if not os.environ.get("AGENTIC_FILE_BASE_DIR"):
+    if not _file_base_dir():
         return None
     parts = pattern.replace("\\", "/").split("/")
     if ".." in parts or Path(pattern).is_absolute() or pattern.startswith("/"):
@@ -314,7 +325,7 @@ def _match_within_file_base(match: Path) -> bool:
     A glob pattern such as ``../outside/*.py`` can leave a validated directory,
     so every match is checked after resolution, which also covers symlinks.
     """
-    base_dir = os.environ.get("AGENTIC_FILE_BASE_DIR")
+    base_dir = _file_base_dir()
     if not base_dir:
         return True
     try:
@@ -366,7 +377,7 @@ def _iter_glob(root: Path, pattern: str, recursive: bool = False) -> Iterator[Pa
     the base cannot lead the traversal into a large outside tree before the
     per-match containment check runs.
     """
-    if not os.environ.get("AGENTIC_FILE_BASE_DIR"):
+    if not _file_base_dir():
         yield from root.rglob(pattern) if recursive else root.glob(pattern)
         return
     matcher = _glob_to_regex(pattern, recursive)
@@ -478,10 +489,10 @@ def shell_run(command: str, cwd: str | None = None, timeout: int = 30) -> str:
         return denied
     if _is_dangerous_command(command):
         return "ERROR: Command blocked by security policy."
-    if cwd is not None:
-        denied = _outside_file_base(cwd)
-        if denied:
-            return denied
+    # Validate the effective directory: an omitted cwd inherits the server's.
+    denied = _outside_file_base(cwd if cwd is not None else os.getcwd())
+    if denied:
+        return denied
     try:
         argv = _split_command(command)
     except ValueError as e:

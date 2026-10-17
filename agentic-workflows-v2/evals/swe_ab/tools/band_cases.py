@@ -42,7 +42,7 @@ import argparse
 import json
 import math
 import sys
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -99,9 +99,20 @@ def load_cases(path: Path) -> list[dict[str, Any]]:
 def band_of(meta: dict[str, Any], band_by: str) -> Any:
     """Band key for a case. Numeric scores band directly; labels pass through."""
     value = (meta or {}).get(band_by)
-    if value is None:
-        return "unknown"
-    return value
+    return "unknown" if value is None else value
+
+
+def case_band(case: dict[str, Any], band_by: str) -> Any:
+    return band_of(case.get("metadata"), band_by)
+
+
+def group_by_band(
+    cases: list[dict[str, Any]], band_by: str
+) -> dict[Any, list[dict[str, Any]]]:
+    grouped: dict[Any, list[dict[str, Any]]] = defaultdict(list)
+    for case in cases:
+        grouped[case_band(case, band_by)].append(case)
+    return grouped
 
 
 def load_probe(path: Path, band_by: str) -> dict[Any, tuple[int, int]]:
@@ -195,11 +206,8 @@ def select(
     exclude: set[str],
 ) -> tuple[list[dict[str, Any]], list[Any]]:
     """Greedily fill target_n from the highest-discordance reliable bands."""
-    by_band: dict[Any, list[dict[str, Any]]] = defaultdict(list)
-    for case in cases:
-        if case.get("sample_id") in exclude:
-            continue
-        by_band[band_of(case.get("metadata") or {}, band_by)].append(case)
+    available = [c for c in cases if c.get("sample_id") not in exclude]
+    by_band = group_by_band(available, band_by)
 
     chosen: list[dict[str, Any]] = []
     used: list[Any] = []
@@ -219,9 +227,7 @@ def select(
 
 def emit_probe(cases: list[dict[str, Any]], band_by: str, count: int, out: Path) -> int:
     """Stratified sample across bands, for the calibration run."""
-    by_band: dict[Any, list[dict[str, Any]]] = defaultdict(list)
-    for case in cases:
-        by_band[band_of(case.get("metadata") or {}, band_by)].append(case)
+    by_band = group_by_band(cases, band_by)
     bands = sorted(by_band, key=lambda b: str(b))
     per = max(1, count // max(1, len(bands)))
 
@@ -234,15 +240,12 @@ def emit_probe(cases: list[dict[str, Any]], band_by: str, count: int, out: Path)
                 break
             picked.append(case)
 
-    write_jsonl(out, picked[:count])
-    print(f"\nstratified probe: {len(picked[:count])} cases across {len(bands)} bands")
+    picked = picked[:count]
+    write_jsonl(out, picked)
+    print(f"\nstratified probe: {len(picked)} cases across {len(bands)} bands")
+    per_band = Counter(case_band(c, band_by) for c in picked)
     for band in bands:
-        n = sum(
-            1
-            for c in picked[:count]
-            if band_of(c.get("metadata") or {}, band_by) == band
-        )
-        print(f"  {band!s:>10}: {n}")
+        print(f"  {band!s:>10}: {per_band[band]}")
     print(f"wrote -> {out}")
     print(
         "\nRun this through ONE arm, then re-run with --probe-report to select "
@@ -256,6 +259,30 @@ def write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
     with path.open("w", encoding="utf-8") as handle:
         for row in rows:
             handle.write(json.dumps(row) + "\n")
+
+
+def measured_sample_ids(report_path: Path) -> set[str]:
+    """Sample ids already measured in a probe report."""
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    ids = (
+        (sample.get("execution") or {}).get("sample_id")
+        for sample in report.get("samples", [])
+    )
+    return {sid for sid in ids if sid}
+
+
+def print_power_verdict(n_chosen: int, used: list[Any]) -> None:
+    """Report expected discordant pairs and whether each effect size is powered."""
+    blended = sum(take * disc for _, take, _, disc in used) / max(1, n_chosen)
+    exp_pairs = blended * n_chosen
+    print(f"\nExpected discordant pairs at n={n_chosen}: {exp_pairs:.0f}")
+    for split, label in ((0.65, "moderate 65/35"), (0.75, "large 75/25")):
+        need = discordant_pairs_needed(split)
+        if exp_pairs >= need:
+            outcome = "POWERED"
+        else:
+            outcome = f"UNDERPOWERED (need ~{cases_needed(blended, split):.0f} cases)"
+        print(f"  {label}: needs {need:.0f} discordant pairs -> {outcome}")
 
 
 def parse_args() -> argparse.Namespace:
@@ -304,11 +331,7 @@ def main() -> int:
 
     exclude: set[str] = set()
     if not args.reuse_probe_cases:
-        report = json.loads(Path(args.probe_report).read_text(encoding="utf-8"))
-        for sample in report.get("samples", []):
-            sid = (sample.get("execution") or {}).get("sample_id")
-            if sid:
-                exclude.add(sid)
+        exclude = measured_sample_ids(Path(args.probe_report))
         print(f"excluding {len(exclude)} already-measured probe instances")
 
     chosen, used = select(cases, rows, args.band_by, args.target_n, exclude)
@@ -326,20 +349,7 @@ def main() -> int:
             f"E[discordance] {100 * disc:.1f}%)"
         )
 
-    blended = sum(t * d for _, t, _, d in used) / max(1, len(chosen))
-    exp_pairs = blended * len(chosen)
-    print(f"\nExpected discordant pairs at n={len(chosen)}: {exp_pairs:.0f}")
-    for split, label in ((0.65, "moderate 65/35"), (0.75, "large 75/25")):
-        need = discordant_pairs_needed(split)
-        verdict = "POWERED" if exp_pairs >= need else "UNDERPOWERED"
-        print(
-            f"  {label}: needs {need:.0f} discordant pairs -> {verdict}"
-            + (
-                ""
-                if exp_pairs >= need
-                else f" (need ~{cases_needed(blended, split):.0f} cases)"
-            )
-        )
+    print_power_verdict(len(chosen), used)
     if len(chosen) < args.target_n:
         print(
             f"\nNOTE: asked for {args.target_n}, got {len(chosen)}. The reliable "

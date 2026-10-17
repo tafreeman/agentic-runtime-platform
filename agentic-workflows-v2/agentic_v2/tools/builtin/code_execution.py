@@ -128,18 +128,6 @@ class CodeExecutionTool(BaseTool):
         {"_os", "_sys", "_io", "__globals__", "__base__", "__builtins__", "__dict__"}
     )
 
-    _DANGEROUS_BUILTINS = frozenset(
-        {
-            "exec",
-            "eval",
-            "compile",
-            "__import__",
-            "breakpoint",
-            "exit",
-            "quit",
-        }
-    )
-
     _DANGEROUS_PATTERNS = [
         "os.system",
         "os.popen",

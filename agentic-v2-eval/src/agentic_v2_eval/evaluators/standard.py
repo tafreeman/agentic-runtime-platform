@@ -18,6 +18,7 @@ from typing import Any
 from agentic_v2_eval.interfaces import LLMClientProtocol
 from agentic_v2_eval.rubrics import load_rubric
 
+from ._judge_json import parse_judge_json
 from .base import EvaluatorRegistry
 
 
@@ -208,25 +209,4 @@ class StandardEvaluator:
         )
 
     def _parse_response(self, text: str) -> dict[str, Any] | None:
-        # Guard against ReDoS on pathological untrusted input (LLM output).
-        _MAX_PARSE_LEN = 262144  # 256 KB — ample for any realistic LLM response
-        if len(text) > _MAX_PARSE_LEN:
-            text = text[:_MAX_PARSE_LEN]
-        match = re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL)
-        if match:
-            text = match.group(1)
-
-        try:
-            parsed: dict[str, Any] = json.loads(text)
-            return parsed
-        except json.JSONDecodeError:
-            # Try finding object
-            s = text.find("{")
-            e = text.rfind("}")
-            if s != -1 and e != -1:
-                try:
-                    fallback: dict[str, Any] = json.loads(text[s : e + 1])
-                    return fallback
-                except json.JSONDecodeError:
-                    pass
-        return None
+        return parse_judge_json(text)

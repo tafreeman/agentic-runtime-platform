@@ -267,3 +267,31 @@ def test_shell_run_cwd_must_be_inside_file_base(
         {"command": "python --version", "cwd": str(tmp_path)}
     )
     assert out.startswith("ERROR")
+
+
+def test_shell_run_default_cwd_is_validated(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    base = tmp_path / "base"
+    base.mkdir()
+    monkeypatch.setenv("AGENTIC_FILE_BASE_DIR", str(base))
+    monkeypatch.setenv("AGENTIC_SHELL_ALLOWED_COMMANDS", "python")
+    monkeypatch.chdir(tmp_path)  # inherited cwd is outside the base
+    out = lc_tools.shell_run.invoke({"command": "python --version"})
+    assert out.startswith("ERROR")
+
+
+def test_file_base_read_from_settings_when_env_unset(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A base configured only via Settings (.env) is honoured, not treated as unset."""
+    from agentic_v2.langchain import tools as mod
+
+    monkeypatch.delenv("AGENTIC_FILE_BASE_DIR", raising=False)
+    monkeypatch.setattr(
+        mod,
+        "get_settings",
+        lambda: type("S", (), {"agentic_file_base_dir": str(tmp_path)})(),
+    )
+    (tmp_path / "a.txt").write_text("hi", encoding="utf-8")
+    assert mod.file_read.invoke({"path": str(tmp_path / "a.txt")}) == "hi"

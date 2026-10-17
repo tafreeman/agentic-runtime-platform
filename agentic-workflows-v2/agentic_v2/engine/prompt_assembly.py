@@ -23,7 +23,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from ..prompts.registry import default_registry
+from ..prompts.registry import PROMPTS_DIR, default_registry
+from .tool_execution import parameter_spec_to_json_schema
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,9 @@ logger = logging.getLogger(__name__)
 # Directory containing agent-specific system prompt Markdown files.
 # ---------------------------------------------------------------------------
 
-_PROMPTS_DIR = Path(__file__).parent.parent / "prompts"
+# Typed alias: mypy runs with --follow-imports=skip, so the import is Any.
+# Module-level name kept because tests monkeypatch it.
+_PROMPTS_DIR: Path = PROMPTS_DIR
 
 # ---------------------------------------------------------------------------
 # Universal output format instructions — always appended to every LLM step.
@@ -144,21 +147,8 @@ _load_agent_system_prompt = load_agent_system_prompt
 # Tool contract resolution (parameter spec conversion)
 # ---------------------------------------------------------------------------
 
-
-def parameter_spec_to_json_schema(spec: Any) -> dict[str, Any]:
-    """Convert internal tool parameter spec to JSON schema object."""
-    if not isinstance(spec, dict):
-        return {"type": "string"}
-
-    normalized: dict[str, Any] = {}
-    for key, value in spec.items():
-        if key == "required":
-            continue
-        normalized[key] = value
-
-    normalized.setdefault("type", "string")
-    return normalized
-
+# parameter_spec_to_json_schema lives in tool_execution (its only caller) and
+# is re-exported here, imported at the top, so existing import paths keep working.
 
 # Backward-compatibility alias
 _parameter_spec_to_json_schema = parameter_spec_to_json_schema

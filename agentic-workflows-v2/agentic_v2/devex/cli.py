@@ -124,6 +124,5 @@ def workflow_linter_cmd(
         console.print(f"\n[red]{len(violations)} violation(s) found.[/red]")
         raise typer.Exit(code=1)
 
-    step_count = ""
-    console.print(f"  [green]OK[/green]  {workflow} is valid{step_count}")
+    console.print(f"  [green]OK[/green]  {workflow} is valid")
     raise typer.Exit(code=0)

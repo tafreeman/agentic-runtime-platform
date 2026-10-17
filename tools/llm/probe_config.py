@@ -216,9 +216,6 @@ ENV_OPENROUTER_API_KEY = "OPENROUTER_API_KEY"
 ENV_OPENROUTER_BASE_URL = "OPENROUTER_BASE_URL"
 OPENROUTER_DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
 
-# Canonical base URL for real OpenAI API — always use this, never rely on env var override
-OPENAI_CANONICAL_BASE_URL = "https://api.openai.com/v1"
-
 # Cloud API hostnames to EXCLUDE from local/generic OpenAI-compatible probing.
 # These have their own dedicated probe functions; picking them up in
 # _probe_local_openai_compatible causes misidentification and double-counting.
@@ -265,7 +262,6 @@ GH_CLI_OUTPUT_MODELS_LIMIT = 5
 ENDPOINT_TRUNCATION_LENGTH = 50
 ERROR_BRIEF_LENGTH = 200
 ERROR_STANDARD_LENGTH = 500
-ERROR_DISPLAY_LENGTH = 60
 
 # GitHub Models HTTP API
 GITHUB_MODELS_API_BASE = "https://models.inference.ai.azure.com"
@@ -296,7 +292,6 @@ AITK_TRAILING_CHARS = "0123456789-"
 AZURE_SLOT_RANGE = 10
 
 # Exponential backoff configuration
-BACKOFF_BASE = 2
 JITTER_LOWER = 0.8
 JITTER_RANGE = 0.4
 
