@@ -12,7 +12,6 @@ import asyncio
 import json
 import os
 import re
-import shlex
 import subprocess
 from collections.abc import Iterator
 from pathlib import Path
@@ -26,6 +25,8 @@ if TYPE_CHECKING:
 
 from ..security.url_guard import validate_url_pinned
 from ..settings import get_settings
+from ..tools.builtin.shell_ops import _shell_policy_error, _split_command
+from ..tools.subprocess_utils import minimal_subprocess_env
 from ..utils.path_safety import ensure_within_base
 
 
@@ -245,12 +246,9 @@ def file_read(path: str) -> str:
     Args:
         path: Absolute or relative path to the file.
     """
-    base_dir = os.environ.get("AGENTIC_FILE_BASE_DIR")
-    if base_dir:
-        try:
-            ensure_within_base(path, base_dir)
-        except ValueError as e:
-            return f"ERROR: {e}"
+    denied = _outside_file_base(path)
+    if denied:
+        return denied
     p = Path(path)
     if not p.exists():
         return f"ERROR: File not found: {path}"
@@ -271,12 +269,9 @@ def file_write(path: str, content: str) -> str:
     denied = _check_tool_approval("file_write", {"path": path, "content": content})
     if denied:
         return denied
-    base_dir = os.environ.get("AGENTIC_FILE_BASE_DIR")
-    if base_dir:
-        try:
-            ensure_within_base(path, base_dir)
-        except ValueError as e:
-            return f"ERROR: {e}"
+    denied = _outside_file_base(path)
+    if denied:
+        return denied
     try:
         p = Path(path)
         p.parent.mkdir(parents=True, exist_ok=True)
@@ -290,7 +285,8 @@ def _outside_file_base(path: str) -> str | None:
     """Return an ERROR string when ``AGENTIC_FILE_BASE_DIR`` excludes *path*."""
     base_dir = os.environ.get("AGENTIC_FILE_BASE_DIR")
     if not base_dir:
-        return None
+        # Fail closed, matching tools/builtin/file_ops.py ``_validate_path``.
+        return "ERROR: AGENTIC_FILE_BASE_DIR is not set; file access is disabled"
     try:
         ensure_within_base(path, base_dir)
     except ValueError as e:
@@ -483,9 +479,17 @@ def shell_run(command: str, cwd: str | None = None, timeout: int = 30) -> str:
     if _is_dangerous_command(command):
         return "ERROR: Command blocked by security policy."
     try:
+        argv = _split_command(command)
+    except ValueError as e:
+        return f"ERROR: {e}"
+    policy_error = _shell_policy_error(argv[0] if argv else "", argv[1:])
+    if policy_error is not None:
+        return f"ERROR: {policy_error}"
+    try:
         result = subprocess.run(
-            shlex.split(command),
+            argv,
             shell=False,
+            env=minimal_subprocess_env(),
             capture_output=True,
             text=True,
             cwd=cwd,

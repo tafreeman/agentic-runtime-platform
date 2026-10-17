@@ -132,11 +132,16 @@ class CodeAnalysisTool(BaseTool):
         from ...settings import get_settings as _gs
 
         base_dir = _gs().agentic_file_base_dir
-        if base_dir:
-            try:
-                ensure_within_base(file_path, base_dir)
-            except ValueError as e:
-                return "", ToolResult(success=False, error=str(e))
+        if not base_dir:
+            # Fail closed, matching file_ops._validate_path.
+            return "", ToolResult(
+                success=False,
+                error="AGENTIC_FILE_BASE_DIR must be set to read source from a file",
+            )
+        try:
+            ensure_within_base(file_path, base_dir)
+        except ValueError as e:
+            return "", ToolResult(success=False, error=str(e))
         if not file_path.exists():
             return "", ToolResult(success=False, error=f"File does not exist: {source}")
         return file_path.read_text(encoding="utf-8"), None

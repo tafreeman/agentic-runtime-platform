@@ -93,6 +93,15 @@ class CodeExecutionTool(BaseTool):
             "xmlrpc",
             "webbrowser",
             "antigravity",
+            # Filesystem/process escapes reachable without the "os.system"
+            # substring (e.g. ``from os import system``).
+            "os",
+            "posix",
+            "nt",
+            "sys",
+            "io",
+            "builtins",
+            "pathlib",
         }
     )
 
@@ -303,9 +312,16 @@ class CodeExecutionTool(BaseTool):
                         {"preexec_fn": self._sandbox_preexec} if os.name != "nt" else {}
                     ),
                 )
-                stdout_bytes, stderr_bytes = await asyncio.wait_for(
-                    proc.communicate(), timeout=timeout
-                )
+                try:
+                    stdout_bytes, stderr_bytes = await asyncio.wait_for(
+                        proc.communicate(), timeout=timeout
+                    )
+                except TimeoutError:
+                    # wait_for cancels communicate() but not the child: kill and
+                    # reap it so it cannot outlive the call or its temp file.
+                    proc.kill()
+                    await proc.wait()
+                    raise
             finally:
                 Path(tmp_path).unlink(missing_ok=True)
 
