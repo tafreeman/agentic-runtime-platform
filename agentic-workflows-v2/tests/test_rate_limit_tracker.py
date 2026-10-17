@@ -1026,3 +1026,29 @@ class TestAdaptiveThrottleFactor:
             tracker.record_error("gh:gpt-4o-mini")
         factor = tracker.compute_throttle_factor("gh:gpt-4o-mini")
         assert factor == pytest.approx(0.5, abs=0.01)
+
+
+class TestRouterAclose:
+    async def test_aclose_closes_redis_store(self) -> None:
+        from unittest.mock import AsyncMock
+
+        router = SmartModelRouter()
+        store = AsyncMock()
+        router._redis_store = store
+        await router.aclose()
+        store.close.assert_awaited_once()
+
+    async def test_aclose_survives_redis_teardown_errors(self) -> None:
+        from unittest.mock import AsyncMock, MagicMock
+
+        from agentic_v2.models.redis_state import RedisCircuitBreakerStore
+
+        store = RedisCircuitBreakerStore(redis_url="redis://fake")
+        store._client = MagicMock(aclose=AsyncMock(side_effect=OSError("boom")))
+        pool = MagicMock(disconnect=AsyncMock())
+        store._pool = pool
+        router = SmartModelRouter()
+        router._redis_store = store
+        await router.aclose()  # must not raise
+        pool.disconnect.assert_awaited_once()
+        assert store._client is None

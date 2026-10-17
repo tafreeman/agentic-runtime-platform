@@ -718,9 +718,12 @@ class SmartModelRouter(ModelRouter):
         """Flush pending background tasks and release resources.
 
         Convenience alias for shutdown sequences that follow the
-        standard ``async with`` / ``aclose()`` convention.
+        standard ``async with`` / ``aclose()`` convention. Also closes the
+        Redis circuit-breaker store, if one is attached.
         """
         await self.drain_background_tasks()
+        if self._redis_store is not None:
+            await self._redis_store.close()
 
     def _save_stats_to_file(self) -> None:
         """Save stats to file atomically with cross-process file locking."""
