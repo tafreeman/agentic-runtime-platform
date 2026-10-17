@@ -99,6 +99,7 @@ class WorkflowEndEvent(BaseModel):
     type: Literal["workflow_end"] = "workflow_end"
     run_id: str
     status: str
+    evaluation_enabled: bool = False
     timestamp: str
 
 

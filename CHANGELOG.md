@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased - Tools inventory command and classify_error repaired
+
+- **`python -m tools.llm.model_inventory` works from the repository root.** It
+  imported `llm_client` as a top-level module, resolved the repo root one level
+  too shallow and pointed at a missing Windows AI bridge path. This resolves
+  Known Limitations 4.12.
+- **`tools.core.errors.classify_error` accepts `return_code` again** (accepted,
+  currently unused). The `tools-tests` job no longer deselects its test, which
+  resolves Known Limitations 4.15.
+
 ## Unreleased - NVIDIA free-tier discovery reports what the catalog says
 
 - **`model_probe --discover` no longer lists every hosted NVIDIA model as free.**

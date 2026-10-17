@@ -21,6 +21,28 @@ from types import TracebackType
 
 from .base import ExecutionResult, Sandbox
 
+# Host environment keys the sandboxed child may inherit. Everything else
+# (provider API keys, tokens) is withheld; callers opt in via ``env=`` /
+# ``extra_env``. Mirrors agentic_v2.tools.subprocess_utils (the eval package
+# must not import the runtime).
+_SAFE_ENV_KEYS = frozenset(
+    {
+        "PATH",
+        "PATHEXT",
+        "SYSTEMROOT",
+        "WINDIR",
+        "TEMP",
+        "TMP",
+        "TMPDIR",
+        "HOME",
+        "USERPROFILE",
+        "LANG",
+        "LC_ALL",
+        "LC_CTYPE",
+        "PYTHONDONTWRITEBYTECODE",
+    }
+)
+
 # Commands that are blocked in safe mode
 BLOCKED_COMMANDS = frozenset(
     {
@@ -118,7 +140,7 @@ class LocalSubprocessSandbox(Sandbox):
 
     def _get_env(self, extra_env: dict[str, str] | None = None) -> dict[str, str]:
         """Build environment dict for subprocess."""
-        env = os.environ.copy()
+        env = {k: v for k, v in os.environ.items() if k.upper() in _SAFE_ENV_KEYS}
         env.update(self._base_env)
         if extra_env:
             env.update(extra_env)

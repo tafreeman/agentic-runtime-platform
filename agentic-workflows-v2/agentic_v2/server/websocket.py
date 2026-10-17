@@ -53,7 +53,9 @@ from typing import Any, Final
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from ..contracts.events import validate_event
+from ..core.tenant import get_tenant_context
 from ..integrations.otel import is_tracing_enabled
+from ..settings import get_settings
 from .audit_log import audit_auth_request_event
 from .auth import (
     AuthThrottle,
@@ -63,6 +65,12 @@ from .auth import (
     is_token_authorized,
     is_websocket_origin_allowed,
     websocket_uses_query_token,
+)
+from .auth_oidc import (
+    AuthenticatedActor,
+    OIDCAuthenticationError,
+    OIDCAuthenticator,
+    OIDCProviderUnavailable,
 )
 from .middleware.tracing import build_traceparent
 from .replay_store import InMemoryReplayStore, ReplayStore
@@ -152,6 +160,46 @@ class ConnectionManager:
         # stacking timers, and so asyncio does not GC a fire-and-forget task
         # mid-sleep.
         self._pending_clears: dict[str, asyncio.Task[None]] = {}
+        # run_id -> owning tenant, bound when a run is submitted. Streaming
+        # endpoints consult it so one tenant cannot subscribe to another's run.
+        self._run_tenants: dict[str, str] = {}
+
+    def bind_run_tenant(self, run_id: str, tenant_id: str) -> bool:
+        """Record which tenant owns *run_id* (first binding wins).
+
+        Returns False when another tenant already owns the id, so callers can
+        refuse the submit instead of sharing buffers and listeners with it.
+        """
+        return self._run_tenants.setdefault(run_id, tenant_id) == tenant_id
+
+    def is_run_accessible(
+        self,
+        run_id: str,
+        tenant_id: str,
+        run_logger: Any | None = None,
+    ) -> bool:
+        """Return True when *tenant_id* may stream *run_id*.
+
+        A run bound at submit time is visible only to its owning tenant.
+        Unbound runs (completed before a restart, or started on another
+        worker) are visible only if a persisted run record exists in the
+        caller's own tenant store; anything else fails closed.
+        """
+        owner = self._run_tenants.get(run_id)
+        if owner is not None:
+            return owner == tenant_id
+        try:
+            if run_logger is None:
+                from ..workflows.run_logger import RunLogger
+
+                run_logger = RunLogger()
+            tenant_logger = run_logger.for_tenant(tenant_id)
+            return tenant_logger.resolve_run_path(run_id) is not None
+        except Exception as exc:
+            logger.warning(
+                "Run ownership lookup failed for run %s (%s); denying", run_id, exc
+            )
+            return False
 
     async def connect(self, websocket: WebSocket, run_id: str):
         """Accept a WebSocket connection and associate it with a run.
@@ -449,6 +497,7 @@ class ConnectionManager:
             run_id: Run identifier whose buffer should be freed.
         """
         self.event_buffers.pop(run_id, None)
+        self._run_tenants.pop(run_id, None)
         # Schedule the durable store clear without blocking.
         # We use asyncio.ensure_future so this works whether or not
         # we are inside a running event loop.
@@ -493,6 +542,21 @@ async def websocket_endpoint(websocket: WebSocket, run_id: str):
     if await _reject_websocket_connection(websocket, run_id, client_host):
         return
 
+    tenant = get_tenant_context(websocket)  # type: ignore[arg-type]
+    # The disk fallback scans run records synchronously; keep it off the loop.
+    if not await asyncio.to_thread(
+        manager.is_run_accessible, run_id, tenant.tenant_id
+    ):
+        # Same outcome as a missing run: never reveal another tenant's run.
+        await websocket.close(code=1008, reason="Run not found")
+        logger.warning(
+            "Rejected WebSocket for run %s: not found in tenant %s from %s",
+            run_id,
+            tenant.tenant_id,
+            client_host,
+        )
+        return
+
     await manager.connect(websocket, run_id)
     try:
         # Inject W3C trace context as the first message when tracing is enabled.
@@ -518,7 +582,9 @@ async def websocket_endpoint(websocket: WebSocket, run_id: str):
 async def _reject_websocket_connection(
     websocket: WebSocket, run_id: str, client_host: str
 ) -> bool:
-    """Validate origin, query-token, and API key; close and return True if rejected.
+    """Validate origin, query-token, and API-key/OIDC credentials.
+
+    Closes the socket and returns True if rejected.
 
     Returns False when the connection passes all checks and may proceed.
     """
@@ -544,8 +610,9 @@ async def _reject_websocket_connection(
         )
         return True
 
+    oidc_enabled = _websocket_oidc_enabled(websocket)
     api_key = _get_api_key()
-    if api_key is None:
+    if api_key is None and not oidc_enabled:
         return False
 
     throttle = _resolve_websocket_throttle(websocket)
@@ -572,8 +639,27 @@ async def _reject_websocket_connection(
         return True
 
     token = extract_websocket_token(websocket)
-    if not is_token_authorized(token.value if token is not None else None, api_key):
-        await websocket.close(code=1008, reason="Invalid or missing API key")
+    actor: AuthenticatedActor | None = None
+    if (
+        api_key is not None
+        and token is not None
+        and is_token_authorized(token.value, api_key)
+    ):
+        actor = AuthenticatedActor(auth_type="api_key", subject="api-key")
+    elif oidc_enabled and token is not None and token.source == "authorization":
+        try:
+            actor = await _resolve_websocket_oidc_authenticator(websocket).authenticate(
+                token.value
+            )
+        except OIDCProviderUnavailable:
+            logger.exception("OIDC provider unavailable for WebSocket run %s", run_id)
+            await websocket.close(code=1013, reason="Authentication unavailable")
+            return True
+        except OIDCAuthenticationError:
+            actor = None
+
+    if actor is None:
+        await websocket.close(code=1008, reason="Invalid or missing credentials")
         logger.warning("WebSocket auth failed for run %s from %s", run_id, client_host)
         throttle.record_failure(client_host)
 
@@ -602,9 +688,32 @@ async def _reject_websocket_connection(
             )
         return True
 
-    # Successful auth — clear any failure history for this IP.
+    # Successful auth: expose the actor to tenant resolution and clear any
+    # failure history for this IP.
+    websocket.state.auth_actor = actor
+    websocket.state.user = actor.to_request_user()
     throttle.record_success(client_host)
     return False
+
+
+def _websocket_oidc_enabled(websocket: WebSocket) -> bool:
+    """Return whether OIDC is on, honouring the per-app override like HTTP."""
+    configured = getattr(
+        getattr(websocket.app, "state", None), "agentic_oidc_enabled", None
+    )
+    if configured is not None:
+        return bool(configured)
+    return bool(get_settings().agentic_oidc_enabled)
+
+
+def _resolve_websocket_oidc_authenticator(websocket: WebSocket) -> OIDCAuthenticator:
+    """Return the app's OIDC authenticator, building (and caching) one lazily."""
+    state = websocket.app.state
+    authenticator = getattr(state, "oidc_authenticator", None)
+    if authenticator is None:
+        authenticator = OIDCAuthenticator(get_settings())
+        state.oidc_authenticator = authenticator
+    return authenticator  # type: ignore[no-any-return]
 
 
 def _resolve_websocket_throttle(websocket: WebSocket) -> AuthThrottle:

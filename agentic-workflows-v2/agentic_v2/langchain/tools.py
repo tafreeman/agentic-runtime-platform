@@ -12,7 +12,6 @@ import asyncio
 import json
 import os
 import re
-import shlex
 import subprocess
 from collections.abc import Iterator
 from pathlib import Path
@@ -26,6 +25,8 @@ if TYPE_CHECKING:
 
 from ..security.url_guard import validate_url_pinned
 from ..settings import get_settings
+from ..tools.builtin.shell_ops import _shell_policy_error, _split_command
+from ..tools.subprocess_utils import minimal_subprocess_env
 from ..utils.path_safety import ensure_within_base
 
 
@@ -245,12 +246,9 @@ def file_read(path: str) -> str:
     Args:
         path: Absolute or relative path to the file.
     """
-    base_dir = os.environ.get("AGENTIC_FILE_BASE_DIR")
-    if base_dir:
-        try:
-            ensure_within_base(path, base_dir)
-        except ValueError as e:
-            return f"ERROR: {e}"
+    denied = _outside_file_base(path)
+    if denied:
+        return denied
     p = Path(path)
     if not p.exists():
         return f"ERROR: File not found: {path}"
@@ -271,12 +269,9 @@ def file_write(path: str, content: str) -> str:
     denied = _check_tool_approval("file_write", {"path": path, "content": content})
     if denied:
         return denied
-    base_dir = os.environ.get("AGENTIC_FILE_BASE_DIR")
-    if base_dir:
-        try:
-            ensure_within_base(path, base_dir)
-        except ValueError as e:
-            return f"ERROR: {e}"
+    denied = _outside_file_base(path)
+    if denied:
+        return denied
     try:
         p = Path(path)
         p.parent.mkdir(parents=True, exist_ok=True)
@@ -286,11 +281,23 @@ def file_write(path: str, content: str) -> str:
         return f"ERROR: {e}"
 
 
+def _file_base_dir() -> str | None:
+    """Return the file sandbox root from the environment or application settings.
+
+    ``Settings`` also loads ``AGENTIC_FILE_BASE_DIR`` from ``.env`` without
+    exporting it, so the process environment alone would miss that config.
+    """
+    return (
+        os.environ.get("AGENTIC_FILE_BASE_DIR") or get_settings().agentic_file_base_dir
+    )
+
+
 def _outside_file_base(path: str) -> str | None:
     """Return an ERROR string when ``AGENTIC_FILE_BASE_DIR`` excludes *path*."""
-    base_dir = os.environ.get("AGENTIC_FILE_BASE_DIR")
+    base_dir = _file_base_dir()
     if not base_dir:
-        return None
+        # Fail closed, matching tools/builtin/file_ops.py ``_validate_path``.
+        return "ERROR: AGENTIC_FILE_BASE_DIR is not set; file access is disabled"
     try:
         ensure_within_base(path, base_dir)
     except ValueError as e:
@@ -304,7 +311,7 @@ def _escaping_pattern(pattern: str) -> str | None:
     Checked before any traversal starts: filtering matches afterwards would
     still let a pattern such as ``../../**/*`` walk the host filesystem.
     """
-    if not os.environ.get("AGENTIC_FILE_BASE_DIR"):
+    if not _file_base_dir():
         return None
     parts = pattern.replace("\\", "/").split("/")
     if ".." in parts or Path(pattern).is_absolute() or pattern.startswith("/"):
@@ -318,7 +325,7 @@ def _match_within_file_base(match: Path) -> bool:
     A glob pattern such as ``../outside/*.py`` can leave a validated directory,
     so every match is checked after resolution, which also covers symlinks.
     """
-    base_dir = os.environ.get("AGENTIC_FILE_BASE_DIR")
+    base_dir = _file_base_dir()
     if not base_dir:
         return True
     try:
@@ -370,7 +377,7 @@ def _iter_glob(root: Path, pattern: str, recursive: bool = False) -> Iterator[Pa
     the base cannot lead the traversal into a large outside tree before the
     per-match containment check runs.
     """
-    if not os.environ.get("AGENTIC_FILE_BASE_DIR"):
+    if not _file_base_dir():
         yield from root.rglob(pattern) if recursive else root.glob(pattern)
         return
     matcher = _glob_to_regex(pattern, recursive)
@@ -482,10 +489,22 @@ def shell_run(command: str, cwd: str | None = None, timeout: int = 30) -> str:
         return denied
     if _is_dangerous_command(command):
         return "ERROR: Command blocked by security policy."
+    # Validate the effective directory: an omitted cwd inherits the server's.
+    denied = _outside_file_base(cwd if cwd is not None else os.getcwd())
+    if denied:
+        return denied
+    try:
+        argv = _split_command(command)
+    except ValueError as e:
+        return f"ERROR: {e}"
+    policy_error = _shell_policy_error(argv[0] if argv else "", argv[1:])
+    if policy_error is not None:
+        return f"ERROR: {policy_error}"
     try:
         result = subprocess.run(
-            shlex.split(command),
+            argv,
             shell=False,
+            env=minimal_subprocess_env(),
             capture_output=True,
             text=True,
             cwd=cwd,
