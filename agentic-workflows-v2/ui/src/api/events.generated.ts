@@ -118,6 +118,7 @@ export interface StepErrorEvent {
   type?: 'step_error';
 }
 export interface WorkflowEndEvent {
+  evaluation_enabled?: boolean;
   run_id: string;
   status: string;
   timestamp: string;

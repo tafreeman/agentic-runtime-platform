@@ -594,3 +594,21 @@ class TestMain:
         mock_build.return_value = {"ok": True}
         main(["--active-probe"])
         mock_build.assert_called_once_with(active_probes=True)
+
+
+class TestRepoLayoutAssumptions:
+    def test_repo_root_points_at_repository_root(self):
+        from tools.llm.model_inventory import _repo_root
+
+        assert (_repo_root() / "tools" / "llm" / "model_inventory.py").is_file()
+
+    def test_windows_ai_bridge_project_path_exists(self):
+        from tools.llm.model_inventory import _repo_root
+
+        csproj = _repo_root() / "tools" / "llm" / "windows_ai_bridge"
+        assert (csproj / "PhiSilicaBridge.csproj").is_file()
+
+    def test_build_inventory_imports_llm_client(self):
+        with patch("tools.llm.model_inventory._load_dotenv"):
+            inv = build_inventory(active_probes=False)
+        assert inv.get("ok") is True, inv.get("error")
