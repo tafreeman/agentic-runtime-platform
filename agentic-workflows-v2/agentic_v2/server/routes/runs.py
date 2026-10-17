@@ -625,6 +625,14 @@ async def _audit_data_accessed(
     )
 
 
+def _is_terminal_stream_event(event: dict[str, Any]) -> bool:
+    """Return True when *event* is the last one an SSE client should wait for."""
+    event_type = event.get("type")
+    if event_type in {"error", "evaluation_complete"}:
+        return True
+    return event_type == "workflow_end" and not event.get("evaluation_enabled")
+
+
 @router.get("/runs/{run_id}/stream")
 async def stream_run_events(
     run_id: str,
@@ -635,8 +643,19 @@ async def stream_run_events(
     Requires the same authenticated tenant context as every other run-history
     route so an unauthenticated caller cannot tap a live execution feed by
     guessing a ``run_id``. The ``tenant`` dependency is resolved for its
-    auth side effect; SSE listeners are keyed by ``run_id`` upstream.
+    ownership check: a run owned by another tenant (or unknown) is a 404,
+    matching the other run routes.
+
+    The stream ends on ``error``, on ``evaluation_complete``, or on
+    ``workflow_end`` when no evaluation follows (``evaluation_enabled`` false).
     """
+    if not await asyncio.to_thread(
+        websocket.manager.is_run_accessible,
+        run_id,
+        tenant.tenant_id,
+        run_logger=run_logger,
+    ):
+        raise HTTPException(status_code=404, detail=f"Run not found: {run_id}")
 
     async def event_generator():
         queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
@@ -646,10 +665,7 @@ async def stream_run_events(
                 try:
                     event = await asyncio.wait_for(queue.get(), timeout=30)
                     yield f"data: {json.dumps(event)}\n\n"
-                    if event.get("type") in {
-                        "evaluation_complete",
-                        "workflow_end",
-                    }:
+                    if _is_terminal_stream_event(event):
                         break
                 except TimeoutError:
                     yield f"data: {json.dumps({'type': 'keepalive'})}\n\n"
