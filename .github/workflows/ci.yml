@@ -81,6 +81,7 @@ jobs:
               - '!*.md'
               - '!agentic-workflows-v2/*.md'
               - '!LICENSE'
+              - '!mkdocs.yml'
               - '!.claude/**'
               - '!.github/ISSUE_TEMPLATE/**'
               - '!.github/PULL_REQUEST_TEMPLATE.md'
