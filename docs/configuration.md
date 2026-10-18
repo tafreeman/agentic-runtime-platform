@@ -344,6 +344,7 @@ Vite reads frontend variables at build or development-server start.
 | `VITE_API_PROXY_TARGET` | `http://127.0.0.1:8010` | Backend used by the Vite development proxy |
 | `VITE_OTEL_ENABLED` | `false` | Enable browser tracing |
 | `VITE_OTEL_ENDPOINT` | unset | OTLP/HTTP endpoint for browser spans |
+| `VITE_AGENTIC_ENABLE_WORKFLOW_BUILDER` / `AGENTIC_ENABLE_WORKFLOW_BUILDER` | on in `vite` dev, off in builds | Compile-time flag for the `/workflows/:name/edit` editor route; a production build needs it set to `1` (dev can opt out with `0`) |
 
 Restart Vite after changing these values.
 
