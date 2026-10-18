@@ -3,7 +3,7 @@
 Use this guide when preparing a change for review. For installation and normal
 usage, start with [Getting started](getting-started/index.md).
 
-> **Last verified:** 2026-07-28
+> **Last verified:** 2026-10-18
 
 ## Repository boundaries
 
@@ -15,26 +15,33 @@ This monorepo contains three Python packages and one frontend:
 | `agentic-v2-eval/` | Evaluation models, rubrics, runners, and reporters |
 | `tools/` | Shared provider and benchmark utilities packaged as `agentic-tools` |
 | `tests/e2e/` | Cross-package behavior |
+| `proofs/` | Lean 4 model of `DAGExecutor` and its replay tests ([ADR-060](adr/ADR-060-scheduler-guarantees-lean.md)) |
 
 The runtime and evaluation packages depend on the root `agentic-tools` package
 through the workspace configuration. Do not introduce another cross-package
 import or an editable sibling-repository dependency without reviewing
-[Architecture](ARCHITECTURE.md) and the relevant ADRs.
+[Architecture](ARCHITECTURE.md) and the relevant ADRs. The existing
+`agentic_v2/models/llm.py` import from `agentic_v2_eval` is a known legacy
+exception; do not add more.
 
 Package-specific notes are in
 [`agentic-workflows-v2/CONTRIBUTING.md`](https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/CONTRIBUTING.md).
 
 ## Set up the workspace
 
-Use Python 3.11 or newer and Node.js 20 or newer.
+Use Python 3.11 or newer and Node.js 22.22.2 or newer (CI uses Node 22).
 
 ```powershell
 git clone https://github.com/tafreeman/agentic-runtime-platform.git
 cd agentic-runtime-platform
 just setup
+.\.venv\Scripts\Activate.ps1
 python -m pip install pre-commit
 pre-commit install --install-hooks
 ```
+
+`just setup` installs into `.venv` but does not activate it, so activate it
+before the `pip` and `agentic` commands below.
 
 The current `justfile` uses PowerShell. Manual installation for Linux, macOS,
 or a system without `just` is documented in
@@ -52,7 +59,7 @@ PowerShell:
 
 ```powershell
 '{"input_text":"hello"}' |
-  Set-Content -Encoding utf8 .\agentic-input.json
+  Set-Content -Encoding ascii .\agentic-input.json
 $env:AGENTIC_NO_LLM = "1"
 agentic run test_deterministic --input .\agentic-input.json
 ```
@@ -86,10 +93,14 @@ Do not push directly to `main`.
 - Add or update tests with behavior changes.
 - Update user documentation when a command, endpoint, environment variable,
   schema, workflow, or UI behavior changes.
-- Update `CHANGELOG.md` under `Unreleased` for user-visible changes.
+- Add a `## Unreleased - <title>` entry to `CHANGELOG.md` for user-visible
+  changes.
 - Add an ADR for a material architecture or security-boundary decision.
 - Do not reformat unrelated files.
 - Preserve generated files unless the source contract changed.
+- Keep one concern per pull request, preferably under about 400 changed lines
+  (guidance, not a gate). When a change spans layers, slice it: contract and
+  generated code first, then backend with tests, then UI and documentation.
 
 Python uses 4-space indentation, Black with an 88-character target, Ruff, and
 typed public interfaces. Use `snake_case` for Python modules and functions,
@@ -109,6 +120,9 @@ pre-commit run --all-files
 npm --prefix agentic-workflows-v2/ui run build
 ```
 
+Use `just ui-check` instead of the last command when you changed the frontend
+or the wire contracts: it also runs the UI tests with their coverage floors.
+
 `just test` runs the runtime, evaluation, cross-package, and UI unit tests.
 Some live-provider and slow checks are intentionally separate.
 
@@ -126,8 +140,12 @@ Documentation checks:
 
 ```bash
 python agentic-workflows-v2/scripts/check_docs_refs.py
+python scripts/check-doc-drift.py
 python scripts/generate_doc_stats.py --check
 ```
+
+`just docs` runs all three. `python scripts/validate-workflows.py` validates the
+workflow YAML files.
 
 If MkDocs and its plugins are installed:
 
@@ -137,6 +155,157 @@ mkdocs build --strict
 
 Do not add a command to documentation until it has been run from the directory
 the page specifies.
+
+### Fast smoke check
+
+A quick pre-push check that needs no provider key. Activate the environment
+from `just setup` first, because `agentic validate` needs the `langchain`
+extra. Run it from the repository root.
+
+Bash:
+
+```bash
+export AGENTIC_NO_LLM=1
+agentic validate test_deterministic
+agentic run test_deterministic \
+  --input agentic-workflows-v2/tests/fixtures/deterministic_input.json
+python -m pytest agentic-workflows-v2/tests/test_approval_gates.py -k fails_closed -q
+```
+
+PowerShell:
+
+```powershell
+$env:AGENTIC_NO_LLM = "1"
+agentic validate test_deterministic
+agentic run test_deterministic `
+  --input agentic-workflows-v2/tests/fixtures/deterministic_input.json
+python -m pytest agentic-workflows-v2/tests/test_approval_gates.py -k fails_closed -q
+```
+
+### Match the checks to what you changed
+
+The checks in "Run checks" are the pre-PR gate. While you work, run the ones
+that match the surface you touched. This list is a development aid, not a
+substitute for that gate.
+
+Runtime Python (`agentic-workflows-v2/agentic_v2/` and its tests). Run these
+from `agentic-workflows-v2/`:
+
+```bash
+cd agentic-workflows-v2
+python -m ruff check agentic_v2/ tests/
+python -m mypy agentic_v2/engine agentic_v2/contracts --config-file pyproject.toml \
+  --follow-imports=skip --disallow-untyped-defs --warn-return-any --no-incremental
+python -m pytest tests/ -q -m "not integration and not slow" \
+  --cov=agentic_v2 --cov-report=term-missing
+python -m coverage report --fail-under=80
+cd ..
+python agentic-workflows-v2/scripts/check_suppression_ratchet.py
+```
+
+- CI also fails when `ruff check --fix` would still change a file, so run it
+  with `--fix` deliberately and commit the result.
+- The coverage gate is the whole-package `coverage report --fail-under=80`
+  step, with `precision = 2`, so 79.93% fails. New code should aim for 80% on
+  its changed lines.
+- Use these exact `mypy` flags. A plain `mypy` run does not reproduce the
+  gate: `--follow-imports=skip` makes everything outside `engine` and
+  `contracts` `Any`, so returning its attributes raises `no-any-return` only
+  with the CI flags.
+- CI also runs `pydocstyle` on `core/` and `contracts/`:
+
+  ```bash
+  python -m pydocstyle --convention=google --add-ignore=D100,D104 agentic-workflows-v2/agentic_v2/core/
+  python -m pydocstyle --convention=google --add-ignore=D100,D101,D104 agentic-workflows-v2/agentic_v2/contracts/
+  ```
+
+Wire contracts (`agentic_v2/contracts/*.py` and the Pydantic classes in
+`agentic_v2/server/models.py`): follow "Change generated contracts" below.
+
+UI (`agentic-workflows-v2/ui/`):
+
+```bash
+just ui-check
+```
+
+`just ui-check` runs the unit tests with coverage floors (including the
+design-drift and contrast guards), then the production build.
+
+UI end-to-end tests (see `agentic-workflows-v2/ui/e2e/README.md`): Playwright
+starts and owns the backend on `127.0.0.1:8010` and Vite on `127.0.0.1:5173`
+and does not reuse running services, so stop `just dev` first.
+
+```bash
+just dev-stop
+cd agentic-workflows-v2/ui
+npx playwright install chromium
+npm run test:e2e -- streaming.spec.ts
+npm run test:e2e:5x
+```
+
+The single spec is the fast subset. `test:e2e:5x` runs the whole Playwright
+suite five times and is the flake gate the nightly workflow uses.
+
+Evaluation (`agentic-v2-eval/`, `datasets/`, `scripts/eval_gate.py`, or
+`agentic_v2/scoring/`):
+
+```bash
+AGENTIC_NO_LLM=1 python scripts/eval_gate.py \
+  --cases datasets/default/golden_cases.json --threshold 0.80
+python -m pytest agentic-workflows-v2/tests/test_eval_gate_independence.py \
+  agentic-workflows-v2/tests/test_eval_gate_live.py -q --no-cov
+cd agentic-v2-eval
+python -m pytest tests -q --cov=src/agentic_v2_eval --cov-fail-under=80
+python -m ruff check src/
+python -m ruff format --check src/
+python -m mypy src/agentic_v2_eval --config-file pyproject.toml
+```
+
+The live evaluation gate is opt-in: add the `run-live-eval` label to a pull
+request that changes live provider routing or judge prompts. With no provider
+secrets configured it exits successfully as skipped, which is not evidence of
+a live pass.
+
+Optional extras. These test modules skip themselves when the extra is missing,
+so a green run proves nothing until the extra is installed. Install it and
+confirm the import first. Run the pytest commands from
+`agentic-workflows-v2/`:
+
+```bash
+python -m pip install -e "./agentic-workflows-v2[dev,server,mcp,langchain,tracing,ek]" -c ci-constraints.txt
+python -c "import executionkit"
+cd agentic-workflows-v2
+python -m pytest tests/engine/test_step_ek_delegation.py tests/engine/test_step_tool_path.py \
+  tests/models/test_ek_adapters.py tests/models/test_ek_provider.py \
+  tests/models/test_ek_provider_attempts.py tests/models/test_ek_provider_wrapper.py \
+  -q --timeout=120
+```
+
+- `eval` extra (also install `agentic-v2-eval[dev]`): confirm
+  `python -c "import agentic_evalkit"`, then run
+  `tests/test_evalkit_bridge.py`, `tests/test_scoring_policy_differential.py`,
+  and `tests/contract/test_evalkit_boundary.py`.
+- `claude` extra: confirm `python -c "import claude_agent_sdk"`, then run
+  `tests/models/test_backends_claude.py`, `tests/test_claude_sdk_agent.py`,
+  `tests/test_sdk_task_orchestrator_example.py`, and
+  `tests/test_implementations_sanitization.py`.
+- `tools/` needs only `[dev]`: `python -m pytest tools/tests -q --timeout=120`
+  from the repository root.
+
+Dependencies (`pyproject.toml`, `uv.lock`, `ci-constraints.txt`, the
+`Dockerfile`). `ci-constraints.txt` is generated from `uv.lock`; CI pins a uv
+version (the `uv==` line in `.github/workflows/ci.yml`), and a different local
+version can produce a spurious diff. Regenerate and commit both files:
+
+```bash
+uv lock
+just update-constraints
+```
+
+Dependabot bumps `pyproject.toml` and `ci-constraints.txt` but not `uv.lock`;
+`just relock` (or the `dependabot-relock` workflow) reconciles it. Every
+`pip install` line in a Dockerfile except `--upgrade pip` must carry
+`-c ci-constraints.txt`.
 
 ## What CI checks
 
@@ -160,6 +329,27 @@ The workflow files under
 [`.github/workflows/`](https://github.com/tafreeman/agentic-runtime-platform/blob/main/.github/workflows/)
 are the current source of truth. Do not infer a green full matrix from one
 local test command.
+
+Pull requests that change only documentation (`docs/`, root and package-level
+`*.md`, `mkdocs.yml`, issue and PR templates, `.claude/`) skip the backend, UI and
+wire-format jobs; `lint` and the documentation-drift gates still run. Any other
+changed path runs the full pipeline.
+
+### Governance ratchets
+
+- **Suppression ratchet.** Adding a ruff `ignore`, a `per-file-ignores` entry,
+  or a mypy `ignore_errors` override beyond the counts in
+  `agentic-workflows-v2/.ruff-suppression-baseline.json` fails CI. Inline
+  `# noqa` and `# type: ignore` comments are not counted. Run
+  `python agentic-workflows-v2/scripts/check_suppression_ratchet.py`. After a
+  cleanup that shrinks a count, lock it in with the script's
+  `--update-baseline` flag. Silencing a lint error to get a change through is
+  a blocked path.
+- **Coverage precision.** The 80% gate uses `precision = 2`, so 79.93% fails
+  rather than rounding up.
+- **Constraints pinning.** Python jobs that install the project packages pass
+  `-c ci-constraints.txt`, which is generated from `uv.lock`; see
+  "Dependencies" above.
 
 ### Run without provider keys
 
@@ -197,8 +387,9 @@ cd ui
 npm run generate:types
 ```
 
-Review the generated diff. Do not edit generated TypeScript or JSON schema
-files by hand.
+Review the generated diff and check `git status --short` for new generated
+files, which `git diff` alone does not show. Do not edit generated TypeScript
+or JSON schema files by hand.
 
 ## Write documentation
 
@@ -278,10 +469,13 @@ A pull request should include:
 - tests and commands that passed;
 - known checks that were not run and why;
 - linked issues or ADRs;
-- screenshots for visible UI changes; and
-- migration or rollout notes when behavior changes.
+- screenshots for visible UI changes;
+- migration or rollout notes when behavior changes; and
+- how to roll back. `main` is protected, so a revert lands as a revert pull
+  request.
 
-Use this checklist:
+The pull request template in `.github/PULL_REQUEST_TEMPLATE.md` carries this
+checklist and the per-surface checks:
 
 ```text
 - [ ] Change is focused and package boundaries are preserved
@@ -289,6 +483,7 @@ Use this checklist:
 - [ ] just test passed, or narrower checks and omissions are listed
 - [ ] just docs passed
 - [ ] pre-commit run --all-files passed
+- [ ] The checks for each surface you changed passed
 - [ ] UI build passed when frontend or wire contracts changed
 - [ ] Documentation and CHANGELOG.md are updated when needed
 - [ ] No credentials, .env files, run data, or private customer data are included

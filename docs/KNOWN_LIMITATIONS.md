@@ -2,7 +2,7 @@
 
 > **Audience:** Operators, auditors, and contributors reading failing CI or trying to understand why something "works but not quite."
 > **Outcome:** After reading, you know what is intentionally unfinished and what the next sprint is expected to address.
-> **Last verified:** 2026-10-17
+> **Last verified:** 2026-10-18
 
 This page records limitations confirmed in the current checkout. Some describe
 accepted design boundaries; others describe work that is not complete. Check
@@ -36,10 +36,10 @@ payloads remain manually maintained.
 
 ### 1.2 The 80% coverage gate scopes out optional provider/plugin surfaces
 
-The `--cov-fail-under=80` gate measures the core runtime only. By design, `[tool.coverage.run] omit` in `agentic-workflows-v2/pyproject.toml` excludes optional provider and plugin surfaces from the gated number — notably the **LangChain adapter** (`agentic_v2/langchain/*`), the **model backends/router** (`agentic_v2/models/*`), MCP integrations, and CLI/prompt scaffolding.
+The 80% gate (`fail_under = 80` in `[tool.coverage.report]`, enforced by a `coverage report --fail-under=80` step) measures the core runtime only. By design, `[tool.coverage.run] omit` in `agentic-workflows-v2/pyproject.toml` excludes specific optional provider and plugin files from the gated number — notably three **LangChain adapter** modules (`agentic_v2/langchain/agents.py`, `model_builders.py`, `tools.py`), the per-provider **model backends and client glue** (`agentic_v2/models/backends_*.py`, `client.py`, `llm.py`, the ExecutionKit bridge modules), MCP integrations (`agentic_v2/integrations/mcp/*`), `workflows/runner.py`, the concrete agent implementations, and CLI/prompt scaffolding. Other modules in those packages, including the smart router, are inside the gated figure.
 
 - **Why:** These surfaces require external services or extras installs and are exercised by their own targeted suites rather than the core unit run, so folding them into the gated percentage would make the number reflect provider availability rather than core-code health.
-- **Surface:** The "coverage gate 80%+" badge therefore reflects core coverage, not whole-repo coverage. The LangChain adapter and model router are tested, but not inside the gated figure — explicitly, `agentic_v2/langchain/tools.py` (the LangChain adapter's own approval-gate re-implementation, see §4.3) and `agentic_v2/models/backends_base.py` / `backends_cloud.py` / `backends_local.py` (per-provider format translation) are listed individually by name in the coverage `omit` array (not merely swept in by a glob) and covered only by their own targeted suites, not the gated 80% figure.
+- **Surface:** The "coverage gate 80%+" badge therefore reflects core coverage, not whole-repo coverage. The omitted files are tested, but not inside the gated figure — explicitly, `agentic_v2/langchain/tools.py` (the LangChain adapter's own approval-gate re-implementation, see §4.3) and `agentic_v2/models/backends_base.py` / `backends_cloud.py` / `backends_local.py` (per-provider format translation) are listed individually by name in the coverage `omit` array and covered only by their own targeted suites.
 - **Status:** Intentional. Documented here so the badge is not read as a whole-repo claim.
 - **Visibility:** CI now publishes a separate ungated `whole-repo-coverage` artifact across the runtime, eval package, and shared tools using the same fast test selection without the core-only coverage omit list.
 - **Upstream fix:** Future sprint — decide whether any optional surface should move from visibility-only reporting into a blocking gate.
@@ -65,7 +65,7 @@ A runtime install without the `langchain` extra succeeds, but
 - **Risk:** Confusing first-run failure if a contributor installed minimal extras.
 - **Workaround:** Install with `langchain` extras (included in `just setup`), or pass `--adapter native` explicitly.
 - **Status:** The _late_ error has been resolved by S1-6: `AdapterRegistry.validate_selected()` now runs at FastAPI lifespan startup and raises `ConfigurationError` with an install hint before any request is processed. The optional-extras design is still correct; only the error timing improved. See [ADR-020](adr/ADR-020-langchain-adapter-eager-validation.md).
-- **Upstream fix:** None further needed for the server path. CLI `agentic run --adapter langchain` surfaces the error at adapter resolution time (outside the FastAPI lifespan); may benefit from an explicit pre-flight check in a future sprint.
+- **Upstream fix:** None further needed. The CLI path also calls `validate_selected()` (in `agentic_v2/adapters/workflows.py`, used by `agentic run` and `agentic compare`), so `agentic run --adapter langchain` fails with the same install hint before any step runs.
 
 ---
 
@@ -131,14 +131,14 @@ The `slowapi` global rate limiter and the `AuthThrottle` per-IP auth throttle (b
 
 ### 4.3 Human approval gates are programmatic only (no UI pause/resume yet)
 
-P1 #12 added real, tested human-approval gates on the tool-execution hot path: an injectable `ApprovalProvider` (`agentic_v2/governance/approval.py`) is consulted at **both** dispatch points before any high-impact tool runs, and the gate **fails closed** (a gated tool with no provider registered is denied, never executed). High-impact builtins (`shell`/`shell_exec`/`execute_python`, `file_write`/`file_delete`/`file_move`/`file_copy`/`directory_create`, `http`/`http_post`) are gated by default.
+P1 #12 added real, tested human-approval gates on the tool-execution hot path: an injectable `ApprovalProvider` (`agentic_v2/governance/approval.py`) is consulted at **both** dispatch points before any high-impact tool runs, and the gate **fails closed** (a gated tool with no provider registered is denied, never executed). High-impact builtins (`shell`/`shell_exec`/`execute_python`, `file_write`/`file_delete`/`file_move`/`file_copy`/`directory_create`, `http`/`http_post`, `build_app`) are gated by default.
 
 What is **not** built yet is the full UI-driven *pause-and-resume* flow — suspending a run, surfacing an approval prompt to a human operator in the web UI, and resuming on their click.
 
 - **Surface:** `agentic_v2/governance/approval.py` (gate + providers), `agentic_v2/engine/tool_execution.py` and `agentic_v2/agents/base.py` (dispatch-point wiring), `agentic_v2/contracts/events.py` (`approval_required` / `approval_decision` events).
 - **Current behavior:** approval is decided synchronously by the registered provider. The agent loop emits the contract events on its event bus; the engine tool loop surfaces approval request/decision via the logger (WARNING for request, INFO for decision) and in the serialized result metadata rather than streaming the new events — the engine dispatch point has no clean event channel without threading an emitter through the tool loop.
 - **Risk:** Operators must wire a provider programmatically (`set_approval_provider(...)`) at process start; there is no web-UI approval queue. Gated tools fail closed until a provider is registered, which is the intended safe default but will block runs that expected those tools to execute unattended.
-- **Workaround:** Register an `ApprovalProvider` at startup (`AutoApproveProvider` for trusted environments, `CallbackApprovalProvider`/`PolicyApprovalProvider` for selective approval), or disable the requirement per tool/globally. See [security-hardening.md §11](operations/security-hardening.md).
+- **Workaround:** Register an `ApprovalProvider` at startup (`AutoApproveProvider` for trusted environments, `CallbackApprovalProvider`/`PolicyApprovalProvider` for selective approval), or disable the requirement per tool/globally. See [Approval gates in security-hardening.md](operations/security-hardening.md#approval-gates).
 - **Status:** Programmatic gate shipped and tested (`tests/test_approval_gates.py`). UI pause/resume is an explicit follow-on; the wire events exist so the server/UI can build on them.
 - **Upstream fix:** Future sprint — server-side approval queue + WebSocket-driven pause/resume in the UI, streaming the `approval_required`/`approval_decision` events from the engine path.
 
@@ -150,7 +150,7 @@ The SSRF guard (`agentic_v2/security/url_guard.py`) validates a URL's resolved a
 - **Residual risk:** Pinning relies on the resolver returning the same answer the guard validated, and OS-level resolver caching is outside the application's control. A hostile authoritative DNS server with a near-zero TTL is a real threat model that application-layer checks alone cannot fully defeat. The guard is **defense-in-depth**, not a complete boundary.
 - **Risk:** In an environment where the server has network reachability to internal services, an attacker controlling DNS for a hostname a workflow fetches could, in principle, steer a connection to a private/metadata address on any code path not covered by pinning.
 - **Workaround:** For hostile-DNS threat models, add a **network-layer egress control** — an egress firewall, service-mesh authorization policy, or Kubernetes `NetworkPolicy` — restricting which addresses the server process may reach. Keep `AGENTIC_BLOCK_PRIVATE_IPS` on (the default).
-- **Status:** Accepted. Application-layer guard + connection pinning shipped and tested (`tests/test_ssrf_guard.py`); network-layer egress control is an operator responsibility documented in [security-hardening.md §10](operations/security-hardening.md).
+- **Status:** Accepted. Application-layer guard + connection pinning shipped and tested (`tests/test_ssrf_guard.py`); network-layer egress control is an operator responsibility documented under [HTTP tool and SSRF controls in security-hardening.md](operations/security-hardening.md#http-tool-and-ssrf-controls).
 - **Upstream fix:** None planned at the application layer — this is an inherent limitation of resolving names in userspace. Operators must apply network controls for hostile-DNS threat models.
 
 ### 4.5 `X-Tenant-ID` is client-supplied and spoofable in the default configuration
@@ -176,7 +176,7 @@ migration boundary, and historical defects remain recorded in
 
 ### 5.1 Implementation plans for Epics 3, 5, and 6 are retrospective
 
-Epics 1 and 2 have proper pre-implementation plan docs. Epics 3, 5, and 6 shipped without prospective plan docs — decision history for those epics is reconstructed from commit messages and ADRs rather than dedicated planning artifacts.
+Epics 1 and 2 had pre-implementation plans, but those internal planning artifacts are not carried in this repository (see [ROADMAP.md](ROADMAP.md)). Epics 3, 5, and 6 shipped without prospective plan docs. Decision history for all of them is reconstructed from the changelog and ADRs rather than dedicated planning artifacts.
 
 - **Risk:** Decision rationale may be under-documented compared to prospective plans.
 - **Mitigation:** Load-bearing decisions are captured in ADRs (`docs/adr/`).

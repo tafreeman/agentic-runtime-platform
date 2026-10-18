@@ -3,7 +3,7 @@
 Agentic Runtime Platform is a monorepo for defining, running, observing, and
 evaluating multi-step AI workflows.
 
-Last verified: 2026-07-28.
+Last verified: 2026-10-18.
 
 ## What the repository contains
 
@@ -58,12 +58,12 @@ They exchange data rather than sharing an internal implementation.
 
 | Engine | Role |
 |---|---|
-| `native` | Owns platform-specific DAG behavior such as conditions, retries, budgets, and observers |
-| `langchain` | Compiles compatible workflows to LangGraph |
+| `native` | Dependency-light Kahn's-algorithm DAG executor; runs runtime-built `DAG` and `Pipeline` objects |
+| `langchain` | Compiles named YAML workflows to LangGraph; the default for `agentic run` and `POST /api/run` |
 
 The CLI defaults to `langchain` for named workflow runs. The native engine is
-not deprecated or replaced. Use workflow capability checks and
-`agentic compare` when engine compatibility matters.
+not deprecated or replaced. Use `agentic compare` (and `GET /api/adapters` to
+see what is registered) when engine compatibility matters.
 
 ## Technology
 
@@ -72,7 +72,7 @@ not deprecated or replaced. Use workflow capability checks and
 | Python packages | Python 3.11+, hatchling, Pydantic v2 |
 | Runtime API | FastAPI and Uvicorn |
 | Workflow adapter | LangGraph as an optional runtime extra |
-| Dashboard | React 19, TypeScript 6, Vite 8, TanStack Query, XYFlow |
+| Dashboard | React 19, TypeScript 7, Vite 8, TanStack Query, XYFlow |
 | Tests | pytest, Vitest, and Playwright |
 | Documentation | MkDocs Material |
 | Telemetry | Optional OpenTelemetry and OTLP |

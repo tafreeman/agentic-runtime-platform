@@ -31,7 +31,8 @@ support SLA.
 
 ## Contributor requirements
 
-- Never commit credentials, LAF tokens, private keys, or private datasets.
+- Never commit credentials, provider tokens (including Windows Limited Access
+  Feature unlock tokens), private keys, or private datasets.
 - Use the runtime secret-provider layer instead of adding direct environment
   reads for provider credentials.
 - Add negative tests for authentication, authorization, path, URL, command,

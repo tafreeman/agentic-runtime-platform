@@ -3,7 +3,7 @@
 This guide gets a new contributor from a clean checkout to a verified workflow
 run and a working development environment.
 
-Last verified: 2026-07-28.
+Last verified: 2026-10-18.
 
 ## What is in this repository
 
@@ -29,7 +29,7 @@ the LangGraph adapter.
 ## Prerequisites
 
 - Python 3.11 or newer
-- Node.js 20 or newer
+- Node.js 22.22.2 or newer (CI uses Node 22)
 - Git
 - PowerShell for the repository's `just` recipes and development scripts
 
@@ -140,8 +140,9 @@ The standalone `agentic serve` command defaults to port `8000`. Use
 
 Start with
 `agentic-workflows-v2/agentic_v2/workflows/definitions/test_deterministic.yaml`.
-It contains two tier-0 agent steps. In no-LLM mode, the current native path
-returns placeholder values without contacting an external provider.
+It contains two tier-0 agent steps. Tier-0 agents run deterministic Python
+handlers on both engines, so this workflow never calls a model, with or
+without `AGENTIC_NO_LLM=1`.
 
 Then inspect `code_review.yaml`:
 

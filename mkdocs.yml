@@ -115,6 +115,7 @@ nav:
       - Installation: getting-started/installation.md
       - Quick start: getting-started/quickstart.md
       - First workflow: getting-started/first-workflow.md
+      - Integration recipes: getting-started/adapter-recipes.md
       - Development guide: development-guide.md
       - No-LLM dev mode: NO_LLM_MODE.md
       - Onboarding: ONBOARDING.md

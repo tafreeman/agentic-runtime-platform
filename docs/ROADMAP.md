@@ -1,6 +1,6 @@
 # Roadmap
 
-> **Last verified against the repository:** 2026-07-28
+> **Last verified against the repository:** 2026-10-18
 
 This is the in-repo backlog. Day-to-day sprint tracking lives in issues; this file captures the load-bearing multi-week arcs. If you are about to propose a new initiative, add a stub under **Proposed** and open a PR for review — a roadmap entry without a PR is aspiration.
 
@@ -37,8 +37,9 @@ Epic 8 focused on closing the gaps for regulated production environments.
 - **E8-2**: Tenant-scoped isolation for runs and datasets (`tenant.py`); OIDC tenant/org claims are authoritative when OIDC is enabled, while `X-Tenant-ID` is a compatibility header — not a hard boundary — used when OIDC is inactive (ADR-022). See [Known Limitations §4.5](KNOWN_LIMITATIONS.md#45-x-tenant-id-is-client-supplied-and-spoofable-in-the-default-configuration).
 - **E8-3**: Append-only, tamper-evident audit logging for all workflow executions and config changes (`audit_log.py`).
 - **E8-4**: Added hash-manifest verification for local ONNX model weights
-  (`weight_integrity.py`). The verifier is not yet called by every local model
-  load path; see [Supply-chain security](SUPPLY_CHAIN.md).
+  (`weight_integrity.py`). It was extended to the native `OnnxBackend` and the
+  shared-tools local provider; see [Supply-chain security](SUPPLY_CHAIN.md) for
+  the current enforcement boundary.
 - **E8-5**: Security posture consolidation and gap report captured in the security hardening and supply-chain documentation.
 
 ---
@@ -127,8 +128,28 @@ decision. `agentic-evalkit>=0.4.1,<0.5.0` is available through the runtime's
 optional `eval` extra, and the additive `evalkit_bridge` module has landed. The
 pin tracks the published PyPI release, and CI installs the extra in the
 `evalkit-bridge-tests` job, so the bridge is exercised rather than skipped.
-`step_scoring.py` still imports the in-tree `agentic_v2_eval` package, so the
-cutover and later package removal remain future slices.
+Slices A-C are done: `step_scoring.py` scores through the bridge against
+runtime-owned rubrics, and `scripts/eval_gate.py` no longer needs the legacy
+package. Removing the in-tree `agentic_v2_eval` package (slices D and E) remains
+a future slice.
+
+---
+
+## 3d. Shipped July - October 2026 — governance, UI, scheduling proofs
+
+Later work also landed as accepted ADRs. The [ADR index](adr/ADR-INDEX.md) is the source of truth for status and detail; the entries below are the headline items.
+
+| Work | ADR(s) | Date |
+|------|--------|------|
+| Configurable workflow UI (per-step node config, UI settings store, run comparison) and evaluation scoring visibility | [ADR-043](adr/ADR-043-configurable-workflow-ui.md), [ADR-044](adr/ADR-044-evaluation-scoring-visibility.md) | 2026-07-07 |
+| Approval-gate hardening: `build_app` gated, gate enforced structurally in `BaseTool.execute`, response-path entropy masking | [ADR-045](adr/ADR-045-build-app-approval-gate.md), [ADR-046](adr/ADR-046-response-entropy-masking.md), [ADR-047](adr/ADR-047-structural-tool-approval-gate.md) | 2026-07-08 |
+| SSE chat playground (`POST /api/chat`) and OpenRouter provider; Ollama cloud routing | [ADR-050](adr/ADR-050-chat-playground-sse-and-openrouter-provider.md), [ADR-051](adr/ADR-051-ollama-cloud-execution-routing.md) | 2026-07-12 |
+| Typed step artifact contracts; Evidence Ledger UI with versioned model packs | [ADR-052](adr/ADR-052-typed-step-artifact-contracts.md), [ADR-054](adr/ADR-054-evidence-ledger-ui-and-model-packs.md) | 2026-07-14 → 2026-07-17 |
+| Claude subscription backend; curated cost lane and failover ceiling | [ADR-058](adr/ADR-058-claude-subscription-backend.md), [ADR-059](adr/ADR-059-model-cost-lane-ceiling.md) | 2026-08-19 → 2026-08-28 |
+| One scheduling rule set for `DAGExecutor` and the orchestrator, modelled and proved in Lean 4 | [ADR-060](adr/ADR-060-scheduler-guarantees-lean.md) | 2026-09-24 |
+| JSON-safe secret masks; the LangGraph adapter runs each step once | [ADR-061](adr/ADR-061-json-safe-secret-masks.md), [ADR-062](adr/ADR-062-langgraph-join-once-semantics.md) | 2026-10-12 |
+
+The next planned release is the `0.4.0-rc.1` platform bundle (`release-manifest.toml`).
 
 ---
 
@@ -155,7 +176,7 @@ Flagged here so nobody quietly adds them to a sprint:
 ## 6. How to propose new work
 
 1. Open a PR that adds a subsection under §4 (Proposed). Include: problem statement, definition of done, rough sizing (story-weeks), open questions.
-2. If the work crosses an architectural boundary — new engine, new contract, new security surface — write an ADR under [`adr/`](https://github.com/tafreeman/agentic-runtime-platform/tree/main/docs/adr) at the same time (see [`CONTRIBUTING.md`](https://github.com/tafreeman/agentic-runtime-platform/blob/main/CONTRIBUTING.md#6-when-to-write-an-adr)).
+2. If the work crosses an architectural boundary — new engine, new contract, new security surface — write an ADR under [`adr/`](https://github.com/tafreeman/agentic-runtime-platform/tree/main/docs/adr) at the same time (see [`CONTRIBUTING.md`](https://github.com/tafreeman/agentic-runtime-platform/blob/main/CONTRIBUTING.md#write-an-adr)).
 3. Once an epic is accepted for sprint, add a short implementation note to the epic entry before execution begins.
 4. When the epic ships, add a new dated shipped section following the §N / §Na / §Nb naming pattern and link the final CHANGELOG entry.
 

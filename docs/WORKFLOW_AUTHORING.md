@@ -41,7 +41,6 @@ A workflow YAML file has these top-level keys:
 | `evaluation` | No | Inline rubric for scoring workflow quality |
 | `experimental` | No | Boolean flag; when `true`, the workflow is hidden from `list_workflows()` by default |
 | `_templates` | No | YAML anchor definitions for DRY step templates (ignored by loader) |
-| `tools` | No | Workflow-level tool declarations (tool type, tier) |
 
 ### Minimal skeleton
 

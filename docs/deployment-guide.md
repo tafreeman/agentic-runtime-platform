@@ -56,11 +56,10 @@ Pre-commit hooks run automatically before every local commit. CI does not run pr
 | Hook | Tool | Purpose |
 |---|---|---|
 | `black` | Black | Python code formatting (line-length 88) |
-| `isort` | isort (profile=black) | Python import sorting |
-| `ruff` | Ruff | Linting (replaces Flake8/pylint/pycodestyle) |
+| `ruff` | Ruff | Linting and import sorting (replaces Flake8/pylint/pycodestyle/isort) |
 | `docformatter` | docformatter | Docstring formatting |
-| `mypy` | mypy | Static type checking |
-| `pydocstyle` | pydocstyle | Docstring style enforcement |
+| `mypy` | mypy | Strict type checking of `agentic-v2-eval/src` |
+| `strip-ai-coauthors` | local script | Strips AI-assistant author trailers at the `commit-msg` stage |
 | `detect-secrets` | detect-secrets | Secret and credential leak prevention |
 
 Install hooks: `pre-commit install`
@@ -247,6 +246,6 @@ Before deploying to a production or shared environment, verify the following:
 | Package | Tool | Gate |
 |---|---|---|
 | `agentic-workflows-v2` | pytest + coverage | 80% on `agentic_v2` — CI collects coverage without `--cov-fail-under` and enforces the gate in a dedicated `coverage report --fail-under=80` step (pytest-cov 7.x does not propagate the failure exit code reliably) |
-| `agentic-v2-eval` | pytest | No explicit gate in current CI (tests must pass) |
+| `agentic-v2-eval` | pytest + coverage | 80% on `src/agentic_v2_eval` (`--cov-fail-under=80` in `eval-package-ci.yml`) |
 | `agentic-tools` | pytest | No per-package gate — included in the whole-repo coverage report for visibility only |
 | `agentic-workflows-v2/ui` | Vitest | 60% threshold (configured in `ui/vitest.config.ts`) |

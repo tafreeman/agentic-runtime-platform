@@ -3,7 +3,7 @@
 This page explains the repository boundaries and the main runtime path. Use the
 linked deep dives for implementation detail.
 
-Last verified: 2026-07-28.
+Last verified: 2026-10-18.
 
 ## Repository boundaries
 
@@ -63,13 +63,16 @@ The repository intentionally keeps two engines:
 
 | Engine | Use |
 |---|---|
-| `native` | Platform-specific DAG behavior, including conditional edges, retries, execution budgets, and observer hooks |
-| `langchain` | LangGraph execution for compatible workflows and engine comparison |
+| `native` | Kahn's-algorithm DAG executor with no LangGraph dependency; the engine for runtime-built `DAG` and `Pipeline` objects |
+| `langchain` | LangGraph execution of named YAML workflows; the default for `agentic run` and `POST /api/run` |
 
-`agentic run` defaults to `langchain`. A workflow can require native features,
-so engine support must be checked rather than inferred. The API exposes
-workflow capabilities, and `agentic compare` runs both adapters against the
-same input.
+`agentic run` defaults to `langchain`. The two engines do not behave
+identically in every case (for example failure propagation and the tools
+registered for a step), so engine support must be checked rather than
+inferred: `GET /api/adapters` lists the registered engines, and
+`agentic compare` runs both adapters against the same input. The
+`/api/workflows/{name}/capabilities` route reports a workflow's input and
+output declarations used for dataset matching, not engine support.
 
 `AdapterRegistry` owns engine discovery. At server startup, it validates the
 adapter selected by `AGENTIC_DEFAULT_ADAPTER` and reports a missing optional
@@ -145,10 +148,10 @@ Different data has different storage:
 |---|---|---|
 | Saved workflow runs | JSON files | Deployment-specific mounted storage |
 | WebSocket replay | Configured replay store | SQLite or Redis |
-| LangGraph checkpoints | Engine configuration | SQLite or PostgreSQL |
+| LangGraph checkpoints | In-memory (`MemorySaver`) | PostgreSQL via `AGENTIC_CHECKPOINTER_URL`, or a checkpointer injected by the caller |
 | Model-router circuit state | Process-local | Redis |
 | Authentication lockouts | Process-local | No shared backend |
-| UI provider and tier settings | `~/.agentic/ui-settings.json` | No remote settings backend |
+| UI provider and tier settings | `.agentic_ui_settings.json` at the repository root (override with `AGENTIC_UI_SETTINGS_PATH`) | No remote settings backend |
 
 Do not assume that configuring Redis makes every type of state shared. See
 [Configuration](configuration.md#redis-and-replay-storage) for the settings
