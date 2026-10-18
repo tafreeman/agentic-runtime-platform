@@ -176,7 +176,7 @@ but deployment still requires operator decisions:
 
 - configure API-key or OIDC authentication;
 - place shared rate limiting at the edge for multiple replicas;
-- choose durable stores for run and retrieval data;
+- choose durable stores for run records and replay data;
 - register an approval provider for approval-required tools;
 - apply network-level egress controls for high-assurance environments;
 - run provider-specific integration tests for every configured provider.

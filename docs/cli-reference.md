@@ -25,12 +25,12 @@ the current directory.
 |---|---|
 | `agentic run` | Run a named or path-based YAML workflow |
 | `agentic compare` | Run one workflow through multiple execution adapters |
-| `agentic orchestrate` | Build and run a workflow from a task description |
+| `agentic orchestrate` | Placeholder: prints a notice and exits 1 (dynamic orchestration is not exposed through the CLI yet) |
 | `agentic resume` | Read a saved execution checkpoint and report changed files |
 | `agentic list` | List workflows, agents, tools, or execution adapters |
 | `agentic validate` | Validate a workflow without running it |
 | `agentic serve` | Start the FastAPI server and packaged UI |
-| `agentic version` | Print package and runtime version information |
+| `agentic version` | Print the installed `agentic-workflows-v2` version |
 | `agentic devex` | Run development checks |
 
 ## `agentic run`
@@ -100,22 +100,19 @@ comparison.
 agentic orchestrate [OPTIONS] TASK
 ```
 
-`TASK` is a text description. The command generates and executes a workflow
-through the runtime's dynamic orchestration path. It does not use the default
-LangGraph path for named YAML workflows.
+`TASK` is a text description. The command is currently a stub: it prints that
+dynamic orchestration is not exposed through the default LangGraph workflow path
+yet, points to `agentic run <workflow>`, and **exits with status 1** without
+planning or running anything, whatever the options or `AGENTIC_NO_LLM` setting.
+The options below are accepted but unused. The orchestrator itself is available
+from Python (see the [Pattern catalog](PATTERN_CATALOG.md)).
 
 | Option | Type | Default | Meaning |
 |---|---|---|---|
 | `--max-parallel`, `--max-steps` | integer | `3` | Maximum number of steps dispatched at the same time |
 | `--verbose`, `-v` | flag | off | Print planning and execution details |
 
-```bash
-agentic orchestrate "Summarize the changed Python modules" --max-parallel 2
-```
-
-This command needs a usable model provider unless `AGENTIC_NO_LLM=1` is set.
-Placeholder mode tests orchestration flow, not the quality of the generated
-plan.
+Use `agentic run <workflow>` for YAML-defined workflows.
 
 ## `agentic resume`
 
@@ -128,7 +125,7 @@ agentic resume [OPTIONS] NAME
 | Option | Type | Default | Meaning |
 |---|---|---|---|
 | `--checkpoint-dir` | path | `.agentic_checkpoints` | Directory containing checkpoint JSON files |
-| `--fork` | text | none | Create a divergent checkpoint with this name after loading |
+| `--fork` | text | none | After loading, branch an in-memory fork with this name and print its run id |
 
 ```bash
 agentic resume my_run --checkpoint-dir ./checkpoints
@@ -137,7 +134,10 @@ agentic resume my_run --checkpoint-dir ./checkpoints --fork experiment_a
 
 The command restores an `ExecutionContext`, compares tracked files with their
 saved state, and reports which files changed. It does not restore a model's
-hidden conversation state.
+hidden conversation state. `--fork` only calls `ExecutionContext.fork_session`
+and prints the new run id; the CLI does not write a checkpoint for the fork or
+continue the run. Exit status is 1 when the checkpoint file is missing or cannot
+be restored.
 
 ## `agentic list`
 
@@ -202,7 +202,7 @@ The repository's `just dev` launcher uses backend port `8010` and Vite port
 agentic version
 ```
 
-Prints the installed runtime version and basic environment information.
+Prints one line, `agentic-workflows-v2 version <version>`; it reports no other environment information.
 
 ## `agentic devex`
 

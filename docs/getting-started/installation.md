@@ -174,13 +174,13 @@ Set only the providers you intend to use. Common chat-provider variables are:
 | Anthropic | `ANTHROPIC_API_KEY` |
 | Gemini | `GEMINI_API_KEY` or `GOOGLE_API_KEY` |
 | Azure OpenAI | `AZURE_OPENAI_API_KEY` and `AZURE_OPENAI_ENDPOINT` |
-| Azure AI Foundry | `AZURE_FOUNDRY_API_KEY` and a configured Foundry endpoint |
+| Azure AI Foundry | `AZURE_FOUNDRY_API_KEY` and `AZURE_FOUNDRY_ENDPOINT` |
 | NVIDIA NIM | `NVIDIA_API_KEY`, or `NVIDIA_BASE_URL` for a self-hosted endpoint |
 | OpenRouter | `OPENROUTER_API_KEY` |
 | DigitalOcean Serverless Inference | `DIGITALOCEAN_TOKEN` |
 | Mistral La Plateforme | `MISTRAL_API_KEY` |
-| GitHub Models | `GITHUB_TOKEN` or `GH_TOKEN` |
-| Ollama | `OLLAMA_HOST`; `OLLAMA_API_KEY` only when the endpoint requires it |
+| GitHub Models | `GITHUB_TOKEN` or `GH_TOKEN`; retired upstream 2026-07-30, so no default tier routes to it |
+| Ollama | `OLLAMA_BASE_URL` (runtime; `OLLAMA_HOST` is read by the inventory and benchmark tools); `OLLAMA_API_KEY` only when the endpoint requires it |
 
 See [Configuration](../configuration.md) for model overrides, endpoint
 settings, authentication, storage, and security controls.

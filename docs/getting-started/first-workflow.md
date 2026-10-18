@@ -197,8 +197,9 @@ agentic validate ./my-first-workflow.yaml --verbose
 
 ### Input is missing
 
-If the input JSON omits `input_text`, validation fails before execution.
-Compare the file with the top-level `inputs` block.
+`agentic validate` does not read your input file. If the input JSON omits
+`input_text`, `agentic run` rejects it with an input-validation error before any
+step executes. Compare the file with the top-level `inputs` block.
 
 ### Dependency name is wrong
 
