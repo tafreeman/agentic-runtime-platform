@@ -67,6 +67,7 @@ verify response quality or structured model output.
 | Understand engine behavior | [Architecture](ARCHITECTURE.md) |
 | Integrate with the API | [Runtime API contracts](api-contracts-runtime.md) |
 | Configure providers and security | [Configuration](configuration.md) |
+| Switch engines, cap model cost, wire approvals, score output | [Integration recipes](getting-started/adapter-recipes.md) |
 | Evaluate workflow output | [Evaluation architecture](architecture-eval.md) |
 | Deploy or troubleshoot the service | [Operations](operations/index.md) |
 

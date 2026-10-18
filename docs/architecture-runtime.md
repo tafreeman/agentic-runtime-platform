@@ -141,7 +141,7 @@ engine = get_registry().get_adapter("native")
 result = await engine.execute(dag, ctx, on_update=broadcast_fn)
 ```
 
-Instances are cached — the same engine object is returned on every subsequent call for the same name.
+Instances are cached — the same engine object is returned on every subsequent call for the same name. Runnable examples for both engines are in [Integration recipes](getting-started/adapter-recipes.md).
 
 **Eager startup validation:** At FastAPI lifespan startup, `AdapterRegistry.validate_selected(name)` is called for the adapter named by `AGENTIC_DEFAULT_ADAPTER` (default `langchain`). If the required extras are absent, the server raises `ConfigurationError` with an install hint and refuses to start, replacing the prior behavior of deferring the `ImportError` until the first workflow run. See [ADR-020](adr/ADR-020-langchain-adapter-eager-validation.md).
 
