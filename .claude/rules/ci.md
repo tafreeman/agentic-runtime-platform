@@ -71,8 +71,8 @@ omitted module expecting it to be measured.
   autofixes and commit them.
 - **mypy** runs strict on `agentic_v2/engine` + `agentic_v2/contracts`
   (`--disallow-untyped-defs --warn-return-any`).
-- `pre-commit run --all-files` covers black, isort (profile=black), ruff,
-  docformatter, detect-secrets, and the scoped mypy/pydocstyle hooks.
+- `pre-commit run --all-files` covers black, ruff,
+  docformatter, detect-secrets, and the scoped mypy hook.
 
 ## Wire-format drift
 

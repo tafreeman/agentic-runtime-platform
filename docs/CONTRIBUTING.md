@@ -244,7 +244,7 @@ npm run test:e2e:5x
 ```
 
 The single spec is the fast subset. `test:e2e:5x` runs the whole Playwright
-suite five times and is the flake gate CI uses.
+suite five times and is the flake gate the nightly workflow uses.
 
 Evaluation (`agentic-v2-eval/`, `datasets/`, `scripts/eval_gate.py`, or
 `agentic_v2/scoring/`):
