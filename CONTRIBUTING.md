@@ -327,6 +327,30 @@ The blocking checks include:
 The workflow files under `.github/workflows/` are the current source of truth.
 Do not infer a green full matrix from one local test command.
 
+### Reproduce a CI job locally
+
+Each job in `.github/workflows/ci.yml` maps to commands this guide already
+gives; the table says where. Run a job's commands before pushing so a failing
+push does not spend a CI run (each push to an open pull request starts a new
+run and cancels the superseded one).
+
+| CI job | Reproduce with |
+|---|---|
+| `lint` | Ruff, the suppression ratchet and `pydocstyle` under "Runtime Python"; `just docs`; `python scripts/validate-workflows.py`; the constraints sync under "Dependencies" |
+| `Mypy (strict engine + contracts)` | the strict `mypy` command under "Runtime Python" |
+| `test-coverage` | the `pytest` and `coverage report --fail-under=80` commands under "Runtime Python" |
+| `python-smoke`, `no-llm-smoke` | "Fast smoke check" above, plus `just test` |
+| `frontend-build` | `just ui-check` |
+| `wire-format-drift` | "Change generated contracts" below |
+| `e2e-streaming` | the Playwright commands under "Match the checks to what you changed" |
+| `EK step-delegation (approval-gate) tests` | the "Optional extras" commands under "Match the checks to what you changed" |
+
+Pull requests are classified by a `changes` job that gates whole jobs, never
+whole workflows, so every required check still reports on every pull request.
+Do not add workflow-level `paths:` or `paths-ignore:` to a workflow that
+reports a required check: a workflow that does not trigger reports nothing, and
+the pull request waits forever on a check that never runs.
+
 Pull requests that change only documentation (`docs/`, root and package-level
 `*.md`, `mkdocs.yml`, issue and PR templates, `.claude/`) skip the backend, UI and
 wire-format jobs; `lint` and the documentation-drift gates still run. Any other
