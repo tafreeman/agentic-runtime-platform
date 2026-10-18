@@ -36,7 +36,8 @@ Some subsystems read variables directly:
 | `AGENTIC_API_KEY` | Resolved for each HTTP request through the secret-provider chain |
 | `AGENTIC_SANITIZER_FAIL_OPEN` | Checked during request dispatch |
 | `AGENTIC_AUTH_LOCKOUT_*` | Read when `AuthThrottle` is created |
-| `AGENTIC_RATE_LIMIT_*` | Read when rate limiting is configured |
+| `AGENTIC_RATE_LIMIT_DEFAULT`, `AGENTIC_RATE_LIMIT_DISABLED` | Read once when the rate-limit module is imported |
+| `AGENTIC_DISABLE_RATE_LIMITING` | Checked at server startup |
 | `AGENTIC_CORS_ORIGINS` | Read when the FastAPI application is created |
 | Provider credentials | Resolved when a provider or call needs them |
 
@@ -60,13 +61,13 @@ selected adapter, installed extras, endpoint access, and configured model IDs.
 | OpenAI | `OPENAI_API_KEY`; optional `OPENAI_BASE_URL` for a compatible endpoint |
 | Anthropic | `ANTHROPIC_API_KEY`; optional `ANTHROPIC_BASE_URL` |
 | Gemini | `GEMINI_API_KEY` or `GOOGLE_API_KEY` |
-| GitHub Models | `GITHUB_TOKEN` or `GH_TOKEN` |
-| NVIDIA NIM | `NVIDIA_API_KEY`; optional `NVIDIA_BASE_URL` for self-hosted NIM |
+| GitHub Models (retired upstream 2026-07-30) | `GITHUB_TOKEN` or `GH_TOKEN`; no tier chain routes to `gh:` any more, and an explicit `gh:` model id fails at the network ([ADR-016](adr/ADR-016-github-token-as-default-e2e-llm.md)) |
+| NVIDIA NIM | `NVIDIA_API_KEY`; optional `NVIDIA_BASE_URL` for self-hosted NIM; `NVIDIA_DISABLE_THINKING=0` turns off the thinking-suppression request flags. The probe and inventory tools in `tools/llm/` read `NVIDIA_NIM_API_KEY` and `NVIDIA_NIM_HOST` instead |
 | OpenRouter | `OPENROUTER_API_KEY`; optional `OPENROUTER_BASE_URL` |
 | DigitalOcean Serverless Inference | `DIGITALOCEAN_TOKEN` (LangChain path only; ids are `digitalocean:<catalog id>`) |
 | Mistral La Plateforme | `MISTRAL_API_KEY`; optional `MISTRAL_BASE_URL`; optional `MISTRAL_FREE_TIER=1` to declare a free account so the probe labels its models free (LangChain path only; ids are `mistral:<id>` as listed by `GET /v1/models`, Labs ids included) |
-| Azure OpenAI | `AZURE_OPENAI_API_KEY` and `AZURE_OPENAI_ENDPOINT`, or indexed pairs such as `_0`, `_1`, and matching deployment values |
-| Azure AI Foundry | `AZURE_FOUNDRY_API_KEY` and the endpoint selected by the Foundry adapter |
+| Azure OpenAI | `AZURE_OPENAI_API_KEY` and `AZURE_OPENAI_ENDPOINT`, or indexed pairs such as `_0`, `_1`, and matching deployment values; optional `AZURE_OPENAI_API_VERSION` (default `2024-10-21`) |
+| Azure AI Foundry | `AZURE_FOUNDRY_API_KEY` and `AZURE_FOUNDRY_ENDPOINT` (indexed `AZURE_FOUNDRY_ENDPOINT_<n>` entries are read by the inventory tools) |
 | Ollama runtime | `OLLAMA_BASE_URL`, default `http://localhost:11434`; optional `OLLAMA_API_KEY` |
 | LM Studio discovery | `LMSTUDIO_HOST`; optional `LM_API_TOKEN` |
 | ONNX discovery tools | `ONNX_MODEL_DIR`, `AIGALLERY_CACHE`, or `LOCAL_MODEL_PATH`, depending on the tool path |
@@ -81,14 +82,18 @@ quota table.
 
 ### Model overrides
 
-`AGENTIC_MODEL_TIER_<N>` forces a model ID for a capability tier:
+`AGENTIC_MODEL_TIER_<N>` forces a model ID for a capability tier. LangChain-path
+ids are provider-prefixed with a colon:
 
 ```bash
-AGENTIC_MODEL_TIER_2=openai/gpt-4o-mini
+AGENTIC_MODEL_TIER_2=gemini:gemini-2.5-flash
 ```
 
-Use the model ID format expected by the selected adapter. An override does not
-install a provider package or supply its credential.
+An override does not install a provider package or supply its credential.
+`AGENTIC_JUDGE_MODEL` pins the model the server uses for evaluation-judge scoring;
+when unset the judge uses the run's model-pack `judge_model`, then
+`AGENTIC_MODEL_TIER_2`, then `AGENTIC_MODEL_TIER_1`. `AGENTIC_UI_SETTINGS_PATH` relocates the JSON store the
+dashboard writes provider endpoints and tier reranks to.
 
 `AGENTIC_REGISTRY_STRICT=1` makes quarantined model-registry entries fatal
 instead of warnings. `AGENTIC_STRICT_MODEL_VERIFY=1` enables strict local model
@@ -113,7 +118,7 @@ when every tier is exhausted). See
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `AGENTIC_DEFAULT_ADAPTER` | `langchain` | Adapter the server validates and uses by default; set `native` to avoid the LangChain dependency |
+| `AGENTIC_DEFAULT_ADAPTER` | `langchain` | Adapter the server validates at startup (and refuses to start without, with an install hint); it does **not** change the per-request default, which stays `langchain` unless the request sets `adapter` |
 | `AGENTIC_NO_LLM` | `0` | Replace model calls with fixed placeholder responses |
 | `AGENTIC_TOKEN_BUDGET` | unset | Positive process-wide token cap on the shared native client; zero, negative, blank, or invalid values disable the cap |
 | `AGENTIC_MAX_COST_LANE` | `paid` | Filters model candidates to `local`/`free`/`paid` and below by curated `cost_lane`; unrecognised values fall back to `paid` (no filtering) with a logged warning |
@@ -175,8 +180,11 @@ X-API-Key: <key>
 When the variable is unset, protected API routes are open. Set authentication
 before exposing the server.
 
-Public paths include health, OpenAPI, Swagger UI, ReDoc, and metrics. Static UI
-files are not protected by this middleware.
+Within `/api/`, only `/api/health` is public. OpenAPI (`/openapi.json`), Swagger
+UI (`/docs`), ReDoc (`/redoc`) and `/metrics` are public too, and so is every
+other path outside `/api/` (the static UI and `/ws/*`): the HTTP key middleware
+and the rate limiter both skip them. WebSocket connections are checked by the
+WebSocket handler itself, not by this middleware.
 
 ### OIDC
 
@@ -202,7 +210,8 @@ JWKS URL. The `server` extra supplies the JWT dependency.
 |---|---|---|
 | `AGENTIC_CORS_ORIGINS` | local origins | Comma-separated allowed browser origins |
 | `AGENTIC_RATE_LIMIT_DEFAULT` | `60/minute` | SlowAPI per-IP limit string |
-| `AGENTIC_RATE_LIMIT_DISABLED` | unset | Exact `1` disables the rate limiter |
+| `AGENTIC_RATE_LIMIT_DISABLED` | unset | Exact `1` disables the rate limiter (intended for tests) |
+| `AGENTIC_DISABLE_RATE_LIMITING` | unset | Exact `1` lets the server start without `slowapi` installed and therefore with no rate limiting; without it, a missing `slowapi` aborts startup |
 | `AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS` | `60` | Window for failed authentication attempts |
 | `AGENTIC_AUTH_LOCKOUT_THRESHOLD` | `5` | Failures in the window before lockout |
 | `AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS` | `300` | Lockout duration |
@@ -215,8 +224,8 @@ variable.
 Rate-limit and auth-throttle state are process-local. Multiple replicas multiply
 the effective allowance unless an external gateway enforces a shared limit.
 
-Public rate-limit exemptions are `/api/health`, `/docs`, `/openapi.json`, and
-`/redoc`. `/metrics` is also public when enabled.
+The rate limiter exempts the same public paths as authentication: `/api/health`,
+`/docs`, `/openapi.json`, `/redoc`, `/metrics`, and everything outside `/api/`.
 
 ## File, shell, HTTP, and MCP boundaries
 
@@ -355,8 +364,10 @@ tool-calling, or evaluation output meaningful.
 AGENTIC_DEFAULT_ADAPTER=native agentic serve --port 8010 --no-open
 ```
 
-The `agentic validate` command still performs LangGraph compilation and needs
-the `langchain` extra.
+This only lets the server start without the `langchain` extra. A `POST /api/run`
+request still defaults to `adapter: "langchain"` and fails unless the client
+sends `"adapter": "native"`. The `agentic validate` command still performs
+LangGraph compilation and needs the `langchain` extra.
 
 ### Exposed service baseline
 
