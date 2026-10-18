@@ -46,8 +46,8 @@ permissions:
 
 concurrency:
   # PRs: one group per PR number, newer push cancels the older run. Everything
-  # else (push to main, schedule, dispatch): group per SHA, never cancelled.
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  # else (push to main, schedule, dispatch): group per run, never cancelled.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -82,10 +82,25 @@ jobs:
         run: |
           set -uo pipefail
           skip=false
-          if newest=$(gh api "repos/${GH_REPO}/actions/workflows/lean-proofs.yml/runs?branch=main&status=success&per_page=50" --jq '
+          # Candidates: successful scheduled/dispatched runs on main for this
+          # SHA, newest first. A run only counts if its `lean-replay` JOB itself
+          # concluded success: a nightly that this gate skipped still concludes
+          # success at the run level, and counting it would make every later
+          # nightly skip too, so the 7-day refresh would never fire.
+          if candidates=$(gh api "repos/${GH_REPO}/actions/workflows/lean-proofs.yml/runs?branch=main&status=success&per_page=50" --jq '
               [.workflow_runs[]
-               | select(.head_sha == env.SHA and (.event == "schedule" or .event == "workflow_dispatch"))
-               | .created_at] | max // empty'); then
+               | select(.head_sha == env.SHA and (.event == "schedule" or .event == "workflow_dispatch"))]
+              | sort_by(.created_at) | reverse | .[:10][]
+              | "\(.id) \(.created_at)"'); then
+            newest=""
+            while read -r run_id created_at; do
+              [ -n "$run_id" ] || continue
+              passed=$(gh api "repos/${GH_REPO}/actions/runs/${run_id}/jobs" --jq '[.jobs[] | select(.name == "lean-replay" and .conclusion == "success")] | length') || passed=0
+              if [ "${passed:-0}" -gt 0 ]; then
+                newest="$created_at"
+                break
+              fi
+            done <<< "$candidates"
             if [ -n "$newest" ]; then
               age_days=$(( ( $(date -u +%s) - $(date -u -d "$newest" +%s) ) / 86400 ))
               if [ "$age_days" -lt "$MAX_AGE_DAYS" ]; then
@@ -95,7 +110,7 @@ jobs:
                 echo "Running: last n=4 pass for ${SHA:0:8} is ${age_days}d old (>= ${MAX_AGE_DAYS}d refresh)."
               fi
             else
-              echo "Running: no successful n=4 run recorded for ${SHA:0:8}."
+              echo "Running: no run whose lean-replay job passed recorded for ${SHA:0:8}."
             fi
           else
             echo "::warning::could not list workflow runs; running the nightly tier"
