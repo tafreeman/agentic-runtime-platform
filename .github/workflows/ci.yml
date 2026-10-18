@@ -33,9 +33,9 @@ on:
 concurrency:
   # PRs: one group per PR number, so a newer push cancels the superseded run
   # (the newer SHA reports the same job names, so no required check is stranded).
-  # Everything else (push to main, schedule, dispatch): group per SHA and never
+  # Everything else (push to main, schedule, dispatch): group per run and never
   # cancel, so every main commit keeps a complete CI result.
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -447,11 +447,22 @@ jobs:
           python -m pytest tests/ -q \
             -m "not integration and not slow" \
             --cov=agentic_v2 \
-            --cov-report=term-missing
+            --cov-report=term-missing \
+            --cov-report=xml:coverage.xml
       - name: Enforce 80% coverage gate
         run: |
           cd agentic-workflows-v2
           python -m coverage report --fail-under=80
+      - name: Upload runtime coverage to Codecov (PRs)
+        # Keeps the Codecov PR signal now that the whole-repo pass (below) runs
+        # on main only. On main pushes the whole-repo upload replaces this one.
+        # Never fails the job and needs no artifact, so it is safe without
+        # `if-no-files-found`.
+        if: ${{ success() && !(github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+        uses: codecov/codecov-action@v7
+        with:
+          files: agentic-workflows-v2/coverage.xml
+          fail_ci_if_error: false
       # The three steps below run on pushes to main only. The second, whole-repo
       # pass is visibility-only and was the critical path of this job; its eval
       # tests already run on every PR in eval-package-ci.yml, and the PR-time
@@ -794,6 +805,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e "." -c ci-constraints.txt
           pip install -e "agentic-workflows-v2/[dev,server,langchain]" -c ci-constraints.txt
+          # The runtime unit suite no longer runs anywhere else with the legacy
+          # agentic-v2-eval package installed (python-smoke dropped its unit
+          # run), so keep that configuration covered here.
+          pip install -e "agentic-v2-eval/[dev]" -c ci-constraints.txt
       - name: Validate deterministic workflow
         env:
           AGENTIC_NO_LLM: "1"
@@ -818,7 +833,8 @@ jobs:
         # Do NOT dedupe against test-coverage: this is the only job running the
         # suite with ambient AGENTIC_NO_LLM=1 (a MockBackend client, see
         # tests/conftest.py backendless_baseline) and without the mcp/tracing
-        # extras, which is a genuinely different configuration.
+        # extras, which is a genuinely different configuration. It also runs with
+        # agentic-v2-eval installed, the configuration python-smoke used to cover.
         #
         # pipefail is NOT the default for workflow `run:` steps (only an
         # explicit `shell: bash` opts in), so without it the `| tail` pipe

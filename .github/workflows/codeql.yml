@@ -20,8 +20,8 @@ on:
 
 concurrency:
   # PRs: one group per PR number, newer push cancels the older run. Everything
-  # else (push to main, schedule): group per SHA, never cancelled.
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  # else (push to main, schedule): group per run, never cancelled.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:

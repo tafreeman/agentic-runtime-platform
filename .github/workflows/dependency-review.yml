@@ -32,7 +32,7 @@ on:
 
 concurrency:
   # PRs: one group per PR number, newer push cancels the older run.
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # If using a dependency submission action in this workflow this permission will need to be set to:

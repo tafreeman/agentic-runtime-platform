@@ -26,8 +26,8 @@ on:
     # status check on main, so it must report on every PR. A path-filtered
     # required check that never runs would leave unrelated PRs stuck "Expected"
     # (unmergeable). eval-golden-gate has no `needs` and is unconditional. The
-    # package jobs (test/lint/type-check/build) are gated per-PR by the
-    # `changes` job below and always run on push, schedule and workflow_dispatch;
+    # package jobs (test/type-check/build) are gated per-PR by the
+    # `changes` job below (the eval `lint` job is deliberately NOT gated) and always run on push, schedule and workflow_dispatch;
     # eval-live-gate stays label-gated. The push trigger above keeps its paths
     # filter. NOTE: the job id `lint` below deliberately shares the required
     # context "lint" with ci.yml's `lint` job -- do not rename or merge it.
@@ -40,9 +40,9 @@ on:
 
 concurrency:
   # PRs: one group per PR number, newer push (or label event) cancels the older
-  # run. Everything else (push to main, schedule, dispatch): group per SHA, never
+  # run. Everything else (push to main, schedule, dispatch): group per run, never
   # cancelled.
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 defaults:
@@ -123,10 +123,10 @@ jobs:
 
   lint:
     # Shares the required context "lint" with ci.yml's `lint` job (neither has a
-    # `name:`): keep the id, and never add an event-based skip here -- a skipped
-    # run for the same SHA could mask a red one.
-    needs: changes
-    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.result != 'success' || needs.changes.outputs.eval_pkg == 'true') }}
+    # `name:`): keep the id, and NEVER gate this job (no `needs:` / `if:`) -- a
+    # fast skipped duplicate could show the context green while ci.yml's heavier
+    # lint is still pending or red. It is ~15s, so it runs on every PR; `build`
+    # still skips with test/type-check on non-eval PRs (its needs are skipped).
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
