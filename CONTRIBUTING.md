@@ -327,6 +327,11 @@ The blocking checks include:
 The workflow files under `.github/workflows/` are the current source of truth.
 Do not infer a green full matrix from one local test command.
 
+Pull requests that change only documentation (`docs/`, root and package-level
+`*.md`, `mkdocs.yml`, issue and PR templates, `.claude/`) skip the backend, UI and
+wire-format jobs; `lint` and the documentation-drift gates still run. Any other
+changed path runs the full pipeline.
+
 ### Governance ratchets
 
 - **Suppression ratchet.** Adding a ruff `ignore`, a `per-file-ignores` entry,
