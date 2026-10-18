@@ -32,9 +32,9 @@ the imported CI rules. Read them before validating a change.
 ## Test conventions
 
 Fixture, golden-file, marker, and isolation conventions for the Python suites
-are in the imported testing rules. A path-scoped copy
-(`paths: ["**/*_test.py", "tests/**/*.py"]`) auto-applies whenever a test file
-is in context.
+are in the imported testing rules. That file also carries
+`paths: ["**/*_test.py", "tests/**/*.py"]` frontmatter, so it loads whenever a
+test file is in context even outside this import.
 
 @.claude/rules/testing.md
 
@@ -53,5 +53,6 @@ the EK-extra blind spot) live in the imported portfolio rules.
   gap list here, it drifts.
 - Contributor gates and the full command catalogue: `CONTRIBUTING.md`.
 - Runnable demonstrations of platform primitives: `examples/` — not uniformly
-  safe to run without a provider; see `examples/README.md` for which files
-  need one and which are currently broken.
+  safe to run without a provider; `examples/README.md` has a provider column
+  per file. The runtime's own `agentic-workflows-v2/examples/README.md` lists
+  which of its scripts are currently broken.

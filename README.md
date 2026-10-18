@@ -35,9 +35,11 @@ long-running or multi-tenant environment.
 - **[Five-minute demo](docs/DEMO.md)** — proves the CLI, API, WebSocket
   stream, and dashboard work together end to end, with no provider
   credential.
-- **[Load and shared-state evidence](docs/flagship.md)** — proves horizontal
-  scale-out and exact Redis-CAS shared-counter consistency under concurrent
-  writes, from a reproducible local k6 run.
+- **[Load and shared-state evidence](docs/flagship.md)** — a reproducible local
+  harness that records `POST /api/run` acceptance throughput at one and three
+  replicas, plus a direct concurrent-writer test showing the Redis
+  compare-and-swap circuit-breaker counter stays exact. The Redis check is a
+  separate worker experiment, not driven by the k6 traffic.
 
 Two concrete outcomes from that demo:
 
@@ -58,10 +60,11 @@ cd agentic-workflows-v2
 python -m pytest tests/test_approval_gates.py -k fails_closed -v
 ```
 
-Every case denies before execution, with `metadata["approval_decision"] ==
-"denied"` — for example, `test_build_app_no_provider_fails_closed` proves
-`BuildAppTool` never starts its install/build/test shell. The denial message
-itself, quoted directly from the gate rather than paraphrased:
+Every case denies before the tool body runs, and the dispatch-path tests also
+assert `metadata["approval_decision"] == "denied"` — for example,
+`test_build_app_no_provider_fails_closed` proves `BuildAppTool` never starts
+its install/build/test shell. The denial message itself, quoted directly from
+the gate rather than paraphrased:
 
 > Tool 'build_app' requires approval: denied by no provider registered
 > (fail-closed). Register an ApprovalProvider via
@@ -174,22 +177,25 @@ first step's output:
 
 ```yaml
 name: test_deterministic
-description: Simple deterministic workflow for testing
+description: Simple deterministic workflow for testing (no LLM calls)
 version: "1.0"
 
 inputs:
   input_text:
     type: string
+    description: Text to process
     required: true
 
 outputs:
   processed_text:
     from: ${steps.step1.outputs.result}
+  step_count:
+    from: ${steps.step2.outputs.count}
 
 steps:
   - name: step1
     agent: tier0_process
-    description: Process the input text
+    description: Process input text (tier-0, no LLM)
     inputs:
       text: ${inputs.input_text}
     outputs:
@@ -197,7 +203,7 @@ steps:
 
   - name: step2
     agent: tier0_counter
-    description: Count characters
+    description: Count characters (tier-0, no LLM)
     depends_on: [step1]
     inputs:
       text: ${steps.step1.outputs.result}
@@ -277,7 +283,10 @@ agentic-runtime-platform/
 ├── examples/                 # Runnable Python examples
 ├── datasets/                 # Evaluation fixtures
 ├── infra/                    # Deployment examples
-└── otel/                     # Local observability configuration
+├── load/                     # k6 load harness and committed results
+├── otel/                     # Local observability configuration
+├── proofs/                   # Lean 4 scheduler proofs
+└── scripts/                  # Repo-level checks, eval gate, and doc generators
 ```
 
 Package boundaries are intentional. Review
