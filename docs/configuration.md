@@ -101,8 +101,13 @@ candidate list rather than reordering it -- a pinned `model_override` is
 filtered too. Default `paid` (unset) filters nothing, matching prior
 behavior. If every candidate is filtered out, the request fails with
 `CostLaneCeilingExceededError` naming the ceiling rather than silently
-returning nothing or falling back to an unfiltered chain. See
-[ADR-059](adr/ADR-059-model-cost-lane-ceiling.md).
+returning nothing or falling back to an unfiltered chain. That refusal is
+the behavior of `ModelRouter` and the LangChain model builder;
+`SmartModelRouter` instead excludes over-ceiling models within a tier,
+degrades to another tier, and records it on `last_selection` (it raises only
+when every tier is exhausted). See
+[ADR-059](adr/ADR-059-model-cost-lane-ceiling.md) and the
+[integration recipes](getting-started/adapter-recipes.md).
 
 ## Execution and model-call settings
 
