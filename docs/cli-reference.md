@@ -56,6 +56,19 @@ The input option accepts a file path:
 agentic run code_review --input review-input.json --adapter native
 ```
 
+`--output` writes a JSON summary with the same shape for both adapters (it is
+not the full `WorkflowResult` model, so there is no `final_output` or
+`overall_status` key):
+
+| Key | Contents |
+|---|---|
+| `workflow_name` | Workflow that ran |
+| `status` | Lowercase overall status, for example `success` or `failed` |
+| `outputs` | The workflow's declared outputs |
+| `steps` | Map of step name to `status`, `outputs`, and `error` |
+| `errors` | List of error messages |
+| `elapsed_seconds` | Wall-clock duration |
+
 The command exits non-zero when validation fails or the workflow cannot be
 run. A workflow result whose overall status is failed is also reported as a
 failed command.

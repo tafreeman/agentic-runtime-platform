@@ -6,7 +6,7 @@ This guide covers the normal edit, run, and test loop. See
 ## Requirements
 
 - Python 3.11 or newer
-- Node.js 20 or newer
+- Node.js 22.22.2 or newer (CI uses Node 22)
 - Git
 - PowerShell for the repository's `just` recipes and `.ps1` scripts
 

@@ -88,7 +88,7 @@ covers today and what is still missing (a UI-driven pause/resume flow).
 ### Requirements
 
 - Python 3.11 or newer
-- Node.js 20 or newer
+- Node.js 22.22.2 or newer (CI uses Node 22)
 - npm
 - PowerShell and [`just`](https://github.com/casey/just) for the shortest setup path
 
@@ -98,30 +98,45 @@ Clone and install the workspace on Windows:
 git clone https://github.com/tafreeman/agentic-runtime-platform.git
 cd agentic-runtime-platform
 just setup
+.\.venv\Scripts\Activate.ps1
 ```
 
-The current `justfile` selects `powershell.exe`. On Linux or macOS, use the
+`just setup` installs into `.venv` but does not activate it in your shell, so
+activate it as above (or call `.\.venv\Scripts\agentic.exe`). The current
+`justfile` selects `powershell.exe`. On Linux or macOS, use the
 [manual installation steps](docs/getting-started/installation.md#manual-setup).
 
-Create an input file and run the deterministic workflow:
+Run the deterministic workflow with the input file shipped in the repository:
 
 ```bash
-printf '{"input_text":"Hello World"}\n' > /tmp/agentic-input.json
 AGENTIC_NO_LLM=1 agentic run test_deterministic \
-  --input /tmp/agentic-input.json
+  --input agentic-workflows-v2/tests/fixtures/deterministic_input.json
 ```
 
 PowerShell:
 
 ```powershell
-'{"input_text":"Hello World"}' |
-  Set-Content -Encoding utf8 .\agentic-input.json
 $env:AGENTIC_NO_LLM = "1"
-agentic run test_deterministic --input .\agentic-input.json
+agentic run test_deterministic `
+  --input agentic-workflows-v2/tests/fixtures/deterministic_input.json
 ```
 
 The command should finish with `Status: SUCCESS`. The `--input` option accepts
-a JSON file path, not inline JSON.
+a JSON file path, not inline JSON. To write your own input file from
+PowerShell, use `Set-Content -Encoding ascii`: Windows PowerShell 5.1 adds a
+byte-order mark with `-Encoding utf8`, which the CLI rejects.
+
+To run the same workflow through both execution engines and compare them:
+
+```bash
+agentic compare test_deterministic \
+  --input agentic-workflows-v2/tests/fixtures/deterministic_input.json \
+  --adapters native,langchain
+```
+
+`agentic compare` exits non-zero if either engine fails. The
+[quick start](docs/getting-started/quickstart.md) covers saving and inspecting
+the result file.
 
 `AGENTIC_NO_LLM=1` replaces model calls with a fixed response. It is useful for
 testing workflow shape, server wiring, and streaming without provider
@@ -143,6 +158,11 @@ The development launcher uses:
 Use `just dev-stop` to stop both processes. The standalone `agentic serve`
 command defaults to port `8000`; pass `--port 8010` when you want it to match
 the UI development proxy.
+
+Without `just` (for example on Linux or macOS), run the two processes yourself
+with the environment active: `agentic serve --port 8010 --no-open` in one
+terminal and `npm --prefix agentic-workflows-v2/ui run dev` in another. See
+[Installation](docs/getting-started/installation.md#dashboard).
 
 If `just` is not available, follow the
 [manual installation steps](docs/getting-started/installation.md).

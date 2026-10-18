@@ -43,7 +43,7 @@ PowerShell:
 
 ```powershell
 '{"input_text":"Hello World"}' |
-  Set-Content -Encoding utf8 .\agentic-input.json
+  Set-Content -Encoding ascii .\agentic-input.json
 $env:AGENTIC_NO_LLM = "1"
 agentic run test_deterministic --input .\agentic-input.json
 ```

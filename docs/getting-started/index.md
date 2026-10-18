@@ -66,7 +66,7 @@ Read these pages before connecting the runtime to another system:
 ## Requirements
 
 - Python 3.11 or newer
-- Node.js 20 or newer for the dashboard
+- Node.js 22.22.2 or newer for the dashboard (CI uses Node 22)
 - npm
 - Git
 - `just` for the repository shortcuts, or the ability to run the equivalent
