@@ -6,28 +6,24 @@ This guide covers the CI/CD pipeline, Docker containerization, environment varia
 
 ## CI/CD pipeline
 
-The primary CI workflow is defined in `.github/workflows/ci.yml`. It runs on every push to `main` and `agenticv2`, and on all pull requests targeting those branches.
+The primary CI workflow is defined in `.github/workflows/ci.yml`. It runs on every push to `main` and on all pull requests targeting `main`. A superseded PR run is cancelled when a newer commit is pushed; runs for pushes to `main` are never cancelled.
 
 ### Pipeline jobs
 
-The `ci.yml` workflow contains fourteen jobs. All jobs run on `ubuntu-latest`.
+The `ci.yml` workflow contains the jobs below, all on `ubuntu-latest`. On pull requests, a `changes` job classifies the changed files and the heavier jobs are skipped (reporting as skipped, which satisfies a required check) when the PR cannot affect them -- for example docs-only PRs. `lint` is never skipped, pushes to `main` always run everything, and the gates fail open if `changes` itself fails. Path gating is job-level only: never add workflow-level `paths:` to a workflow that provides a required check, and never rename a required job.
 
 | Job | What it does |
 |---|---|
-| `python-smoke` | Installs all three packages, verifies critical imports, runs the unit suite (`-m "not integration and not slow"`, e2e excluded) |
-| `frontend-build` | `npm ci` and production Vite build of the UI |
-| `lint` | Ruff on `agentic_v2/` and `tests/`; also fails if `ruff check --fix` would still change anything |
-| `suppression-ratchet` | Fails a PR that grows the ruff/mypy suppression counts beyond the committed baseline |
+| `changes` | PR-only path classification (backend / UI / wire-format surfaces) that drives the job-level gates below |
+| `python-smoke` | Installs all three packages, verifies critical imports and combined runtime + eval test collection, and runs the swe_ab tool tests and `tools/tests` (the runtime unit suite runs in `test-coverage` and `no-llm-smoke`) |
+| `frontend-build` | `npm ci`, the production build (`tsc -b && vite build`), then the vitest unit suite with the coverage floors (`npm run test:coverage`) |
+| `lint` | Ruff on `agentic_v2/` and `tests/` (and a final check that `ruff check --fix` would change nothing), the suppression ratchet, pydocstyle on `core/` and `contracts/`, workflow-definition validation, protocol/ADR and local-reference drift checks, generated homepage-stat drift, Dockerfile `pip install` constraint pins, and `ci-constraints.txt` vs `uv.lock` drift. Each check is its own step and all of them report even when one fails |
 | `typecheck-core-contracts` | Strict mypy on `agentic_v2/engine` and `agentic_v2/contracts` (`--disallow-untyped-defs --warn-return-any`) |
-| `test-coverage` | Unit suite with coverage on `agentic_v2`, then enforces the 80% gate in a dedicated `coverage report --fail-under=80` step; also uploads a whole-repo coverage report for visibility |
+| `test-coverage` | Unit suite with coverage on `agentic_v2`, then enforces the 80% gate in a dedicated `coverage report --fail-under=80` step; on pushes to `main` it also runs a whole-repo coverage pass and uploads the report for visibility |
+| `ek-delegation-tests` (check name: `EK step-delegation (approval-gate) tests`) | Installs the optional `claude`, `ek` and `eval` extras together and runs the suites that module-skip everywhere else: the Claude subscription backend, the ExecutionKit approval-gate regressions, the EvalKit bridge, and scoring without the legacy evaluation package |
 | `wire-format-drift` | Regenerates JSON schemas and TypeScript types from the Pydantic contracts and fails on any diff |
-| `e2e-streaming` | Runs the Playwright streaming spec 5× with `AGENTIC_NO_LLM=1` |
+| `e2e-streaming` | Runs the full Playwright e2e suite once with `AGENTIC_NO_LLM=1`; repeat-run flake detection (full suite 5x, streaming spec 50x) runs in `nightly.yml` |
 | `no-llm-smoke` | Validates and runs a deterministic workflow plus the full unit suite with `AGENTIC_NO_LLM=1` and zero API keys |
-| `validate-workflows` | Validates all workflow YAML definitions against the schema |
-| `check-doc-drift` | Checks that protocol names appear in `ARCHITECTURE.md` |
-| `pydocstyle` | Google-convention docstring checks on `agentic_v2/core/` and `agentic_v2/contracts/` |
-| `lockfile-constraints` | Regenerates `ci-constraints.txt` from `uv.lock` and fails on drift |
-| `dockerfile-constraints` | Verifies every `pip install` line in the Dockerfile pins `-c ci-constraints.txt` |
 
 A single job failure blocks the merge. There are no bypass mechanisms for CI failures.
 
@@ -37,19 +33,19 @@ The other workflows in `.github/workflows/`:
 
 | File | Purpose |
 |---|---|
-| `codeql.yml` | CodeQL static analysis on push and PR |
+| `codeql.yml` | CodeQL static analysis on push, PR and weekly; on docs-only PRs the analysis steps are skipped but the check still reports |
 | `dependabot-auto-merge.yml` | Auto-merges passing Dependabot PRs |
 | `dependency-audit.yml` | pip-audit (Python packages) and npm audit (UI) CVE scans |
 | `dependency-review.yml` | Dependency license and vulnerability review on PRs |
-| `deploy.yml` | Release pipeline, triggered on version tags (`v*`) |
-| `devcontainer-validate.yml` | Validates the devcontainer on changes to `.devcontainer/` |
-| `docs.yml` | Builds and deploys the docs site to GitHub Pages |
+| `deploy.yml` | Release pipeline, triggered on version tags (`v*`); also runs as a build check on PRs that touch packaging inputs |
+| `devcontainer-validate.yml` | Validates the devcontainer on changes to its inputs (`.devcontainer/`, the Dockerfile, the pyproject files, `ci-constraints.txt`, the UI package files) |
+| `docs.yml` | Builds and deploys the docs site to GitHub Pages (the only Pages publisher; also regenerates and verifies the load report from `load/results/*.json`) |
 | `eval-package-ci.yml` | Isolated CI for the `agentic-v2-eval` package |
 | `infra-deploy.yml` | Reference infrastructure deployment workflow (manual dispatch only; never run automatically) |
-| `load-report-pages.yml` | Deploys the load report to GitHub Pages |
 | `manifest-temperature-check.yml` | Detects drift in `run-manifest.yaml` model temperature defaults |
-| `nightly.yml` | Nightly E2E reliability run (scheduled) |
+| `nightly.yml` | Nightly E2E reliability run (scheduled): the full Playwright suite 5x, then the streaming spec 50x feeding the flake-rate and SLO gates |
 | `sbom.yml` | SBOM generation on release and weekly |
+| `weekly-telemetry-snapshot.yml` | Weekly CI-run statistics (and optional repository traffic) appended to a rolling ledger issue; never a PR check |
 | `windows-workflows-ci.yml` | Windows workflow verification |
 
 ---
