@@ -2,7 +2,7 @@ name: Windows Workflow Verification
 
 on:
   push:
-    branches: [main, agenticv2]
+    branches: [main]
     paths:
       - 'agentic-workflows-v2/agentic_v2/workflows/definitions/**'
       - 'agentic-workflows-v2/agentic_v2/cli/**'
@@ -10,13 +10,20 @@ on:
       - 'agentic-workflows-v2/scripts/fixtures/**'
       - '.github/workflows/windows-workflows-ci.yml'
   pull_request:
-    branches: [main, agenticv2]
+    branches: [main]
     paths:
       - 'agentic-workflows-v2/agentic_v2/workflows/definitions/**'
       - 'agentic-workflows-v2/agentic_v2/cli/**'
       - 'agentic-workflows-v2/scripts/setup-dev.ps1'
       - 'agentic-workflows-v2/scripts/fixtures/**'
       - '.github/workflows/windows-workflows-ci.yml'
+
+concurrency:
+  # PRs: one group per PR number, newer push cancels the older run. Everything
+  # else (push to main, dispatch): group per SHA, never cancelled. Not a
+  # required check and already path-filtered, so there is no deadlock risk.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   verify-workflows:

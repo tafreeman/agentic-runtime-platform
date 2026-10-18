@@ -3,7 +3,7 @@ name: Eval Package CI
 on:
   workflow_dispatch:
   push:
-    branches: [main, agenticv2]
+    branches: [main]
     paths:
       - 'agentic-v2-eval/**'
       - 'tools/**'
@@ -16,7 +16,7 @@ on:
       - 'ci-constraints.txt'
       - 'uv.lock'
   pull_request:
-    branches: [main, agenticv2]
+    branches: [main]
     # 'labeled' is added (on top of the default opened/synchronize/reopened)
     # so that adding the run-live-eval label to an ALREADY-OPEN PR re-triggers
     # this workflow -- without it, a label added after the PR was opened would
@@ -25,9 +25,12 @@ on:
     # No `paths:` filter on pull_request: `eval-golden-gate` below is a REQUIRED
     # status check on main, so it must report on every PR. A path-filtered
     # required check that never runs would leave unrelated PRs stuck "Expected"
-    # (unmergeable). The golden gate is deterministic, key-free, and fast; the
-    # test/lint/type-check jobs it `needs` run cheaply here, and eval-live-gate
-    # stays label-gated. The push trigger above keeps its paths filter.
+    # (unmergeable). eval-golden-gate has no `needs` and is unconditional. The
+    # package jobs (test/lint/type-check/build) are gated per-PR by the
+    # `changes` job below and always run on push, schedule and workflow_dispatch;
+    # eval-live-gate stays label-gated. The push trigger above keeps its paths
+    # filter. NOTE: the job id `lint` below deliberately shares the required
+    # context "lint" with ci.yml's `lint` job -- do not rename or merge it.
   schedule:
     # Nightly real-model eval-live-gate run on main, independent of the label
     # gate below. 06:00 UTC -- outside the 07:00 UTC nightly.yml E2E window
@@ -35,12 +38,53 @@ on:
     # contend for runner capacity or provider rate limits at the same minute.
     - cron: '0 6 * * *'
 
+concurrency:
+  # PRs: one group per PR number, newer push (or label event) cancels the older
+  # run. Everything else (push to main, schedule, dispatch): group per SHA, never
+  # cancelled.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 defaults:
   run:
     working-directory: agentic-v2-eval
 
 jobs:
+  changes:
+    # PR-only path classification for the package jobs below. Fail OPEN: any
+    # gate treats `needs.changes.result != 'success'` as "run", because a job
+    # skipped for a failed `needs` would otherwise report success with nothing
+    # run. eval-golden-gate does NOT depend on this job. The eval package is
+    # self-contained: it installs only the repo-root agentic-tools package
+    # (`pip install -e ..`, i.e. tools/ and the root pyproject.toml) plus
+    # itself, so that is its whole dependency closure; datasets/ and
+    # scripts/eval_gate.py feed only eval-golden-gate, which always runs.
+    name: Detect eval package changes
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      eval_pkg: ${{ steps.filter.outputs.eval_pkg }}
+    steps:
+      - name: Does this PR touch eval-package inputs?
+        id: filter
+        uses: dorny/paths-filter@v4
+        with:
+          filters: |
+            eval_pkg:
+              - 'agentic-v2-eval/**'
+              - 'tools/**'
+              - 'pyproject.toml'
+              - 'ci-constraints.txt'
+              - 'uv.lock'
+              - '.github/workflows/eval-package-ci.yml'
+
   test:
+    needs: changes
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.result != 'success' || needs.changes.outputs.eval_pkg == 'true') }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -55,6 +99,10 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
+          # `uses:` steps ignore defaults.run.working-directory, so the path is
+          # workspace-root relative. The key includes OS and Python version.
+          cache: pip
+          cache-dependency-path: ci-constraints.txt
 
       - name: Install dependencies
         run: |
@@ -74,6 +122,11 @@ jobs:
           fail_ci_if_error: false
 
   lint:
+    # Shares the required context "lint" with ci.yml's `lint` job (neither has a
+    # `name:`): keep the id, and never add an event-based skip here -- a skipped
+    # run for the same SHA could mask a red one.
+    needs: changes
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.result != 'success' || needs.changes.outputs.eval_pkg == 'true') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -95,6 +148,8 @@ jobs:
         run: ruff format --check src/
 
   type-check:
+    needs: changes
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.result != 'success' || needs.changes.outputs.eval_pkg == 'true') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -103,6 +158,9 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: '3.11'
+          # Same install set (and so the same key) as the ubuntu/3.11 test leg.
+          cache: pip
+          cache-dependency-path: ci-constraints.txt
 
       - name: Install dependencies
         run: |
