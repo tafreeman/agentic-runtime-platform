@@ -151,40 +151,13 @@ See `agentic_v2/tools/` and `agentic_v2/engine/tool_execution.py`.
 A policy decision applied before a tool with side effects runs. Approval
 behavior depends on the configured policy and provider.
 
-## Retrieval-augmented generation
+## Retrieval
 
-**RAG**
-
-Retrieval-augmented generation. The application searches indexed content and
-adds selected passages to a model request.
-
-**Chunk**
-
-A section of a loaded document. Chunks include text, an identifier, position,
-and metadata.
-
-**Embedding**
-
-A numeric vector produced from text for similarity search. Provider embeddings
-can support semantic search.
-
-**BM25**
-
-A keyword-ranking algorithm used for sparse lexical search.
-
-**Hybrid retrieval**
-
-Combining vector search and BM25 results, typically merged with reciprocal
-rank fusion.
-
-**Reciprocal rank fusion (RRF)**
-
-A method for merging ranked result lists using each result's position rather
-than trying to compare provider-specific scores directly.
-
-**Vector store**
-
-A component that stores vectors and finds nearby vectors.
+ARP ships no retrieval (RAG) package or command. The `agentic_v2.rag` package
+and its terms (chunking, embeddings, BM25, hybrid retrieval, vector stores) were
+removed by [ADR-057](adr/ADR-057-remove-rag-package.md); the standalone
+[groundkit](https://github.com/tafreeman/groundkit) repository is the
+successor.
 
 ## Evaluation
 
