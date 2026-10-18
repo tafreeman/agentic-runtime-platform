@@ -2883,6 +2883,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#app_improvement_review" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        app_improvement_review
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#code_review" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3059,6 +3070,13 @@ reference.</p>
 </thead>
 <tbody>
 <tr>
+<td><a href="#app_improvement_review"><code>app_improvement_review</code></a></td>
+<td>Evidence-based fan-out / challenge / decision</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">10</td>
+<td>Score an existing app and compare incremental improvement with clean-sheet alternatives</td>
+</tr>
+<tr>
 <td><a href="#code_review"><code>code_review</code></a></td>
 <td>Fan-out / fan-in</td>
 <td style="text-align: right;">5</td>
@@ -3075,9 +3093,9 @@ reference.</p>
 <tr>
 <td><a href="#fullstack_generation"><code>fullstack_generation</code></a></td>
 <td>Parallel sub-DAG with rework</td>
-<td style="text-align: right;">8</td>
-<td style="text-align: right;">6</td>
-<td>Generate API + frontend + tests in parallel, then review and rework</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">7</td>
+<td>Generate API + frontend + tests in parallel, then review, rework and re-review</td>
 </tr>
 <tr>
 <td><a href="#iterative_review"><code>iterative_review</code></a></td>
@@ -3125,6 +3143,40 @@ reference.</p>
 </table>
 <p><strong>Steps</strong> counts entries under <code>steps:</code>. <strong>Agents</strong> counts unique <code>agent:</code>
 values. <strong>Pattern</strong> names the main control-flow shape.</p>
+<h2 id="app_improvement_review"><code>app_improvement_review</code><a class="headerlink" href="#app_improvement_review" title="Permanent link">&para;</a></h2>
+<p>Builds a shared, evidence-cited inventory of an existing application, then
+runs six independent reviews in parallel: architecture, product/UX,
+reliability/security, delivery/maintainability, performance/cost, and a
+clean-sheet rethink. A challenge step removes unsupported claims and preserves
+disagreements before the workflow calculates a weighted current-state score,
+ranks changes, and produces a phased roadmap with success metrics and kill
+criteria. Repository inspection is restricted to read-only tools.</p>
+<ul>
+<li><strong>Pattern:</strong> Evidence baseline → six-way fan-out → challenge → score → roadmap</li>
+<li><strong>Steps:</strong> <code>inventory_app</code> → (<code>architecture_lens</code> ‖ <code>product_ux_lens</code> ‖
+  <code>reliability_security_lens</code> ‖ <code>delivery_maintainability_lens</code> ‖
+  <code>performance_cost_lens</code> ‖ <code>reinvention_lens</code>) → <code>challenge_analysis</code> →
+  <code>score_and_prioritize</code> → <code>build_roadmap</code> → <code>assemble_report</code></li>
+<li><strong>Agents:</strong> 10 agent roles across tiers 2 and 3</li>
+<li><strong>Inputs:</strong> <code>app_path</code>, plus optional context, goal, change appetite, and score weights</li>
+<li><strong>Outputs:</strong> current state, scorecard, recommended direction, ranked changes,
+  roadmap, rethink options, evidence gaps, and a complete decision report</li>
+<li><strong>Rubric:</strong> <code>app_improvement_review_v1</code></li>
+<li><strong>Use it for:</strong> deciding whether to improve, restructure, or rethink an
+  existing application before implementation begins</li>
+</ul>
+<p>Run it against the current directory with an input file:</p>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">"app_path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"."</span><span class="p">,</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nt">"app_context"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Internal app used by support engineers"</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="nt">"improvement_goal"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Reduce time-to-resolution without weakening controls"</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="nt">"change_appetite"</span><span class="p">:</span><span class="w"> </span><span class="s2">"balanced"</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">}</span>
+</span></code></pre></div>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">agentic</span> <span class="n">validate</span> <span class="n">app_improvement_review</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">agentic</span> <span class="n">run</span> <span class="n">app_improvement_review</span> <span class="p">-</span><span class="n">-input</span> <span class="p">.\</span><span class="n">app-review-input</span><span class="p">.</span><span class="n">json</span> <span class="p">-</span><span class="n">-output</span> <span class="p">.\</span><span class="n">app-review-result</span><span class="p">.</span><span class="n">json</span>
+</span></code></pre></div>
+<p><a class="md-button" href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/agentic_v2/workflows/definitions/app_improvement_review.yaml">View YAML →</a></p>
 <h2 id="code_review"><code>code_review</code><a class="headerlink" href="#code_review" title="Permanent link">&para;</a></h2>
 <p>Multi-tier code review with a fan-out / fan-in shape. The first step
 parses the source file; three downstream steps run in parallel — style,
@@ -3159,12 +3211,16 @@ step writes the human-readable report.</p>
 <h2 id="fullstack_generation"><code>fullstack_generation</code><a class="headerlink" href="#fullstack_generation" title="Permanent link">&para;</a></h2>
 <p>After an architecture step, four generators run in parallel for the API,
 frontend, migrations, and integration tests. A reviewer checks their output.
-A rework step handles review findings before the final assembly step packages
-the result.</p>
+When the review does not approve, a rework step fixes the findings,
+<code>apply_rework</code> merges the changed files over the generated ones (files the
+rework left out are kept), and if the rework changed any code, the merged
+code is reviewed once more. The
+final assembly step packages the merged code, and the workflow's
+<code>review_report</code> is the latest review.</p>
 <ul>
 <li><strong>Pattern:</strong> Parallel sub-DAG with rework</li>
-<li><strong>Steps:</strong> <code>design_architecture</code> → (<code>generate_api</code> ‖ <code>generate_frontend</code> ‖ <code>generate_migrations</code> ‖ <code>generate_integration_tests</code>) → <code>review_code</code> → <code>developer_rework</code> → <code>assemble_feature</code></li>
-<li><strong>Agents:</strong> <code>tier1_assembler</code>, <code>tier1_generator</code>, <code>tier2_coder</code>, <code>tier2_tester</code>, <code>tier3_architect</code>, <code>tier3_reviewer</code></li>
+<li><strong>Steps:</strong> <code>design_architecture</code> → (<code>generate_api</code> ‖ <code>generate_frontend</code> ‖ <code>generate_migrations</code> ‖ <code>generate_integration_tests</code>) → <code>review_code</code> → <code>developer_rework</code> → <code>apply_rework</code> → <code>re_review_code</code> → <code>assemble_feature</code></li>
+<li><strong>Agents:</strong> <code>tier0_overlay</code>, <code>tier1_assembler</code>, <code>tier1_generator</code>, <code>tier2_coder</code>, <code>tier2_tester</code>, <code>tier3_architect</code>, <code>tier3_reviewer</code></li>
 <li><strong>Inputs:</strong> <code>feature_spec</code>, <code>tech_stack</code></li>
 <li><strong>Outputs:</strong> <code>feature_package</code>, <code>review_report</code>, <code>all_code</code></li>
 <li><strong>Rubric:</strong> <code>fullstack_generation_v1</code></li>
@@ -3312,7 +3368,7 @@ with no inputs at all.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 1, 2026 03:04:55 UTC">October 1, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 13, 2026 03:07:01 UTC">October 13, 2026</span>
   </span>
 
     

@@ -4521,7 +4521,7 @@
 <p><strong>Top-level timeout watchdog:</strong> <code>DAGExecutor.execute()</code> accepts an optional <code>timeout: float | None</code> parameter. When set, the entire scheduling loop is wrapped with <code>asyncio.wait_for</code>. On expiry, all in-flight tasks are structurally cancelled, every RUNNING step transitions to FAILED, and transitive dependents are cascade-skipped via BFS — the same mechanism used for step-level failure propagation. OTEL span attributes <code>workflow.timeout_exceeded=True</code> and <code>workflow.timeout_seconds=&lt;n&gt;</code> are emitted. This watchdog is additive to the existing per-step timeouts in <code>StepExecutor</code>; both can be active simultaneously. See <a href="../adr/ADR-019-dag-executor-top-level-timeout/">ADR-019</a>.</p>
 <h3 id="42-langgraph-execution-engine">4.2 LangGraph execution engine<a class="headerlink" href="#42-langgraph-execution-engine" title="Permanent link">&para;</a></h3>
 <p>Source: <code>langchain/</code> package (adapter: <code>adapters/langchain/engine.py</code>)</p>
-<p>The LangGraph engine compiles a YAML workflow configuration into a LangGraph <code>StateGraph</code>. Each YAML step becomes a graph node; <code>depends_on</code> edges become conditional graph edges. The graph is compiled once, then executed via <code>graph.ainvoke()</code>.</p>
+<p>The LangGraph engine compiles a YAML workflow configuration into a LangGraph <code>StateGraph</code>. Each YAML step becomes a graph node. A step's <code>depends_on</code> list becomes one edge into it: a waiting edge when it has several dependencies, so it runs once, after all of them, as on the native executor (<a href="../adr/ADR-062-langgraph-join-once-semantics/">ADR-062</a>). The graph is compiled once, then executed via <code>graph.ainvoke()</code>.</p>
 <p><strong>Characteristics:</strong></p>
 <ul>
 <li>Full LangGraph checkpointing support when configured.</li>
@@ -4812,7 +4812,7 @@
 </tr>
 </tbody>
 </table>
-<p>Per-tier fallback chains are built at import time from the curated model registry (<code>models/model_registry.py</code>, ADR-040), ordered free-tier-first (Gemini, GitHub Models) then paid. A custom chain can override any tier via <code>register_chain()</code>. There is no YAML tier config file — the registry is the single source of truth.</p>
+<p>Per-tier fallback chains are built at import time from the curated model registry (<code>models/model_registry.py</code>, ADR-040): cloud providers first, then a local Ollama tail that is always the last candidate. A custom chain can override any tier via <code>register_chain()</code>. There is no YAML tier config file — the registry is the single source of truth.</p>
 <h3 id="provider-backends">Provider backends<a class="headerlink" href="#provider-backends" title="Permanent link">&para;</a></h3>
 <p>The shared <code>LLMClient</code> in <code>agentic-tools</code> routes <strong>multiple providers across several routing backends</strong> (<code>tools/llm/provider_adapters.py</code>); local ONNX and Windows AI are distinct local backends:</p>
 <table>
@@ -5352,7 +5352,7 @@ generated files differ from the committed versions. See
 </tr>
 <tr>
 <td><code>GITHUB_TOKEN</code></td>
-<td>GitHub Models access token (default E2E LLM provider)</td>
+<td>GitHub Models access token. The service was retired upstream on 2026-07-30 (ADR-016), and no tier chain routes to <code>gh:</code></td>
 <td>—</td>
 </tr>
 <tr>
@@ -5560,7 +5560,7 @@ which is not designed for large-scale analytical queries.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 31, 2026 12:55:56 UTC">August 31, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 13, 2026 01:09:39 UTC">October 13, 2026</span>
   </span>
 
     

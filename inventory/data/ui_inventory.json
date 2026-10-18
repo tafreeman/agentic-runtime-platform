@@ -1,0 +1,4124 @@
+{
+  "routes": [
+    {
+      "path": "/",
+      "element": "DashboardPage"
+    },
+    {
+      "path": "/workflows",
+      "element": "WorkflowsPage"
+    },
+    {
+      "path": "/workflows/:name/edit",
+      "element": "WorkflowEditorPage"
+    },
+    {
+      "path": "/workflows/:name",
+      "element": "WorkflowDetailPage"
+    },
+    {
+      "path": "/datasets",
+      "element": "DatasetsPage"
+    },
+    {
+      "path": "/evaluations",
+      "element": "EvaluationsPage"
+    },
+    {
+      "path": "/models",
+      "element": "ModelFinderPage"
+    },
+    {
+      "path": "/settings",
+      "element": "Navigate"
+    },
+    {
+      "path": "/runs",
+      "element": "RunsPage"
+    },
+    {
+      "path": "/runs/:filename",
+      "element": "RunDetailPage"
+    },
+    {
+      "path": "/live",
+      "element": "Navigate"
+    },
+    {
+      "path": "/live/:runId",
+      "element": "LivePage"
+    },
+    {
+      "path": "*",
+      "element": "NotFoundPage"
+    }
+  ],
+  "areas": {
+    "App.tsx": 1,
+    "__tests__": 67,
+    "api": 12,
+    "components": 89,
+    "config": 1,
+    "hooks": 13,
+    "lib": 5,
+    "main.tsx": 1,
+    "pages": 12,
+    "telemetry": 1,
+    "vite-env.d.ts": 1
+  },
+  "unused_candidates": [
+    "agentic-workflows-v2/ui/src/api/chat_request.generated.ts",
+    "agentic-workflows-v2/ui/src/api/chat_stream_event.generated.ts",
+    "agentic-workflows-v2/ui/src/components/common/BBox.tsx",
+    "agentic-workflows-v2/ui/src/components/common/BSpark.tsx",
+    "agentic-workflows-v2/ui/src/components/ui/accordion.tsx",
+    "agentic-workflows-v2/ui/src/components/ui/collapsible.tsx",
+    "agentic-workflows-v2/ui/src/components/ui/resizable.tsx",
+    "agentic-workflows-v2/ui/src/components/ui/scroll-area.tsx",
+    "agentic-workflows-v2/ui/src/components/ui/select.tsx",
+    "agentic-workflows-v2/ui/src/components/ui/separator.tsx",
+    "agentic-workflows-v2/ui/src/components/ui/skeleton.tsx",
+    "agentic-workflows-v2/ui/src/components/ui/table.tsx",
+    "agentic-workflows-v2/ui/src/components/ui/tooltip.tsx",
+    "agentic-workflows-v2/ui/src/hooks/useNodeConfigUpdate.ts",
+    "agentic-workflows-v2/ui/src/pages/PrototypeLabPage.tsx"
+  ],
+  "test_only": [
+    "agentic-workflows-v2/ui/src/components/dag/BDagMini.tsx",
+    "agentic-workflows-v2/ui/src/components/live/NodeConfigOverlay.tsx",
+    "agentic-workflows-v2/ui/src/components/runs/RunSummaryCards.tsx",
+    "agentic-workflows-v2/ui/src/components/ui/badge.tsx",
+    "agentic-workflows-v2/ui/src/components/ui/checkbox.tsx",
+    "agentic-workflows-v2/ui/src/components/ui/switch.tsx",
+    "agentic-workflows-v2/ui/src/components/ui/tabs.tsx",
+    "agentic-workflows-v2/ui/src/pages/SettingsPage.tsx"
+  ],
+  "external_import_counts": {
+    "react": 87,
+    "vitest": 67,
+    "@testing-library/react": 49,
+    "lucide-react": 46,
+    "react-router-dom": 45,
+    "@tanstack/react-query": 36,
+    "radix-ui": 16,
+    "@dnd-kit/core": 5,
+    "@xyflow/react": 4,
+    "class-variance-authority": 4,
+    "sonner": 2,
+    "@dnd-kit/sortable": 2,
+    "node:fs": 1,
+    "node:os": 1,
+    "node:path": 1,
+    "@dnd-kit/utilities": 1,
+    "cmdk": 1,
+    "react-resizable-panels": 1,
+    "clsx": 1,
+    "tailwind-merge": 1,
+    "react-dom": 1,
+    "@opentelemetry/sdk-trace-web": 1,
+    "@opentelemetry/exporter-trace-otlp-http": 1,
+    "@opentelemetry/instrumentation-fetch": 1,
+    "@opentelemetry/resources": 1,
+    "@opentelemetry/semantic-conventions": 1,
+    "@opentelemetry/instrumentation": 1
+  },
+  "package": {
+    "name": "agentic-workflows-ui",
+    "version": "0.1.0",
+    "scripts": {
+      "dev": "vite",
+      "build": "tsc -b && vite build",
+      "preview": "vite preview",
+      "test": "vitest run",
+      "test:coverage": "vitest run --coverage",
+      "test:watch": "vitest",
+      "test:e2e": "playwright test",
+      "test:e2e:5x": "node scripts/run-e2e-5x.mjs",
+      "test:e2e:ui": "playwright test --ui",
+      "generate:types": "node scripts/generate-ts-types.mjs",
+      "generate:types:check": "node scripts/generate-ts-types.mjs && git diff --exit-code -- src/api/events.generated.ts"
+    },
+    "dependencies": {
+      "@dnd-kit/core": "^6.3.1",
+      "@dnd-kit/sortable": "^10.0.0",
+      "@dnd-kit/utilities": "^3.2.2",
+      "@fontsource-variable/geist": "^5.3.0",
+      "@opentelemetry/api": "^1.9.0",
+      "@opentelemetry/exporter-trace-otlp-http": "^0.223.0",
+      "@opentelemetry/instrumentation": "^0.223.0",
+      "@opentelemetry/instrumentation-fetch": "^0.223.0",
+      "@opentelemetry/resources": "^2.12.0",
+      "@opentelemetry/sdk-trace-web": "^2.12.0",
+      "@opentelemetry/semantic-conventions": "^1.43.0",
+      "@tanstack/react-query": "^5.104.1",
+      "@xyflow/react": "^12.12.0",
+      "class-variance-authority": "^0.7.1",
+      "clsx": "^2.1.1",
+      "cmdk": "^1.1.1",
+      "lucide-react": "^1.54.0",
+      "radix-ui": "^1.7.0",
+      "react": "^19.3.0",
+      "react-dom": "^19.3.0",
+      "react-resizable-panels": "^4.14.3",
+      "react-router-dom": "^7.18.4",
+      "sonner": "^2.0.8",
+      "tailwind-merge": "^3.7.0"
+    },
+    "devDependencies": {
+      "@playwright/test": "^1.64.0",
+      "@tailwindcss/postcss": "^4.3.3",
+      "@testing-library/jest-dom": "^7.0.1",
+      "@testing-library/react": "^16.3.3",
+      "@types/node": "^26.6.4",
+      "@types/react": "^19.3.0",
+      "@types/react-dom": "^19.3.0",
+      "@vitejs/plugin-react": "^6.1.2",
+      "@vitest/coverage-v8": "^5.0.3",
+      "jsdom": "^30.1.2",
+      "json-schema-to-typescript": "^16.0.0",
+      "postcss": "^8.5.29",
+      "tailwindcss": "^4.3.3",
+      "typescript": "^7.0.2",
+      "vite": "^8.3.4",
+      "vitest": "^5.0.1"
+    },
+    "engines": null
+  },
+  "files": [
+    {
+      "path": "agentic-workflows-v2/ui/src/App.tsx",
+      "area": "App.tsx",
+      "loc": 114,
+      "exports": [
+        "App"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/main.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/App.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/ApiOfflineBanner.test.tsx",
+      "area": "__tests__",
+      "loc": 53,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/App.test.tsx",
+      "area": "__tests__",
+      "loc": 150,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/BDagMini.test.tsx",
+      "area": "__tests__",
+      "loc": 132,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/ChatPlaygroundPanel.test.tsx",
+      "area": "__tests__",
+      "loc": 734,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/CommandPalette.test.tsx",
+      "area": "__tests__",
+      "loc": 94,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/ConsoleHeader.test.tsx",
+      "area": "__tests__",
+      "loc": 217,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/ConsoleStatus.test.tsx",
+      "area": "__tests__",
+      "loc": 48,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-07-09",
+      "age_days": 95,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/DashboardPage.test.tsx",
+      "area": "__tests__",
+      "loc": 579,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/DatasetDetailPane.test.tsx",
+      "area": "__tests__",
+      "loc": 108,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/DatasetsPage.test.tsx",
+      "area": "__tests__",
+      "loc": 127,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/DurationDisplay.test.tsx",
+      "area": "__tests__",
+      "loc": 21,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-05-27",
+      "age_days": 138,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/EvaluationRubricAccordion.test.tsx",
+      "area": "__tests__",
+      "loc": 216,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/EvaluationsPage.test.tsx",
+      "area": "__tests__",
+      "loc": 289,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/InlineError.test.tsx",
+      "area": "__tests__",
+      "loc": 62,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/JsonViewer.test.tsx",
+      "area": "__tests__",
+      "loc": 34,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-05-27",
+      "age_days": 138,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/LivePage.test.tsx",
+      "area": "__tests__",
+      "loc": 361,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/LiveStepDetails.test.tsx",
+      "area": "__tests__",
+      "loc": 93,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/ModelFinderPage.test.tsx",
+      "area": "__tests__",
+      "loc": 745,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/ModelPacksPanel.test.tsx",
+      "area": "__tests__",
+      "loc": 622,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-10",
+      "age_days": 1,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/NodeConfigOverlay.test.tsx",
+      "area": "__tests__",
+      "loc": 125,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/PackBuilder.test.tsx",
+      "area": "__tests__",
+      "loc": 779,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-11",
+      "age_days": 1,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/ProviderProbeList.test.tsx",
+      "area": "__tests__",
+      "loc": 213,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-10",
+      "age_days": 1,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/RunComparePanel.test.tsx",
+      "area": "__tests__",
+      "loc": 225,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/RunConfigForm.test.tsx",
+      "area": "__tests__",
+      "loc": 537,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/RunDetail.test.tsx",
+      "area": "__tests__",
+      "loc": 61,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/RunDetailPage.test.tsx",
+      "area": "__tests__",
+      "loc": 366,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/RunList.test.tsx",
+      "area": "__tests__",
+      "loc": 144,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/RunSummaryCards.test.tsx",
+      "area": "__tests__",
+      "loc": 75,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/RunsPage.test.tsx",
+      "area": "__tests__",
+      "loc": 585,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/SampleIndexGrid.test.tsx",
+      "area": "__tests__",
+      "loc": 160,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/SettingsPage.test.tsx",
+      "area": "__tests__",
+      "loc": 481,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/Sidebar.test.tsx",
+      "area": "__tests__",
+      "loc": 281,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/StateComponents.test.tsx",
+      "area": "__tests__",
+      "loc": 167,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/StatusBadge.test.tsx",
+      "area": "__tests__",
+      "loc": 87,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/StepLogPanel.test.tsx",
+      "area": "__tests__",
+      "loc": 60,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/StepNode.test.tsx",
+      "area": "__tests__",
+      "loc": 337,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/TierMark.test.tsx",
+      "area": "__tests__",
+      "loc": 33,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/TokenCounter.test.tsx",
+      "area": "__tests__",
+      "loc": 42,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/WorkflowDetailPage.test.tsx",
+      "area": "__tests__",
+      "loc": 439,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/WorkflowEditorPage.test.tsx",
+      "area": "__tests__",
+      "loc": 482,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/WorkflowsPage.test.tsx",
+      "area": "__tests__",
+      "loc": 130,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/apiClient.test.ts",
+      "area": "__tests__",
+      "loc": 145,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-05-27",
+      "age_days": 138,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/apiErrorText.test.ts",
+      "area": "__tests__",
+      "loc": 33,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/apiErrors.test.ts",
+      "area": "__tests__",
+      "loc": 135,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/cliEquivalents.test.tsx",
+      "area": "__tests__",
+      "loc": 101,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/dagLayout.test.ts",
+      "area": "__tests__",
+      "loc": 50,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-05-27",
+      "age_days": 138,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/designDrift.test.ts",
+      "area": "__tests__",
+      "loc": 209,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-10",
+      "age_days": 2,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/documentModel.test.ts",
+      "area": "__tests__",
+      "loc": 138,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-07-07",
+      "age_days": 97,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/edgeAppearance.test.ts",
+      "area": "__tests__",
+      "loc": 75,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/featureFlags.test.ts",
+      "area": "__tests__",
+      "loc": 13,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-07-09",
+      "age_days": 95,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/grades.test.ts",
+      "area": "__tests__",
+      "loc": 65,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/hardwareClient.test.ts",
+      "area": "__tests__",
+      "loc": 77,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-07-13",
+      "age_days": 91,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/modelVerification.test.ts",
+      "area": "__tests__",
+      "loc": 92,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-07-13",
+      "age_days": 91,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/packDraft.test.ts",
+      "area": "__tests__",
+      "loc": 630,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-10",
+      "age_days": 1,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/platform.test.ts",
+      "area": "__tests__",
+      "loc": 42,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/sendChat.test.ts",
+      "area": "__tests__",
+      "loc": 134,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-07-12",
+      "age_days": 92,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/setup.ts",
+      "area": "__tests__",
+      "loc": 21,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-05-27",
+      "age_days": 138,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/slo-storage.test.ts",
+      "area": "__tests__",
+      "loc": 147,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-06-07",
+      "age_days": 127,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/tokens.contrast.test.ts",
+      "area": "__tests__",
+      "loc": 201,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-09",
+      "age_days": 3,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/tracing.test.ts",
+      "area": "__tests__",
+      "loc": 132,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-05-27",
+      "age_days": 138,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/uiPrimitives.test.tsx",
+      "area": "__tests__",
+      "loc": 130,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/useAutoPanZoom.test.ts",
+      "area": "__tests__",
+      "loc": 239,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-06-23",
+      "age_days": 111,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/useHotkeys.test.ts",
+      "area": "__tests__",
+      "loc": 82,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-06-07",
+      "age_days": 127,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/usePrefersReducedMotion.test.ts",
+      "area": "__tests__",
+      "loc": 29,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-06-15",
+      "age_days": 119,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/useWorkflowStream.test.ts",
+      "area": "__tests__",
+      "loc": 207,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/utils.test.ts",
+      "area": "__tests__",
+      "loc": 11,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/__tests__/workflowHooks.test.tsx",
+      "area": "__tests__",
+      "loc": 101,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-05-27",
+      "age_days": 138,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/api/chat_request.generated.ts",
+      "area": "api",
+      "loc": 185,
+      "exports": [
+        "ChatRequest",
+        "ModelChatRequest",
+        "ChatMessage",
+        "ChatTextPart",
+        "ChatImagePart",
+        "TierChatRequest"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-07-18",
+      "age_days": 86,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": true,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/api/chat_stream_event.generated.ts",
+      "area": "api",
+      "loc": 56,
+      "exports": [
+        "ChatStreamEvent",
+        "ChatRouteEvent",
+        "ChatTokenEvent",
+        "ChatMediaEvent",
+        "ChatDoneEvent",
+        "ChatErrorEvent"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-07-18",
+      "age_days": 86,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": true,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/api/client.ts",
+      "area": "api",
+      "loc": 695,
+      "exports": [
+        "listWorkflows",
+        "getWorkflowDAG",
+        "getWorkflowEditor",
+        "saveWorkflowEditor",
+        "saveWorkflowEditorDocument",
+        "validateWorkflowEditor",
+        "validateWorkflowEditorDocument",
+        "listRuns",
+        "getRunDetail",
+        "getRunsSummary",
+        "runWorkflow",
+        "listEvaluationDatasets",
+        "previewDatasetInputs",
+        "listAgents",
+        "getRunEvaluationDetail",
+        "evaluateRun",
+        "listDatasetSamples",
+        "getDatasetSampleDetail",
+        "getModelRecommendations",
+        "probeModels"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-07-18",
+      "age_days": 86,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/evaluations/RunComparePanel.tsx",
+        "agentic-workflows-v2/ui/src/components/models/ChatPlaygroundPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/models/HardwareOverrideForm.tsx",
+        "agentic-workflows-v2/ui/src/components/models/ModelPacksPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/models/ProviderProbeList.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunConfigForm.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunDetailPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/settings/ProviderPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/settings/TierBoard.tsx",
+        "agentic-workflows-v2/ui/src/hooks/useBackendHealth.ts",
+        "agentic-workflows-v2/ui/src/hooks/useDatasets.ts",
+        "agentic-workflows-v2/ui/src/hooks/useRuns.ts",
+        "agentic-workflows-v2/ui/src/hooks/useWorkflows.ts",
+        "agentic-workflows-v2/ui/src/pages/DashboardPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/EvaluationsPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/ModelFinderPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/WorkflowDetailPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/WorkflowEditorPage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/apiClient.test.ts",
+        "agentic-workflows-v2/ui/src/__tests__/hardwareClient.test.ts",
+        "agentic-workflows-v2/ui/src/__tests__/sendChat.test.ts"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/api/dag_response.generated.ts",
+      "area": "api",
+      "loc": 93,
+      "exports": [
+        "DAGResponse",
+        "DAGEdgeModel",
+        "WorkflowInputSchemaItem",
+        "DAGNodeModel"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-07-07",
+      "age_days": 97,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/api/types.ts",
+        "agentic-workflows-v2/ui/src/api/types.ts",
+        "agentic-workflows-v2/ui/src/api/types.ts"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/api/events.generated.ts",
+      "area": "api",
+      "loc": 181,
+      "exports": [
+        "ExecutionEvent",
+        "WorkflowStartEvent",
+        "StepStartEvent",
+        "StepEndEvent",
+        "TokenDeltaEvent",
+        "StepCompleteEvent",
+        "StepErrorEvent",
+        "WorkflowEndEvent",
+        "ErrorEvent",
+        "EvaluationStartEvent",
+        "EvaluationCompleteEvent",
+        "ApprovalRequiredEvent",
+        "ApprovalDecisionEvent"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-07-08",
+      "age_days": 96,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/api/types.ts",
+        "agentic-workflows-v2/ui/src/api/types.ts"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/api/hardware.ts",
+      "area": "api",
+      "loc": 49,
+      "exports": [
+        "HardwareAcceleratorOverride",
+        "HardwareOverride",
+        "HardwareOverrideGetResponse",
+        "HardwareOverrideUpdateResponse",
+        "HardwareOverrideClearResponse"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-07-13",
+      "age_days": 91,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/api/client.ts",
+        "agentic-workflows-v2/ui/src/components/models/HardwareOverrideForm.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/hardwareClient.test.ts"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/api/runs_summary.generated.ts",
+      "area": "api",
+      "loc": 30,
+      "exports": [
+        "RunsSummaryResponse"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-05-27",
+      "age_days": 138,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/api/types.ts",
+        "agentic-workflows-v2/ui/src/api/types.ts"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/api/step_result.generated.ts",
+      "area": "api",
+      "loc": 70,
+      "exports": [
+        "StepResultRecord"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-09-10",
+      "age_days": 32,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/api/types.ts"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/api/types.ts",
+      "area": "api",
+      "loc": 774,
+      "exports": [
+        "StepStatus",
+        "WorkflowEditorDocument",
+        "WorkflowEditorMutationRequest",
+        "WorkflowEditorValidationIssue",
+        "WorkflowEditorValidateResponse",
+        "WorkflowEditorSaveResponse",
+        "RunSummary",
+        "RunDetail",
+        "RunRoutingStep",
+        "RunRoutingProvenance",
+        "ExecutionProfileRequest",
+        "WorkflowRunRequest",
+        "WorkflowRunResponse",
+        "HealthCheckResponse",
+        "WorkflowEvaluationRequest",
+        "EvaluationDatasetOption",
+        "EvaluationSetOption",
+        "EvaluationDatasetsResponse",
+        "EvaluationCriterionScore",
+        "EvaluationResult"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-10",
+      "age_days": 1,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/api/client.ts",
+        "agentic-workflows-v2/ui/src/api/hardware.ts",
+        "agentic-workflows-v2/ui/src/api/websocket.ts",
+        "agentic-workflows-v2/ui/src/components/dag/BDagMini.tsx",
+        "agentic-workflows-v2/ui/src/components/dag/StepNode.tsx",
+        "agentic-workflows-v2/ui/src/components/dag/WorkflowDAG.tsx",
+        "agentic-workflows-v2/ui/src/components/dag/dagLayout.ts",
+        "agentic-workflows-v2/ui/src/components/dag/edgeAppearance.ts",
+        "agentic-workflows-v2/ui/src/components/datasets/DatasetBrowser.tsx",
+        "agentic-workflows-v2/ui/src/components/datasets/SampleIndexGrid.tsx",
+        "agentic-workflows-v2/ui/src/components/editor/NodeInspector.tsx",
+        "agentic-workflows-v2/ui/src/components/evaluations/CriterionRow.tsx",
+        "agentic-workflows-v2/ui/src/components/evaluations/RunComparePanel.tsx",
+        "agentic-workflows-v2/ui/src/components/evaluations/StepScoreDetails.tsx",
+        "agentic-workflows-v2/ui/src/components/live/LiveStepDetails.tsx",
+        "agentic-workflows-v2/ui/src/components/live/StepLogPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/live/TokenCounter.tsx",
+        "agentic-workflows-v2/ui/src/components/models/ChatPlaygroundPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/models/ModelPacksPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/models/ProviderProbeList.tsx",
+        "agentic-workflows-v2/ui/src/components/models/pack-builder/ModelPalette.tsx",
+        "agentic-workflows-v2/ui/src/components/models/pack-builder/PackBuilder.tsx",
+        "agentic-workflows-v2/ui/src/components/models/pack-builder/TierChainBoard.tsx",
+        "agentic-workflows-v2/ui/src/components/models/pack-builder/builderParts.tsx",
+        "agentic-workflows-v2/ui/src/components/models/pack-builder/packDraft.ts",
+        "agentic-workflows-v2/ui/src/components/runs/RunConfigForm.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunDetail.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunDetailPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunList.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunSummaryCards.tsx",
+        "agentic-workflows-v2/ui/src/components/settings/ProviderPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/settings/TierBoard.tsx",
+        "agentic-workflows-v2/ui/src/hooks/useDatasets.ts",
+        "agentic-workflows-v2/ui/src/hooks/useWorkflowStream.ts",
+        "agentic-workflows-v2/ui/src/pages/DashboardPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/LivePage.tsx",
+        "agentic-workflows-v2/ui/src/pages/ModelFinderPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/RunsPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/WorkflowEditorPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/WorkflowsPage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/BDagMini.test.tsx",
+        "agentic-workflows-v2/ui/src/__tests__/ChatPlaygroundPanel.test.tsx",
+        "agentic-workflows-v2/ui/src/__tests__/ModelFinderPage.test.tsx",
+        "agentic-workflows-v2/ui/src/__tests__/ModelPacksPanel.test.tsx",
+        "agentic-workflows-v2/ui/src/__tests__/PackBuilder.test.tsx",
+        "agentic-workflows-v2/ui/src/__tests__/ProviderProbeList.test.tsx",
+        "agentic-workflows-v2/ui/src/__tests__/RunComparePanel.test.tsx",
+        "agentic-workflows-v2/ui/src/__tests__/RunConfigForm.test.tsx",
+        "agentic-workflows-v2/ui/src/__tests__/RunDetail.test.tsx",
+        "agentic-workflows-v2/ui/src/__tests__/RunList.test.tsx",
+        "agentic-workflows-v2/ui/src/__tests__/RunsPage.test.tsx",
+        "agentic-workflows-v2/ui/src/__tests__/SampleIndexGrid.test.tsx",
+        "agentic-workflows-v2/ui/src/__tests__/SettingsPage.test.tsx",
+        "agentic-workflows-v2/ui/src/__tests__/StepLogPanel.test.tsx",
+        "agentic-workflows-v2/ui/src/__tests__/TokenCounter.test.tsx",
+        "agentic-workflows-v2/ui/src/__tests__/WorkflowEditorPage.test.tsx",
+        "agentic-workflows-v2/ui/src/__tests__/dagLayout.test.ts",
+        "agentic-workflows-v2/ui/src/__tests__/packDraft.test.ts",
+        "agentic-workflows-v2/ui/src/__tests__/sendChat.test.ts"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/api/websocket.ts",
+      "area": "api",
+      "loc": 83,
+      "exports": [
+        "EventHandler",
+        "connectExecutionStream"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-06-15",
+      "age_days": 119,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/hooks/useWorkflowStream.ts"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/api/workflow_editor_step.generated.ts",
+      "area": "api",
+      "loc": 66,
+      "exports": [
+        "WorkflowEditorStep",
+        "StepModelParams"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-07-07",
+      "age_days": 97,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/api/types.ts"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/api/workflow_input_schema.generated.ts",
+      "area": "api",
+      "loc": 96,
+      "exports": [
+        "WorkflowInputSchemaResponse",
+        "DAGEdgeModel",
+        "WorkflowInputSchemaItem",
+        "DAGNodeModel"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-07-07",
+      "age_days": 97,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/api/types.ts"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/common/BAsciiBar.tsx",
+      "area": "components",
+      "loc": 54,
+      "exports": [
+        "BAsciiBar"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/evaluations/StepScoreDetails.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunDetailPanel.tsx",
+        "agentic-workflows-v2/ui/src/pages/EvaluationsPage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/uiPrimitives.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/common/BBox.tsx",
+      "area": "components",
+      "loc": 33,
+      "exports": [
+        "BBox"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": true,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/common/BPill.tsx",
+      "area": "components",
+      "loc": 30,
+      "exports": [
+        "BPillTone",
+        "BPill"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/common/ConsoleStatus.tsx",
+        "agentic-workflows-v2/ui/src/components/datasets/DatasetDetailPane.tsx",
+        "agentic-workflows-v2/ui/src/components/evaluations/EvaluationRubricAccordion.tsx",
+        "agentic-workflows-v2/ui/src/components/evaluations/EvaluationRubricAccordion.tsx",
+        "agentic-workflows-v2/ui/src/components/evaluations/RunComparePanel.tsx",
+        "agentic-workflows-v2/ui/src/components/settings/ProviderPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/settings/TierBoard.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/uiPrimitives.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/common/BSpark.tsx",
+      "area": "components",
+      "loc": 47,
+      "exports": [
+        "BSpark"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": true,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/common/CommandPalette.tsx",
+      "area": "components",
+      "loc": 312,
+      "exports": [
+        "CommandPalette"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/App.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/CommandPalette.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/common/ConsoleStatus.tsx",
+      "area": "components",
+      "loc": 39,
+      "exports": [
+        "ConsoleStatus"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/pages/DashboardPage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/ConsoleStatus.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/common/CopyId.tsx",
+      "area": "components",
+      "loc": 39,
+      "exports": [
+        "CopyId"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/runs/RunDetailPanel.tsx"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/common/DurationDisplay.tsx",
+      "area": "components",
+      "loc": 18,
+      "exports": [
+        "DurationDisplay"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-06-23",
+      "age_days": 111,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/live/LiveStepDetails.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunDetail.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunDetailPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunList.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunSummaryCards.tsx",
+        "agentic-workflows-v2/ui/src/pages/RunsPage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/DurationDisplay.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/common/JsonViewer.tsx",
+      "area": "components",
+      "loc": 148,
+      "exports": [
+        "JsonViewer"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/datasets/DatasetDetailPane.tsx",
+        "agentic-workflows-v2/ui/src/components/live/LiveStepDetails.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunDetail.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/JsonViewer.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/common/Scoreline.tsx",
+      "area": "components",
+      "loc": 78,
+      "exports": [
+        "ScorelineItem",
+        "Scoreline"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/pages/DashboardPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/LivePage.tsx",
+        "agentic-workflows-v2/ui/src/pages/ModelFinderPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/RunsPage.tsx"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/common/StatusBadge.tsx",
+      "area": "components",
+      "loc": 103,
+      "exports": [
+        "StatusTone",
+        "StatusMeta",
+        "STATUS_TONE_TEXT",
+        "statusMeta",
+        "StatusBadge"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/dag/StepNode.tsx",
+        "agentic-workflows-v2/ui/src/components/evaluations/CriterionRow.tsx",
+        "agentic-workflows-v2/ui/src/components/evaluations/EvaluationRubricAccordion.tsx",
+        "agentic-workflows-v2/ui/src/components/evaluations/RunComparePanel.tsx",
+        "agentic-workflows-v2/ui/src/components/evaluations/StepScoreDetails.tsx",
+        "agentic-workflows-v2/ui/src/components/live/LiveStepDetails.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunDetail.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunDetailPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunList.tsx",
+        "agentic-workflows-v2/ui/src/pages/DashboardPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/EvaluationsPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/LivePage.tsx",
+        "agentic-workflows-v2/ui/src/pages/RunsPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/WorkflowsPage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/StatusBadge.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/common/TierMark.tsx",
+      "area": "components",
+      "loc": 63,
+      "exports": [
+        "tierLevel",
+        "tierToneClass",
+        "tierDescription",
+        "TierMark"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/dag/StepNode.tsx",
+        "agentic-workflows-v2/ui/src/components/live/LiveStepDetails.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunDetail.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunDetailPanel.tsx",
+        "agentic-workflows-v2/ui/src/pages/DashboardPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/LivePage.tsx",
+        "agentic-workflows-v2/ui/src/pages/WorkflowDetailPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/WorkflowEditorPage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/TierMark.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/common/apiErrorText.ts",
+      "area": "components",
+      "loc": 5,
+      "exports": [],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/models/ChatPlaygroundPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/models/HardwareOverrideForm.tsx",
+        "agentic-workflows-v2/ui/src/components/models/ModelPacksPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/models/ProviderProbeList.tsx",
+        "agentic-workflows-v2/ui/src/components/settings/ProviderPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/settings/TierBoard.tsx",
+        "agentic-workflows-v2/ui/src/pages/ModelFinderPage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/apiErrorText.test.ts"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/dag/BDagMini.tsx",
+      "area": "components",
+      "loc": 151,
+      "exports": [
+        "BDagMini"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/BDagMini.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": true
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/dag/StepNode.tsx",
+      "area": "components",
+      "loc": 293,
+      "exports": [
+        "StepNodeData",
+        "STEP_NODE_WIDTH",
+        "STEP_NODE_ESTIMATED_HEIGHT"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/dag/WorkflowDAG.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/StepNode.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/dag/WorkflowDAG.tsx",
+      "area": "components",
+      "loc": 352,
+      "exports": [
+        "WorkflowDAG"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/runs/RunDetailPanel.tsx",
+        "agentic-workflows-v2/ui/src/pages/LivePage.tsx",
+        "agentic-workflows-v2/ui/src/pages/WorkflowDetailPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/WorkflowEditorPage.tsx"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/dag/dagLayout.ts",
+      "area": "components",
+      "loc": 94,
+      "exports": [
+        "layoutDAG"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-06-07",
+      "age_days": 127,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/dag/BDagMini.tsx",
+        "agentic-workflows-v2/ui/src/components/dag/WorkflowDAG.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/dagLayout.test.ts"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/dag/edgeAppearance.ts",
+      "area": "components",
+      "loc": 59,
+      "exports": [
+        "EdgeAppearanceInput",
+        "EdgeAppearance",
+        "resolveEdgeAppearance"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/dag/WorkflowDAG.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/edgeAppearance.test.ts"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/dag/graphTokens.ts",
+      "area": "components",
+      "loc": 39,
+      "exports": [
+        "GraphToken",
+        "graphColor"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/dag/StepNode.tsx",
+        "agentic-workflows-v2/ui/src/components/dag/WorkflowDAG.tsx",
+        "agentic-workflows-v2/ui/src/components/dag/edgeAppearance.ts"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/edgeAppearance.test.ts"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/dashboard/GettingStartedCard.tsx",
+      "area": "components",
+      "loc": 169,
+      "exports": [
+        "GettingStartedCard"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/pages/DashboardPage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/components/dashboard/__tests__/GettingStartedCard.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/dashboard/__tests__/GettingStartedCard.test.tsx",
+      "area": "components",
+      "loc": 169,
+      "exports": [],
+      "api_calls": [],
+      "is_test": true,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/datasets/DatasetBrowser.tsx",
+      "area": "components",
+      "loc": 173,
+      "exports": [
+        "DatasetBrowser"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/pages/DatasetsPage.tsx"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/datasets/DatasetDetailPane.tsx",
+      "area": "components",
+      "loc": 212,
+      "exports": [
+        "DatasetDetailPane"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/datasets/DatasetBrowser.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/DatasetDetailPane.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/datasets/SampleIndexGrid.tsx",
+      "area": "components",
+      "loc": 150,
+      "exports": [
+        "SampleIndexGrid"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/datasets/DatasetBrowser.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/SampleIndexGrid.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/editor/EdgeInspector.tsx",
+      "area": "components",
+      "loc": 108,
+      "exports": [
+        "EdgeInspectorProps",
+        "EdgeInspector"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/pages/WorkflowEditorPage.tsx"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/editor/NodeInspector.tsx",
+      "area": "components",
+      "loc": 415,
+      "exports": [
+        "NodeInspectorProps",
+        "NodeInspector"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/pages/WorkflowEditorPage.tsx"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/editor/documentModel.ts",
+      "area": "components",
+      "loc": 251,
+      "exports": [
+        "RawDocument",
+        "RawStep",
+        "EdgeInfo",
+        "getSteps",
+        "getStep",
+        "patchStep",
+        "nextStepName",
+        "addStep",
+        "removeStep",
+        "addDependency",
+        "removeDependency",
+        "edgeInfo",
+        "patchStepInput",
+        "deriveGraph",
+        "documentsEqual",
+        "cloneDocument"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-07-07",
+      "age_days": 97,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/editor/EdgeInspector.tsx",
+        "agentic-workflows-v2/ui/src/components/editor/NodeInspector.tsx",
+        "agentic-workflows-v2/ui/src/pages/WorkflowEditorPage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/documentModel.test.ts"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/evaluations/CriterionRow.tsx",
+      "area": "components",
+      "loc": 48,
+      "exports": [
+        "CriterionRow"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/evaluations/EvaluationRubricAccordion.tsx"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/evaluations/EvaluationRubricAccordion.tsx",
+      "area": "components",
+      "loc": 233,
+      "exports": [
+        "EvaluationRubricAccordion"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/runs/RunDetailPanel.tsx",
+        "agentic-workflows-v2/ui/src/pages/EvaluationsPage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/EvaluationRubricAccordion.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/evaluations/RunComparePanel.tsx",
+      "area": "components",
+      "loc": 325,
+      "exports": [
+        "RunComparePanel"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/pages/EvaluationsPage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/RunComparePanel.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/evaluations/StepScoreDetails.tsx",
+      "area": "components",
+      "loc": 88,
+      "exports": [
+        "StepScoreDetails"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/evaluations/EvaluationRubricAccordion.tsx"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/layout/BTopBar.tsx",
+      "area": "components",
+      "loc": 33,
+      "exports": [
+        "BTopBar"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/pages/DashboardPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/DatasetsPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/EvaluationsPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/LivePage.tsx",
+        "agentic-workflows-v2/ui/src/pages/ModelFinderPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/RunDetailPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/RunsPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/WorkflowDetailPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/WorkflowsPage.tsx"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/layout/CliStrip.tsx",
+      "area": "components",
+      "loc": 58,
+      "exports": [
+        "CliStrip"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/App.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/cliEquivalents.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/layout/ConsoleHeader.tsx",
+      "area": "components",
+      "loc": 87,
+      "exports": [
+        "ConsoleHeader"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/App.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/ConsoleHeader.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/layout/MobileNav.tsx",
+      "area": "components",
+      "loc": 153,
+      "exports": [
+        "MobileNav"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/layout/Sidebar.tsx"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/layout/PaletteShortcut.tsx",
+      "area": "components",
+      "loc": 40,
+      "exports": [
+        "PaletteShortcut"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/common/CommandPalette.tsx",
+        "agentic-workflows-v2/ui/src/components/layout/ConsoleHeader.tsx",
+        "agentic-workflows-v2/ui/src/components/layout/Sidebar.tsx"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/layout/Sidebar.tsx",
+      "area": "components",
+      "loc": 223,
+      "exports": [
+        "Sidebar"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/App.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/Sidebar.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/layout/navigation.ts",
+      "area": "components",
+      "loc": 57,
+      "exports": [
+        "NavItem",
+        "NAV_ITEMS",
+        "isNavItemActive"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/layout/MobileNav.tsx",
+        "agentic-workflows-v2/ui/src/components/layout/Sidebar.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/ConsoleHeader.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/live/LiveStepDetails.tsx",
+      "area": "components",
+      "loc": 279,
+      "exports": [
+        "LiveStepDetailsList",
+        "formatDuration",
+        "LiveStepDetailsStep",
+        "LiveStepDetails"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/pages/LivePage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/LiveStepDetails.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/live/NodeConfigOverlay.tsx",
+      "area": "components",
+      "loc": 399,
+      "exports": [
+        "NodeConfigOverlay"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/NodeConfigOverlay.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": true
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/live/StepLogPanel.tsx",
+      "area": "components",
+      "loc": 131,
+      "exports": [
+        "StepLogPanel"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/pages/LivePage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/StepLogPanel.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/live/TokenCounter.tsx",
+      "area": "components",
+      "loc": 55,
+      "exports": [
+        "TokenCounter"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/pages/LivePage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/TokenCounter.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/models/ChatPlaygroundPanel.tsx",
+      "area": "components",
+      "loc": 718,
+      "exports": [
+        "ChatPlaygroundPanel"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/pages/ModelFinderPage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/ChatPlaygroundPanel.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/models/HardwareOverrideForm.tsx",
+      "area": "components",
+      "loc": 308,
+      "exports": [
+        "HardwareOverrideForm"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/pages/ModelFinderPage.tsx"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/models/ModelPacksPanel.tsx",
+      "area": "components",
+      "loc": 671,
+      "exports": [
+        "ModelPacksPanel"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-11",
+      "age_days": 1,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/pages/ModelFinderPage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/ModelPacksPanel.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/models/ProviderProbeList.tsx",
+      "area": "components",
+      "loc": 604,
+      "exports": [
+        "ProviderProbeList"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-10",
+      "age_days": 1,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/pages/ModelFinderPage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/ProviderProbeList.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/models/pack-builder/ModelPalette.tsx",
+      "area": "components",
+      "loc": 380,
+      "exports": [
+        "AddModelPicker",
+        "ModelPalette"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-11",
+      "age_days": 1,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/models/pack-builder/PackBuilder.tsx",
+        "agentic-workflows-v2/ui/src/components/models/pack-builder/TierChainBoard.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/PackBuilder.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/models/pack-builder/PackBuilder.tsx",
+      "area": "components",
+      "loc": 335,
+      "exports": [
+        "PackBuilderProps",
+        "PackBuilder"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-11",
+      "age_days": 1,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/models/ModelPacksPanel.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/PackBuilder.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/models/pack-builder/TierChainBoard.tsx",
+      "area": "components",
+      "loc": 408,
+      "exports": [
+        "TierChainBoard"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-11",
+      "age_days": 1,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/models/pack-builder/PackBuilder.tsx"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/models/pack-builder/builderParts.tsx",
+      "area": "components",
+      "loc": 301,
+      "exports": [
+        "PriceInfo",
+        "LIST_LIMIT",
+        "limitNote",
+        "mergeModelCatalog",
+        "customModelId",
+        "ModelFilter",
+        "selectModels",
+        "SELECT_CLASS",
+        "PricePill",
+        "CapabilityTag",
+        "ToggleChip",
+        "DragData",
+        "DropTarget",
+        "paletteDragId",
+        "chipDragId",
+        "laneDropId",
+        "readDragData",
+        "resolveDrop",
+        "dropAction",
+        "dropPosition"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-11",
+      "age_days": 1,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/models/ModelPacksPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/models/pack-builder/ModelPalette.tsx",
+        "agentic-workflows-v2/ui/src/components/models/pack-builder/PackBuilder.tsx",
+        "agentic-workflows-v2/ui/src/components/models/pack-builder/TierChainBoard.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/PackBuilder.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/models/pack-builder/packDraft.ts",
+      "area": "components",
+      "loc": 332,
+      "exports": [
+        "PackDraft",
+        "DraftAction",
+        "draftReducer",
+        "draftFromPack",
+        "draftToUpdate",
+        "isDraftDirty",
+        "providerOf",
+        "effectiveCapabilities",
+        "requiredCapabilities",
+        "unmetCapabilities"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-10",
+      "age_days": 1,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/models/ModelPacksPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/models/pack-builder/ModelPalette.tsx",
+        "agentic-workflows-v2/ui/src/components/models/pack-builder/PackBuilder.tsx",
+        "agentic-workflows-v2/ui/src/components/models/pack-builder/TierChainBoard.tsx",
+        "agentic-workflows-v2/ui/src/components/models/pack-builder/builderParts.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/PackBuilder.test.tsx",
+        "agentic-workflows-v2/ui/src/__tests__/packDraft.test.ts",
+        "agentic-workflows-v2/ui/src/__tests__/packDraft.test.ts"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/runs/RunConfigForm.tsx",
+      "area": "components",
+      "loc": 734,
+      "exports": [
+        "RunConfigValues",
+        "InitialEvaluationConfig",
+        "RunConfigForm"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/pages/WorkflowDetailPage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/RunConfigForm.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/runs/RunDetail.tsx",
+      "area": "components",
+      "loc": 134,
+      "exports": [
+        "RunDetailSteps"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/runs/RunDetailPanel.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/RunDetail.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/runs/RunDetailPanel.tsx",
+      "area": "components",
+      "loc": 563,
+      "exports": [
+        "RunDetailPanelProps",
+        "RunDetailPanel"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/pages/RunDetailPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/RunsPage.tsx"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/runs/RunList.tsx",
+      "area": "components",
+      "loc": 182,
+      "exports": [
+        "RunList"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/pages/WorkflowDetailPage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/RunList.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/runs/RunSummaryCards.tsx",
+      "area": "components",
+      "loc": 103,
+      "exports": [
+        "RunSummaryCards"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/RunSummaryCards.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": true
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/settings/ProviderPanel.tsx",
+      "area": "components",
+      "loc": 556,
+      "exports": [
+        "ProviderPanel"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/pages/ModelFinderPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/SettingsPage.tsx"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/settings/TierBoard.tsx",
+      "area": "components",
+      "loc": 401,
+      "exports": [
+        "TierBoard"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/pages/ModelFinderPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/SettingsPage.tsx"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/states/ApiOfflineBanner.tsx",
+      "area": "components",
+      "loc": 37,
+      "exports": [
+        "ApiOfflineBanner"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/App.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/ApiOfflineBanner.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/states/AppErrorBoundary.tsx",
+      "area": "components",
+      "loc": 49,
+      "exports": [
+        "AppErrorBoundary"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/main.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/StateComponents.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/states/EmptyState.tsx",
+      "area": "components",
+      "loc": 49,
+      "exports": [
+        "EmptyState",
+        "EmptyStateWithHome"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/pages/DatasetsPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/EvaluationsPage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/StateComponents.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/states/ErrorBanner.tsx",
+      "area": "components",
+      "loc": 90,
+      "exports": [
+        "ErrorBanner"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/states/AppErrorBoundary.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/StateComponents.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/states/InlineError.tsx",
+      "area": "components",
+      "loc": 93,
+      "exports": [
+        "InlineError"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/runs/RunConfigForm.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunDetailPanel.tsx",
+        "agentic-workflows-v2/ui/src/pages/DashboardPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/DatasetsPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/EvaluationsPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/RunsPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/WorkflowDetailPage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/InlineError.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/states/NoData.tsx",
+      "area": "components",
+      "loc": 18,
+      "exports": [
+        "NoData"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/evaluations/RunComparePanel.tsx",
+        "agentic-workflows-v2/ui/src/components/live/LiveStepDetails.tsx",
+        "agentic-workflows-v2/ui/src/components/live/TokenCounter.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunDetail.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunDetailPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunSummaryCards.tsx",
+        "agentic-workflows-v2/ui/src/pages/DashboardPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/DatasetsPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/EvaluationsPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/LivePage.tsx",
+        "agentic-workflows-v2/ui/src/pages/RunsPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/WorkflowsPage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/StateComponents.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/states/NotFoundPage.tsx",
+      "area": "components",
+      "loc": 36,
+      "exports": [
+        "NotFoundPage"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/App.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/StateComponents.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/ui/accordion.tsx",
+      "area": "components",
+      "loc": 72,
+      "exports": [],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": true,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/ui/alert-dialog.tsx",
+      "area": "components",
+      "loc": 186,
+      "exports": [],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/runs/RunDetailPanel.tsx"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/ui/badge.tsx",
+      "area": "components",
+      "loc": 45,
+      "exports": [],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/uiPrimitives.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": true
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/ui/button.tsx",
+      "area": "components",
+      "loc": 70,
+      "exports": [],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/editor/EdgeInspector.tsx",
+        "agentic-workflows-v2/ui/src/components/editor/NodeInspector.tsx",
+        "agentic-workflows-v2/ui/src/components/live/NodeConfigOverlay.tsx",
+        "agentic-workflows-v2/ui/src/components/models/ChatPlaygroundPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/models/HardwareOverrideForm.tsx",
+        "agentic-workflows-v2/ui/src/components/models/ModelPacksPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/models/pack-builder/ModelPalette.tsx",
+        "agentic-workflows-v2/ui/src/components/models/pack-builder/TierChainBoard.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunConfigForm.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunDetailPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/settings/ProviderPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/settings/TierBoard.tsx",
+        "agentic-workflows-v2/ui/src/components/states/ErrorBanner.tsx",
+        "agentic-workflows-v2/ui/src/components/ui/alert-dialog.tsx",
+        "agentic-workflows-v2/ui/src/components/ui/dialog.tsx",
+        "agentic-workflows-v2/ui/src/components/ui/input-group.tsx",
+        "agentic-workflows-v2/ui/src/components/ui/sheet.tsx",
+        "agentic-workflows-v2/ui/src/pages/DashboardPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/ModelFinderPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/RunDetailPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/RunsPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/WorkflowEditorPage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/uiPrimitives.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/ui/checkbox.tsx",
+      "area": "components",
+      "loc": 30,
+      "exports": [],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/uiPrimitives.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": true
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/ui/collapsible.tsx",
+      "area": "components",
+      "loc": 28,
+      "exports": [],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-07-18",
+      "age_days": 86,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": true,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/ui/command.tsx",
+      "area": "components",
+      "loc": 188,
+      "exports": [],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/models/pack-builder/ModelPalette.tsx"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/ui/dialog.tsx",
+      "area": "components",
+      "loc": 158,
+      "exports": [],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/ui/command.tsx"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/ui/dropdown-menu.tsx",
+      "area": "components",
+      "loc": 253,
+      "exports": [],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/models/pack-builder/ModelPalette.tsx"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/ui/input-group.tsx",
+      "area": "components",
+      "loc": 154,
+      "exports": [],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/ui/command.tsx"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/ui/input.tsx",
+      "area": "components",
+      "loc": 16,
+      "exports": [],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/models/ModelPacksPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/models/pack-builder/ModelPalette.tsx",
+        "agentic-workflows-v2/ui/src/components/ui/input-group.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/uiPrimitives.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/ui/popover.tsx",
+      "area": "components",
+      "loc": 81,
+      "exports": [],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/models/pack-builder/ModelPalette.tsx"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/ui/resizable.tsx",
+      "area": "components",
+      "loc": 43,
+      "exports": [],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": true,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/ui/scroll-area.tsx",
+      "area": "components",
+      "loc": 50,
+      "exports": [],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": true,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/ui/select.tsx",
+      "area": "components",
+      "loc": 182,
+      "exports": [],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": true,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/ui/separator.tsx",
+      "area": "components",
+      "loc": 23,
+      "exports": [],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-07-18",
+      "age_days": 86,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": true,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/ui/sheet.tsx",
+      "area": "components",
+      "loc": 133,
+      "exports": [],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/layout/MobileNav.tsx"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/ui/skeleton.tsx",
+      "area": "components",
+      "loc": 11,
+      "exports": [],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-07-18",
+      "age_days": 86,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": true,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/ui/sonner.tsx",
+      "area": "components",
+      "loc": 45,
+      "exports": [],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-07-18",
+      "age_days": 86,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/App.tsx"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/ui/switch.tsx",
+      "area": "components",
+      "loc": 31,
+      "exports": [],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/uiPrimitives.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": true
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/ui/table.tsx",
+      "area": "components",
+      "loc": 105,
+      "exports": [],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": true,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/ui/tabs.tsx",
+      "area": "components",
+      "loc": 81,
+      "exports": [],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/uiPrimitives.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": true
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/ui/textarea.tsx",
+      "area": "components",
+      "loc": 15,
+      "exports": [],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/ui/input-group.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/uiPrimitives.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/components/ui/tooltip.tsx",
+      "area": "components",
+      "loc": 50,
+      "exports": [],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": true,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/config/featureFlags.ts",
+      "area": "config",
+      "loc": 9,
+      "exports": [
+        "parseBooleanFlag",
+        "isWorkflowBuilderEnabled"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-07-09",
+      "age_days": 95,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/App.tsx",
+        "agentic-workflows-v2/ui/src/pages/WorkflowDetailPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/WorkflowsPage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/featureFlags.test.ts"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/hooks/useApiAvailability.ts",
+      "area": "hooks",
+      "loc": 29,
+      "exports": [
+        "ApiAvailability",
+        "useApiAvailability"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/evaluations/RunComparePanel.tsx",
+        "agentic-workflows-v2/ui/src/components/live/NodeConfigOverlay.tsx",
+        "agentic-workflows-v2/ui/src/components/models/ChatPlaygroundPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/models/HardwareOverrideForm.tsx",
+        "agentic-workflows-v2/ui/src/components/models/ModelPacksPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/models/ProviderProbeList.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunDetailPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/settings/ProviderPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/settings/TierBoard.tsx",
+        "agentic-workflows-v2/ui/src/pages/DashboardPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/EvaluationsPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/RunsPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/WorkflowDetailPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/WorkflowEditorPage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/ApiOfflineBanner.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/hooks/useAutoPanZoom.ts",
+      "area": "hooks",
+      "loc": 159,
+      "exports": [
+        "LARGE_WORKFLOW_NODE_THRESHOLD",
+        "isLargeWorkflow",
+        "AutoPanZoomHandlers",
+        "useAutoPanZoom"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-06-23",
+      "age_days": 111,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/dag/WorkflowDAG.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/useAutoPanZoom.test.ts"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/hooks/useBackendHealth.ts",
+      "area": "hooks",
+      "loc": 26,
+      "exports": [
+        "useBackendHealth"
+      ],
+      "api_calls": [
+        "/api/health"
+      ],
+      "is_test": false,
+      "last_commit": "2026-07-13",
+      "age_days": 91,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/common/ConsoleStatus.tsx",
+        "agentic-workflows-v2/ui/src/components/layout/ConsoleHeader.tsx",
+        "agentic-workflows-v2/ui/src/components/layout/Sidebar.tsx",
+        "agentic-workflows-v2/ui/src/components/states/ApiOfflineBanner.tsx",
+        "agentic-workflows-v2/ui/src/hooks/useApiAvailability.ts"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/hooks/useCli.tsx",
+      "area": "hooks",
+      "loc": 81,
+      "exports": [
+        "CliCommand",
+        "cliForPath",
+        "CliProvider",
+        "useCli",
+        "useCliRouteSync"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/App.tsx",
+        "agentic-workflows-v2/ui/src/components/layout/CliStrip.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunDetailPanel.tsx",
+        "agentic-workflows-v2/ui/src/pages/WorkflowDetailPage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/CommandPalette.test.tsx",
+        "agentic-workflows-v2/ui/src/__tests__/ConsoleHeader.test.tsx",
+        "agentic-workflows-v2/ui/src/__tests__/cliEquivalents.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/hooks/useDatasets.ts",
+      "area": "hooks",
+      "loc": 26,
+      "exports": [
+        "useDatasetSamples",
+        "useDatasetSampleDetail"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-05-27",
+      "age_days": 138,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/datasets/DatasetDetailPane.tsx",
+        "agentic-workflows-v2/ui/src/components/datasets/SampleIndexGrid.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunConfigForm.tsx"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/hooks/useGoNav.ts",
+      "area": "hooks",
+      "loc": 71,
+      "exports": [
+        "GO_TARGETS",
+        "useGoNav"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/App.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/ConsoleHeader.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/hooks/useHotkeys.ts",
+      "area": "hooks",
+      "loc": 61,
+      "exports": [
+        "HotkeyAction",
+        "HotkeyMap",
+        "useHotkeys"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-06-07",
+      "age_days": 127,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/pages/DashboardPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/RunsPage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/useHotkeys.test.ts"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/hooks/useNodeConfigUpdate.ts",
+      "area": "hooks",
+      "loc": 84,
+      "exports": [
+        "useNodeConfigUpdate"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-06-07",
+      "age_days": 127,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": true,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/hooks/usePrefersReducedMotion.ts",
+      "area": "hooks",
+      "loc": 21,
+      "exports": [
+        "usePrefersReducedMotion"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-06-15",
+      "age_days": 119,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/dag/StepNode.tsx",
+        "agentic-workflows-v2/ui/src/components/dag/WorkflowDAG.tsx",
+        "agentic-workflows-v2/ui/src/components/models/pack-builder/PackBuilder.tsx",
+        "agentic-workflows-v2/ui/src/components/models/pack-builder/TierChainBoard.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/usePrefersReducedMotion.test.ts"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/hooks/useRuns.ts",
+      "area": "hooks",
+      "loc": 44,
+      "exports": [
+        "UseRunsOptions",
+        "useRuns",
+        "useRunDetail",
+        "useRunsSummary",
+        "useRunEvaluationDetail"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-07-06",
+      "age_days": 98,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/evaluations/EvaluationRubricAccordion.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunDetailPanel.tsx",
+        "agentic-workflows-v2/ui/src/pages/DashboardPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/EvaluationsPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/LivePage.tsx",
+        "agentic-workflows-v2/ui/src/pages/RunsPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/WorkflowDetailPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/WorkflowsPage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/workflowHooks.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/hooks/useTheme.ts",
+      "area": "hooks",
+      "loc": 33,
+      "exports": [
+        "Theme",
+        "applyTheme",
+        "useTheme"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-07-18",
+      "age_days": 86,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/layout/Sidebar.tsx",
+        "agentic-workflows-v2/ui/src/components/ui/sonner.tsx"
+      ],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/hooks/useWorkflowStream.ts",
+      "area": "hooks",
+      "loc": 216,
+      "exports": [
+        "StepState",
+        "WorkflowStreamState",
+        "StreamErrorKind",
+        "useWorkflowStream"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/live/LiveStepDetails.tsx",
+        "agentic-workflows-v2/ui/src/pages/LivePage.tsx",
+        "agentic-workflows-v2/ui/src/pages/LivePage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/LiveStepDetails.test.tsx",
+        "agentic-workflows-v2/ui/src/__tests__/useWorkflowStream.test.ts"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/hooks/useWorkflows.ts",
+      "area": "hooks",
+      "loc": 34,
+      "exports": [
+        "useWorkflows",
+        "useWorkflowDAG",
+        "useWorkflowEditor",
+        "useEvaluationDatasets"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-06-15",
+      "age_days": 119,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/datasets/DatasetDetailPane.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunConfigForm.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunDetailPanel.tsx",
+        "agentic-workflows-v2/ui/src/pages/DashboardPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/DatasetsPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/LivePage.tsx",
+        "agentic-workflows-v2/ui/src/pages/WorkflowDetailPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/WorkflowEditorPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/WorkflowsPage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/workflowHooks.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/lib/apiErrors.ts",
+      "area": "lib",
+      "loc": 191,
+      "exports": [
+        "API_START_HINT",
+        "ApiErrorDescription",
+        "describeApiError",
+        "apiErrorMessage",
+        "formatApiError",
+        "StreamErrorDescription",
+        "describeStreamError"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/common/apiErrorText.ts",
+        "agentic-workflows-v2/ui/src/components/datasets/DatasetDetailPane.tsx",
+        "agentic-workflows-v2/ui/src/components/datasets/SampleIndexGrid.tsx",
+        "agentic-workflows-v2/ui/src/components/evaluations/EvaluationRubricAccordion.tsx",
+        "agentic-workflows-v2/ui/src/components/evaluations/RunComparePanel.tsx",
+        "agentic-workflows-v2/ui/src/components/models/ChatPlaygroundPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/models/HardwareOverrideForm.tsx",
+        "agentic-workflows-v2/ui/src/components/models/ModelPacksPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/models/ProviderProbeList.tsx",
+        "agentic-workflows-v2/ui/src/components/settings/ProviderPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/settings/TierBoard.tsx",
+        "agentic-workflows-v2/ui/src/components/states/ErrorBanner.tsx",
+        "agentic-workflows-v2/ui/src/components/states/InlineError.tsx",
+        "agentic-workflows-v2/ui/src/hooks/useApiAvailability.ts",
+        "agentic-workflows-v2/ui/src/pages/DatasetsPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/EvaluationsPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/LivePage.tsx",
+        "agentic-workflows-v2/ui/src/pages/ModelFinderPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/WorkflowDetailPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/WorkflowEditorPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/WorkflowsPage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/apiErrorText.test.ts",
+        "agentic-workflows-v2/ui/src/__tests__/apiErrors.test.ts"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/lib/grades.ts",
+      "area": "lib",
+      "loc": 56,
+      "exports": [
+        "scoreToPercent",
+        "gradeLetter",
+        "gradeColorClass",
+        "isPassingScore"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/evaluations/RunComparePanel.tsx",
+        "agentic-workflows-v2/ui/src/components/runs/RunList.tsx",
+        "agentic-workflows-v2/ui/src/pages/DashboardPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/EvaluationsPage.tsx",
+        "agentic-workflows-v2/ui/src/pages/RunsPage.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/grades.test.ts"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/lib/modelVerification.ts",
+      "area": "lib",
+      "loc": 88,
+      "exports": [
+        "VerificationStatus",
+        "ModelVerification",
+        "VERIFICATION_STORAGE_KEY",
+        "loadVerifications",
+        "getVerification",
+        "recordVerification",
+        "clearVerifications"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-07-13",
+      "age_days": 91,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/models/ChatPlaygroundPanel.tsx",
+        "agentic-workflows-v2/ui/src/components/models/ProviderProbeList.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/ChatPlaygroundPanel.test.tsx",
+        "agentic-workflows-v2/ui/src/__tests__/ModelFinderPage.test.tsx",
+        "agentic-workflows-v2/ui/src/__tests__/modelVerification.test.ts"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/lib/platform.ts",
+      "area": "lib",
+      "loc": 38,
+      "exports": [
+        "PlatformNavigator",
+        "isApplePlatform",
+        "paletteShortcutKeys"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/layout/PaletteShortcut.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/platform.test.ts"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/lib/utils.ts",
+      "area": "lib",
+      "loc": 11,
+      "exports": [
+        "cn"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/components/ui/accordion.tsx",
+        "agentic-workflows-v2/ui/src/components/ui/alert-dialog.tsx",
+        "agentic-workflows-v2/ui/src/components/ui/badge.tsx",
+        "agentic-workflows-v2/ui/src/components/ui/button.tsx",
+        "agentic-workflows-v2/ui/src/components/ui/checkbox.tsx",
+        "agentic-workflows-v2/ui/src/components/ui/command.tsx",
+        "agentic-workflows-v2/ui/src/components/ui/dialog.tsx",
+        "agentic-workflows-v2/ui/src/components/ui/dropdown-menu.tsx",
+        "agentic-workflows-v2/ui/src/components/ui/input-group.tsx",
+        "agentic-workflows-v2/ui/src/components/ui/input.tsx",
+        "agentic-workflows-v2/ui/src/components/ui/popover.tsx",
+        "agentic-workflows-v2/ui/src/components/ui/resizable.tsx",
+        "agentic-workflows-v2/ui/src/components/ui/scroll-area.tsx",
+        "agentic-workflows-v2/ui/src/components/ui/select.tsx",
+        "agentic-workflows-v2/ui/src/components/ui/separator.tsx",
+        "agentic-workflows-v2/ui/src/components/ui/sheet.tsx",
+        "agentic-workflows-v2/ui/src/components/ui/skeleton.tsx",
+        "agentic-workflows-v2/ui/src/components/ui/switch.tsx",
+        "agentic-workflows-v2/ui/src/components/ui/table.tsx",
+        "agentic-workflows-v2/ui/src/components/ui/tabs.tsx",
+        "agentic-workflows-v2/ui/src/components/ui/textarea.tsx",
+        "agentic-workflows-v2/ui/src/components/ui/tooltip.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/utils.test.ts"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/main.tsx",
+      "area": "main.tsx",
+      "loc": 32,
+      "exports": [],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-05-27",
+      "age_days": 138,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/pages/DashboardPage.tsx",
+      "area": "pages",
+      "loc": 390,
+      "exports": [
+        "DashboardPage"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/App.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/DashboardPage.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/pages/DatasetsPage.tsx",
+      "area": "pages",
+      "loc": 102,
+      "exports": [
+        "DatasetsPage"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/App.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/DatasetsPage.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/pages/EvaluationsPage.tsx",
+      "area": "pages",
+      "loc": 579,
+      "exports": [
+        "EvaluationsPage"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/App.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/EvaluationsPage.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/pages/LivePage.tsx",
+      "area": "pages",
+      "loc": 680,
+      "exports": [
+        "LivePage"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/App.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/LivePage.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/pages/ModelFinderPage.tsx",
+      "area": "pages",
+      "loc": 546,
+      "exports": [
+        "ModelFinderPage"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/App.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/ModelFinderPage.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/pages/PrototypeLabPage.tsx",
+      "area": "pages",
+      "loc": 269,
+      "exports": [
+        "PrototypeLabPage"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": true,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/pages/RunDetailPage.tsx",
+      "area": "pages",
+      "loc": 42,
+      "exports": [
+        "RunDetailPage"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/App.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/RunDetailPage.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/pages/RunsPage.tsx",
+      "area": "pages",
+      "loc": 549,
+      "exports": [
+        "RunsPage"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/App.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/RunsPage.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/pages/SettingsPage.tsx",
+      "area": "pages",
+      "loc": 22,
+      "exports": [
+        "SettingsPage"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-07-18",
+      "age_days": 86,
+      "imported_by_prod": [],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/SettingsPage.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": true
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/pages/WorkflowDetailPage.tsx",
+      "area": "pages",
+      "loc": 581,
+      "exports": [
+        "WorkflowDetailPage"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/App.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/WorkflowDetailPage.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/pages/WorkflowEditorPage.tsx",
+      "area": "pages",
+      "loc": 674,
+      "exports": [
+        "WorkflowEditorPage"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/App.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/WorkflowEditorPage.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/pages/WorkflowsPage.tsx",
+      "area": "pages",
+      "loc": 201,
+      "exports": [
+        "WorkflowsPage"
+      ],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-10-08",
+      "age_days": 4,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/App.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/WorkflowsPage.test.tsx"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/telemetry/tracing.ts",
+      "area": "telemetry",
+      "loc": 180,
+      "exports": [
+        "initTracing",
+        "getTraceId",
+        "parseTraceparentId",
+        "captureTraceparentFromResponse",
+        "_resetTracingState"
+      ],
+      "api_calls": [
+        "/api/"
+      ],
+      "is_test": false,
+      "last_commit": "2026-06-08",
+      "age_days": 126,
+      "imported_by_prod": [
+        "agentic-workflows-v2/ui/src/main.tsx"
+      ],
+      "imported_by_tests": [
+        "agentic-workflows-v2/ui/src/__tests__/tracing.test.ts"
+      ],
+      "unused_candidate": false,
+      "test_only": false
+    },
+    {
+      "path": "agentic-workflows-v2/ui/src/vite-env.d.ts",
+      "area": "vite-env.d.ts",
+      "loc": 3,
+      "exports": [],
+      "api_calls": [],
+      "is_test": false,
+      "last_commit": "2026-07-09",
+      "age_days": 95,
+      "imported_by_prod": [],
+      "imported_by_tests": [],
+      "unused_candidate": false,
+      "test_only": false
+    }
+  ]
+}

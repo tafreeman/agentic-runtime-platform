@@ -1,0 +1,2566 @@
+
+<!DOCTYPE html>
+
+<html class="no-js" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." name="description"/>
+<link href="https://tafreeman.github.io/agentic-runtime-platform/inventory/sections/01-overview-architecture/" rel="canonical"/>
+<link href="../../../assets/images/favicon.png" rel="icon"/>
+<meta content="mkdocs-1.6.1, mkdocs-material-9.7.7" name="generator"/>
+<title>01 overview architecture - Agentic Runtime Platform</title>
+<link href="../../../assets/stylesheets/main.ec1eaa64.min.css" rel="stylesheet"/>
+<link href="../../../assets/stylesheets/palette.ab4e12ef.min.css" rel="stylesheet"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css?family=IBM+Plex+Sans:300,300i,400,400i,700,700i%7CIBM+Plex+Mono:400,400i,700,700i&amp;display=fallback" rel="stylesheet"/>
+<style>:root{--md-text-font:"IBM Plex Sans";--md-code-font:"IBM Plex Mono"}</style>
+<link href="../../../stylesheets/tokens.css" rel="stylesheet"/>
+<link href="../../../stylesheets/console.css" rel="stylesheet"/>
+<link href="../../../stylesheets/landing.css" rel="stylesheet"/>
+<script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+<meta content="website" property="og:type"/>
+<meta content="01 overview architecture - Agentic Runtime Platform" property="og:title"/>
+<meta content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." property="og:description"/>
+<meta content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/inventory/sections/01-overview-architecture.png" property="og:image"/>
+<meta content="image/png" property="og:image:type"/>
+<meta content="1200" property="og:image:width"/>
+<meta content="630" property="og:image:height"/>
+<meta content="https://tafreeman.github.io/agentic-runtime-platform/inventory/sections/01-overview-architecture/" property="og:url"/>
+<meta content="summary_large_image" property="twitter:card"/>
+<meta content="01 overview architecture - Agentic Runtime Platform" property="twitter:title"/>
+<meta content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." property="twitter:description"/>
+<meta content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/inventory/sections/01-overview-architecture.png" property="twitter:image"/>
+</head>
+<body data-md-color-accent="cyan" data-md-color-primary="black" data-md-color-scheme="slate" dir="ltr">
+<input autocomplete="off" class="md-toggle" data-md-toggle="drawer" id="__drawer" type="checkbox"/>
+<input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
+<label class="md-overlay" for="__drawer"></label>
+<div data-md-component="skip">
+<a class="md-skip" href="#1-application-overview-architecture-technologies-theory">
+          Skip to content
+        </a>
+</div>
+<div data-md-component="announce">
+</div>
+<header class="md-header" data-md-component="header">
+<nav aria-label="Header" class="md-header__inner md-grid">
+<a aria-label="Agentic Runtime Platform" class="md-header__button md-logo" data-md-component="logo" href="../../.." title="Agentic Runtime Platform">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
+</a>
+<label class="md-header__button md-icon" for="__drawer">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+</label>
+<div class="md-header__title" data-md-component="header-title">
+<div class="md-header__ellipsis">
+<div class="md-header__topic">
+<span class="md-ellipsis">
+            Agentic Runtime Platform
+          </span>
+</div>
+<div class="md-header__topic" data-md-component="header-topic">
+<span class="md-ellipsis">
+            
+              01 overview architecture
+            
+          </span>
+</div>
+</div>
+</div>
+<label class="md-header__button md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+</label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input aria-label="Search" autocapitalize="off" autocomplete="off" autocorrect="off" class="md-search__input" data-md-component="search-query" name="query" placeholder="Search" required="" spellcheck="false" type="text"/>
+<label class="md-search__icon md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+</label>
+<nav aria-label="Search" class="md-search__options">
+<a aria-label="Share" class="md-search__icon md-icon" data-clipboard="" data-clipboard-text="" data-md-component="search-share" href="javascript:void(0)" tabindex="-1" title="Share">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"></path></svg>
+</a>
+<button aria-label="Clear" class="md-search__icon md-icon" tabindex="-1" title="Clear" type="reset">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+</button>
+</nav>
+<div class="md-search__suggest" data-md-component="search-suggest"></div>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix="" tabindex="0">
+<div class="md-search-result" data-md-component="search-result">
+<div class="md-search-result__meta">
+            Initializing search
+          </div>
+<ol class="md-search-result__list" role="presentation"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="md-header__source">
+<a class="md-source" data-md-component="source" href="https://github.com/tafreeman/agentic-runtime-platform" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+</div>
+<div class="md-source__repository">
+    tafreeman/agentic-runtime-platform
+  </div>
+</a>
+</div>
+</nav>
+</header>
+<div class="md-container" data-md-component="container">
+<nav aria-label="Tabs" class="md-tabs" data-md-component="tabs">
+<div class="md-grid">
+<ul class="md-tabs__list">
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../..">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../../getting-started/">
+          
+  
+  
+    
+  
+  Getting started
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../../ARCHITECTURE/">
+          
+  
+  
+    
+  
+  Architecture
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../../deep-dive-server/">
+          
+  
+  
+    
+  
+  Deep dives
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../../cli-reference/">
+          
+  
+  
+    
+  
+  API reference
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../../WORKFLOW_AUTHORING/">
+          
+  
+  
+    
+  
+  Workflows
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../../architecture-eval/">
+          
+  
+  
+    
+  
+  Evaluation
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../../tools/">
+          
+  
+  
+    
+  
+  Tools
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../../operations/">
+          
+  
+  
+    
+  
+  Operations
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../../configuration/">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../../project-overview/">
+          
+  
+  
+    
+  
+  Project
+
+        </a>
+</li>
+</ul>
+</div>
+</nav>
+<main class="md-main" data-md-component="main">
+<div class="md-main__inner md-grid">
+<div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Navigation" class="md-nav md-nav--primary md-nav--lifted" data-md-level="0">
+<label class="md-nav__title" for="__drawer">
+<a aria-label="Agentic Runtime Platform" class="md-nav__button md-logo" data-md-component="logo" href="../../.." title="Agentic Runtime Platform">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
+</a>
+    Agentic Runtime Platform
+  </label>
+<div class="md-nav__source">
+<a class="md-source" data-md-component="source" href="https://github.com/tafreeman/agentic-runtime-platform" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+</div>
+<div class="md-source__repository">
+    tafreeman/agentic-runtime-platform
+  </div>
+</a>
+</div>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../..">
+<span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_2" type="checkbox"/>
+<div class="md-nav__link md-nav__container">
+<a class="md-nav__link" href="../../../getting-started/">
+<span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+</a>
+<label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+<span class="md-nav__icon md-icon"></span>
+</label>
+</div>
+<nav aria-expanded="false" aria-labelledby="__nav_2_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_2">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting started
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../getting-started/installation/">
+<span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../getting-started/quickstart/">
+<span class="md-ellipsis">
+    
+  
+    Quick start
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../getting-started/first-workflow/">
+<span class="md-ellipsis">
+    
+  
+    First workflow
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../development-guide/">
+<span class="md-ellipsis">
+    
+  
+    Development guide
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../NO_LLM_MODE/">
+<span class="md-ellipsis">
+    
+  
+    No-LLM dev mode
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../ONBOARDING/">
+<span class="md-ellipsis">
+    
+  
+    Onboarding
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_3">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../ARCHITECTURE/">
+<span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../architecture-runtime/">
+<span class="md-ellipsis">
+    
+  
+    Runtime engine
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../architecture-ui/">
+<span class="md-ellipsis">
+    
+  
+    UI dashboard
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../architecture-eval/">
+<span class="md-ellipsis">
+    
+  
+    Evaluation framework
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../architecture-tools/">
+<span class="md-ellipsis">
+    
+  
+    Tools &amp; providers
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../integration-architecture/">
+<span class="md-ellipsis">
+    
+  
+    Integration
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_4" type="checkbox"/>
+<label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Deep dives
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_4_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_4">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Deep dives
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../deep-dive-server/">
+<span class="md-ellipsis">
+    
+  
+    Server &amp; API
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../deep-dive-agents/">
+<span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../deep-dive-agentic-v2-eval/">
+<span class="md-ellipsis">
+    
+  
+    Evaluation engine
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_5" type="checkbox"/>
+<label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_5_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_5">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../cli-reference/">
+<span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../api-contracts-runtime/">
+<span class="md-ellipsis">
+    
+  
+    REST endpoints
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../data-models-runtime/">
+<span class="md-ellipsis">
+    
+  
+    Data models
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../component-inventory-ui/">
+<span class="md-ellipsis">
+    
+  
+    UI components
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../ui/pages/">
+<span class="md-ellipsis">
+    
+  
+    UI pages
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../ui/api-integration/">
+<span class="md-ellipsis">
+    
+  
+    UI API integration
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_6" type="checkbox"/>
+<div class="md-nav__link md-nav__container">
+<a class="md-nav__link" href="../../../workflows/">
+<span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+</a>
+<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+<span class="md-nav__icon md-icon"></span>
+</label>
+</div>
+<nav aria-expanded="false" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_6">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Workflows
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../WORKFLOW_AUTHORING/">
+<span class="md-ellipsis">
+    
+  
+    Authoring guide
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../PATTERN_CATALOG/">
+<span class="md-ellipsis">
+    
+  
+    Pattern catalog
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_7" type="checkbox"/>
+<label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Evaluation
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_7_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_7">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Evaluation
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../architecture-eval/">
+<span class="md-ellipsis">
+    
+  
+    Evaluation framework
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../evaluation/rubrics/">
+<span class="md-ellipsis">
+    
+  
+    Rubrics
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../evaluation/judge/">
+<span class="md-ellipsis">
+    
+  
+    LLM-as-Judge
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../evaluation/gating/">
+<span class="md-ellipsis">
+    
+  
+    Production gating
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../evaluation/runners/">
+<span class="md-ellipsis">
+    
+  
+    Runners
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../evaluation/datasets/">
+<span class="md-ellipsis">
+    
+  
+    Datasets
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_8" type="checkbox"/>
+<div class="md-nav__link md-nav__container">
+<a class="md-nav__link" href="../../../tools/">
+<span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+</a>
+<label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+<span class="md-nav__icon md-icon"></span>
+</label>
+</div>
+<nav aria-expanded="false" aria-labelledby="__nav_8_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_8">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Tools
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../architecture-tools/">
+<span class="md-ellipsis">
+    
+  
+    Tools &amp; providers
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../tools/llm-client/">
+<span class="md-ellipsis">
+    
+  
+    LLM client
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../tools/local-models/">
+<span class="md-ellipsis">
+    
+  
+    Local ONNX models
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../tools/windows-ai/">
+<span class="md-ellipsis">
+    
+  
+    Windows AI
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../tools/model-probing/">
+<span class="md-ellipsis">
+    
+  
+    Model probing
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../tools/provider-limits/">
+<span class="md-ellipsis">
+    
+  
+    Provider limits
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../tools/benchmarks/">
+<span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_9" type="checkbox"/>
+<div class="md-nav__link md-nav__container">
+<a class="md-nav__link" href="../../../operations/">
+<span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+</a>
+<label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+<span class="md-nav__icon md-icon"></span>
+</label>
+</div>
+<nav aria-expanded="false" aria-labelledby="__nav_9_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_9">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Operations
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../deployment-guide/">
+<span class="md-ellipsis">
+    
+  
+    Deployment guide
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../operations/security-hardening/">
+<span class="md-ellipsis">
+    
+  
+    Security hardening
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../SUPPLY_CHAIN/">
+<span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../load-report/">
+<span class="md-ellipsis">
+    
+  
+    Load evidence
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../operations/troubleshooting/">
+<span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_10" type="checkbox"/>
+<label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_10_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_10">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../configuration/">
+<span class="md-ellipsis">
+    
+  
+    Configuration reference
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../GLOSSARY/">
+<span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../CODING_STANDARDS/">
+<span class="md-ellipsis">
+    
+  
+    Coding standards
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../KNOWN_LIMITATIONS/">
+<span class="md-ellipsis">
+    
+  
+    Known limitations
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../AI_RISK_MANAGEMENT/">
+<span class="md-ellipsis">
+    
+  
+    AI risk management
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../MIGRATIONS/">
+<span class="md-ellipsis">
+    
+  
+    Migrations
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_11" type="checkbox"/>
+<label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Project
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_11_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_11">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Project
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../project-overview/">
+<span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../flagship/">
+<span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../project-context/">
+<span class="md-ellipsis">
+    
+  
+    Project context
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../ROADMAP/">
+<span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../CHANGELOG/">
+<span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../adr/ADR-INDEX/">
+<span class="md-ellipsis">
+    
+  
+    ADRs
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../CONTRIBUTING/">
+<span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../DEMO/">
+<span class="md-ellipsis">
+    
+  
+    Demo
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+<ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#1-application-overview-architecture-technologies-theory">
+<span class="md-ellipsis">
+      
+        1. Application overview, architecture, technologies &amp; theory
+      
+    </span>
+</a>
+<nav aria-label="1. Application overview, architecture, technologies &amp; theory" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#11-what-the-application-is">
+<span class="md-ellipsis">
+      
+        1.1 What the application is
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#12-architecture">
+<span class="md-ellipsis">
+      
+        1.2 Architecture
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#13-package-and-workspace-structure">
+<span class="md-ellipsis">
+      
+        1.3 Package and workspace structure
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#14-technologies">
+<span class="md-ellipsis">
+      
+        1.4 Technologies
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#15-theories-concepts-and-patterns-implemented">
+<span class="md-ellipsis">
+      
+        1.5 Theories, concepts and patterns implemented
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#16-design-principles-and-constraints">
+<span class="md-ellipsis">
+      
+        1.6 Design principles and constraints
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-content" data-md-component="content">
+<article class="md-content__inner md-typeset">
+<a class="md-content__button md-icon" href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/inventory/sections/01-overview-architecture.md" rel="edit" title="Edit this page">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"></path></svg>
+</a>
+<a class="md-content__button md-icon" href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/inventory/sections/01-overview-architecture.md" title="View source of this page">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"></path></svg>
+</a>
+<h1>01 overview architecture</h1>
+<h2 id="1-application-overview-architecture-technologies-theory">1. Application overview, architecture, technologies &amp; theory<a class="headerlink" href="#1-application-overview-architecture-technologies-theory" title="Permanent link">¶</a></h2>
+<p>Source of truth: clean <code>origin/main</code> worktree at revision <code>c3b2d328</code> (2026-10-12, "fix(langchain): run each step once, after all its dependencies (#387)"). Paths are repo-relative. Data from <code>docs/inventory/data/meta_inventory.json</code> (deps, CI, ADRs) and direct reads of <code>agentic-workflows-v2/agentic_v2/</code>.</p>
+<h3 id="11-what-the-application-is">1.1 What the application is<a class="headerlink" href="#11-what-the-application-is" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Finding</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>One-line</td>
+<td>Python + React monorepo to define, run, observe and evaluate multi-step AI workflows</td>
+<td><code>README.md</code></td>
+</tr>
+<tr>
+<td>Workflow model</td>
+<td>A workflow is a YAML file; steps form a DAG. Independent steps run concurrently, dependents wait, a failure stops downstream steps from running on incomplete data</td>
+<td><code>README.md</code>, <code>docs/ARCHITECTURE.md</code></td>
+</tr>
+<tr>
+<td>Engines</td>
+<td>Native asyncio DAG executor, or an optional LangGraph adapter, behind one <code>ExecutionEngine</code> Protocol</td>
+<td><code>agentic-workflows-v2/agentic_v2/core/protocols.py:58</code>, <code>agentic_v2/adapters/</code></td>
+</tr>
+<tr>
+<td>Model selection</td>
+<td>Steps name a capability <strong>tier</strong>, never a model; <code>SmartModelRouter</code> resolves tier to provider/model</td>
+<td><code>PRODUCT.md</code>, <code>agentic_v2/models/smart_router.py</code></td>
+</tr>
+<tr>
+<td>Primary user</td>
+<td>A solo developer/operator who authors, runs and debugs workflows via dashboard, CLI and API</td>
+<td><code>PRODUCT.md</code> ("Users")</td>
+</tr>
+<tr>
+<td>Platform</td>
+<td>Web (React 19 + Vite dashboard); Python 3.11+ backend (FastAPI)</td>
+<td><code>PRODUCT.md</code>, <code>pyproject.toml</code></td>
+</tr>
+<tr>
+<td>Operating context</td>
+<td>Local development and demo; explicitly "not a hosted service" and not a claim that every deployment concern is solved</td>
+<td><code>README.md</code>, <code>PRODUCT.md</code>, <code>docs/KNOWN_LIMITATIONS.md</code></td>
+</tr>
+<tr>
+<td>Positioning</td>
+<td>"Inspectable runs in one place": live DAG/step streaming, fail-closed approval governance, evaluation evidence, all working with no provider credential (<code>AGENTIC_NO_LLM=1</code>)</td>
+<td><code>PRODUCT.md</code></td>
+</tr>
+<tr>
+<td>Licence</td>
+<td>MIT</td>
+<td><code>README.md</code>, <code>LICENSE</code></td>
+</tr>
+<tr>
+<td>Docs site</td>
+<td>MkDocs</td>
+<td><code>mkdocs.yml</code>, <code>.github/workflows/docs.yml</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="primary-flows">Primary flows<a class="headerlink" href="#primary-flows" title="Permanent link">¶</a></h4>
+<table>
+<thead>
+<tr>
+<th>Flow</th>
+<th>Entry point</th>
+<th>What happens</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CLI run</td>
+<td><code>agentic run &lt;workflow&gt; --input file.json</code> (Typer; console script <code>agentic = agentic_v2.cli:main</code>)</td>
+<td>Load + validate workflow, pick adapter (default <code>langchain</code>), execute, print <code>Status: SUCCESS</code></td>
+<td><code>agentic-workflows-v2/pyproject.toml</code> scripts; <code>agentic_v2/cli/main.py:218</code>; <code>README.md</code> quick start</td>
+</tr>
+<tr>
+<td>CLI compare</td>
+<td><code>agentic compare</code></td>
+<td>Runs both adapters on the same input</td>
+<td><code>docs/ARCHITECTURE.md</code> "Execution engines" (CLI body unverified)</td>
+</tr>
+<tr>
+<td>API run</td>
+<td><code>POST /api/run</code> (workflows router, prefix <code>/api</code>)</td>
+<td>Validate input against workflow schema, execute, stream events, persist run</td>
+<td><code>agentic_v2/server/app.py:158-167</code>, <code>server/routes/workflows.py</code>, <code>docs/flagship.md</code></td>
+</tr>
+<tr>
+<td>Live streaming</td>
+<td>WebSocket <code>/ws/execution/{run_id}</code> (reconnect/replay)</td>
+<td>Typed <code>ExecutionEvent</code>s to dashboard</td>
+<td><code>agentic_v2/server/websocket.py:480</code></td>
+</tr>
+<tr>
+<td>Chat playground</td>
+<td><code>POST /api/chat</code> SSE (direct model chat)</td>
+<td>Tier or exact-model chat stream</td>
+<td><code>agentic_v2/server/routes/chat.py</code>, <code>docs/adr/ADR-050-chat-playground-sse-and-openrouter-provider.md</code></td>
+</tr>
+<tr>
+<td>Run history</td>
+<td><code>GET /api/runs</code>, <code>/api/runs/summary</code>, <code>/api/runs/{filename}</code></td>
+<td>Saved run JSON for inspection and scoring</td>
+<td><code>agentic_v2/server/routes/runs.py:74,143,244</code></td>
+</tr>
+<tr>
+<td>Evaluation</td>
+<td>evaluation routes, datasets, <code>agentic_v2/scoring/</code></td>
+<td>Rubric/judge scoring of saved runs; UI Evaluations + Datasets pages</td>
+<td><code>server/routes/evaluation_routes.py</code>, <code>server/datasets.py</code>, <code>ui/src/pages/EvaluationsPage.tsx</code></td>
+</tr>
+<tr>
+<td>Approval-denied run</td>
+<td>High-impact tool (<code>shell</code>, <code>file_write</code>, <code>build_app</code>, <code>http_post</code>, ...) with no <code>ApprovalProvider</code> registered</td>
+<td>Call denied before tool body runs, <code>metadata["approval_decision"] == "denied"</code></td>
+<td><code>README.md</code>; <code>agentic_v2/governance/approval.py</code> (test file <code>tests/test_approval_gates.py</code> cited by README, not opened)</td>
+</tr>
+<tr>
+<td>Offline eval</td>
+<td><code>agentic-v2-eval</code> CLI (<code>agentic_v2_eval.__main__:main</code>)</td>
+<td>Rubrics, evaluators, runners, reporters over structured results</td>
+<td><code>agentic-v2-eval/pyproject.toml</code>, <code>docs/architecture-eval.md</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="shipped-workflow-definitions-agentic-workflows-v2agentic_v2workflowsdefinitions">Shipped workflow definitions (<code>agentic-workflows-v2/agentic_v2/workflows/definitions/</code>)<a class="headerlink" href="#shipped-workflow-definitions-agentic-workflows-v2agentic_v2workflowsdefinitions" title="Permanent link">¶</a></h4>
+<p><code>bug_resolution</code>, <code>code_review</code>, <code>conditional_branching</code>, <code>consensus_review</code>, <code>fullstack_generation</code>, <code>iterative_review</code>, <code>plan_tribunal</code>, <code>test_deterministic</code>, <code>test_workflow</code> (9 YAML files at the pinned revision; <code>meta_inventory.json</code> <code>workflows</code> lists the same 9).</p>
+<p>UI pages (<code>agentic-workflows-v2/ui/src/pages/</code>): Dashboard, Workflows, WorkflowDetail, WorkflowEditor, Runs, RunDetail, Live, Evaluations, Datasets, ModelFinder, Settings, PrototypeLab.</p>
+<h3 id="12-architecture">1.2 Architecture<a class="headerlink" href="#12-architecture" title="Permanent link">¶</a></h3>
+<h4 id="layers">Layers<a class="headerlink" href="#layers" title="Permanent link">¶</a></h4>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Responsibility</th>
+<th>Primary code</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. Workflow definition</td>
+<td>YAML (inputs, steps, <code>depends_on</code>, <code>when</code>, <code>loop_until</code>/<code>loop_max</code>, agent, tools, outputs)</td>
+<td><code>agentic_v2/workflows/definitions/*.yaml</code>, <code>workflows/loader.py</code></td>
+</tr>
+<tr>
+<td>2. Compile / validate</td>
+<td>YAML -&gt; typed definitions -&gt; <code>DAG</code>; rejects missing deps (<code>MissingDependencyError</code>) and cycles (<code>CycleDetectedError</code>)</td>
+<td><code>agentic_v2/engine/dag.py:19,28,38</code>, <code>engine/step.py</code></td>
+</tr>
+<tr>
+<td>3. Engine seam</td>
+<td><code>AdapterRegistry</code> (thread-safe singleton) maps <code>"native"</code> / <code>"langchain"</code> to engine classes</td>
+<td><code>agentic_v2/adapters/registry.py</code>, <code>adapters/native/engine.py</code>, <code>adapters/langchain/engine.py</code></td>
+</tr>
+<tr>
+<td>4a. Native executor</td>
+<td>Kahn in-degree wavefront scheduling on asyncio, cascade skip, top-level timeout, OTel spans</td>
+<td><code>agentic_v2/engine/dag_executor.py</code> (718 lines)</td>
+</tr>
+<tr>
+<td>4b. LangGraph adapter</td>
+<td>Builds a <code>StateGraph</code> from the same YAML; join-once edge wiring (ADR-062)</td>
+<td><code>agentic_v2/langchain/</code> (graph.py, graph_wiring.py, runner.py, state.py)</td>
+</tr>
+<tr>
+<td>5. Agents and steps</td>
+<td><code>tier{N}_{role}</code> agent names resolved to functions/agents (<code>tier0_*</code> deterministic handlers; others LLM-backed); Markdown persona prompts</td>
+<td><code>engine/agent_resolver.py:306-310,644-660</code>, <code>agentic_v2/agents/</code>, <code>agentic_v2/prompts/*.md</code></td>
+</tr>
+<tr>
+<td>6. Tools and MCP</td>
+<td>Tool registry + builtins (file, git, shell, http, code exec, build, memory, search, ...), MCP client stack</td>
+<td><code>agentic_v2/tools/</code>, <code>tools/builtin/</code>, <code>integrations/mcp/</code></td>
+</tr>
+<tr>
+<td>7. Governance and security</td>
+<td>Approval gate (fail-closed), SSRF URL guard, sanitization detectors, AST expression sandbox</td>
+<td><code>governance/approval.py</code>, <code>security/url_guard.py</code>, <code>middleware/detectors/</code>, <code>engine/expressions.py</code></td>
+</tr>
+<tr>
+<td>8. Model routing</td>
+<td><code>ModelTier</code> 0-5, per-tier fallback chains from curated registry, circuit breakers, bulkheads, rate-limit tracker, Redis CAS state</td>
+<td><code>models/router.py:33</code>, <code>models/smart_router.py</code> (1078 lines), <code>models/model_registry.py</code>, <code>models/redis_state.py</code></td>
+</tr>
+<tr>
+<td>9. Providers/backends</td>
+<td>Ollama, OpenAI-compatible, Anthropic, Claude subscription/SDK, OpenRouter, local discovery (Ollama, LM Studio, Lemonade, Foundry Local, Docker Model Runner)</td>
+<td><code>models/backends*.py</code>, <code>models/*_discovery.py</code>, <code>models/client.py</code></td>
+</tr>
+<tr>
+<td>10. Server</td>
+<td>FastAPI app, route groups under <code>/api</code>, WebSocket, SSE, auth (API key, JWT/OIDC), rate limit, tenant, audit log, replay store, SPA serving</td>
+<td><code>agentic_v2/server/</code></td>
+</tr>
+<tr>
+<td>11. Observability</td>
+<td>OpenTelemetry tracer, Prometheus metrics, tracing middleware</td>
+<td><code>integrations/otel.py</code>, <code>integrations/metrics.py</code>, <code>server/middleware/{tracing,metrics}.py</code></td>
+</tr>
+<tr>
+<td>12. Scoring/eval</td>
+<td>Runtime scoring of saved runs (rubrics, LLM judge, multidimensional); bridge to <code>agentic-evalkit</code></td>
+<td><code>agentic_v2/scoring/</code>, <code>scoring/evalkit_bridge.py</code></td>
+</tr>
+<tr>
+<td>13. UI</td>
+<td>React 19 console; generated TS wire types</td>
+<td><code>agentic-workflows-v2/ui/src/</code></td>
+</tr>
+<tr>
+<td>14. Shared package</td>
+<td>Root <code>agentic-tools</code> (<code>tools/</code>): LLM clients, probes, model inventory, caches, prompt DB, benchmarks</td>
+<td><code>tools/</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="diagram-a-runtime-request-flow">Diagram A - runtime request flow<a class="headerlink" href="#diagram-a-runtime-request-flow" title="Permanent link">¶</a></h4>
+<pre class="mermaid"><code>flowchart TD
+    CLI["CLI: agentic run (Typer)"] --&gt; LOAD
+    UI["React dashboard"] --&gt;|"POST /api/run"| API["FastAPI /api"]
+    API --&gt; MW["Middleware: auth, rate limit, tenant, tracing, sanitization"]
+    MW --&gt; LOAD["Workflow loader: YAML to typed definition, input validation"]
+    LOAD --&gt; DAG["DAG compile + validate: missing deps, cycles"]
+    DAG --&gt; REG{"AdapterRegistry (AGENTIC_DEFAULT_ADAPTER, default langchain)"}
+    REG --&gt;|native| NAT["DAGExecutor: Kahn in-degree wavefront, asyncio"]
+    REG --&gt;|langchain| LG["LangGraph StateGraph adapter"]
+    NAT --&gt; STEP["Step run: when / loop_until / retries / timeout"]
+    LG --&gt; STEP
+    STEP --&gt; RES["Agent resolver: tier0_* deterministic or tier N LLM agent"]
+    RES --&gt; GATE{"Tool call needs approval?"}
+    GATE --&gt;|"no provider registered"| DENY["DENIED (fail-closed)"]
+    GATE --&gt;|approved| TOOLS["Tools / MCP / SSRF url_guard"]
+    RES --&gt; ROUTER["SmartModelRouter: tier to model, circuit breaker, bulkhead, fallback chain"]
+    ROUTER --&gt; PROV["Providers: Ollama, OpenAI-compat, Anthropic, Claude SDK, OpenRouter"]
+    NAT --&gt; EVT["Typed ExecutionEvents"]
+    LG --&gt; EVT
+    EVT --&gt;|"WebSocket /ws/execution/{run_id}"| UI
+    EVT --&gt; STORE["Run storage: JSON files"]
+    STORE --&gt; SCORE["agentic_v2/scoring: rubrics, LLM judge"]
+    STORE -. "JSON" .-&gt; EVALPKG["agentic-v2-eval (offline)"]
+</code></pre>
+<h4 id="diagram-b-components-and-packages">Diagram B - components and packages<a class="headerlink" href="#diagram-b-components-and-packages" title="Permanent link">¶</a></h4>
+<pre class="mermaid"><code>flowchart LR
+    subgraph ROOT["Root project agentic-tools"]
+        TOOLS_PKG["tools/: llm clients, probes, core cache/config, agents/benchmarks"]
+    end
+    subgraph RT["agentic-workflows-v2 (package agentic_v2)"]
+        CLIM["cli"] --- ENG["engine + adapters + langchain"]
+        ENG --- AGT["agents + prompts + tools"]
+        AGT --- MOD["models: smart_router, backends, discovery"]
+        ENG --- GOV["governance + security + middleware"]
+        SRV["server: routes, websocket, auth"] --- ENG
+        SCO["scoring"]
+        INT["integrations: otel, metrics, mcp"]
+        CON["contracts: Pydantic wire format"]
+    end
+    subgraph UIP["ui/ (React 19, Vite 8)"]
+        PAGES["pages + components"] --- GEN["*.generated.ts"]
+    end
+    subgraph EV["agentic-v2-eval"]
+        EVC["rubrics, evaluators, runners, reporters"]
+    end
+    EK[("executionkit (extra ek)")]
+    EVK[("agentic-evalkit (extra eval)")]
+    LEAN["proofs/ Lean 4 scheduler model"]
+    CON --&gt;|"JSON Schema then json-schema-to-typescript"| GEN
+    UIP --&gt;|"REST, SSE, WebSocket"| SRV
+    RT --&gt; TOOLS_PKG
+    EV --&gt; TOOLS_PKG
+    ENG -. "optional step delegation" .-&gt; EK
+    SCO -. "evalkit_bridge.py" .-&gt; EVK
+    LEAN -. "replay test vs dag_executor.py" .-&gt; ENG
+</code></pre>
+<h4 id="doc-versus-code-check-verified-against-originmain">Doc-versus-code check (verified against <code>origin/main</code>)<a class="headerlink" href="#doc-versus-code-check-verified-against-originmain" title="Permanent link">¶</a></h4>
+<table>
+<thead>
+<tr>
+<th>Claim (source)</th>
+<th>Checked against code</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>8 protocols in <code>agentic_v2/core/protocols.py</code> (<code>docs/ARCHITECTURE.md</code>)</td>
+<td><code>ExecutionEngine</code>, <code>SupportsStreaming</code>, <code>SupportsCheckpointing</code>, <code>AgentProtocol</code>, <code>ToolProtocol</code>, <code>DetectorProtocol</code>, <code>MiddlewareProtocol</code>, <code>VerifierProtocol</code> at <code>core/protocols.py:58-238</code></td>
+<td>Agrees</td>
+</tr>
+<tr>
+<td><code>agentic run</code> defaults to <code>langchain</code>; server validates <code>AGENTIC_DEFAULT_ADAPTER</code> at startup</td>
+<td><code>cli/main.py:218</code>, <code>server/lifespan.py:65-83</code> (default <code>"langchain"</code>)</td>
+<td>Agrees</td>
+</tr>
+<tr>
+<td>Six-level tier enum (<code>docs/architecture-runtime.md:299-310</code>)</td>
+<td><code>models/router.py:33-44</code> TIER_0..TIER_5</td>
+<td>Agrees; <code>agent_resolver._infer_tier</code> also parses <code>tier4_</code>/<code>tier5_</code> (<code>engine/agent_resolver.py:644-660</code>)</td>
+</tr>
+<tr>
+<td>"8 Pydantic models -&gt; 8 JSON Schemas -&gt; 8 <code>.generated.ts</code>" (<code>.claude/rules/portfolio-context.md</code>)</td>
+<td>8 <code>*.generated.ts</code> in <code>ui/src/api/</code> (chat_request, chat_stream_event, dag_response, events, runs_summary, step_result, workflow_editor_step, workflow_input_schema)</td>
+<td>Agrees</td>
+</tr>
+<tr>
+<td><code>docs/ARCHITECTURE.md</code>: dashboard "imports generated TypeScript rather than maintaining a separate handwritten copy"</td>
+<td><code>docs/KNOWN_LIMITATIONS.md</code> 1.1: only eight shapes generated/gated; other payloads manually mirrored in <code>ui/src/api/types.ts</code></td>
+<td><strong>Docs disagree with each other</strong>; ARCHITECTURE overstates, KNOWN_LIMITATIONS is accurate</td>
+</tr>
+<tr>
+<td><code>.claude/rules/portfolio-context.md</code>: "<code>ci.yml</code> defines 17 blocking jobs"</td>
+<td><code>meta_inventory.json</code> lists 20 job ids in <code>.github/workflows/ci.yml</code>: python-smoke, frontend-build, frontend-test, lint, suppression-ratchet, typecheck-core-contracts, test-coverage, claude-subscription-tests, ek-delegation-tests, evalkit-bridge-tests, wire-format-drift, e2e-streaming, no-llm-smoke, validate-workflows, check-doc-drift, doc-stats-drift, pydocstyle, lockfile-constraints, dockerfile-constraints, tools-tests</td>
+<td><strong>Stale count</strong> (how many are "blocking" is unverified)</td>
+</tr>
+<tr>
+<td>Workspace <code>&lt;workspace&gt;/CLAUDE.md</code> s.7: EK and EVK pinned <code>&gt;=0.3.0,&lt;0.4.0</code></td>
+<td><code>agentic-workflows-v2/pyproject.toml</code>: <code>ek = executionkit&gt;=0.4.0,&lt;0.5.0</code>, <code>eval = agentic-evalkit&gt;=0.4.1,&lt;0.5.0</code></td>
+<td><strong>Workspace CLAUDE.md stale</strong> (outside the repo)</td>
+</tr>
+<tr>
+<td>ADR-031 title "native DAG single engine"</td>
+<td>Status Superseded; header says proposal <strong>not adopted</strong>, LangGraph adapter retained</td>
+<td>Filename misleading; dual-engine is current (ADR-001, ADR-020, ADR-062)</td>
+</tr>
+<tr>
+<td><code>docs/ARCHITECTURE.md</code>: runtime scoring and <code>agentic-v2-eval</code> need not import each other</td>
+<td><code>scoring/evalkit_bridge.py</code> couples runtime scoring to external <code>agentic-evalkit</code> (extra <code>eval</code>, ADR-042)</td>
+<td>Not a contradiction, but ARCHITECTURE omits the evalkit bridge</td>
+</tr>
+<tr>
+<td>Native engine "dependency-light"</td>
+<td><code>server/lifespan.py:73-83</code>: default adapter is <code>langchain</code>; without the <code>langchain</code> extra the server warns and tells you to set <code>AGENTIC_DEFAULT_ADAPTER=native</code></td>
+<td>Matches ADR-020; the default is not the lightweight engine</td>
+</tr>
+<tr>
+<td>Engines interchangeable "for compatible workflows"</td>
+<td><code>workflows/definitions/plan_tribunal.yaml</code> header: native ignores <code>model_override</code> and lacks <code>search_files</code>/<code>web_search</code></td>
+<td>Engines are not behaviourally equivalent; ARCHITECTURE says to check support (agrees)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="13-package-and-workspace-structure">1.3 Package and workspace structure<a class="headerlink" href="#13-package-and-workspace-structure" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Unit</th>
+<th>Path</th>
+<th>Name / version</th>
+<th>Role</th>
+<th>Depends on</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Workspace root</td>
+<td><code>pyproject.toml</code></td>
+<td><code>agentic-tools</code> 0.1.0 (hatchling wheel <code>packages = ["tools"]</code>)</td>
+<td>Shared utilities (<code>tools/</code>); owns <code>[tool.uv.workspace]</code></td>
+<td>pyyaml, aiohttp, pydantic, langchain-core, anthropic, openai, numpy</td>
+</tr>
+<tr>
+<td>Runtime</td>
+<td><code>agentic-workflows-v2/</code></td>
+<td><code>agentic-workflows-v2</code> 0.1.0</td>
+<td>Engine, agents, models, CLI (<code>agentic</code>), FastAPI server</td>
+<td>pydantic, httpx, ollama, jinja2, jmespath, typer, rich, ... + <code>agentic-tools</code></td>
+</tr>
+<tr>
+<td>Eval</td>
+<td><code>agentic-v2-eval/</code></td>
+<td><code>agentic-v2-eval</code> 0.3.0</td>
+<td>Offline rubric/evaluator/runner/reporter package (<code>src/</code>: adapters, evaluators, metrics, reporters, rubrics, runners, sandbox); console script <code>agentic-v2-eval</code></td>
+<td>pyyaml, <code>agentic-tools</code></td>
+</tr>
+<tr>
+<td>UI</td>
+<td><code>agentic-workflows-v2/ui/</code></td>
+<td><code>agentic-workflows-ui</code> 0.1.0 (private, ESM)</td>
+<td>React dashboard</td>
+<td>see 1.4</td>
+</tr>
+<tr>
+<td>Root npm stub</td>
+<td><code>package.json</code></td>
+<td><code>agentic-runtime-platform</code></td>
+<td>Only <code>@playwright/test</code>; <code>npm test</code> deliberately errors</td>
+<td>none</td>
+</tr>
+<tr>
+<td>Formal proofs</td>
+<td><code>proofs/</code></td>
+<td>Lake package, Lean 4.34.0 core only</td>
+<td>Scheduler model, proofs, replay executable</td>
+<td>no Mathlib/Batteries</td>
+</tr>
+<tr>
+<td>Other trees</td>
+<td><code>datasets/</code>, <code>examples/</code>, <code>infra/</code>, <code>load/</code>, <code>otel/</code>, <code>scripts/</code>, <code>tests/e2e</code>, <code>.devcontainer/</code>, <code>.github/</code></td>
+<td>-</td>
+<td>Data, demos, deploy, k6 load harness, OTel collector config</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<p>Relationships:
+- uv workspace members are the runtime and eval packages only; the root project (<code>agentic-tools</code>) owns <code>tools/</code> itself (comment in root <code>pyproject.toml</code>). <code>ci-constraints.txt</code> is generated from <code>uv.lock</code>; every pip install is pinned to it (<code>.claude/rules/portfolio-context.md</code>).
+- Both Python packages depend on installed <code>agentic-tools</code>; <code>docs/ARCHITECTURE.md</code> forbids path hacks into <code>tools/</code>. <code>.claude/rules/portfolio-context.md</code> states there are zero cross-imports between the two workspace packages.
+- Pydantic (<code>agentic_v2/contracts/</code>, <code>server/models.py</code>) -&gt; committed JSON Schemas (<code>agentic-workflows-v2/tests/schemas/</code>) -&gt; <code>ui/src/api/*.generated.ts</code> via <code>python -m scripts.generate_ts_types</code> then <code>npm run generate:types</code>; CI job <code>wire-format-drift</code> enforces (ADR-014).</p>
+<h4 id="cross-repo-and-optional-backend-dependencies">Cross-repo and optional-backend dependencies<a class="headerlink" href="#cross-repo-and-optional-backend-dependencies" title="Permanent link">¶</a></h4>
+<table>
+<thead>
+<tr>
+<th>Dependency</th>
+<th>Mechanism</th>
+<th>Pin at this revision</th>
+<th>Coupling</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>executionkit (EK)</td>
+<td>Extra <code>ek</code></td>
+<td><code>executionkit&gt;=0.4.0,&lt;0.5.0</code></td>
+<td>Guarded imports, falls back to native loop: <code>engine/ek_step_delegation.py</code> (510 lines), <code>models/ek_provider.py</code>, <code>models/ek_adapters.py</code>. Only CI job <code>ek-delegation-tests</code> installs the extra. Workspace notes say it imports the private <code>executionkit.patterns.base._TrackedProvider</code> (not re-verified here)</td>
+<td><code>agentic-workflows-v2/pyproject.toml</code>; ADR-023; <code>.claude/rules/portfolio-context.md</code></td>
+</tr>
+<tr>
+<td>agentic-evalkit (EVK)</td>
+<td>Extra <code>eval</code></td>
+<td><code>agentic-evalkit&gt;=0.4.1,&lt;0.5.0</code></td>
+<td><code>scoring/evalkit_bridge.py</code>; CI job <code>evalkit-bridge-tests</code></td>
+<td><code>agentic-workflows-v2/pyproject.toml</code>; ADR-042</td>
+</tr>
+<tr>
+<td>Claude backends</td>
+<td>Extra <code>claude</code></td>
+<td><code>anthropic&gt;=0.40,&lt;2</code>, <code>claude-agent-sdk&gt;=0.1,&lt;1</code></td>
+<td><code>models/backends_claude.py</code>, <code>agents/implementations/claude_*</code>; CI job <code>claude-subscription-tests</code></td>
+<td>ADR-058</td>
+</tr>
+</tbody>
+</table>
+<h3 id="14-technologies">1.4 Technologies<a class="headerlink" href="#14-technologies" title="Permanent link">¶</a></h3>
+<p>Versions are declared constraints (pyproject / package.json), not installed versions. "Extra" = optional-dependency group in <code>agentic-workflows-v2/pyproject.toml</code>.</p>
+<h4 id="python-backend">Python backend<a class="headerlink" href="#python-backend" title="Permanent link">¶</a></h4>
+<table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Technology</th>
+<th>Constraint</th>
+<th>Used for / where</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Web</td>
+<td>FastAPI (extra <code>server</code>)</td>
+<td><code>&gt;=0.100,&lt;1</code></td>
+<td>App factory <code>server/app.py</code>, routers <code>server/routes/</code></td>
+</tr>
+<tr>
+<td>Web</td>
+<td>uvicorn[standard]</td>
+<td><code>&gt;=0.23,&lt;1</code></td>
+<td>ASGI server</td>
+</tr>
+<tr>
+<td>Web</td>
+<td>python-multipart</td>
+<td><code>&gt;=0.0.31,&lt;1</code></td>
+<td>Form/upload parsing</td>
+</tr>
+<tr>
+<td>Web</td>
+<td>slowapi</td>
+<td><code>&gt;=0.1.9,&lt;1</code></td>
+<td>Rate limiting, <code>server/middleware/rate_limit.py</code> (ADR-018)</td>
+</tr>
+<tr>
+<td>Web/Auth</td>
+<td>pyjwt[crypto]</td>
+<td><code>&gt;=2.13,&lt;3</code></td>
+<td>JWT/OIDC, <code>server/auth_oidc.py</code> (ADR-021)</td>
+</tr>
+<tr>
+<td>Web</td>
+<td>websockets (extra <code>mcp</code>)</td>
+<td><code>&gt;=12.0,&lt;18</code></td>
+<td>MCP WebSocket transport, <code>integrations/mcp/transports/</code></td>
+</tr>
+<tr>
+<td>HTTP</td>
+<td>httpx</td>
+<td><code>&gt;=0.25,&lt;1</code></td>
+<td>Provider/HTTP clients</td>
+</tr>
+<tr>
+<td>HTTP</td>
+<td>aiohttp</td>
+<td><code>&gt;=3.14.3,&lt;4</code></td>
+<td>Async HTTP (runtime and root)</td>
+</tr>
+<tr>
+<td>HTTP</td>
+<td>aiofiles</td>
+<td><code>&gt;=23.0,&lt;26</code></td>
+<td>Async file IO</td>
+</tr>
+<tr>
+<td>LLM/providers</td>
+<td>ollama</td>
+<td><code>&gt;=0.5.1,&lt;1</code></td>
+<td>Ollama SDK backend (ADR-036)</td>
+</tr>
+<tr>
+<td>LLM/providers</td>
+<td>anthropic</td>
+<td><code>&gt;=1.8.0,&lt;2</code> (root); <code>&gt;=0.40,&lt;2</code> (extra <code>claude</code>)</td>
+<td>Anthropic client</td>
+</tr>
+<tr>
+<td>LLM/providers</td>
+<td>openai</td>
+<td><code>&gt;=3.19.2,&lt;4</code> (root)</td>
+<td>OpenAI-compatible clients</td>
+</tr>
+<tr>
+<td>LLM/providers</td>
+<td>claude-agent-sdk</td>
+<td><code>&gt;=0.1,&lt;1</code> (extra <code>claude</code>)</td>
+<td>Claude subscription backend (ADR-058)</td>
+</tr>
+<tr>
+<td>Orchestration</td>
+<td>langchain, langchain-core</td>
+<td><code>&gt;=1.3.9,&lt;2</code>, <code>&gt;=1.3,&lt;2</code> (root core <code>&gt;=1.6.5,&lt;2</code>)</td>
+<td>LangGraph adapter, <code>agentic_v2/langchain/</code></td>
+</tr>
+<tr>
+<td>Orchestration</td>
+<td>langgraph</td>
+<td><code>&gt;=1.2,&lt;2</code></td>
+<td><code>StateGraph</code> execution</td>
+</tr>
+<tr>
+<td>Orchestration</td>
+<td>langgraph-checkpoint, -sqlite, -postgres</td>
+<td><code>&gt;=4.0.3,&lt;5</code>, <code>&gt;=3.1.1,&lt;4</code>, <code>&gt;=3.1.1,&lt;4</code></td>
+<td>Checkpointing (extras <code>langchain</code>, <code>postgres</code>)</td>
+</tr>
+<tr>
+<td>Orchestration</td>
+<td>langchain-openai / -anthropic / -google-genai / -mistralai / -ollama</td>
+<td><code>&gt;=1.2</code>, <code>&gt;=1.4.6</code>, <code>&gt;=4.2</code>, <code>&gt;=1.1</code>, <code>&gt;=1.1</code></td>
+<td><code>langchain/model_builders.py</code></td>
+</tr>
+<tr>
+<td>Orchestration</td>
+<td>langsmith</td>
+<td><code>&gt;=0.8.18,&lt;1</code></td>
+<td>LangChain tracing hooks</td>
+</tr>
+<tr>
+<td>Orchestration</td>
+<td>executionkit</td>
+<td><code>&gt;=0.4.0,&lt;0.5.0</code> (extra <code>ek</code>)</td>
+<td>Step delegation</td>
+</tr>
+<tr>
+<td>Data/validation</td>
+<td>pydantic, pydantic-settings</td>
+<td><code>&gt;=2.0,&lt;3</code>, <code>&gt;=2.14.2,&lt;3</code></td>
+<td>Contracts, settings (<code>settings.py</code>)</td>
+</tr>
+<tr>
+<td>Data/validation</td>
+<td>pyyaml</td>
+<td><code>&gt;=6.0,&lt;7</code></td>
+<td>Workflow YAML</td>
+</tr>
+<tr>
+<td>Data/validation</td>
+<td>jinja2, jmespath</td>
+<td><code>&gt;=3.0,&lt;4</code>, <code>&gt;=1.0,&lt;2</code></td>
+<td>Templating, JSON querying</td>
+</tr>
+<tr>
+<td>Data/validation</td>
+<td>cachetools, filelock</td>
+<td><code>&gt;=5.0,&lt;8</code>, <code>&gt;=3.0,&lt;5</code></td>
+<td>Caching; file-lock shared breaker state</td>
+</tr>
+<tr>
+<td>Data/validation</td>
+<td>numpy</td>
+<td><code>&gt;=2.4.6,&lt;3</code> (root)</td>
+<td>Shared tools</td>
+</tr>
+<tr>
+<td>Data/validation</td>
+<td>pandas</td>
+<td><code>&gt;=3.0.5,&lt;4</code> (extra <code>swe-ab</code>)</td>
+<td>SWE A/B evals</td>
+</tr>
+<tr>
+<td>CLI</td>
+<td>typer, rich, python-json-logger</td>
+<td><code>&gt;=0.9,&lt;1</code>, <code>&gt;=13,&lt;16</code>, <code>&gt;=3,&lt;5</code></td>
+<td><code>agentic</code> CLI, display, JSON logs</td>
+</tr>
+<tr>
+<td>Observability</td>
+<td>opentelemetry-sdk + OTLP grpc/http exporters</td>
+<td><code>&gt;=1.20,&lt;2</code> (extra <code>tracing</code>)</td>
+<td><code>integrations/otel.py</code></td>
+</tr>
+<tr>
+<td>Observability</td>
+<td>opentelemetry-exporter-prometheus, prometheus-client</td>
+<td><code>&gt;=0.48b0,&lt;1</code>, <code>&gt;=0.17,&lt;1</code></td>
+<td><code>integrations/metrics.py</code></td>
+</tr>
+<tr>
+<td>Storage</td>
+<td>redis[hiredis] (extra <code>redis</code>)</td>
+<td><code>&gt;=5.0,&lt;9</code></td>
+<td>Breaker CAS state (<code>models/redis_state.py</code>), replay store</td>
+</tr>
+<tr>
+<td>Storage</td>
+<td>aiosqlite (extra <code>sqlite</code>)</td>
+<td><code>&gt;=0.19,&lt;1</code></td>
+<td>SQLite replay/checkpoints</td>
+</tr>
+<tr>
+<td>Storage</td>
+<td>psycopg[binary] (extra <code>postgres</code>)</td>
+<td><code>&gt;=3.1,&lt;4</code></td>
+<td>PostgreSQL checkpoints</td>
+</tr>
+<tr>
+<td>Storage</td>
+<td>vector store</td>
+<td>none</td>
+<td>RAG package removed (ADR-057); no <code>rag</code> extra at this revision</td>
+</tr>
+<tr>
+<td>Dev tooling</td>
+<td>psutil (extra <code>devex</code>)</td>
+<td><code>&gt;=6.0</code></td>
+<td><code>agentic_v2/devex/</code></td>
+</tr>
+<tr>
+<td>Testing</td>
+<td>pytest, pytest-asyncio, -cov, -mock, -timeout</td>
+<td>runtime dev <code>&gt;=7</code>, <code>&gt;=0.21</code>, <code>&gt;=4</code>, <code>&gt;=3.12</code>, <code>&gt;=2.2</code>; root dev pytest <code>&gt;=9.1.1</code>, asyncio <code>&gt;=1.4.0</code></td>
+<td><code>agentic-workflows-v2/tests</code>, <code>agentic-v2-eval/tests</code>, <code>tests/e2e</code>, <code>tools/tests</code></td>
+</tr>
+<tr>
+<td>Testing</td>
+<td>hypothesis, fakeredis[lua], jsonschema</td>
+<td><code>&gt;=6,&lt;7</code>, <code>&gt;=2.21,&lt;3</code>, <code>&gt;=4.18</code></td>
+<td>Property tests; Redis/Lua CAS tests; schema checks</td>
+</tr>
+<tr>
+<td>Lint/type</td>
+<td>ruff</td>
+<td><code>&gt;=0.16.10</code> (root dev)</td>
+<td>Rules <code>E,F,W,I,N,UP,S,B,A,C4,SIM,TCH,RUF</code>, line length 88 (<code>.claude/rules/ci.md</code>)</td>
+</tr>
+<tr>
+<td>Lint/type</td>
+<td>black, mypy, pydocstyle, pre-commit</td>
+<td><code>&gt;=26.5.1</code>, <code>&gt;=2.4.0</code>, <code>&gt;=6.3</code>, <code>&gt;=4.6.2</code> (root dev)</td>
+<td>mypy strict on <code>engine</code> + <code>contracts</code> + eval src</td>
+</tr>
+<tr>
+<td>Build</td>
+<td>hatchling; uv (<code>uv.lock</code>, CI pins <code>uv==0.11.2</code>)</td>
+<td>-</td>
+<td>Wheels, workspace, constraints export</td>
+</tr>
+</tbody>
+</table>
+<h4 id="frontend-agentic-workflows-v2uipackagejson">Frontend (<code>agentic-workflows-v2/ui/package.json</code>)<a class="headerlink" href="#frontend-agentic-workflows-v2uipackagejson" title="Permanent link">¶</a></h4>
+<table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Technology</th>
+<th>Constraint</th>
+<th>Used for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Framework</td>
+<td>react, react-dom</td>
+<td><code>^19.3.0</code></td>
+<td>UI</td>
+</tr>
+<tr>
+<td>Routing/data</td>
+<td>react-router-dom, @tanstack/react-query</td>
+<td><code>^7.18.4</code>, <code>^5.104.1</code></td>
+<td>Routing, server state</td>
+</tr>
+<tr>
+<td>Graph</td>
+<td>@xyflow/react</td>
+<td><code>^12.12.0</code></td>
+<td>DAG visualisation/editor</td>
+</tr>
+<tr>
+<td>UI kit</td>
+<td>radix-ui, cmdk, sonner, lucide-react, react-resizable-panels, @dnd-kit/core</td>
+<td><code>^1.7.0</code>, <code>^1.1.1</code>, <code>^2.0.8</code>, <code>^1.54.0</code>, <code>^4.14.3</code>, <code>^6.3.1</code></td>
+<td>Components, command palette, toasts, icons, panes, drag-drop</td>
+</tr>
+<tr>
+<td>Styling</td>
+<td>tailwindcss + @tailwindcss/postcss, postcss, class-variance-authority, clsx, tailwind-merge, @fontsource-variable/geist</td>
+<td><code>^4.3.3</code>, <code>^8.5.29</code>, <code>^0.7.1</code>, <code>^2.1.1</code>, <code>^3.7.0</code>, <code>^5.3.0</code></td>
+<td>Evidence Ledger tokens (<code>DESIGN.md</code>, <code>ui/src/styles/tokens.css</code>)</td>
+</tr>
+<tr>
+<td>Telemetry</td>
+<td>@opentelemetry/api, sdk-trace-web, exporter-trace-otlp-http, instrumentation-fetch</td>
+<td><code>^1.9.0</code>, <code>^2.12.0</code>, <code>^0.223.0</code></td>
+<td>Browser tracing (<code>ui/src/telemetry/</code>)</td>
+</tr>
+<tr>
+<td>Build</td>
+<td>vite, @vitejs/plugin-react, typescript</td>
+<td><code>^8.3.4</code>, <code>^6.1.2</code>, <code>^7.0.2</code></td>
+<td><code>tsc -b &amp;&amp; vite build</code></td>
+</tr>
+<tr>
+<td>Codegen</td>
+<td>json-schema-to-typescript</td>
+<td><code>^16.0.0</code></td>
+<td><code>ui/scripts/generate-ts-types.mjs</code></td>
+</tr>
+<tr>
+<td>Testing</td>
+<td>vitest, @vitest/coverage-v8, jsdom, @testing-library/react + jest-dom, @playwright/test</td>
+<td><code>^5.0.1</code>, <code>^5.0.3</code>, <code>^30.1.2</code>, <code>^16.3.3</code>, <code>^7.0.1</code>, <code>^1.64.0</code></td>
+<td>Unit/coverage (floors in <code>ui/vitest.config.ts</code>), E2E streaming</td>
+</tr>
+</tbody>
+</table>
+<h4 id="build-ci-ops-formal-methods">Build, CI, ops, formal methods<a class="headerlink" href="#build-ci-ops-formal-methods" title="Permanent link">¶</a></h4>
+<table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Technology</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Task runner</td>
+<td><code>just</code> (PowerShell shell)</td>
+<td><code>justfile</code>: <code>setup</code>, <code>test</code>, <code>docs</code>, <code>relock</code></td>
+</tr>
+<tr>
+<td>Containers</td>
+<td>Docker, Compose, devcontainer</td>
+<td><code>Dockerfile</code>, <code>Dockerfile.ui</code>, <code>docker-compose.yml</code>, <code>.devcontainer/</code></td>
+</tr>
+<tr>
+<td>CI</td>
+<td>GitHub Actions, 18 workflow files: ci, codeql, dependabot-auto-merge, dependabot-relock, dependency-audit, dependency-drift-check, dependency-review, deploy, devcontainer-validate, docs, eval-package-ci, infra-deploy, lean-proofs, load-report-pages, nightly, sbom, upstream-compatibility, windows-workflows-ci</td>
+<td><code>.github/workflows/</code> (<code>meta_inventory.json</code> <code>ci</code>)</td>
+</tr>
+<tr>
+<td>Quality/security</td>
+<td>pre-commit (black, isort, ruff, docformatter, detect-secrets), CodeQL, SonarQube, SBOM, dependency review</td>
+<td><code>.pre-commit-config.yaml</code>, <code>.secrets.baseline</code>, <code>sonar-project.properties</code>, <code>docs/SUPPLY_CHAIN.md</code></td>
+</tr>
+<tr>
+<td>Docs</td>
+<td>MkDocs</td>
+<td><code>mkdocs.yml</code>, <code>docs/</code></td>
+</tr>
+<tr>
+<td>Load</td>
+<td>k6 + Docker</td>
+<td><code>load/</code>, <code>docs/load-report.md</code>, <code>docs/flagship.md</code></td>
+</tr>
+<tr>
+<td>IaC</td>
+<td><code>infra/</code> deployed via <code>infra-deploy.yml</code></td>
+<td>contents not inspected</td>
+</tr>
+<tr>
+<td>Formal methods</td>
+<td>Lean 4.34.0 + Lake, <code>leanchecker</code>, axiom audit</td>
+<td><code>proofs/</code>, <code>.github/workflows/lean-proofs.yml</code></td>
+</tr>
+<tr>
+<td>Toolchain</td>
+<td>Python 3.11, Node 20+</td>
+<td><code>.python-version</code>, <code>.nvmrc</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="15-theories-concepts-and-patterns-implemented">1.5 Theories, concepts and patterns implemented<a class="headerlink" href="#15-theories-concepts-and-patterns-implemented" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Concept</th>
+<th>What it is</th>
+<th>Where implemented</th>
+<th>ADR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Kahn's topological DAG execution</td>
+<td>Track per-step in-degree at runtime; launch every zero-in-degree step concurrently (wavefront); unlock dependents on completion</td>
+<td><code>engine/dag.py</code> (<code>DAG</code>, topological order, validate), <code>engine/dag_executor.py</code> (<code>_schedule_ready_steps</code>, <code>_unlock_downstream</code>, <code>_scheduling_loop</code>)</td>
+<td>ADR-001/002/003, ADR-019</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Cascade skip / honest status</td>
+<td>Failed step's transitive dependents are SKIPPED with a reason; run is SUCCESS only if nothing failed or was dropped</td>
+<td><code>engine/dag_executor.py</code> (<code>_cascade_skip</code>, <code>_mark_skipped</code>), <code>agents/orchestrator.py</code></td>
+<td>ADR-060</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Formal verification of the scheduler</td>
+<td>Lean 4 model of <code>DAGExecutor</code> proves safety, no duplicates / bounded parallelism, completeness, honest status over every legal completion order; a replay test ties model to code on sampled schedules (not a proof of the Python)</td>
+<td><code>proofs/Scheduler.lean</code>, <code>proofs/Scheduler/</code>, <code>proofs/Main.lean</code>, <code>tests/engine/test_dag_executor_lean_replay.py</code> (named in <code>proofs/README.md</code>, not opened)</td>
+<td>ADR-060</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Engine swap behind a Protocol seam</td>
+<td>Structural <code>typing.Protocol</code> contracts + thread-safe registry</td>
+<td><code>core/protocols.py</code>, <code>adapters/registry.py</code></td>
+<td>ADR-001, ADR-020; ADR-031 (single-engine, not adopted)</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Join-once semantics for superstep engines</td>
+<td>Each step runs once after all deps even on LangGraph</td>
+<td><code>langchain/graph_wiring.py</code> (<code>wire_graph_edges</code>, <code>wire_dependency_edges</code>, <code>build_loop_exit_map</code>, <code>add_loop_edge</code>)</td>
+<td>ADR-062</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Capability-tier routing</td>
+<td>Steps request tier 0 (deterministic) to 5 (premium cloud); router resolves via per-tier fallback chains from a curated registry</td>
+<td><code>models/router.py</code> (<code>ModelTier</code>, <code>register_chain</code>, <code>DEFAULT_CHAINS</code>), <code>models/smart_router.py</code>, <code>models/model_registry.py</code></td>
+<td>ADR-040, ADR-059, ADR-051</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Three-state circuit breaker</td>
+<td>CLOSED / OPEN / HALF_OPEN per provider with single-probe lock; <code>CircuitResolvedError</code> when a prior probe already resolved the circuit</td>
+<td><code>models/smart_router.py</code> (<code>execute_with_bulkhead</code>, ~lines 814-1016), <code>models/model_stats.py</code></td>
+<td>ADR-001/002/003 (ADR-002A)</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Bulkheads</td>
+<td>Per-provider semaphores prevent cascade failure</td>
+<td><code>models/smart_router.py:190,256</code></td>
+<td>ADR-002A</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Shared breaker state via compare-and-swap</td>
+<td>Lua-script atomic CAS in Redis keeps counters exact under concurrent writers; evidence is a k6 run plus an exact-sum worker test</td>
+<td><code>models/redis_state.py</code>, <code>docs/flagship.md</code>, <code>load/</code></td>
+<td>no dedicated ADR found (unverified)</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Health, cooldown, rate-limit awareness</td>
+<td>Honour retry guidance, cooldowns, HTTP-status error classification</td>
+<td><code>models/smart_router.py</code> (<code>CooldownConfig</code>), <code>models/rate_limit_tracker.py</code>, <code>models/retry_utils.py</code></td>
+<td>none</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Majority-vote consensus / self-consistency</td>
+<td>Same prompt N times, deterministic tier-0 vote, <code>min_agreement</code> threshold</td>
+<td><code>engine/consensus.py</code> (<code>majority_vote</code>, <code>self_consistency</code>), <code>engine/agent_resolver.py:309</code> (<code>tier0_consensus</code>), <code>workflows/definitions/consensus_review.yaml</code></td>
+<td>ADR-023 (EK relationship)</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Plan tribunal (multi-judge panel)</td>
+<td>Five persona judges, two-stage deterministic vote, dissent recorded, split ruling never presented as a decision</td>
+<td><code>workflows/definitions/plan_tribunal.yaml</code></td>
+<td>none found</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Bounded iterative review loop</td>
+<td><code>loop_until</code> + <code>loop_max</code> review-rework cycles; verification gate/loop for post-step checks</td>
+<td><code>workflows/definitions/iterative_review.yaml</code>, <code>engine/step.py</code>, <code>engine/verification.py</code> (<code>VerificationGate</code>, <code>VerificationLoop</code>)</td>
+<td>ADR-019 for timeout; loop-specific ADR unverified</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Adaptive decomposition / orchestrator</td>
+<td>Orchestrator plans subtasks, validates plan as a DAG, runs with <code>max_parallel</code>, fallback chains, escalation</td>
+<td><code>agents/orchestrator.py</code>, <code>orchestrator_planning.py</code>, <code>orchestrator_models.py</code>, <code>governance/escalation.py</code></td>
+<td>ADR-029, ADR-025, ADR-060</td>
+</tr>
+<tr>
+<td>15</td>
+<td>LLM-as-judge rubric scoring</td>
+<td>Rubric criteria scored by a judge model; multidimensional profiles</td>
+<td><code>scoring/judge.py</code> (<code>LLMJudge</code>, <code>JudgeResponseProvider</code>), <code>scoring/rubrics/</code>, <code>scoring/multidimensional_scoring.py</code>, <code>prompts/judges/</code>, <code>agentic-v2-eval/src/</code></td>
+<td>ADR-009, ADR-010, ADR-032, ADR-044</td>
+</tr>
+<tr>
+<td>16</td>
+<td>Discriminated-union wire format + codegen</td>
+<td>Pydantic <code>Field(discriminator="type")</code> unions -&gt; JSON Schema -&gt; generated TS; CI drift gate</td>
+<td><code>contracts/events.py:181</code>, <code>contracts/chat.py:84,262</code>, <code>ui/scripts/generate-ts-types.mjs</code>, <code>tests/schemas/</code></td>
+<td>ADR-014, ADR-052</td>
+</tr>
+<tr>
+<td>17</td>
+<td>Fail-closed governance (HITL)</td>
+<td>No <code>ApprovalProvider</code> registered =&gt; tool call denied; gate runs before validation at both dispatch points; timeouts</td>
+<td><code>governance/approval.py</code> (<code>AutoDenyProvider</code>, <code>PolicyApprovalProvider</code>, <code>tool_requires_approval</code>), <code>engine/tool_execution.py</code></td>
+<td>ADR-041, ADR-045, ADR-047</td>
+</tr>
+<tr>
+<td>18</td>
+<td>SSRF egress guard</td>
+<td>Block private/loopback/metadata addresses; resolve-and-pin to limit DNS rebinding; residual risk documented</td>
+<td><code>security/url_guard.py</code> (<code>validate_url</code>, <code>validate_url_pinned</code>, <code>check_resolved_address</code>), <code>tools/builtin/http_ops.py</code></td>
+<td>ADR-030; KNOWN_LIMITATIONS 4.4</td>
+</tr>
+<tr>
+<td>19</td>
+<td>AST expression sandbox</td>
+<td><code>when</code> / <code>loop_until</code> parsed via <code>ast.parse(mode="eval")</code> and a whitelist interpreter; no <code>eval()</code></td>
+<td><code>engine/expressions.py:101-132</code>, <code>langchain/expressions.py</code></td>
+<td>ADR-024</td>
+</tr>
+<tr>
+<td>20</td>
+<td>Content sanitization and secret masking</td>
+<td>Detector chain (injection, PII, secrets, unicode); entropy-based masking; JSON-safe masks that do not break parsing</td>
+<td><code>middleware/detectors/</code>, <code>middleware/policy.py</code>, <code>middleware/response_sanitizer.py</code>, <code>contracts/sanitization.py</code></td>
+<td>ADR-046, ADR-061</td>
+</tr>
+<tr>
+<td>21</td>
+<td>AuthN/AuthZ and tenancy</td>
+<td>API key + JWT/OIDC, per-IP auth throttle, client-supplied <code>X-Tenant-ID</code> path scoping (spoofable by default)</td>
+<td><code>server/auth.py</code>, <code>server/auth_oidc.py</code>, <code>core/tenant.py</code>, <code>server/middleware/rate_limit.py</code></td>
+<td>ADR-018, ADR-021, ADR-022; KNOWN_LIMITATIONS 4.1, 4.2, 4.5</td>
+</tr>
+<tr>
+<td>22</td>
+<td>Process-wide token budget</td>
+<td>Global cap on tokens consumed</td>
+<td>grep hits in <code>engine/tool_execution.py</code>, <code>contracts/verification.py</code>, <code>engine/ek_step_delegation.py</code> (exact owner unverified)</td>
+<td>ADR-048</td>
+</tr>
+<tr>
+<td>23</td>
+<td>OpenTelemetry tracing</td>
+<td>Spans per run/step (tracer from <code>integrations/otel.py</code>), server tracing middleware, browser OTel, Prometheus metrics</td>
+<td><code>engine/dag_executor.py:27,610</code>, <code>integrations/otel.py</code>, <code>server/middleware/tracing.py</code>, <code>ui/src/telemetry/</code>, <code>otel/</code></td>
+<td>none</td>
+</tr>
+<tr>
+<td>24</td>
+<td>Deterministic no-LLM mode</td>
+<td><code>AGENTIC_NO_LLM=1</code> swaps model clients for placeholders; <code>tier0_*</code> agents run deterministic handlers; supported credential-free baseline</td>
+<td><code>langchain/model_builders.py:972</code> (<code>PlaceholderChatModel</code>), <code>models/backends.py:37</code>, <code>models/client.py</code> (<code>ERR_NO_LLM_BACKEND</code>), <code>settings.py</code>, <code>docs/NO_LLM_MODE.md</code>, <code>workflows/definitions/test_deterministic.yaml</code></td>
+<td>none</td>
+</tr>
+<tr>
+<td>25</td>
+<td>Tool descriptions as selection mechanism / forced tool choice</td>
+<td>Tool selection steered by description quality and <code>tool_choice</code> forcing</td>
+<td><code>tools/base.py</code>, <code>tools/registry.py</code></td>
+<td>ADR-027, ADR-028</td>
+</tr>
+<tr>
+<td>26</td>
+<td>Step-output parsing unification</td>
+<td>One parser for LLM output so both engines see the same data</td>
+<td><code>engine/llm_output_parsing.py</code> (1015 lines)</td>
+<td>ADR unverified</td>
+</tr>
+<tr>
+<td>27</td>
+<td>Typed step artifacts / path-first IO</td>
+<td>Steps exchange typed artifact contracts; path-first IO is only proposed</td>
+<td><code>workflows/artifact_extractor.py</code></td>
+<td>ADR-052 (Accepted), ADR-034 (<strong>Proposed</strong>)</td>
+</tr>
+<tr>
+<td>28</td>
+<td>Model discovery and pricing annotation</td>
+<td>Live discovery of local/cloud models, curated registry, price labels, weight-integrity checks</td>
+<td><code>models/*_discovery.py</code>, <code>models/price_annotation.py</code>, <code>models/weight_integrity.py</code></td>
+<td>ADR-037, ADR-038, ADR-039, ADR-040</td>
+</tr>
+<tr>
+<td>29</td>
+<td>Prompt versioning registry</td>
+<td>Versioned prompts</td>
+<td><code>prompts/registry.py</code></td>
+<td>ADR-056</td>
+</tr>
+<tr>
+<td>30</td>
+<td>Guarded delegation to ExecutionKit</td>
+<td>Optional step delegation to an external pattern library</td>
+<td><code>engine/ek_step_delegation.py</code></td>
+<td>ADR-023</td>
+</tr>
+<tr>
+<td>31</td>
+<td>Evidence-labelled claims</td>
+<td>Claims graded SOURCE/TEST/RUNTIME/LIVE-VERIFIED, INFERRED, UNVERIFIED</td>
+<td><code>AI_EVIDENCE_STANDARD.md</code>, <code>docs/PROOF_LEDGER.md</code></td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>Removed or superseded concepts (do not expect code): RAG pipeline (ADR-035 Superseded; ADR-057 removed the package); GitHub Models as default E2E LLM (ADR-016 Superseded; service retired upstream 2026-07-30 per <code>docs/architecture-runtime.md:595</code>); single-engine native DAG (ADR-031 Superseded, never adopted). Numbering gaps in <code>docs/adr/</code> (no files for 004-006, 013, 049, 053) are declared intentional in <code>docs/adr/ADR-INDEX.md</code> (the declared list itself was not re-read here).</p>
+<h3 id="16-design-principles-and-constraints">1.6 Design principles and constraints<a class="headerlink" href="#16-design-principles-and-constraints" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Principle / constraint</th>
+<th>Statement</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Steps name tiers, not models</td>
+<td>Workflow structure separate from model selection; router resolves env pins, saved UI settings, availability, health, fallbacks</td>
+<td><code>PRODUCT.md</code>, <code>docs/ARCHITECTURE.md</code></td>
+</tr>
+<tr>
+<td>Fail closed and show why</td>
+<td>Approval-required tools denied without a provider</td>
+<td><code>PRODUCT.md</code>, <code>README.md</code></td>
+</tr>
+<tr>
+<td>Work credential-free</td>
+<td><code>AGENTIC_NO_LLM=1</code> is the supported no-key baseline; never imply a provider is required</td>
+<td><code>PRODUCT.md</code>, <code>.claude/rules/ci.md</code></td>
+</tr>
+<tr>
+<td>Legible run state before pretty</td>
+<td>Operator must see what ran, what failed, why</td>
+<td><code>PRODUCT.md</code></td>
+</tr>
+<tr>
+<td>Do not overclaim maturity</td>
+<td>Link limitations; no testimonials or hosted-service claims</td>
+<td><code>PRODUCT.md</code>, <code>docs/KNOWN_LIMITATIONS.md</code></td>
+</tr>
+<tr>
+<td>Evidence over assertion</td>
+<td>Cite active call path; mock/no-LLM tests are not live-provider evidence; missing evidence is UNVERIFIED not a defect; date live/perf claims; prefer behaviour over test counts</td>
+<td><code>AI_EVIDENCE_STANDARD.md</code> (10 rules)</td>
+</tr>
+<tr>
+<td>Smallest coherent change, reuse infra</td>
+<td>One concern per PR; reuse <code>SmartModelRouter</code>, <code>ExecutionContext</code>, <code>ConversationMemory</code>, MCP client stack, error-classification helpers</td>
+<td><code>CLAUDE.md</code></td>
+</tr>
+<tr>
+<td>Secrets only via env / <code>.env.example</code></td>
+<td>Never read/edit/commit <code>.env</code></td>
+<td><code>CLAUDE.md</code></td>
+</tr>
+<tr>
+<td>Package boundaries intact</td>
+<td>Runtime, eval, tools, UI each own their area; no path hacks into <code>tools/</code></td>
+<td><code>CONTRIBUTING.md</code>, <code>docs/ARCHITECTURE.md</code></td>
+</tr>
+<tr>
+<td>Generated files preserved unless contract changed</td>
+<td>Contract change =&gt; regenerate schemas + TS and commit</td>
+<td><code>CONTRIBUTING.md</code>, <code>.claude/rules/ci.md</code></td>
+</tr>
+<tr>
+<td>Automated-evidence gates (solo, AI-assisted)</td>
+<td>AI-generated code is untrusted input; ruff + mypy + tests + docs + pre-commit green</td>
+<td><code>.claude/rules/ci.md</code></td>
+</tr>
+<tr>
+<td>Coverage gate</td>
+<td>80% over <code>agentic_v2</code> configured subset, <code>precision = 2</code>; UI vitest floors (branches &gt;=56 ratchet, others &gt;=60)</td>
+<td><code>.claude/rules/ci.md</code>, <code>ui/vitest.config.ts</code></td>
+</tr>
+<tr>
+<td>Suppression ratchet</td>
+<td>A new ruff <code>ignore</code>, per-file-ignore, or mypy <code>ignore_errors</code> fails CI</td>
+<td><code>.claude/rules/portfolio-context.md</code> (<code>scripts/check_suppression_ratchet.py</code>)</td>
+</tr>
+<tr>
+<td>Style</td>
+<td>Black 88, Ruff, typed public interfaces; snake_case modules, PascalCase classes/components, UPPER_CASE constants</td>
+<td><code>CONTRIBUTING.md</code></td>
+</tr>
+<tr>
+<td>ADR required for boundary changes</td>
+<td>Wire format; engine/provider/storage backend; auth, approval, path containment, egress; new patterns</td>
+<td><code>CONTRIBUTING.md</code> "Write an ADR"</td>
+</tr>
+<tr>
+<td>ADRs immutable</td>
+<td>Do not rewrite accepted ADRs; supersede and update <code>ADR-INDEX.md</code></td>
+<td><code>docs/ARCHITECTURE.md</code></td>
+</tr>
+<tr>
+<td>Conventional commits</td>
+<td><code>type(scope): subject</code>; scope = subsystem</td>
+<td><code>.claude/rules/ci.md</code>, <code>CONTRIBUTING.md</code></td>
+</tr>
+<tr>
+<td>Changelog</td>
+<td>User-visible changes under <code>Unreleased</code></td>
+<td><code>CONTRIBUTING.md</code></td>
+</tr>
+<tr>
+<td>UI design system "Evidence Ledger"</td>
+<td>Warm paper neutrals, one vermilion accent (<code>#ef5a36</code>), hairline borders over shadows, radii 2/4/8px, Georgia display + Geist body + mono for ids; <code>ui/src/styles/tokens.css</code> is authoritative over <code>DESIGN.md</code></td>
+<td><code>DESIGN.md</code>, ADR-054</td>
+</tr>
+<tr>
+<td>Windows supported</td>
+<td>cp1252 console gotchas, UTF-8 env vars</td>
+<td><code>docs/KNOWN_LIMITATIONS.md</code> 3.2, <code>.claude/rules/portfolio-context.md</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="known-limitations-that-bound-the-architecture-docsknown_limitationsmd">Known limitations that bound the architecture (<code>docs/KNOWN_LIMITATIONS.md</code>)<a class="headerlink" href="#known-limitations-that-bound-the-architecture-docsknown_limitationsmd" title="Permanent link">¶</a></h4>
+<table>
+<thead>
+<tr>
+<th>Ref</th>
+<th>Limitation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.1</td>
+<td>Wire format generated for 8 shapes only; others manually mirrored</td>
+</tr>
+<tr>
+<td>1.2</td>
+<td>80% coverage gate scopes out optional provider/plugin modules (<code>[tool.coverage.run] omit</code>)</td>
+</tr>
+<tr>
+<td>2.1</td>
+<td>LangChain adapter needs a separate extras install</td>
+</tr>
+<tr>
+<td>3.1</td>
+<td>Blocking CI does not prove live provider behaviour</td>
+</tr>
+<tr>
+<td>4.1, 4.2</td>
+<td>Rate limiting and auth throttle are in-process only (multi-replica caveat)</td>
+</tr>
+<tr>
+<td>4.3</td>
+<td>Human approval gates are programmatic only; no UI pause/resume yet</td>
+</tr>
+<tr>
+<td>4.4</td>
+<td>SSRF guard cannot fully close DNS rebinding without network-layer egress control</td>
+</tr>
+<tr>
+<td>4.5</td>
+<td><code>X-Tenant-ID</code> is client-supplied and spoofable by default</td>
+</tr>
+<tr>
+<td>4.12-4.14</td>
+<td>Model inventory command fails from repo root; <code>onnx:</code> IDs unusable for exact-model chat; strict weight verification not wired into every loader</td>
+</tr>
+<tr>
+<td>4.15</td>
+<td>Eleven <code>tools/tests</code> cases assert a removed API; <code>ci.yml</code> now lists a <code>tools-tests</code> job, so whether this is still current is unverified</td>
+</tr>
+</tbody>
+</table>
+<aside class="md-source-file">
+<span class="md-source-file__fact">
+<span class="md-icon" title="Last update">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
+</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 15, 2026 00:57:08 UTC">October 15, 2026</span>
+</span>
+<span class="md-source-file__fact">
+<span class="md-icon" title="Created">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"></path></svg>
+</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 13, 2026 23:11:25 UTC">October 13, 2026</span>
+</span>
+</aside>
+</article>
+</div>
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+</div>
+<button class="md-top md-icon" data-md-component="top" hidden="" type="button">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"></path></svg>
+  Back to top
+</button>
+</main>
+<footer class="md-footer">
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-copyright">
+</div>
+<div class="md-social">
+<a class="md-social__link" href="https://github.com/tafreeman/agentic-runtime-platform" rel="noopener" target="_blank" title="GitHub">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+</a>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<div class="md-dialog" data-md-component="dialog">
+<div class="md-dialog__inner md-typeset"></div>
+</div>
+<script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.instant", "navigation.tracking", "navigation.indexes", "navigation.footer", "toc.follow", "search.highlight", "search.suggest", "search.share", "content.code.copy", "content.code.annotate", "content.tooltips", "content.action.edit", "content.action.view"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": {"Architecture": "architecture", "Evaluation": "evaluation", "Tooling": "tooling", "Workflow": "workflow"}, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+<script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
+<script type="module">import mermaid from "https://unpkg.com/mermaid@10.4.0/dist/mermaid.esm.min.mjs";
+window.mermaidConfig = {default: {
+    startOnLoad: false
+}};</script></body>
+</html>

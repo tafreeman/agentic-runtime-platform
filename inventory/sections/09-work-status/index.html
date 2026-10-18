@@ -1,0 +1,4010 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard.">
+      
+      
+      
+        <link rel="canonical" href="https://tafreeman.github.io/agentic-runtime-platform/inventory/sections/09-work-status/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>09 work status - Agentic Runtime Platform</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=IBM+Plex+Sans:300,300i,400,400i,700,700i%7CIBM+Plex+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"IBM Plex Sans";--md-code-font:"IBM Plex Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/tokens.css">
+    
+      <link rel="stylesheet" href="../../../stylesheets/console.css">
+    
+      <link rel="stylesheet" href="../../../stylesheets/landing.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="09 work status - Agentic Runtime Platform" />
+<meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
+<meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/inventory/sections/09-work-status.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/inventory/sections/09-work-status/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="09 work status - Agentic Runtime Platform" />
+<meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
+<meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/inventory/sections/09-work-status.png" />
+</head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#9-work-status-ongoing-stalled-and-future" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Agentic Runtime Platform" class="md-header__button md-logo" aria-label="Agentic Runtime Platform" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Agentic Runtime Platform
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              09 work status
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/tafreeman/agentic-runtime-platform" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    tafreeman/agentic-runtime-platform
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../getting-started/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Getting started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../ARCHITECTURE/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../deep-dive-server/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Deep dives
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../cli-reference/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  API reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../WORKFLOW_AUTHORING/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Workflows
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../architecture-eval/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Evaluation
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../tools/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tools
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../operations/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../configuration/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../project-overview/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Project
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Agentic Runtime Platform" class="md-nav__button md-logo" aria-label="Agentic Runtime Platform" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Agentic Runtime Platform
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/tafreeman/agentic-runtime-platform" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    tafreeman/agentic-runtime-platform
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../getting-started/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting-started/first-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    First workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../NO_LLM_MODE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    No-LLM dev mode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../ONBOARDING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture-runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runtime engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture-eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation framework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools & providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../integration-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deep dives
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deep dives
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../deep-dive-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server & API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../deep-dive-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../deep-dive-agentic-v2-eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-contracts-runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST endpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../data-models-runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../component-inventory-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI components
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../ui/pages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI pages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../ui/api-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI API integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../workflows/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Workflows
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../WORKFLOW_AUTHORING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../PATTERN_CATALOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pattern catalog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Evaluation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture-eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation framework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../evaluation/rubrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rubrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../evaluation/judge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LLM-as-Judge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../evaluation/gating/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production gating
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../evaluation/runners/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runners
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../evaluation/datasets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Datasets
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../tools/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tools
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools & providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tools/llm-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LLM client
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tools/local-models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local ONNX models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tools/windows-ai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Windows AI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tools/model-probing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model probing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tools/provider-limits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Provider limits
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tools/benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../operations/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Operations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../deployment-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../operations/security-hardening/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../operations/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../GLOSSARY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../CODING_STANDARDS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding standards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../KNOWN_LIMITATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known limitations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../AI_RISK_MANAGEMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI risk management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../MIGRATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migrations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../project-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../adr/ADR-INDEX/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADRs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../DEMO/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#9-work-status-ongoing-stalled-and-future" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Work status — ongoing, stalled, and future
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. Work status — ongoing, stalled, and future">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#90-headline-numbers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.0 Headline numbers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#91-ongoing-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.1 Ongoing work
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#92-stalled-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.2 Stalled work
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#93-cleanup-backlog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.3 Cleanup backlog
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#94-code-level-debt-markers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.4 Code-level debt markers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#95-documented-future-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.5 Documented future work
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#96-cross-repo-follow-ups-open-items-touching-arp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.6 Cross-repo follow-ups (open items touching ARP)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#97-recent-velocity-last-40-merged-prs-newest-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.7 Recent velocity (last ~40 merged PRs, newest first)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#98-prioritized-next-actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.8 Prioritized next actions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/inventory/sections/09-work-status.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/inventory/sections/09-work-status.md" title="View source of this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
+    </a>
+  
+
+
+  <h1>09 work status</h1>
+
+<h2 id="9-work-status-ongoing-stalled-and-future">9. Work status — ongoing, stalled, and future<a class="headerlink" href="#9-work-status-ongoing-stalled-and-future" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Snapshot taken 2026-10-12/13 against <code>origin/main</code> = <code>c3b2d328</code> (tafreeman/agentic-runtime-platform#387, ADR-062). Git/PR state moves hourly in this repo (several concurrent sessions); counts below were re-read from <code>git</code>/<code>gh</code> at write time and several differ from the pre-extracted JSON. Where they differ, the live value is used and the difference is called out.</p>
+</blockquote>
+<h3 id="90-headline-numbers">9.0 Headline numbers<a class="headerlink" href="#90-headline-numbers" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Value</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Open PRs</td>
+<td>6 (#382, #383, #384, #388, #389, #390)</td>
+<td><code>gh pr list -R tafreeman/agentic-runtime-platform</code></td>
+</tr>
+<tr>
+<td>Of which feature/UI work</td>
+<td>3 (#388, #389, #390)</td>
+<td>same</td>
+</tr>
+<tr>
+<td>Of which Dependabot</td>
+<td>3 (#382, #383, #384)</td>
+<td>same</td>
+</tr>
+<tr>
+<td>Open GitHub issues</td>
+<td>0</td>
+<td><code>meta_inventory.json</code> <code>git.open_issues</code></td>
+</tr>
+<tr>
+<td>Pushed feature branches with no PR</td>
+<td>2 (<code>feature/criterion_aggregation</code>, <code>feature/el_screen_restyle</code>)</td>
+<td><code>git ls-remote --heads origin</code> vs open PRs</td>
+</tr>
+<tr>
+<td>Local worktrees (incl. this inventory's)</td>
+<td>9</td>
+<td><code>git worktree list</code></td>
+</tr>
+<tr>
+<td>Stashes</td>
+<td>3</td>
+<td><code>git stash list</code></td>
+</tr>
+<tr>
+<td>Real code-level TODO/FIXME/HACK/XXX markers</td>
+<td>1 (<code>TODO(ADR-001)</code>)</td>
+<td>grep over main worktree, §9.4</td>
+</tr>
+<tr>
+<td>Open-ended "Proposed" ADRs</td>
+<td>5 (007, 010, 011, 012, 034)</td>
+<td><code>docs/adr/ADR-INDEX.md</code></td>
+</tr>
+<tr>
+<td>Merged PRs since 2026-09-25</td>
+<td>33 commits on main</td>
+<td><code>git log origin/main --since=2026-09-25</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="91-ongoing-work">9.1 Ongoing work<a class="headerlink" href="#91-ongoing-work" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Branch / PR</th>
+<th>Size</th>
+<th>State</th>
+<th>Next step</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Evidence Ledger UI redesign — tokens, primitives, DataTable, FilterBar (ADR-054 follow-on)</td>
+<td><code>feature/evidence_ledger_port</code> / tafreeman/agentic-runtime-platform#388</td>
+<td>+3,152 / -123, 17 files</td>
+<td>OPEN, <code>mergeable: MERGEABLE</code>, <code>mergeStateStatus: BLOCKED</code>, 0 failing checks, 1 pending, no review decision. Local checkout is <code>ahead 3, behind 14</code> of <code>origin/main</code> (head <code>3dbfae10</code>, 2026-10-10); origin copy <code>74123cb4</code> already merged main</td>
+<td>Wait for checks, get the single review (global rule: one approval, PRs &lt;~400 lines — this one is ~8x over), then merge. Consider splitting tokens vs components if review stalls</td>
+</tr>
+<tr>
+<td>Evidence Ledger screen restyle (existing screens re-themed)</td>
+<td><code>feature/el_screen_restyle</code> @ <code>1d28dce3</code>, no PR</td>
+<td>+466 / -551, 36 files; 15 commits behind main</td>
+<td>Pushed, worktree <code>&lt;codex-home&gt;/worktrees/evidence-ledger-ui/agentic-runtime-platform</code>. Stacked on #388 (carries its commits <code>a9ba66a3</code>, <code>9ad6bca3</code>, <code>1572d32a</code>)</td>
+<td>Hold until #388 merges, rebase, open PR</td>
+</tr>
+<tr>
+<td>Local ignore rules for design-tool scratch under <code>docs/ui/</code></td>
+<td><code>chore/ignore_docs_ui_scratch</code> / #389</td>
+<td>+18, 1 file</td>
+<td>OPEN, BLOCKED (1 check pending)</td>
+<td>Merge as soon as checks go green; it is what stops the ~350 untracked <code>docs/ui</code> files from polluting <code>git status</code></td>
+</tr>
+<tr>
+<td><code>app_improvement_review</code> workflow (evidence-based app review)</td>
+<td><code>feature/app_improvement_review</code> / #390</td>
+<td>+639 / -2, 8 files; 3 commits (<code>65890f36</code>, <code>57a8c879</code>, <code>adddb23f</code>)</td>
+<td>OPEN, BLOCKED; branch is 0 behind main. Worktree <code>&lt;tmp&gt;/arp-appreview</code></td>
+<td>Review + merge; confirm shipped-workflow gate registration (commit <code>57a8c879</code>)</td>
+</tr>
+<tr>
+<td>Criterion aggregation + independent eval gate (G1 of tech-debt plan)</td>
+<td><code>feature/criterion_aggregation</code> (no PR)</td>
+<td>local <code>a6ee2520</code>: +854 / -141, 12 files; origin copy <code>32180ede</code>: +1,373 / -201, 16 files</td>
+<td>Local branch was <strong>rebased onto main during this session</strong> (0 behind main) but is <code>ahead 63, behind 1</code> of its own origin copy — push needed (force-with-lease, owner's call)</td>
+<td>See §9.2: effectively stalled until pushed and a PR opened</td>
+</tr>
+<tr>
+<td>Dependabot <code>pip-root-llm</code> (15 updates)</td>
+<td><code>dependabot/pip/pip-root-llm-06dfaa602f</code> / #382</td>
+<td>+18 / -18, 3 files</td>
+<td>OPEN, <code>reviewDecision: APPROVED</code>, 0 failing, 1 pending, BLOCKED on pending check. Relocked in <code>eba4f777</code> (local branch <code>relock-382</code>)</td>
+<td>Merge when the last check lands (needs explicit authorization per global rule)</td>
+</tr>
+<tr>
+<td>Tech-debt delivery plan G0–G7</td>
+<td><code>docs/tech_debt_plans</code> @ <code>8e61318c</code> in <code>&lt;tmp&gt;/arp-plans</code>, 1 commit ahead of main, unpushed, no PR</td>
+<td>+460, 4 docs (<code>docs/plans/2026-09-10-tech-debt-workflow.md</code> + 3 addenda)</td>
+<td>Planning docs only; the plan itself says "does not assert that the planned changes ... have completed"</td>
+<td>Push + PR the docs (small), then start G0 baseline reconciliation</td>
+</tr>
+<tr>
+<td>Probe-tooling edits (uncommitted)</td>
+<td>live checkout, no branch of its own</td>
+<td>+47 / -1: <code>tools/llm/probe_config.py</code> (+28), <code>tools/llm/probe_discovery_providers.py</code> (+13), <code>.env.example</code>, <code>.gitignore</code></td>
+<td>Uncommitted tracked modifications on <code>feature/evidence_ledger_port</code> — unrelated to the UI branch they sit on</td>
+<td>Move to a <code>chore/</code> branch or stash before the next <code>git checkout</code>; do not let them ride into #388</td>
+</tr>
+<tr>
+<td>Untracked Evidence Ledger components (live checkout)</td>
+<td>live checkout, untracked</td>
+<td><code>agentic-workflows-v2/ui/src/components/el/{ApprovalGate,EventLog,LiveSteps,ModelChain,ReRunSheet,TierLanes,Waterfall}.tsx</code>, <code>el/timeScale.ts</code>, <code>ui/src/lib/runSentence.ts</code> (~2.1k lines per brief)</td>
+<td>Not committed anywhere; exists only on this machine</td>
+<td>Commit to a branch (follow-up to #388) or it is one <code>git clean</code> from loss</td>
+</tr>
+<tr>
+<td>Model-pack builder follow-ups (ADR-054)</td>
+<td>merged #373, #374</td>
+<td>—</td>
+<td>Shipped 2026-10-10/11; no open follow-up PR found</td>
+<td>None open</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="92-stalled-work">9.2 Stalled work<a class="headerlink" href="#92-stalled-work" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Why stalled</th>
+<th>Age</th>
+<th>Recommended action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dependabot <code>pip-root-rest</code> (38 updates) — #384</td>
+<td>26 failing checks (every <code>test (os, py)</code> leg, <code>lint</code>, <code>type-check</code>, <code>Mypy (strict engine + contracts)</code>, <code>wire-format-drift</code>, <code>e2e-streaming</code>, <code>eval-golden-gate</code>, <code>no-llm-smoke</code>, <code>python-smoke</code>, <code>EK step-delegation</code>, <code>EvalKit bridge</code>, <code>Claude subscription backend tests</code>, <code>tools/ tests</code>, <code>test-coverage</code>, <code>Build release assets</code>, <code>Build and test devcontainer</code>, <code>ci-constraints.txt in sync</code>) — real breakage from the bulk bump, not just a stale lock</td>
+<td>Opened 2026-10-12 16:32Z</td>
+<td><strong>Close and let Dependabot regroup</strong>, or relock then bisect: apply the 38 bumps in 3-4 batches (memory: <code>deps-land-via-manual-batches</code>). Do not rebase it blind</td>
+</tr>
+<tr>
+<td>Dependabot <code>pip-root-tooling</code> (4 updates) — #383</td>
+<td>Exactly one failure: <code>ci-constraints.txt in sync with uv.lock</code> (GITHUB_TOKEN-pushed relocks start no CI; Dependabot does not touch <code>uv.lock</code>)</td>
+<td>2026-10-12 16:24Z</td>
+<td><strong>Relock</strong> with <code>uvx uv@0.11.2</code> (CI pins 0.11.2), export constraints, push from a user account (audit lesson: <code>remediation-progress-2026-09-23.md</code> §Lessons). Then merge</td>
+</tr>
+<tr>
+<td><code>feature/criterion_aggregation</code> (F5/F6 → G1)</td>
+<td>No PR; origin copy <code>32180ede</code> is 62 commits behind <code>origin/main</code>; the rebased local copy <code>a6ee2520</code> is unpushed. Touches <code>scripts/eval_gate.py</code>, <code>scoring/evalkit_bridge.py</code>, <code>.github/workflows/{ci,eval-package-ci}.yml</code>, ADR-042 — high conflict surface with the 62 main commits it missed</td>
+<td>Origin copy: 2026-10-12 (commit date) but based on a main from before 2026-09-25</td>
+<td><strong>Rebase (already done locally), push, open PR.</strong> Required gate must be proven green with neither legacy eval nor EvalKit installed (plan G1 done-when) before touching G2 (legacy removal)</td>
+</tr>
+<tr>
+<td>ADR-042 cutover (<code>step_scoring.py</code> still imports in-tree <code>agentic_v2_eval</code>)</td>
+<td>Accepted/partially implemented since 2026-07; only the additive <code>evalkit_bridge</code> landed (docs/ROADMAP.md §3c)</td>
+<td>~3 months</td>
+<td>Same PR as above (G1/G2). Land or explicitly re-scope</td>
+</tr>
+<tr>
+<td><code>docs/HANDOFF.md</code> (proof handoff 2026-09-26)</td>
+<td>Stale: names PR #354 and #353 as open/in-flight; both merged 2026-09-26 (#353 <code>fix(engine): make DAG.validate's cycle check iterative</code>, #354 <code>feat(proofs): prove timeout cleanup always fails closed</code>). Its Scope-lock says "SOLID queue is empty"</td>
+<td>17 days</td>
+<td>Rewrite or delete; it also tells future sessions to ignore other work</td>
+</tr>
+<tr>
+<td><code>docs/ROADMAP.md</code> / <code>docs/KNOWN_LIMITATIONS.md</code></td>
+<td>"Last verified" 2026-07-28; no entry for the Sept–Oct 2026 work (Lean proofs ADR-060, plan_tribunal, Evidence Ledger, model packs, NIM/GH-Models retirements)</td>
+<td>76 days</td>
+<td>Refresh next time <code>just docs</code> scope is touched; note memory <code>docs-refs-check-scope</code> — <code>check_docs_refs.py</code> only scans a fixed file list, so these rot silently</td>
+</tr>
+<tr>
+<td>3 git stashes</td>
+<td><code>stash@{0}</code> <code>On feature/study-telemetry: epitaxy: pre-switch ...</code>; <code>stash@{1}</code> <code>On wip_sweep: uncommitted uv.lock + band_cases.py + build_rebench_cases.py ...</code>; <code>stash@{2}</code> <code>On adr_016: WIP adr_016: bug fixes, tier-0 steps, websocket compat, new tests (Aug 3)</code></td>
+<td>stash@{2} dated Aug 3 (~70 days)</td>
+<td>Owner triage only; memory <code>user-keeps-wip-in-git-stash</code> says never <code>git stash</code> during validation. Inspect with <code>git stash show -p</code>; ADR-016 work may now be on main</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="93-cleanup-backlog">9.3 Cleanup backlog<a class="headerlink" href="#93-cleanup-backlog" title="Permanent link">&para;</a></h3>
+<h4 id="branches">Branches<a class="headerlink" href="#branches" title="Permanent link">&para;</a></h4>
+<p>Local branches (9) and remote heads (11). Origin <code>gh-pages</code> and <code>slo-data</code> are bot-owned.</p>
+<table>
+<thead>
+<tr>
+<th>Branch</th>
+<th>Where</th>
+<th>State</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>main</code></td>
+<td>local</td>
+<td><code>behind 1</code> of origin (local <code>d0c07a13</code>, origin <code>c3b2d328</code>)</td>
+<td>fast-forward</td>
+</tr>
+<tr>
+<td><code>fix/langgraph_fanin_join</code></td>
+<td>local + origin + worktree <code>&lt;tmp&gt;/arp-fanin</code></td>
+<td>content merged as #387 (squash; branch still shows <code>ahead 1</code> of main by SHA)</td>
+<td><strong>delete</strong> branch + worktree</td>
+</tr>
+<tr>
+<td><code>relock-382</code></td>
+<td>local</td>
+<td>tracks <code>origin/dependabot/pip/pip-root-llm-06dfaa602f</code> (relock <code>eba4f777</code>)</td>
+<td>keep until #382 merges, then delete</td>
+</tr>
+<tr>
+<td><code>chore/ignore_docs_ui_scratch</code></td>
+<td>local + origin + worktree <code>&lt;tmp&gt;/arp-chore</code></td>
+<td>#389 open</td>
+<td>keep until merged</td>
+</tr>
+<tr>
+<td><code>feature/app_improvement_review</code></td>
+<td>local + origin + worktree <code>&lt;tmp&gt;/arp-appreview</code></td>
+<td>#390 open</td>
+<td>keep until merged</td>
+</tr>
+<tr>
+<td><code>feature/el_screen_restyle</code></td>
+<td>local + origin + codex worktree</td>
+<td>no PR</td>
+<td>keep, open PR after #388</td>
+</tr>
+<tr>
+<td><code>feature/criterion_aggregation</code></td>
+<td>local + origin + worktree <code>&lt;workspace&gt;/agentic-runtime-platform-f5-f6</code></td>
+<td>see §9.2</td>
+<td>keep</td>
+</tr>
+<tr>
+<td><code>docs/tech_debt_plans</code></td>
+<td>local + worktree <code>&lt;tmp&gt;/arp-plans</code></td>
+<td>unpushed</td>
+<td>push or discard</td>
+</tr>
+<tr>
+<td><code>feature/evidence_ledger_port</code></td>
+<td>local (checked out in live checkout) + origin</td>
+<td>#388 open</td>
+<td>keep</td>
+</tr>
+<tr>
+<td><code>origin/dependabot/pip/pip-root-{llm,rest,tooling}-*</code></td>
+<td>origin</td>
+<td>#382/#383/#384</td>
+<td>closed by merge/close of PRs</td>
+</tr>
+<tr>
+<td><code>origin/gh-pages</code></td>
+<td>origin</td>
+<td>94 commits; mkdocs deploy</td>
+<td>leave</td>
+</tr>
+<tr>
+<td><code>origin/slo-data</code></td>
+<td>origin</td>
+<td>nightly bot commits <code>[skip ci]</code></td>
+<td>leave</td>
+</tr>
+</tbody>
+</table>
+<p>Already cleaned during this session (listed in the brief, no longer present): local branches and worktrees for <code>fix/secret_mask_json</code> (#380), <code>fix/review_report_extraction</code> (#377), <code>fix/fullstack_rework</code> (#379), <code>fix/retire-github-models</code> (#378), <code>fix/nvidia-deepseek-v4-eol</code> (#376), <code>fix/nvidia-llama-31-8b-eol</code> (#375), and <code>.claude/worktrees/{deepseek-v4-eol,epic-yonath-0c6f8e}</code>, <code>&lt;workspace&gt;/arp-model-pack-builder</code>, copilot worktrees — <code>git worktree list</code> at write time shows none of them. Verified with <code>git branch --list</code> (empty for the three <code>fix/*</code> names checked).</p>
+<h4 id="worktrees-9-live">Worktrees (9 live)<a class="headerlink" href="#worktrees-9-live" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Branch</th>
+<th>Disposition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&lt;workspace&gt;/agentic-runtime-platform</code></td>
+<td><code>feature/evidence_ledger_port</code></td>
+<td>primary checkout; dirty (see below)</td>
+</tr>
+<tr>
+<td><code>&lt;tmp&gt;/arp-appreview</code></td>
+<td><code>feature/app_improvement_review</code></td>
+<td>keep until #390 merges</td>
+</tr>
+<tr>
+<td><code>&lt;tmp&gt;/arp-chore</code></td>
+<td><code>chore/ignore_docs_ui_scratch</code></td>
+<td>keep until #389 merges</td>
+</tr>
+<tr>
+<td><code>&lt;tmp&gt;/arp-el-port</code></td>
+<td>detached <code>74123cb4</code> (merge of main into #388 head)</td>
+<td><strong>remove</strong> — redundant with the live checkout</td>
+</tr>
+<tr>
+<td><code>&lt;tmp&gt;/arp-fanin</code></td>
+<td><code>fix/langgraph_fanin_join</code></td>
+<td><strong>remove</strong> — #387 merged</td>
+</tr>
+<tr>
+<td><code>../arp-main-inventory</code></td>
+<td>detached <code>c3b2d328</code></td>
+<td>remove after the inventory is finished</td>
+</tr>
+<tr>
+<td><code>&lt;tmp&gt;/arp-plans</code></td>
+<td><code>docs/tech_debt_plans</code></td>
+<td>keep (unpushed work)</td>
+</tr>
+<tr>
+<td><code>&lt;codex-home&gt;/worktrees/evidence-ledger-ui/agentic-runtime-platform</code></td>
+<td><code>feature/el_screen_restyle</code></td>
+<td>keep; owned by Codex</td>
+</tr>
+<tr>
+<td><code>&lt;workspace&gt;/agentic-runtime-platform-f5-f6</code></td>
+<td><code>feature/criterion_aggregation</code></td>
+<td>keep</td>
+</tr>
+</tbody>
+</table>
+<p>Note (memory <code>nested-worktree-loads-real-env</code>): none of these is under <code>.claude/worktrees</code> any more, so the live-<code>.env</code>-at-import hazard does not apply to the current set.</p>
+<h4 id="local-only-artifacts-uncommitted-in-the-live-checkout">Local-only artifacts (uncommitted, in the live checkout)<a class="headerlink" href="#local-only-artifacts-uncommitted-in-the-live-checkout" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Size / count</th>
+<th>Risk</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Modified tracked: <code>.env.example</code>, <code>.gitignore</code>, <code>tools/llm/probe_config.py</code>, <code>tools/llm/probe_discovery_providers.py</code></td>
+<td>+47 / -1</td>
+<td>Mixed into the #388 branch checkout</td>
+<td>Commit to a <code>chore/</code> branch</td>
+</tr>
+<tr>
+<td>Untracked <code>agentic-workflows-v2/ui/src/components/el/*</code> (8 files) + <code>ui/src/lib/runSentence.ts</code></td>
+<td>~2.1k lines</td>
+<td>Lost on <code>git clean</code></td>
+<td>Commit</td>
+</tr>
+<tr>
+<td><code>docs/ui/</code> untracked design HTML (Dispatch, Dossier, Rewind, Run Inspector 1–7, Live execution x3, <code>designd</code>–<code>designg</code>, <code>superdesign-local/</code>, <code>_impeccable/</code>, <code>design-system/</code>, <code>_design-system.tgz</code>)</td>
+<td>353 entries by <code>git status --short -uall docs/ui</code>; 9.8 MB on disk (<code>du</code>); only 6 files under <code>docs/ui/</code> are tracked on main</td>
+<td>Pollutes status; #389 ignores them but does not archive them</td>
+<td>Merge #389; move the winning mockups under <code>docs/ui/</code> tracked or into <code>_archive/</code></td>
+</tr>
+<tr>
+<td><code>evidence-ledger-design-system/</code> directory at repo root (also a <code>.zip</code> per the brief; none matched <code>*.zip</code> at repo root at write time)</td>
+<td>n/a</td>
+<td>Exported bundle</td>
+<td>Covered by #389 ignore rule</td>
+</tr>
+<tr>
+<td><code>docs/inventory/</code>, <code>scripts/inventory/</code></td>
+<td>this inventory</td>
+<td>Untracked</td>
+<td>Commit when the inventory lands</td>
+</tr>
+</tbody>
+</table>
+<h4 id="stashes-3-see-92">Stashes: 3 (see §9.2).<a class="headerlink" href="#stashes-3-see-92" title="Permanent link">&para;</a></h4>
+<hr />
+<h3 id="94-code-level-debt-markers">9.4 Code-level debt markers<a class="headerlink" href="#94-code-level-debt-markers" title="Permanent link">&para;</a></h3>
+<p>Method: <code>grep -rnE "\b(TODO|FIXME|XXX|HACK|DEPRECATED)\b"</code> over <code>py/ts/tsx/yaml/yml/lean</code> in <code>../arp-main-inventory</code> (excluding <code>node_modules</code>, <code>.venv</code>, <code>docs/</code>, <code>*.generated.*</code>). <code>py_inventory.json</code> <code>modules[].markers</code> reports only the one TODO; the grep widened the scope to YAML, TSX and string literals and found the rest — all but one are not actionable debt.</p>
+<h4 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>TODO</th>
+<th>FIXME</th>
+<th>HACK</th>
+<th>XXX</th>
+<th>DEPRECATED</th>
+<th>Actionable</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>agentic-workflows-v2/agentic_v2</code></td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>3</td>
+<td>1 TODO + 2 route deprecations</td>
+</tr>
+<tr>
+<td><code>agentic-v2-eval</code></td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0 (1 regex literal)</td>
+</tr>
+<tr>
+<td><code>agentic-workflows-v2/ui</code> (TS/TSX)</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td><code>tools/</code>, <code>scripts/</code>, <code>proofs/</code></td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0 (<code>sorry</code>/<code>admit</code> hits in <code>proofs/Scheduler.lean:2537-2538</code> are prose; <code>warningAsError</code> rejects real <code>sorry</code>)</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td><strong>1</strong></td>
+<td><strong>0</strong></td>
+<td><strong>0</strong></td>
+<td><strong>0</strong></td>
+<td><strong>3</strong></td>
+<td><strong>3</strong></td>
+</tr>
+</tbody>
+</table>
+<h4 id="agentic-workflows-v2-runtime">agentic-workflows-v2 (runtime)<a class="headerlink" href="#agentic-workflows-v2-runtime" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>file:line</th>
+<th>Tag</th>
+<th>Text</th>
+<th>Class</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>agentic-workflows-v2/agentic_v2/workflows/runner.py:416</code></td>
+<td>TODO(ADR-001)</td>
+<td>"When a custom step_executor is provided we must construct DAGExecutor directly because NativeEngine does not accept a step_executor parameter and the registry returns a shared singleton. Full unification requires NativeEngine to support per-call step_executor injection or a factory pattern."</td>
+<td><strong>Real debt</strong> (engine-unification, tied to ADR-031 single-engine direction; plan goal G3)</td>
+</tr>
+<tr>
+<td><code>agentic-workflows-v2/agentic_v2/server/routes/evaluation_routes.py:411</code></td>
+<td>DEPRECATED</td>
+<td>"(Sprint B SB-1): Use path-based URL instead" (route docstring)</td>
+<td>Real: deprecated route still served</td>
+</tr>
+<tr>
+<td><code>agentic-workflows-v2/agentic_v2/server/routes/evaluation_routes.py:438</code></td>
+<td>DEPRECATED</td>
+<td>same, second route</td>
+<td>Real: remove after confirming UI uses path-based URL</td>
+</tr>
+<tr>
+<td><code>agentic-workflows-v2/agentic_v2/config/defaults/agents.yaml:62</code></td>
+<td>DEPRECATED</td>
+<td>"prompt files removed in d921ba0f" (commented-out researcher/writer agents)</td>
+<td>Dead commented YAML — delete</td>
+</tr>
+<tr>
+<td><code>agentic-workflows-v2/agentic_v2/engine/prompt_assembly.py:63</code></td>
+<td>TODO</td>
+<td>"no TODO stubs"</td>
+<td>Prompt text, not debt</td>
+</tr>
+<tr>
+<td><code>agentic-workflows-v2/agentic_v2/agents/implementations/claude_sdk_agent.py:37</code></td>
+<td>TODO</td>
+<td>docstring example</td>
+<td>Not debt</td>
+</tr>
+<tr>
+<td><code>agentic-workflows-v2/agentic_v2/tools/builtin/search_ops.py:376</code></td>
+<td>TODO</td>
+<td>tool help example</td>
+<td>Not debt</td>
+</tr>
+</tbody>
+</table>
+<h4 id="agentic-v2-eval">agentic-v2-eval<a class="headerlink" href="#agentic-v2-eval" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>file:line</th>
+<th>Tag</th>
+<th>Text</th>
+<th>Class</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>agentic-v2-eval/src/agentic_v2_eval/metrics/quality.py:92-94</code></td>
+<td>TODO/FIXME/XXX/HACK</td>
+<td>regex that <em>detects</em> markers in scored code</td>
+<td>Not debt</td>
+</tr>
+</tbody>
+</table>
+<p>Inference: a repo this size carrying one real TODO means debt is tracked elsewhere (KNOWN_LIMITATIONS, ADRs, the plan in §9.1), not in-code.</p>
+<p>Skips/xfail: 15 test files under <code>agentic-workflows-v2/tests</code>, <code>agentic-v2-eval/tests</code>, <code>tests/</code> contain <code>pytest.mark.skip</code> or <code>xfail</code> (count of files, not cases); the 11 deselected <code>tools/tests</code> cases are enumerated in <code>.github/workflows/ci.yml:655-687</code>.</p>
+<hr />
+<h3 id="95-documented-future-work">9.5 Documented future work<a class="headerlink" href="#95-documented-future-work" title="Permanent link">&para;</a></h3>
+<p>Each row is verified against main (<code>c3b2d328</code>) unless noted.</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Source</th>
+<th>Status on main</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Epic 9 — Multi-Run Comparison (candidate)</td>
+<td><code>docs/ROADMAP.md</code> §4</td>
+<td><strong>Open.</strong> Only "Proposed" roadmap entry; depends on ADR-012 (Proposed)</td>
+</tr>
+<tr>
+<td>ADR-042 slices: switch <code>step_scoring.py</code> to EvalKit, remove <code>agentic_v2_eval</code></td>
+<td><code>docs/ROADMAP.md</code> §3c; <code>docs/adr/ADR-042-agentic-evalkit-adoption.md</code></td>
+<td><strong>Partial.</strong> <code>evalkit_bridge</code> present, pin <code>agentic-evalkit&gt;=0.4.1,&lt;0.5.0</code> (<code>agentic-workflows-v2/pyproject.toml:52</code>); cutover is in <code>feature/criterion_aggregation</code> (unmerged)</td>
+</tr>
+<tr>
+<td>ADR-034 path-first workflow I/O contracts</td>
+<td><code>docs/adr/ADR-INDEX.md</code> L172: "Proposed, 0% (pilot on fullstack_generation pending)"</td>
+<td><strong>Open</strong>, though ADR-052 typed step artifact contracts and #379 fullstack rework landed adjacent work; index row not updated</td>
+</tr>
+<tr>
+<td>ADR-007 classification matrix &amp; stop policy</td>
+<td>ADR-INDEX L24 "Proposed"</td>
+<td>Open, no implementation</td>
+</tr>
+<tr>
+<td>ADR-010 commit-driven A/B eval harness</td>
+<td>ADR-INDEX L27, L156: Proposed, ~10% (primitives)</td>
+<td>Open</td>
+</tr>
+<tr>
+<td>ADR-011 eval harness API &amp; interface</td>
+<td>ADR-INDEX L28, L157: Proposed, ~15%</td>
+<td>Open</td>
+</tr>
+<tr>
+<td>ADR-012 UI evaluation hub &amp; A/B comparison</td>
+<td>ADR-INDEX L29, L158: Proposed, ~10%</td>
+<td>Open; UI hub partially advanced by #388 line of work but not this ADR</td>
+</tr>
+<tr>
+<td>ADR-031 native DAG single engine</td>
+<td>ADR file: Superseded, not adopted in this repo</td>
+<td>Closed (non-goal); contradicts the tech-debt plan's "retain both engines" — consistent</td>
+</tr>
+<tr>
+<td>Parked ADR numbers 049 (noncompensatory gates draft in a stash) and 053 (memoryctl, PR #205)</td>
+<td><code>docs/adr/ADR-INDEX.md</code> L77</td>
+<td><strong>Contradicted:</strong> <code>CHANGELOG.md</code> 2026-09-03 entry says "removed accepted ADR-054 and ADR-057 from the parked-number note"; 049/053 still reserved. Verify before reusing</td>
+</tr>
+<tr>
+<td>Next free ADR number</td>
+<td>ADR-062 is the last file (<code>docs/adr/ADR-062-langgraph-join-once-semantics.md</code>)</td>
+<td>ADR-063 free unless INDEX says otherwise</td>
+</tr>
+<tr>
+<td>Wire-format gate covers 8 shapes; remaining endpoints hand-mirrored</td>
+<td><code>docs/KNOWN_LIMITATIONS.md</code> §1.1 (Status L34-35)</td>
+<td>Open: "future sprint"</td>
+</tr>
+<tr>
+<td>Optional provider surfaces outside the 80% coverage gate</td>
+<td>KNOWN_LIMITATIONS §1.2</td>
+<td>Intentional</td>
+</tr>
+<tr>
+<td>CLI <code>--adapter langchain</code> pre-flight check</td>
+<td>KNOWN_LIMITATIONS §2.1 (L68)</td>
+<td>Open (server path done by S1-6)</td>
+</tr>
+<tr>
+<td>Redis backend for <code>slowapi</code> rate limit and <code>AuthThrottle</code></td>
+<td>KNOWN_LIMITATIONS §4.1/§4.2, ADR-018</td>
+<td><strong>Open</strong> — Redis exists only for the circuit breaker (T1-2)</td>
+</tr>
+<tr>
+<td>Human approval gate UI pause/resume + server approval queue</td>
+<td>KNOWN_LIMITATIONS §4.3</td>
+<td>Open. Note untracked <code>ApprovalGate.tsx</code> in <code>ui/src/components/el/</code> is the likely UI half</td>
+</tr>
+<tr>
+<td>SSRF DNS rebinding needs network-layer egress</td>
+<td>KNOWN_LIMITATIONS §4.4</td>
+<td>Accepted, no app fix planned</td>
+</tr>
+<tr>
+<td><code>X-Tenant-ID</code> spoofable without OIDC</td>
+<td>KNOWN_LIMITATIONS §4.5</td>
+<td>Accepted</td>
+</tr>
+<tr>
+<td><code>python -m tools.llm.model_inventory</code> fails from repo root</td>
+<td>KNOWN_LIMITATIONS §4.12</td>
+<td><strong>Still open on main</strong>: <code>tools/llm/model_inventory.py:504</code> <code>from llm_client import LLMClient</code></td>
+</tr>
+<tr>
+<td><code>onnx:</code> IDs exposed in catalog but unusable by exact-model chat</td>
+<td>KNOWN_LIMITATIONS §4.13</td>
+<td>Open (no change found)</td>
+</tr>
+<tr>
+<td>Strict ONNX weight verification not in every loader</td>
+<td>KNOWN_LIMITATIONS §4.14; ROADMAP E8-4</td>
+<td>Open</td>
+</tr>
+<tr>
+<td>11 stale <code>tools/tests</code> cases</td>
+<td>KNOWN_LIMITATIONS §4.15</td>
+<td><strong>Partly superseded:</strong> CI now has a <code>tools/ tests</code> job that runs <code>tools/tests</code> with 11 <code>--deselect</code>s (<code>ci.yml:655-687</code>); memory <code>tools-tests-never-run-by-ci</code> is out of date. The 11 cases themselves remain stale</td>
+</tr>
+<tr>
+<td>Live-provider behavior not proven by blocking CI</td>
+<td>KNOWN_LIMITATIONS §3.1</td>
+<td>Intentional; opt-in live lanes</td>
+</tr>
+<tr>
+<td>Multi-tenant billing/quotas; polyglot workers</td>
+<td>ROADMAP §5</td>
+<td>Explicitly out of scope for v0.3.x</td>
+</tr>
+<tr>
+<td>v0.4.0-rc.1 release engineering</td>
+<td>CHANGELOG "Release engineering for v0.4.0-rc.1 (2026-07-14)"</td>
+<td>Manifest <code>release-manifest.toml</code> present; no <code>rc.1</code> tag verification done here — mark UNVERIFIED</td>
+</tr>
+<tr>
+<td>Tech-debt goals G0–G7</td>
+<td><code>docs/plans/2026-09-10-tech-debt-workflow.md</code> (branch <code>docs/tech_debt_plans</code>, unmerged)</td>
+<td>Not started on main except F5/F6 (#315, #316) and scoring Slice C</td>
+</tr>
+<tr>
+<td>Native-lane NIM reasoning-model empty content</td>
+<td>CHANGELOG 2026-08-29 "Not fixed here" (<code>NvidiaBackend</code> inherits <code>OpenAIBackend.complete_chat</code>)</td>
+<td>Open</td>
+</tr>
+<tr>
+<td>DigitalOcean provider has no native backend/discovery/registry entry</td>
+<td>CHANGELOG 2026-09-01</td>
+<td>Open by design</td>
+</tr>
+<tr>
+<td>Expression-interpreter dispatch changes</td>
+<td>tech-debt plan: "deferred until a real grammar change"</td>
+<td>Deferred</td>
+</tr>
+<tr>
+<td>Proof ledger: whole-trace consumed-timeout statement, fairness/cancellation assumptions</td>
+<td><code>docs/HANDOFF.md</code> "UNCLEAR" list</td>
+<td>Open research; handoff itself stale</td>
+</tr>
+<tr>
+<td><code>AI_EVIDENCE_STANDARD.md</code> gaps</td>
+<td><code>AI_EVIDENCE_STANDARD.md</code> L244 defers to KNOWN_LIMITATIONS; L21/L34/L259 mandate <strong>UNVERIFIED</strong> labels rather than listing gaps</td>
+<td>No separate gap list exists; limitations of record are KNOWN_LIMITATIONS above</td>
+</tr>
+</tbody>
+</table>
+<h4 id="changelog-unreleased-state">CHANGELOG "Unreleased" state<a class="headerlink" href="#changelog-unreleased-state" title="Permanent link">&para;</a></h4>
+<p><code>CHANGELOG.md</code> has <strong>seven consecutive <code>## Unreleased - ...</code> headings</strong> (L3-L176): secret masks (#380), GitHub Models retirement (#378), DeepSeek V4 retirement (#376), reviewer reports (#377), fullstack rework (#379), NIM tier-1 retirement (#375), Mistral provider, UI design guardrails. There is no <code>[Unreleased]</code> section header; the file's 0.3.0 → 0.4.0-rc.1 cut has not been made since 2026-07-14. A release-cut task is implicit: collapse these into a version heading.</p>
+<hr />
+<h3 id="96-cross-repo-follow-ups-open-items-touching-arp">9.6 Cross-repo follow-ups (open items touching ARP)<a class="headerlink" href="#96-cross-repo-follow-ups-open-items-touching-arp" title="Permanent link">&para;</a></h3>
+<p>Sources: <code>&lt;workspace&gt;/_audit/remediation-progress-2026-09-23.md</code> (newest remediation file; <code>remediation-progress-2026-08-04.md</code> and <code>-07-25.md</code> older), <code>net-new-triage-revalidation-2026-08-09.md</code>, <code>net-new-sweep-2026-07-25.md</code>. The newest net-new file is the 2026-08-09 revalidation; no newer dated file exists.</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Source</th>
+<th>Status at 2026-10-12</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>T05: add <code>ci-constraints.txt in sync with uv.lock</code> to ARP's <strong>classic</strong> branch protection (ruleset <code>base</code> is disabled; 12 required checks live in classic protection)</td>
+<td>remediation-progress-2026-09-23 §3 item 2</td>
+<td>Owner action; not verifiable by this inventory (no admin API read). #383 failing only that check suggests it is still not blocking merge ordering</td>
+</tr>
+<tr>
+<td>T19: restart CI on Dependabot PRs by close/reopen because a <code>GITHUB_TOKEN</code> push starts no CI (#323, #311, #301, #322 at that date)</td>
+<td>same, §3 item 4 &amp; §Lessons</td>
+<td>Those PRs are now merged/closed (#367, #366, #357). Hazard persists: #382/#383 need user-account pushes</td>
+</tr>
+<tr>
+<td>T11 verification: 2026-09-24 12:00 UTC scheduled relock run should pass</td>
+<td>same</td>
+<td><strong>UNVERIFIED</strong> here; #382's relock (<code>eba4f777</code>) was done by hand this session, suggesting the workflow may still not cover the case</td>
+</tr>
+<tr>
+<td>T51: root <code>CLAUDE.md</code> §7 documents <code>_TrackedProvider</code> coupling</td>
+<td>same §3 item 5</td>
+<td>Done (§7 present in workspace root file)</td>
+</tr>
+<tr>
+<td>T50: stale worktrees back merged PRs</td>
+<td>same</td>
+<td>Superseded by §9.3</td>
+</tr>
+<tr>
+<td>M8 EK <code>_TrackedProvider</code> coupling — consumer canary (<code>ek-delegation-tests</code>, ARP#329)</td>
+<td>same §2</td>
+<td>Closed; remaining hazard: EK 0.4.x range and blanket-<code>ImportError</code>-skip lesson</td>
+</tr>
+<tr>
+<td>M7/N2 ARP caps EK/EVK below 0.4</td>
+<td>same §2</td>
+<td>Closed by ARP#330: constraints resolve <code>executionkit==0.4.0</code>, <code>agentic-evalkit==0.4.1</code></td>
+</tr>
+<tr>
+<td>H5 LangChain path unredacted</td>
+<td>ARP#326</td>
+<td>Closed</td>
+</tr>
+<tr>
+<td>Net-new triage (2026-08-09): 2 confirmed HIGHs on ARP (both size S)</td>
+<td>net-new-triage-revalidation-2026-08-09.md "The two confirmed HIGHs on ARP"</td>
+<td>Likely addressed by later work (#325-#330); <strong>UNVERIFIED</strong> item-by-item</td>
+</tr>
+<tr>
+<td><code>agentic-workflows-v2</code> dependency pins for <code>ek</code> extra range</td>
+<td>workspace <code>CLAUDE.md</code> §7</td>
+<td>Hazard stands: EK 0.5/0.4 major outside range silently stops exercising path</td>
+</tr>
+<tr>
+<td>Releasing EK/EVK requires hub bump</td>
+<td>workspace <code>CLAUDE.md</code> §7</td>
+<td>Not ARP-owned; no ARP action</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="97-recent-velocity-last-40-merged-prs-newest-first">9.7 Recent velocity (last ~40 merged PRs, newest first)<a class="headerlink" href="#97-recent-velocity-last-40-merged-prs-newest-first" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Theme</th>
+<th>PRs</th>
+<th>Dates (UTC)</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Engine / middleware fixes</strong></td>
+<td>#387 LangGraph run-once join (ADR-062); #380 JSON-safe secret masks (ADR-061); #377 keep <code>review_report</code> when reviewer JSON damaged; #379 fullstack rework ships and re-reviews; #353 iterative DAG cycle check; #348 cancellation survives observer masking; #340 observer failures kept out of scheduling</td>
+<td>2026-09-25 → 2026-10-13</td>
+<td>Highest-value 3 days: #375-#380 + #387 landed 2026-10-11/13</td>
+</tr>
+<tr>
+<td><strong>Models / providers churn</strong></td>
+<td>#375 retired NIM tier-1 model + 410 as retired; #376 retired NIM DeepSeek V4 rungs; #378 drop retired GitHub Models rungs; #373 drag-and-drop model-pack builder; #374 typed model ids in pack builder</td>
+<td>2026-10-10 → 2026-10-12</td>
+<td>Three EOL fixes in 24h — provider volatility (memory <code>provider-env-reality</code>); consider a retirement-detection CI probe</td>
+</tr>
+<tr>
+<td><strong>UI / design</strong></td>
+<td>#370 critique/audit remediation; #371 design rules enforced in CI; #372 font shorthand / transition guard; open #388, #389</td>
+<td>2026-10-08 → 2026-10-10</td>
+<td>Pivot to Evidence Ledger design system (ADR-054)</td>
+</tr>
+<tr>
+<td><strong>Lean proofs / scheduler</strong></td>
+<td>#347 land ADR-060 stack; #351, #352, #354, #361 proofs; #362/#364 differential test; #341, #343</td>
+<td>2026-09-25 → 2026-10-01</td>
+<td>Burst on scheduler verification</td>
+</tr>
+<tr>
+<td><strong>New workflows / features</strong></td>
+<td>#363 <code>plan_tribunal</code> multi-judge; #365 follow-up; #349/#350 study telemetry + SWE-AB ledger</td>
+<td>2026-09-25 → 2026-10-01</td>
+<td><code>plan_tribunal.yaml</code> present on main; <code>app_improvement_review</code> (#390) next</td>
+</tr>
+<tr>
+<td><strong>Dependencies</strong></td>
+<td>#386 node 26.11; #385 ui-npm (14); #381 setup-uv 10.3.0; #369, #368, #367 (24 pip-root-rest), #366, #359, #360, #357 (14 pip-root-llm)</td>
+<td>2026-09-28 → 2026-10-12</td>
+<td>Pip-group PRs routinely land days late via manual relock; npm/docker/actions auto-merge</td>
+</tr>
+<tr>
+<td><strong>Docs / chores</strong></td>
+<td>#355 derived test count; #345 pre-commit <code>--all-files</code> green</td>
+<td>2026-09-25 → 2026-09-27</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>Pace: 33 commits to main in 18 days, 20 of them in the final 5 (<code>git log origin/main --since=2026-09-25</code>). 0 open issues means work is tracked in PRs and docs only.</p>
+<hr />
+<h3 id="98-prioritized-next-actions">9.8 Prioritized next actions<a class="headerlink" href="#98-prioritized-next-actions" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Action</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Commit the untracked <code>el/*</code> components and <code>runSentence.ts</code> and the probe-tooling edits to their own branches</strong></td>
+<td>~2.1k lines + 47 lines exist only in the live checkout on a branch they do not belong to; the cheapest and most irreversible-if-lost item</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Land #388 (Evidence Ledger), then rebase and PR <code>feature/el_screen_restyle</code></strong></td>
+<td>3,152-line PR is the long pole; <code>el_screen_restyle</code> and the untracked components stack on it; MERGEABLE, 0 failing checks</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Merge #389 (docs/ui ignore) and archive or track the 353 design files</strong></td>
+<td>18-line PR; removes noise that hides real untracked work in <code>git status</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Push the rebased <code>feature/criterion_aggregation</code> (a6ee2520) and open the PR</strong></td>
+<td>Rebase work is done locally; origin copy is 62 commits stale; gates ADR-042 cutover and plan G2</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>Relock and merge #383; finish #382 (approved, awaiting last check)</strong></td>
+<td>Both are mechanical; #383 fails only on <code>uv.lock</code> sync; use <code>uvx uv@0.11.2</code> and push as a user</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>Close #384 and re-stage the 38 bumps in batches</strong></td>
+<td>26 failing checks = real breakage; a blind rebase wastes CI minutes; unblocks Dependabot's group</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>Review/merge #390 (<code>app_improvement_review</code>)</strong></td>
+<td>0 behind main, 639 lines, small review surface; ships a new workflow</td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>Remove stale worktrees and branches (<code>arp-fanin</code>, <code>arp-el-port</code>, <code>fix/langgraph_fanin_join</code>) and fast-forward <code>main</code></strong></td>
+<td>Worktrees pin branches and caused the multi-session collisions recorded in memory (<code>concurrent-sessions-same-branch</code>)</td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong>Refresh docs: delete/rewrite <code>docs/HANDOFF.md</code>, update ROADMAP/KNOWN_LIMITATIONS "last verified", fold seven <code>Unreleased</code> CHANGELOG headings, update ADR-INDEX for ADR-034 and the tools-tests CI job</strong></td>
+<td>Docs are 17-76 days stale, include false claims (PR #354 "open"), and <code>just docs</code> does not scan them (memory <code>docs-refs-check-scope</code>)</td>
+</tr>
+<tr>
+<td>10</td>
+<td><strong>Fix <code>tools/llm/model_inventory.py:504</code> import and push/PR the tech-debt plan (<code>8e61318c</code>)</strong></td>
+<td>One-line known defect with a documented fix (KNOWN_LIMITATIONS §4.12); the plan commit is the only record of G0-G7 and is unpushed</td>
+</tr>
+</tbody>
+</table>
+<p>Authorization reminder (global rule): merging any of these PRs, creating releases/tags, and force-pushing the rebased <code>feature/criterion_aggregation</code> each need explicit, separate user approval.</p>
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 15, 2026 00:57:08 UTC">October 15, 2026</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 13, 2026 23:11:25 UTC">October 13, 2026</span>
+  </span>
+
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/tafreeman/agentic-runtime-platform" target="_blank" rel="noopener" title="GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.instant", "navigation.tracking", "navigation.indexes", "navigation.footer", "toc.follow", "search.highlight", "search.suggest", "search.share", "content.code.copy", "content.code.annotate", "content.tooltips", "content.action.edit", "content.action.view"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": {"Architecture": "architecture", "Evaluation": "evaluation", "Tooling": "tooling", "Workflow": "workflow"}, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

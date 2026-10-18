@@ -3587,9 +3587,9 @@
 <p>This guide covers the CI/CD pipeline, Docker containerization, environment variable configuration for production, security hardening, and observability setup for the <code>agentic-runtime-platform</code> monorepo.</p>
 <hr />
 <h2 id="cicd-pipeline">CI/CD pipeline<a class="headerlink" href="#cicd-pipeline" title="Permanent link">&para;</a></h2>
-<p>The primary CI workflow is defined in <code>.github/workflows/ci.yml</code>. It runs on every push to <code>main</code> and <code>agenticv2</code>, and on all pull requests targeting those branches.</p>
+<p>The primary CI workflow is defined in <code>.github/workflows/ci.yml</code>. It runs on every push to <code>main</code> and on all pull requests targeting <code>main</code>. A superseded PR run is cancelled when a newer commit is pushed; runs for pushes to <code>main</code> are never cancelled.</p>
 <h3 id="pipeline-jobs">Pipeline jobs<a class="headerlink" href="#pipeline-jobs" title="Permanent link">&para;</a></h3>
-<p>The <code>ci.yml</code> workflow contains fourteen jobs. All jobs run on <code>ubuntu-latest</code>.</p>
+<p>The <code>ci.yml</code> workflow contains the jobs below, all on <code>ubuntu-latest</code>. On pull requests, a <code>changes</code> job classifies the changed files and the heavier jobs are skipped (reporting as skipped, which satisfies a required check) when the PR cannot affect them -- for example docs-only PRs. <code>lint</code> is never skipped, pushes to <code>main</code> always run everything, and the gates fail open if <code>changes</code> itself fails. Path gating is job-level only: never add workflow-level <code>paths:</code> to a workflow that provides a required check, and never rename a required job.</p>
 <table>
 <thead>
 <tr>
@@ -3599,20 +3599,20 @@
 </thead>
 <tbody>
 <tr>
+<td><code>changes</code></td>
+<td>PR-only path classification (backend / UI / wire-format surfaces) that drives the job-level gates below</td>
+</tr>
+<tr>
 <td><code>python-smoke</code></td>
-<td>Installs all three packages, verifies critical imports, runs the unit suite (<code>-m "not integration and not slow"</code>, e2e excluded)</td>
+<td>Installs all three packages, verifies critical imports and combined runtime + eval test collection, and runs the swe_ab tool tests and <code>tools/tests</code> (the runtime unit suite runs in <code>test-coverage</code> and <code>no-llm-smoke</code>)</td>
 </tr>
 <tr>
 <td><code>frontend-build</code></td>
-<td><code>npm ci</code> and production Vite build of the UI</td>
+<td><code>npm ci</code>, the production build (<code>tsc -b &amp;&amp; vite build</code>), then the vitest unit suite with the coverage floors (<code>npm run test:coverage</code>)</td>
 </tr>
 <tr>
 <td><code>lint</code></td>
-<td>Ruff on <code>agentic_v2/</code> and <code>tests/</code>; also fails if <code>ruff check --fix</code> would still change anything</td>
-</tr>
-<tr>
-<td><code>suppression-ratchet</code></td>
-<td>Fails a PR that grows the ruff/mypy suppression counts beyond the committed baseline</td>
+<td>Ruff on <code>agentic_v2/</code> and <code>tests/</code> (and a final check that <code>ruff check --fix</code> would change nothing), the suppression ratchet, pydocstyle on <code>core/</code> and <code>contracts/</code>, workflow-definition validation, protocol/ADR and local-reference drift checks, generated homepage-stat drift, Dockerfile <code>pip install</code> constraint pins, and <code>ci-constraints.txt</code> vs <code>uv.lock</code> drift. Each check is its own step so one failure does not hide the others (the autofix check only runs when ruff itself passed, and the checks that need the pip install are skipped if it failed)</td>
 </tr>
 <tr>
 <td><code>typecheck-core-contracts</code></td>
@@ -3620,7 +3620,11 @@
 </tr>
 <tr>
 <td><code>test-coverage</code></td>
-<td>Unit suite with coverage on <code>agentic_v2</code>, then enforces the 80% gate in a dedicated <code>coverage report --fail-under=80</code> step; also uploads a whole-repo coverage report for visibility</td>
+<td>Unit suite with coverage on <code>agentic_v2</code>, then enforces the 80% gate in a dedicated <code>coverage report --fail-under=80</code> step; on pushes to <code>main</code> it also runs a whole-repo coverage pass and uploads the report for visibility</td>
+</tr>
+<tr>
+<td><code>ek-delegation-tests</code> (check name: <code>EK step-delegation (approval-gate) tests</code>)</td>
+<td>Installs the optional <code>claude</code>, <code>ek</code> and <code>eval</code> extras together and runs the suites that module-skip everywhere else: the Claude subscription backend, the ExecutionKit approval-gate regressions, the EvalKit bridge, and scoring without the legacy evaluation package</td>
 </tr>
 <tr>
 <td><code>wire-format-drift</code></td>
@@ -3628,31 +3632,11 @@
 </tr>
 <tr>
 <td><code>e2e-streaming</code></td>
-<td>Runs the Playwright streaming spec 5× with <code>AGENTIC_NO_LLM=1</code></td>
+<td>Runs the full Playwright e2e suite once with <code>AGENTIC_NO_LLM=1</code>; repeat-run flake detection (full suite 5x, streaming spec 50x) runs in <code>nightly.yml</code></td>
 </tr>
 <tr>
 <td><code>no-llm-smoke</code></td>
 <td>Validates and runs a deterministic workflow plus the full unit suite with <code>AGENTIC_NO_LLM=1</code> and zero API keys</td>
-</tr>
-<tr>
-<td><code>validate-workflows</code></td>
-<td>Validates all workflow YAML definitions against the schema</td>
-</tr>
-<tr>
-<td><code>check-doc-drift</code></td>
-<td>Checks that protocol names appear in <code>ARCHITECTURE.md</code></td>
-</tr>
-<tr>
-<td><code>pydocstyle</code></td>
-<td>Google-convention docstring checks on <code>agentic_v2/core/</code> and <code>agentic_v2/contracts/</code></td>
-</tr>
-<tr>
-<td><code>lockfile-constraints</code></td>
-<td>Regenerates <code>ci-constraints.txt</code> from <code>uv.lock</code> and fails on drift</td>
-</tr>
-<tr>
-<td><code>dockerfile-constraints</code></td>
-<td>Verifies every <code>pip install</code> line in the Dockerfile pins <code>-c ci-constraints.txt</code></td>
 </tr>
 </tbody>
 </table>
@@ -3669,7 +3653,7 @@
 <tbody>
 <tr>
 <td><code>codeql.yml</code></td>
-<td>CodeQL static analysis on push and PR</td>
+<td>CodeQL static analysis on push, PR and weekly; markdown/image/LICENSE/proofs-only PRs skip the analysis steps but the check still reports</td>
 </tr>
 <tr>
 <td><code>dependabot-auto-merge.yml</code></td>
@@ -3685,15 +3669,15 @@
 </tr>
 <tr>
 <td><code>deploy.yml</code></td>
-<td>Release pipeline, triggered on version tags (<code>v*</code>)</td>
+<td>Release pipeline, triggered on version tags (<code>v*</code>); also runs as a build check on PRs that touch packaging inputs</td>
 </tr>
 <tr>
 <td><code>devcontainer-validate.yml</code></td>
-<td>Validates the devcontainer on changes to <code>.devcontainer/</code></td>
+<td>Validates the devcontainer on changes to its inputs (<code>.devcontainer/</code>, the Dockerfile, the pyproject files, <code>ci-constraints.txt</code>, the UI package files)</td>
 </tr>
 <tr>
 <td><code>docs.yml</code></td>
-<td>Builds and deploys the docs site to GitHub Pages</td>
+<td>Builds and deploys the docs site to GitHub Pages (the only Pages publisher; also regenerates and verifies the load report from <code>load/results/*.json</code>)</td>
 </tr>
 <tr>
 <td><code>eval-package-ci.yml</code></td>
@@ -3704,20 +3688,16 @@
 <td>Reference infrastructure deployment workflow (manual dispatch only; never run automatically)</td>
 </tr>
 <tr>
-<td><code>load-report-pages.yml</code></td>
-<td>Deploys the load report to GitHub Pages</td>
-</tr>
-<tr>
-<td><code>manifest-temperature-check.yml</code></td>
-<td>Detects drift in <code>run-manifest.yaml</code> model temperature defaults</td>
-</tr>
-<tr>
 <td><code>nightly.yml</code></td>
-<td>Nightly E2E reliability run (scheduled)</td>
+<td>Nightly E2E reliability run (scheduled): the streaming spec 50x feeding the flake-rate gate, the first-span SLO sample, the SLO-data publish, then the full Playwright suite 5x</td>
 </tr>
 <tr>
 <td><code>sbom.yml</code></td>
 <td>SBOM generation on release and weekly</td>
+</tr>
+<tr>
+<td><code>weekly-telemetry-snapshot.yml</code></td>
+<td>Weekly CI-run statistics (and optional repository traffic) appended to a rolling ledger issue; never a PR check</td>
 </tr>
 <tr>
 <td><code>windows-workflows-ci.yml</code></td>
@@ -4112,7 +4092,7 @@ same-origin <code>/api</code> and <code>/ws</code> traffic to the backend.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 18, 2026 15:39:13 UTC">October 18, 2026</span>
   </span>
 
     

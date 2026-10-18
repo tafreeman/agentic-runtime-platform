@@ -3056,7 +3056,9 @@ spend tracking are follow-ups.</p>
 <li><strong><code>GH_BACKUP_MODELS</code></strong> stays in <code>langchain/model_utils.py</code> next to the provider
   gate (<code>PROVIDER_ENV_KEYS</code>) it belongs to. Pulling it into the registry would
   create a <code>model_utils</code> ↔ <code>model_registry</code> import cycle for a two-id fallback
-  whose ids are already declared in the registry catalog.</li>
+  whose ids are already declared in the registry catalog. <em>(Removed 2026-10-12
+  along with the <code>gh:</code> tier rungs, after GitHub Models was retired upstream; see
+  ADR-016's update. The registry chain's local tail is now the last candidate.)</em></li>
 <li><strong>Named-agent model fields</strong> (<code>agents.yaml</code> <code>default_model</code> /
   <code>fallback_models</code>) are <em>not</em> migrated. An audit found them vestigial: agent
   model selection flows through the agent's <strong>tier</strong> (now registry-sourced), and
@@ -3071,7 +3073,7 @@ has a <code>models:</code> entry (catches dangling references), and that every m
 <strong>not</strong> <code>_KNOWN_PREFIXES</code> (a display superset that includes keyless namespaces
 like <code>azure:</code> / <code>windows-ai:</code>). Env-var precedence is preserved unchanged:
 per-step <code>model_override</code> → <code>AGENTIC_MODEL_TIER_{n}</code> → probed default → registry
-chain → <code>GH_BACKUP_MODELS</code>.</p>
+chain → <code>GH_BACKUP_MODELS</code> (the last step was removed on 2026-10-12).</p>
 <h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
 <ul>
 <li>A retired or mis-typed id is now a one-file edit, and a dangling reference
@@ -3125,7 +3127,7 @@ chain → <code>GH_BACKUP_MODELS</code>.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 26, 2026 03:20:24 UTC">June 26, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 12, 2026 17:46:56 UTC">October 12, 2026</span>
   </span>
 
     

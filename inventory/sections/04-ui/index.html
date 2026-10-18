@@ -1,0 +1,5341 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard.">
+      
+      
+      
+        <link rel="canonical" href="https://tafreeman.github.io/agentic-runtime-platform/inventory/sections/04-ui/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>04 ui - Agentic Runtime Platform</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=IBM+Plex+Sans:300,300i,400,400i,700,700i%7CIBM+Plex+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"IBM Plex Sans";--md-code-font:"IBM Plex Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/tokens.css">
+    
+      <link rel="stylesheet" href="../../../stylesheets/console.css">
+    
+      <link rel="stylesheet" href="../../../stylesheets/landing.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="04 ui - Agentic Runtime Platform" />
+<meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
+<meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/inventory/sections/04-ui.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/inventory/sections/04-ui/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="04 ui - Agentic Runtime Platform" />
+<meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
+<meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/inventory/sections/04-ui.png" />
+</head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#4-frontend-arp-console-react-ui" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Agentic Runtime Platform" class="md-header__button md-logo" aria-label="Agentic Runtime Platform" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Agentic Runtime Platform
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              04 ui
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/tafreeman/agentic-runtime-platform" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    tafreeman/agentic-runtime-platform
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../getting-started/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Getting started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../ARCHITECTURE/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../deep-dive-server/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Deep dives
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../cli-reference/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  API reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../WORKFLOW_AUTHORING/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Workflows
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../architecture-eval/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Evaluation
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../tools/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tools
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../operations/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../configuration/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../project-overview/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Project
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Agentic Runtime Platform" class="md-nav__button md-logo" aria-label="Agentic Runtime Platform" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Agentic Runtime Platform
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/tafreeman/agentic-runtime-platform" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    tafreeman/agentic-runtime-platform
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../getting-started/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting-started/first-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    First workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../NO_LLM_MODE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    No-LLM dev mode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../ONBOARDING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture-runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runtime engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture-eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation framework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools & providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../integration-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deep dives
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deep dives
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../deep-dive-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server & API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../deep-dive-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../deep-dive-agentic-v2-eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-contracts-runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST endpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../data-models-runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../component-inventory-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI components
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../ui/pages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI pages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../ui/api-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI API integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../workflows/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Workflows
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../WORKFLOW_AUTHORING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../PATTERN_CATALOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pattern catalog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Evaluation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture-eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation framework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../evaluation/rubrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rubrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../evaluation/judge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LLM-as-Judge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../evaluation/gating/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production gating
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../evaluation/runners/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runners
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../evaluation/datasets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Datasets
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../tools/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tools
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools & providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tools/llm-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LLM client
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tools/local-models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local ONNX models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tools/windows-ai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Windows AI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tools/model-probing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model probing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tools/provider-limits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Provider limits
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tools/benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../operations/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Operations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../deployment-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../operations/security-hardening/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../operations/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../GLOSSARY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../CODING_STANDARDS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding standards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../KNOWN_LIMITATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known limitations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../AI_RISK_MANAGEMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI risk management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../MIGRATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migrations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../project-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../adr/ADR-INDEX/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADRs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../DEMO/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#4-frontend-arp-console-react-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Frontend — ARP Console (React UI)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Frontend — ARP Console (React UI)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-stack-and-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Stack and build
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-routes-pages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 Routes -&gt; pages
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-component-inventory-by-area" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Component inventory by area
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-state-and-data-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 State and data layer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45-design-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.5 Design system
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#46-unused-and-dead-code-verified" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.6 Unused and dead code (verified)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#47-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.7 Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#48-needs-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.8 Needs work
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/inventory/sections/04-ui.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/inventory/sections/04-ui.md" title="View source of this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
+    </a>
+  
+
+
+  <h1>04 ui</h1>
+
+<h2 id="4-frontend-arp-console-react-ui">4. Frontend — ARP Console (React UI)<a class="headerlink" href="#4-frontend-arp-console-react-ui" title="Permanent link">&para;</a></h2>
+<p>Source of truth: <code>origin/main</code> @ <code>c3b2d328</code> (clean worktree <code>../arp-main-inventory</code>). UI root: <code>agentic-workflows-v2/ui/</code>. Counts come from <code>docs/inventory/data/ui_inventory.json</code> (203 files under <code>ui/src/</code>: 135 non-test, 68 test; ~23.4k non-test LOC, ~16.1k test LOC as reported by the extractor; LOC = extractor's count, not <code>wc -l</code>). "Prod importers" = distinct non-test files importing the module; "test importers" = distinct test files importing it directly (indirect coverage via a parent render is not counted).</p>
+<h3 id="41-stack-and-build">4.1 Stack and build<a class="headerlink" href="#41-stack-and-build" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Concern</th>
+<th>Choice (version range from <code>ui/package.json</code>)</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UI</td>
+<td>React <code>^19.3.0</code>, react-dom <code>^19.3.0</code></td>
+<td><code>ui/package.json</code></td>
+</tr>
+<tr>
+<td>Language</td>
+<td>TypeScript <code>^7.0.2</code>, <code>strict</code>, <code>noUncheckedIndexedAccess</code>, <code>noUnusedLocals/Parameters</code>, target ES2022, <code>@/*</code> -&gt; <code>src/*</code></td>
+<td><code>ui/tsconfig.json</code> (sets <code>ignoreDeprecations: "6.0"</code>)</td>
+</tr>
+<tr>
+<td>Bundler</td>
+<td>Vite <code>^8.3.4</code> + <code>@vitejs/plugin-react ^6.1.2</code></td>
+<td><code>ui/vite.config.ts</code></td>
+</tr>
+<tr>
+<td>Styling</td>
+<td>Tailwind CSS <code>^4.3.3</code> via <code>@tailwindcss/postcss</code> (CSS-first, <code>@theme</code> in <code>globals.css</code>; <strong>no <code>tailwind.config.*</code></strong>)</td>
+<td><code>ui/postcss.config.js</code>, <code>ui/src/styles/globals.css</code></td>
+</tr>
+<tr>
+<td>Component kit</td>
+<td>shadcn/ui style <code>radix-nova</code>, base colour neutral, CSS variables, lucide icons; <code>radix-ui ^1.7.0</code> meta-package, <code>class-variance-authority</code>, <code>clsx</code>, <code>tailwind-merge</code>, <code>cmdk</code>, <code>sonner</code></td>
+<td><code>ui/components.json</code>, <code>ui/src/components/ui/*</code></td>
+</tr>
+<tr>
+<td>Routing</td>
+<td><code>react-router-dom ^7.18.4</code> (<code>BrowserRouter</code> + <code>&lt;Routes&gt;</code>, all pages <code>React.lazy</code>)</td>
+<td><code>ui/src/main.tsx</code>, <code>ui/src/App.tsx</code></td>
+</tr>
+<tr>
+<td>Server state</td>
+<td><code>@tanstack/react-query ^5.104.1</code> (<code>QueryClient</code> defaults: <code>retry: 1</code>, <code>staleTime: 10_000</code>, <code>refetchOnWindowFocus: false</code>)</td>
+<td><code>ui/src/main.tsx</code></td>
+</tr>
+<tr>
+<td>Graph</td>
+<td><code>@xyflow/react ^12.12.0</code> (React Flow) for the DAG</td>
+<td><code>ui/src/components/dag/WorkflowDAG.tsx</code>, <code>StepNode.tsx</code></td>
+</tr>
+<tr>
+<td>Drag and drop</td>
+<td><code>@dnd-kit/{core,sortable,utilities}</code> (model pack builder only)</td>
+<td><code>ui/src/components/models/pack-builder/*</code></td>
+</tr>
+<tr>
+<td>Telemetry</td>
+<td><code>@opentelemetry/*</code> web SDK + fetch instrumentation, opt-in via <code>VITE_OTEL_ENABLED=true</code></td>
+<td><code>ui/src/telemetry/tracing.ts</code></td>
+</tr>
+<tr>
+<td>Fonts</td>
+<td><code>@fontsource-variable/geist</code> (bundled via <code>globals.css</code>) <strong>and</strong> Google Fonts IBM Plex Mono/Sans/Serif <code>&lt;link&gt;</code> in <code>index.html</code></td>
+<td><code>ui/src/styles/globals.css</code>, <code>ui/index.html</code></td>
+</tr>
+<tr>
+<td>Unit tests</td>
+<td>Vitest <code>^5.0.1</code>, jsdom <code>^30.1.2</code>, Testing Library (<code>react ^16.3.3</code>, <code>jest-dom ^7.0.1</code>), <code>@vitest/coverage-v8</code></td>
+<td><code>ui/vitest.config.ts</code></td>
+</tr>
+<tr>
+<td>E2E</td>
+<td><code>@playwright/test ^1.64.0</code></td>
+<td><code>ui/playwright.config.ts</code></td>
+</tr>
+<tr>
+<td>Type generation</td>
+<td><code>json-schema-to-typescript ^16.0.0</code> driven by <code>ui/scripts/generate-ts-types.mjs</code></td>
+<td><code>ui/package.json</code></td>
+</tr>
+<tr>
+<td>Overrides</td>
+<td><code>nanoid ^3.3.17</code> (reason not stated in the file; (unverified))</td>
+<td><code>ui/package.json</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="scripts-uipackagejson">Scripts (<code>ui/package.json</code>)<a class="headerlink" href="#scripts-uipackagejson" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Script</th>
+<th>Command</th>
+<th>Used by CI</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dev</code></td>
+<td><code>vite</code> (port 5173, HMR on 5183)</td>
+<td>via Playwright <code>webServer</code></td>
+</tr>
+<tr>
+<td><code>build</code></td>
+<td><code>tsc -b &amp;&amp; vite build</code></td>
+<td><code>frontend-build</code> job (<code>.github/workflows/ci.yml:48</code>)</td>
+</tr>
+<tr>
+<td><code>test</code> / <code>test:watch</code></td>
+<td><code>vitest run</code> / <code>vitest</code></td>
+<td>local</td>
+</tr>
+<tr>
+<td><code>test:coverage</code></td>
+<td><code>vitest run --coverage</code></td>
+<td><code>frontend-test</code> job (<code>ci.yml:64</code>)</td>
+</tr>
+<tr>
+<td><code>test:e2e</code> / <code>test:e2e:ui</code></td>
+<td><code>playwright test</code> / <code>--ui</code></td>
+<td>local</td>
+</tr>
+<tr>
+<td><code>test:e2e:5x</code></td>
+<td><code>node scripts/run-e2e-5x.mjs</code> (repeat-run flake gate)</td>
+<td><code>e2e-streaming</code> job (<code>ci.yml:412</code>)</td>
+</tr>
+<tr>
+<td><code>generate:types</code></td>
+<td><code>node scripts/generate-ts-types.mjs</code></td>
+<td><code>wire-format-drift</code> job (<code>ci.yml:347</code>)</td>
+</tr>
+<tr>
+<td><code>generate:types:check</code></td>
+<td>generate then <code>git diff --exit-code -- src/api/events.generated.ts</code></td>
+<td>local only; checks <strong>one</strong> of the 8 generated files</td>
+</tr>
+</tbody>
+</table>
+<h4 id="config-files">Config files<a class="headerlink" href="#config-files" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Key facts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ui/vite.config.ts</code></td>
+<td>Dev proxy <code>/api</code> -&gt; <code>VITE_API_PROXY_TARGET</code> (default <code>http://localhost:8010</code>); <code>/ws</code> proxied with <code>ws: true</code> but the client bypasses it in dev (see 4.4). Defines compile-time <code>__AGENTIC_ENABLE_WORKFLOW_BUILDER__</code>: default <code>"1"</code> in <code>development</code>, otherwise requires env <code>VITE_AGENTIC_ENABLE_WORKFLOW_BUILDER</code>/<code>AGENTIC_ENABLE_WORKFLOW_BUILDER</code>. Injects <code>import.meta.env.VITE_API_PROXY_TARGET</code> only in dev.</td>
+</tr>
+<tr>
+<td><code>ui/vitest.config.ts</code></td>
+<td>jsdom, <code>globals: true</code>, setup <code>src/__tests__/setup.ts</code>, <code>css: true</code>, excludes <code>e2e/**</code>. Coverage v8, include <code>src/**/*.{ts,tsx}</code>, exclude tests/<code>*.d.ts</code>/<code>main.tsx</code>/<code>vite-env.d.ts</code>.</td>
+</tr>
+<tr>
+<td><code>ui/playwright.config.ts</code></td>
+<td><code>testDir: ./e2e</code>, 90 s test timeout, <code>workers: 4</code>, <code>retries: 0</code>, <code>fullyParallel: false</code>, chromium only, trace/video/screenshot on failure. Spawns <strong>its own</strong> backend (<code>uvicorn agentic_v2.server.app:app</code> on <code>127.0.0.1:8010</code>, <code>AGENTIC_NO_LLM=1</code>, venv python if present else <code>python</code>) and frontend (<code>npm run dev</code> on <code>127.0.0.1:5173</code>), both <code>reuseExistingServer: false</code>.</td>
+</tr>
+<tr>
+<td><code>ui/nginx.conf</code></td>
+<td>Port 8080 SPA server: <code>/healthz</code> returns 200 <code>ok</code>; <code>/</code> uses <code>try_files $uri $uri/ /index.html</code>. <strong>No <code>/api</code> or <code>/ws</code> proxying</strong> — Dockerfile comment says ingress routes those to the backend.</td>
+</tr>
+<tr>
+<td><code>Dockerfile.ui</code> (repo root)</td>
+<td>3 stages: <code>frontend-dev</code> (node:26.11-bookworm-slim, <code>npm ci</code>, non-root <code>node</code>, <code>npm run dev</code> on 5173) -&gt; <code>frontend-build</code> (<code>npm run build</code>) -&gt; <code>frontend</code> (nginxinc/nginx-unprivileged:1.31-alpine, copies <code>dist/</code>, port 8080, wget healthcheck on <code>/healthz</code>).</td>
+</tr>
+<tr>
+<td><code>ui/components.json</code></td>
+<td>shadcn config; aliases <code>@/components</code>, <code>@/lib/utils</code>, <code>@/components/ui</code>; css <code>src/styles/globals.css</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>Observation: CI builds with Node 22 (<code>ci.yml:55,74</code>), <code>Dockerfile.ui</code> uses Node 26.11 — different majors for the same <code>npm ci</code>/<code>npm run build</code> (compatibility between them is (unverified)).</p>
+<h4 id="coverage-floors-uivitestconfigts">Coverage floors (<code>ui/vitest.config.ts</code>)<a class="headerlink" href="#coverage-floors-uivitestconfigts" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Floor</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>lines</td>
+<td>60</td>
+<td>ratchet: may only move up</td>
+</tr>
+<tr>
+<td>statements</td>
+<td>60</td>
+<td></td>
+</tr>
+<tr>
+<td>functions</td>
+<td>60</td>
+<td></td>
+</tr>
+<tr>
+<td>branches</td>
+<td>56</td>
+<td>set below target 60 because measured 57.9% on 2026-07-06 per the in-file comment; "raise back to 60" when sustained</td>
+</tr>
+</tbody>
+</table>
+<p>Enforced by <code>npm run test:coverage</code> in the <code>frontend-test</code> CI job. Actual current percentages are not recorded here (not run; read-only research).</p>
+<h3 id="42-routes-pages">4.2 Routes -&gt; pages<a class="headerlink" href="#42-routes-pages" title="Permanent link">&para;</a></h3>
+<p>Router: <code>ui/src/App.tsx</code>. All pages are <code>React.lazy</code> inside one <code>&lt;Suspense&gt;</code> with a skeleton <code>RouteFallback</code>. Shell (always mounted): <code>ConsoleHeader</code>, <code>ApiOfflineBanner</code>, <code>Sidebar</code>, <code>CommandPalette</code>, <code>CliStrip</code>, <code>Toaster</code>, skip-to-main link, route-change focus management, <code>CliProvider</code>/<code>useGoNav</code> (<code>g</code>+key navigation).</p>
+<p>API endpoint paths below are the <code>BASE = "/api"</code> calls in <code>ui/src/api/client.ts</code>; "via X" means the page reaches them through that hook/component.</p>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Page component (LOC)</th>
+<th>Purpose</th>
+<th>Main child components</th>
+<th>API endpoints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/</code></td>
+<td><code>pages/DashboardPage.tsx</code> (390)</td>
+<td>Aggregate health, recent runs, first-run guidance</td>
+<td><code>GettingStartedCard</code>, <code>Scoreline</code>, <code>StatusBadge</code>, <code>TierMark</code>, <code>ConsoleStatus</code>, <code>BTopBar</code></td>
+<td><code>GET /api/agents</code> (direct <code>useQuery</code>); via <code>useRuns</code>: <code>GET /api/runs</code>; via <code>useWorkflows</code>: <code>GET /api/workflows</code></td>
+</tr>
+<tr>
+<td><code>/workflows</code></td>
+<td><code>WorkflowsPage.tsx</code> (201)</td>
+<td>Searchable workflow registry</td>
+<td><code>StatusBadge</code>, <code>NoData</code>, <code>BTopBar</code></td>
+<td>via <code>useWorkflows</code>, <code>useRuns</code></td>
+</tr>
+<tr>
+<td><code>/workflows/:name</code></td>
+<td><code>WorkflowDetailPage.tsx</code> (581)</td>
+<td>DAG view, input schema, launch a run</td>
+<td><code>WorkflowDAG</code>, <code>RunConfigForm</code>, <code>RunList</code>, <code>TierMark</code>, <code>useCli</code></td>
+<td><code>POST /api/run</code> (<code>runWorkflow</code>, plus a "demo" mutation); via hooks: <code>GET /api/workflows/{name}/dag</code>, <code>/runs</code></td>
+</tr>
+<tr>
+<td><code>/workflows/:name/edit</code></td>
+<td><code>WorkflowEditorPage.tsx</code> (674)</td>
+<td>Visual/YAML workflow editor. <strong>Route only registered when <code>isWorkflowBuilderEnabled()</code></strong> (compile-time flag)</td>
+<td><code>WorkflowDAG</code>, <code>NodeInspector</code>, <code>EdgeInspector</code>, <code>editor/documentModel</code></td>
+<td><code>PUT /api/workflows/{name}</code>, <code>POST /api/workflows/validate</code>, <code>GET /api/models/probe</code>, <code>/api/personas</code>, <code>/api/tools</code>, <code>/api/observers</code>; via hook: <code>GET /api/workflows/{name}/editor</code></td>
+</tr>
+<tr>
+<td><code>/datasets</code></td>
+<td><code>DatasetsPage.tsx</code> (102)</td>
+<td>Browse repository/local/eval-set datasets and samples</td>
+<td><code>DatasetBrowser</code>, <code>DatasetDetailPane</code>, <code>SampleIndexGrid</code></td>
+<td>via <code>useWorkflows</code>: <code>GET /api/eval/datasets</code>; <code>useDatasets</code>: <code>GET /api/eval/datasets/{path}/samples[/{i}]</code></td>
+</tr>
+<tr>
+<td><code>/evaluations</code></td>
+<td><code>EvaluationsPage.tsx</code> (579)</td>
+<td>Scores, rubrics, judge truth, replay comparison</td>
+<td><code>EvaluationRubricAccordion</code>, <code>RunComparePanel</code>, <code>BAsciiBar</code>, <code>StatusBadge</code></td>
+<td><code>POST /api/runs/{file}/evaluate</code> (mutation); <code>POST /api/eval/compare</code> (via <code>RunComparePanel</code>); <code>GET /api/runs/{file}/evaluation</code> (via <code>useRuns</code>)</td>
+</tr>
+<tr>
+<td><code>/models</code></td>
+<td><code>ModelFinderPage.tsx</code> (546)</td>
+<td>"Model Router" workspace; URL-backed tabs (Models, Providers, Tiers, Packs, Playground, Hardware — per <code>docs/component-inventory-ui.md</code>)</td>
+<td><code>ChatPlaygroundPanel</code>, <code>HardwareOverrideForm</code>, <code>ProviderProbeList</code>, <code>ModelPacksPanel</code>, <code>ProviderPanel</code>, <code>TierBoard</code></td>
+<td><code>GET /api/model-finder/recommendations</code>, <code>GET /api/models/probe</code> (direct); child panels: see 4.4</td>
+</tr>
+<tr>
+<td><code>/settings</code></td>
+<td><code>&lt;Navigate to="/models?tab=providers" replace /&gt;</code></td>
+<td>Legacy alias; <strong>not</strong> <code>SettingsPage</code></td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>/runs</code></td>
+<td><code>RunsPage.tsx</code> (549)</td>
+<td>Run ledger, filters, live tail, keyboard-driven inspector</td>
+<td><code>RunDetailPanel</code>, <code>StatusBadge</code>, <code>Scoreline</code>, <code>DurationDisplay</code>, <code>useHotkeys</code></td>
+<td>via <code>useRuns</code>: <code>GET /api/runs</code> (5 s <code>refetchInterval</code> when live)</td>
+</tr>
+<tr>
+<td><code>/runs/:filename</code></td>
+<td><code>RunDetailPage.tsx</code> (42)</td>
+<td>Thin wrapper for deep-linked run detail</td>
+<td><code>RunDetailPanel</code> (563)</td>
+<td><code>GET /api/runs/{file}</code>, <code>GET /api/workflows/{name}/editor</code> (YAML), <code>POST /api/run</code> (replay)</td>
+</tr>
+<tr>
+<td><code>/live</code></td>
+<td><code>&lt;Navigate to="/live/latest" replace /&gt;</code></td>
+<td>Redirect</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>/live/:runId</code></td>
+<td><code>LivePage.tsx</code> (680)</td>
+<td>Real-time execution view</td>
+<td><code>WorkflowDAG</code>, <code>LiveStepDetails</code>, <code>StepLogPanel</code>, <code>TokenCounter</code>, <code>Scoreline</code>, <code>TierMark</code></td>
+<td><strong>WebSocket</strong> <code>/ws/execution/{runId}</code> via <code>useWorkflowStream</code>; <code>useRuns</code>, <code>useWorkflows</code></td>
+</tr>
+<tr>
+<td><code>*</code></td>
+<td><code>components/states/NotFoundPage.tsx</code> (36)</td>
+<td>404</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>Not routed anywhere: <code>pages/PrototypeLabPage.tsx</code> (no route, no importer), <code>pages/SettingsPage.tsx</code> (test-only; see 4.6).</p>
+<h3 id="43-component-inventory-by-area">4.3 Component inventory by area<a class="headerlink" href="#43-component-inventory-by-area" title="Permanent link">&para;</a></h3>
+<p>Columns: file | LOC | purpose | prod importers | test importers | status. "Status": <strong>active</strong> = imported by production code; <strong>test-only</strong> / <strong>unused</strong> per 4.6. File ages are not a column because 94 of the 135 non-test files carry <code>age_days = 4</code> (102 are &lt;= 4; one broad restyle sweep) — see 4.8 for the stale outliers.</p>
+<h4 id="entry-and-shell">Entry and shell<a class="headerlink" href="#entry-and-shell" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>LOC</th>
+<th>Purpose</th>
+<th>Prod</th>
+<th>Tests</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>src/main.tsx</code></td>
+<td>32</td>
+<td>Bootstrap: <code>initTracing</code>, <code>QueryClientProvider</code>, <code>BrowserRouter</code>, <code>AppErrorBoundary</code></td>
+<td>0 (entry)</td>
+<td>0 (excluded from coverage)</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>src/App.tsx</code></td>
+<td>114</td>
+<td>Routes, shell, focus management, feature-flag gate</td>
+<td>1</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>src/vite-env.d.ts</code></td>
+<td>3</td>
+<td>Vite client types</td>
+<td>0</td>
+<td>0</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h4 id="pages-12-files-4635-loc"><code>pages/</code> (12 files, 4,635 LOC)<a class="headerlink" href="#pages-12-files-4635-loc" title="Permanent link">&para;</a></h4>
+<p>See 4.2 for per-page detail. Status: 10 active, <code>SettingsPage.tsx</code> (22 LOC) test-only, <code>PrototypeLabPage.tsx</code> (269 LOC) unused. Every routed page has a dedicated <code>__tests__/&lt;Page&gt;.test.tsx</code> (<code>RunDetailPage</code>, <code>Dashboard</code>, <code>Datasets</code>, <code>Evaluations</code>, <code>Live</code>, <code>ModelFinder</code>, <code>Runs</code>, <code>WorkflowDetail</code>, <code>WorkflowEditor</code>, <code>Workflows</code>; <code>NotFoundPage</code> via <code>StateComponents.test.tsx</code>).</p>
+<h4 id="componentscommon"><code>components/common/</code><a class="headerlink" href="#componentscommon" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>LOC</th>
+<th>Purpose</th>
+<th>Prod</th>
+<th>Tests</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>BAsciiBar.tsx</code></td>
+<td>54</td>
+<td>ASCII progress/score bar</td>
+<td>3</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>BBox.tsx</code></td>
+<td>33</td>
+<td>Boxed container (legacy <code>B*</code> family)</td>
+<td>0</td>
+<td>0</td>
+<td><strong>unused</strong></td>
+</tr>
+<tr>
+<td><code>BPill.tsx</code></td>
+<td>30</td>
+<td>Tone pill</td>
+<td>6</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>BSpark.tsx</code></td>
+<td>47</td>
+<td>Sparkline</td>
+<td>0</td>
+<td>0</td>
+<td><strong>unused</strong></td>
+</tr>
+<tr>
+<td><code>CommandPalette.tsx</code></td>
+<td>312</td>
+<td>cmdk palette (global)</td>
+<td>1</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>ConsoleStatus.tsx</code></td>
+<td>39</td>
+<td>Backend status line</td>
+<td>1</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>CopyId.tsx</code></td>
+<td>39</td>
+<td>Copy-to-clipboard id</td>
+<td>1</td>
+<td>0</td>
+<td>active, no direct test</td>
+</tr>
+<tr>
+<td><code>DurationDisplay.tsx</code></td>
+<td>18</td>
+<td>Duration formatter</td>
+<td>6</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>JsonViewer.tsx</code></td>
+<td>148</td>
+<td>Collapsible JSON</td>
+<td>3</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>Scoreline.tsx</code></td>
+<td>78</td>
+<td>Score summary row</td>
+<td>4</td>
+<td>0</td>
+<td>active, no direct test</td>
+</tr>
+<tr>
+<td><code>StatusBadge.tsx</code></td>
+<td>103</td>
+<td>Status marker with tone</td>
+<td>14</td>
+<td>1</td>
+<td>active (most shared)</td>
+</tr>
+<tr>
+<td><code>TierMark.tsx</code></td>
+<td>63</td>
+<td>Tier T0-Tn marker</td>
+<td>8</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>apiErrorText.ts</code></td>
+<td>5</td>
+<td>Error-to-string helper</td>
+<td>7</td>
+<td>1</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h4 id="componentslayout"><code>components/layout/</code><a class="headerlink" href="#componentslayout" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>LOC</th>
+<th>Purpose</th>
+<th>Prod</th>
+<th>Tests</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>BTopBar.tsx</code></td>
+<td>33</td>
+<td>Per-page breadcrumb/action band</td>
+<td>9</td>
+<td>0</td>
+<td>active, no direct test</td>
+</tr>
+<tr>
+<td><code>CliStrip.tsx</code></td>
+<td>58</td>
+<td>Dark command/status strip</td>
+<td>1</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>ConsoleHeader.tsx</code></td>
+<td>87</td>
+<td>Section/path, health, search affordance</td>
+<td>1</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>MobileNav.tsx</code></td>
+<td>153</td>
+<td>Mobile bottom nav</td>
+<td>1</td>
+<td>0</td>
+<td>active, no direct test</td>
+</tr>
+<tr>
+<td><code>PaletteShortcut.tsx</code></td>
+<td>40</td>
+<td>Palette shortcut hint</td>
+<td>3</td>
+<td>0</td>
+<td>active, no direct test</td>
+</tr>
+<tr>
+<td><code>Sidebar.tsx</code></td>
+<td>223</td>
+<td>Desktop evidence index</td>
+<td>1</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>navigation.ts</code></td>
+<td>57</td>
+<td><code>NAV_ITEMS</code></td>
+<td>2</td>
+<td>1</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h4 id="componentsstates"><code>components/states/</code><a class="headerlink" href="#componentsstates" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>LOC</th>
+<th>Purpose</th>
+<th>Prod</th>
+<th>Tests</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ApiOfflineBanner.tsx</code></td>
+<td>37</td>
+<td>Single shell-level API-unreachable notice</td>
+<td>1</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>AppErrorBoundary.tsx</code></td>
+<td>49</td>
+<td>Last-resort render error boundary</td>
+<td>1</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>EmptyState.tsx</code></td>
+<td>49</td>
+<td>Empty state (+ with-home variant)</td>
+<td>2</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>ErrorBanner.tsx</code></td>
+<td>90</td>
+<td>Error banner</td>
+<td>1</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>InlineError.tsx</code></td>
+<td>93</td>
+<td>Inline error</td>
+<td>7</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>NoData.tsx</code></td>
+<td>18</td>
+<td>No-data placeholder</td>
+<td>12</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>NotFoundPage.tsx</code></td>
+<td>36</td>
+<td>404 route</td>
+<td>1</td>
+<td>1</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h4 id="componentsdag"><code>components/dag/</code><a class="headerlink" href="#componentsdag" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>LOC</th>
+<th>Purpose</th>
+<th>Prod</th>
+<th>Tests</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>WorkflowDAG.tsx</code></td>
+<td>352</td>
+<td>React Flow DAG canvas</td>
+<td>4</td>
+<td>0</td>
+<td>active, no direct test (exercised via page tests)</td>
+</tr>
+<tr>
+<td><code>StepNode.tsx</code></td>
+<td>293</td>
+<td>Custom node (has snapshot)</td>
+<td>1</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>dagLayout.ts</code></td>
+<td>94</td>
+<td><code>layoutDAG</code></td>
+<td>2</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>edgeAppearance.ts</code></td>
+<td>59</td>
+<td>Edge styling</td>
+<td>1</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>graphTokens.ts</code></td>
+<td>39</td>
+<td><code>--el-graph-*</code> token lookup</td>
+<td>3</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>BDagMini.tsx</code></td>
+<td>151</td>
+<td>SVG DAG thumbnail</td>
+<td>0</td>
+<td>1</td>
+<td><strong>test-only</strong></td>
+</tr>
+</tbody>
+</table>
+<h4 id="componentslive"><code>components/live/</code><a class="headerlink" href="#componentslive" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>LOC</th>
+<th>Purpose</th>
+<th>Prod</th>
+<th>Tests</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>LiveStepDetails.tsx</code></td>
+<td>279</td>
+<td>Per-step live detail list</td>
+<td>1</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>StepLogPanel.tsx</code></td>
+<td>131</td>
+<td>Step log</td>
+<td>1</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>TokenCounter.tsx</code></td>
+<td>55</td>
+<td>Token counter</td>
+<td>1</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>NodeConfigOverlay.tsx</code></td>
+<td>399</td>
+<td>Unfinished live node-config editor</td>
+<td>0</td>
+<td>1</td>
+<td><strong>test-only</strong></td>
+</tr>
+</tbody>
+</table>
+<h4 id="componentsruns"><code>components/runs/</code><a class="headerlink" href="#componentsruns" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>LOC</th>
+<th>Purpose</th>
+<th>Prod</th>
+<th>Tests</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RunConfigForm.tsx</code></td>
+<td>734</td>
+<td>Launch form (inputs, routing, runtime, eval)</td>
+<td>1</td>
+<td>1</td>
+<td>active, oversized</td>
+</tr>
+<tr>
+<td><code>RunDetailPanel.tsx</code></td>
+<td>563</td>
+<td>Run detail (DAG, IO, evaluation, replay)</td>
+<td>2</td>
+<td>0</td>
+<td>active, oversized, no direct test</td>
+</tr>
+<tr>
+<td><code>RunDetail.tsx</code></td>
+<td>134</td>
+<td><code>RunDetailSteps</code></td>
+<td>1</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>RunList.tsx</code></td>
+<td>182</td>
+<td>Run list</td>
+<td>1</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>RunSummaryCards.tsx</code></td>
+<td>103</td>
+<td>Summary KPI cards</td>
+<td>0</td>
+<td>1</td>
+<td><strong>test-only</strong></td>
+</tr>
+</tbody>
+</table>
+<h4 id="componentsmodels-pack-builder"><code>components/models/</code> (+ <code>pack-builder/</code>)<a class="headerlink" href="#componentsmodels-pack-builder" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>LOC</th>
+<th>Purpose</th>
+<th>Prod</th>
+<th>Tests</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ChatPlaygroundPanel.tsx</code></td>
+<td>718</td>
+<td>Abortable SSE chat (text/image)</td>
+<td>1</td>
+<td>1</td>
+<td>active, oversized</td>
+</tr>
+<tr>
+<td><code>ModelPacksPanel.tsx</code></td>
+<td>671</td>
+<td>Model pack lifecycle (create/version/validate/activate/bind/import/export/archive)</td>
+<td>1</td>
+<td>1</td>
+<td>active, oversized</td>
+</tr>
+<tr>
+<td><code>ProviderProbeList.tsx</code></td>
+<td>604</td>
+<td>Provider status + live model catalog, LM Studio load</td>
+<td>1</td>
+<td>1</td>
+<td>active, oversized</td>
+</tr>
+<tr>
+<td><code>HardwareOverrideForm.tsx</code></td>
+<td>308</td>
+<td>Hardware profile override</td>
+<td>1</td>
+<td>0</td>
+<td>active, no direct test (api client test covers <code>api/hardware.ts</code>)</td>
+</tr>
+<tr>
+<td><code>pack-builder/PackBuilder.tsx</code></td>
+<td>335</td>
+<td>Pack builder (dnd-kit)</td>
+<td>1</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>pack-builder/TierChainBoard.tsx</code></td>
+<td>408</td>
+<td>Tier chain droppable board</td>
+<td>1</td>
+<td>0</td>
+<td>active, oversized, no direct test</td>
+</tr>
+<tr>
+<td><code>pack-builder/ModelPalette.tsx</code></td>
+<td>380</td>
+<td>Draggable model palette</td>
+<td>2</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>pack-builder/builderParts.tsx</code></td>
+<td>301</td>
+<td>Shared builder parts</td>
+<td>4</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>pack-builder/packDraft.ts</code></td>
+<td>332</td>
+<td>Draft reducer/model</td>
+<td>5</td>
+<td>2</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h4 id="componentssettings"><code>components/settings/</code><a class="headerlink" href="#componentssettings" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>LOC</th>
+<th>Purpose</th>
+<th>Prod</th>
+<th>Tests</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ProviderPanel.tsx</code></td>
+<td>556</td>
+<td>Provider CRUD, env-name credential ref, probe</td>
+<td>2</td>
+<td>0</td>
+<td>active, oversized, no direct test</td>
+</tr>
+<tr>
+<td><code>TierBoard.tsx</code></td>
+<td>401</td>
+<td>Tier chain reorder, dry-run</td>
+<td>2</td>
+<td>0</td>
+<td>active, oversized, no direct test</td>
+</tr>
+</tbody>
+</table>
+<p>Prod importers = <code>ModelFinderPage</code> + test-only <code>SettingsPage</code>.</p>
+<h4 id="componentseditor-evaluations-datasets-dashboard"><code>components/editor/</code>, <code>evaluations/</code>, <code>datasets/</code>, <code>dashboard/</code><a class="headerlink" href="#componentseditor-evaluations-datasets-dashboard" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>LOC</th>
+<th>Purpose</th>
+<th>Prod</th>
+<th>Tests</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>editor/NodeInspector.tsx</code></td>
+<td>415</td>
+<td>Node property editor</td>
+<td>1</td>
+<td>0</td>
+<td>active, oversized, no direct test</td>
+</tr>
+<tr>
+<td><code>editor/EdgeInspector.tsx</code></td>
+<td>108</td>
+<td>Edge inspector</td>
+<td>1</td>
+<td>0</td>
+<td>active, no direct test</td>
+</tr>
+<tr>
+<td><code>editor/documentModel.ts</code></td>
+<td>251</td>
+<td>Raw YAML doc model</td>
+<td>3</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>evaluations/RunComparePanel.tsx</code></td>
+<td>325</td>
+<td>Run comparison</td>
+<td>1</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>evaluations/EvaluationRubricAccordion.tsx</code></td>
+<td>233</td>
+<td>Rubric accordion</td>
+<td>2</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>evaluations/CriterionRow.tsx</code></td>
+<td>48</td>
+<td>Criterion row</td>
+<td>1</td>
+<td>0</td>
+<td>active, no direct test</td>
+</tr>
+<tr>
+<td><code>evaluations/StepScoreDetails.tsx</code></td>
+<td>88</td>
+<td>Step score detail</td>
+<td>1</td>
+<td>0</td>
+<td>active, no direct test</td>
+</tr>
+<tr>
+<td><code>datasets/DatasetBrowser.tsx</code></td>
+<td>173</td>
+<td>Dataset browser</td>
+<td>1</td>
+<td>0</td>
+<td>active, no direct test</td>
+</tr>
+<tr>
+<td><code>datasets/DatasetDetailPane.tsx</code></td>
+<td>212</td>
+<td>Dataset detail</td>
+<td>1</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>datasets/SampleIndexGrid.tsx</code></td>
+<td>150</td>
+<td>Sample grid</td>
+<td>1</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>dashboard/GettingStartedCard.tsx</code></td>
+<td>169</td>
+<td>First-run card</td>
+<td>1</td>
+<td>1</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h4 id="componentsui-shadcn-primitives-24-files"><code>components/ui/</code> (shadcn primitives, 24 files)<a class="headerlink" href="#componentsui-shadcn-primitives-24-files" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>LOC</th>
+<th>Prod</th>
+<th>Tests</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>button.tsx</code></td>
+<td>70</td>
+<td>22</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>input.tsx</code></td>
+<td>16</td>
+<td>3</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>textarea.tsx</code></td>
+<td>15</td>
+<td>1</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>alert-dialog.tsx</code></td>
+<td>186</td>
+<td>1</td>
+<td>0</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>command.tsx</code></td>
+<td>188</td>
+<td>1</td>
+<td>0</td>
+<td>active (CommandPalette)</td>
+</tr>
+<tr>
+<td><code>dialog.tsx</code></td>
+<td>158</td>
+<td>1</td>
+<td>0</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>dropdown-menu.tsx</code></td>
+<td>253</td>
+<td>1</td>
+<td>0</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>input-group.tsx</code></td>
+<td>154</td>
+<td>1</td>
+<td>0</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>popover.tsx</code></td>
+<td>81</td>
+<td>1</td>
+<td>0</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>sheet.tsx</code></td>
+<td>133</td>
+<td>1</td>
+<td>0</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>sonner.tsx</code></td>
+<td>45</td>
+<td>1</td>
+<td>0</td>
+<td>active (<code>App.tsx</code> Toaster)</td>
+</tr>
+<tr>
+<td><code>badge.tsx</code></td>
+<td>45</td>
+<td>0</td>
+<td>1</td>
+<td>test-only</td>
+</tr>
+<tr>
+<td><code>checkbox.tsx</code></td>
+<td>30</td>
+<td>0</td>
+<td>1</td>
+<td>test-only</td>
+</tr>
+<tr>
+<td><code>switch.tsx</code></td>
+<td>31</td>
+<td>0</td>
+<td>1</td>
+<td>test-only</td>
+</tr>
+<tr>
+<td><code>tabs.tsx</code></td>
+<td>81</td>
+<td>0</td>
+<td>1</td>
+<td>test-only</td>
+</tr>
+<tr>
+<td><code>accordion.tsx</code></td>
+<td>72</td>
+<td>0</td>
+<td>0</td>
+<td>unused</td>
+</tr>
+<tr>
+<td><code>collapsible.tsx</code></td>
+<td>28</td>
+<td>0</td>
+<td>0</td>
+<td>unused</td>
+</tr>
+<tr>
+<td><code>resizable.tsx</code></td>
+<td>43</td>
+<td>0</td>
+<td>0</td>
+<td>unused</td>
+</tr>
+<tr>
+<td><code>scroll-area.tsx</code></td>
+<td>50</td>
+<td>0</td>
+<td>0</td>
+<td>unused</td>
+</tr>
+<tr>
+<td><code>select.tsx</code></td>
+<td>182</td>
+<td>0</td>
+<td>0</td>
+<td>unused</td>
+</tr>
+<tr>
+<td><code>separator.tsx</code></td>
+<td>23</td>
+<td>0</td>
+<td>0</td>
+<td>unused</td>
+</tr>
+<tr>
+<td><code>skeleton.tsx</code></td>
+<td>11</td>
+<td>0</td>
+<td>0</td>
+<td>unused</td>
+</tr>
+<tr>
+<td><code>table.tsx</code></td>
+<td>105</td>
+<td>0</td>
+<td>0</td>
+<td>unused</td>
+</tr>
+<tr>
+<td><code>tooltip.tsx</code></td>
+<td>50</td>
+<td>0</td>
+<td>0</td>
+<td>unused</td>
+</tr>
+</tbody>
+</table>
+<p><code>uiPrimitives.test.tsx</code> is the only test touching <code>badge/checkbox/switch/tabs</code>/<code>button</code>/<code>input</code>/<code>textarea</code> (also asserts focus ring and 2 px badge radius per <code>.claude/rules/ui-design.md</code>).</p>
+<h4 id="hooks"><code>hooks/</code><a class="headerlink" href="#hooks" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>LOC</th>
+<th>Purpose</th>
+<th>Prod</th>
+<th>Tests</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>useApiAvailability.ts</code></td>
+<td>29</td>
+<td>API reachability flag</td>
+<td>14</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>useAutoPanZoom.ts</code></td>
+<td>159</td>
+<td>React Flow auto fit/zoom</td>
+<td>1</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>useBackendHealth.ts</code></td>
+<td>26</td>
+<td><code>GET /api/health</code>, 15 s poll</td>
+<td>5</td>
+<td>0</td>
+<td>active, no direct test</td>
+</tr>
+<tr>
+<td><code>useCli.tsx</code></td>
+<td>81</td>
+<td>CLI strip context, <code>cliForPath</code></td>
+<td>4</td>
+<td>3</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>useDatasets.ts</code></td>
+<td>26</td>
+<td>Dataset sample queries</td>
+<td>3</td>
+<td>0</td>
+<td>active, no direct test</td>
+</tr>
+<tr>
+<td><code>useGoNav.ts</code></td>
+<td>71</td>
+<td><code>g</code>+key navigation</td>
+<td>1</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>useHotkeys.ts</code></td>
+<td>61</td>
+<td>Hotkey map</td>
+<td>2</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>usePrefersReducedMotion.ts</code></td>
+<td>21</td>
+<td>Media query</td>
+<td>4</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>useRuns.ts</code></td>
+<td>44</td>
+<td>Run list/detail/summary/evaluation queries</td>
+<td>8</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>useTheme.ts</code></td>
+<td>33</td>
+<td><code>applyTheme</code> (paper/dark)</td>
+<td>2</td>
+<td>0</td>
+<td>active, no direct test</td>
+</tr>
+<tr>
+<td><code>useWorkflowStream.ts</code></td>
+<td>216</td>
+<td>WebSocket reducer for a run</td>
+<td>2</td>
+<td>2</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>useWorkflows.ts</code></td>
+<td>34</td>
+<td>Workflow list/DAG/editor/eval datasets</td>
+<td>9</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>useNodeConfigUpdate.ts</code></td>
+<td>84</td>
+<td>Send <code>node_config_update</code> over WS</td>
+<td>0</td>
+<td>0</td>
+<td><strong>unused</strong></td>
+</tr>
+</tbody>
+</table>
+<h4 id="lib-config-telemetry"><code>lib/</code>, <code>config/</code>, <code>telemetry/</code><a class="headerlink" href="#lib-config-telemetry" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>LOC</th>
+<th>Purpose</th>
+<th>Prod</th>
+<th>Tests</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>lib/utils.ts</code></td>
+<td>11</td>
+<td><code>cn()</code></td>
+<td>22</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>lib/apiErrors.ts</code></td>
+<td>191</td>
+<td>Error classification / start hint</td>
+<td>21</td>
+<td>2</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>lib/grades.ts</code></td>
+<td>56</td>
+<td>Score -&gt; grade</td>
+<td>5</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>lib/modelVerification.ts</code></td>
+<td>88</td>
+<td>Model verification status</td>
+<td>2</td>
+<td>3</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>lib/platform.ts</code></td>
+<td>38</td>
+<td>Apple-platform detection</td>
+<td>1</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>config/featureFlags.ts</code></td>
+<td>9</td>
+<td><code>isWorkflowBuilderEnabled()</code></td>
+<td>3</td>
+<td>1</td>
+<td>active</td>
+</tr>
+<tr>
+<td><code>telemetry/tracing.ts</code></td>
+<td>180</td>
+<td>Opt-in OTLP tracing + fetch instrumentation</td>
+<td>1</td>
+<td>1</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h4 id="styles"><code>styles/</code><a class="headerlink" href="#styles" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>LOC (lines)</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>styles/globals.css</code></td>
+<td>466</td>
+<td>Tailwind v4 entry: imports <code>tokens.css</code> + Geist, <code>@custom-variant dark</code>, <code>@theme</code>, shell classes, frozen <code>b-*</code> aliases</td>
+</tr>
+<tr>
+<td><code>styles/tokens.css</code></td>
+<td>279</td>
+<td>Evidence Ledger tokens: <code>:root,[data-theme="paper"]</code>, <code>[data-theme="dark"]</code> overrides, graph tokens</td>
+</tr>
+<tr>
+<td><code>styles/prototype-lab.css</code></td>
+<td>144</td>
+<td>Styles for the unrouted <code>PrototypeLabPage</code>; exempt from design guards</td>
+</tr>
+</tbody>
+</table>
+<h3 id="44-state-and-data-layer">4.4 State and data layer<a class="headerlink" href="#44-state-and-data-layer" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Implementation</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HTTP client</td>
+<td>Single module <code>api/client.ts</code> (695 LOC, 48 exported functions). <code>BASE = "/api"</code>; private <code>fetchJSON&lt;T&gt;()</code> wraps <code>fetch(resolveRequestUrl(url))</code> and throws on non-OK. No auth header handling visible in the client ((unverified) beyond the grep for <code>credentials</code>/<code>X-</code> which found none).</td>
+<td><code>ui/src/api/client.ts:54,67,79</code></td>
+</tr>
+<tr>
+<td>Hardware override</td>
+<td>Separate small module <code>api/hardware.ts</code> (49 LOC) for the profile-override types; calls live in <code>client.ts</code> (<code>/api/model-finder/profile-override</code> GET/PUT/DELETE).</td>
+<td><code>ui/src/api/hardware.ts</code></td>
+</tr>
+<tr>
+<td>Hand-written types</td>
+<td><code>api/types.ts</code> (774 LOC, 40 prod importers — the most imported module) re-exports the generated types and defines everything else, including <code>ChatRequest</code>/<code>ChatStreamEvent</code>.</td>
+<td><code>ui/src/api/types.ts</code></td>
+</tr>
+<tr>
+<td>Server state</td>
+<td>React Query for reads and mutations. Shared read hooks: <code>useWorkflows</code> (4 queries), <code>useRuns</code> (4 queries; <code>refetchInterval: 5000</code> only when <code>live</code>), <code>useDatasets</code> (2), <code>useBackendHealth</code> (15 s poll when enabled). Page/panel-local <code>useQuery</code>/<code>useMutation</code> in Dashboard, Editor, WorkflowDetail, ModelFinder, ProviderPanel, TierBoard, ModelPacksPanel, HardwareOverrideForm, ProviderProbeList, RunConfigForm, RunDetailPanel, RunComparePanel, Evaluations. Query keys seen: <code>runs</code>, <code>run-evaluation</code>, <code>model-packs</code>, <code>model-probe</code>, <code>model-recommendations</code>, <code>hardware-override</code>.</td>
+<td><code>ui/src/hooks/*.ts</code>, grep of <code>useQuery(</code></td>
+</tr>
+<tr>
+<td>WebSocket</td>
+<td><code>api/websocket.ts</code> <code>connectExecutionStream(runId, onEvent, {maxRetries=5, retryDelayMs=1000, pathPrefix="execution", onRetriesExhausted})</code> -&gt; <code>ws(s)://&lt;host&gt;/ws/execution/{runId}</code>. Exponential backoff 1/2/4/8/16 s (31 s total), retry counter resets on open, malformed frames logged and dropped. In dev it connects directly to <code>VITE_API_PROXY_TARGET</code> because Vite's proxy drops WS upgrades. Consumed only by <code>hooks/useWorkflowStream.ts</code>.</td>
+<td><code>ui/src/api/websocket.ts:9-93</code></td>
+</tr>
+<tr>
+<td>Stream reducer</td>
+<td><code>useWorkflowStream</code> (216 LOC) accumulates run state; server replays its buffer on reconnect so duplicates are dropped by wire-key (comments at lines ~67-75). E2E <code>reconnect.spec.ts</code> covers drop-and-replay.</td>
+<td><code>ui/src/hooks/useWorkflowStream.ts</code></td>
+</tr>
+<tr>
+<td>SSE</td>
+<td><code>sendChat()</code> (<code>client.ts:498</code>) does <code>POST /api/chat</code> with <code>fetch</code> + <code>res.body.getReader()</code> (SSE over fetch, abortable); used only by <code>ChatPlaygroundPanel</code>.</td>
+<td><code>ui/src/api/client.ts:447-545</code></td>
+</tr>
+<tr>
+<td>Client-only state</td>
+<td><code>useCli</code> context (CLI strip), <code>useGoNav</code>, <code>useHotkeys</code>, <code>useTheme</code> (<code>data-theme</code> attribute), <code>PackBuilder</code> draft reducer (<code>packDraft.ts</code>). No Redux/Zustand.</td>
+<td><code>ui/src/hooks</code>, <code>ui/src/components/models/pack-builder</code></td>
+</tr>
+<tr>
+<td>Feature flag</td>
+<td>Compile-time <code>__AGENTIC_ENABLE_WORKFLOW_BUILDER__</code> (Vite <code>define</code>) read by <code>parseBooleanFlag</code>. Production builds hide <code>/workflows/:name/edit</code> unless the env flag is set at build time.</td>
+<td><code>ui/vite.config.ts</code>, <code>ui/src/config/featureFlags.ts</code></td>
+</tr>
+<tr>
+<td>Tracing</td>
+<td><code>initTracing()</code> first in <code>main.tsx</code>; no-op unless <code>VITE_OTEL_ENABLED=true</code>.</td>
+<td><code>ui/src/main.tsx:10</code>, <code>ui/src/telemetry/tracing.ts</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="generated-types-python-json-schema-ts">Generated types (Python -&gt; JSON Schema -&gt; TS)<a class="headerlink" href="#generated-types-python-json-schema-ts" title="Permanent link">&para;</a></h4>
+<p><code>ui/scripts/generate-ts-types.mjs</code> converts 8 schemas under <code>agentic-workflows-v2/tests/schemas/</code> into <code>ui/src/api/*.generated.ts</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Generated file</th>
+<th>LOC</th>
+<th>Consumed by</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>events.generated.ts</code></td>
+<td>181</td>
+<td><code>api/types.ts</code></td>
+<td>used</td>
+</tr>
+<tr>
+<td><code>step_result.generated.ts</code></td>
+<td>70</td>
+<td><code>api/types.ts</code></td>
+<td>used</td>
+</tr>
+<tr>
+<td><code>dag_response.generated.ts</code></td>
+<td>93</td>
+<td><code>api/types.ts</code></td>
+<td>used</td>
+</tr>
+<tr>
+<td><code>workflow_input_schema.generated.ts</code></td>
+<td>96</td>
+<td><code>api/types.ts</code></td>
+<td>used</td>
+</tr>
+<tr>
+<td><code>workflow_editor_step.generated.ts</code></td>
+<td>66</td>
+<td><code>api/types.ts</code></td>
+<td>used</td>
+</tr>
+<tr>
+<td><code>runs_summary.generated.ts</code></td>
+<td>30</td>
+<td><code>api/types.ts</code></td>
+<td>used</td>
+</tr>
+<tr>
+<td><code>chat_request.generated.ts</code></td>
+<td>185</td>
+<td><strong>nobody</strong></td>
+<td>emitted + drift-checked, never imported</td>
+</tr>
+<tr>
+<td><code>chat_stream_event.generated.ts</code></td>
+<td>56</td>
+<td><strong>nobody</strong></td>
+<td>emitted + drift-checked, never imported</td>
+</tr>
+</tbody>
+</table>
+<p>CI <code>wire-format-drift</code> (<code>ci.yml:347-411</code>) regenerates and diffs all 8 files (lines 400-407 list them), but <code>api/types.ts</code> hand-defines <code>ChatRequestBase</code>, <code>ModelChatRequest</code>, <code>TierChatRequest</code>, <code>ChatRequest</code>, <code>ChatStreamEvent</code> instead of importing the generated ones. Consequence: the chat wire contract is guarded in CI yet the UI does not consume it, so a schema change passes CI while the UI types silently diverge.</p>
+<h4 id="backend-endpoints-called-by-the-ui-from-clientts">Backend endpoints called by the UI (from <code>client.ts</code>)<a class="headerlink" href="#backend-endpoints-called-by-the-ui-from-clientts" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Endpoints</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Workflows</td>
+<td><code>GET /workflows</code>, <code>/workflows/{n}/dag</code>, <code>/workflows/{n}/editor</code>, <code>/workflows/{n}/preview-dataset-inputs</code>; <code>PUT /workflows/{n}</code>; <code>POST /workflows/validate</code></td>
+</tr>
+<tr>
+<td>Runs</td>
+<td><code>GET /runs</code>, <code>/runs/{f}</code>, <code>/runs/summary</code>, <code>/runs/{f}/evaluation</code>; <code>POST /run</code>, <code>/runs/{f}/evaluate</code></td>
+</tr>
+<tr>
+<td>Eval</td>
+<td><code>GET /eval/datasets</code>, <code>/eval/datasets/{path}/samples[/{i}]</code>; <code>POST /eval/compare</code></td>
+</tr>
+<tr>
+<td>Registry</td>
+<td><code>GET /agents</code>, <code>/personas</code>, <code>/tools</code>, <code>/observers</code></td>
+</tr>
+<tr>
+<td>Models</td>
+<td><code>GET /models/probe</code>, <code>/model-finder/recommendations</code>; <code>POST /models/lmstudio/load</code>; <code>GET/PUT/DELETE /model-finder/profile-override</code>; <code>POST /chat</code> (SSE)</td>
+</tr>
+<tr>
+<td>Settings</td>
+<td><code>GET/PUT /settings/providers</code>, <code>POST /settings/providers/{id}/probe</code>, <code>GET/PUT /settings/tiers</code></td>
+</tr>
+<tr>
+<td>Model packs</td>
+<td><code>GET/POST /settings/model-packs</code>; <code>PUT /settings/model-packs/{id}</code>; <code>POST .../{id}/{duplicate,validate,activate,archive}</code>; <code>DELETE /settings/model-packs/active</code>; <code>PUT/DELETE</code> bindings; <code>GET .../{id}/{dependencies,export}</code>; <code>POST /settings/model-packs/import</code></td>
+</tr>
+<tr>
+<td>Health</td>
+<td><code>GET /health</code></td>
+</tr>
+<tr>
+<td>WS</td>
+<td><code>/ws/execution/{runId}</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="45-design-system">4.5 Design system<a class="headerlink" href="#45-design-system" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Where</th>
+<th>State on main</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Design system doc ("Evidence Ledger")</td>
+<td><code>DESIGN.md</code> (repo root, 10.9 KB; sections: Colors, Typography, Layout, Elevation, Shapes, Motion, Components, Do's/Don'ts, Enforcement, Exemptions)</td>
+<td>present</td>
+</tr>
+<tr>
+<td>Product brief</td>
+<td><code>PRODUCT.md</code> (repo root; platform web, solo operator persona, "inspectable runs" positioning)</td>
+<td>present</td>
+</tr>
+<tr>
+<td>Machine-readable design</td>
+<td><code>.impeccable/design.json</code> (schemaVersion 2, title "Design System: Agentic Runtime Platform Dashboard")</td>
+<td>present</td>
+</tr>
+<tr>
+<td>Tokens</td>
+<td><code>ui/src/styles/tokens.css</code> (279 lines): warm-paper default (<code>:root,[data-theme="paper"]</code>), <code>[data-theme="dark"]</code> override layered on top, <code>--el-*</code> and <code>--el-graph-*</code>. Palette in <code>DESIGN.md</code> frontmatter: canvas <code>#f2efe8</code>, ink <code>#1b1b18</code>, accent vermilion <code>#ef5a36</code> (text uses <code>accent-strong #b6381e</code>), plus success/warning/danger/info/plum. Tailwind exposes them as <code>el-*</code> utilities via <code>@theme</code> in <code>globals.css</code>.</td>
+<td>present</td>
+</tr>
+<tr>
+<td>Typography</td>
+<td>Geist variable (bundled) with IBM Plex Mono/Sans/Serif loaded from Google Fonts in <code>index.html</code>; <code>font-display</code> used in headings; type floor <code>text-micro</code> 11 px, <code>text-xs</code> 12 px</td>
+<td>present</td>
+</tr>
+<tr>
+<td>Component rules doc</td>
+<td><code>docs/ui/evidence-ledger-design-system.md</code> (referenced by <code>.claude/rules/ui-design.md</code>)</td>
+<td>referenced; not opened here</td>
+</tr>
+<tr>
+<td>Agent rule file</td>
+<td><code>.claude/rules/ui-design.md</code> (path-scoped to <code>agentic-workflows-v2/ui/**</code>)</td>
+<td>present</td>
+</tr>
+<tr>
+<td>Frozen legacy</td>
+<td><code>b-*</code> classes and <code>--b-*</code> variables in <code>globals.css</code> are frozen aliases; <code>BAsciiBar/BPill/BTopBar/BDagMini/BBox/BSpark</code> are the <code>B*</code> component family (BBox, BSpark unused)</td>
+<td>present</td>
+</tr>
+</tbody>
+</table>
+<h4 id="ci-enforcement-of-design-rules">CI enforcement of design rules<a class="headerlink" href="#ci-enforcement-of-design-rules" title="Permanent link">&para;</a></h4>
+<p>There is <strong>no script under <code>ui/scripts/</code></strong> for this (only <code>generate-ts-types.mjs</code>, <code>run-e2e-5x.mjs</code>); enforcement is vitest tests run by <code>npm run test:coverage</code> in the <code>frontend-test</code> job:</p>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>What it fails on</th>
+<th>Exemptions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>src/__tests__/designDrift.test.ts</code></td>
+<td>Scans every non-test <code>ts/tsx/css</code> via <code>import.meta.glob(..., ?raw)</code>: type below 11 px (<code>text-[Npx]</code>, inline <code>fontSize</code>, CSS <code>font-size</code>, <code>font:</code> shorthand incl. <code>.5px</code> form), hex/rgb/hsl colour literals in TS/TSX not <code>var(--el-*)</code>, <code>transition-all</code>, transitions on layout properties; has meta-tests (comments/exempt files ignored; shorthand reads only the size slot)</td>
+<td><code>__tests__/</code>, <code>*.test.*</code>, <code>/test/</code>, <code>styles/tokens.css</code>, <code>styles/prototype-lab.css</code></td>
+</tr>
+<tr>
+<td><code>src/__tests__/tokens.contrast.test.ts</code></td>
+<td>Parses <code>tokens.css</code> itself, resolves paper and dark themes, checks WCAG AA (ink tiers &gt;= 4.5:1 on surfaces, status ink on tint, focus &gt;= 3:1) and a dark override for every literal paper colour</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>src/__tests__/uiPrimitives.test.tsx</code></td>
+<td>Shared primitives keep compliant focus ring and 2 px badge radius</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>Git history on main shows this was landed by <code>#371</code> and hardened by <code>#372</code> (per recent commit subjects in the repo status; hashes <code>2f33a716</code>, <code>397a3eef</code>).</p>
+<h4 id="in-flight-evidence-ledger-component-redesign-ongoing-not-on-main">In-flight: Evidence Ledger component redesign (ongoing, not on main)<a class="headerlink" href="#in-flight-evidence-ledger-component-redesign-ongoing-not-on-main" title="Permanent link">&para;</a></h4>
+<p>Per the task brief, the full Evidence Ledger port lives on branch <code>feature/evidence_ledger_port</code> / PR #388 and is <strong>not</strong> merged into <code>origin/main</code>. Main already carries the tokens, guard tests and <code>el-*</code> shell (App.tsx uses <code>bg-el-*</code>); the in-flight work adds the new component set (the local working tree of the primary checkout shows untracked <code>components/el/*</code> and <code>lib/runSentence.ts</code>, not part of this inventory). Two main-side items are coupled to that work: <code>PrototypeLabPage</code>/<code>prototype-lab.css</code> are named in <code>docs/ui/evidence-ledger-full-rewrite-goal-prompt.md:29-30</code>, and the <code>b-*</code> alias layer is "frozen" pending that migration. Treat counts in 4.3 as pre-port.</p>
+<h3 id="46-unused-and-dead-code-verified">4.6 Unused and dead code (verified)<a class="headerlink" href="#46-unused-and-dead-code-verified" title="Permanent link">&para;</a></h3>
+<p>Method: for each file, searched <code>ui/</code> (excluding <code>node_modules</code>, <code>dist</code>, <code>coverage</code>) for any <code>import</code>/<code>from</code>/<code>lazy(</code>/CSS <code>@import</code> line naming it, plus string-route and docs references. <code>src/**/index.ts</code> barrels: none exist in the file list, so no re-export hides a consumer. <code>App.tsx</code> uses only string-literal <code>lazy(() =&gt; import("./pages/..."))</code> for 10 pages — neither Prototype nor Settings is among them.</p>
+<h4 id="unused-candidates-no-prod-or-test-importer">Unused candidates (no prod or test importer)<a class="headerlink" href="#unused-candidates-no-prod-or-test-importer" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>LOC</th>
+<th>Verification</th>
+<th>Verdict</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>api/chat_request.generated.ts</code></td>
+<td>185</td>
+<td>Zero imports; generated by <code>generate-ts-types.mjs:327-352</code>; CI drift-checks it (<code>ci.yml:406</code>); <code>types.ts</code> redefines the same types by hand</td>
+<td><strong>Generated but unwired</strong></td>
+<td><strong>Wire up</strong>: re-export from <code>api/types.ts</code> (and delete the hand copies). Deleting instead requires removing the generator block and the CI file list</td>
+</tr>
+<tr>
+<td><code>api/chat_stream_event.generated.ts</code></td>
+<td>56</td>
+<td>Same as above (<code>generate-ts-types.mjs:357-384</code>, <code>ci.yml:407</code>)</td>
+<td>Generated but unwired</td>
+<td><strong>Wire up</strong> (same change)</td>
+</tr>
+<tr>
+<td><code>components/common/BBox.tsx</code></td>
+<td>33</td>
+<td>No importer anywhere</td>
+<td>Dead (legacy <code>B*</code> family)</td>
+<td><strong>Delete</strong></td>
+</tr>
+<tr>
+<td><code>components/common/BSpark.tsx</code></td>
+<td>47</td>
+<td>No importer anywhere</td>
+<td>Dead</td>
+<td><strong>Delete</strong> (check the in-flight redesign first; recreate cost is trivial)</td>
+</tr>
+<tr>
+<td><code>components/ui/accordion.tsx</code></td>
+<td>72</td>
+<td>No importer; <code>EvaluationRubricAccordion</code> is hand-rolled, not shadcn</td>
+<td>Unused shadcn scaffold</td>
+<td>Keep-or-delete (low value; see note)</td>
+</tr>
+<tr>
+<td><code>components/ui/collapsible.tsx</code></td>
+<td>28</td>
+<td>No importer</td>
+<td>Unused scaffold</td>
+<td>Same</td>
+</tr>
+<tr>
+<td><code>components/ui/resizable.tsx</code></td>
+<td>43</td>
+<td>Only importer of <code>react-resizable-panels</code> in the repo</td>
+<td>Unused; keeps a runtime dependency alive</td>
+<td><strong>Delete both</strong> file and dependency, unless the redesign needs panels</td>
+</tr>
+<tr>
+<td><code>components/ui/scroll-area.tsx</code></td>
+<td>50</td>
+<td>No importer</td>
+<td>Unused scaffold</td>
+<td>Same</td>
+</tr>
+<tr>
+<td><code>components/ui/select.tsx</code></td>
+<td>182</td>
+<td>No importer (grep hits for "select" were comments/test names)</td>
+<td>Unused scaffold</td>
+<td>Same</td>
+</tr>
+<tr>
+<td><code>components/ui/separator.tsx</code></td>
+<td>23</td>
+<td>No importer</td>
+<td>Unused scaffold</td>
+<td>Same</td>
+</tr>
+<tr>
+<td><code>components/ui/skeleton.tsx</code></td>
+<td>11</td>
+<td>No importer; <code>App.tsx</code> <code>RouteFallback</code> uses inline <code>animate-pulse</code> divs</td>
+<td>Unused scaffold</td>
+<td>Same</td>
+</tr>
+<tr>
+<td><code>components/ui/table.tsx</code></td>
+<td>105</td>
+<td>No importer (hits were <code>dnd-kit/sortable</code>, comments)</td>
+<td>Unused scaffold</td>
+<td>Same</td>
+</tr>
+<tr>
+<td><code>components/ui/tooltip.tsx</code></td>
+<td>50</td>
+<td>No importer</td>
+<td>Unused scaffold</td>
+<td>Same</td>
+</tr>
+<tr>
+<td><code>hooks/useNodeConfigUpdate.ts</code></td>
+<td>84</td>
+<td>No importer in src or tests. Backend has no <code>node_config_update</code> handler (grep of <code>agentic-workflows-v2/agentic_v2</code> found 0 files). Documented as unfinished in <code>agentic-workflows-v2/docs/NODE_CONFIG_OVERLAY.md</code></td>
+<td>Dead prototype</td>
+<td><strong>Delete with <code>NodeConfigOverlay</code> + its test + the doc</strong>, or finish backend + wire into <code>LivePage</code> as a deliberate decision</td>
+</tr>
+<tr>
+<td><code>pages/PrototypeLabPage.tsx</code></td>
+<td>269</td>
+<td>No route, no import; imports <code>styles/prototype-lab.css</code>; <code>docs/component-inventory-ui.md:44</code> states it "is not imported by production"</td>
+<td>Dead lab page</td>
+<td><strong>Keep until PR #388 lands</strong>, then delete page + <code>prototype-lab.css</code> (144 lines) + the exemption entries in <code>designDrift.test.ts:27</code>, <code>DESIGN.md:209</code>, <code>.claude/rules/ui-design.md:25</code></td>
+</tr>
+</tbody>
+</table>
+<p>Note on the shadcn scaffolds: nine files (~570 LOC) are unused, but <code>components.json</code> means they can be regenerated with <code>npx shadcn add</code>; they cost bundle nothing (tree-shaken, never imported) but count against LOC/coverage <code>include</code>. Recommended: delete the ones the redesign will not need; <code>resizable.tsx</code> is the strongest candidate because it also removes <code>react-resizable-panels</code> from <code>dependencies</code>.</p>
+<h4 id="test-only-imported-only-by-tests">Test-only (imported only by tests)<a class="headerlink" href="#test-only-imported-only-by-tests" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>LOC</th>
+<th>Evidence</th>
+<th>Verdict</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>components/dag/BDagMini.tsx</code></td>
+<td>151</td>
+<td>Only <code>__tests__/BDagMini.test.tsx</code>; mentioned in <code>docs/ROADMAP.md:18</code> as a Phase-5 deliverable</td>
+<td>Orphaned feature, tested in isolation</td>
+<td>Delete with its test, or wire into <code>WorkflowsPage</code> as thumbnail</td>
+</tr>
+<tr>
+<td><code>components/live/NodeConfigOverlay.tsx</code></td>
+<td>399</td>
+<td>Only its test; documented unfinished (above)</td>
+<td>Orphaned prototype</td>
+<td>Delete (see <code>useNodeConfigUpdate</code>)</td>
+</tr>
+<tr>
+<td><code>components/runs/RunSummaryCards.tsx</code></td>
+<td>103</td>
+<td>Only its test; <code>RunsPage</code>/<code>DashboardPage</code> do not render it</td>
+<td>Orphaned; <code>useRunsSummary</code> (<code>hooks/useRuns.ts:36</code>) is consumed by <code>DashboardPage.tsx:78</code> and <code>RunsPage.tsx:90</code>, which render the data their own way, so this card is a superseded view</td>
+<td>Wire up or delete</td>
+</tr>
+<tr>
+<td><code>components/ui/badge.tsx</code></td>
+<td>45</td>
+<td>Only <code>uiPrimitives.test.tsx</code></td>
+<td>Unused primitive, kept alive by a test that also guards the 2 px radius rule</td>
+<td>Keep if the redesign uses <code>Badge</code>; else delete + trim test</td>
+</tr>
+<tr>
+<td><code>components/ui/checkbox.tsx</code></td>
+<td>30</td>
+<td>Same</td>
+<td>Same</td>
+<td>Same</td>
+</tr>
+<tr>
+<td><code>components/ui/switch.tsx</code></td>
+<td>31</td>
+<td>Same</td>
+<td>Same</td>
+<td>Same</td>
+</tr>
+<tr>
+<td><code>components/ui/tabs.tsx</code></td>
+<td>81</td>
+<td>Same; <code>/models</code> tabs are URL-backed custom code, not shadcn <code>Tabs</code></td>
+<td>Same</td>
+<td>Same</td>
+</tr>
+<tr>
+<td><code>pages/SettingsPage.tsx</code></td>
+<td>22</td>
+<td><code>/settings</code> is <code>&lt;Navigate to="/models?tab=providers"&gt;</code>; page imported only by <code>SettingsPage.test.tsx</code>; <code>App.test.tsx</code> <code>vi.doMock</code>s it. <code>docs/component-inventory-ui.md:41</code> calls it "a direct-component compatibility wrapper for tests and embedding"</td>
+<td>Intentionally retained compatibility shell, but nothing embeds it</td>
+<td>Delete page + test + the mock in <code>App.test.tsx</code>; keep the redirect route</td>
+</tr>
+</tbody>
+</table>
+<h4 id="packagejson-dependencies-never-imported"><code>package.json</code> dependencies never imported<a class="headerlink" href="#packagejson-dependencies-never-imported" title="Permanent link">&para;</a></h4>
+<p><code>external_import_counts</code> was cross-checked against both dependency maps by searching <code>src/</code>, <code>e2e/</code>, config files and CSS for quoted module specifiers.</p>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Status</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>react-resizable-panels</code> (dep)</td>
+<td>Imported only by unused <code>components/ui/resizable.tsx</code></td>
+<td>Effectively dead; remove with <code>resizable.tsx</code></td>
+</tr>
+<tr>
+<td><code>@opentelemetry/api</code> (dep)</td>
+<td>No direct import</td>
+<td>Peer dependency of <code>@opentelemetry/sdk-trace-web</code>/instrumentation; <strong>keep</strong> (peer requirement is standard; (unverified) against the installed packages' metadata)</td>
+</tr>
+<tr>
+<td><code>@vitest/coverage-v8</code> (dev)</td>
+<td>Referenced only by <code>provider: "v8"</code> string</td>
+<td>Keep</td>
+</tr>
+<tr>
+<td><code>json-schema-to-typescript</code> (dev)</td>
+<td>Imported in <code>scripts/generate-ts-types.mjs:3</code> (outside my src/e2e search scope)</td>
+<td>Keep</td>
+</tr>
+<tr>
+<td><code>postcss</code> (dev)</td>
+<td><code>postcss.config.js</code> uses <code>@tailwindcss/postcss</code></td>
+<td>Probably redundant direct dep (transitive of Tailwind plugin); low value (unverified)</td>
+</tr>
+<tr>
+<td><code>@types/node</code>, <code>@types/react</code>, <code>@types/react-dom</code> (dev)</td>
+<td>Ambient types, never imported by name</td>
+<td>Keep</td>
+</tr>
+<tr>
+<td><code>@dnd-kit/utilities</code>, <code>cmdk</code>, <code>sonner</code>, <code>radix-ui</code>, <code>lucide-react</code>, <code>class-variance-authority</code></td>
+<td>All referenced</td>
+<td>Keep</td>
+</tr>
+</tbody>
+</table>
+<h3 id="47-tests">4.7 Tests<a class="headerlink" href="#47-tests" title="Permanent link">&para;</a></h3>
+<h4 id="unitcomponent-vitest">Unit/component (Vitest)<a class="headerlink" href="#unitcomponent-vitest" title="Permanent link">&para;</a></h4>
+<p>66 files in <code>ui/src/__tests__/</code> plus <code>setup.ts</code> and 1 snapshot dir; ~830 <code>it</code>/<code>test</code> cases (regex count, approximate); ~16.1k test LOC. Single snapshot: <code>__snapshots__/StepNode.test.tsx.snap</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Test files</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pages</td>
+<td><code>App</code>, <code>DashboardPage</code>, <code>DatasetsPage</code>, <code>EvaluationsPage</code>, <code>LivePage</code>, <code>ModelFinderPage</code>, <code>RunDetailPage</code>, <code>RunsPage</code>, <code>SettingsPage</code>, <code>WorkflowDetailPage</code>, <code>WorkflowEditorPage</code>, <code>WorkflowsPage</code></td>
+</tr>
+<tr>
+<td>Components</td>
+<td><code>ApiOfflineBanner</code>, <code>BDagMini</code>, <code>ChatPlaygroundPanel</code>, <code>CommandPalette</code>, <code>ConsoleHeader</code>, <code>ConsoleStatus</code>, <code>DatasetDetailPane</code>, <code>DurationDisplay</code>, <code>EvaluationRubricAccordion</code>, <code>InlineError</code>, <code>JsonViewer</code>, <code>LiveStepDetails</code>, <code>ModelPacksPanel</code>, <code>NodeConfigOverlay</code>, <code>PackBuilder</code>, <code>ProviderProbeList</code>, <code>RunComparePanel</code>, <code>RunConfigForm</code>, <code>RunDetail</code>, <code>RunList</code>, <code>RunSummaryCards</code>, <code>SampleIndexGrid</code>, <code>Sidebar</code>, <code>StateComponents</code>, <code>StatusBadge</code>, <code>StepLogPanel</code>, <code>StepNode</code>, <code>TierMark</code>, <code>TokenCounter</code>, <code>uiPrimitives</code>, <code>cliEquivalents</code></td>
+</tr>
+<tr>
+<td>Hooks/lib/api</td>
+<td><code>apiClient</code>, <code>apiErrors</code>, <code>apiErrorText</code>, <code>hardwareClient</code>, <code>sendChat</code>, <code>dagLayout</code>, <code>documentModel</code>, <code>edgeAppearance</code>, <code>featureFlags</code>, <code>grades</code>, <code>modelVerification</code>, <code>packDraft</code>, <code>platform</code>, <code>tracing</code>, <code>useAutoPanZoom</code>, <code>useHotkeys</code>, <code>usePrefersReducedMotion</code>, <code>useWorkflowStream</code>, <code>utils</code>, <code>workflowHooks</code>, <code>slo-storage</code></td>
+</tr>
+<tr>
+<td>Guards</td>
+<td><code>designDrift</code>, <code>tokens.contrast</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="e2e-playwright-uie2e-14-spechelper-files">E2E (Playwright, <code>ui/e2e/</code>, 14 spec/helper files)<a class="headerlink" href="#e2e-playwright-uie2e-14-spechelper-files" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Spec</th>
+<th>Flow covered</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>app-shell.spec.ts</code></td>
+<td>Console loads, reaches backend, sidebar routing</td>
+</tr>
+<tr>
+<td><code>streaming.spec.ts</code></td>
+<td><code>code_review</code> streams step events; matches server run record (PR gate)</td>
+</tr>
+<tr>
+<td><code>reconnect.spec.ts</code></td>
+<td>WS drop -&gt; client reconnects and replays missed events</td>
+</tr>
+<tr>
+<td><code>workflow-run.spec.ts</code></td>
+<td><code>fullstack_generation</code> end-to-end vs server record</td>
+</tr>
+<tr>
+<td><code>workflow-params.spec.ts</code></td>
+<td>Edited inputs propagate to the server run record</td>
+</tr>
+<tr>
+<td><code>runs-list.spec.ts</code></td>
+<td>List, status filter, open detail via deep link</td>
+</tr>
+<tr>
+<td><code>run-detail.spec.ts</code></td>
+<td>Status/step list/drill-down; cold deep link <code>/runs/:filename</code></td>
+</tr>
+<tr>
+<td><code>datasets.spec.ts</code></td>
+<td>Sidebar route, sections from API or empty state</td>
+</tr>
+<tr>
+<td><code>evaluations.spec.ts</code></td>
+<td>Surface loads (populated or empty), sidebar route</td>
+</tr>
+<tr>
+<td><code>settings.spec.ts</code></td>
+<td>Provider-endpoint and tier controls render; settings endpoint shapes</td>
+</tr>
+<tr>
+<td><code>model-probe.spec.ts</code></td>
+<td>Probe on load, expand provider, rescan</td>
+</tr>
+<tr>
+<td><code>chat-playground.spec.ts</code></td>
+<td>Streams placeholder reply; backend error event shows <code>chat-error</code></td>
+</tr>
+<tr>
+<td><code>slo-first-span.spec.ts</code></td>
+<td>Records first-span latency sample; rolling 7-day p95 within budget</td>
+</tr>
+<tr>
+<td>helpers</td>
+<td><code>flake-gate.ts</code>, <code>slo-storage.ts</code>, <code>README.md</code></td>
+</tr>
+</tbody>
+</table>
+<p>CI runs them through <code>npm run test:e2e:5x</code> in <code>e2e-streaming</code> (<code>ci.yml:412-463</code>), uploading <code>test-results/</code>, <code>playwright-report/</code>, <code>e2e-results.json</code> on failure.</p>
+<h4 id="gaps">Gaps<a class="headerlink" href="#gaps" title="Permanent link">&para;</a></h4>
+<p>Production files with <strong>no direct test importer</strong> (indirect coverage through parent renders is possible but unmeasured here):</p>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Files</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Large, risky</td>
+<td><code>components/runs/RunDetailPanel.tsx</code> (563), <code>components/settings/ProviderPanel.tsx</code> (556), <code>components/settings/TierBoard.tsx</code> (401), <code>components/editor/NodeInspector.tsx</code> (415), <code>components/models/pack-builder/TierChainBoard.tsx</code> (408), <code>components/dag/WorkflowDAG.tsx</code> (352), <code>components/models/HardwareOverrideForm.tsx</code> (308)</td>
+</tr>
+<tr>
+<td>Small</td>
+<td><code>EdgeInspector</code>, <code>DatasetBrowser</code>, <code>CriterionRow</code>, <code>StepScoreDetails</code>, <code>Scoreline</code>, <code>CopyId</code>, <code>BTopBar</code>, <code>MobileNav</code>, <code>PaletteShortcut</code>, <code>api/websocket.ts</code> (reconnect logic tested only end-to-end and via <code>useWorkflowStream</code>), <code>useBackendHealth</code>, <code>useDatasets</code>, <code>useTheme</code></td>
+</tr>
+<tr>
+<td>shadcn</td>
+<td><code>alert-dialog</code>, <code>command</code>, <code>dialog</code>, <code>dropdown-menu</code>, <code>input-group</code>, <code>popover</code>, <code>sheet</code>, <code>sonner</code></td>
+</tr>
+</tbody>
+</table>
+<p>Observations: <code>settings.spec.ts</code> e2e still targets provider/tier controls although <code>/settings</code> redirects to <code>/models?tab=providers</code> (e2e likely follows the redirect; (unverified)). No e2e for the workflow editor, model packs, dashboard or live page directly (live is covered only through <code>streaming</code>/<code>workflow-run</code>).</p>
+<h3 id="48-needs-work">4.8 Needs work<a class="headerlink" href="#48-needs-work" title="Permanent link">&para;</a></h3>
+<h4 id="todo-fixme-hack">TODO / FIXME / HACK<a class="headerlink" href="#todo-fixme-hack" title="Permanent link">&para;</a></h4>
+<p><code>grep</code> of <code>ui/src</code>, <code>ui/e2e</code>, <code>ui/scripts</code> for <code>TODO|FIXME|HACK|XXX</code>: <strong>0 real markers</strong> (one false positive: the string "a todo list with add and complete" in <code>e2e/workflow-run.spec.ts:44</code>).</p>
+<h4 id="oversized-400-non-test-loc-extractor-loc">Oversized (&gt; 400 non-test LOC; extractor LOC)<a class="headerlink" href="#oversized-400-non-test-loc-extractor-loc" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>LOC</th>
+<th>Concern</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>api/types.ts</code></td>
+<td>774</td>
+<td>Single type dump with 40 importers; split by domain (runs, models, packs, chat) and re-export generated chat types</td>
+</tr>
+<tr>
+<td><code>components/runs/RunConfigForm.tsx</code></td>
+<td>734</td>
+<td>Form + eval config + probe/pack queries in one component</td>
+</tr>
+<tr>
+<td><code>components/models/ChatPlaygroundPanel.tsx</code></td>
+<td>718</td>
+<td>Chat UI + SSE state + attachments</td>
+</tr>
+<tr>
+<td><code>api/client.ts</code></td>
+<td>695</td>
+<td>48 endpoint functions; split by domain</td>
+</tr>
+<tr>
+<td><code>pages/LivePage.tsx</code></td>
+<td>680</td>
+<td>Page with embedded view logic</td>
+</tr>
+<tr>
+<td><code>pages/WorkflowEditorPage.tsx</code></td>
+<td>674</td>
+<td>Editor page; flag-gated</td>
+</tr>
+<tr>
+<td><code>components/models/ModelPacksPanel.tsx</code></td>
+<td>671</td>
+<td>8+ mutations in one panel</td>
+</tr>
+<tr>
+<td><code>components/models/ProviderProbeList.tsx</code></td>
+<td>604</td>
+<td></td>
+</tr>
+<tr>
+<td><code>pages/WorkflowDetailPage.tsx</code></td>
+<td>581</td>
+<td></td>
+</tr>
+<tr>
+<td><code>pages/EvaluationsPage.tsx</code></td>
+<td>579</td>
+<td></td>
+</tr>
+<tr>
+<td><code>components/runs/RunDetailPanel.tsx</code></td>
+<td>563</td>
+<td>No direct test</td>
+</tr>
+<tr>
+<td><code>components/settings/ProviderPanel.tsx</code></td>
+<td>556</td>
+<td>No direct test</td>
+</tr>
+<tr>
+<td><code>pages/RunsPage.tsx</code></td>
+<td>549</td>
+<td></td>
+</tr>
+<tr>
+<td><code>pages/ModelFinderPage.tsx</code></td>
+<td>546</td>
+<td></td>
+</tr>
+<tr>
+<td><code>components/editor/NodeInspector.tsx</code></td>
+<td>415</td>
+<td>No direct test</td>
+</tr>
+<tr>
+<td><code>components/models/pack-builder/TierChainBoard.tsx</code></td>
+<td>408</td>
+<td>No direct test</td>
+</tr>
+<tr>
+<td><code>components/settings/TierBoard.tsx</code></td>
+<td>401</td>
+<td>No direct test</td>
+</tr>
+</tbody>
+</table>
+<p>17 files exceed 400 LOC; 7 of them lack a direct test. The global style rule is files &lt; ~800 LOC, so none breach that ceiling; <code>types.ts</code> (774) is closest.</p>
+<h4 id="stale-age_days-120">Stale (age_days &gt; 120)<a class="headerlink" href="#stale-age_days-120" title="Permanent link">&para;</a></h4>
+<p><code>age_days</code> is &lt;= 4 for 102 of 135 files (one restyle sweep), so "stale" only isolates files that sweep did not touch:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>age_days</th>
+<th>Comment</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>api/runs_summary.generated.ts</code></td>
+<td>138</td>
+<td>Generated; stable</td>
+</tr>
+<tr>
+<td><code>hooks/useDatasets.ts</code></td>
+<td>138</td>
+<td>Untested</td>
+</tr>
+<tr>
+<td><code>main.tsx</code></td>
+<td>138</td>
+<td>Entry</td>
+</tr>
+<tr>
+<td><code>hooks/useNodeConfigUpdate.ts</code></td>
+<td>127</td>
+<td>Dead (4.6)</td>
+</tr>
+<tr>
+<td><code>components/dag/dagLayout.ts</code></td>
+<td>127</td>
+<td></td>
+</tr>
+<tr>
+<td><code>hooks/useHotkeys.ts</code></td>
+<td>127</td>
+<td></td>
+</tr>
+<tr>
+<td><code>telemetry/tracing.ts</code></td>
+<td>126</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h4 id="other-findings-worth-action">Other findings worth action<a class="headerlink" href="#other-findings-worth-action" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Finding</th>
+<th>Evidence</th>
+<th>Suggested action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Chat wire types generated and CI-guarded but hand-duplicated in <code>types.ts</code></td>
+<td>4.4 table</td>
+<td>Import generated types</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>generate:types:check</code> script diffs only <code>events.generated.ts</code></td>
+<td><code>ui/package.json</code> scripts</td>
+<td>Extend to all 8 or drop (CI job already covers all)</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Node 22 in CI vs 26.11 in <code>Dockerfile.ui</code></td>
+<td><code>ci.yml:55</code>, <code>Dockerfile.ui:3</code></td>
+<td>Align or document</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Fonts double-loaded: bundled Geist plus Google Fonts IBM Plex <code>&lt;link&gt;</code> in <code>index.html</code>; external font host contradicts a no-network/offline dev-platform posture</td>
+<td><code>index.html</code>, <code>globals.css:2</code></td>
+<td>Self-host or drop whichever is unused (which families the CSS actually resolves to: (unverified))</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Production builds hide the workflow editor route unless the env flag is baked in at build time; <code>Dockerfile.ui</code> sets no such build arg</td>
+<td><code>vite.config.ts</code>, <code>Dockerfile.ui</code></td>
+<td>Document or add <code>ARG</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>nginx.conf</code> does not proxy <code>/api</code>/<code>/ws</code>; the shipped UI image works only behind an ingress that does</td>
+<td><code>ui/nginx.conf</code>, <code>Dockerfile.ui:28-30</code> comment</td>
+<td>Document in deployment guide / provide a sample ingress</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Vite WS proxy is configured but bypassed by the client</td>
+<td><code>vite.config.ts</code> comments, <code>websocket.ts:38-48</code></td>
+<td>Harmless; note for newcomers</td>
+</tr>
+<tr>
+<td>8</td>
+<td>~570 LOC of unused shadcn scaffolding + 4 test-only primitives</td>
+<td>4.6</td>
+<td>Prune with the redesign</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 15, 2026 00:57:08 UTC">October 15, 2026</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 13, 2026 23:11:25 UTC">October 13, 2026</span>
+  </span>
+
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/tafreeman/agentic-runtime-platform" target="_blank" rel="noopener" title="GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.instant", "navigation.tracking", "navigation.indexes", "navigation.footer", "toc.follow", "search.highlight", "search.suggest", "search.share", "content.code.copy", "content.code.annotate", "content.tooltips", "content.action.edit", "content.action.view"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": {"Architecture": "architecture", "Evaluation": "evaluation", "Tooling": "tooling", "Workflow": "workflow"}, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

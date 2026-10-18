@@ -3045,11 +3045,24 @@ decided in 2026-04, not as current policy.</p>
   named, not the judge default — and, independently, the upstream service
   itself stopped serving requests entirely on 2026-07-30.</li>
 </ul>
+<p><strong>Update 2026-10-12.</strong> The <code>gh:</code> rungs are now out of routing too. Leaving
+them in cost a real run: on 2026-10-11 a <code>fullstack_generation</code> step failed
+over from <code>ollama:qwen3-coder:30b</code> to <code>gh:openai/gpt-4o-mini</code> and died with
+"Connection error", because the legacy <code>models.inference.ai.azure.com</code>
+endpoint no longer resolves. Four downstream steps then failed their input
+contracts. Removed: <code>gh:openai/gpt-4o-mini</code> from the tier-1 chain,
+<code>gh:openai/gpt-4o</code> from the tier 2-5 chains, and the <code>GITHUB_TOKEN</code> backup
+tail (<code>GH_BACKUP_MODELS</code>, <code>include_gh_backup</code>) that
+<code>get_model_candidates_for_tier</code> appended after the local tail. Both ids stay
+in <code>model_registry.yaml</code> as <code>deprecated</code>, <code>tiers: []</code>, curated <code>paid</code>. The
+<code>gh:</code> builder, discovery and <code>GITHUB_TOKEN</code> gate are still in place, so an
+explicit <code>gh:</code> id builds and then fails at the network.</p>
 <p><code>docs/adr/ADR-INDEX.md</code> reflects this status change. A separate,
 unrelated stale claim was also found while investigating this: <code>docs/
 architecture-runtime.md</code>'s environment-variable table still describes
 <code>GITHUB_TOKEN</code> as the "default E2E LLM provider" — flagged for a follow-up
-fix, not corrected in this change.</p>
+fix, not corrected in this change. (Corrected 2026-10-12, with the update
+above.)</p>
 </blockquote>
 <hr />
 <h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
@@ -3189,7 +3202,7 @@ fix, not corrected in this change.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 07:30:23 UTC">July 29, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 12, 2026 17:46:56 UTC">October 12, 2026</span>
   </span>
 
     

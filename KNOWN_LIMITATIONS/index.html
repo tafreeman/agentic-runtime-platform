@@ -2703,50 +2703,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#412-the-model-inventory-command-fails-from-the-repository-root" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4.12 The model inventory command fails from the repository root
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#413-the-model-catalog-exposes-onnx-ids-that-exact-model-chat-cannot-use" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4.13 The model catalog exposes onnx: IDs that exact-model chat cannot use
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#414-strict-model-weight-verification-is-not-wired-into-every-model-loader" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4.14 Strict model-weight verification is not wired into every model loader
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#415-eleven-toolstests-cases-assert-an-api-that-no-longer-exists" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4.15 Eleven tools/tests cases assert an API that no longer exists
-      
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -3385,50 +3341,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#412-the-model-inventory-command-fails-from-the-repository-root" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4.12 The model inventory command fails from the repository root
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#413-the-model-catalog-exposes-onnx-ids-that-exact-model-chat-cannot-use" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4.13 The model catalog exposes onnx: IDs that exact-model chat cannot use
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#414-strict-model-weight-verification-is-not-wired-into-every-model-loader" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4.14 Strict model-weight verification is not wired into every model loader
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#415-eleven-toolstests-cases-assert-an-api-that-no-longer-exists" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4.15 Eleven tools/tests cases assert an API that no longer exists
-      
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -3521,7 +3433,7 @@
 <blockquote>
 <p><strong>Audience:</strong> Operators, auditors, and contributors reading failing CI or trying to understand why something "works but not quite."
 <strong>Outcome:</strong> After reading, you know what is intentionally unfinished and what the next sprint is expected to address.
-<strong>Last verified:</strong> 2026-07-28</p>
+<strong>Last verified:</strong> 2026-10-17</p>
 </blockquote>
 <p>This page records limitations confirmed in the current checkout. Some describe
 accepted design boundaries; others describe work that is not complete. Check
@@ -3666,86 +3578,7 @@ configured.</p>
 ARP behavior because the package and command surface were removed. The removal,
 migration boundary, and historical defects remain recorded in
 <a href="../adr/ADR-057-remove-rag-package/">ADR-057</a> and the changelog.</p>
-<h3 id="412-the-model-inventory-command-fails-from-the-repository-root">4.12 The model inventory command fails from the repository root<a class="headerlink" href="#412-the-model-inventory-command-fails-from-the-repository-root" title="Permanent link">&para;</a></h3>
-<p><code>python -m tools.llm.model_inventory</code> imports <code>llm_client</code> as a top-level
-module. In the installed repository package, that module is
-<code>tools.llm.llm_client</code>, so the command exits with
-<code>No module named 'llm_client'</code>.</p>
-<ul>
-<li><strong>Surface:</strong> <code>tools/llm/model_inventory.py</code>.</li>
-<li><strong>Risk:</strong> A model discovery run fails before checking any provider.</li>
-<li><strong>Workaround:</strong> Use <code>python -m tools.llm.model_probe</code> for live discovery.</li>
-<li><strong>Status:</strong> Known command defect.</li>
-<li><strong>Upstream fix:</strong> Change the command to package-relative imports and add a
-  repository-root CLI smoke test.</li>
-</ul>
-<h3 id="413-the-model-catalog-exposes-onnx-ids-that-exact-model-chat-cannot-use">4.13 The model catalog exposes <code>onnx:</code> IDs that exact-model chat cannot use<a class="headerlink" href="#413-the-model-catalog-exposes-onnx-ids-that-exact-model-chat-cannot-use" title="Permanent link">&para;</a></h3>
-<p>ONNX discovery emits <code>onnx:&lt;relative-path&gt;</code> IDs and the native model backend
-supports that prefix. The LangChain model builder uses <code>local:</code> for its ONNX
-path and has no <code>onnx:</code> prefix builder. <code>POST /api/chat</code> uses the LangChain
-builder, so selecting a discovered <code>onnx:</code> entry there produces an unsupported
-provider error.</p>
-<ul>
-<li><strong>Surface:</strong> <code>agentic_v2/models/local_discovery.py</code>,
-  <code>agentic_v2/models/backends.py</code>, <code>agentic_v2/langchain/models.py</code>, and
-  <code>agentic_v2/server/routes/chat.py</code>.</li>
-<li><strong>Risk:</strong> The model page can list a local model that its chat playground
-  cannot test.</li>
-<li><strong>Workaround:</strong> Use the native backend for <code>onnx:</code> models. Use <code>local:</code> only
-  where the LangChain ONNX builder's path contract is appropriate.</li>
-<li><strong>Status:</strong> Known cross-adapter mismatch.</li>
-<li><strong>Upstream fix:</strong> Normalize the prefix contract across discovery and both
-  execution paths, then add an end-to-end discovered-model chat test.</li>
-</ul>
-<h3 id="414-strict-model-weight-verification-is-not-wired-into-every-model-loader">4.14 Strict model-weight verification is not wired into every model loader<a class="headerlink" href="#414-strict-model-weight-verification-is-not-wired-into-every-model-loader" title="Permanent link">&para;</a></h3>
-<p>The SHA-256 verifier and strict-mode behavior are implemented in
-<code>agentic_v2/models/weight_integrity.py</code>. The shared-tools local provider calls
-it before loading a local model. The runtime's native <code>OnnxBackend</code> and
-LangChain local ONNX builder do not call it.</p>
-<ul>
-<li><strong>Surface:</strong> <code>tools/llm/provider_adapters.py</code>,
-  <code>agentic_v2/models/backends_local.py</code>, and
-  <code>agentic_v2/langchain/model_builders.py</code>.</li>
-<li><strong>Risk:</strong> <code>AGENTIC_STRICT_MODEL_VERIFY=1</code> can be set while a runtime ONNX
-  load still proceeds without consulting the trusted hash file.</li>
-<li><strong>Workaround:</strong> Call <code>verify_model_weights()</code> explicitly before starting the
-  runtime and restrict the model directory against later changes.</li>
-<li><strong>Status:</strong> Partial enforcement.</li>
-<li><strong>Upstream fix:</strong> Put verification in the common runtime load boundary and
-  add strict-mode tests for every local model backend.</li>
-</ul>
 <hr />
-<h3 id="415-eleven-toolstests-cases-assert-an-api-that-no-longer-exists">4.15 Eleven <code>tools/tests</code> cases assert an API that no longer exists<a class="headerlink" href="#415-eleven-toolstests-cases-assert-an-api-that-no-longer-exists" title="Permanent link">&para;</a></h3>
-<p><code>tools/tests</code> holds 17 test files that <strong>no CI job had ever collected</strong>. The whole-repo
-coverage step measures <code>--cov=tools</code> but only collects <code>agentic-workflows-v2/tests</code> and
-<code>agentic-v2-eval/tests</code>, so <code>tools/</code> was <em>measured</em> but never <em>exercised</em> — its coverage
-number was whatever the workflow suites happened to import.</p>
-<p>The <code>tools-tests</code> job in <code>ci.yml</code> now collects them. Running them for the first time
-surfaced 11 failures. They are not flaky; they are stale, and they are stale precisely
-because nothing ever ran them:</p>
-<ul>
-<li><code>test_errors.py::TestClassifyError::test_return_code_param_accepted</code> calls
-  <code>classify_error(..., return_code=124)</code>; the parameter no longer exists.</li>
-<li>
-<p>Ten cases across <code>test_benchmark_pipeline.py</code> and <code>test_evaluation_pipeline.py</code>
-  (<code>TestEvaluateTaskOutputLlm</code>) patch <code>evaluation_pipeline.print_evaluation_report</code>,
-  a symbol the module no longer defines.</p>
-</li>
-<li>
-<p><strong>Surface:</strong> <code>tools/tests/test_errors.py</code>, <code>tools/tests/test_benchmark_pipeline.py</code>,
-  <code>tools/tests/test_evaluation_pipeline.py</code>; the <code>tools-tests</code> job in <code>.github/workflows/ci.yml</code>.</p>
-</li>
-<li><strong>Risk:</strong> Low for runtime behaviour — the implementations are current and the other 410
-  cases pass. The real cost is that these three files' intent is now unverified, so a
-  regression in the surrounding code would not be caught by them.</li>
-<li><strong>Workaround:</strong> None needed; the 11 are deselected by node id in the CI job, so the
-  remaining cases in those same files still gate.</li>
-<li><strong>Status:</strong> Accepted, short-term. Deselecting by node id rather than by file is
-  deliberate — it keeps the debt greppable and keeps the rest of each file enforcing.</li>
-<li><strong>Upstream fix:</strong> Decide per case whether the test or the API is right, then either
-  update the assertions or delete the case. Once the list is empty, drop the <code>--deselect</code>
-  flags so the whole suite gates unconditionally.</li>
-</ul>
 <h2 id="5-documentation-and-process">5. Documentation and process<a class="headerlink" href="#5-documentation-and-process" title="Permanent link">&para;</a></h2>
 <h3 id="51-implementation-plans-for-epics-3-5-and-6-are-retrospective">5.1 Implementation plans for Epics 3, 5, and 6 are retrospective<a class="headerlink" href="#51-implementation-plans-for-epics-3-5-and-6-are-retrospective" title="Permanent link">&para;</a></h3>
 <p>Epics 1 and 2 have proper pre-implementation plan docs. Epics 3, 5, and 6 shipped without prospective plan docs — decision history for those epics is reconstructed from commit messages and ADRs rather than dedicated planning artifacts.</p>
@@ -3793,7 +3626,7 @@ exist.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="September 4, 2026 02:04:19 UTC">September 4, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 17, 2026 14:19:32 UTC">October 17, 2026</span>
   </span>
 
     

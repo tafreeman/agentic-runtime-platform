@@ -23,7 +23,7 @@
     
     
       
-        <title>Impeccable context changes — UI accessibility pass (2026-10) - Agentic Runtime Platform</title>
+        <title>Impeccable context changes - Agentic Runtime Platform</title>
       
     
     
@@ -63,7 +63,7 @@
     
   
 <meta property="og:type" content="website" />
-<meta property="og:title" content="Impeccable context changes — UI accessibility pass (2026-10) - Agentic Runtime Platform" />
+<meta property="og:title" content="Impeccable context changes - Agentic Runtime Platform" />
 <meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/ui/impeccable-context-changes.png" />
 <meta property="og:image:type" content="image/png" />
@@ -71,7 +71,7 @@
 <meta property="og:image:height" content="630" />
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/ui/impeccable-context-changes/" />
 <meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:title" content="Impeccable context changes — UI accessibility pass (2026-10) - Agentic Runtime Platform" />
+<meta property="twitter:title" content="Impeccable context changes - Agentic Runtime Platform" />
 <meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/ui/impeccable-context-changes.png" />
 </head>
@@ -91,7 +91,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#impeccable-context-changes-ui-accessibility-pass-2026-10" class="md-skip">
+        <a href="#impeccable-context-changes" class="md-skip">
           Skip to content
         </a>
       
@@ -125,7 +125,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Impeccable context changes — UI accessibility pass (2026-10)
+              Impeccable context changes
             
           </span>
         </div>
@@ -2854,58 +2854,6 @@
     
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#designmd-frontmatter" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        DESIGN.md frontmatter
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#designmd-body" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        DESIGN.md body
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#impeccabledesignjson-schemaversion-2-merge-into-extensions-and-narrative" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        .impeccable/design.json (schemaVersion 2) — merge into extensions and narrative
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#gitignore-status" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        .gitignore status
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -2937,147 +2885,16 @@
   
 
 
-<h1 id="impeccable-context-changes-ui-accessibility-pass-2026-10">Impeccable context changes — UI accessibility pass (2026-10)<a class="headerlink" href="#impeccable-context-changes-ui-accessibility-pass-2026-10" title="Permanent link">&para;</a></h1>
-<p><code>DESIGN.md</code>, <code>PRODUCT.md</code> and <code>.impeccable/</code> are maintained locally and are not
-tracked in this repository. This page lists the changes to apply to them so the
-Impeccable context matches what the accessibility pass shipped. The tracked
-sources of truth are <code>agentic-workflows-v2/ui/src/styles/tokens.css</code> (values and
-the verified contrast table) and
-<a href="../evidence-ledger-design-system/">the Evidence Ledger design system</a> (rules).</p>
-<h2 id="designmd-frontmatter">DESIGN.md frontmatter<a class="headerlink" href="#designmd-frontmatter" title="Permanent link">&para;</a></h2>
-<p>Paper (default) theme. Changed values are marked; the rest are additions.</p>
-<div class="language-yaml highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">colors</span><span class="p">:</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">ink-secondary</span><span class="p">:</span><span class="w"> </span><span class="s">"#49453f"</span><span class="w">     </span><span class="c1"># was #514d46</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nt">ink-muted</span><span class="p">:</span><span class="w"> </span><span class="s">"#5a554c"</span><span class="w">         </span><span class="c1"># was #736e64 (4.41:1 on canvas, failed AA)</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="nt">ink-faint</span><span class="p">:</span><span class="w"> </span><span class="s">"#6a645a"</span><span class="w">         </span><span class="c1"># was #918b80 (2.95:1 on canvas, failed AA)</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="nt">accent-strong</span><span class="p">:</span><span class="w"> </span><span class="s">"#b6381e"</span><span class="w">     </span><span class="c1"># was #b83a20 (4.42:1 on accent-soft)</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span><span class="nt">control-border</span><span class="p">:</span><span class="w"> </span><span class="s">"#857f73"</span><span class="w">    </span><span class="c1"># new: &gt;=3:1 boundary for inputs, selects, graph nodes</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span><span class="nt">plum</span><span class="p">:</span><span class="w"> </span><span class="s">"#695385"</span><span class="w">              </span><span class="c1"># new: the one categorical secondary hue; never a status</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span><span class="nt">plum-soft</span><span class="p">:</span><span class="w"> </span><span class="s">"#e6dff1"</span><span class="w">         </span><span class="c1"># new</span>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="nt">typography</span><span class="p">:</span>
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">  </span><span class="nt">micro</span><span class="p">:</span><span class="w">                       </span><span class="c1"># new: the 11px floor for labels and metadata</span>
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">    </span><span class="nt">fontFamily</span><span class="p">:</span><span class="w"> </span><span class="s">"Geist</span><span class="nv"> </span><span class="s">Variable,</span><span class="nv"> </span><span class="s">Inter,</span><span class="nv"> </span><span class="s">system-ui,</span><span class="nv"> </span><span class="s">sans-serif"</span>
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">    </span><span class="nt">fontSize</span><span class="p">:</span><span class="w"> </span><span class="s">"11px"</span>
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">    </span><span class="nt">lineHeight</span><span class="p">:</span><span class="w"> </span><span class="s">"15px"</span>
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">  </span><span class="nt">metadata</span><span class="p">:</span>
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">    </span><span class="nt">fontSize</span><span class="p">:</span><span class="w"> </span><span class="s">"11px"</span><span class="w">           </span><span class="c1"># was 10px</span>
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="nt">rounded</span><span class="p">:</span>
-</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">  </span><span class="nt">sm</span><span class="p">:</span><span class="w"> </span><span class="s">"2px"</span><span class="w">                    </span><span class="c1"># badges, tags</span>
-</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">  </span><span class="nt">md</span><span class="p">:</span><span class="w"> </span><span class="s">"4px"</span><span class="w">                    </span><span class="c1"># buttons, inputs, menus</span>
-</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">  </span><span class="nt">lg</span><span class="p">:</span><span class="w"> </span><span class="s">"8px"</span><span class="w">                    </span><span class="c1"># dialogs, sheets</span>
-</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="nt">components</span><span class="p">:</span>
-</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="w">  </span><span class="nt">badge</span><span class="p">:</span>
-</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="w">    </span><span class="nt">rounded</span><span class="p">:</span><span class="w"> </span><span class="s">"{rounded.sm}"</span><span class="w">    </span><span class="c1"># was a full pill</span>
-</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="w">  </span><span class="nt">button-primary</span><span class="p">:</span>
-</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="w">    </span><span class="nt">backgroundColor</span><span class="p">:</span><span class="w"> </span><span class="s">"{colors.action}"</span>
-</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="w">    </span><span class="nt">textColor</span><span class="p">:</span><span class="w"> </span><span class="s">"{colors.action-ink}"</span>
-</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="w">    </span><span class="nt">rounded</span><span class="p">:</span><span class="w"> </span><span class="s">"{rounded.md}"</span>
-</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="w">    </span><span class="nt">height</span><span class="p">:</span><span class="w"> </span><span class="s">"36px"</span><span class="w">             </span><span class="c1"># &gt;=36px target; compact sizes keep a 36px hit area</span>
-</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="w">  </span><span class="nt">input</span><span class="p">:</span>
-</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="w">    </span><span class="nt">rounded</span><span class="p">:</span><span class="w"> </span><span class="s">"{rounded.md}"</span>
-</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span class="w">    </span><span class="nt">height</span><span class="p">:</span><span class="w"> </span><span class="s">"40px"</span>
-</span></code></pre></div>
-<p>Dark theme values (<code>[data-theme="dark"]</code>), for the sidecar or a dark section:
-ink-muted <code>#c4baad</code>, ink-faint <code>#b2aa9f</code>, success <code>#6ec497</code>, danger <code>#fa8c7e</code>,
-plum <code>#b8a1d8</code>, plum-soft <code>#3f354e</code>, control-border <code>#8a8276</code>. The dark theme is
-selected with <code>data-theme</code>, and Tailwind's <code>dark:</code> variant is bound to it.</p>
-<h2 id="designmd-body">DESIGN.md body<a class="headerlink" href="#designmd-body" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>Colors.</strong> Every ink tier is at least 4.5:1 on every surface in both themes.
-  <code>accent</code> (<code>#ef5a36</code>) is for marks and fills only and is below 3:1 on light
-  canvas; accent text and state-bearing rails use <code>accent-strong</code>. Dividers are
-  decorative hairlines; interactive control boundaries use <code>control-border</code>.
-  Graph code uses the <code>--el-graph-*</code> set and never <code>rgb()</code> or hex literals.</li>
-<li><strong>Typography.</strong> Nothing essential below 11px (<code>text-micro</code>); <code>text-xs</code> (12px)
-  is secondary copy. Monospace only for IDs, code, CLI commands, logs and aligned
-  numbers. No eyebrow labels above headings.</li>
-<li><strong>Layout.</strong> Metrics use the ruled <strong>Scoreline</strong> (aligned columns between
-  hairline rules), not KPI cards. At most one notice above a page's data.</li>
-<li><strong>Shapes.</strong> Radii are 2/4/8 only; pills only for tiny status dots.</li>
-<li><strong>Components.</strong></li>
-<li><em>Status marker</em> (<code>StatusBadge</code>): icon, sentence-case word and semantic
-    color. It is the one vocabulary for runs, steps, DAG nodes, evaluations and
-    gates, and replaces the <code>[ ok ]</code> / <code>[fail]</code> labels.</li>
-<li><em>Tier mark</em> (<code>TierMark</code>): <code>T0</code>–<code>T5</code> with an accessible "Tier N — capability
-    tier" description.</li>
-<li><em>Focus</em>: <code>focus-ring</code> (a 2px <code>#9e321c</code> outline with 2px offset on
-    <code>:focus-visible</code>) and <code>focus-ring-inset</code> for rows, tabs and anything inside
-    <code>overflow-hidden</code>.</li>
-<li><em>Navigation</em>: seven destinations, each an icon plus a sentence-case label,
-    with no section numbers. On mobile, four destinations plus a labeled
-    <strong>More</strong> sheet; the palette hint reads ⌘K on Apple platforms and Ctrl K
-    elsewhere.</li>
-<li><em>Offline banner</em>: one shell-level notice with the <code>just dev</code> remedy and a
-    Retry. API-backed actions are disabled with a visible reason.</li>
-<li><strong>Do's and Don'ts.</strong></li>
-<li>Do show an em dash with a "no data" label instead of 0, 0.0% or NaN.</li>
-<li>Do show a CLI equivalent only when a real <code>agentic</code> command exists.</li>
-<li>Don't animate width, height or padding, and don't use <code>transition-all</code>.</li>
-<li>Don't stack page banners under the shell banner.</li>
-<li>Don't add presentational controls with no backend behavior.</li>
-</ul>
-<h2 id="impeccabledesignjson-schemaversion-2-merge-into-extensions-and-narrative">.impeccable/design.json (schemaVersion 2) — merge into <code>extensions</code> and <code>narrative</code><a class="headerlink" href="#impeccabledesignjson-schemaversion-2-merge-into-extensions-and-narrative" title="Permanent link">&para;</a></h2>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">"extensions"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">"colorMeta"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">      </span><span class="nt">"control-border"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"role"</span><span class="p">:</span><span class="w"> </span><span class="s2">"neutral"</span><span class="p">,</span><span class="w"> </span><span class="nt">"displayName"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Control Border"</span><span class="p">,</span><span class="w"> </span><span class="nt">"canonical"</span><span class="p">:</span><span class="w"> </span><span class="s2">"#857f73"</span><span class="w"> </span><span class="p">},</span>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">      </span><span class="nt">"plum"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"role"</span><span class="p">:</span><span class="w"> </span><span class="s2">"tertiary"</span><span class="p">,</span><span class="w"> </span><span class="nt">"displayName"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Plum (categorical)"</span><span class="p">,</span><span class="w"> </span><span class="nt">"canonical"</span><span class="p">:</span><span class="w"> </span><span class="s2">"#695385"</span><span class="w"> </span><span class="p">}</span>
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="p">},</span>
-</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="nt">"typographyMeta"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">      </span><span class="nt">"micro"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"displayName"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Micro"</span><span class="p">,</span><span class="w"> </span><span class="nt">"purpose"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Type floor: labels, IDs, timestamps, tags (11/15)."</span><span class="w"> </span><span class="p">}</span>
-</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="p">},</span>
-</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="nt">"motion"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">      </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"motion-fast"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"120ms"</span><span class="p">,</span><span class="w"> </span><span class="nt">"purpose"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Hover, focus and button feedback; the cap for color/opacity transitions under reduced motion."</span><span class="w"> </span><span class="p">},</span>
-</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">      </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"motion-standard"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"180ms"</span><span class="p">,</span><span class="w"> </span><span class="nt">"purpose"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Inspector, tab and content transitions."</span><span class="w"> </span><span class="p">},</span>
-</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">      </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"motion-slow"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"240ms"</span><span class="p">,</span><span class="w"> </span><span class="nt">"purpose"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Drawer and sheet entry, graph layout settle."</span><span class="w"> </span><span class="p">},</span>
-</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">      </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"reduced-motion"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"prefers-reduced-motion: reduce"</span><span class="p">,</span><span class="w"> </span><span class="nt">"purpose"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Stop every loop, snap transform and size changes, keep paint-only feedback capped at 120ms."</span><span class="w"> </span><span class="p">}</span>
-</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">    </span><span class="p">]</span>
-</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">  </span><span class="p">},</span>
-</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">  </span><span class="nt">"components"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">    </span><span class="p">{</span>
-</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="w">      </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Status marker"</span><span class="p">,</span>
-</span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="w">      </span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"chip"</span><span class="p">,</span>
-</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="w">      </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"The one status vocabulary: icon + sentence-case word + semantic color."</span><span class="p">,</span>
-</span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="w">      </span><span class="nt">"html"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;span class=\"ds-status ds-status--failed\"&gt;&lt;svg aria-hidden=\"true\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"&gt;&lt;circle cx=\"12\" cy=\"12\" r=\"10\"/&gt;&lt;path d=\"m15 9-6 6M9 9l6 6\"/&gt;&lt;/svg&gt;Failed&lt;/span&gt;"</span><span class="p">,</span>
-</span><span id="__span-1-23"><a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="w">      </span><span class="nt">"css"</span><span class="p">:</span><span class="w"> </span><span class="s2">".ds-status { display: inline-flex; align-items: center; gap: 6px; font: 500 12px/16px 'Geist Variable', system-ui, sans-serif; } .ds-status--failed { color: #a33228; } .ds-status--success { color: #236c4b; } .ds-status--running { color: #2f6788; }"</span>
-</span><span id="__span-1-24"><a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="w">    </span><span class="p">},</span>
-</span><span id="__span-1-25"><a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="w">    </span><span class="p">{</span>
-</span><span id="__span-1-26"><a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span class="w">      </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Focus ring"</span><span class="p">,</span>
-</span><span id="__span-1-27"><a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="w">      </span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"custom"</span><span class="p">,</span>
-</span><span id="__span-1-28"><a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="w">      </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2px --el-focus outline with 2px offset on :focus-visible; inset variant for rows and tabs."</span><span class="p">,</span>
-</span><span id="__span-1-29"><a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a><span class="w">      </span><span class="nt">"html"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;button class=\"ds-focus\"&gt;Inspect run&lt;/button&gt;"</span><span class="p">,</span>
-</span><span id="__span-1-30"><a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a><span class="w">      </span><span class="nt">"css"</span><span class="p">:</span><span class="w"> </span><span class="s2">".ds-focus { min-height: 36px; padding: 0 12px; border: 1px solid #857f73; border-radius: 4px; background: #f8f5ef; color: #1b1b18; } .ds-focus:focus-visible { outline: 2px solid #9e321c; outline-offset: 2px; }"</span>
-</span><span id="__span-1-31"><a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a><span class="w">    </span><span class="p">},</span>
-</span><span id="__span-1-32"><a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a><span class="w">    </span><span class="p">{</span>
-</span><span id="__span-1-33"><a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a><span class="w">      </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Scoreline"</span><span class="p">,</span>
-</span><span id="__span-1-34"><a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a><span class="w">      </span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"custom"</span><span class="p">,</span>
-</span><span id="__span-1-35"><a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a><span class="w">      </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Ruled metric band that replaces KPI cards; em dash for no data."</span><span class="p">,</span>
-</span><span id="__span-1-36"><a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a><span class="w">      </span><span class="nt">"html"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;dl class=\"ds-scoreline\"&gt;&lt;div&gt;&lt;dt&gt;Total runs&lt;/dt&gt;&lt;dd&gt;42&lt;/dd&gt;&lt;/div&gt;&lt;div&gt;&lt;dt&gt;Success rate&lt;/dt&gt;&lt;dd&gt;—&lt;/dd&gt;&lt;/div&gt;&lt;/dl&gt;"</span><span class="p">,</span>
-</span><span id="__span-1-37"><a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a><span class="w">      </span><span class="nt">"css"</span><span class="p">:</span><span class="w"> </span><span class="s2">".ds-scoreline { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); border-top: 1px solid #bdb7aa; border-bottom: 1px solid #bdb7aa; margin: 0; } .ds-scoreline div { padding: 16px 0; } .ds-scoreline div + div { border-left: 1px solid #d3cec4; padding-left: 16px; } .ds-scoreline dt { font: 400 12px/16px system-ui, sans-serif; color: #5a554c; } .ds-scoreline dd { margin: 4px 0 0; font: 500 28px/1 Georgia, serif; font-variant-numeric: tabular-nums; color: #1b1b18; }"</span>
-</span><span id="__span-1-38"><a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a><span class="w">    </span><span class="p">}</span>
-</span><span id="__span-1-39"><a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a><span class="w">  </span><span class="p">],</span>
-</span><span id="__span-1-40"><a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a><span class="w">  </span><span class="nt">"narrative"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-1-41"><a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a><span class="w">    </span><span class="nt">"rules"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-</span><span id="__span-1-42"><a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a><span class="w">      </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"The Floor Rule"</span><span class="p">,</span><span class="w"> </span><span class="nt">"body"</span><span class="p">:</span><span class="w"> </span><span class="s2">"No essential text below 11px, no text tier below 4.5:1, no control boundary below 3:1, no focus indicator below a solid 2px ring."</span><span class="p">,</span><span class="w"> </span><span class="nt">"section"</span><span class="p">:</span><span class="w"> </span><span class="s2">"typography"</span><span class="w"> </span><span class="p">},</span>
-</span><span id="__span-1-43"><a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a><span class="w">      </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"The One Signal Rule"</span><span class="p">,</span><span class="w"> </span><span class="nt">"body"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Vermilion marks one thing per view: the selection rail, a key mark, or the primary emphasis. Accent text and state rails use accent-strong."</span><span class="p">,</span><span class="w"> </span><span class="nt">"section"</span><span class="p">:</span><span class="w"> </span><span class="s2">"colors"</span><span class="w"> </span><span class="p">},</span>
-</span><span id="__span-1-44"><a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a><span class="w">      </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"The Honest State Rule"</span><span class="p">,</span><span class="w"> </span><span class="nt">"body"</span><span class="p">:</span><span class="w"> </span><span class="s2">"One shell banner for an unreachable API; em dashes for absent data; disabled actions say why; CLI equivalents only when real."</span><span class="p">,</span><span class="w"> </span><span class="nt">"section"</span><span class="p">:</span><span class="w"> </span><span class="s2">"colors"</span><span class="w"> </span><span class="p">}</span>
-</span><span id="__span-1-45"><a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a><span class="w">    </span><span class="p">],</span>
-</span><span id="__span-1-46"><a id="__codelineno-1-46" name="__codelineno-1-46" href="#__codelineno-1-46"></a><span class="w">    </span><span class="nt">"dos"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"Do use the Scoreline for metrics."</span><span class="p">,</span><span class="w"> </span><span class="s2">"Do use StatusBadge for every status."</span><span class="p">,</span><span class="w"> </span><span class="s2">"Do use focus-ring on custom controls."</span><span class="p">],</span>
-</span><span id="__span-1-47"><a id="__codelineno-1-47" name="__codelineno-1-47" href="#__codelineno-1-47"></a><span class="w">    </span><span class="nt">"donts"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"Don't use KPI card mosaics."</span><span class="p">,</span><span class="w"> </span><span class="s2">"Don't use eyebrows above headings or decorative section numbers."</span><span class="p">,</span><span class="w"> </span><span class="s2">"Don't use monospace as a costume."</span><span class="p">,</span><span class="w"> </span><span class="s2">"Don't animate layout properties or use transition-all."</span><span class="p">]</span>
-</span><span id="__span-1-48"><a id="__codelineno-1-48" name="__codelineno-1-48" href="#__codelineno-1-48"></a><span class="w">  </span><span class="p">}</span>
-</span><span id="__span-1-49"><a id="__codelineno-1-49" name="__codelineno-1-49" href="#__codelineno-1-49"></a><span class="p">}</span>
-</span></code></pre></div>
-<h2 id="gitignore-status">.gitignore status<a class="headerlink" href="#gitignore-status" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>node_modules/</code> is ignored, by the root <code>.gitignore</code> (<code>node_modules/</code>) and by
-  <code>agentic-workflows-v2/.gitignore</code> (<code>ui/node_modules/</code>).</li>
-<li><code>.impeccable/</code> is <strong>not</strong> ignored. If it should stay local, add <code>.impeccable/</code>
-  under "Tool-installed skill/agent packs" in the root <code>.gitignore</code>. Otherwise,
-  commit it deliberately together with <code>DESIGN.md</code>.</li>
-<li>The detector waiver for the intentional prototype-lab findings is an inline
-  <code>impeccable-disable</code> directive in <code>ui/src/styles/prototype-lab.css</code>, so it
-  does not depend on <code>.impeccable/config.json</code>.</li>
-</ul>
+<h1 id="impeccable-context-changes">Impeccable context changes<a class="headerlink" href="#impeccable-context-changes" title="Permanent link">&para;</a></h1>
+<p>Applied. The Impeccable context is now tracked at the repository root:
+<a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/PRODUCT.md"><code>PRODUCT.md</code></a>, <a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/DESIGN.md"><code>DESIGN.md</code></a> and
+<a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/.impeccable/design.json"><code>.impeccable/design.json</code></a>.</p>
+<p>The sources of truth remain <code>agentic-workflows-v2/ui/src/styles/tokens.css</code>
+(values and the verified contrast table) and
+<a href="../evidence-ledger-design-system/">the Evidence Ledger design system</a> (rules).
+Where a context file and <code>tokens.css</code> disagree, <code>tokens.css</code> wins.</p>
+<p><code>.impeccable/hook.cache.json</code> and <code>.impeccable/live/</code> are local tool state and
+are not tracked.</p>
 
 
 
@@ -3100,7 +2917,7 @@ selected with <code>data-theme</code>, and Tailwind's <code>dark:</code> variant
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 8, 2026 08:32:27 UTC">October 8, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 18, 2026 15:39:13 UTC">October 18, 2026</span>
   </span>
 
     
