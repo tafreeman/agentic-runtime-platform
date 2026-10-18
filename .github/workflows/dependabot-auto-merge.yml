@@ -23,7 +23,7 @@ jobs:
       #
       # pip is deliberately excluded: Dependabot updates pyproject + ci-constraints.txt
       # but NOT uv.lock, so an auto-merged pip PR would land a stale lockfile and turn
-      # the `ci-constraints.txt in sync with uv.lock` job red on main. pip PRs are
+      # the `ci-constraints.txt in sync with uv.lock` step of the `lint` job red on main. pip PRs are
       # merged by hand after `just relock` (re-locks + regenerates ci-constraints.txt).
       #
       # uv is excluded for the same reason. Dependabot *security* updates arrive

@@ -5,6 +5,14 @@ on:
     tags:
       - "v*"
   pull_request:
+    # Not a required check, so a path filter cannot deadlock a PR. The negated
+    # entries (evaluated in order, after the broad globs above them) drop the
+    # trees that cannot change what this pipeline builds: the wheels package only
+    # agentic_v2 / the eval src / tools, the Dockerfiles install editable
+    # packages and never run tests, and docs/ is dockerignored. Deliberately NOT
+    # excluded: *.md (each package README is its wheel long_description, which
+    # `twine check` validates), ui/** (Dockerfile.ui builds it and no other job
+    # builds that image), and every pyproject.toml / lock input.
     paths:
       - ".github/workflows/deploy.yml"
       - "Dockerfile"
@@ -15,6 +23,11 @@ on:
       - "tools/**"
       - "agentic-workflows-v2/**"
       - "agentic-v2-eval/**"
+      - "!tools/tests/**"
+      - "!agentic-workflows-v2/tests/**"
+      - "!agentic-workflows-v2/docs/**"
+      - "!agentic-workflows-v2/evals/**"
+      - "!agentic-v2-eval/tests/**"
   workflow_dispatch:
     inputs:
       publish_release:

@@ -2,15 +2,27 @@ name: Devcontainer Validate
 
 # Builds and tests the devcontainer when relevant files change to ensure
 # it remains functional for GitHub Codespaces and VS Code Dev Containers users.
+#
+# The filter lists the real inputs of the `devcontainer` Dockerfile stage: the
+# stage runs `pip install -e` for all three packages under
+# `-c ci-constraints.txt` and `npm install` for the UI. Dependabot pip bumps
+# that make that resolution impossible (ResolutionImpossible) are exactly what
+# this check catches, so do not narrow it to .devcontainer/ + Dockerfile.
+# Not a required check, so the filter cannot deadlock a PR.
 
 on:
   pull_request:
     paths:
       - '.devcontainer/**'
       - 'Dockerfile'
+      - '.dockerignore'
       - 'pyproject.toml'
+      - 'agentic-workflows-v2/pyproject.toml'
+      - 'agentic-v2-eval/pyproject.toml'
+      - 'ci-constraints.txt'
       - 'agentic-workflows-v2/ui/package.json'
       - 'agentic-workflows-v2/ui/package-lock.json'
+      - '.github/workflows/devcontainer-validate.yml'
 
 jobs:
   validate-devcontainer:
