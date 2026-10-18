@@ -555,6 +555,8 @@
       
         
       
+        
+      
     
     
     
@@ -868,6 +870,34 @@
     
   
     First workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adapter-recipes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integration recipes
   
 
     
@@ -3274,7 +3304,7 @@
 </tr>
 </tbody>
 </table>
-<p>Use Python 3.11 or newer and Node.js 20 or newer.</p>
+<p>Use Python 3.11 or newer and Node.js 22.22.2 or newer (CI uses Node 22).</p>
 <h2 id="full-development-setup">Full development setup<a class="headerlink" href="#full-development-setup" title="Permanent link">&para;</a></h2>
 <p>Clone the repository:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/tafreeman/agentic-runtime-platform.git
@@ -3284,36 +3314,40 @@
 packages, and installs the UI dependencies:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>just<span class="w"> </span>setup
 </span></code></pre></div>
+<p><code>just setup</code> installs into <code>.venv</code> but does not activate it in your shell.
+Activate it before using the <code>agentic</code> command:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">.\.</span><span class="n">venv</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">Activate</span><span class="p">.</span><span class="n">ps1</span>
+</span></code></pre></div>
 <p>The current <code>justfile</code> selects <code>powershell.exe</code>. Use the manual setup below on
 Linux or macOS.</p>
 <p>Verify the installation:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>agentic<span class="w"> </span>version
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>agentic<span class="w"> </span>list<span class="w"> </span>workflows
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>npm<span class="w"> </span>--prefix<span class="w"> </span>agentic-workflows-v2/ui<span class="w"> </span>run<span class="w"> </span>build
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>agentic<span class="w"> </span>version
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>agentic<span class="w"> </span>list<span class="w"> </span>workflows
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>npm<span class="w"> </span>--prefix<span class="w"> </span>agentic-workflows-v2/ui<span class="w"> </span>run<span class="w"> </span>build
 </span></code></pre></div>
 <h2 id="manual-setup">Manual setup<a class="headerlink" href="#manual-setup" title="Permanent link">&para;</a></h2>
 <p>Run these commands from the repository root.</p>
 <h3 id="bash">Bash<a class="headerlink" href="#bash" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nb">source</span><span class="w"> </span>.venv/bin/activate
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>pip
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="w"> </span>-c<span class="w"> </span>ci-constraints.txt
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">  </span>-e<span class="w"> </span><span class="s2">"./agentic-workflows-v2[dev,server,langchain,tracing]"</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span>-c<span class="w"> </span>ci-constraints.txt
-</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">"./agentic-v2-eval[dev]"</span><span class="w"> </span>-c<span class="w"> </span>ci-constraints.txt
-</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>npm<span class="w"> </span>--prefix<span class="w"> </span>agentic-workflows-v2/ui<span class="w"> </span>install
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>pip
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="w"> </span>-c<span class="w"> </span>ci-constraints.txt
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span>-e<span class="w"> </span><span class="s2">"./agentic-workflows-v2[dev,server,langchain,tracing]"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span>-c<span class="w"> </span>ci-constraints.txt
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">"./agentic-v2-eval[dev]"</span><span class="w"> </span>-c<span class="w"> </span>ci-constraints.txt
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>npm<span class="w"> </span>--prefix<span class="w"> </span>agentic-workflows-v2/ui<span class="w"> </span>install
 </span></code></pre></div>
 <h3 id="powershell">PowerShell<a class="headerlink" href="#powershell" title="Permanent link">&para;</a></h3>
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">venv</span> <span class="p">.</span><span class="n">venv</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="p">.\.</span><span class="n">venv</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">Activate</span><span class="p">.</span><span class="n">ps1</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">pip</span> <span class="n">install</span> <span class="p">-</span><span class="n">-upgrade</span> <span class="n">pip</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">-e</span> <span class="p">.</span> <span class="n">-c</span> <span class="n">ci-constraints</span><span class="p">.</span><span class="n">txt</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">pip</span> <span class="n">install</span> <span class="p">`</span>
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>  <span class="n">-e</span> <span class="s2">"./agentic-workflows-v2[dev,server,langchain,tracing]"</span> <span class="p">`</span>
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>  <span class="n">-c</span> <span class="n">ci-constraints</span><span class="p">.</span><span class="n">txt</span>
-</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">-e</span> <span class="s2">"./agentic-v2-eval[dev]"</span> <span class="n">-c</span> <span class="n">ci-constraints</span><span class="p">.</span><span class="n">txt</span>
-</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="n">npm</span> <span class="p">-</span><span class="n">-prefix</span> <span class="n">agentic-workflows-v2</span><span class="p">/</span><span class="n">ui</span> <span class="n">install</span>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">venv</span> <span class="p">.</span><span class="n">venv</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="p">.\.</span><span class="n">venv</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">Activate</span><span class="p">.</span><span class="n">ps1</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">pip</span> <span class="n">install</span> <span class="p">-</span><span class="n">-upgrade</span> <span class="n">pip</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">-e</span> <span class="p">.</span> <span class="n">-c</span> <span class="n">ci-constraints</span><span class="p">.</span><span class="n">txt</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">pip</span> <span class="n">install</span> <span class="p">`</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>  <span class="n">-e</span> <span class="s2">"./agentic-workflows-v2[dev,server,langchain,tracing]"</span> <span class="p">`</span>
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>  <span class="n">-c</span> <span class="n">ci-constraints</span><span class="p">.</span><span class="n">txt</span>
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">-e</span> <span class="s2">"./agentic-v2-eval[dev]"</span> <span class="n">-c</span> <span class="n">ci-constraints</span><span class="p">.</span><span class="n">txt</span>
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="n">npm</span> <span class="p">-</span><span class="n">-prefix</span> <span class="n">agentic-workflows-v2</span><span class="p">/</span><span class="n">ui</span> <span class="n">install</span>
 </span></code></pre></div>
 <p>Installing the root package first matters: both child packages resolve shared
 code through the workspace's <code>agentic-tools</code> package.</p>
@@ -3350,6 +3384,14 @@ dependency versions aligned with CI.</p>
 <td>ExecutionKit integration</td>
 </tr>
 <tr>
+<td><code>eval</code></td>
+<td>The <code>agentic-evalkit</code> scoring bridge (<a href="../../adr/ADR-042-agentic-evalkit-adoption/">ADR-042</a>)</td>
+</tr>
+<tr>
+<td><code>swe-ab</code></td>
+<td><code>pandas</code>, used to build SWE-bench cases for <code>agentic-workflows-v2/evals/swe_ab</code></td>
+</tr>
+<tr>
 <td><code>devex</code></td>
 <td>Process inspection used by development commands</td>
 </tr>
@@ -3376,35 +3418,39 @@ dependency versions aligned with CI.</p>
 </tbody>
 </table>
 <p>Add extras to the same editable install:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s2">"./agentic-workflows-v2[dev,server,langchain,tracing,redis]"</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>-c<span class="w"> </span>ci-constraints.txt
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s2">"./agentic-workflows-v2[dev,server,langchain,tracing,redis]"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>-c<span class="w"> </span>ci-constraints.txt
 </span></code></pre></div>
 <p>Optional packages fail when their feature is selected, not when the base
 runtime is imported. For example, requesting the PostgreSQL checkpointer
 without the <code>postgres</code> extra raises an install hint.</p>
 <h2 id="deterministic-verification">Deterministic verification<a class="headerlink" href="#deterministic-verification" title="Permanent link">&para;</a></h2>
 <p>Create an input file:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nb">printf</span><span class="w"> </span><span class="s1">'{"input_text":"hello"}\n'</span><span class="w"> </span>&gt;<span class="w"> </span>/tmp/agentic-input.json
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nv">AGENTIC_NO_LLM</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>agentic<span class="w"> </span>run<span class="w"> </span>test_deterministic<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>--input<span class="w"> </span>/tmp/agentic-input.json
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nb">printf</span><span class="w"> </span><span class="s1">'{"input_text":"hello"}\n'</span><span class="w"> </span>&gt;<span class="w"> </span>/tmp/agentic-input.json
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nv">AGENTIC_NO_LLM</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>agentic<span class="w"> </span>run<span class="w"> </span>test_deterministic<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>--input<span class="w"> </span>/tmp/agentic-input.json
 </span></code></pre></div>
 <p>PowerShell:</p>
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="s1">'{"input_text":"hello"}'</span> <span class="p">|</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>  <span class="nb">Set-Content</span> <span class="n">-Encoding</span> <span class="n">utf8</span> <span class="p">.\</span><span class="n">agentic-input</span><span class="p">.</span><span class="n">json</span>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="nv">$env:AGENTIC_NO_LLM</span> <span class="p">=</span> <span class="s2">"1"</span>
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="n">agentic</span> <span class="n">run</span> <span class="n">test_deterministic</span> <span class="p">-</span><span class="n">-input</span> <span class="p">.\</span><span class="n">agentic-input</span><span class="p">.</span><span class="n">json</span>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="s1">'{"input_text":"hello"}'</span> <span class="p">|</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>  <span class="nb">Set-Content</span> <span class="n">-Encoding</span> <span class="n">ascii</span> <span class="p">.\</span><span class="n">agentic-input</span><span class="p">.</span><span class="n">json</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="nv">$env:AGENTIC_NO_LLM</span> <span class="p">=</span> <span class="s2">"1"</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="n">agentic</span> <span class="n">run</span> <span class="n">test_deterministic</span> <span class="p">-</span><span class="n">-input</span> <span class="p">.\</span><span class="n">agentic-input</span><span class="p">.</span><span class="n">json</span>
 </span></code></pre></div>
+<p>Use <code>-Encoding ascii</code> here: Windows PowerShell 5.1 writes a byte-order mark
+with <code>-Encoding utf8</code>, which the CLI rejects. The repository also ships a
+ready-made input at
+<code>agentic-workflows-v2/tests/fixtures/deterministic_input.json</code>.</p>
 <p>Expected result: <code>Status: SUCCESS</code>.</p>
 <p>The deterministic workflow itself does not call a model. Setting
 <code>AGENTIC_NO_LLM=1</code> also protects you if you continue with an LLM-backed
 workflow before configuring provider credentials.</p>
 <h2 id="provider-configuration">Provider configuration<a class="headerlink" href="#provider-configuration" title="Permanent link">&para;</a></h2>
 <p>Copy the environment template:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>cp<span class="w"> </span>.env.example<span class="w"> </span>.env
 </span></code></pre></div>
 <p>PowerShell:</p>
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nb">Copy-Item</span> <span class="p">.</span><span class="n">env</span><span class="p">.</span><span class="n">example</span> <span class="p">.</span><span class="n">env</span>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nb">Copy-Item</span> <span class="p">.</span><span class="n">env</span><span class="p">.</span><span class="n">example</span> <span class="p">.</span><span class="n">env</span>
 </span></code></pre></div>
 <p>Set only the providers you intend to use. Common chat-provider variables are:</p>
 <table>
@@ -3433,7 +3479,7 @@ workflow before configuring provider credentials.</p>
 </tr>
 <tr>
 <td>Azure AI Foundry</td>
-<td><code>AZURE_FOUNDRY_API_KEY</code> and a configured Foundry endpoint</td>
+<td><code>AZURE_FOUNDRY_API_KEY</code> and <code>AZURE_FOUNDRY_ENDPOINT</code></td>
 </tr>
 <tr>
 <td>NVIDIA NIM</td>
@@ -3453,11 +3499,11 @@ workflow before configuring provider credentials.</p>
 </tr>
 <tr>
 <td>GitHub Models</td>
-<td><code>GITHUB_TOKEN</code> or <code>GH_TOKEN</code></td>
+<td><code>GITHUB_TOKEN</code> or <code>GH_TOKEN</code>; retired upstream 2026-07-30, so no default tier routes to it</td>
 </tr>
 <tr>
 <td>Ollama</td>
-<td><code>OLLAMA_HOST</code>; <code>OLLAMA_API_KEY</code> only when the endpoint requires it</td>
+<td><code>OLLAMA_BASE_URL</code> (runtime; <code>OLLAMA_HOST</code> is read by the inventory and benchmark tools); <code>OLLAMA_API_KEY</code> only when the endpoint requires it</td>
 </tr>
 </tbody>
 </table>
@@ -3466,39 +3512,39 @@ settings, authentication, storage, and security controls.</p>
 <p>Do not commit <code>.env</code> or provider credentials.</p>
 <h2 id="dashboard">Dashboard<a class="headerlink" href="#dashboard" title="Permanent link">&para;</a></h2>
 <p>After installing the UI dependencies:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>just<span class="w"> </span>dev
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>just<span class="w"> </span>dev
 </span></code></pre></div>
 <p>Or start the two processes manually.</p>
 <p>Terminal 1:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>agentic<span class="w"> </span>serve<span class="w"> </span>--port<span class="w"> </span><span class="m">8010</span><span class="w"> </span>--dev<span class="w"> </span>--no-open
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>agentic<span class="w"> </span>serve<span class="w"> </span>--port<span class="w"> </span><span class="m">8010</span><span class="w"> </span>--dev<span class="w"> </span>--no-open
 </span></code></pre></div>
 <p>Terminal 2:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>npm<span class="w"> </span>--prefix<span class="w"> </span>agentic-workflows-v2/ui<span class="w"> </span>run<span class="w"> </span>dev
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>npm<span class="w"> </span>--prefix<span class="w"> </span>agentic-workflows-v2/ui<span class="w"> </span>run<span class="w"> </span>dev
 </span></code></pre></div>
 <p>Open <code>http://127.0.0.1:5173</code>. Vite proxies <code>/api</code> and <code>/ws</code> to
 <code>http://127.0.0.1:8010</code>.</p>
 <p>Build the production UI:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>npm<span class="w"> </span>--prefix<span class="w"> </span>agentic-workflows-v2/ui<span class="w"> </span>run<span class="w"> </span>build
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>npm<span class="w"> </span>--prefix<span class="w"> </span>agentic-workflows-v2/ui<span class="w"> </span>run<span class="w"> </span>build
 </span></code></pre></div>
 <p>When <code>ui/dist</code> exists, the FastAPI application can serve that build from the
 same origin as the API.</p>
 <h2 id="powershell-bootstrap">PowerShell bootstrap<a class="headerlink" href="#powershell-bootstrap" title="Permanent link">&para;</a></h2>
 <p>The runtime package also includes a Windows setup script:</p>
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="p">.\</span><span class="n">agentic-workflows-v2</span><span class="p">\</span><span class="n">scripts</span><span class="p">\</span><span class="n">setup-dev</span><span class="p">.</span><span class="n">ps1</span>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="p">.\</span><span class="n">agentic-workflows-v2</span><span class="p">\</span><span class="n">scripts</span><span class="p">\</span><span class="n">setup-dev</span><span class="p">.</span><span class="n">ps1</span>
 </span></code></pre></div>
 <p>Run it from the repository root. Use <code>-SkipFrontend</code> to skip the UI and
 <code>-SkipSmokeTest</code> to skip its workflow smoke check.</p>
 <h2 id="evaluation-package">Evaluation package<a class="headerlink" href="#evaluation-package" title="Permanent link">&para;</a></h2>
 <p>The full setup installs the evaluation package. Verify its command:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>agentic-v2-eval<span class="w"> </span>--help
-</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>python<span class="w"> </span>-m<span class="w"> </span>agentic_v2_eval<span class="w"> </span>--help
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>agentic-v2-eval<span class="w"> </span>--help
+</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>python<span class="w"> </span>-m<span class="w"> </span>agentic_v2_eval<span class="w"> </span>--help
 </span></code></pre></div>
 <p>See <a href="../../architecture-eval/">Evaluation architecture</a> and
 <a href="../../evaluation/runners/">evaluation runners</a> before supplying result files.</p>
 <h2 id="pre-commit-hooks">Pre-commit hooks<a class="headerlink" href="#pre-commit-hooks" title="Permanent link">&para;</a></h2>
 <p>Install the configured pre-commit and commit-message hooks:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>pre-commit<span class="w"> </span>install<span class="w"> </span>--install-hooks
-</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>pre-commit<span class="w"> </span>install<span class="w"> </span>--install-hooks
+</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
 </span></code></pre></div>
 <p>The current hook configuration runs Black, Ruff with import sorting,
 docformatter, detect-secrets, and strict mypy for the evaluation package
@@ -3533,7 +3579,7 @@ local hook.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 11, 2026 01:59:45 UTC">October 11, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 18, 2026 16:53:41 UTC">October 18, 2026</span>
   </span>
 
     

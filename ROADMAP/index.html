@@ -553,6 +553,8 @@
       
         
       
+        
+      
     
     
     
@@ -678,6 +680,34 @@
     
   
     First workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/adapter-recipes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integration recipes
   
 
     
@@ -2865,6 +2895,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#3d-shipped-july-october-2026-governance-ui-scheduling-proofs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3d. Shipped July - October 2026 — governance, UI, scheduling proofs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#4-proposed" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3169,6 +3210,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#3d-shipped-july-october-2026-governance-ui-scheduling-proofs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3d. Shipped July - October 2026 — governance, UI, scheduling proofs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#4-proposed" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3253,7 +3305,7 @@
 
 <h1 id="roadmap">Roadmap<a class="headerlink" href="#roadmap" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>Last verified against the repository:</strong> 2026-07-28</p>
+<p><strong>Last verified against the repository:</strong> 2026-10-18</p>
 </blockquote>
 <p>This is the in-repo backlog. Day-to-day sprint tracking lives in issues; this file captures the load-bearing multi-week arcs. If you are about to propose a new initiative, add a stub under <strong>Proposed</strong> and open a PR for review — a roadmap entry without a PR is aspiration.</p>
 <hr />
@@ -3307,8 +3359,9 @@
 - <strong>E8-2</strong>: Tenant-scoped isolation for runs and datasets (<code>tenant.py</code>); OIDC tenant/org claims are authoritative when OIDC is enabled, while <code>X-Tenant-ID</code> is a compatibility header — not a hard boundary — used when OIDC is inactive (ADR-022). See <a href="../KNOWN_LIMITATIONS/#45-x-tenant-id-is-client-supplied-and-spoofable-in-the-default-configuration">Known Limitations §4.5</a>.
 - <strong>E8-3</strong>: Append-only, tamper-evident audit logging for all workflow executions and config changes (<code>audit_log.py</code>).
 - <strong>E8-4</strong>: Added hash-manifest verification for local ONNX model weights
-  (<code>weight_integrity.py</code>). The verifier is not yet called by every local model
-  load path; see <a href="../SUPPLY_CHAIN/">Supply-chain security</a>.
+  (<code>weight_integrity.py</code>). It was extended to the native <code>OnnxBackend</code> and the
+  shared-tools local provider; see <a href="../SUPPLY_CHAIN/">Supply-chain security</a> for
+  the current enforcement boundary.
 - <strong>E8-5</strong>: Security posture consolidation and gap report captured in the security hardening and supply-chain documentation.</p>
 <hr />
 <h2 id="3-shipped-in-sprint-1-engineering-stabilization-2026-05-14">3. Shipped in Sprint 1 — Engineering Stabilization (2026-05-14)<a class="headerlink" href="#3-shipped-in-sprint-1-engineering-stabilization-2026-05-14" title="Permanent link">&para;</a></h2>
@@ -3548,8 +3601,60 @@ decision. <code>agentic-evalkit&gt;=0.4.1,&lt;0.5.0</code> is available through 
 optional <code>eval</code> extra, and the additive <code>evalkit_bridge</code> module has landed. The
 pin tracks the published PyPI release, and CI installs the extra in the
 <code>evalkit-bridge-tests</code> job, so the bridge is exercised rather than skipped.
-<code>step_scoring.py</code> still imports the in-tree <code>agentic_v2_eval</code> package, so the
-cutover and later package removal remain future slices.</p>
+Slices A-C are done: <code>step_scoring.py</code> scores through the bridge against
+runtime-owned rubrics, and <code>scripts/eval_gate.py</code> no longer needs the legacy
+package. Removing the in-tree <code>agentic_v2_eval</code> package (slices D and E) remains
+a future slice.</p>
+<hr />
+<h2 id="3d-shipped-july-october-2026-governance-ui-scheduling-proofs">3d. Shipped July - October 2026 — governance, UI, scheduling proofs<a class="headerlink" href="#3d-shipped-july-october-2026-governance-ui-scheduling-proofs" title="Permanent link">&para;</a></h2>
+<p>Later work also landed as accepted ADRs. The <a href="../adr/ADR-INDEX/">ADR index</a> is the source of truth for status and detail; the entries below are the headline items.</p>
+<table>
+<thead>
+<tr>
+<th>Work</th>
+<th>ADR(s)</th>
+<th>Date</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Configurable workflow UI (per-step node config, UI settings store, run comparison) and evaluation scoring visibility</td>
+<td><a href="../adr/ADR-043-configurable-workflow-ui/">ADR-043</a>, <a href="../adr/ADR-044-evaluation-scoring-visibility/">ADR-044</a></td>
+<td>2026-07-07</td>
+</tr>
+<tr>
+<td>Approval-gate hardening: <code>build_app</code> gated, gate enforced structurally in <code>BaseTool.execute</code>, response-path entropy masking</td>
+<td><a href="../adr/ADR-045-build-app-approval-gate/">ADR-045</a>, <a href="../adr/ADR-046-response-entropy-masking/">ADR-046</a>, <a href="../adr/ADR-047-structural-tool-approval-gate/">ADR-047</a></td>
+<td>2026-07-08</td>
+</tr>
+<tr>
+<td>SSE chat playground (<code>POST /api/chat</code>) and OpenRouter provider; Ollama cloud routing</td>
+<td><a href="../adr/ADR-050-chat-playground-sse-and-openrouter-provider/">ADR-050</a>, <a href="../adr/ADR-051-ollama-cloud-execution-routing/">ADR-051</a></td>
+<td>2026-07-12</td>
+</tr>
+<tr>
+<td>Typed step artifact contracts; Evidence Ledger UI with versioned model packs</td>
+<td><a href="../adr/ADR-052-typed-step-artifact-contracts/">ADR-052</a>, <a href="../adr/ADR-054-evidence-ledger-ui-and-model-packs/">ADR-054</a></td>
+<td>2026-07-14 → 2026-07-17</td>
+</tr>
+<tr>
+<td>Claude subscription backend; curated cost lane and failover ceiling</td>
+<td><a href="../adr/ADR-058-claude-subscription-backend/">ADR-058</a>, <a href="../adr/ADR-059-model-cost-lane-ceiling/">ADR-059</a></td>
+<td>2026-08-19 → 2026-08-28</td>
+</tr>
+<tr>
+<td>One scheduling rule set for <code>DAGExecutor</code> and the orchestrator, modelled and proved in Lean 4</td>
+<td><a href="../adr/ADR-060-scheduler-guarantees-lean/">ADR-060</a></td>
+<td>2026-09-24</td>
+</tr>
+<tr>
+<td>JSON-safe secret masks; the LangGraph adapter runs each step once</td>
+<td><a href="../adr/ADR-061-json-safe-secret-masks/">ADR-061</a>, <a href="../adr/ADR-062-langgraph-join-once-semantics/">ADR-062</a></td>
+<td>2026-10-12</td>
+</tr>
+</tbody>
+</table>
+<p>The next planned release is the <code>0.4.0-rc.1</code> platform bundle (<code>release-manifest.toml</code>).</p>
 <hr />
 <h2 id="4-proposed">4. Proposed<a class="headerlink" href="#4-proposed" title="Permanent link">&para;</a></h2>
 <h3 id="epic-9-multi-run-comparison-candidate">Epic 9 — Multi-Run Comparison (candidate)<a class="headerlink" href="#epic-9-multi-run-comparison-candidate" title="Permanent link">&para;</a></h3>
@@ -3567,7 +3672,7 @@ cutover and later package removal remain future slices.</p>
 <h2 id="6-how-to-propose-new-work">6. How to propose new work<a class="headerlink" href="#6-how-to-propose-new-work" title="Permanent link">&para;</a></h2>
 <ol>
 <li>Open a PR that adds a subsection under §4 (Proposed). Include: problem statement, definition of done, rough sizing (story-weeks), open questions.</li>
-<li>If the work crosses an architectural boundary — new engine, new contract, new security surface — write an ADR under <a href="https://github.com/tafreeman/agentic-runtime-platform/tree/main/docs/adr"><code>adr/</code></a> at the same time (see <a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/CONTRIBUTING.md#6-when-to-write-an-adr"><code>CONTRIBUTING.md</code></a>).</li>
+<li>If the work crosses an architectural boundary — new engine, new contract, new security surface — write an ADR under <a href="https://github.com/tafreeman/agentic-runtime-platform/tree/main/docs/adr"><code>adr/</code></a> at the same time (see <a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/CONTRIBUTING.md#write-an-adr"><code>CONTRIBUTING.md</code></a>).</li>
 <li>Once an epic is accepted for sprint, add a short implementation note to the epic entry before execution begins.</li>
 <li>When the epic ships, add a new dated shipped section following the §N / §Na / §Nb naming pattern and link the final CHANGELOG entry.</li>
 </ol>
@@ -3594,7 +3699,7 @@ cutover and later package removal remain future slices.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="September 24, 2026 04:15:53 UTC">September 24, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 18, 2026 16:53:41 UTC">October 18, 2026</span>
   </span>
 
     

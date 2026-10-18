@@ -553,6 +553,8 @@
       
         
       
+        
+      
     
     
     
@@ -678,6 +680,34 @@
     
   
     First workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/adapter-recipes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integration recipes
   
 
     
@@ -3344,7 +3374,7 @@ the current directory.</p>
 </tr>
 <tr>
 <td><code>agentic orchestrate</code></td>
-<td>Build and run a workflow from a task description</td>
+<td>Placeholder: prints a notice and exits 1 (dynamic orchestration is not exposed through the CLI yet)</td>
 </tr>
 <tr>
 <td><code>agentic resume</code></td>
@@ -3364,7 +3394,7 @@ the current directory.</p>
 </tr>
 <tr>
 <td><code>agentic version</code></td>
-<td>Print package and runtime version information</td>
+<td>Print the installed <code>agentic-workflows-v2</code> version</td>
 </tr>
 <tr>
 <td><code>agentic devex</code></td>
@@ -3422,6 +3452,43 @@ to a YAML file.</p>
 <p>The input option accepts a file path:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>agentic<span class="w"> </span>run<span class="w"> </span>code_review<span class="w"> </span>--input<span class="w"> </span>review-input.json<span class="w"> </span>--adapter<span class="w"> </span>native
 </span></code></pre></div>
+<p><code>--output</code> writes a JSON summary with the same shape for both adapters (it is
+not the full <code>WorkflowResult</code> model, so there is no <code>final_output</code> or
+<code>overall_status</code> key):</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workflow_name</code></td>
+<td>Workflow that ran</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Lowercase overall status, for example <code>success</code> or <code>failed</code></td>
+</tr>
+<tr>
+<td><code>outputs</code></td>
+<td>The workflow's declared outputs</td>
+</tr>
+<tr>
+<td><code>steps</code></td>
+<td>Map of step name to <code>status</code>, <code>outputs</code>, and <code>error</code></td>
+</tr>
+<tr>
+<td><code>errors</code></td>
+<td>List of error messages</td>
+</tr>
+<tr>
+<td><code>elapsed_seconds</code></td>
+<td>Wall-clock duration</td>
+</tr>
+</tbody>
+</table>
 <p>The command exits non-zero when validation fails or the workflow cannot be
 run. A workflow result whose overall status is failed is also reported as a
 failed command.</p>
@@ -3462,9 +3529,12 @@ comparison.</p>
 <h2 id="agentic-orchestrate"><code>agentic orchestrate</code><a class="headerlink" href="#agentic-orchestrate" title="Permanent link">&para;</a></h2>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>agentic orchestrate [OPTIONS] TASK
 </span></code></pre></div>
-<p><code>TASK</code> is a text description. The command generates and executes a workflow
-through the runtime's dynamic orchestration path. It does not use the default
-LangGraph path for named YAML workflows.</p>
+<p><code>TASK</code> is a text description. The command is currently a stub: it prints that
+dynamic orchestration is not exposed through the default LangGraph workflow path
+yet, points to <code>agentic run &lt;workflow&gt;</code>, and <strong>exits with status 1</strong> without
+planning or running anything, whatever the options or <code>AGENTIC_NO_LLM</code> setting.
+The options below are accepted but unused. The orchestrator itself is available
+from Python (see the <a href="../PATTERN_CATALOG/">Pattern catalog</a>).</p>
 <table>
 <thead>
 <tr>
@@ -3489,13 +3559,9 @@ LangGraph path for named YAML workflows.</p>
 </tr>
 </tbody>
 </table>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>agentic<span class="w"> </span>orchestrate<span class="w"> </span><span class="s2">"Summarize the changed Python modules"</span><span class="w"> </span>--max-parallel<span class="w"> </span><span class="m">2</span>
-</span></code></pre></div>
-<p>This command needs a usable model provider unless <code>AGENTIC_NO_LLM=1</code> is set.
-Placeholder mode tests orchestration flow, not the quality of the generated
-plan.</p>
+<p>Use <code>agentic run &lt;workflow&gt;</code> for YAML-defined workflows.</p>
 <h2 id="agentic-resume"><code>agentic resume</code><a class="headerlink" href="#agentic-resume" title="Permanent link">&para;</a></h2>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>agentic resume [OPTIONS] NAME
+<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>agentic resume [OPTIONS] NAME
 </span></code></pre></div>
 <p><code>NAME</code> is the checkpoint file stem.</p>
 <table>
@@ -3518,18 +3584,21 @@ plan.</p>
 <td><code>--fork</code></td>
 <td>text</td>
 <td>none</td>
-<td>Create a divergent checkpoint with this name after loading</td>
+<td>After loading, branch an in-memory fork with this name and print its run id</td>
 </tr>
 </tbody>
 </table>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>agentic<span class="w"> </span>resume<span class="w"> </span>my_run<span class="w"> </span>--checkpoint-dir<span class="w"> </span>./checkpoints
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>agentic<span class="w"> </span>resume<span class="w"> </span>my_run<span class="w"> </span>--checkpoint-dir<span class="w"> </span>./checkpoints<span class="w"> </span>--fork<span class="w"> </span>experiment_a
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>agentic<span class="w"> </span>resume<span class="w"> </span>my_run<span class="w"> </span>--checkpoint-dir<span class="w"> </span>./checkpoints
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>agentic<span class="w"> </span>resume<span class="w"> </span>my_run<span class="w"> </span>--checkpoint-dir<span class="w"> </span>./checkpoints<span class="w"> </span>--fork<span class="w"> </span>experiment_a
 </span></code></pre></div>
 <p>The command restores an <code>ExecutionContext</code>, compares tracked files with their
 saved state, and reports which files changed. It does not restore a model's
-hidden conversation state.</p>
+hidden conversation state. <code>--fork</code> only calls <code>ExecutionContext.fork_session</code>
+and prints the new run id; the CLI does not write a checkpoint for the fork or
+continue the run. Exit status is 1 when the checkpoint file is missing or cannot
+be restored.</p>
 <h2 id="agentic-list"><code>agentic list</code><a class="headerlink" href="#agentic-list" title="Permanent link">&para;</a></h2>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>agentic list [COMPONENT_TYPE]
+<div class="language-text highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>agentic list [COMPONENT_TYPE]
 </span></code></pre></div>
 <p><code>COMPONENT_TYPE</code> is one of:</p>
 <ul>
@@ -3538,11 +3607,11 @@ hidden conversation state.</p>
 <li><code>tools</code></li>
 <li><code>adapters</code></li>
 </ul>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>agentic<span class="w"> </span>list
-</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>agentic<span class="w"> </span>list<span class="w"> </span>tools
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>agentic<span class="w"> </span>list
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>agentic<span class="w"> </span>list<span class="w"> </span>tools
 </span></code></pre></div>
 <h2 id="agentic-validate"><code>agentic validate</code><a class="headerlink" href="#agentic-validate" title="Permanent link">&para;</a></h2>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>agentic validate [OPTIONS] WORKFLOW
+<div class="language-text highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>agentic validate [OPTIONS] WORKFLOW
 </span></code></pre></div>
 <table>
 <thead>
@@ -3566,11 +3635,11 @@ hidden conversation state.</p>
 cycles, and LangGraph compilation. The compilation check requires the
 <code>langchain</code> extra even when you intend to execute the workflow with the native
 adapter.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>agentic<span class="w"> </span>validate<span class="w"> </span>code_review<span class="w"> </span>--verbose
-</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>agentic<span class="w"> </span>validate<span class="w"> </span>./workflows/custom.yaml
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>agentic<span class="w"> </span>validate<span class="w"> </span>code_review<span class="w"> </span>--verbose
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>agentic<span class="w"> </span>validate<span class="w"> </span>./workflows/custom.yaml
 </span></code></pre></div>
 <h2 id="agentic-serve"><code>agentic serve</code><a class="headerlink" href="#agentic-serve" title="Permanent link">&para;</a></h2>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>agentic serve [OPTIONS]
+<div class="language-text highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>agentic serve [OPTIONS]
 </span></code></pre></div>
 <table>
 <thead>
@@ -3602,25 +3671,25 @@ adapter.</p>
 </tr>
 </tbody>
 </table>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>agentic<span class="w"> </span>serve<span class="w"> </span>--port<span class="w"> </span><span class="m">8010</span><span class="w"> </span>--dev<span class="w"> </span>--no-open
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>agentic<span class="w"> </span>serve<span class="w"> </span>--port<span class="w"> </span><span class="m">8010</span><span class="w"> </span>--dev<span class="w"> </span>--no-open
 </span></code></pre></div>
 <p>The repository's <code>just dev</code> launcher uses backend port <code>8010</code> and Vite port
 <code>5173</code>. The standalone CLI uses port <code>8000</code> unless you override it.</p>
 <h2 id="agentic-version"><code>agentic version</code><a class="headerlink" href="#agentic-version" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>agentic<span class="w"> </span>version
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>agentic<span class="w"> </span>version
 </span></code></pre></div>
-<p>Prints the installed runtime version and basic environment information.</p>
+<p>Prints one line, <code>agentic-workflows-v2 version &lt;version&gt;</code>; it reports no other environment information.</p>
 <h2 id="agentic-devex"><code>agentic devex</code><a class="headerlink" href="#agentic-devex" title="Permanent link">&para;</a></h2>
 <h3 id="port-checks">Port checks<a class="headerlink" href="#port-checks" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>agentic<span class="w"> </span>devex<span class="w"> </span>port-guard<span class="w"> </span>--backend-port<span class="w"> </span><span class="m">8010</span><span class="w"> </span>--frontend-port<span class="w"> </span><span class="m">5173</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>agentic<span class="w"> </span>devex<span class="w"> </span>port-guard<span class="w"> </span>--backend-port<span class="w"> </span><span class="m">8010</span><span class="w"> </span>--frontend-port<span class="w"> </span><span class="m">5173</span>
 </span></code></pre></div>
 <p>The command's built-in defaults are <code>8012</code> and <code>5174</code>, which differ from
 <code>just dev</code>. Pass the ports explicitly when checking the standard development
 launcher.</p>
 <h3 id="workspace-tests">Workspace tests<a class="headerlink" href="#workspace-tests" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>agentic<span class="w"> </span>devex<span class="w"> </span>workspace-test-runner
-</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>agentic<span class="w"> </span>devex<span class="w"> </span>workspace-test-runner<span class="w"> </span>--coverage
-</span><span id="__span-17-3"><a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>agentic<span class="w"> </span>devex<span class="w"> </span>workspace-test-runner<span class="w"> </span>--package<span class="w"> </span>agentic-workflows-v2
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>agentic<span class="w"> </span>devex<span class="w"> </span>workspace-test-runner
+</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>agentic<span class="w"> </span>devex<span class="w"> </span>workspace-test-runner<span class="w"> </span>--coverage
+</span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>agentic<span class="w"> </span>devex<span class="w"> </span>workspace-test-runner<span class="w"> </span>--package<span class="w"> </span>agentic-workflows-v2
 </span></code></pre></div>
 <table>
 <thead>
@@ -3649,8 +3718,8 @@ launcher.</p>
 </tbody>
 </table>
 <h3 id="workflow-linter">Workflow linter<a class="headerlink" href="#workflow-linter" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>agentic<span class="w"> </span>devex<span class="w"> </span>workflow-linter<span class="w"> </span>code_review
-</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>agentic<span class="w"> </span>devex<span class="w"> </span>workflow-linter<span class="w"> </span>./workflow.yaml<span class="w"> </span>--strict
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>agentic<span class="w"> </span>devex<span class="w"> </span>workflow-linter<span class="w"> </span>code_review
+</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>agentic<span class="w"> </span>devex<span class="w"> </span>workflow-linter<span class="w"> </span>./workflow.yaml<span class="w"> </span>--strict
 </span></code></pre></div>
 <p><code>--strict</code> treats warnings as violations.</p>
 <h2 id="environment-behavior">Environment behavior<a class="headerlink" href="#environment-behavior" title="Permanent link">&para;</a></h2>
@@ -3665,9 +3734,9 @@ launcher.</p>
 </ul>
 <h2 id="getting-help">Getting help<a class="headerlink" href="#getting-help" title="Permanent link">&para;</a></h2>
 <p>Every group and command supports <code>--help</code>:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>agentic<span class="w"> </span>--help
-</span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>agentic<span class="w"> </span>run<span class="w"> </span>--help
-</span><span id="__span-19-3"><a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>agentic<span class="w"> </span>devex<span class="w"> </span>workspace-test-runner<span class="w"> </span>--help
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>agentic<span class="w"> </span>--help
+</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>agentic<span class="w"> </span>run<span class="w"> </span>--help
+</span><span id="__span-18-3"><a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>agentic<span class="w"> </span>devex<span class="w"> </span>workspace-test-runner<span class="w"> </span>--help
 </span></code></pre></div>
 <p>Typer's generated help is the source of truth for installed command options.
 This page records the command behavior in the current repository.</p>
@@ -3693,7 +3762,7 @@ This page records the command behavior in the current repository.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 31, 2026 12:55:56 UTC">August 31, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 18, 2026 16:53:41 UTC">October 18, 2026</span>
   </span>
 
     

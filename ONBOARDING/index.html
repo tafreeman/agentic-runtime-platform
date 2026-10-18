@@ -555,6 +555,8 @@
       
         
       
+        
+      
     
     
     
@@ -683,6 +685,34 @@
     
   
     First workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/adapter-recipes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integration recipes
   
 
     
@@ -3196,7 +3226,7 @@
 <h1 id="contributor-onboarding">Contributor onboarding<a class="headerlink" href="#contributor-onboarding" title="Permanent link">&para;</a></h1>
 <p>This guide gets a new contributor from a clean checkout to a verified workflow
 run and a working development environment.</p>
-<p>Last verified: 2026-07-28.</p>
+<p>Last verified: 2026-10-18.</p>
 <h2 id="what-is-in-this-repository">What is in this repository<a class="headerlink" href="#what-is-in-this-repository" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -3244,7 +3274,7 @@ the LangGraph adapter.</p>
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Python 3.11 or newer</li>
-<li>Node.js 20 or newer</li>
+<li>Node.js 22.22.2 or newer (CI uses Node 22)</li>
 <li>Git</li>
 <li>PowerShell for the repository's <code>just</code> recipes and development scripts</li>
 </ul>
@@ -3333,8 +3363,9 @@ fields and the <a href="../cli-reference/">CLI reference</a> for every command.<
 <h2 id="4-understand-one-workflow">4. Understand one workflow<a class="headerlink" href="#4-understand-one-workflow" title="Permanent link">&para;</a></h2>
 <p>Start with
 <code>agentic-workflows-v2/agentic_v2/workflows/definitions/test_deterministic.yaml</code>.
-It contains two tier-0 agent steps. In no-LLM mode, the current native path
-returns placeholder values without contacting an external provider.</p>
+It contains two tier-0 agent steps. Tier-0 agents run deterministic Python
+handlers on both engines, so this workflow never calls a model, with or
+without <code>AGENTIC_NO_LLM=1</code>.</p>
 <p>Then inspect <code>code_review.yaml</code>:</p>
 <ol>
 <li>the workflow declares an input schema;</li>
@@ -3510,7 +3541,7 @@ verification matrix, use <a href="../CONTRIBUTING/">CONTRIBUTING.md</a>.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 31, 2026 12:55:56 UTC">August 31, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 18, 2026 16:53:41 UTC">October 18, 2026</span>
   </span>
 
     

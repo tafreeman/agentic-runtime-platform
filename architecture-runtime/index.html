@@ -553,6 +553,8 @@
       
         
       
+        
+      
     
     
     
@@ -678,6 +680,34 @@
     
   
     First workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/adapter-recipes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integration recipes
   
 
     
@@ -4383,7 +4413,7 @@
 <blockquote>
 <p><strong>Audience:</strong> Engineers onboarding to the platform, architects doing design reviews, and senior contributors planning major changes.
 <strong>Scope:</strong> The <code>agentic-workflows-v2</code> Python package and its direct dependencies. The evaluation framework (<code>agentic-v2-eval</code>) and React UI are covered in separate documents.
-<strong>Last verified:</strong> 2026-07-28</p>
+<strong>Last verified:</strong> 2026-10-18</p>
 </blockquote>
 <p><strong>Package:</strong> <code>agentic-workflows-v2</code> | <strong>Python:</strong> 3.11+ | <strong>Build:</strong> hatchling</p>
 <hr />
@@ -4490,7 +4520,7 @@
 </span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│   ├── governance/          # Approval gate + escalation sink
 </span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│   ├── prompts/             # 7 agent persona definitions (.md)
 </span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│   ├── tools/builtin/       # Built-in runtime tools
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│   ├── workflows/           # YAML loader, run logger, definitions/ (8 YAML workflows)
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│   ├── workflows/           # YAML loader, run logger, definitions/ (10 YAML files: 8 production + 2 test fixtures)
 </span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>│   ├── middleware/          # Sanitization detectors
 </span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│   ├── integrations/        # OTEL tracing, metrics, MCP adapters
 </span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│   └── cli/                 # Typer CLI entry points
@@ -4507,7 +4537,7 @@
 <ul>
 <li><code>asyncio.wait(FIRST_COMPLETED)</code> unblocks downstream steps the instant an upstream step finishes, rather than waiting for an entire wave.</li>
 <li><strong>Cascade skip via BFS</strong>: when a step fails, all transitive dependents are immediately marked <code>SKIPPED</code> and the executor continues cleanly.</li>
-<li><strong>Deadlock detection</strong>: if no tasks are running and unresolved steps remain, they are skipped with reason <code>"unmet dependencies"</code>.</li>
+<li><strong>Deadlock backstop</strong>: unreachable for a validated DAG, but if no tasks are running and unfinished steps remain, those steps are marked skipped with reason <code>"scheduler deadlock"</code> and the run fails (<code>overall_status</code> FAILED, <code>metadata["error"]</code> set) rather than reporting success (<a href="../adr/ADR-060-scheduler-guarantees-lean/">ADR-060</a>).</li>
 <li><strong>Configurable concurrency</strong>: <code>max_concurrency</code> kwarg (default 10) limits simultaneously running <code>asyncio</code> tasks.</li>
 </ul>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Example: DAG with parallel steps</span>
@@ -4518,14 +4548,14 @@
 </span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1"># "analyze" and "summarize" execute in parallel after "load_data" finishes</span>
 </span></code></pre></div>
 <p><strong>Cycle detection</strong> uses a DFS three-color (white/gray/black) algorithm at <code>DAG.validate()</code> time. A gray-to-gray back-edge is a cycle; the full cycle path is reported in <code>CycleDetectedError</code>.</p>
-<p><strong>Top-level timeout watchdog:</strong> <code>DAGExecutor.execute()</code> accepts an optional <code>timeout: float | None</code> parameter. When set, the entire scheduling loop is wrapped with <code>asyncio.wait_for</code>. On expiry, all in-flight tasks are structurally cancelled, every RUNNING step transitions to FAILED, and transitive dependents are cascade-skipped via BFS — the same mechanism used for step-level failure propagation. OTEL span attributes <code>workflow.timeout_exceeded=True</code> and <code>workflow.timeout_seconds=&lt;n&gt;</code> are emitted. This watchdog is additive to the existing per-step timeouts in <code>StepExecutor</code>; both can be active simultaneously. See <a href="../adr/ADR-019-dag-executor-top-level-timeout/">ADR-019</a>.</p>
+<p><strong>Top-level timeout watchdog:</strong> <code>DAGExecutor.execute()</code> accepts an optional <code>timeout: float | None</code> parameter. When set, the entire scheduling loop runs under <code>asyncio.timeout</code>. On expiry, all in-flight tasks are structurally cancelled, every RUNNING step transitions to FAILED, and transitive dependents are cascade-skipped via BFS — the same mechanism used for step-level failure propagation. OTEL span attributes <code>workflow.timeout_exceeded=True</code> and <code>workflow.timeout_seconds=&lt;n&gt;</code> are emitted. This watchdog is additive to the existing per-step timeouts in <code>StepExecutor</code>; both can be active simultaneously. See <a href="../adr/ADR-019-dag-executor-top-level-timeout/">ADR-019</a>.</p>
 <h3 id="42-langgraph-execution-engine">4.2 LangGraph execution engine<a class="headerlink" href="#42-langgraph-execution-engine" title="Permanent link">&para;</a></h3>
 <p>Source: <code>langchain/</code> package (adapter: <code>adapters/langchain/engine.py</code>)</p>
 <p>The LangGraph engine compiles a YAML workflow configuration into a LangGraph <code>StateGraph</code>. Each YAML step becomes a graph node. A step's <code>depends_on</code> list becomes one edge into it: a waiting edge when it has several dependencies, so it runs once, after all of them, as on the native executor (<a href="../adr/ADR-062-langgraph-join-once-semantics/">ADR-062</a>). The graph is compiled once, then executed via <code>graph.ainvoke()</code>.</p>
 <p><strong>Characteristics:</strong></p>
 <ul>
-<li>Full LangGraph checkpointing support when configured.</li>
-<li>Richer conditional edge support via <code>when:</code> expressions in YAML.</li>
+<li>LangGraph checkpointing: in-memory (<code>MemorySaver</code>) by default, PostgreSQL when <code>AGENTIC_CHECKPOINTER_URL</code> is set (<code>postgres</code> extra), or any checkpointer injected into <code>WorkflowRunner</code>.</li>
+<li>Honors the same <code>when:</code> conditions, <code>loop_until</code> loops and per-step observers as the native path; differences between the engines (for example failure propagation) are listed in <a href="../adr/ADR-062-langgraph-join-once-semantics/">ADR-062</a>.</li>
 <li>Requires the <code>langchain</code> optional extras: <code>pip install -e ".[langchain]"</code>.</li>
 <li>Falls back gracefully at import time — guarded with <code>try/except ImportError</code> throughout.</li>
 </ul>
@@ -4549,7 +4579,7 @@
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">engine</span> <span class="o">=</span> <span class="n">get_registry</span><span class="p">()</span><span class="o">.</span><span class="n">get_adapter</span><span class="p">(</span><span class="s2">"native"</span><span class="p">)</span>
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">engine</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">dag</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">on_update</span><span class="o">=</span><span class="n">broadcast_fn</span><span class="p">)</span>
 </span></code></pre></div>
-<p>Instances are cached — the same engine object is returned on every subsequent call for the same name.</p>
+<p>Instances are cached — the same engine object is returned on every subsequent call for the same name. Runnable examples for both engines are in <a href="../getting-started/adapter-recipes/">Integration recipes</a>.</p>
 <p><strong>Eager startup validation:</strong> At FastAPI lifespan startup, <code>AdapterRegistry.validate_selected(name)</code> is called for the adapter named by <code>AGENTIC_DEFAULT_ADAPTER</code> (default <code>langchain</code>). If the required extras are absent, the server raises <code>ConfigurationError</code> with an install hint and refuses to start, replacing the prior behavior of deferring the <code>ImportError</code> until the first workflow run. See <a href="../adr/ADR-020-langchain-adapter-eager-validation/">ADR-020</a>.</p>
 <hr />
 <h2 id="5-server-layer">5. Server layer<a class="headerlink" href="#5-server-layer" title="Permanent link">&para;</a></h2>
@@ -4562,7 +4592,7 @@
 <li><strong><code>SlowAPIMiddleware</code></strong> — global per-IP sliding-window rate limit (default 60 requests/minute; configurable via <code>AGENTIC_RATE_LIMIT_DEFAULT</code>). Requests over the limit receive <code>429 Too Many Requests</code> with a <code>Retry-After</code> header. Limits are tracked in-process; multi-replica deployments do not share state. See <a href="../adr/ADR-018-api-rate-limiting-and-auth-throttle/">ADR-018</a>.</li>
 <li><strong><code>MetricsMiddleware</code></strong> — HTTP request duration histograms and request-count counters per route, method, and status code.</li>
 <li><strong><code>TraceparentMiddleware</code></strong> — injects W3C <code>traceparent</code> / <code>tracestate</code> response headers (plus <code>Server-Timing</code>) so the browser can correlate frontend and backend OTEL spans.</li>
-<li><strong><code>SanitizationASGIMiddleware</code></strong> — runs inbound request bodies through the sanitization detector pipeline. Requests classified <code>BLOCKED</code> are rejected with <code>400 Bad Request</code> before reaching any route handler.</li>
+<li><strong><code>SanitizationASGIMiddleware</code></strong> — runs inbound request bodies through the sanitization detector pipeline. Requests classified <code>BLOCKED</code> are rejected with <code>422</code> (<code>"Request blocked by sanitization policy"</code>) before reaching any route handler.</li>
 <li><strong><code>APIKeyMiddleware</code> (or <code>OIDCAuthMiddleware</code>)</strong> — validates <code>Authorization: Bearer</code> or <code>X-API-Key</code> headers using <code>secrets.compare_digest()</code>. Passes through configured public paths without authentication. An <code>AuthThrottle</code> class in <code>server/auth.py</code> tracks per-IP <code>401</code> failures: 5 failures within a 60-second window trigger a 300-second <code>429</code> lockout with <code>Retry-After</code>. Thresholds are configurable via <code>AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS</code>, <code>AGENTIC_AUTH_LOCKOUT_THRESHOLD</code>, and <code>AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS</code>. In-process only. See <a href="../adr/ADR-018-api-rate-limiting-and-auth-throttle/">ADR-018</a>.</li>
 </ol>
 <h3 id="52-request-lifecycle">5.2 Request lifecycle<a class="headerlink" href="#52-request-lifecycle" title="Permanent link">&para;</a></h3>
@@ -4625,6 +4655,18 @@
 <tr>
 <td><code>server/routes/models.py</code></td>
 <td>Model probe endpoint (<code>/api/models/probe</code>)</td>
+</tr>
+<tr>
+<td><code>server/routes/catalog.py</code></td>
+<td>Read-only editor pickers: <code>/api/personas</code>, <code>/api/tools</code>, <code>/api/observers</code></td>
+</tr>
+<tr>
+<td><code>server/routes/chat.py</code></td>
+<td><code>POST /api/chat</code> model playground (SSE)</td>
+</tr>
+<tr>
+<td><code>server/routes/settings_routes.py</code></td>
+<td><code>/api/settings/*</code>: provider endpoints, tier overrides, model packs</td>
 </tr>
 <tr>
 <td><code>server/routes/workflows.py</code></td>
@@ -4852,11 +4894,11 @@
 <tr>
 <td>GitHub Models</td>
 <td><code>GITHUB_TOKEN</code></td>
-<td>Models API</td>
+<td>Retired upstream 2026-07-30; no tier chain routes to it</td>
 </tr>
 <tr>
 <td>Ollama</td>
-<td><code>OLLAMA_HOST</code></td>
+<td><code>OLLAMA_HOST</code> (shared <code>LLMClient</code>); the runtime's own Ollama backend reads <code>OLLAMA_BASE_URL</code></td>
 <td>Local inference</td>
 </tr>
 <tr>
@@ -5107,7 +5149,7 @@
 </tr>
 </tbody>
 </table>
-<p>Requests classified <code>BLOCKED</code> are rejected with <code>400 Bad Request</code> before any business logic executes. Requests classified <code>REDACTED</code> proceed with sensitive values replaced by <code>[REDACTED]</code> markers. The middleware is fail-closed by default (<code>AGENTIC_SANITIZER_FAIL_OPEN=1</code> to override).</p>
+<p>Requests classified <code>BLOCKED</code> are rejected with <code>422</code> before any business logic executes (a malformed body gets <code>400</code>; <code>POST /api/run</code> additionally re-checks workflow inputs and answers <code>400</code> for blocked values). Requests classified <code>REDACTED</code> proceed with sensitive values replaced by <code>[REDACTED]</code> markers. The middleware is fail-closed by default (<code>AGENTIC_SANITIZER_FAIL_OPEN=1</code> to override).</p>
 <h3 id="133-runtime-safety-controls">13.3 Runtime safety controls<a class="headerlink" href="#133-runtime-safety-controls" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -5368,7 +5410,7 @@ generated files differ from the committed versions. See
 </tbody>
 </table>
 <p>See <code>.env.example</code> for the full variable list with documentation.</p>
-<p>Workflow definitions are configured in YAML under <code>agentic_v2/workflows/definitions/</code> (8 built-in definitions). A <code>SecretProvider</code> abstraction centralises secret access at runtime (environment-variable backend by default, file-based backend for mounted secrets, or a custom protocol implementation).</p>
+<p>Workflow definitions are configured in YAML under <code>agentic_v2/workflows/definitions/</code> (10 built-in definitions: 8 production workflows plus 2 test fixtures). A <code>SecretProvider</code> abstraction centralises secret access at runtime (environment-variable backend by default, file-based backend for mounted secrets, or a custom protocol implementation).</p>
 <hr />
 <h2 id="18-cli">18. CLI<a class="headerlink" href="#18-cli" title="Permanent link">&para;</a></h2>
 <p><strong>Source:</strong> <code>agentic_v2/cli/</code></p>
@@ -5391,15 +5433,15 @@ generated files differ from the committed versions. See
 </tr>
 <tr>
 <td><code>agentic orchestrate</code></td>
-<td>Run an orchestrator-driven task decomposition</td>
+<td>Stub: prints a notice and exits 1 (see the <a href="../cli-reference/">CLI reference</a>)</td>
 </tr>
 <tr>
-<td><code>agentic resume &lt;run_id&gt;</code></td>
-<td>Resume an interrupted workflow run</td>
+<td><code>agentic resume &lt;name&gt;</code></td>
+<td>Rehydrate a saved <code>ExecutionContext</code> checkpoint and report changed files; it does not re-run the workflow</td>
 </tr>
 <tr>
-<td><code>agentic list workflows\|agents\|tools</code></td>
-<td>List available workflows, agents, or tools</td>
+<td><code>agentic list workflows\|agents\|tools\|adapters</code></td>
+<td>List available workflows, agents, tools, or adapters</td>
 </tr>
 <tr>
 <td><code>agentic validate &lt;workflow&gt;</code></td>
@@ -5411,7 +5453,7 @@ generated files differ from the committed versions. See
 </tr>
 <tr>
 <td><code>agentic version</code></td>
-<td>Print version information</td>
+<td>Print the installed version</td>
 </tr>
 </tbody>
 </table>
@@ -5435,7 +5477,8 @@ support. See <a href="../adr/ADR-001-002-003-architecture-decisions/">ADR-001</a
 <h3 id="persistence">Persistence<a class="headerlink" href="#persistence" title="Permanent link">&para;</a></h3>
 <p>Saved run results are JSON files, so they remain directly inspectable. Other
 state has separate backends: replay can use memory, SQLite, or Redis; LangGraph
-checkpoints can use SQLite or PostgreSQL; and model-router circuit state can
+checkpoints are in-memory unless <code>AGENTIC_CHECKPOINTER_URL</code> selects PostgreSQL
+(or the caller injects a checkpointer); and model-router circuit state can
 use Redis. The run-list API still scans and filters JSON metadata in process,
 which is not designed for large-scale analytical queries.</p>
 <h3 id="protocol-driven-architecture">Protocol-driven architecture<a class="headerlink" href="#protocol-driven-architecture" title="Permanent link">&para;</a></h3>
@@ -5445,13 +5488,13 @@ which is not designed for large-scale analytical queries.</p>
 <p>Merged from the 2026-03-03 architecture review. Captures weaknesses and recommendations that complement the strengths above.</p>
 <h3 id="protocol-type-safety-weaknesses">Protocol type-safety weaknesses<a class="headerlink" href="#protocol-type-safety-weaknesses" title="Permanent link">&para;</a></h3>
 <ul>
-<li><code>ExecutionEngine.execute()</code> uses <code>Any</code> for <code>workflow</code>, <code>ctx</code>, and return type — loses compile-time type safety and pushes validation to runtime.</li>
-<li><code>AgentProtocol.run()</code> uses <code>Any</code> for both input and output. <code>BaseAgent</code> is generic over <code>TInput</code>/<code>TOutput</code>, but the protocol itself does not enforce it.</li>
+<li><code>ExecutionEngine.execute()</code> still uses <code>Any</code> for <code>workflow</code> (engines accept different representations) and <code>ctx</code>; its return type is <code>WorkflowResult</code>.</li>
+<li><code>AgentProtocol.run()</code> uses <code>object</code> for input and output since the Epic 1 tightening (<a href="../MIGRATIONS/">Migrations</a>). <code>BaseAgent</code> is generic over <code>TInput</code>/<code>TOutput</code>, but the protocol itself does not enforce it.</li>
 <li>No protocol exists for <code>WorkflowLoader</code> or config validation — these remain concrete classes.</li>
 </ul>
 <h3 id="adapter-gaps">Adapter gaps<a class="headerlink" href="#adapter-gaps" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Context bridging missing.</strong> <code>LangChainEngine</code> accepts <code>ctx: Any</code> but does not forward the <code>ExecutionContext</code> to the underlying <code>WorkflowRunner</code>. Shared state (variables, services, step tracking) from the native context system is not available in LangGraph executions. <code>ctx</code> is currently reserved for "future use."</li>
+<li><strong>Context bridging is partial.</strong> <code>LangChainEngine</code> forwards <code>ctx</code> to <code>WorkflowRunner</code>, which merges the context's variables into the LangGraph <code>state["context"]</code> and writes safe final values back. Other <code>ExecutionContext</code> state (services, step tracking) is not shared with LangGraph executions.</li>
 <li><strong>Instance caching.</strong> <code>AdapterRegistry</code> caches adapter instances. Configuration changes after first access require a registry reset — production-safe but forces <code>object.__new__()</code> workarounds in tests.</li>
 </ul>
 <h3 id="route-module-size">Route-module size<a class="headerlink" href="#route-module-size" title="Permanent link">&para;</a></h3>
@@ -5460,11 +5503,11 @@ which is not designed for large-scale analytical queries.</p>
 </ul>
 <h3 id="code-quality-configuration-drift">Code-quality configuration drift<a class="headerlink" href="#code-quality-configuration-drift" title="Permanent link">&para;</a></h3>
 <ul>
-<li><code>agentic-workflows-v2/pyproject.toml</code> has <strong>no <code>[tool.ruff]</code> section</strong> of its own; the ruff rule set is inherited from the workspace root. Some documented standards are aspirational rather than tool-enforced for the main package.</li>
+<li><code>agentic-workflows-v2/pyproject.toml</code> has no <code>[tool.ruff]</code> table of its own (line length and target version come from the workspace root) but does define <code>[tool.ruff.lint]</code> rules and per-file ignores.</li>
 </ul>
 <h3 id="current-architecture-gaps">Current architecture gaps<a class="headerlink" href="#current-architecture-gaps" title="Permanent link">&para;</a></h3>
 <ul>
-<li>The only memory implementation is in-memory (<code>InMemoryStore</code>); there is no durable backend.</li>
+<li>The <code>MemoryStoreProtocol</code> store (<code>core/memory.py</code>) has only an in-memory implementation (<code>InMemoryStore</code>); durable memory exists only as the file-backed built-in memory tool (<code>AGENTIC_MEMORY_PATH</code>).</li>
 <li>No adapter/tool plugin discovery — registration is import-time only (no <code>entry_points</code> or directory scan).</li>
 </ul>
 <h3 id="prioritized-recommendations">Prioritized recommendations<a class="headerlink" href="#prioritized-recommendations" title="Permanent link">&para;</a></h3>
@@ -5481,17 +5524,17 @@ which is not designed for large-scale analytical queries.</p>
 <tbody>
 <tr>
 <td>1</td>
-<td>Tighten protocol signatures — replace <code>Any</code> in <code>ExecutionEngine.execute()</code> / <code>AgentProtocol.run()</code> with bounded TypeVars or Union types</td>
-<td style="text-align: center;">4</td>
+<td>Tighten the remaining <code>Any</code> in <code>ExecutionEngine.execute()</code> (<code>workflow</code>, <code>ctx</code>) with bounded TypeVars or Union types</td>
+<td style="text-align: center;">3</td>
 <td style="text-align: center;">M</td>
-<td style="text-align: center;">High</td>
+<td style="text-align: center;">Medium</td>
 </tr>
 <tr>
 <td>2</td>
-<td>Bridge <code>ExecutionContext</code> into <code>LangChainEngine</code> so both engines share state during adapter-routed execution</td>
-<td style="text-align: center;">4</td>
+<td>Extend the <code>ExecutionContext</code> bridge in <code>LangChainEngine</code> beyond variables (services, step tracking)</td>
+<td style="text-align: center;">3</td>
 <td style="text-align: center;">M</td>
-<td style="text-align: center;">High</td>
+<td style="text-align: center;">Medium</td>
 </tr>
 <tr>
 <td>3</td>
@@ -5509,20 +5552,13 @@ which is not designed for large-scale analytical queries.</p>
 </tr>
 <tr>
 <td>5</td>
-<td>Add a standalone <code>quickstart.py</code> / CLI command running a simple workflow end-to-end</td>
-<td style="text-align: center;">3</td>
-<td style="text-align: center;">S</td>
-<td style="text-align: center;">Medium</td>
-</tr>
-<tr>
-<td>6</td>
 <td>Document "How to implement ExecutionEngine" with test templates</td>
 <td style="text-align: center;">3</td>
 <td style="text-align: center;">S</td>
 <td style="text-align: center;">Medium</td>
 </tr>
 <tr>
-<td>7</td>
+<td>6</td>
 <td>Add adapter/tool plugin discovery via <code>entry_points</code> or directory scan</td>
 <td style="text-align: center;">3</td>
 <td style="text-align: center;">M</td>
@@ -5560,7 +5596,7 @@ which is not designed for large-scale analytical queries.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 13, 2026 01:09:39 UTC">October 13, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 18, 2026 16:53:41 UTC">October 18, 2026</span>
   </span>
 
     

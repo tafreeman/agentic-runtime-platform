@@ -553,6 +553,8 @@
       
         
       
+        
+      
     
     
     
@@ -678,6 +680,34 @@
     
   
     First workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/adapter-recipes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integration recipes
   
 
     
@@ -1311,10 +1341,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#rest-endpoints-25" class="md-nav__link">
+  <a href="#rest-endpoints" class="md-nav__link">
     <span class="md-ellipsis">
       
-        REST endpoints (25)
+        REST endpoints
       
     </span>
   </a>
@@ -3726,10 +3756,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#rest-endpoints-25" class="md-nav__link">
+  <a href="#rest-endpoints" class="md-nav__link">
     <span class="md-ellipsis">
       
-        REST endpoints (25)
+        REST endpoints
       
     </span>
   </a>
@@ -4258,7 +4288,7 @@
 <p><strong>Package:</strong> <code>agentic-workflows-v2/agentic_v2/server/</code>
 <strong>Audience:</strong> Backend engineers extending the server, security reviewers, and DevOps engineers deploying the service.</p>
 </blockquote>
-<p><strong>Generated:</strong> 2026-05-02 (updated 2026-07-05)
+<p><strong>Generated:</strong> 2026-05-02 (updated 2026-10-18)
 <strong>Key source files:</strong> <code>server/app.py</code>, <code>server/auth.py</code>, <code>server/websocket.py</code>, <code>server/middleware/__init__.py</code>, <code>server/routes/</code>, <code>server/execution.py</code>, <code>server/_step_events.py</code>, <code>server/_stream_merge.py</code></p>
 <hr />
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
@@ -4289,7 +4319,7 @@
 <li><code>SanitizationASGIMiddleware</code> — prompt injection and secret scrubbing on JSON request bodies.</li>
 <li><code>APIKeyMiddleware</code> — bearer-token gate on <code>/api/</code> routes plus per-IP 401 throttle (innermost). Replaced by <code>OIDCAuthMiddleware</code> when <code>AGENTIC_OIDC_ENABLED</code> is set.</li>
 </ol>
-<p>Route groups (<code>health</code>, <code>agents</code>, <code>models</code>, <code>workflows</code>, <code>evaluation_routes</code>, <code>model_finder</code>, <code>runs</code>) are registered under the <code>/api</code> prefix; the WebSocket router mounts at the root. A static file mount (if <code>ui/dist/</code> exists) provides SPA fallback to <code>index.html</code>.</p>
+<p>Route groups (<code>health</code>, <code>agents</code>, <code>catalog</code>, <code>settings_routes</code>, <code>models</code>, <code>chat</code>, <code>workflows</code>, <code>evaluation_routes</code>, <code>model_finder</code>, <code>runs</code>) are registered under the <code>/api</code> prefix; the WebSocket router mounts at the root. A static file mount (if <code>ui/dist/</code> exists) provides SPA fallback to <code>index.html</code>.</p>
 <p><strong>SPA path traversal guard:</strong></p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">candidate_path</span> <span class="o">=</span> <span class="p">(</span><span class="n">UI_DIST_DIR_RESOLVED</span> <span class="o">/</span> <span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">if</span> <span class="n">UI_DIST_DIR_RESOLVED</span> <span class="ow">in</span> <span class="n">candidate_path</span><span class="o">.</span><span class="n">parents</span><span class="p">:</span>
@@ -4301,14 +4331,20 @@
 <p>The <code>lifespan</code> async context manager (in <code>server/lifespan.py</code>) runs at startup and shutdown.</p>
 <p><strong>Startup sequence:</strong></p>
 <ol>
-<li>Log a warning if <code>AGENTIC_API_KEY</code> is unset (all routes publicly accessible).</li>
-<li>Call <code>probe_and_update_tier_defaults()</code> to discover available LLM providers and update tier-to-model mappings for both engines. Skipped gracefully if LangChain extras are not installed.</li>
-<li>Initialize <code>SanitizationMiddleware(dry_run=False)</code> and attach to <code>app.state.sanitization</code>. Any failure here logs an exception but does not abort startup — the middleware will be a no-op.</li>
-<li>Log OTEL tracing status.</li>
+<li>Log a warning if neither <code>AGENTIC_API_KEY</code> nor OIDC is configured (all routes publicly accessible).</li>
+<li>Validate the adapter named by <code>AGENTIC_DEFAULT_ADAPTER</code>; abort with an install hint if its extras are missing.</li>
+<li>Refuse to start when <code>slowapi</code> is missing unless <code>AGENTIC_DISABLE_RATE_LIMITING=1</code> (or the test override <code>AGENTIC_RATE_LIMIT_DISABLED=1</code>) is set.</li>
+<li>Probe LLM providers and update tier-to-model mappings for both engines (non-fatal; a missing provider leaves the server degraded).</li>
+<li>Initialize <code>SanitizationMiddleware(dry_run=False)</code> on <code>app.state.sanitization</code>. A failure aborts startup with a <code>RuntimeError</code> (fail-closed); only <code>AGENTIC_SANITIZER_FAIL_OPEN=1</code> lets the server start without sanitization.</li>
+<li>Log OTEL tracing and metrics status.</li>
+<li>Install the <code>SmartModelRouter</code> (Redis-backed circuit-breaker state when <code>REDIS_URL</code> connects, otherwise in-process).</li>
+<li>Initialize the durable WebSocket replay store (Redis, SQLite, or in-memory).</li>
+<li>Build the audit logger (a failure disables audit logging but keeps the server up).</li>
 </ol>
 <p><strong>Shutdown sequence:</strong></p>
 <ol>
-<li>Call <code>shutdown_tracing()</code> to flush pending OTEL spans.</li>
+<li>Close the audit logger and drain the router's pending Redis save tasks.</li>
+<li>Call <code>shutdown_tracing()</code> and <code>shutdown_metrics()</code> to flush pending OTEL data.</li>
 </ol>
 <hr />
 <h2 id="3-authentication-middleware">3. Authentication middleware<a class="headerlink" href="#3-authentication-middleware" title="Permanent link">&para;</a></h2>
@@ -4413,7 +4449,7 @@ Allowed headers: <code>Authorization, X-API-Key, Content-Type, Accept</code></p>
 <p><strong>Late-join replay:</strong></p>
 <p>When a WebSocket client connects after a run has started, <code>replay()</code> immediately sends all buffered events. The client receives the full run history and can reconstruct current state without polling.</p>
 <p><strong>SSE integration:</strong></p>
-<p>The <code>GET /api/runs/{run_id}/stream</code> route creates a bounded <code>asyncio.Queue</code>, registers it via <code>register_sse_listener</code>, and yields events as <code>data: &lt;json&gt;\n\n</code> lines. A 30-second <code>wait_for</code> timeout yields keepalive events. On termination (<code>workflow_end</code> or <code>evaluation_complete</code> event received), the queue is unregistered.</p>
+<p>The <code>GET /api/runs/{run_id}/stream</code> route creates a bounded <code>asyncio.Queue</code>, registers it via <code>register_sse_listener</code>, and yields events as <code>data: &lt;json&gt;\n\n</code> lines. A 30-second <code>wait_for</code> timeout yields keepalive events and the stream stays open. The stream ends (and the queue is unregistered) after an <code>error</code> event, an <code>evaluation_complete</code> event, or a <code>workflow_end</code> event with no evaluation pending.</p>
 <h3 id="websocket-endpoint">WebSocket endpoint<a class="headerlink" href="#websocket-endpoint" title="Permanent link">&para;</a></h3>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>WS /ws/execution/{run_id}
 </span></code></pre></div>
@@ -4431,13 +4467,14 @@ Allowed headers: <code>Authorization, X-API-Key, Content-Type, Accept</code></p>
 </span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="k">if</span> <span class="n">api_key</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_token_authorized</span><span class="p">(</span><span class="n">token</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">api_key</span><span class="p">):</span>
 </span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>    <span class="k">await</span> <span class="n">websocket</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="mi">1008</span><span class="p">,</span> <span class="s2">"Invalid or missing API key"</span><span class="p">)</span>
 </span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>
-</span><span id="__span-5-14"><a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="c1"># 4. Accept + replay</span>
-</span><span id="__span-5-15"><a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">websocket</span><span class="p">,</span> <span class="n">run_id</span><span class="p">)</span>
-</span><span id="__span-5-16"><a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">replay</span><span class="p">(</span><span class="n">websocket</span><span class="p">,</span> <span class="n">run_id</span><span class="p">)</span>
-</span><span id="__span-5-17"><a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>
-</span><span id="__span-5-18"><a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="c1"># 5. Keep-alive loop</span>
-</span><span id="__span-5-19"><a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-</span><span id="__span-5-20"><a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>    <span class="k">await</span> <span class="n">websocket</span><span class="o">.</span><span class="n">receive_text</span><span class="p">()</span>   <span class="c1"># any text is ignored</span>
+</span><span id="__span-5-14"><a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="c1"># 4. Tenant check: unknown run, or another tenant's run -&gt; close(1008, "Run not found")</span>
+</span><span id="__span-5-15"><a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="c1"># 5. Accept + replay</span>
+</span><span id="__span-5-16"><a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">websocket</span><span class="p">,</span> <span class="n">run_id</span><span class="p">)</span>
+</span><span id="__span-5-17"><a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="k">await</span> <span class="n">manager</span><span class="o">.</span><span class="n">replay</span><span class="p">(</span><span class="n">websocket</span><span class="p">,</span> <span class="n">run_id</span><span class="p">)</span>
+</span><span id="__span-5-18"><a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>
+</span><span id="__span-5-19"><a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="c1"># 6. Keep-alive loop</span>
+</span><span id="__span-5-20"><a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+</span><span id="__span-5-21"><a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>    <span class="k">await</span> <span class="n">websocket</span><span class="o">.</span><span class="n">receive_text</span><span class="p">()</span>   <span class="c1"># any text is ignored</span>
 </span></code></pre></div>
 <hr />
 <h2 id="6-background-execution">6. Background execution<a class="headerlink" href="#6-background-execution" title="Permanent link">&para;</a></h2>
@@ -4452,8 +4489,8 @@ Allowed headers: <code>Authorization, X-API-Key, Content-Type, Accept</code></p>
 <p>The background task runs in the same event loop as the server. It does not use a separate thread or process. Long-running workflows are isolated via the <code>execution_profile.runtime</code> (subprocess or Docker) — not the asyncio event loop.</p>
 <hr />
 <h2 id="7-api-surface">7. API surface<a class="headerlink" href="#7-api-surface" title="Permanent link">&para;</a></h2>
-<h3 id="rest-endpoints-25">REST endpoints (25)<a class="headerlink" href="#rest-endpoints-25" title="Permanent link">&para;</a></h3>
-<p>All routes are mounted under the <code>/api</code> prefix (<code>app.py</code>). "API key" means the route requires a valid key only when <code>AGENTIC_API_KEY</code> is set; otherwise the server runs in open local-development mode.</p>
+<h3 id="rest-endpoints">REST endpoints<a class="headerlink" href="#rest-endpoints" title="Permanent link">&para;</a></h3>
+<p>All routes are mounted under the <code>/api</code> prefix (<code>app.py</code>). The table lists the core workflow, run and evaluation routes; the catalog, chat, settings and model-finder additions follow it, and <a href="../api-contracts-runtime/">Runtime API contracts</a> is the complete inventory. "API key" means the route requires a valid key only when <code>AGENTIC_API_KEY</code> is set; otherwise the server runs in open local-development mode.</p>
 <table>
 <thead>
 <tr>
@@ -4640,6 +4677,69 @@ Allowed headers: <code>Authorization, X-API-Key, Content-Type, Accept</code></p>
 <td>Model recommendations</td>
 <td><code>routes/model_finder.py</code></td>
 </tr>
+<tr>
+<td>GET, PUT, DELETE</td>
+<td><code>/api/model-finder/profile-override</code></td>
+<td>API key</td>
+<td>Read, set or clear the hardware override</td>
+<td><code>routes/model_finder.py</code></td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/runs/{filename}/evaluate</code></td>
+<td>API key</td>
+<td>Re-score a saved run by replaying its log</td>
+<td><code>routes/runs.py</code></td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/eval/compare</code></td>
+<td>API key</td>
+<td>Re-score two runs under one rubric and compare</td>
+<td><code>routes/runs.py</code></td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/personas</code>, <code>/api/tools</code>, <code>/api/observers</code></td>
+<td>API key</td>
+<td>Workflow-editor pickers</td>
+<td><code>routes/catalog.py</code></td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/chat</code></td>
+<td>API key</td>
+<td>Model playground (SSE)</td>
+<td><code>routes/chat.py</code></td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/models/lmstudio/load</code></td>
+<td>API key</td>
+<td>Ask LM Studio to load a model</td>
+<td><code>routes/models.py</code></td>
+</tr>
+<tr>
+<td>GET, PUT</td>
+<td><code>/api/settings/providers</code>, <code>/api/settings/tiers</code></td>
+<td>API key</td>
+<td>Saved provider endpoints and tier overrides</td>
+<td><code>routes/settings_routes.py</code></td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/settings/providers/{provider_id}/probe</code></td>
+<td>API key</td>
+<td>Probe one saved provider</td>
+<td><code>routes/settings_routes.py</code></td>
+</tr>
+<tr>
+<td>GET, POST, PUT, DELETE</td>
+<td><code>/api/settings/model-packs/...</code></td>
+<td>API key</td>
+<td>Immutable model-pack lifecycle (13 routes)</td>
+<td><code>routes/settings_routes.py</code></td>
+</tr>
 </tbody>
 </table>
 <h3 id="websocket">WebSocket<a class="headerlink" href="#websocket" title="Permanent link">&para;</a></h3>
@@ -4726,7 +4826,7 @@ and <a href="../operations/security-hardening/">security hardening guide</a>.</p
 <h3 id="datasetspy"><code>datasets.py</code><a class="headerlink" href="#datasetspy" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Purpose:</strong> Dataset discovery and loading. Supports repository (HuggingFace/GitHub), local JSON files, and predefined eval sets. Flexible sample extraction from top-level list, or dict with <code>tasks</code>/<code>samples</code>/<code>items</code> keys.</li>
-<li><strong>Key exports:</strong> <code>list_datasets()</code>, <code>load_dataset(name)</code>, <code>resolve_local_dataset(path)</code>, <code>DatasetDescriptor</code>.</li>
+<li><strong>Key exports:</strong> <code>list_repository_datasets()</code>, <code>list_local_datasets()</code>, <code>list_eval_sets()</code>, <code>load_local_dataset_sample()</code>, <code>load_repository_dataset_sample()</code>, <code>adapt_sample_to_workflow_inputs()</code>, <code>match_workflow_dataset()</code>.</li>
 <li><strong>Used by:</strong> <code>routes/evaluation_routes.py</code>, <code>evaluation.py</code>.</li>
 <li><strong>Risks:</strong> path traversal possible if caller doesn't sanitize <code>name</code>; uses <code>is_within_base()</code> guard.</li>
 <li><strong>Suggested tests:</strong> malformed JSON (non-list, non-dict), missing files, symlink escape, network failure for HF/GitHub.</li>
@@ -4738,8 +4838,8 @@ and <a href="../operations/security-hardening/">security hardening guide</a>.</p
 </ul>
 <h3 id="evaluationpy"><code>evaluation.py</code><a class="headerlink" href="#evaluationpy" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Purpose:</strong> Orchestrates the 3-stage evaluation pipeline: hard gates → criterion scoring → LLM judge. Thin glue layer over <code>agentic_v2.scoring</code>.</li>
-<li><strong>Key exports:</strong> <code>evaluate_workflow_result(result, criteria, judge)</code>, <code>EvaluationOutcome</code>.</li>
+<li><strong>Purpose:</strong> Backward-compatible facade over the evaluation subsystem (hard gates → criterion scoring → LLM judge). It re-exports names from <code>server/datasets.py</code> and <code>agentic_v2.scoring.evaluation_scoring</code> and keeps only the thin <code>score_workflow_result()</code> wrapper.</li>
+<li><strong>Key exports:</strong> <code>score_workflow_result()</code>, <code>JudgeRequiredError</code>, <code>compute_hard_gates()</code>, plus the re-exported dataset helpers.</li>
 <li><strong>Used by:</strong> <code>execution.py</code>, <code>routes/evaluation_routes.py</code>.</li>
 <li><strong>Side effects:</strong> optional LLM call if judge configured.</li>
 </ul>
@@ -4797,7 +4897,7 @@ and <a href="../operations/security-hardening/">security hardening guide</a>.</p
 <h3 id="result_normalizationpy"><code>result_normalization.py</code><a class="headerlink" href="#result_normalizationpy" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Purpose:</strong> Converts runner-specific result shapes (LangChain, native engine) to contract <code>WorkflowResult</code>. Handles nested <code>AgentOutput</code>, tool traces, step metadata.</li>
-<li><strong>Key exports:</strong> <code>normalize_langchain_result()</code>, <code>normalize_native_result()</code>.</li>
+<li><strong>Key exports:</strong> <code>normalize_workflow_result()</code>, <code>merge_dataset_and_request_inputs()</code>, <code>is_effectively_empty()</code>.</li>
 <li><strong>Risks:</strong> breaking schema drift in runners → silent field loss; add schema version assertions.</li>
 </ul>
 <h3 id="scoring_criteriapy-moved-to-agentic_v2scoring-adr-032"><code>scoring_criteria.py</code> — <strong>moved to <code>agentic_v2.scoring</code></strong> (ADR-032)<a class="headerlink" href="#scoring_criteriapy-moved-to-agentic_v2scoring-adr-032" title="Permanent link">&para;</a></h3>
@@ -4826,11 +4926,11 @@ and <a href="../operations/security-hardening/">security hardening guide</a>.</p
 </ul>
 <h3 id="routes__init__py"><code>routes/__init__.py</code><a class="headerlink" href="#routes__init__py" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Purpose:</strong> Router aggregation for health, agents, models, workflows, evaluation, model-finder, and runs.</li>
+<li><strong>Purpose:</strong> Router package; <code>app.py</code> includes each router module under <code>/api</code> (health, agents, catalog, settings, models, chat, workflows, evaluation, model-finder, runs).</li>
 </ul>
 <h3 id="routesagentspy"><code>routes/agents.py</code><a class="headerlink" href="#routesagentspy" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Purpose:</strong> <code>GET /api/agents</code> — enumerates agents from <code>prompts/*.md</code> with metadata (persona, capabilities).</li>
+<li><strong>Purpose:</strong> <code>GET /api/agents</code> — reads <code>config/defaults/agents.yaml</code> on every request and returns name, description and tier.</li>
 </ul>
 <h3 id="routesevaluation_routespy"><code>routes/evaluation_routes.py</code><a class="headerlink" href="#routesevaluation_routespy" title="Permanent link">&para;</a></h3>
 <ul>
@@ -4842,15 +4942,15 @@ and <a href="../operations/security-hardening/">security hardening guide</a>.</p
 </ul>
 <h3 id="routesmodel_finderpy"><code>routes/model_finder.py</code><a class="headerlink" href="#routesmodel_finderpy" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Purpose:</strong> <code>GET /api/model-finder/profile</code> and <code>GET /api/model-finder/recommendations</code> — hardware profiling and local-model recommendations.</li>
+<li><strong>Purpose:</strong> <code>/api/model-finder/*</code> — hardware profiling, the hardware override, and local-model recommendations.</li>
 </ul>
 <h3 id="routesmodelspy"><code>routes/models.py</code><a class="headerlink" href="#routesmodelspy" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Purpose:</strong> <code>GET /api/models/probe</code> — provider availability and tier mapping.</li>
+<li><strong>Purpose:</strong> <code>GET /api/models/probe</code> (provider availability and tier mapping) and <code>POST /api/models/lmstudio/load</code>.</li>
 </ul>
 <h3 id="routesrunspy"><code>routes/runs.py</code><a class="headerlink" href="#routesrunspy" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Purpose:</strong> Run history, pagination, filesystem-backed run log reading, per-run evaluation detail, and the SSE stream. Uses <code>is_within_base()</code> path guard.</li>
+<li><strong>Purpose:</strong> Run history, filesystem-backed run log reading, per-run evaluation detail and re-scoring, run-to-run comparison, and the SSE stream. Uses the <code>is_within_base()</code> path guard from <code>agentic_v2/utils/path_safety.py</code>.</li>
 <li><strong>Risks:</strong> path traversal via symlinks — ensure <code>resolve()</code> before <code>is_relative_to()</code>.</li>
 </ul>
 <h3 id="routesworkflowspy"><code>routes/workflows.py</code><a class="headerlink" href="#routesworkflowspy" title="Permanent link">&para;</a></h3>
@@ -4865,33 +4965,36 @@ and <a href="../operations/security-hardening/">security hardening guide</a>.</p
 </span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>  ├─ routes/__init__.py
 </span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>  │   ├─ routes/health.py
 </span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>  │   ├─ routes/agents.py
-</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>  │   ├─ routes/models.py
-</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>  │   ├─ routes/model_finder.py
-</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>  │   ├─ routes/workflows.py → models.py
-</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>  │   ├─ routes/runs.py → execution.py → websocket.py, result_normalization.py
-</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>  │   └─ routes/evaluation_routes.py → datasets.py, evaluation.py
-</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>  ├─ auth.py / auth_oidc.py
-</span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>  ├─ lifespan.py
-</span><span id="__span-8-12"><a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>  ├─ middleware/ (sanitization, rate_limit, metrics, tracing)
-</span><span id="__span-8-13"><a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>  ├─ spa.py
-</span><span id="__span-8-14"><a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>  └─ websocket.py
-</span><span id="__span-8-15"><a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>
-</span><span id="__span-8-16"><a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>execution.py
-</span><span id="__span-8-17"><a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>  ├─ _step_events.py  (step-event builders; receives _stream_dict via injection)
-</span><span id="__span-8-18"><a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>  └─ _stream_merge.py (pure state-merge helpers; no server imports)
-</span><span id="__span-8-19"><a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a>
-</span><span id="__span-8-20"><a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a>evaluation.py  (thin orchestration wrapper)
-</span><span id="__span-8-21"><a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>  └─ agentic_v2.scoring  (domain logic — cross-package import)
-</span><span id="__span-8-22"><a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a>       ├─ scoring.evaluation_scoring
-</span><span id="__span-8-23"><a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a>       │   ├─ scoring.scoring_criteria
-</span><span id="__span-8-24"><a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a>       │   ├─ scoring.scoring_profiles
-</span><span id="__span-8-25"><a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a>       │   └─ scoring.multidimensional_scoring
-</span><span id="__span-8-26"><a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a>       ├─ scoring.judge
-</span><span id="__span-8-27"><a id="__codelineno-8-27" name="__codelineno-8-27" href="#__codelineno-8-27"></a>       ├─ scoring.step_scoring
-</span><span id="__span-8-28"><a id="__codelineno-8-28" name="__codelineno-8-28" href="#__codelineno-8-28"></a>       ├─ scoring.dataset_matching
-</span><span id="__span-8-29"><a id="__codelineno-8-29" name="__codelineno-8-29" href="#__codelineno-8-29"></a>       └─ scoring.eval_config
-</span><span id="__span-8-30"><a id="__codelineno-8-30" name="__codelineno-8-30" href="#__codelineno-8-30"></a>
-</span><span id="__span-8-31"><a id="__codelineno-8-31" name="__codelineno-8-31" href="#__codelineno-8-31"></a>normalization.py → result_normalization.py (shim)
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>  │   ├─ routes/catalog.py
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>  │   ├─ routes/settings_routes.py
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>  │   ├─ routes/models.py
+</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>  │   ├─ routes/chat.py
+</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>  │   ├─ routes/model_finder.py
+</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>  │   ├─ routes/workflows.py → models.py
+</span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>  │   ├─ routes/runs.py → execution.py → websocket.py, result_normalization.py
+</span><span id="__span-8-12"><a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>  │   └─ routes/evaluation_routes.py → datasets.py, evaluation.py
+</span><span id="__span-8-13"><a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>  ├─ auth.py / auth_oidc.py
+</span><span id="__span-8-14"><a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>  ├─ lifespan.py
+</span><span id="__span-8-15"><a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>  ├─ middleware/ (sanitization, rate_limit, metrics, tracing)
+</span><span id="__span-8-16"><a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>  ├─ spa.py
+</span><span id="__span-8-17"><a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>  └─ websocket.py
+</span><span id="__span-8-18"><a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>
+</span><span id="__span-8-19"><a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a>execution.py
+</span><span id="__span-8-20"><a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a>  ├─ _step_events.py  (step-event builders; receives _stream_dict via injection)
+</span><span id="__span-8-21"><a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>  └─ _stream_merge.py (pure state-merge helpers; no server imports)
+</span><span id="__span-8-22"><a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a>
+</span><span id="__span-8-23"><a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a>evaluation.py  (thin orchestration wrapper)
+</span><span id="__span-8-24"><a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a>  └─ agentic_v2.scoring  (domain logic — cross-package import)
+</span><span id="__span-8-25"><a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a>       ├─ scoring.evaluation_scoring
+</span><span id="__span-8-26"><a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a>       │   ├─ scoring.scoring_criteria
+</span><span id="__span-8-27"><a id="__codelineno-8-27" name="__codelineno-8-27" href="#__codelineno-8-27"></a>       │   ├─ scoring.scoring_profiles
+</span><span id="__span-8-28"><a id="__codelineno-8-28" name="__codelineno-8-28" href="#__codelineno-8-28"></a>       │   └─ scoring.multidimensional_scoring
+</span><span id="__span-8-29"><a id="__codelineno-8-29" name="__codelineno-8-29" href="#__codelineno-8-29"></a>       ├─ scoring.judge
+</span><span id="__span-8-30"><a id="__codelineno-8-30" name="__codelineno-8-30" href="#__codelineno-8-30"></a>       ├─ scoring.step_scoring
+</span><span id="__span-8-31"><a id="__codelineno-8-31" name="__codelineno-8-31" href="#__codelineno-8-31"></a>       ├─ scoring.dataset_matching
+</span><span id="__span-8-32"><a id="__codelineno-8-32" name="__codelineno-8-32" href="#__codelineno-8-32"></a>       └─ scoring.eval_config
+</span><span id="__span-8-33"><a id="__codelineno-8-33" name="__codelineno-8-33" href="#__codelineno-8-33"></a>
+</span><span id="__span-8-34"><a id="__codelineno-8-34" name="__codelineno-8-34" href="#__codelineno-8-34"></a>normalization.py → result_normalization.py (shim)
 </span></code></pre></div>
 <p>No circular dependencies. <code>models.py</code> is leaf-shared by all route modules.</p>
 <hr />
@@ -4943,7 +5046,7 @@ and <a href="../operations/security-hardening/">security hardening guide</a>.</p
 <ol>
 <li><code>pip install -e ".[dev,server,langchain]"</code> from <code>agentic-workflows-v2/</code>.</li>
 <li><code>python -m uvicorn agentic_v2.server.app:app --host 127.0.0.1 --port 8010</code> — confirm startup.</li>
-<li><code>curl http://127.0.0.1:8010/api/health</code> — expect <code>200 {"status":"ok"}</code>.</li>
+<li><code>curl http://127.0.0.1:8010/api/health</code> — expect <code>200</code> with <code>"status":"ok"</code>.</li>
 <li><code>curl http://127.0.0.1:8010/api/workflows</code> — expect non-empty list.</li>
 <li>Run <code>python -m pytest tests/ -k "server or api or evaluation"</code> — full suite green.</li>
 <li>Hit <code>POST /api/run</code> with a minimal workflow; confirm WS + SSE stream events.</li>
@@ -4969,9 +5072,9 @@ and <a href="../operations/security-hardening/">security hardening guide</a>.</p
 <li><strong><code>tools.agents.benchmarks.llm_evaluator</code></strong> mirrors the rubric scoring in <code>agentic_v2/scoring/judge.py</code> — consider unifying.</li>
 <li><strong><code>agentic_v2_eval.runners</code></strong> has a parallel streaming runner — extract shared streaming abstraction.</li>
 <li><strong><code>agentic_v2.adapters</code></strong> <code>AdapterRegistry</code> pattern is reusable for other plugin points (scorer backends, judge backends).</li>
-<li><strong>Event hub</strong> in <code>websocket.py</code> could be generalized into <code>core/events.py</code> for non-HTTP pub/sub.</li>
-<li><strong>Path-guard</strong> <code>is_within_base()</code> should be promoted to <code>core/paths.py</code> and unit-tested against symlink attacks.</li>
-<li><strong>Scoring profiles</strong> are YAML-serializable — consider moving to <code>agentic-v2-eval/rubrics/</code>.</li>
+<li><strong>Event hub</strong> in <code>websocket.py</code> could be generalized into a shared <code>core</code> module for non-HTTP pub/sub.</li>
+<li><strong>Path-guard</strong> <code>is_within_base()</code> already lives in <code>agentic_v2/utils/path_safety.py</code>; keep unit-testing it against symlink attacks.</li>
+<li><strong>Scoring profiles</strong> are YAML-serializable — consider moving them next to the rubric YAML under <code>agentic-v2-eval/src/agentic_v2_eval/rubrics/</code>.</li>
 </ul>
 
 
@@ -4995,7 +5098,7 @@ and <a href="../operations/security-hardening/">security hardening guide</a>.</p
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 18, 2026 16:53:41 UTC">October 18, 2026</span>
   </span>
 
     

@@ -553,6 +553,8 @@
       
         
       
+        
+      
     
     
     
@@ -678,6 +680,34 @@
     
   
     First workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/adapter-recipes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integration recipes
   
 
     
@@ -2497,10 +2527,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#retrieval-augmented-generation" class="md-nav__link">
+  <a href="#retrieval" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Retrieval-augmented generation
+        Retrieval
       
     </span>
   </a>
@@ -3018,10 +3048,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#retrieval-augmented-generation" class="md-nav__link">
+  <a href="#retrieval" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Retrieval-augmented generation
+        Retrieval
       
     </span>
   </a>
@@ -3178,26 +3208,12 @@ An empty allowlist disables tools for that step.</p>
 <p><strong>Tool approval</strong></p>
 <p>A policy decision applied before a tool with side effects runs. Approval
 behavior depends on the configured policy and provider.</p>
-<h2 id="retrieval-augmented-generation">Retrieval-augmented generation<a class="headerlink" href="#retrieval-augmented-generation" title="Permanent link">&para;</a></h2>
-<p><strong>RAG</strong></p>
-<p>Retrieval-augmented generation. The application searches indexed content and
-adds selected passages to a model request.</p>
-<p><strong>Chunk</strong></p>
-<p>A section of a loaded document. Chunks include text, an identifier, position,
-and metadata.</p>
-<p><strong>Embedding</strong></p>
-<p>A numeric vector produced from text for similarity search. Provider embeddings
-can support semantic search.</p>
-<p><strong>BM25</strong></p>
-<p>A keyword-ranking algorithm used for sparse lexical search.</p>
-<p><strong>Hybrid retrieval</strong></p>
-<p>Combining vector search and BM25 results, typically merged with reciprocal
-rank fusion.</p>
-<p><strong>Reciprocal rank fusion (RRF)</strong></p>
-<p>A method for merging ranked result lists using each result's position rather
-than trying to compare provider-specific scores directly.</p>
-<p><strong>Vector store</strong></p>
-<p>A component that stores vectors and finds nearby vectors.</p>
+<h2 id="retrieval">Retrieval<a class="headerlink" href="#retrieval" title="Permanent link">&para;</a></h2>
+<p>ARP ships no retrieval (RAG) package or command. The <code>agentic_v2.rag</code> package
+and its terms (chunking, embeddings, BM25, hybrid retrieval, vector stores) were
+removed by <a href="../adr/ADR-057-remove-rag-package/">ADR-057</a>; the standalone
+<a href="https://github.com/tafreeman/groundkit">groundkit</a> repository is the
+successor.</p>
 <h2 id="evaluation">Evaluation<a class="headerlink" href="#evaluation" title="Permanent link">&para;</a></h2>
 <p><strong>Criterion</strong></p>
 <p>One named part of a rubric, with a weight and scoring guidance.</p>
@@ -3253,7 +3269,7 @@ recommended provider-free workflow smoke test.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 31, 2026 12:55:56 UTC">August 31, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 18, 2026 16:53:41 UTC">October 18, 2026</span>
   </span>
 
     

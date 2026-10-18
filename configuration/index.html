@@ -553,6 +553,8 @@
       
         
       
+        
+      
     
     
     
@@ -678,6 +680,34 @@
     
   
     First workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/adapter-recipes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integration recipes
   
 
     
@@ -3469,8 +3499,12 @@ unless a section below says otherwise.</p>
 <td>Read when <code>AuthThrottle</code> is created</td>
 </tr>
 <tr>
-<td><code>AGENTIC_RATE_LIMIT_*</code></td>
-<td>Read when rate limiting is configured</td>
+<td><code>AGENTIC_RATE_LIMIT_DEFAULT</code>, <code>AGENTIC_RATE_LIMIT_DISABLED</code></td>
+<td>Read once when the rate-limit module is imported</td>
+</tr>
+<tr>
+<td><code>AGENTIC_DISABLE_RATE_LIMITING</code></td>
+<td>Checked at server startup</td>
 </tr>
 <tr>
 <td><code>AGENTIC_CORS_ORIGINS</code></td>
@@ -3514,12 +3548,12 @@ selected adapter, installed extras, endpoint access, and configured model IDs.</
 <td><code>GEMINI_API_KEY</code> or <code>GOOGLE_API_KEY</code></td>
 </tr>
 <tr>
-<td>GitHub Models</td>
-<td><code>GITHUB_TOKEN</code> or <code>GH_TOKEN</code></td>
+<td>GitHub Models (retired upstream 2026-07-30)</td>
+<td><code>GITHUB_TOKEN</code> or <code>GH_TOKEN</code>; no tier chain routes to <code>gh:</code> any more, and an explicit <code>gh:</code> model id fails at the network (<a href="../adr/ADR-016-github-token-as-default-e2e-llm/">ADR-016</a>)</td>
 </tr>
 <tr>
 <td>NVIDIA NIM</td>
-<td><code>NVIDIA_API_KEY</code>; optional <code>NVIDIA_BASE_URL</code> for self-hosted NIM</td>
+<td><code>NVIDIA_API_KEY</code>; optional <code>NVIDIA_BASE_URL</code> for self-hosted NIM; <code>NVIDIA_DISABLE_THINKING=0</code> turns off the thinking-suppression request flags. The probe and inventory tools in <code>tools/llm/</code> read <code>NVIDIA_NIM_API_KEY</code> and <code>NVIDIA_NIM_HOST</code> instead</td>
 </tr>
 <tr>
 <td>OpenRouter</td>
@@ -3535,11 +3569,11 @@ selected adapter, installed extras, endpoint access, and configured model IDs.</
 </tr>
 <tr>
 <td>Azure OpenAI</td>
-<td><code>AZURE_OPENAI_API_KEY</code> and <code>AZURE_OPENAI_ENDPOINT</code>, or indexed pairs such as <code>_0</code>, <code>_1</code>, and matching deployment values</td>
+<td><code>AZURE_OPENAI_API_KEY</code> and <code>AZURE_OPENAI_ENDPOINT</code>, or indexed pairs such as <code>_0</code>, <code>_1</code>, and matching deployment values; optional <code>AZURE_OPENAI_API_VERSION</code> (default <code>2024-10-21</code>)</td>
 </tr>
 <tr>
 <td>Azure AI Foundry</td>
-<td><code>AZURE_FOUNDRY_API_KEY</code> and the endpoint selected by the Foundry adapter</td>
+<td><code>AZURE_FOUNDRY_API_KEY</code> and <code>AZURE_FOUNDRY_ENDPOINT</code> (indexed <code>AZURE_FOUNDRY_ENDPOINT_&lt;n&gt;</code> entries are read by the inventory tools)</td>
 </tr>
 <tr>
 <td>Ollama runtime</td>
@@ -3562,11 +3596,15 @@ you use both surfaces.</p>
 provider account or official documentation instead of relying on a copied
 quota table.</p>
 <h3 id="model-overrides">Model overrides<a class="headerlink" href="#model-overrides" title="Permanent link">&para;</a></h3>
-<p><code>AGENTIC_MODEL_TIER_&lt;N&gt;</code> forces a model ID for a capability tier:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nv">AGENTIC_MODEL_TIER_2</span><span class="o">=</span>openai/gpt-4o-mini
+<p><code>AGENTIC_MODEL_TIER_&lt;N&gt;</code> forces a model ID for a capability tier. LangChain-path
+ids are provider-prefixed with a colon:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nv">AGENTIC_MODEL_TIER_2</span><span class="o">=</span>gemini:gemini-2.5-flash
 </span></code></pre></div>
-<p>Use the model ID format expected by the selected adapter. An override does not
-install a provider package or supply its credential.</p>
+<p>An override does not install a provider package or supply its credential.
+<code>AGENTIC_JUDGE_MODEL</code> pins the model the server uses for evaluation-judge scoring;
+when unset the judge uses the run's model-pack <code>judge_model</code>, then
+<code>AGENTIC_MODEL_TIER_2</code>, then <code>AGENTIC_MODEL_TIER_1</code>. <code>AGENTIC_UI_SETTINGS_PATH</code> relocates the JSON store the
+dashboard writes provider endpoints and tier reranks to.</p>
 <p><code>AGENTIC_REGISTRY_STRICT=1</code> makes quarantined model-registry entries fatal
 instead of warnings. <code>AGENTIC_STRICT_MODEL_VERIFY=1</code> enables strict local model
 hash verification. <code>AGENTIC_TRUSTED_MODEL_HASHES</code> may point to an operator
@@ -3577,8 +3615,13 @@ candidate list rather than reordering it -- a pinned <code>model_override</code>
 filtered too. Default <code>paid</code> (unset) filters nothing, matching prior
 behavior. If every candidate is filtered out, the request fails with
 <code>CostLaneCeilingExceededError</code> naming the ceiling rather than silently
-returning nothing or falling back to an unfiltered chain. See
-<a href="../adr/ADR-059-model-cost-lane-ceiling/">ADR-059</a>.</p>
+returning nothing or falling back to an unfiltered chain. That refusal is
+the behavior of <code>ModelRouter</code> and the LangChain model builder;
+<code>SmartModelRouter</code> instead excludes over-ceiling models within a tier,
+degrades to another tier, and records it on <code>last_selection</code> (it raises only
+when every tier is exhausted). See
+<a href="../adr/ADR-059-model-cost-lane-ceiling/">ADR-059</a> and the
+<a href="../getting-started/adapter-recipes/">integration recipes</a>.</p>
 <h2 id="execution-and-model-call-settings">Execution and model-call settings<a class="headerlink" href="#execution-and-model-call-settings" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -3592,7 +3635,7 @@ returning nothing or falling back to an unfiltered chain. See
 <tr>
 <td><code>AGENTIC_DEFAULT_ADAPTER</code></td>
 <td><code>langchain</code></td>
-<td>Adapter the server validates and uses by default; set <code>native</code> to avoid the LangChain dependency</td>
+<td>Adapter the server validates at startup (and refuses to start without, with an install hint); it does <strong>not</strong> change the per-request default, which stays <code>langchain</code> unless the request sets <code>adapter</code></td>
 </tr>
 <tr>
 <td><code>AGENTIC_NO_LLM</code></td>
@@ -3702,8 +3745,11 @@ sanitization enabled. It is skipped under <code>AGENTIC_NO_LLM</code>.</p>
 </span></code></pre></div>
 <p>When the variable is unset, protected API routes are open. Set authentication
 before exposing the server.</p>
-<p>Public paths include health, OpenAPI, Swagger UI, ReDoc, and metrics. Static UI
-files are not protected by this middleware.</p>
+<p>Within <code>/api/</code>, only <code>/api/health</code> is public. OpenAPI (<code>/openapi.json</code>), Swagger
+UI (<code>/docs</code>), ReDoc (<code>/redoc</code>) and <code>/metrics</code> are public too, and so is every
+other path outside <code>/api/</code> (the static UI and <code>/ws/*</code>): the HTTP key middleware
+and the rate limiter both skip them. WebSocket connections are checked by the
+WebSocket handler itself, not by this middleware.</p>
 <h3 id="oidc">OIDC<a class="headerlink" href="#oidc" title="Permanent link">&para;</a></h3>
 <p>OIDC validates a bearer JWT and preserves the static API key as a fallback.</p>
 <table>
@@ -3782,7 +3828,12 @@ JWKS URL. The <code>server</code> extra supplies the JWT dependency.</p>
 <tr>
 <td><code>AGENTIC_RATE_LIMIT_DISABLED</code></td>
 <td>unset</td>
-<td>Exact <code>1</code> disables the rate limiter</td>
+<td>Exact <code>1</code> disables the rate limiter (intended for tests)</td>
+</tr>
+<tr>
+<td><code>AGENTIC_DISABLE_RATE_LIMITING</code></td>
+<td>unset</td>
+<td>Exact <code>1</code> lets the server start without <code>slowapi</code> installed and therefore with no rate limiting; without it, a missing <code>slowapi</code> aborts startup</td>
 </tr>
 <tr>
 <td><code>AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS</code></td>
@@ -3807,8 +3858,8 @@ development. Set an explicit deployment origin at the edge and in this
 variable.</p>
 <p>Rate-limit and auth-throttle state are process-local. Multiple replicas multiply
 the effective allowance unless an external gateway enforces a shared limit.</p>
-<p>Public rate-limit exemptions are <code>/api/health</code>, <code>/docs</code>, <code>/openapi.json</code>, and
-<code>/redoc</code>. <code>/metrics</code> is also public when enabled.</p>
+<p>The rate limiter exempts the same public paths as authentication: <code>/api/health</code>,
+<code>/docs</code>, <code>/openapi.json</code>, <code>/redoc</code>, <code>/metrics</code>, and everything outside <code>/api/</code>.</p>
 <h2 id="file-shell-http-and-mcp-boundaries">File, shell, HTTP, and MCP boundaries<a class="headerlink" href="#file-shell-http-and-mcp-boundaries" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -4068,6 +4119,11 @@ cluster-wide.</p>
 <td>unset</td>
 <td>OTLP/HTTP endpoint for browser spans</td>
 </tr>
+<tr>
+<td><code>VITE_AGENTIC_ENABLE_WORKFLOW_BUILDER</code> / <code>AGENTIC_ENABLE_WORKFLOW_BUILDER</code></td>
+<td>on in <code>vite</code> dev, off in builds</td>
+<td>Compile-time flag for the <code>/workflows/:name/edit</code> editor route; a production build needs it set to <code>1</code> (dev can opt out with <code>0</code>)</td>
+</tr>
 </tbody>
 </table>
 <p>Restart Vite after changing these values.</p>
@@ -4080,8 +4136,10 @@ tool-calling, or evaluation output meaningful.</p>
 <h3 id="native-engine-without-langgraph">Native engine without LangGraph<a class="headerlink" href="#native-engine-without-langgraph" title="Permanent link">&para;</a></h3>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nv">AGENTIC_DEFAULT_ADAPTER</span><span class="o">=</span>native<span class="w"> </span>agentic<span class="w"> </span>serve<span class="w"> </span>--port<span class="w"> </span><span class="m">8010</span><span class="w"> </span>--no-open
 </span></code></pre></div>
-<p>The <code>agentic validate</code> command still performs LangGraph compilation and needs
-the <code>langchain</code> extra.</p>
+<p>This only lets the server start without the <code>langchain</code> extra. A <code>POST /api/run</code>
+request still defaults to <code>adapter: "langchain"</code> and fails unless the client
+sends <code>"adapter": "native"</code>. The <code>agentic validate</code> command still performs
+LangGraph compilation and needs the <code>langchain</code> extra.</p>
 <h3 id="exposed-service-baseline">Exposed service baseline<a class="headerlink" href="#exposed-service-baseline" title="Permanent link">&para;</a></h3>
 <p>At minimum:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nv">AGENTIC_API_KEY</span><span class="o">=</span>&lt;random-secret&gt;
@@ -4124,7 +4182,7 @@ management outside the process. See
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 11, 2026 01:59:45 UTC">October 11, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 18, 2026 16:53:41 UTC">October 18, 2026</span>
   </span>
 
     

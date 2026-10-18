@@ -553,6 +553,8 @@
       
         
       
+        
+      
     
     
     
@@ -678,6 +680,34 @@
     
   
     First workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/adapter-recipes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integration recipes
   
 
     
@@ -3433,7 +3463,7 @@
 <blockquote>
 <p><strong>Audience:</strong> Operators, auditors, and contributors reading failing CI or trying to understand why something "works but not quite."
 <strong>Outcome:</strong> After reading, you know what is intentionally unfinished and what the next sprint is expected to address.
-<strong>Last verified:</strong> 2026-10-17</p>
+<strong>Last verified:</strong> 2026-10-18</p>
 </blockquote>
 <p>This page records limitations confirmed in the current checkout. Some describe
 accepted design boundaries; others describe work that is not complete. Check
@@ -3461,10 +3491,10 @@ payloads remain manually maintained.</p>
 <li><strong>Upstream fix:</strong> Future sprint — extend gate coverage to remaining endpoint payloads.</li>
 </ul>
 <h3 id="12-the-80-coverage-gate-scopes-out-optional-providerplugin-surfaces">1.2 The 80% coverage gate scopes out optional provider/plugin surfaces<a class="headerlink" href="#12-the-80-coverage-gate-scopes-out-optional-providerplugin-surfaces" title="Permanent link">&para;</a></h3>
-<p>The <code>--cov-fail-under=80</code> gate measures the core runtime only. By design, <code>[tool.coverage.run] omit</code> in <code>agentic-workflows-v2/pyproject.toml</code> excludes optional provider and plugin surfaces from the gated number — notably the <strong>LangChain adapter</strong> (<code>agentic_v2/langchain/*</code>), the <strong>model backends/router</strong> (<code>agentic_v2/models/*</code>), MCP integrations, and CLI/prompt scaffolding.</p>
+<p>The 80% gate (<code>fail_under = 80</code> in <code>[tool.coverage.report]</code>, enforced by a <code>coverage report --fail-under=80</code> step) measures the core runtime only. By design, <code>[tool.coverage.run] omit</code> in <code>agentic-workflows-v2/pyproject.toml</code> excludes specific optional provider and plugin files from the gated number — notably three <strong>LangChain adapter</strong> modules (<code>agentic_v2/langchain/agents.py</code>, <code>model_builders.py</code>, <code>tools.py</code>), the per-provider <strong>model backends and client glue</strong> (<code>agentic_v2/models/backends_*.py</code>, <code>client.py</code>, <code>llm.py</code>, the ExecutionKit bridge modules), MCP integrations (<code>agentic_v2/integrations/mcp/*</code>), <code>workflows/runner.py</code>, the concrete agent implementations, and CLI/prompt scaffolding. Other modules in those packages, including the smart router, are inside the gated figure.</p>
 <ul>
 <li><strong>Why:</strong> These surfaces require external services or extras installs and are exercised by their own targeted suites rather than the core unit run, so folding them into the gated percentage would make the number reflect provider availability rather than core-code health.</li>
-<li><strong>Surface:</strong> The "coverage gate 80%+" badge therefore reflects core coverage, not whole-repo coverage. The LangChain adapter and model router are tested, but not inside the gated figure — explicitly, <code>agentic_v2/langchain/tools.py</code> (the LangChain adapter's own approval-gate re-implementation, see §4.3) and <code>agentic_v2/models/backends_base.py</code> / <code>backends_cloud.py</code> / <code>backends_local.py</code> (per-provider format translation) are listed individually by name in the coverage <code>omit</code> array (not merely swept in by a glob) and covered only by their own targeted suites, not the gated 80% figure.</li>
+<li><strong>Surface:</strong> The "coverage gate 80%+" badge therefore reflects core coverage, not whole-repo coverage. The omitted files are tested, but not inside the gated figure — explicitly, <code>agentic_v2/langchain/tools.py</code> (the LangChain adapter's own approval-gate re-implementation, see §4.3) and <code>agentic_v2/models/backends_base.py</code> / <code>backends_cloud.py</code> / <code>backends_local.py</code> (per-provider format translation) are listed individually by name in the coverage <code>omit</code> array and covered only by their own targeted suites.</li>
 <li><strong>Status:</strong> Intentional. Documented here so the badge is not read as a whole-repo claim.</li>
 <li><strong>Visibility:</strong> CI now publishes a separate ungated <code>whole-repo-coverage</code> artifact across the runtime, eval package, and shared tools using the same fast test selection without the core-only coverage omit list.</li>
 <li><strong>Upstream fix:</strong> Future sprint — decide whether any optional surface should move from visibility-only reporting into a blocking gate.</li>
@@ -3484,7 +3514,7 @@ payloads remain manually maintained.</p>
 <li><strong>Risk:</strong> Confusing first-run failure if a contributor installed minimal extras.</li>
 <li><strong>Workaround:</strong> Install with <code>langchain</code> extras (included in <code>just setup</code>), or pass <code>--adapter native</code> explicitly.</li>
 <li><strong>Status:</strong> The <em>late</em> error has been resolved by S1-6: <code>AdapterRegistry.validate_selected()</code> now runs at FastAPI lifespan startup and raises <code>ConfigurationError</code> with an install hint before any request is processed. The optional-extras design is still correct; only the error timing improved. See <a href="../adr/ADR-020-langchain-adapter-eager-validation/">ADR-020</a>.</li>
-<li><strong>Upstream fix:</strong> None further needed for the server path. CLI <code>agentic run --adapter langchain</code> surfaces the error at adapter resolution time (outside the FastAPI lifespan); may benefit from an explicit pre-flight check in a future sprint.</li>
+<li><strong>Upstream fix:</strong> None further needed. The CLI path also calls <code>validate_selected()</code> (in <code>agentic_v2/adapters/workflows.py</code>, used by <code>agentic run</code> and <code>agentic compare</code>), so <code>agentic run --adapter langchain</code> fails with the same install hint before any step runs.</li>
 </ul>
 <hr />
 <h2 id="3-ci-and-environment-dependencies">3. CI and environment dependencies<a class="headerlink" href="#3-ci-and-environment-dependencies" title="Permanent link">&para;</a></h2>
@@ -3544,13 +3574,13 @@ configured.</p>
 <li><strong>Upstream fix:</strong> Future sprint — shared Redis store for <code>AuthThrottle</code>. See <a href="../adr/ADR-018-api-rate-limiting-and-auth-throttle/">ADR-018</a>.</li>
 </ul>
 <h3 id="43-human-approval-gates-are-programmatic-only-no-ui-pauseresume-yet">4.3 Human approval gates are programmatic only (no UI pause/resume yet)<a class="headerlink" href="#43-human-approval-gates-are-programmatic-only-no-ui-pauseresume-yet" title="Permanent link">&para;</a></h3>
-<p>P1 #12 added real, tested human-approval gates on the tool-execution hot path: an injectable <code>ApprovalProvider</code> (<code>agentic_v2/governance/approval.py</code>) is consulted at <strong>both</strong> dispatch points before any high-impact tool runs, and the gate <strong>fails closed</strong> (a gated tool with no provider registered is denied, never executed). High-impact builtins (<code>shell</code>/<code>shell_exec</code>/<code>execute_python</code>, <code>file_write</code>/<code>file_delete</code>/<code>file_move</code>/<code>file_copy</code>/<code>directory_create</code>, <code>http</code>/<code>http_post</code>) are gated by default.</p>
+<p>P1 #12 added real, tested human-approval gates on the tool-execution hot path: an injectable <code>ApprovalProvider</code> (<code>agentic_v2/governance/approval.py</code>) is consulted at <strong>both</strong> dispatch points before any high-impact tool runs, and the gate <strong>fails closed</strong> (a gated tool with no provider registered is denied, never executed). High-impact builtins (<code>shell</code>/<code>shell_exec</code>/<code>execute_python</code>, <code>file_write</code>/<code>file_delete</code>/<code>file_move</code>/<code>file_copy</code>/<code>directory_create</code>, <code>http</code>/<code>http_post</code>, <code>build_app</code>) are gated by default.</p>
 <p>What is <strong>not</strong> built yet is the full UI-driven <em>pause-and-resume</em> flow — suspending a run, surfacing an approval prompt to a human operator in the web UI, and resuming on their click.</p>
 <ul>
 <li><strong>Surface:</strong> <code>agentic_v2/governance/approval.py</code> (gate + providers), <code>agentic_v2/engine/tool_execution.py</code> and <code>agentic_v2/agents/base.py</code> (dispatch-point wiring), <code>agentic_v2/contracts/events.py</code> (<code>approval_required</code> / <code>approval_decision</code> events).</li>
 <li><strong>Current behavior:</strong> approval is decided synchronously by the registered provider. The agent loop emits the contract events on its event bus; the engine tool loop surfaces approval request/decision via the logger (WARNING for request, INFO for decision) and in the serialized result metadata rather than streaming the new events — the engine dispatch point has no clean event channel without threading an emitter through the tool loop.</li>
 <li><strong>Risk:</strong> Operators must wire a provider programmatically (<code>set_approval_provider(...)</code>) at process start; there is no web-UI approval queue. Gated tools fail closed until a provider is registered, which is the intended safe default but will block runs that expected those tools to execute unattended.</li>
-<li><strong>Workaround:</strong> Register an <code>ApprovalProvider</code> at startup (<code>AutoApproveProvider</code> for trusted environments, <code>CallbackApprovalProvider</code>/<code>PolicyApprovalProvider</code> for selective approval), or disable the requirement per tool/globally. See <a href="../operations/security-hardening/">security-hardening.md §11</a>.</li>
+<li><strong>Workaround:</strong> Register an <code>ApprovalProvider</code> at startup (<code>AutoApproveProvider</code> for trusted environments, <code>CallbackApprovalProvider</code>/<code>PolicyApprovalProvider</code> for selective approval), or disable the requirement per tool/globally. See <a href="../operations/security-hardening/#approval-gates">Approval gates in security-hardening.md</a>.</li>
 <li><strong>Status:</strong> Programmatic gate shipped and tested (<code>tests/test_approval_gates.py</code>). UI pause/resume is an explicit follow-on; the wire events exist so the server/UI can build on them.</li>
 <li><strong>Upstream fix:</strong> Future sprint — server-side approval queue + WebSocket-driven pause/resume in the UI, streaming the <code>approval_required</code>/<code>approval_decision</code> events from the engine path.</li>
 </ul>
@@ -3561,7 +3591,7 @@ configured.</p>
 <li><strong>Residual risk:</strong> Pinning relies on the resolver returning the same answer the guard validated, and OS-level resolver caching is outside the application's control. A hostile authoritative DNS server with a near-zero TTL is a real threat model that application-layer checks alone cannot fully defeat. The guard is <strong>defense-in-depth</strong>, not a complete boundary.</li>
 <li><strong>Risk:</strong> In an environment where the server has network reachability to internal services, an attacker controlling DNS for a hostname a workflow fetches could, in principle, steer a connection to a private/metadata address on any code path not covered by pinning.</li>
 <li><strong>Workaround:</strong> For hostile-DNS threat models, add a <strong>network-layer egress control</strong> — an egress firewall, service-mesh authorization policy, or Kubernetes <code>NetworkPolicy</code> — restricting which addresses the server process may reach. Keep <code>AGENTIC_BLOCK_PRIVATE_IPS</code> on (the default).</li>
-<li><strong>Status:</strong> Accepted. Application-layer guard + connection pinning shipped and tested (<code>tests/test_ssrf_guard.py</code>); network-layer egress control is an operator responsibility documented in <a href="../operations/security-hardening/">security-hardening.md §10</a>.</li>
+<li><strong>Status:</strong> Accepted. Application-layer guard + connection pinning shipped and tested (<code>tests/test_ssrf_guard.py</code>); network-layer egress control is an operator responsibility documented under <a href="../operations/security-hardening/#http-tool-and-ssrf-controls">HTTP tool and SSRF controls in security-hardening.md</a>.</li>
 <li><strong>Upstream fix:</strong> None planned at the application layer — this is an inherent limitation of resolving names in userspace. Operators must apply network controls for hostile-DNS threat models.</li>
 </ul>
 <h3 id="45-x-tenant-id-is-client-supplied-and-spoofable-in-the-default-configuration">4.5 <code>X-Tenant-ID</code> is client-supplied and spoofable in the default configuration<a class="headerlink" href="#45-x-tenant-id-is-client-supplied-and-spoofable-in-the-default-configuration" title="Permanent link">&para;</a></h3>
@@ -3581,7 +3611,7 @@ migration boundary, and historical defects remain recorded in
 <hr />
 <h2 id="5-documentation-and-process">5. Documentation and process<a class="headerlink" href="#5-documentation-and-process" title="Permanent link">&para;</a></h2>
 <h3 id="51-implementation-plans-for-epics-3-5-and-6-are-retrospective">5.1 Implementation plans for Epics 3, 5, and 6 are retrospective<a class="headerlink" href="#51-implementation-plans-for-epics-3-5-and-6-are-retrospective" title="Permanent link">&para;</a></h3>
-<p>Epics 1 and 2 have proper pre-implementation plan docs. Epics 3, 5, and 6 shipped without prospective plan docs — decision history for those epics is reconstructed from commit messages and ADRs rather than dedicated planning artifacts.</p>
+<p>Epics 1 and 2 had pre-implementation plans, but those internal planning artifacts are not carried in this repository (see <a href="../ROADMAP/">ROADMAP.md</a>). Epics 3, 5, and 6 shipped without prospective plan docs. Decision history for all of them is reconstructed from the changelog and ADRs rather than dedicated planning artifacts.</p>
 <ul>
 <li><strong>Risk:</strong> Decision rationale may be under-documented compared to prospective plans.</li>
 <li><strong>Mitigation:</strong> Load-bearing decisions are captured in ADRs (<code>docs/adr/</code>).</li>
@@ -3626,7 +3656,7 @@ exist.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 17, 2026 14:19:32 UTC">October 17, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 18, 2026 16:53:41 UTC">October 18, 2026</span>
   </span>
 
     

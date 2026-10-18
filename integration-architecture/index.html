@@ -553,6 +553,8 @@
       
         
       
+        
+      
     
     
     
@@ -678,6 +680,34 @@
     
   
     First workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/adapter-recipes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integration recipes
   
 
     
@@ -3419,7 +3449,7 @@
 </span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    ▼
 </span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>agentic-workflows-v2/ui
 </span></code></pre></div>
-<p>Dependency direction is always downward or lateral. <code>agentic-workflows-v2</code> does not import from <code>agentic-v2-eval</code>. The eval package does not import from the runtime. The UI has no Python imports; it communicates only over HTTP and WebSocket.</p>
+<p>Dependency direction is always downward or lateral. <code>agentic-workflows-v2</code> has no runtime import of <code>agentic-v2-eval</code>: the one source-level reference is <code>agentic_v2/models/llm.py</code>, an unreferenced adapter (omitted from coverage) that imports <code>agentic_v2_eval.interfaces.LLMClientProtocol</code>, and <code>devex/workspace_test_runner.py</code> mentions the package by name. The eval package does not import from the runtime. The UI has no Python imports; it communicates only over HTTP and WebSocket.</p>
 <hr />
 <h2 id="runtime-ui">Runtime ↔ UI<a class="headerlink" href="#runtime-ui" title="Permanent link">&para;</a></h2>
 <h3 id="transport-layer">Transport layer<a class="headerlink" href="#transport-layer" title="Permanent link">&para;</a></h3>
@@ -3472,7 +3502,7 @@
 </ul>
 <p>This means a single <code>uvicorn</code> process can serve both the API and the UI, with no separate web server required.</p>
 <h3 id="rest-api-endpoint-reference">REST API endpoint reference<a class="headerlink" href="#rest-api-endpoint-reference" title="Permanent link">&para;</a></h3>
-<p>All endpoints are prefixed with <code>/api/</code>. Authentication is controlled by <code>AGENTIC_API_KEY</code> (see <a href="../deployment-guide/">Deployment Guide</a>).</p>
+<p>All endpoints are prefixed with <code>/api/</code>. Authentication is controlled by <code>AGENTIC_API_KEY</code> (see <a href="../deployment-guide/">Deployment Guide</a>). This table is the integration-relevant subset; the full route list, including chat, settings, model finder, catalog and evaluation routes, is in <a href="../api-contracts-runtime/">Runtime API contracts</a>.</p>
 <table>
 <thead>
 <tr>
@@ -3595,12 +3625,12 @@
 <p><strong>Import location:</strong> <code>agentic_v2/models/llm.py</code></p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.llm_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">LLMClient</span> <span class="k">as</span> <span class="n">LegacyClient</span>
 </span></code></pre></div>
-<p><code>LegacyClient</code> is the alias used inside the runtime for the shared <code>LLMClient</code>. The runtime's <code>ModelRouter</code> and <code>SmartRouter</code> use this as the underlying async completion client. Provider credentials are injected at runtime via the <code>SecretProvider</code> abstraction in <code>models/secrets.py</code>.</p>
+<p><code>LegacyClient</code> is the alias this module uses for the shared <code>LLMClient</code>. Nothing else in the runtime imports <code>models/llm.py</code> today, so neither <code>ModelRouter</code> nor <code>SmartModelRouter</code> routes through it; their provider backends are the runtime's own (<code>models/backends_*.py</code>). Runtime provider credentials are resolved through the <code>SecretProvider</code> abstraction in <code>models/secrets.py</code>.</p>
 <h3 id="langgraph-model-builders">LangGraph model builders<a class="headerlink" href="#langgraph-model-builders" title="Permanent link">&para;</a></h3>
 <p><strong>Import location:</strong> <code>agentic_v2/langchain/model_builders.py</code></p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.llm_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">LLMClient</span>
 </span></code></pre></div>
-<p>The LangGraph engine's model builders import the shared <code>LLMClient</code> lazily (inside <code>_import_repo_llm_client()</code>) to back the local ONNX provider path. The import is deferred and error-guarded, so the runtime works without the shared package installed as long as no local ONNX model is requested.</p>
+<p>The LangGraph engine's model builders import the shared <code>LLMClient</code> lazily to back the legacy <code>local:</code> provider path. The import is deferred and error-guarded, so the runtime works without the shared package importable as long as no <code>local:</code> model is requested. (<code>onnx:&lt;folder&gt;</code> ids use the runtime's own <code>OnnxBackend</code> instead.)</p>
 <h3 id="benchmarks-and-datasets">Benchmarks and datasets<a class="headerlink" href="#benchmarks-and-datasets" title="Permanent link">&para;</a></h3>
 <p><strong>Import location:</strong> <code>agentic_v2/server/datasets.py</code></p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.agents.benchmarks.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">BENCHMARK_DEFINITIONS</span>
@@ -3616,7 +3646,7 @@
 </span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.llm_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">LLMClient</span>
 </span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="k">return</span> <span class="n">LLMClient</span>
 </span></code></pre></div>
-<p>The LLM evaluator (<code>evaluators/llm.py</code>) calls <code>get_llm_client()</code> at evaluation time. If <code>agentic-tools</code> is not installed, this raises <code>ImportError</code> with a clear message directing the user to install the <code>[llm]</code> extra.</p>
+<p>The LLM evaluator (<code>evaluators/llm.py</code>) obtains the client from this adapter at evaluation time. <code>agentic-tools</code> is a hard dependency of the package (<code>dependencies = ["pyyaml", "agentic-tools"]</code>); if the import fails anyway, the adapter logs a warning and the evaluator needs an injected client.</p>
 <h3 id="benchmarks-lazy-import">Benchmarks (lazy import)<a class="headerlink" href="#benchmarks-lazy-import" title="Permanent link">&para;</a></h3>
 <p><strong>Import location:</strong> <code>agentic_v2_eval/datasets.py</code></p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">load_benchmark_datasets</span><span class="p">():</span>
@@ -3626,15 +3656,16 @@
 <p>The eval package can reference the same benchmark datasets as the runtime server, enabling apples-to-apples comparison of model outputs against ground truth.</p>
 <hr />
 <h2 id="eval-runtime">Eval ↔ Runtime<a class="headerlink" href="#eval-runtime" title="Permanent link">&para;</a></h2>
-<p>The evaluation package and the runtime package have <strong>no direct Python import relationship</strong>. They are integrated at the data level: the runtime writes run results as JSON files (default location: <code>runs/</code> in the project root), and the eval framework reads those files as input.</p>
+<p>The evaluation package and the runtime package have <strong>no direct Python import relationship</strong>. They are integrated at the data level: the runtime writes run results as JSON files (default location: <code>runs/</code> in the project root). The eval CLI does not read those run files directly: <code>agentic-v2-eval evaluate</code> takes a JSON list of per-criterion score objects (see <a href="../architecture-eval/">Evaluation architecture</a>), so a run file has to be converted into that shape first.</p>
 <p>This separation is intentional. It allows the eval framework to be used for offline analysis, CI batch scoring, or evaluation of outputs from any source, not just the runtime.</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>[Runtime] → writes → runs/{run_id}.json
 </span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>                              │
 </span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>                              ▼
-</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>[Eval CLI] → reads → agentic_v2_eval evaluate runs/{run_id}.json
-</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>                              │
-</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>                              ▼
-</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>                    reports/{run_id}.{json|md|html}
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>[Converter] → reads runs/{run_id}.json → writes results.json (list of score dicts)
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>[Eval CLI] → reads → agentic-v2-eval evaluate results.json
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>                              │
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>                              ▼
+</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>                    reports/{run_id}.{json|md|html}
 </span></code></pre></div>
 <p>The runtime's in-server scoring lives in <code>agentic_v2/server/evaluation.py</code> (orchestration) and the transport-free <code>agentic_v2/scoring/</code> package (<code>evaluation_scoring.py</code>, <code>judge.py</code>, and friends — extracted per ADR-032). It implements scoring logic independently from the eval package and is used when the <code>POST /api/run</code> request includes evaluation parameters — it does not depend on <code>agentic-v2-eval</code>.</p>
 <hr />
@@ -3654,7 +3685,7 @@
 <td><code>pydantic</code></td>
 <td><code>&gt;=2.0,&lt;3</code></td>
 <td>(via <code>agentic-tools</code>)</td>
-<td><code>&gt;=2.13.4</code></td>
+<td><code>&gt;=2.14.0</code></td>
 </tr>
 <tr>
 <td><code>pyyaml</code></td>
@@ -3664,48 +3695,49 @@
 </tr>
 <tr>
 <td><code>aiohttp</code></td>
-<td><code>&gt;=3.9,&lt;4</code></td>
+<td><code>&gt;=3.14.3,&lt;4</code></td>
 <td>No</td>
-<td><code>&gt;=3.14.1</code></td>
+<td><code>&gt;=3.14.4</code></td>
 </tr>
 <tr>
 <td><code>openai</code></td>
 <td>No (only <code>langchain-openai</code> via the <code>[langchain]</code> extra)</td>
 <td>No</td>
-<td><code>&gt;=2.41.1,&lt;3</code></td>
+<td><code>&gt;=3.27.0,&lt;4</code></td>
 </tr>
 <tr>
 <td><code>anthropic</code></td>
-<td><code>&gt;=0.40,&lt;1</code> (optional <code>[claude]</code> extra)</td>
+<td><code>&gt;=0.40,&lt;2</code> (optional <code>[claude]</code> extra)</td>
 <td>No</td>
-<td><code>&gt;=0.109.1,&lt;1</code></td>
+<td><code>&gt;=1.13.0,&lt;2</code></td>
 </tr>
 <tr>
 <td><code>numpy</code></td>
 <td>No</td>
 <td>No</td>
-<td><code>&gt;=1.26.4,&lt;3</code></td>
+<td><code>&gt;=2.4.6,&lt;3</code></td>
 </tr>
 </tbody>
 </table>
+<p>The ranges mirror each <code>pyproject.toml</code>; those files and <code>uv.lock</code> are the source of truth.</p>
 <p>All packages use Pydantic v2 APIs exclusively (<code>model_dump()</code>, <code>model_validate()</code>, <code>model_fields</code>). The legacy Pydantic v1 <code>.dict()</code> and <code>.parse_obj()</code> methods are not used anywhere.</p>
 <hr />
 <h2 id="end-to-end-data-flow">End-to-end data flow<a class="headerlink" href="#end-to-end-data-flow" title="Permanent link">&para;</a></h2>
 <p>The following describes the complete lifecycle of a workflow execution request, from browser click to evaluated result.</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>Browser (React UI)
 </span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    │
-</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>    │  POST /api/run { workflow: "code_review", input: {...}, engine: "native" }
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>    │  POST /api/run { workflow: "code_review", input_data: {...}, adapter: "native" }
 </span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    ▼
 </span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>Sanitization ASGI middleware (server/middleware/ + agentic_v2/middleware/)
 </span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>    │     ├── secrets detector
 </span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>    │     ├── PII detector
 </span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>    │     ├── injection detector
 </span><span id="__span-10-9"><a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>    │     └── unicode anomaly detector
-</span><span id="__span-10-10"><a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>    │     (BLOCKED requests are rejected with 400 before any route handler runs)
+</span><span id="__span-10-10"><a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>    │     (BLOCKED requests are rejected with 422 before any route handler runs)
 </span><span id="__span-10-11"><a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>    ▼
 </span><span id="__span-10-12"><a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>FastAPI /api/run route (server/routes/workflows.py)
 </span><span id="__span-10-13"><a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>    │
-</span><span id="__span-10-14"><a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a>    ├── Validates request against workflow I/O schema (contracts/schemas.py)
+</span><span id="__span-10-14"><a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a>    ├── Validates request against the workflow input schema (422 on failure)
 </span><span id="__span-10-15"><a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>    ├── Starts background execution task (server/execution.py)
 </span><span id="__span-10-16"><a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a>    └── Returns { run_id: "uuid" }
 </span><span id="__span-10-17"><a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a>    │
@@ -3714,7 +3746,7 @@
 </span><span id="__span-10-20"><a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a>Background Execution (server/execution.py)
 </span><span id="__span-10-21"><a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a>    │
 </span><span id="__span-10-22"><a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a>    ├── Adapter dispatch (adapters/registry.py)
-</span><span id="__span-10-23"><a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a>    │     └── native → engine/executor.py  OR  langchain → langchain/runner.py
+</span><span id="__span-10-23"><a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a>    │     └── native → adapters/native (DAGExecutor / PipelineExecutor)  OR  langchain → langchain/runner.py
 </span><span id="__span-10-24"><a id="__codelineno-10-24" name="__codelineno-10-24" href="#__codelineno-10-24"></a>    │
 </span><span id="__span-10-25"><a id="__codelineno-10-25" name="__codelineno-10-25" href="#__codelineno-10-25"></a>    ├── DAG step scheduling (engine/dag_executor.py — Kahn's algorithm)
 </span><span id="__span-10-26"><a id="__codelineno-10-26" name="__codelineno-10-26" href="#__codelineno-10-26"></a>    │     For each step in topological order:
@@ -3747,7 +3779,7 @@
 </span></code></pre></div>
 <hr />
 <h2 id="opentelemetry-tracing">OpenTelemetry Tracing<a class="headerlink" href="#opentelemetry-tracing" title="Permanent link">&para;</a></h2>
-<p>When <code>AGENTIC_TRACING=1</code>, the runtime instruments the following spans:</p>
+<p>When <code>AGENTIC_TRACING=1</code>, the native path creates these spans:</p>
 <table>
 <thead>
 <tr>
@@ -3758,32 +3790,18 @@
 </thead>
 <tbody>
 <tr>
-<td><code>http.request</code></td>
-<td>FastAPI middleware</td>
-<td>Incoming HTTP request</td>
+<td><code>engine.execute</code></td>
+<td><code>engine/dag_executor.py</code></td>
+<td>Top-level workflow span on <code>DAGExecutor.execute()</code></td>
 </tr>
 <tr>
-<td><code>workflow.execute</code></td>
-<td><code>server/execution.py</code></td>
-<td>Full workflow execution</td>
-</tr>
-<tr>
-<td><code>step.execute</code></td>
-<td><code>engine/step.py</code></td>
-<td>Individual DAG step</td>
-</tr>
-<tr>
-<td><code>llm.call</code></td>
-<td><code>models/client.py</code></td>
-<td>LLM API call (model, tokens, latency)</td>
-</tr>
-<tr>
-<td><code>tool.execute</code></td>
-<td><code>engine/tool_execution.py</code></td>
-<td>Built-in tool invocation</td>
+<td><code>agent.&lt;name&gt;</code></td>
+<td><code>agents/base.py</code>, <code>engine/agent_resolver.py</code></td>
+<td>One span per agent run</td>
 </tr>
 </tbody>
 </table>
+<p>The LangGraph path emits <code>workflow_start</code>/<code>workflow_end</code> and <code>step_start</code>/<code>step_complete</code> trace events through the <code>TraceAdapter</code>; the OpenTelemetry adapter (<code>integrations/tracing.py</code>) turns them into workflow and step spans named after the event type, with step spans parented to the workflow span. <code>TraceparentMiddleware</code> adds W3C <code>traceparent</code> response headers for browser correlation. There are no dedicated <code>llm.call</code> or <code>tool.execute</code> spans.</p>
 <p>Spans are exported via OTLP to <code>OTEL_EXPORTER_OTLP_ENDPOINT</code> (default: <code>http://localhost:4317</code>). The <code>otel/</code> directory contains a Docker Compose configuration for running a local OpenTelemetry Collector.</p>
 <p>Sensitive data (prompt text, LLM outputs, tool arguments) is excluded from spans by default. Set <code>AGENTIC_TRACE_SENSITIVE=1</code> to include it.</p>
 <hr />
@@ -3860,7 +3878,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 31, 2026 12:55:56 UTC">August 31, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 18, 2026 16:53:41 UTC">October 18, 2026</span>
   </span>
 
     

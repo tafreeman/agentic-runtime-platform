@@ -553,6 +553,8 @@
       
         
       
+        
+      
     
     
     
@@ -678,6 +680,34 @@
     
   
     First workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/adapter-recipes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integration recipes
   
 
     
@@ -3665,7 +3695,7 @@ module prints the error and the missing constants remain <code>None</code>.</p>
 - <code>weighted_score: float</code> — weight-adjusted aggregate in [0.0, 1.0]
 - <code>criterion_scores: dict[str, float]</code> — raw (clamped) input value per criterion
 - <code>missing_criteria: list[str]</code> — criteria defined in the rubric but absent from the input dict</p>
-<p><strong><code>Scorer</code></strong> constructor accepts a YAML file path, a <code>Path</code>, or an in-memory <code>dict</code>. The rubric dict must have a <code>"criteria"</code> key; missing criteria are silently skipped during parsing. The <code>name</code> and <code>version</code> fields are read from the rubric if present.</p>
+<p><strong><code>Scorer</code></strong> constructor accepts a YAML file path, a <code>Path</code>, or an in-memory <code>dict</code>. The rubric dict is expected to have a <code>"criteria"</code> list; entries that are not mappings or lack a <code>name</code> are silently skipped during parsing. The <code>name</code> and <code>version</code> fields are read from the rubric if present.</p>
 <p><code>score(results: dict[str, float]) -&gt; ScoringResult</code> is the main method. For each criterion:</p>
 <ol>
 <li>Look up <code>results[criterion.name]</code> — record as missing if absent.</li>
@@ -3680,12 +3710,12 @@ module prints the error and the missing constants remain <code>None</code>.</p>
 <p><strong><code>EvaluatorRegistry</code></strong> is a classvar <code>dict[str, type[Evaluator]]</code> — a class-level singleton shared across all instances. The <code>@EvaluatorRegistry.register("name")</code> decorator is a classmethod returning a wrapper that stores the class in the registry under the lowercased key. <code>get(name)</code> does a case-insensitive lookup. <code>list_available()</code> returns all registered names.</p>
 <p>The registry accepts <code>type[Any]</code> rather than <code>type[Evaluator]</code> in <code>register()</code> to accommodate the three non-inheriting evaluators (<code>StandardEvaluator</code>, <code>PatternEvaluator</code>, <code>QualityEvaluator</code>) that satisfy the <code>Evaluator</code> protocol via duck typing.</p>
 <h3 id="evaluatorsllmpy"><code>evaluators/llm.py</code><a class="headerlink" href="#evaluatorsllmpy" title="Permanent link">&para;</a></h3>
-<p><strong><code>Choice</code></strong> is a frozen dataclass: <code>choice: str</code> (the label the LLM should emit) and <code>score: float</code> (the normalized 0–1 value it maps to).</p>
+<p><strong><code>Choice</code></strong> is a dataclass: <code>label: str</code> (the label the LLM should emit) and <code>score: float</code> (the normalized 0–1 value it maps to).</p>
 <p><strong><code>STANDARD_CHOICES</code></strong> is the built-in five-point scale:
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">[</span><span class="n">Choice</span><span class="p">(</span><span class="s2">"1"</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span> <span class="n">Choice</span><span class="p">(</span><span class="s2">"2"</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">),</span> <span class="n">Choice</span><span class="p">(</span><span class="s2">"3"</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="n">Choice</span><span class="p">(</span><span class="s2">"4"</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">),</span> <span class="n">Choice</span><span class="p">(</span><span class="s2">"5"</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)]</span>
 </span></code></pre></div></p>
-<p><strong><code>LLMEvaluator</code></strong> is both a <code>@dataclass</code> and a subclass of <code>Evaluator</code>. Fields: <code>model_id</code>, <code>system_prompt</code>, <code>prompt_template</code>, <code>choices: list[Choice]</code>, <code>llm_client: LLMClientProtocol</code>.</p>
-<p><code>evaluate(output, **kwargs)</code> templates the prompt by replacing <code>{{variable}}</code> placeholders with values from <code>kwargs</code>. The system prompt is prepended with a <code>"System: "</code> prefix. The call to <code>llm_client.generate_text</code> uses <code>temperature=0.0</code>. The response is passed to <code>get_score_from_response</code>.</p>
+<p><strong><code>LLMEvaluator</code></strong> is both a <code>@dataclass</code> and a subclass of <code>Evaluator</code>. Fields: <code>model_id</code>, <code>system_prompt</code>, <code>prompt_template</code>, <code>choices: list[Choice]</code>, <code>llm_client: LLMClientProtocol</code>, <code>seed: int = 0</code>.</p>
+<p><code>evaluate(output, **kwargs)</code> templates the prompt by replacing <code>{{variable}}</code> placeholders with values from <code>kwargs</code>. The system prompt is prepended with a <code>"System: "</code> prefix. The call to <code>llm_client.generate_text</code> uses <code>temperature=0.0</code> and passes the configured <code>seed</code>. The response is passed to <code>get_score_from_response</code>.</p>
 <p><code>get_score_from_response</code> scans:
 1. Exact match on the <strong>last line</strong> of the response (stripped and lowercased).
 2. Containment match in the <strong>last three lines</strong>.</p>
@@ -3695,7 +3725,7 @@ module prints the error and the missing constants remain <code>None</code>.</p>
 <ul>
 <li><code>universal_scores: dict[str, float]</code> — keyed by PIF/POI/PC/CA/SRC/PR/IR, each 0–5</li>
 <li><code>pattern_scores: dict[str, float]</code> — keyed by R1-R3, C1-C3, F1-F3, or G1-G3</li>
-<li><code>overall_universal: float</code> — sum of the six scored universal dimensions (PIF+POI+PC+CA+SRC+IR), max 30</li>
+<li><code>overall_universal: float</code> — sum of six universal dimensions (PIF+POI+PC+CA+SRC+IR), max 30; PR is gate-only</li>
 <li><code>overall_pattern: float</code> — sum of pattern-specific dimensions</li>
 <li><code>combined_score: float</code> — <code>overall_universal + overall_pattern</code></li>
 <li><code>hard_gates_passed: bool</code>, <code>hard_gate_failures: list[str]</code></li>
@@ -3713,7 +3743,7 @@ module prints the error and the missing constants remain <code>None</code>.</p>
 <p><strong><code>QualityEvaluator.evaluate(definition, inputs, output, model_override)</code></strong> — templates the prompt with <code>inputs</code> dict plus <code>completion=output</code>, builds the full prompt with system prefix, calls <code>generate_text</code> at temperature 0.0, and returns the extracted float score via <code>_extract_score</code> (same last-line / last-three-lines matching logic as <code>LLMEvaluator</code>).</p>
 <p>The five built-in definitions are populated by <code>_load_definitions()</code> at import time from <code>rubrics/quality.yaml</code>. Each YAML entry specifies <code>system_prompt</code>, <code>prompt_template</code> (with <code>{{input}}</code>, <code>{{completion}}</code>, <code>{{context}}</code>, or <code>{{expected}}</code> placeholders), and <code>choices_type</code>. The only supported <code>choices_type</code> is <code>"standard_5_point"</code> mapping to <code>STANDARD_CHOICES</code>.</p>
 <h3 id="evaluatorsstandardpy"><code>evaluators/standard.py</code><a class="headerlink" href="#evaluatorsstandardpy" title="Permanent link">&para;</a></h3>
-<p><strong><code>StandardScore</code></strong> — 10-field result. Key fields: <code>scores: dict[str, float]</code> (clarity/effectiveness/structure/specificity/completeness, each 0–10), <code>overall_score: float</code> (simple mean of five), <code>grade: str</code> (A/B/C/D/F), <code>passed: bool</code> (overall ≥ 7.0), <code>improvements: list[str]</code> (up to 5 deduplicated suggestions), <code>confidence: float</code> (median judge confidence).</p>
+<p><strong><code>StandardScore</code></strong> — 12-field result. Key fields: <code>scores: dict[str, float]</code> (clarity/effectiveness/structure/specificity/completeness, each 0–10), <code>overall_score: float</code> (simple mean of five), <code>grade: str</code> (A/B/C/D/F), <code>passed: bool</code> (overall ≥ 7.0), <code>improvements: list[str]</code> (up to 5 deduplicated suggestions), <code>confidence: float</code> (median judge confidence).</p>
 <p><strong><code>StandardEvaluator.score_prompt()</code></strong> — the main entry point. Handles input truncation at 18,000 characters (16,000 head + 1,000 tail). Calls the judge <code>N</code> times, collecting parseable JSON responses. Aggregates dimension scores via median. Deduplicates improvement suggestions (preserving insertion order using <code>dict.fromkeys</code>). Computes letter grade via <code>_get_grade()</code> using the percent-of-10 scale.</p>
 <p>The judge prompt is loaded from <code>rubrics/prompt_standard.yaml</code> via <code>_load_standard_prompt()</code> at module import time. The prompt instructs the judge to return ONLY a JSON object (no markdown fences) with the schema shown in <a href="../evaluation/judge/"><code>evaluation/judge.md</code></a>.</p>
 <h3 id="runnersbatchpy"><code>runners/batch.py</code><a class="headerlink" href="#runnersbatchpy" title="Permanent link">&para;</a></h3>
@@ -3765,14 +3795,14 @@ module prints the error and the missing constants remain <code>None</code>.</p>
 <p><code>load_benchmark(benchmark_id, limit, language, difficulty, cache_dir, force_refresh)</code> calls <code>loader_mod.load_benchmark()</code> and then applies optional post-hoc Python-side filters for <code>language</code> and <code>difficulty</code> (using <code>getattr</code> with <code>None</code> sentinel to handle benchmarks that don't have these fields).</p>
 <p><code>get_registry()</code> returns a fresh <code>BenchmarkRegistry()</code> instance for advanced configuration (preset eval configs, custom task loading).</p>
 <h3 id="adaptersllm_clientpy"><code>adapters/llm_client.py</code><a class="headerlink" href="#adaptersllm_clientpy" title="Permanent link">&para;</a></h3>
-<p>Provides a lazy-loading bridge to <code>tools.llm.llm_client.LLMClient</code>. The actual <code>LLMClient</code> is imported on first call, not at module load. This allows <code>agentic-v2-eval</code> to be imported in environments where <code>agentic-tools</code> is not on <code>sys.path</code>.</p>
+<p>Provides a lazy-loading bridge to <code>tools.llm.llm_client.LLMClient</code>. The actual <code>LLMClient</code> is imported when <code>LLMClientAdapter</code> is constructed, not at module load. This allows <code>agentic-v2-eval</code> to be imported in environments where <code>agentic-tools</code> is not on <code>sys.path</code>.</p>
 <h3 id="sandboxlocalpy"><code>sandbox/local.py</code><a class="headerlink" href="#sandboxlocalpy" title="Permanent link">&para;</a></h3>
 <p><code>LocalSubprocessSandbox</code> extends <code>BaseSandbox</code>. Key implementation details:</p>
 <ul>
-<li>Runs code via <code>subprocess.run(["python", "-c", code], ...)</code> with a configurable <code>timeout</code> (default 30 s).</li>
-<li><code>safe_mode=True</code> (default) blocks 24 dangerous shell commands by scanning the code string before execution.</li>
-<li>Path-escape prevention: if <code>code</code> contains absolute paths not under <code>sandbox_root</code>, execution is rejected.</li>
-<li><code>stdout</code> and <code>stderr</code> are captured and returned in the result dict.</li>
+<li><code>run_command(command: list[str], ...)</code> runs the command with <code>subprocess.run</code> in a temporary (or caller-supplied) root directory, with a configurable <code>timeout</code> (default 30 s).</li>
+<li><code>safe_mode=True</code> (default) blocks 20 dangerous commands (<code>rm</code>, <code>curl</code>, <code>kill</code>, and similar) by checking the executable name and scanning the command line before execution.</li>
+<li>Path-escape prevention: a <code>cwd</code> outside the sandbox root is rejected, and <code>write_file</code> / <code>read_file</code> raise <code>ValueError</code> for paths that escape the root.</li>
+<li><code>stdout</code>, <code>stderr</code>, exit code, and duration are captured in an <code>ExecutionResult</code>.</li>
 <li><code>TimeoutExpired</code> is caught and returned as an error result rather than propagating.</li>
 </ul>
 <hr />
@@ -3840,7 +3870,7 @@ module prints the error and the missing constants remain <code>None</code>.</p>
 </span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
 </span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="nt">criteria</span><span class="p">:</span>
 </span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Accuracy</span><span class="w">         </span><span class="c1"># required — key used in results dict</span>
-</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">    </span><span class="nt">weight</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span><span class="w">            </span><span class="c1"># required — relative weight</span>
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">    </span><span class="nt">weight</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span><span class="w">            </span><span class="c1"># optional, default 1.0 — relative weight</span>
 </span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">    </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">"..."</span><span class="w">     </span><span class="c1"># optional</span>
 </span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">    </span><span class="nt">min_value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span><span class="w">         </span><span class="c1"># optional, default 0.0</span>
 </span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">    </span><span class="nt">max_value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span><span class="w">         </span><span class="c1"># optional, default 1.0</span>
@@ -3860,13 +3890,10 @@ module prints the error and the missing constants remain <code>None</code>.</p>
 </span><span id="__span-8-24"><a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a><span class="w">  </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">"1.0.0"</span>
 </span><span id="__span-8-25"><a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a><span class="w">  </span><span class="nt">author</span><span class="p">:</span><span class="w"> </span><span class="s">"..."</span>
 </span></code></pre></div>
-<p>Only <code>criteria[].name</code> and <code>criteria[].weight</code> are required for <code>Scorer</code>. All other fields are advisory or used by specific evaluator types.</p>
+<p>Only <code>criteria[].name</code> is required for <code>Scorer</code>; <code>weight</code> defaults to 1.0. All other fields are advisory or used by specific evaluator types.</p>
 <hr />
 <h2 id="known-limitations">Known limitations<a class="headerlink" href="#known-limitations" title="Permanent link">&para;</a></h2>
 <ol>
-<li>
-<p><strong>One <code># type: ignore[return-value]</code></strong> at <code>runners/streaming.py:199</code> — mypy cannot narrow the type through <code>inspect.isawaitable</code> at this location. The runtime behavior is correct; the ignore is intentional and documented.</p>
-</li>
 <li>
 <p><strong><code>safe_mode</code> in <code>LocalSubprocessSandbox</code> is code-string scanning, not syscall interception.</strong> It can be bypassed by obfuscated code. Use Docker for stronger isolation.</p>
 </li>
@@ -3905,7 +3932,7 @@ module prints the error and the missing constants remain <code>None</code>.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 18, 2026 16:53:41 UTC">October 18, 2026</span>
   </span>
 
     

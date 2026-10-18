@@ -342,6 +342,18 @@
 </a>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="../getting-started/adapter-recipes/">
+<span class="md-ellipsis">
+    
+  
+    Integration recipes
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="../development-guide/">
 <span class="md-ellipsis">
     
@@ -1426,7 +1438,7 @@
 <h1 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">¶</a></h1>
 <p>This page explains the repository boundaries and the main runtime path. Use the
 linked deep dives for implementation detail.</p>
-<p>Last verified: 2026-07-28.</p>
+<p>Last verified: 2026-10-18.</p>
 <h2 id="repository-boundaries">Repository boundaries<a class="headerlink" href="#repository-boundaries" title="Permanent link">¶</a></h2>
 <table>
 <thead>
@@ -1509,18 +1521,21 @@ packages depend on that installed package; they should not reach into the
 <tbody>
 <tr>
 <td><code>native</code></td>
-<td>Platform-specific DAG behavior, including conditional edges, retries, execution budgets, and observer hooks</td>
+<td>Kahn's-algorithm DAG executor with no LangGraph dependency; the engine for runtime-built <code>DAG</code> and <code>Pipeline</code> objects</td>
 </tr>
 <tr>
 <td><code>langchain</code></td>
-<td>LangGraph execution for compatible workflows and engine comparison</td>
+<td>LangGraph execution of named YAML workflows; the default for <code>agentic run</code> and <code>POST /api/run</code></td>
 </tr>
 </tbody>
 </table>
-<p><code>agentic run</code> defaults to <code>langchain</code>. A workflow can require native features,
-so engine support must be checked rather than inferred. The API exposes
-workflow capabilities, and <code>agentic compare</code> runs both adapters against the
-same input.</p>
+<p><code>agentic run</code> defaults to <code>langchain</code>. The two engines do not behave
+identically in every case (for example failure propagation and the tools
+registered for a step), so engine support must be checked rather than
+inferred: <code>GET /api/adapters</code> lists the registered engines, and
+<code>agentic compare</code> runs both adapters against the same input. The
+<code>/api/workflows/{name}/capabilities</code> route reports a workflow's input and
+output declarations used for dataset matching, not engine support.</p>
 <p><code>AdapterRegistry</code> owns engine discovery. At server startup, it validates the
 adapter selected by <code>AGENTIC_DEFAULT_ADAPTER</code> and reports a missing optional
 dependency before accepting work.</p>
@@ -1595,8 +1610,8 @@ secret values.</p>
 </tr>
 <tr>
 <td>LangGraph checkpoints</td>
-<td>Engine configuration</td>
-<td>SQLite or PostgreSQL</td>
+<td>In-memory (<code>MemorySaver</code>)</td>
+<td>PostgreSQL via <code>AGENTIC_CHECKPOINTER_URL</code>, or a checkpointer injected by the caller</td>
 </tr>
 <tr>
 <td>Model-router circuit state</td>
@@ -1610,7 +1625,7 @@ secret values.</p>
 </tr>
 <tr>
 <td>UI provider and tier settings</td>
-<td><code>~/.agentic/ui-settings.json</code></td>
+<td><code>.agentic_ui_settings.json</code> at the repository root (override with <code>AGENTIC_UI_SETTINGS_PATH</code>)</td>
 <td>No remote settings backend</td>
 </tr>
 </tbody>
@@ -1711,7 +1726,7 @@ describe a later design; add a new ADR that supersedes it and update the index.<
 <span class="md-icon" title="Last update">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
 </span>
-<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 31, 2026 12:55:56 UTC">August 31, 2026</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 18, 2026 16:53:41 UTC">October 18, 2026</span>
 </span>
 <span class="md-source-file__fact">
 <span class="md-icon" title="Created">

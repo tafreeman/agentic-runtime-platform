@@ -547,6 +547,8 @@
       
         
       
+        
+      
     
     
     
@@ -672,6 +674,34 @@
     
   
     First workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/adapter-recipes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integration recipes
   
 
     
@@ -2936,7 +2966,7 @@ The current model already proves all four ADR guarantees. PRs #347, #351 and</p>
 <tr>
 <td>T1</td>
 <td><code>finalStatus (handleTimeout p s) = .failed</code>, for every plan and state</td>
-<td>Proved; PR #354 open</td>
+<td>Proved; merged in #354</td>
 <td>Definitions only</td>
 <td><code>agentic-workflows-v2/agentic_v2/engine/dag_executor.py:463</code> <code>_handle_timeout</code>, final FAILED assignment at line 507; <code>DAGExecutor.execute</code> docstring at line 562; existing timeout replay at <code>agentic-workflows-v2/tests/engine/test_dag_executor_lean_replay.py:710</code></td>
 </tr>
@@ -2978,8 +3008,8 @@ abstracted away. Differential sampling cannot prove Python/Lean equivalence.</p>
 <h2 id="bug-candidates">Bug candidates<a class="headerlink" href="#bug-candidates" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Existing: recursive <code>DAG.validate</code> can raise RecursionError on a long chain.
-  Recorded in ADR-060; open PR #353 (<code>validate_iterative</code>) already addresses it.
-  Do not duplicate or modify that work.</li>
+  Recorded in ADR-060; fixed by merged PR #353 (iterative cycle check in
+  <code>DAG.validate</code>). Do not duplicate or modify that work.</li>
 </ul>
 <h2 id="out-of-scope-dependencies">Out-of-scope dependencies<a class="headerlink" href="#out-of-scope-dependencies" title="Permanent link">&para;</a></h2>
 <p>None identified that require another repository.</p>
@@ -2999,9 +3029,7 @@ one-test count increment. Full suite passed: runtime 4,332 passed / 108 skipped 
 <p>Review: local inspection checked the narrow cleanup premise, independent FAILED
 assertions (not only model equality), legal/complete replay flags, hanging-root
 construction, fixture isolation and dependency lock changes. No runtime code
-changed. PR #354 is open: https://github.com/tafreeman/agentic-runtime-platform/pull/354.
-Rebase merge is enabled. A detached scratch worktree at <code>.proof-rebase-check</code>
-successfully ran <code>git rebase origin/main</code> against c07974c. CI/review pending.</p>
+changed. PR #354 has since merged: https://github.com/tafreeman/agentic-runtime-platform/pull/354.</p>
 <p>The local <code>.claude/settings.json</code> now invokes <code>.claude/scope_guard.py</code> with an
 absolute path and Windows <code>python</code>. Both are ignored local configuration.
 The guard reads the persistent lock, resolves path components, rejects malformed
@@ -3031,7 +3059,7 @@ Merging requires separate human authorization under workspace instructions.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="September 26, 2026 23:38:24 UTC">September 26, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 18, 2026 16:53:41 UTC">October 18, 2026</span>
   </span>
 
     

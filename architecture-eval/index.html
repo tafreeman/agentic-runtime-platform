@@ -342,6 +342,18 @@
 </a>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="../getting-started/adapter-recipes/">
+<span class="md-ellipsis">
+    
+  
+    Integration recipes
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="../development-guide/">
 <span class="md-ellipsis">
     
@@ -2029,7 +2041,7 @@ a numeric quality score. The evaluation package does not import the runtime.</p>
 <tr>
 <td>Language</td>
 <td>Python 3.11+</td>
-<td><code>match</code> statements and <code>tomllib</code> used</td>
+<td><code>requires-python = "&gt;=3.11"</code></td>
 </tr>
 <tr>
 <td>Build backend</td>
@@ -2039,7 +2051,7 @@ a numeric quality score. The evaluation package does not import the runtime.</p>
 <tr>
 <td>Rubric format</td>
 <td>YAML (PyYAML 6.0+)</td>
-<td>Loaded at call time, not import time</td>
+<td><code>Scorer</code> rubrics load at construction; evaluator prompt YAML loads when the evaluator module is imported</td>
 </tr>
 <tr>
 <td>LLM access</td>
@@ -2104,7 +2116,7 @@ a numeric quality score. The evaluation package does not import the runtime.</p>
 <code>typing.Protocol</code> with <code>@runtime_checkable</code>. Any object whose <code>generate_text</code>
 method matches the signature can be injected into an evaluator. Tests use
 small fakes instead of calling a provider.</p>
-<p><strong>Rubric YAML loaded at call time, not import time.</strong> Rubric YAML files are opened when a <code>Scorer</code> is constructed or an evaluator method is first called. The module-level <code>__init__.py</code> exports are pure class symbols with no file I/O. This keeps import overhead negligible and allows test code to override the rubric path trivially.</p>
+<p><strong>Scorer rubrics loaded at construction.</strong> A <code>Scorer</code> opens its rubric YAML when it is constructed (<code>load_rubric()</code> reads the file on each call), so test code can pass any path or dict. The evaluator prompt files (<code>quality.yaml</code>, <code>prompt_standard.yaml</code>, <code>prompt_pattern.yaml</code>) are read once when <code>evaluators.quality</code>, <code>evaluators.standard</code> and <code>evaluators.pattern</code> are imported, which the package <code>__init__.py</code> does; a load failure prints a warning and leaves the affected definitions empty.</p>
 <p><strong>EvaluatorRegistry as a classvar singleton.</strong> The registry is a class-level dict rather than a module-level global. Evaluators register themselves at class-definition time via the <code>@EvaluatorRegistry.register("name")</code> decorator. Discovery is automatic: importing any evaluator module is sufficient for it to appear in the registry.</p>
 <p><strong>Median aggregation over multiple judge runs.</strong> <code>PatternEvaluator</code> and
 <code>StandardEvaluator</code> can run a judge prompt more than once and report the median.
@@ -2152,7 +2164,7 @@ an LLM judge deterministic.</p>
 </span><span id="__span-0-36"><a href="#__codelineno-0-36" id="__codelineno-0-36" name="__codelineno-0-36"></a>│   │   ├── batch.py         # BatchRunner[T,R] + run_batch_evaluation()
 </span><span id="__span-0-37"><a href="#__codelineno-0-37" id="__codelineno-0-37" name="__codelineno-0-37"></a>│   │   └── streaming.py     # StreamingRunner + AsyncStreamingRunner + run_streaming_evaluation()
 </span><span id="__span-0-38"><a href="#__codelineno-0-38" id="__codelineno-0-38" name="__codelineno-0-38"></a>│   └── sandbox/
-</span><span id="__span-0-39"><a href="#__codelineno-0-39" id="__codelineno-0-39" name="__codelineno-0-39"></a>│       ├── base.py          # BaseSandbox abstract class
+</span><span id="__span-0-39"><a href="#__codelineno-0-39" id="__codelineno-0-39" name="__codelineno-0-39"></a>│       ├── base.py          # Sandbox abstract class + ExecutionResult
 </span><span id="__span-0-40"><a href="#__codelineno-0-40" id="__codelineno-0-40" name="__codelineno-0-40"></a>│       └── local.py         # LocalSubprocessSandbox (subprocess isolation, safe_mode)
 </span><span id="__span-0-41"><a href="#__codelineno-0-41" id="__codelineno-0-41" name="__codelineno-0-41"></a>└── tests/                   # Package tests
 </span><span id="__span-0-42"><a href="#__codelineno-0-42" id="__codelineno-0-42" name="__codelineno-0-42"></a>    ├── conftest.py
@@ -2425,9 +2437,9 @@ an LLM judge deterministic.</p>
 </ul>
 <hr/>
 <h2 id="sandbox">Sandbox<a class="headerlink" href="#sandbox" title="Permanent link">¶</a></h2>
-<p><code>LocalSubprocessSandbox</code> (in <code>sandbox/local.py</code>) runs evaluated code in a subprocess with a configurable timeout (default 30 s) and an optional blocked-command list (<code>safe_mode=True</code>).</p>
-<p>Blocked commands in safe mode include: <code>rm</code>, <code>wget</code>, <code>curl</code>, <code>nc</code>, <code>kill</code>, <code>chmod</code>, <code>chown</code>, <code>dd</code>, <code>mkfs</code>, and other destructive or network-accessing commands.</p>
-<p>The sandbox prevents path-escape by rejecting absolute paths outside the configured sandbox root before execution. It does not provide container-level isolation; for higher assurance, wrap the evaluator in a Docker image.</p>
+<p><code>LocalSubprocessSandbox</code> (in <code>sandbox/local.py</code>) runs commands in a subprocess with a configurable timeout (default 30 s) and an optional blocked-command list (<code>safe_mode=True</code>).</p>
+<p>Blocked commands in safe mode include: <code>rm</code>, <code>wget</code>, <code>curl</code>, <code>nc</code>, <code>kill</code>, <code>dd</code>, <code>mkfs</code>, and other destructive or network-accessing commands.</p>
+<p>The sandbox prevents path-escape by rejecting a working directory, or a file read/write path, that resolves outside the sandbox root. It does not provide container-level isolation; for higher assurance, wrap the evaluator in a Docker image.</p>
 <hr/>
 <h2 id="dataset-bridge">Dataset bridge<a class="headerlink" href="#dataset-bridge" title="Permanent link">¶</a></h2>
 <p><code>datasets.py</code> provides a lazy facade over <code>tools.agents.benchmarks</code>. The benchmark modules are imported only on first access, not at package import time.</p>
@@ -2467,10 +2479,22 @@ an LLM judge deterministic.</p>
 <td>Python function-level tasks</td>
 </tr>
 <tr>
+<td><code>humaneval-plus</code></td>
+<td>HumanEval+</td>
+<td>164</td>
+<td>HumanEval with additional tests</td>
+</tr>
+<tr>
 <td><code>mbpp</code></td>
 <td>MBPP</td>
 <td>974</td>
 <td>Basic Python programming</td>
+</tr>
+<tr>
+<td><code>mbpp-sanitized</code></td>
+<td>MBPP Sanitized</td>
+<td>427</td>
+<td>Cleaned MBPP subset</td>
 </tr>
 <tr>
 <td><code>codeclash</code></td>
@@ -2494,7 +2518,7 @@ an LLM judge deterministic.</p>
 </span></code></pre></div>
 <hr/>
 <h2 id="server-side-integration">Server-side integration<a class="headerlink" href="#server-side-integration" title="Permanent link">¶</a></h2>
-<p>The <code>agentic-workflows-v2</code> server runs its own three-stage evaluation pipeline that is architecturally parallel to but distinct from the standalone <code>agentic-v2-eval</code> package. The integration point is the <code>GET /runs/{filename}/evaluation</code> API endpoint.</p>
+<p>The <code>agentic-workflows-v2</code> server runs its own three-stage evaluation pipeline that is architecturally parallel to but distinct from the standalone <code>agentic-v2-eval</code> package. The integration point is the <code>GET /api/runs/{filename}/evaluation</code> API endpoint.</p>
 <p>See <code>docs/evaluation/gating.md</code> for the full server-side scoring pipeline, scoring profiles, and hard gate specification.</p>
 <hr/>
 <h2 id="cli-reference">CLI reference<a class="headerlink" href="#cli-reference" title="Permanent link">¶</a></h2>
@@ -2649,7 +2673,7 @@ an LLM judge deterministic.</p>
 </tr>
 <tr>
 <td>Approximate test count</td>
-<td>~215</td>
+<td>~275</td>
 </tr>
 <tr>
 <td>asyncio mode</td>
@@ -2674,7 +2698,7 @@ an LLM judge deterministic.</p>
 <span class="md-icon" title="Last update">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
 </span>
-<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="September 10, 2026 12:34:50 UTC">September 10, 2026</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 18, 2026 16:53:41 UTC">October 18, 2026</span>
 </span>
 <span class="md-source-file__fact">
 <span class="md-icon" title="Created">

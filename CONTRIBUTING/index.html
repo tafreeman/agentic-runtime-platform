@@ -553,6 +553,8 @@
       
         
       
+        
+      
     
     
     
@@ -678,6 +680,34 @@
     
   
     First workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/adapter-recipes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integration recipes
   
 
     
@@ -2901,6 +2931,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Run checks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fast-smoke-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fast smoke check
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#match-the-checks-to-what-you-changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Match the checks to what you changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2914,6 +2972,17 @@
   
     <nav class="md-nav" aria-label="What CI checks">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#governance-ratchets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Governance ratchets
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#run-without-provider-keys" class="md-nav__link">
@@ -3131,6 +3200,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Run checks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fast-smoke-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fast smoke check
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#match-the-checks-to-what-you-changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Match the checks to what you changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -3144,6 +3241,17 @@
   
     <nav class="md-nav" aria-label="What CI checks">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#governance-ratchets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Governance ratchets
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#run-without-provider-keys" class="md-nav__link">
@@ -3275,7 +3383,7 @@
 <p>Use this guide when preparing a change for review. For installation and normal
 usage, start with <a href="../getting-started/">Getting started</a>.</p>
 <blockquote>
-<p><strong>Last verified:</strong> 2026-07-28</p>
+<p><strong>Last verified:</strong> 2026-10-18</p>
 </blockquote>
 <h2 id="repository-boundaries">Repository boundaries<a class="headerlink" href="#repository-boundaries" title="Permanent link">&para;</a></h2>
 <p>This monorepo contains three Python packages and one frontend:</p>
@@ -3303,22 +3411,31 @@ usage, start with <a href="../getting-started/">Getting started</a>.</p>
 <td><code>tests/e2e/</code></td>
 <td>Cross-package behavior</td>
 </tr>
+<tr>
+<td><code>proofs/</code></td>
+<td>Lean 4 model of <code>DAGExecutor</code> and its replay tests (<a href="../adr/ADR-060-scheduler-guarantees-lean/">ADR-060</a>)</td>
+</tr>
 </tbody>
 </table>
 <p>The runtime and evaluation packages depend on the root <code>agentic-tools</code> package
 through the workspace configuration. Do not introduce another cross-package
 import or an editable sibling-repository dependency without reviewing
-<a href="../ARCHITECTURE/">Architecture</a> and the relevant ADRs.</p>
+<a href="../ARCHITECTURE/">Architecture</a> and the relevant ADRs. The existing
+<code>agentic_v2/models/llm.py</code> import from <code>agentic_v2_eval</code> is a known legacy
+exception; do not add more.</p>
 <p>Package-specific notes are in
 <a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/CONTRIBUTING.md"><code>agentic-workflows-v2/CONTRIBUTING.md</code></a>.</p>
 <h2 id="set-up-the-workspace">Set up the workspace<a class="headerlink" href="#set-up-the-workspace" title="Permanent link">&para;</a></h2>
-<p>Use Python 3.11 or newer and Node.js 20 or newer.</p>
+<p>Use Python 3.11 or newer and Node.js 22.22.2 or newer (CI uses Node 22).</p>
 <div class="language-powershell highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">://</span><span class="n">github</span><span class="p">.</span><span class="n">com</span><span class="p">/</span><span class="n">tafreeman</span><span class="p">/</span><span class="n">agentic-runtime-platform</span><span class="p">.</span><span class="n">git</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">cd </span><span class="n">agentic-runtime-platform</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">just</span> <span class="n">setup</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">pre-commit</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">pre-commit</span> <span class="n">install</span> <span class="p">-</span><span class="n">-install-hooks</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">.\.</span><span class="n">venv</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">Activate</span><span class="p">.</span><span class="n">ps1</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">pre-commit</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">pre-commit</span> <span class="n">install</span> <span class="p">-</span><span class="n">-install-hooks</span>
 </span></code></pre></div>
+<p><code>just setup</code> installs into <code>.venv</code> but does not activate it, so activate it
+before the <code>pip</code> and <code>agentic</code> commands below.</p>
 <p>The current <code>justfile</code> uses PowerShell. Manual installation for Linux, macOS,
 or a system without <code>just</code> is documented in
 <a href="../getting-started/installation/">Installation</a>.</p>
@@ -3329,7 +3446,7 @@ or a system without <code>just</code> is documented in
 </span></code></pre></div>
 <p>PowerShell:</p>
 <div class="language-powershell highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="s1">'{"input_text":"hello"}'</span> <span class="p">|</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>  <span class="nb">Set-Content</span> <span class="n">-Encoding</span> <span class="n">utf8</span> <span class="p">.\</span><span class="n">agentic-input</span><span class="p">.</span><span class="n">json</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>  <span class="nb">Set-Content</span> <span class="n">-Encoding</span> <span class="n">ascii</span> <span class="p">.\</span><span class="n">agentic-input</span><span class="p">.</span><span class="n">json</span>
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nv">$env:AGENTIC_NO_LLM</span> <span class="p">=</span> <span class="s2">"1"</span>
 </span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">agentic</span> <span class="n">run</span> <span class="n">test_deterministic</span> <span class="p">-</span><span class="n">-input</span> <span class="p">.\</span><span class="n">agentic-input</span><span class="p">.</span><span class="n">json</span>
 </span></code></pre></div>
@@ -3355,10 +3472,14 @@ the ignored <code>.env</code> file when a live-provider test is required.</p>
 <li>Add or update tests with behavior changes.</li>
 <li>Update user documentation when a command, endpoint, environment variable,
   schema, workflow, or UI behavior changes.</li>
-<li>Update <code>CHANGELOG.md</code> under <code>Unreleased</code> for user-visible changes.</li>
+<li>Add a <code>## Unreleased - &lt;title&gt;</code> entry to <code>CHANGELOG.md</code> for user-visible
+  changes.</li>
 <li>Add an ADR for a material architecture or security-boundary decision.</li>
 <li>Do not reformat unrelated files.</li>
 <li>Preserve generated files unless the source contract changed.</li>
+<li>Keep one concern per pull request, preferably under about 400 changed lines
+  (guidance, not a gate). When a change spans layers, slice it: contract and
+  generated code first, then backend with tests, then UI and documentation.</li>
 </ul>
 <p>Python uses 4-space indentation, Black with an 88-character target, Ruff, and
 typed public interfaces. Use <code>snake_case</code> for Python modules and functions,
@@ -3372,6 +3493,8 @@ camelCase names.</p>
 </span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
 </span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>npm<span class="w"> </span>--prefix<span class="w"> </span>agentic-workflows-v2/ui<span class="w"> </span>run<span class="w"> </span>build
 </span></code></pre></div>
+<p>Use <code>just ui-check</code> instead of the last command when you changed the frontend
+or the wire contracts: it also runs the UI tests with their coverage floors.</p>
 <p><code>just test</code> runs the runtime, evaluation, cross-package, and UI unit tests.
 Some live-provider and slow checks are intentionally separate.</p>
 <p>Use narrower commands during development:</p>
@@ -3383,13 +3506,134 @@ Some live-provider and slow checks are intentionally separate.</p>
 </span></code></pre></div>
 <p>Documentation checks:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>python<span class="w"> </span>agentic-workflows-v2/scripts/check_docs_refs.py
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>python<span class="w"> </span>scripts/generate_doc_stats.py<span class="w"> </span>--check
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>python<span class="w"> </span>scripts/check-doc-drift.py
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>python<span class="w"> </span>scripts/generate_doc_stats.py<span class="w"> </span>--check
 </span></code></pre></div>
+<p><code>just docs</code> runs all three. <code>python scripts/validate-workflows.py</code> validates the
+workflow YAML files.</p>
 <p>If MkDocs and its plugins are installed:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>mkdocs<span class="w"> </span>build<span class="w"> </span>--strict
 </span></code></pre></div>
 <p>Do not add a command to documentation until it has been run from the directory
 the page specifies.</p>
+<h3 id="fast-smoke-check">Fast smoke check<a class="headerlink" href="#fast-smoke-check" title="Permanent link">&para;</a></h3>
+<p>A quick pre-push check that needs no provider key. Activate the environment
+from <code>just setup</code> first, because <code>agentic validate</code> needs the <code>langchain</code>
+extra. Run it from the repository root.</p>
+<p>Bash:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AGENTIC_NO_LLM</span><span class="o">=</span><span class="m">1</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>agentic<span class="w"> </span>validate<span class="w"> </span>test_deterministic
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>agentic<span class="w"> </span>run<span class="w"> </span>test_deterministic<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span>--input<span class="w"> </span>agentic-workflows-v2/tests/fixtures/deterministic_input.json
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>agentic-workflows-v2/tests/test_approval_gates.py<span class="w"> </span>-k<span class="w"> </span>fails_closed<span class="w"> </span>-q
+</span></code></pre></div>
+<p>PowerShell:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nv">$env:AGENTIC_NO_LLM</span> <span class="p">=</span> <span class="s2">"1"</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">agentic</span> <span class="n">validate</span> <span class="n">test_deterministic</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">agentic</span> <span class="n">run</span> <span class="n">test_deterministic</span> <span class="p">`</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>  <span class="p">-</span><span class="n">-input</span> <span class="n">agentic-workflows-v2</span><span class="p">/</span><span class="n">tests</span><span class="p">/</span><span class="n">fixtures</span><span class="p">/</span><span class="n">deterministic_input</span><span class="p">.</span><span class="n">json</span>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">pytest</span> <span class="n">agentic-workflows-v2</span><span class="p">/</span><span class="n">tests</span><span class="p">/</span><span class="n">test_approval_gates</span><span class="p">.</span><span class="n">py</span> <span class="n">-k</span> <span class="n">fails_closed</span> <span class="n">-q</span>
+</span></code></pre></div>
+<h3 id="match-the-checks-to-what-you-changed">Match the checks to what you changed<a class="headerlink" href="#match-the-checks-to-what-you-changed" title="Permanent link">&para;</a></h3>
+<p>The checks in "Run checks" are the pre-PR gate. While you work, run the ones
+that match the surface you touched. This list is a development aid, not a
+substitute for that gate.</p>
+<p>Runtime Python (<code>agentic-workflows-v2/agentic_v2/</code> and its tests). Run these
+from <code>agentic-workflows-v2/</code>:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nb">cd</span><span class="w"> </span>agentic-workflows-v2
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>python<span class="w"> </span>-m<span class="w"> </span>ruff<span class="w"> </span>check<span class="w"> </span>agentic_v2/<span class="w"> </span>tests/
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>python<span class="w"> </span>-m<span class="w"> </span>mypy<span class="w"> </span>agentic_v2/engine<span class="w"> </span>agentic_v2/contracts<span class="w"> </span>--config-file<span class="w"> </span>pyproject.toml<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">  </span>--follow-imports<span class="o">=</span>skip<span class="w"> </span>--disallow-untyped-defs<span class="w"> </span>--warn-return-any<span class="w"> </span>--no-incremental
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/<span class="w"> </span>-q<span class="w"> </span>-m<span class="w"> </span><span class="s2">"not integration and not slow"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">  </span>--cov<span class="o">=</span>agentic_v2<span class="w"> </span>--cov-report<span class="o">=</span>term-missing
+</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>python<span class="w"> </span>-m<span class="w"> </span>coverage<span class="w"> </span>report<span class="w"> </span>--fail-under<span class="o">=</span><span class="m">80</span>
+</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="nb">cd</span><span class="w"> </span>..
+</span><span id="__span-10-9"><a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>python<span class="w"> </span>agentic-workflows-v2/scripts/check_suppression_ratchet.py
+</span></code></pre></div>
+<ul>
+<li>CI also fails when <code>ruff check --fix</code> would still change a file, so run it
+  with <code>--fix</code> deliberately and commit the result.</li>
+<li>The coverage gate is the whole-package <code>coverage report --fail-under=80</code>
+  step, with <code>precision = 2</code>, so 79.93% fails. New code should aim for 80% on
+  its changed lines.</li>
+<li>Use these exact <code>mypy</code> flags. A plain <code>mypy</code> run does not reproduce the
+  gate: <code>--follow-imports=skip</code> makes everything outside <code>engine</code> and
+  <code>contracts</code> <code>Any</code>, so returning its attributes raises <code>no-any-return</code> only
+  with the CI flags.</li>
+<li>CI also runs <code>pydocstyle</code> on <code>core/</code> and <code>contracts/</code>:</li>
+</ul>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pydocstyle<span class="w"> </span>--convention<span class="o">=</span>google<span class="w"> </span>--add-ignore<span class="o">=</span>D100,D104<span class="w"> </span>agentic-workflows-v2/agentic_v2/core/
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>python<span class="w"> </span>-m<span class="w"> </span>pydocstyle<span class="w"> </span>--convention<span class="o">=</span>google<span class="w"> </span>--add-ignore<span class="o">=</span>D100,D101,D104<span class="w"> </span>agentic-workflows-v2/agentic_v2/contracts/
+</span></code></pre></div>
+<p>Wire contracts (<code>agentic_v2/contracts/*.py</code> and the Pydantic classes in
+<code>agentic_v2/server/models.py</code>): follow "Change generated contracts" below.</p>
+<p>UI (<code>agentic-workflows-v2/ui/</code>):</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>just<span class="w"> </span>ui-check
+</span></code></pre></div>
+<p><code>just ui-check</code> runs the unit tests with coverage floors (including the
+design-drift and contrast guards), then the production build.</p>
+<p>UI end-to-end tests (see <code>agentic-workflows-v2/ui/e2e/README.md</code>): Playwright
+starts and owns the backend on <code>127.0.0.1:8010</code> and Vite on <code>127.0.0.1:5173</code>
+and does not reuse running services, so stop <code>just dev</code> first.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>just<span class="w"> </span>dev-stop
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="nb">cd</span><span class="w"> </span>agentic-workflows-v2/ui
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>npx<span class="w"> </span>playwright<span class="w"> </span>install<span class="w"> </span>chromium
+</span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>npm<span class="w"> </span>run<span class="w"> </span>test:e2e<span class="w"> </span>--<span class="w"> </span>streaming.spec.ts
+</span><span id="__span-13-5"><a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>npm<span class="w"> </span>run<span class="w"> </span>test:e2e:5x
+</span></code></pre></div>
+<p>The single spec is the fast subset. <code>test:e2e:5x</code> runs the whole Playwright
+suite five times and is the flake gate the nightly workflow uses.</p>
+<p>Evaluation (<code>agentic-v2-eval/</code>, <code>datasets/</code>, <code>scripts/eval_gate.py</code>, or
+<code>agentic_v2/scoring/</code>):</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nv">AGENTIC_NO_LLM</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>python<span class="w"> </span>scripts/eval_gate.py<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span>--cases<span class="w"> </span>datasets/default/golden_cases.json<span class="w"> </span>--threshold<span class="w"> </span><span class="m">0</span>.80
+</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>agentic-workflows-v2/tests/test_eval_gate_independence.py<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span>agentic-workflows-v2/tests/test_eval_gate_live.py<span class="w"> </span>-q<span class="w"> </span>--no-cov
+</span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="nb">cd</span><span class="w"> </span>agentic-v2-eval
+</span><span id="__span-14-6"><a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests<span class="w"> </span>-q<span class="w"> </span>--cov<span class="o">=</span>src/agentic_v2_eval<span class="w"> </span>--cov-fail-under<span class="o">=</span><span class="m">80</span>
+</span><span id="__span-14-7"><a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>python<span class="w"> </span>-m<span class="w"> </span>ruff<span class="w"> </span>check<span class="w"> </span>src/
+</span><span id="__span-14-8"><a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>python<span class="w"> </span>-m<span class="w"> </span>ruff<span class="w"> </span>format<span class="w"> </span>--check<span class="w"> </span>src/
+</span><span id="__span-14-9"><a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>python<span class="w"> </span>-m<span class="w"> </span>mypy<span class="w"> </span>src/agentic_v2_eval<span class="w"> </span>--config-file<span class="w"> </span>pyproject.toml
+</span></code></pre></div>
+<p>The live evaluation gate is opt-in: add the <code>run-live-eval</code> label to a pull
+request that changes live provider routing or judge prompts. With no provider
+secrets configured it exits successfully as skipped, which is not evidence of
+a live pass.</p>
+<p>Optional extras. These test modules skip themselves when the extra is missing,
+so a green run proves nothing until the extra is installed. Install it and
+confirm the import first. Run the pytest commands from
+<code>agentic-workflows-v2/</code>:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">"./agentic-workflows-v2[dev,server,mcp,langchain,tracing,ek]"</span><span class="w"> </span>-c<span class="w"> </span>ci-constraints.txt
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import executionkit"</span>
+</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="nb">cd</span><span class="w"> </span>agentic-workflows-v2
+</span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/engine/test_step_ek_delegation.py<span class="w"> </span>tests/engine/test_step_tool_path.py<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-15-5"><a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">  </span>tests/models/test_ek_adapters.py<span class="w"> </span>tests/models/test_ek_provider.py<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-15-6"><a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">  </span>tests/models/test_ek_provider_attempts.py<span class="w"> </span>tests/models/test_ek_provider_wrapper.py<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-15-7"><a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="w">  </span>-q<span class="w"> </span>--timeout<span class="o">=</span><span class="m">120</span>
+</span></code></pre></div>
+<ul>
+<li><code>eval</code> extra (also install <code>agentic-v2-eval[dev]</code>): confirm
+  <code>python -c "import agentic_evalkit"</code>, then run
+  <code>tests/test_evalkit_bridge.py</code>, <code>tests/test_scoring_policy_differential.py</code>,
+  and <code>tests/contract/test_evalkit_boundary.py</code>.</li>
+<li><code>claude</code> extra: confirm <code>python -c "import claude_agent_sdk"</code>, then run
+  <code>tests/models/test_backends_claude.py</code>, <code>tests/test_claude_sdk_agent.py</code>,
+  <code>tests/test_sdk_task_orchestrator_example.py</code>, and
+  <code>tests/test_implementations_sanitization.py</code>.</li>
+<li><code>tools/</code> needs only <code>[dev]</code>: <code>python -m pytest tools/tests -q --timeout=120</code>
+  from the repository root.</li>
+</ul>
+<p>Dependencies (<code>pyproject.toml</code>, <code>uv.lock</code>, <code>ci-constraints.txt</code>, the
+<code>Dockerfile</code>). <code>ci-constraints.txt</code> is generated from <code>uv.lock</code>; CI pins a uv
+version (the <code>uv==</code> line in <code>.github/workflows/ci.yml</code>), and a different local
+version can produce a spurious diff. Regenerate and commit both files:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>uv<span class="w"> </span>lock
+</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>just<span class="w"> </span>update-constraints
+</span></code></pre></div>
+<p>Dependabot bumps <code>pyproject.toml</code> and <code>ci-constraints.txt</code> but not <code>uv.lock</code>;
+<code>just relock</code> (or the <code>dependabot-relock</code> workflow) reconciles it. Every
+<code>pip install</code> line in a Dockerfile except <code>--upgrade pip</code> must carry
+<code>-c ci-constraints.txt</code>.</p>
 <h2 id="what-ci-checks">What CI checks<a class="headerlink" href="#what-ci-checks" title="Permanent link">&para;</a></h2>
 <p>The blocking checks include:</p>
 <table>
@@ -3448,14 +3692,34 @@ the page specifies.</p>
 </table>
 <p>The workflow files under <code>.github/workflows/</code> are the current source of truth.
 Do not infer a green full matrix from one local test command.</p>
+<p>Pull requests that change only documentation (<code>docs/</code>, root and package-level
+<code>*.md</code>, <code>mkdocs.yml</code>, issue and PR templates, <code>.claude/</code>) skip the backend, UI and
+wire-format jobs; <code>lint</code> and the documentation-drift gates still run. Any other
+changed path runs the full pipeline.</p>
+<h3 id="governance-ratchets">Governance ratchets<a class="headerlink" href="#governance-ratchets" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Suppression ratchet.</strong> Adding a ruff <code>ignore</code>, a <code>per-file-ignores</code> entry,
+  or a mypy <code>ignore_errors</code> override beyond the counts in
+  <code>agentic-workflows-v2/.ruff-suppression-baseline.json</code> fails CI. Inline
+  <code># noqa</code> and <code># type: ignore</code> comments are not counted. Run
+  <code>python agentic-workflows-v2/scripts/check_suppression_ratchet.py</code>. After a
+  cleanup that shrinks a count, lock it in with the script's
+  <code>--update-baseline</code> flag. Silencing a lint error to get a change through is
+  a blocked path.</li>
+<li><strong>Coverage precision.</strong> The 80% gate uses <code>precision = 2</code>, so 79.93% fails
+  rather than rounding up.</li>
+<li><strong>Constraints pinning.</strong> Python jobs that install the project packages pass
+  <code>-c ci-constraints.txt</code>, which is generated from <code>uv.lock</code>; see
+  "Dependencies" above.</li>
+</ul>
 <h3 id="run-without-provider-keys">Run without provider keys<a class="headerlink" href="#run-without-provider-keys" title="Permanent link">&para;</a></h3>
 <p>Use:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AGENTIC_NO_LLM</span><span class="o">=</span><span class="m">1</span>
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>just<span class="w"> </span><span class="nb">test</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AGENTIC_NO_LLM</span><span class="o">=</span><span class="m">1</span>
+</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>just<span class="w"> </span><span class="nb">test</span>
 </span></code></pre></div>
 <p>PowerShell:</p>
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nv">$env:AGENTIC_NO_LLM</span> <span class="p">=</span> <span class="s2">"1"</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">just</span> <span class="n">test</span>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="nv">$env:AGENTIC_NO_LLM</span> <span class="p">=</span> <span class="s2">"1"</span>
+</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="n">just</span> <span class="n">test</span>
 </span></code></pre></div>
 <p>The <code>no-llm-smoke</code> CI job validates workflow loading, the deterministic run,
 the LangGraph placeholder path, and the unit suite without provider
@@ -3466,13 +3730,14 @@ behavior still need live or provider-specific tests.</p>
 <h2 id="change-generated-contracts">Change generated contracts<a class="headerlink" href="#change-generated-contracts" title="Permanent link">&para;</a></h2>
 <p>When a Pydantic event or server model changes, regenerate the committed
 schemas and TypeScript types:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nb">cd</span><span class="w"> </span>agentic-workflows-v2
-</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>python<span class="w"> </span>-m<span class="w"> </span>scripts.generate_ts_types
-</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="nb">cd</span><span class="w"> </span>ui
-</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>npm<span class="w"> </span>run<span class="w"> </span>generate:types
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="nb">cd</span><span class="w"> </span>agentic-workflows-v2
+</span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>python<span class="w"> </span>-m<span class="w"> </span>scripts.generate_ts_types
+</span><span id="__span-19-3"><a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="nb">cd</span><span class="w"> </span>ui
+</span><span id="__span-19-4"><a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>npm<span class="w"> </span>run<span class="w"> </span>generate:types
 </span></code></pre></div>
-<p>Review the generated diff. Do not edit generated TypeScript or JSON schema
-files by hand.</p>
+<p>Review the generated diff and check <code>git status --short</code> for new generated
+files, which <code>git diff</code> alone does not show. Do not edit generated TypeScript
+or JSON schema files by hand.</p>
 <h2 id="write-documentation">Write documentation<a class="headerlink" href="#write-documentation" title="Permanent link">&para;</a></h2>
 <p>Use the shortest page that answers the reader's task. Prefer:</p>
 <ul>
@@ -3547,16 +3812,16 @@ the status of related decisions. Do not reuse a documented numbering gap.</p>
 <p>An ADR is not required for a local refactor that preserves public behavior.</p>
 <h2 id="commit">Commit<a class="headerlink" href="#commit" title="Permanent link">&para;</a></h2>
 <p>Use Conventional Commits:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>feat(ui): add run filter
-</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>fix(server): validate adapter override
-</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>docs(rag): correct CLI persistence limits
-</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>test(engine): cover timeout cancellation
+<div class="language-text highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>feat(ui): add run filter
+</span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>fix(server): validate adapter override
+</span><span id="__span-20-3"><a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>docs(engine): correct CLI persistence limits
+</span><span id="__span-20-4"><a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>test(engine): cover timeout cancellation
 </span></code></pre></div>
 <p>Use a short, present-tense subject and keep one concern per commit. Temporary
 <code>wip</code> commits may be used on a feature branch but must be squashed before
 merge.</p>
 <p>Install the commit-message hook with:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>pre-commit<span class="w"> </span>install<span class="w"> </span>--install-hooks
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>pre-commit<span class="w"> </span>install<span class="w"> </span>--install-hooks
 </span></code></pre></div>
 <p>The repository removes AI-assistant co-author trailers. Human and service-bot
 co-authors are preserved.</p>
@@ -3568,19 +3833,23 @@ co-authors are preserved.</p>
 <li>tests and commands that passed;</li>
 <li>known checks that were not run and why;</li>
 <li>linked issues or ADRs;</li>
-<li>screenshots for visible UI changes; and</li>
-<li>migration or rollout notes when behavior changes.</li>
+<li>screenshots for visible UI changes;</li>
+<li>migration or rollout notes when behavior changes; and</li>
+<li>how to roll back. <code>main</code> is protected, so a revert lands as a revert pull
+  request.</li>
 </ul>
-<p>Use this checklist:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>- [ ] Change is focused and package boundaries are preserved
-</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>- [ ] Regression tests cover the behavior change
-</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>- [ ] just test passed, or narrower checks and omissions are listed
-</span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>- [ ] just docs passed
-</span><span id="__span-13-5"><a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>- [ ] pre-commit run --all-files passed
-</span><span id="__span-13-6"><a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>- [ ] UI build passed when frontend or wire contracts changed
-</span><span id="__span-13-7"><a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>- [ ] Documentation and CHANGELOG.md are updated when needed
-</span><span id="__span-13-8"><a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>- [ ] No credentials, .env files, run data, or private customer data are included
-</span><span id="__span-13-9"><a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>- [ ] Commit messages use Conventional Commits
+<p>The pull request template in <code>.github/PULL_REQUEST_TEMPLATE.md</code> carries this
+checklist and the per-surface checks:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>- [ ] Change is focused and package boundaries are preserved
+</span><span id="__span-22-2"><a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>- [ ] Regression tests cover the behavior change
+</span><span id="__span-22-3"><a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>- [ ] just test passed, or narrower checks and omissions are listed
+</span><span id="__span-22-4"><a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>- [ ] just docs passed
+</span><span id="__span-22-5"><a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>- [ ] pre-commit run --all-files passed
+</span><span id="__span-22-6"><a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>- [ ] The checks for each surface you changed passed
+</span><span id="__span-22-7"><a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>- [ ] UI build passed when frontend or wire contracts changed
+</span><span id="__span-22-8"><a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>- [ ] Documentation and CHANGELOG.md are updated when needed
+</span><span id="__span-22-9"><a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a>- [ ] No credentials, .env files, run data, or private customer data are included
+</span><span id="__span-22-10"><a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>- [ ] Commit messages use Conventional Commits
 </span></code></pre></div>
 <h2 id="security-reports">Security reports<a class="headerlink" href="#security-reports" title="Permanent link">&para;</a></h2>
 <p>Do not open a public issue for a vulnerability. Follow
@@ -3618,7 +3887,7 @@ reviewing the existing provider path.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 18, 2026 15:39:13 UTC">October 18, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 18, 2026 16:53:41 UTC">October 18, 2026</span>
   </span>
 
     
