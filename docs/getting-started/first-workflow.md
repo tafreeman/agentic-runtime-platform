@@ -109,7 +109,7 @@ PowerShell:
 
 ```powershell
 '{"input_text":"hello"}' |
-  Set-Content -Encoding utf8 .\my-first-input.json
+  Set-Content -Encoding ascii .\my-first-input.json
 ```
 
 ## 4. Run

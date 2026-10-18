@@ -16,7 +16,7 @@ The repository contains three Python packages and one Node application:
 | `agentic-v2-eval/` | `agentic-v2-eval` | Rubrics, evaluators, runners, and reporters |
 | `agentic-workflows-v2/ui/` | private npm package | React dashboard |
 
-Use Python 3.11 or newer and Node.js 20 or newer.
+Use Python 3.11 or newer and Node.js 22.22.2 or newer (CI uses Node 22).
 
 ## Full development setup
 
@@ -32,6 +32,13 @@ packages, and installs the UI dependencies:
 
 ```bash
 just setup
+```
+
+`just setup` installs into `.venv` but does not activate it in your shell.
+Activate it before using the `agentic` command:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
 ```
 
 The current `justfile` selects `powershell.exe`. Use the manual setup below on
@@ -94,6 +101,8 @@ Extras are declared in `agentic-workflows-v2/pyproject.toml`.
 | `langchain` | The default adapter for named YAML workflows and LangGraph compilation during validation |
 | `tracing` | OpenTelemetry SDK, OTLP exporters, Prometheus exporter, and client |
 | `ek` | ExecutionKit integration |
+| `eval` | The `agentic-evalkit` scoring bridge ([ADR-042](../adr/ADR-042-agentic-evalkit-adoption.md)) |
+| `swe-ab` | `pandas`, used to build SWE-bench cases for `agentic-workflows-v2/evals/swe_ab` |
 | `devex` | Process inspection used by development commands |
 | `mcp` | WebSocket transport for the MCP client |
 | `redis` | Redis-backed shared state and replay storage |
@@ -127,10 +136,15 @@ PowerShell:
 
 ```powershell
 '{"input_text":"hello"}' |
-  Set-Content -Encoding utf8 .\agentic-input.json
+  Set-Content -Encoding ascii .\agentic-input.json
 $env:AGENTIC_NO_LLM = "1"
 agentic run test_deterministic --input .\agentic-input.json
 ```
+
+Use `-Encoding ascii` here: Windows PowerShell 5.1 writes a byte-order mark
+with `-Encoding utf8`, which the CLI rejects. The repository also ships a
+ready-made input at
+`agentic-workflows-v2/tests/fixtures/deterministic_input.json`.
 
 Expected result: `Status: SUCCESS`.
 
