@@ -17,7 +17,7 @@ The `ci.yml` workflow contains the jobs below, all on `ubuntu-latest`. On pull r
 | `changes` | PR-only path classification (backend / UI / wire-format surfaces) that drives the job-level gates below |
 | `python-smoke` | Installs all three packages, verifies critical imports and combined runtime + eval test collection, and runs the swe_ab tool tests and `tools/tests` (the runtime unit suite runs in `test-coverage` and `no-llm-smoke`) |
 | `frontend-build` | `npm ci`, the production build (`tsc -b && vite build`), then the vitest unit suite with the coverage floors (`npm run test:coverage`) |
-| `lint` | Ruff on `agentic_v2/` and `tests/` (and a final check that `ruff check --fix` would change nothing), the suppression ratchet, pydocstyle on `core/` and `contracts/`, workflow-definition validation, protocol/ADR and local-reference drift checks, generated homepage-stat drift, Dockerfile `pip install` constraint pins, and `ci-constraints.txt` vs `uv.lock` drift. Each check is its own step and all of them report even when one fails |
+| `lint` | Ruff on `agentic_v2/` and `tests/` (and a final check that `ruff check --fix` would change nothing), the suppression ratchet, pydocstyle on `core/` and `contracts/`, workflow-definition validation, protocol/ADR and local-reference drift checks, generated homepage-stat drift, Dockerfile `pip install` constraint pins, and `ci-constraints.txt` vs `uv.lock` drift. Each check is its own step so one failure does not hide the others (the autofix check only runs when ruff itself passed, and the checks that need the pip install are skipped if it failed) |
 | `typecheck-core-contracts` | Strict mypy on `agentic_v2/engine` and `agentic_v2/contracts` (`--disallow-untyped-defs --warn-return-any`) |
 | `test-coverage` | Unit suite with coverage on `agentic_v2`, then enforces the 80% gate in a dedicated `coverage report --fail-under=80` step; on pushes to `main` it also runs a whole-repo coverage pass and uploads the report for visibility |
 | `ek-delegation-tests` (check name: `EK step-delegation (approval-gate) tests`) | Installs the optional `claude`, `ek` and `eval` extras together and runs the suites that module-skip everywhere else: the Claude subscription backend, the ExecutionKit approval-gate regressions, the EvalKit bridge, and scoring without the legacy evaluation package |
@@ -33,7 +33,7 @@ The other workflows in `.github/workflows/`:
 
 | File | Purpose |
 |---|---|
-| `codeql.yml` | CodeQL static analysis on push, PR and weekly; on docs-only PRs the analysis steps are skipped but the check still reports |
+| `codeql.yml` | CodeQL static analysis on push, PR and weekly; markdown/image/LICENSE/proofs-only PRs skip the analysis steps but the check still reports |
 | `dependabot-auto-merge.yml` | Auto-merges passing Dependabot PRs |
 | `dependency-audit.yml` | pip-audit (Python packages) and npm audit (UI) CVE scans |
 | `dependency-review.yml` | Dependency license and vulnerability review on PRs |
@@ -42,8 +42,7 @@ The other workflows in `.github/workflows/`:
 | `docs.yml` | Builds and deploys the docs site to GitHub Pages (the only Pages publisher; also regenerates and verifies the load report from `load/results/*.json`) |
 | `eval-package-ci.yml` | Isolated CI for the `agentic-v2-eval` package |
 | `infra-deploy.yml` | Reference infrastructure deployment workflow (manual dispatch only; never run automatically) |
-| `manifest-temperature-check.yml` | Detects drift in `run-manifest.yaml` model temperature defaults |
-| `nightly.yml` | Nightly E2E reliability run (scheduled): the full Playwright suite 5x, then the streaming spec 50x feeding the flake-rate and SLO gates |
+| `nightly.yml` | Nightly E2E reliability run (scheduled): the streaming spec 50x feeding the flake-rate gate, the first-span SLO sample, the SLO-data publish, then the full Playwright suite 5x |
 | `sbom.yml` | SBOM generation on release and weekly |
 | `weekly-telemetry-snapshot.yml` | Weekly CI-run statistics (and optional repository traffic) appended to a rolling ledger issue; never a PR check |
 | `windows-workflows-ci.yml` | Windows workflow verification |

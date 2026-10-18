@@ -15,8 +15,9 @@
   checks are now merge-blocking.
 - **PR concurrency.** A newer push cancels the superseded PR run; main-branch runs are
   never cancelled. The non-existent `agenticv2` branch is gone from every trigger.
-- **Playwright runs once per PR.** The 5x repeat moved to `nightly.yml` (full suite
-  5x, then the streaming spec 50x).
+- **Playwright runs once per PR.** The 5x repeat moved to `nightly.yml`, which now
+  runs the streaming spec 50x, the first-span sample, the SLO-data publish, then the
+  full suite 5x (last, so it cannot affect SLO publishing).
 - **Pages publishing is one workflow.** `load-report-pages.yml` is folded into
   `docs.yml` (serialized, with the load-report drift check), which also fixes three
   broken links that had failed the strict docs build.

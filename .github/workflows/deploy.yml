@@ -20,6 +20,8 @@ on:
       - "release-manifest.toml"
       - "scripts/verify_release_artifacts.py"
       - "pyproject.toml"
+      - "uv.lock"
+      - "ci-constraints.txt"
       - "tools/**"
       - "agentic-workflows-v2/**"
       - "agentic-v2-eval/**"
