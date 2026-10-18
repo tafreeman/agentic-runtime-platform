@@ -8,7 +8,7 @@ name: Lean scheduler model and replay
 
 on:
   push:
-    branches: [main, agenticv2]
+    branches: [main]
     paths:
       - 'proofs/**'
       - 'agentic-workflows-v2/agentic_v2/engine/dag*.py'
@@ -21,7 +21,7 @@ on:
       - 'agentic-workflows-v2/agentic_v2/agents/orchestrator*.py'
       - '.github/workflows/lean-proofs.yml'
   pull_request:
-    branches: [main, agenticv2]
+    branches: [main]
     paths:
       - 'proofs/**'
       - 'agentic-workflows-v2/agentic_v2/engine/dag*.py'
@@ -35,6 +35,8 @@ on:
       - '.github/workflows/lean-proofs.yml'
 
   # The n=4 exhaustive tier is too long for a PR; it runs nightly and on demand.
+  # The nightly run is skipped when main has not moved since the last successful
+  # n=4 run (see the `nightly-gate` job); it is still forced at least weekly.
   schedule:
     - cron: '17 4 * * *'
   workflow_dispatch:
@@ -42,8 +44,85 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  # PRs: one group per PR number, newer push cancels the older run. Everything
+  # else (push to main, schedule, dispatch): group per run, never cancelled.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
+  nightly-gate:
+    # Scheduled runs only. Lean (pinned by lean-toolchain / lake-manifest) and
+    # the replay are deterministic, so re-running n=4 on a commit that already
+    # passed it tells us nothing new -- about a third of the nightly runs were
+    # exactly that (main idle). Skip when the last SUCCESSFUL run of this workflow
+    # on main that executed the n=4 tier (event schedule or workflow_dispatch)
+    # tested this same SHA and is under MAX_AGE_DAYS old; the weekly refresh still
+    # catches drift in the floating inputs (runner image, lean-action@v1,
+    # pip-installed tooling). Fail OPEN: any API problem means "run". This is a
+    # different trade-off from nightly.yml, where repeated same-SHA runs ARE the
+    # measurement (flake rate), so that workflow is deliberately not gated.
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      skip: ${{ steps.gate.outputs.skip }}
+    steps:
+      - name: Has this commit already passed the n=4 tier recently?
+        id: gate
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          MAX_AGE_DAYS: "7"
+        run: |
+          set -uo pipefail
+          skip=false
+          # Candidates: successful scheduled/dispatched runs on main for this
+          # SHA, newest first. A run only counts if its `lean-replay` JOB itself
+          # concluded success: a nightly that this gate skipped still concludes
+          # success at the run level, and counting it would make every later
+          # nightly skip too, so the 7-day refresh would never fire.
+          if candidates=$(gh api "repos/${GH_REPO}/actions/workflows/lean-proofs.yml/runs?branch=main&status=success&per_page=50" --jq '
+              [.workflow_runs[]
+               | select(.head_sha == env.SHA and (.event == "schedule" or .event == "workflow_dispatch"))]
+              | sort_by(.created_at) | reverse | .[:10][]
+              | "\(.id) \(.created_at)"'); then
+            newest=""
+            while read -r run_id created_at; do
+              [ -n "$run_id" ] || continue
+              passed=$(gh api "repos/${GH_REPO}/actions/runs/${run_id}/jobs" --jq '[.jobs[] | select(.name == "lean-replay" and .conclusion == "success")] | length') || passed=0
+              if [ "${passed:-0}" -gt 0 ]; then
+                newest="$created_at"
+                break
+              fi
+            done <<< "$candidates"
+            if [ -n "$newest" ]; then
+              age_days=$(( ( $(date -u +%s) - $(date -u -d "$newest" +%s) ) / 86400 ))
+              if [ "$age_days" -lt "$MAX_AGE_DAYS" ]; then
+                skip=true
+                echo "Skipping: ${SHA:0:8} already passed the n=4 tier ${age_days}d ago (refresh after ${MAX_AGE_DAYS}d)."
+              else
+                echo "Running: last n=4 pass for ${SHA:0:8} is ${age_days}d old (>= ${MAX_AGE_DAYS}d refresh)."
+              fi
+            else
+              echo "Running: no run whose lean-replay job passed recorded for ${SHA:0:8}."
+            fi
+          else
+            echo "::warning::could not list workflow runs; running the nightly tier"
+          fi
+          echo "skip=$skip" >> "$GITHUB_OUTPUT"
+
   lean-replay:
+    # Not a required check. Runs for push/PR/dispatch always, and for the
+    # nightly unless nightly-gate said skip. `!cancelled()` plus the empty-output
+    # case (gate skipped on non-schedule events, or failed) means fail-open.
+    needs: nightly-gate
+    if: ${{ !cancelled() && needs.nightly-gate.outputs.skip != 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: ${{ github.event_name == 'pull_request' && 20 || 60 }}
     env:

@@ -10,9 +10,9 @@
 # `agentic_v2/scoring/evalkit_bridge.py`) with no consumer contract test on
 # the upstream side. A tight pin protects TODAY's build.
 #
-# It does nothing for TOMORROW's. `ci.yml`'s `ek-delegation-tests` and
-# `evalkit-bridge-tests` jobs are the only places CI ever exercises these two
-# integrations, and both always install with `-c ci-constraints.txt` — the
+# It does nothing for TOMORROW's. `ci.yml`'s consolidated `ek-delegation-tests`
+# job (its EK and EvalKit steps) is the only place CI ever exercises these two
+# integrations, and it always installs with `-c ci-constraints.txt` — the
 # exact lockfile-pinned versions. Nobody finds out a new EK or EVK release
 # breaks ARP's usage until someone manually bumps the upper bound in
 # pyproject.toml, by which point the incompatible release is already the one
@@ -94,7 +94,7 @@ jobs:
             -q --timeout=120
 
   evalkit-bridge-drift:
-    # Unpinned mirror of ci.yml's evalkit-bridge-tests job — same reasoning
+    # Unpinned mirror of the EvalKit steps of ci.yml's ek-delegation-tests job — same reasoning
     # as ek-delegation-drift above, for the `eval` extra instead.
     name: EvalKit bridge drift check (unpinned eval extra)
     runs-on: ubuntu-latest

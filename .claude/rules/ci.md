@@ -20,6 +20,22 @@ CI runs the unit suite with `-m "not integration and not slow"` and
 `--ignore=tests/e2e` (marker conventions and the `asyncio_mode` setting are in
 the imported testing rules).
 
+## Required checks and path gating
+
+The job ids / names in `ci.yml` (and `codeql.yml`, `eval-package-ci.yml`) are branch-
+protection contexts: see the header comment of `ci.yml` for the list. Never rename one,
+add a `name:` to one that has none, or add a workflow-level `paths:` / `paths-ignore:`
+to a workflow that provides a required check. PR path gating is job-level only (the
+`changes` job in `ci.yml`): a skipped job reports success, `lint` is never skipped,
+pushes to `main` run everything, and the gates fail open. A change to a gated job's
+inputs must also update the `changes` filters. The `ek-delegation-tests` job (check
+name `EK step-delegation (approval-gate) tests`) also carries the claude, EvalKit and
+scoring-without-legacy suites; the former `claude-subscription-tests`,
+`evalkit-bridge-tests`, `tools-tests`, `frontend-test`, `suppression-ratchet`,
+`pydocstyle`, `validate-workflows`, `check-doc-drift`, `doc-stats-drift`,
+`lockfile-constraints` and `dockerfile-constraints` jobs no longer exist -- their checks
+are steps of `ek-delegation-tests`, `python-smoke`, `frontend-build` and `lint`.
+
 ## Running without provider credentials
 
 Set `AGENTIC_NO_LLM=1` to force every tier-1/tier-2 agent onto the deterministic
@@ -38,8 +54,8 @@ failure exit code reliably).
 
 UI: vitest coverage floors (branches ≥56, ratcheting toward 60; statements/
 functions/lines ≥60) defined in `ui/vitest.config.ts` and enforced by the
-`frontend-test` CI job (`npm run test:coverage`, which runs `vitest run
---coverage`). The branches floor is a deliberate ratchet — it may only move up
+`frontend-build` CI job, a required check (its `npm run test:coverage` step, which
+runs `vitest run --coverage`, alongside `npm run build`). The branches floor is a deliberate ratchet — it may only move up
 as coverage improves, never down; see the comment above the thresholds in
 `vitest.config.ts` for the full policy.
 

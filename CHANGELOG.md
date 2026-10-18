@@ -1,5 +1,28 @@
 # Changelog
 
+## Unreleased - CI pruning: fewer jobs, same required checks
+
+- **No required status check changed.** Every required context keeps its job id
+  and name; path gating is job-level only (a `changes` job in `ci.yml` and
+  `eval-package-ci.yml`, CodeQL gates its steps), pushes to `main` run
+  everything, and the gates fail open.
+- **Consolidated jobs.** `lint` now also runs the suppression ratchet, pydocstyle,
+  workflow validation, doc-drift and homepage-stat checks, the Dockerfile
+  constraint pins and the `ci-constraints.txt` vs `uv.lock` check;
+  `ek-delegation-tests` also runs the claude, EvalKit and scoring-without-legacy
+  suites; `python-smoke` also runs `tools/tests` and no longer repeats the runtime
+  unit suite; `frontend-build` also runs the vitest coverage gate. The absorbed
+  checks are now merge-blocking.
+- **PR concurrency.** A newer push cancels the superseded PR run; main-branch runs are
+  never cancelled. The non-existent `agenticv2` branch is gone from every trigger.
+- **Playwright runs once per PR.** The 5x repeat moved to `nightly.yml`, which now
+  runs the streaming spec 50x, the first-span sample, the SLO-data publish, then the
+  full suite 5x (last, so it cannot affect SLO publishing).
+- **Pages publishing is one workflow.** `load-report-pages.yml` is folded into
+  `docs.yml` (serialized, with the load-report drift check), which also fixes three
+  broken links that had failed the strict docs build.
+- **New:** `weekly-telemetry-snapshot.yml` (CI-run statistics ledger).
+
 ## Unreleased - Discovered ONNX models run in chat, with weight verification
 
 - **`onnx:<folder>` model ids now work in `/api/chat` and `get_chat_model`.**

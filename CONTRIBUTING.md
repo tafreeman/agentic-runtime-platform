@@ -152,8 +152,8 @@ The blocking checks include:
 | Wire-format drift | Pydantic schemas and generated TypeScript types |
 | Documentation drift | Workflow validation, architecture protocol names, local references, and generated homepage statistics |
 | Security and dependencies | Secret detection, CodeQL, dependency review, and audit workflows |
-| E2E streaming | Repeated Playwright streaming path |
-| Optional ExecutionKit path | Dedicated tests with the `ek` extra installed |
+| E2E streaming | Full Playwright e2e suite once per PR; repeat-run flake detection (full suite 5x, streaming spec 50x) runs nightly |
+| Optional extras (`ek`, `eval`, `claude`) | Dedicated tests with those extras installed together, in the `EK step-delegation (approval-gate) tests` job |
 
 The workflow files under `.github/workflows/` are the current source of truth.
 Do not infer a green full matrix from one local test command.

@@ -4,9 +4,9 @@ name: Relock Dependabot pip PR
 # alerts raised against the generated ci-constraints.txt, that file
 # directly) but never touches uv.lock — see dependabot.yml and the
 # justfile's `relock` recipe. `uv export --locked` in the
-# "ci-constraints.txt in sync with uv.lock" CI job then hard-fails with
-# "the lockfile needs to be updated" before it ever reaches the diff check,
-# so every pip Dependabot PR opens red on a required check. The fix was
+# "ci-constraints.txt in sync with uv.lock" step of the `lint` CI job then
+# hard-fails with "the lockfile needs to be updated" before it ever reaches the
+# diff check, so every pip Dependabot PR opens red on a required check. The fix was
 # already documented as a manual step — clone, `just relock`, review,
 # commit, push — the `relock` job below runs those same three commands on
 # demand so a maintainer can unblock a PR from the Actions tab instead of a
@@ -126,8 +126,8 @@ jobs:
           python-version: "3.11"
 
       - name: Relock uv.lock and regenerate ci-constraints.txt
-        # Pins the same uv version the lockfile-constraints CI job uses so the
-        # two never disagree over what "in sync" means.
+        # Pins the same uv version the `lint` CI job's ci-constraints.txt step
+        # uses so the two never disagree over what "in sync" means.
         #
         # Deliberately `uv lock`, NOT `uv lock --upgrade` as `just relock` does.
         # The failure being fixed is that Dependabot edits pyproject.toml and
@@ -174,11 +174,13 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # No checkout here: this job only calls `gh pr list` / `gh pr view` and jq
+      # (preinstalled on ubuntu runners). `gh` normally infers the repo from the
+      # checkout's git remote, so name it explicitly instead.
+      GH_REPO: ${{ github.repository }}
     outputs:
       prs: ${{ steps.list.outputs.prs }}
     steps:
-      - uses: actions/checkout@v7
-
       - name: List open Dependabot pip/uv PRs
         id: list
         run: |

@@ -1,16 +1,28 @@
 # CodeQL SAST analysis for Python and TypeScript. Results appear in GitHub Security tab →
 # Code scanning alerts. Free for public repositories. Implements NIST SP 800-218 SSDF
 # PW.7.1 (use automated testing for vulnerabilities).
+#
+# REQUIRED status checks on main: "Analyze (python)" and "Analyze (javascript-typescript)".
+# Never add workflow-level `paths:` / `paths-ignore:` to this workflow, and never
+# give the matrix job a job-level `if:` -- either leaves the required contexts at
+# "Expected" (a skipped matrix job reports its UNEXPANDED name). Docs-only PRs are
+# handled by gating the expensive STEPS instead, so the job always reports.
 
 name: CodeQL
 
 on:
   push:
-    branches: [main, agenticv2]
+    branches: [main]
   pull_request:
-    branches: [main, agenticv2]
+    branches: [main]
   schedule:
     - cron: '0 2 * * 0'  # Weekly Sunday 2am UTC
+
+concurrency:
+  # PRs: one group per PR number, newer push cancels the older run. Everything
+  # else (push to main, schedule): group per run, never cancelled.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   analyze:
@@ -19,6 +31,7 @@ jobs:
     permissions:
       actions: read
       contents: read
+      pull-requests: read
       security-events: write
 
     strategy:
@@ -27,18 +40,51 @@ jobs:
         language: [python, javascript-typescript]
 
     steps:
+      # PR-only scope check. The job ALWAYS runs so both required contexts
+      # always report; only the expensive steps are skipped, and only when every
+      # changed file is something CodeQL can never read (markdown, images,
+      # LICENSE, issue templates, Lean proofs). docs/** is deliberately NOT
+      # ignored: it holds .html and .json files the JS extractor reads.
+      # continue-on-error => on any API failure the output is empty and the
+      # analysis RUNS (fail-open to analyzing). Push and schedule runs skip this
+      # step, so their outputs are empty and everything runs.
+      - name: Detect PRs CodeQL cannot be affected by
+        id: scope
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        uses: dorny/paths-filter@v4
+        with:
+          predicate-quantifier: every
+          filters: |
+            analyzable:
+              - '**'
+              - '!**/*.md'
+              - '!**/*.png'
+              - '!**/*.jpg'
+              - '!**/*.jpeg'
+              - '!**/*.gif'
+              - '!LICENSE'
+              - '!proofs/**'
+              - '!.github/ISSUE_TEMPLATE/**'
+              - '!.github/PULL_REQUEST_TEMPLATE.md'
+              - '!.github/CODEOWNERS'
+
       - name: Checkout repository
+        if: steps.scope.outputs.analyzable != 'false'
         uses: actions/checkout@v7
 
       - name: Initialize CodeQL
+        if: steps.scope.outputs.analyzable != 'false'
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
 
       - name: Autobuild
+        if: steps.scope.outputs.analyzable != 'false'
         uses: github/codeql-action/autobuild@v4
 
       - name: Perform CodeQL Analysis
+        if: steps.scope.outputs.analyzable != 'false'
         uses: github/codeql-action/analyze@v4
         with:
           category: "/language:${{ matrix.language }}"
