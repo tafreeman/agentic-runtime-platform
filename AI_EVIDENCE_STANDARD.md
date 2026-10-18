@@ -63,8 +63,8 @@ Claim: Workflow inputs are validated against the selected workflow schema.
 Evidence level: TEST-VERIFIED
 Scope: FastAPI POST /api/run
 Evidence: agentic_v2/server/routes/workflows.py
-Command or test: python -m pytest tests/test_server_workflows.py -q
-Observed result: Invalid inputs returned HTTP 400 in the tested cases.
+Command or test: python -m pytest agentic-workflows-v2/tests/server/test_run_input_validation.py -q
+Observed result: Missing or empty required inputs returned HTTP 422 in the tested cases.
 Limits: Does not cover every workflow or external reverse-proxy behavior.
 Verified: 2026-07-28
 ```
