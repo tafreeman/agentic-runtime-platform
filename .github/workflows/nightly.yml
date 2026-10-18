@@ -10,7 +10,12 @@ permissions:
 
 jobs:
   streaming-50x:
+    # Two repeat-run flake sensors live here: the streaming spec 50x (feeds the
+    # rolling flake-rate / SLO gates) and the FULL Playwright suite 5x (last
+    # step). PRs run the full suite once (ci.yml e2e-streaming); repeated-run
+    # detection for the non-streaming specs happens here instead.
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     defaults:
       run:
         shell: bash
@@ -112,13 +117,46 @@ jobs:
             git push --force origin slo-data
           fi
 
+      # Repeat-run flake detection for the WHOLE Playwright suite (every spec
+      # under ui/e2e, not just streaming). PRs run the suite once; this is the
+      # only place the 12 non-streaming specs are repeated. Deliberately the
+      # LAST step so it cannot interfere with the SLO bookkeeping above:
+      #   * it runs AFTER "Publish SLO data", so the first-span samples that
+      #     slo-first-span.spec.ts appends to the working tree during these
+      #     runs are discarded with the runner, never published;
+      #   * it is BLOCKING (no continue-on-error), unlike the 50x sensor, because
+      #     there is no rolling-rate gate behind it -- run-e2e-5x.mjs aborts on
+      #     the first failing iteration, and that failure IS the signal (it used
+      #     to block the PR; now it turns the nightly red);
+      #   * `!cancelled()` lets it run even when the flake gate above failed, so
+      #     one signal never hides the other.
+      - name: Run full E2E suite 5x
+        id: e2e5x
+        if: ${{ !cancelled() }}
+        working-directory: agentic-workflows-v2/ui
+        env:
+          AGENTIC_NO_LLM: "1"
+        run: npm run test:e2e:5x
+
+      - name: Upload Playwright artifacts on failure
+        if: ${{ !cancelled() && steps.e2e5x.outcome == 'failure' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-artifacts-nightly
+          path: |
+            agentic-workflows-v2/ui/test-results/
+            agentic-workflows-v2/ui/playwright-report/
+            agentic-workflows-v2/ui/e2e-results.json
+          retention-days: 14
+          if-no-files-found: ignore
+
   # ---------------------------------------------------------------------------
   # Gate: compare the committed load/results/*.json against load/baseline.json.
   # The load test itself runs locally and its JSON summaries are committed (see
   # load/README.md). This job enforces that what is committed never regresses
   # beyond 2x p99 latency or below 0.5x throughput of the baseline, so a
   # committed result that would breach the threshold fails the nightly before
-  # the load-report-pages.yml workflow publishes it.
+  # the docs.yml workflow publishes it.
   # ---------------------------------------------------------------------------
   performance-regression:
     runs-on: ubuntu-latest

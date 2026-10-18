@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// Epic 2 Story 2.2 — run the Playwright streaming spec 5 times in a row
-// and abort on the first failure. Cross-platform replacement for the
+// Epic 2 Story 2.2 — run the full Playwright suite (`npm run test:e2e`, every
+// spec under e2e/) 5 times in a row and abort on the first failure. PRs run
+// the suite once; nightly.yml runs this script for repeat-run flake detection. Cross-platform replacement for the
 // bash for-loop in the plan (needed because contributors run this on
 // Windows PowerShell + Git Bash + Linux CI).
 import { spawnSync } from 'node:child_process';
