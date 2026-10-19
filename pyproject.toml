@@ -34,9 +34,9 @@ dev = [
     "pytest-mock>=3.16.0",
     "pytest-timeout>=2.2",
     "black>=26.10.0",
-    "ruff>=0.16.10",
+    "ruff>=0.17.1",
     "mypy>=2.4.0",
-    "pre-commit>=4.6.2",
+    "pre-commit>=4.7.0",
 ]
 
 # The root project (`agentic-tools`) owns `tools/`; workspace members list

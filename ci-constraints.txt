@@ -77,7 +77,7 @@ colorama==0.4.6 ; sys_platform == 'win32'
     #   pytest
     #   tqdm
     #   typer
-coverage==7.13.5
+coverage==7.16.2
     # via pytest-cov
 cryptography==50.0.2
     # via
@@ -95,7 +95,7 @@ docstring-parser==0.18.0
     # via anthropic
 executionkit==0.4.0
     # via agentic-workflows-v2
-fakeredis==2.35.1
+fakeredis==2.40.0
     # via agentic-workflows-v2
 fastapi==0.142.2
     # via agentic-workflows-v2
@@ -363,7 +363,7 @@ pluggy==1.6.0
     # via
     #   pytest
     #   pytest-cov
-pre-commit==4.6.2
+pre-commit==4.7.0
 prometheus-client==0.26.0
     # via
     #   agentic-workflows-v2
@@ -504,7 +504,7 @@ rpds-py==2026.6.3
     # via
     #   jsonschema
     #   referencing
-ruff==0.16.10
+ruff==0.17.1
     # via
     #   agentic-v2-eval
     #   agentic-workflows-v2
@@ -556,7 +556,7 @@ typer==0.27.2
     # via
     #   agentic-evalkit
     #   agentic-workflows-v2
-types-pyyaml==6.0.12.20260408
+types-pyyaml==6.0.12.20260906
     # via agentic-v2-eval
 typing-extensions==4.16.0
     # via
