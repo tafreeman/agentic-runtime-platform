@@ -32,10 +32,11 @@ DECLARED_REV_RE = re.compile(
 def _check_revision(texts: list[str]) -> None:
     """Refuse to assemble narrative that describes a different revision than the data.
 
-    The sections are hand-written against one revision; the JSON is regenerated
-    per run. Mixing them produces a report dated today whose body describes an
-    older tree than its numbers. Every declaration in the front matter and in
-    each section is checked, not just the first form.
+    The sections are hand-written against one revision; the JSON is
+    regenerated per run. Mixing them produces a report dated today whose
+    body describes an older tree than its numbers. Every declaration in
+    the front matter and in each section is checked, not just the first
+    form.
     """
     data = json.loads(
         (INV / "data" / "meta_inventory.json").read_text(encoding="utf-8")
