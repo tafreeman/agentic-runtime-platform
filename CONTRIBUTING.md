@@ -239,11 +239,14 @@ just dev-stop
 cd agentic-workflows-v2/ui
 npx playwright install chromium
 npm run test:e2e -- streaming.spec.ts
+npm run test:e2e
 npm run test:e2e:5x
 ```
 
-The single spec is the fast subset. `test:e2e:5x` runs the whole Playwright
-suite five times and is the flake gate the nightly workflow uses.
+The single spec is the fast subset. `npm run test:e2e` runs the whole suite
+once, which is what the `e2e-streaming` pull request check runs.
+`test:e2e:5x` runs the whole suite five times and is the flake gate the
+nightly workflow uses, not a pull request check.
 
 Evaluation (`agentic-v2-eval/`, `datasets/`, `scripts/eval_gate.py`, or
 `agentic_v2/scoring/`):
@@ -311,11 +314,12 @@ Dependabot bumps `pyproject.toml` and `ci-constraints.txt` but not `uv.lock`;
 `just relock` (or the `dependabot-relock` workflow) reconciles it. Every
 `pip install` line in a Dockerfile except `--upgrade pip` must carry
 `-c ci-constraints.txt`. The `lint` job blocks on this. Check it from the
-repository root; any line it prints is missing the constraints file:
+repository root. Like the CI step, it exits non-zero on a violation and
+prints each line that is missing the constraints file:
 
 ```bash
-grep -n "pip install" Dockerfile | grep -v -e "--upgrade pip" \
-  | grep -v -E -e "-c[[:space:]]+ci-constraints\.txt"
+! { grep -n "pip install" Dockerfile | grep -v -e "--upgrade pip" \
+  | grep -v -E -e "-c[[:space:]]+ci-constraints\.txt"; }
 ```
 
 ## What CI checks
@@ -355,7 +359,7 @@ run and cancels the superseded one).
 | `no-llm-smoke` | "Fast smoke check" above, plus `just test` |
 | `frontend-build` | `just ui-check` |
 | `wire-format-drift` | "Change generated contracts" below |
-| `e2e-streaming` | the Playwright commands under "Match the checks to what you changed" |
+| `e2e-streaming` | `npm run test:e2e` (the full Playwright suite, once) from the UI end-to-end block under "Match the checks to what you changed" |
 | `EK step-delegation (approval-gate) tests` | the "Optional extras" commands under "Match the checks to what you changed", ending with the legacy-package-absent scoring run |
 
 `python-smoke` does not run the runtime unit suite. It runs suites that
