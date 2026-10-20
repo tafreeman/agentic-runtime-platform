@@ -266,13 +266,15 @@ secrets configured it exits successfully as skipped, which is not evidence of
 a live pass.
 
 Optional extras. These test modules skip themselves when the extra is missing,
-so a green run proves nothing until the extra is installed. Install it and
-confirm the import first. Run the pytest commands from
+so a green run proves nothing until the extra is installed. Install all three
+together, as the `EK step-delegation (approval-gate) tests` job does, and
+confirm each import first. Run the pytest commands from
 `agentic-workflows-v2/`:
 
 ```bash
-python -m pip install -e "./agentic-workflows-v2[dev,server,mcp,langchain,tracing,ek]" -c ci-constraints.txt
-python -c "import executionkit"
+python -m pip install -e "./agentic-workflows-v2[dev,server,mcp,langchain,tracing,claude,ek,eval]" -c ci-constraints.txt
+python -m pip install -e "./agentic-v2-eval[dev]" -c ci-constraints.txt
+python -c "import claude_agent_sdk, executionkit, agentic_evalkit"
 cd agentic-workflows-v2
 python -m pytest tests/engine/test_step_ek_delegation.py tests/engine/test_step_tool_path.py \
   tests/models/test_ek_adapters.py tests/models/test_ek_provider.py \
@@ -280,9 +282,7 @@ python -m pytest tests/engine/test_step_ek_delegation.py tests/engine/test_step_
   -q --timeout=120
 ```
 
-- `eval` extra (also install `agentic-v2-eval[dev]`): confirm
-  `python -c "import agentic_evalkit"`, then run
-  `tests/test_evalkit_bridge.py`, `tests/test_scoring_policy_differential.py`,
+- `eval` extra: run `tests/test_evalkit_bridge.py`, `tests/test_scoring_policy_differential.py`,
   and `tests/contract/test_evalkit_boundary.py`.
 - Runtime scoring without the legacy eval package, which CI runs last because
   it uninstalls that package. Keep `agentic-evalkit` installed, run
@@ -291,8 +291,7 @@ python -m pytest tests/engine/test_step_ek_delegation.py tests/engine/test_step_
   from `agentic-workflows-v2/`. Reinstall afterwards with
   `python -m pip install -e "./agentic-v2-eval[dev]" -c ci-constraints.txt`
   from the repository root.
-- `claude` extra: confirm `python -c "import claude_agent_sdk"`, then run
-  `tests/models/test_backends_claude.py`, `tests/test_claude_sdk_agent.py`,
+- `claude` extra: run `tests/models/test_backends_claude.py`, `tests/test_claude_sdk_agent.py`,
   `tests/test_sdk_task_orchestrator_example.py`, and
   `tests/test_implementations_sanitization.py`.
 - `tools/` needs only `[dev]`: `python -m pytest tools/tests -q --timeout=120`
@@ -311,7 +310,13 @@ just update-constraints
 Dependabot bumps `pyproject.toml` and `ci-constraints.txt` but not `uv.lock`;
 `just relock` (or the `dependabot-relock` workflow) reconciles it. Every
 `pip install` line in a Dockerfile except `--upgrade pip` must carry
-`-c ci-constraints.txt`.
+`-c ci-constraints.txt`. The `lint` job blocks on this. Check it from the
+repository root; any line it prints is missing the constraints file:
+
+```bash
+grep -n "pip install" Dockerfile | grep -v -e "--upgrade pip" \
+  | grep -v -E -e "-c[[:space:]]+ci-constraints\.txt"
+```
 
 ## What CI checks
 
@@ -343,7 +348,7 @@ run and cancels the superseded one).
 
 | CI job | Reproduce with |
 |---|---|
-| `lint` | Ruff, the suppression ratchet and `pydocstyle` under "Runtime Python"; `just docs`; `python scripts/validate-workflows.py`; the constraints sync under "Dependencies" |
+| `lint` | Ruff, the suppression ratchet and `pydocstyle` under "Runtime Python"; `just docs`; `python scripts/validate-workflows.py`; the constraints sync and the Dockerfile pin check under "Dependencies" |
 | `Mypy (strict engine + contracts)` | the strict `mypy` command under "Runtime Python" |
 | `test-coverage` | the `pytest` and `coverage report --fail-under=80` commands under "Runtime Python" |
 | `python-smoke` | its own suites, below the table |
