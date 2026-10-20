@@ -2974,6 +2974,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#reproduce-a-ci-job-locally" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reproduce a CI job locally
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#governance-ratchets" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3241,6 +3252,17 @@
   
     <nav class="md-nav" aria-label="What CI checks">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#reproduce-a-ci-job-locally" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reproduce a CI job locally
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#governance-ratchets" class="md-nav__link">
@@ -3579,10 +3601,13 @@ and does not reuse running services, so stop <code>just dev</code> first.</p>
 </span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="nb">cd</span><span class="w"> </span>agentic-workflows-v2/ui
 </span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>npx<span class="w"> </span>playwright<span class="w"> </span>install<span class="w"> </span>chromium
 </span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>npm<span class="w"> </span>run<span class="w"> </span>test:e2e<span class="w"> </span>--<span class="w"> </span>streaming.spec.ts
-</span><span id="__span-13-5"><a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>npm<span class="w"> </span>run<span class="w"> </span>test:e2e:5x
+</span><span id="__span-13-5"><a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>npm<span class="w"> </span>run<span class="w"> </span>test:e2e
+</span><span id="__span-13-6"><a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>npm<span class="w"> </span>run<span class="w"> </span>test:e2e:5x
 </span></code></pre></div>
-<p>The single spec is the fast subset. <code>test:e2e:5x</code> runs the whole Playwright
-suite five times and is the flake gate the nightly workflow uses.</p>
+<p>The single spec is the fast subset. <code>npm run test:e2e</code> runs the whole suite
+once, which is what the <code>e2e-streaming</code> pull request check runs.
+<code>test:e2e:5x</code> runs the whole suite five times and is the flake gate the
+nightly workflow uses, not a pull request check.</p>
 <p>Evaluation (<code>agentic-v2-eval/</code>, <code>datasets/</code>, <code>scripts/eval_gate.py</code>, or
 <code>agentic_v2/scoring/</code>):</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nv">AGENTIC_NO_LLM</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>python<span class="w"> </span>scripts/eval_gate.py<span class="w"> </span><span class="se">\</span>
@@ -3600,24 +3625,30 @@ request that changes live provider routing or judge prompts. With no provider
 secrets configured it exits successfully as skipped, which is not evidence of
 a live pass.</p>
 <p>Optional extras. These test modules skip themselves when the extra is missing,
-so a green run proves nothing until the extra is installed. Install it and
-confirm the import first. Run the pytest commands from
+so a green run proves nothing until the extra is installed. Install all three
+together, as the <code>EK step-delegation (approval-gate) tests</code> job does, and
+confirm each import first. Run the pytest commands from
 <code>agentic-workflows-v2/</code>:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">"./agentic-workflows-v2[dev,server,mcp,langchain,tracing,ek]"</span><span class="w"> </span>-c<span class="w"> </span>ci-constraints.txt
-</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import executionkit"</span>
-</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="nb">cd</span><span class="w"> </span>agentic-workflows-v2
-</span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/engine/test_step_ek_delegation.py<span class="w"> </span>tests/engine/test_step_tool_path.py<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-15-5"><a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">  </span>tests/models/test_ek_adapters.py<span class="w"> </span>tests/models/test_ek_provider.py<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-15-6"><a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">  </span>tests/models/test_ek_provider_attempts.py<span class="w"> </span>tests/models/test_ek_provider_wrapper.py<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-15-7"><a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="w">  </span>-q<span class="w"> </span>--timeout<span class="o">=</span><span class="m">120</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">"./agentic-workflows-v2[dev,server,mcp,langchain,tracing,claude,ek,eval]"</span><span class="w"> </span>-c<span class="w"> </span>ci-constraints.txt
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">"./agentic-v2-eval[dev]"</span><span class="w"> </span>-c<span class="w"> </span>ci-constraints.txt
+</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import claude_agent_sdk, executionkit, agentic_evalkit"</span>
+</span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="nb">cd</span><span class="w"> </span>agentic-workflows-v2
+</span><span id="__span-15-5"><a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/engine/test_step_ek_delegation.py<span class="w"> </span>tests/engine/test_step_tool_path.py<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-15-6"><a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">  </span>tests/models/test_ek_adapters.py<span class="w"> </span>tests/models/test_ek_provider.py<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-15-7"><a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="w">  </span>tests/models/test_ek_provider_attempts.py<span class="w"> </span>tests/models/test_ek_provider_wrapper.py<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-15-8"><a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="w">  </span>-q<span class="w"> </span>--timeout<span class="o">=</span><span class="m">120</span>
 </span></code></pre></div>
 <ul>
-<li><code>eval</code> extra (also install <code>agentic-v2-eval[dev]</code>): confirm
-  <code>python -c "import agentic_evalkit"</code>, then run
-  <code>tests/test_evalkit_bridge.py</code>, <code>tests/test_scoring_policy_differential.py</code>,
+<li><code>eval</code> extra: run <code>tests/test_evalkit_bridge.py</code>, <code>tests/test_scoring_policy_differential.py</code>,
   and <code>tests/contract/test_evalkit_boundary.py</code>.</li>
-<li><code>claude</code> extra: confirm <code>python -c "import claude_agent_sdk"</code>, then run
-  <code>tests/models/test_backends_claude.py</code>, <code>tests/test_claude_sdk_agent.py</code>,
+<li>Runtime scoring without the legacy eval package, which CI runs last because
+  it uninstalls that package. Keep <code>agentic-evalkit</code> installed, run
+  <code>python -m pip uninstall -y agentic-v2-eval</code>, then
+  <code>python -m pytest tests/test_step_scoring_additional.py -q --timeout=120</code>
+  from <code>agentic-workflows-v2/</code>. Reinstall afterwards with
+  <code>python -m pip install -e "./agentic-v2-eval[dev]" -c ci-constraints.txt</code>
+  from the repository root.</li>
+<li><code>claude</code> extra: run <code>tests/models/test_backends_claude.py</code>, <code>tests/test_claude_sdk_agent.py</code>,
   <code>tests/test_sdk_task_orchestrator_example.py</code>, and
   <code>tests/test_implementations_sanitization.py</code>.</li>
 <li><code>tools/</code> needs only <code>[dev]</code>: <code>python -m pytest tools/tests -q --timeout=120</code>
@@ -3633,7 +3664,12 @@ version can produce a spurious diff. Regenerate and commit both files:</p>
 <p>Dependabot bumps <code>pyproject.toml</code> and <code>ci-constraints.txt</code> but not <code>uv.lock</code>;
 <code>just relock</code> (or the <code>dependabot-relock</code> workflow) reconciles it. Every
 <code>pip install</code> line in a Dockerfile except <code>--upgrade pip</code> must carry
-<code>-c ci-constraints.txt</code>.</p>
+<code>-c ci-constraints.txt</code>. The <code>lint</code> job blocks on this. Check it from the
+repository root. Like the CI step, it exits non-zero on a violation and
+prints each line that is missing the constraints file:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>!<span class="w"> </span><span class="o">{</span><span class="w"> </span>grep<span class="w"> </span>-n<span class="w"> </span><span class="s2">"pip install"</span><span class="w"> </span>Dockerfile<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-v<span class="w"> </span>-e<span class="w"> </span><span class="s2">"--upgrade pip"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-v<span class="w"> </span>-E<span class="w"> </span>-e<span class="w"> </span><span class="s2">"-c[[:space:]]+ci-constraints\.txt"</span><span class="p">;</span><span class="w"> </span><span class="o">}</span>
+</span></code></pre></div>
 <h2 id="what-ci-checks">What CI checks<a class="headerlink" href="#what-ci-checks" title="Permanent link">&para;</a></h2>
 <p>The blocking checks include:</p>
 <table>
@@ -3692,6 +3728,75 @@ version can produce a spurious diff. Regenerate and commit both files:</p>
 </table>
 <p>The workflow files under <code>.github/workflows/</code> are the current source of truth.
 Do not infer a green full matrix from one local test command.</p>
+<h3 id="reproduce-a-ci-job-locally">Reproduce a CI job locally<a class="headerlink" href="#reproduce-a-ci-job-locally" title="Permanent link">&para;</a></h3>
+<p>Each job in <code>.github/workflows/ci.yml</code> maps to commands this guide already
+gives; the table says where. Run a job's commands before pushing so a failing
+push does not spend a CI run (each push to an open pull request starts a new
+run and cancels the superseded one).</p>
+<table>
+<thead>
+<tr>
+<th>CI job</th>
+<th>Reproduce with</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>lint</code></td>
+<td>Ruff, the suppression ratchet and <code>pydocstyle</code> under "Runtime Python"; <code>just docs</code>; <code>python scripts/validate-workflows.py</code>; the constraints sync and the Dockerfile pin check under "Dependencies"</td>
+</tr>
+<tr>
+<td><code>Mypy (strict engine + contracts)</code></td>
+<td>the strict <code>mypy</code> command under "Runtime Python"</td>
+</tr>
+<tr>
+<td><code>test-coverage</code></td>
+<td>the <code>pytest</code> and <code>coverage report --fail-under=80</code> commands under "Runtime Python"</td>
+</tr>
+<tr>
+<td><code>python-smoke</code></td>
+<td>its own suites, below the table</td>
+</tr>
+<tr>
+<td><code>no-llm-smoke</code></td>
+<td>"Fast smoke check" above, plus <code>just test</code></td>
+</tr>
+<tr>
+<td><code>frontend-build</code></td>
+<td><code>just ui-check</code></td>
+</tr>
+<tr>
+<td><code>wire-format-drift</code></td>
+<td>"Change generated contracts" below</td>
+</tr>
+<tr>
+<td><code>e2e-streaming</code></td>
+<td><code>npm run test:e2e</code> (the full Playwright suite, once) from the UI end-to-end block under "Match the checks to what you changed"</td>
+</tr>
+<tr>
+<td><code>EK step-delegation (approval-gate) tests</code></td>
+<td>the "Optional extras" commands under "Match the checks to what you changed", ending with the legacy-package-absent scoring run</td>
+</tr>
+</tbody>
+</table>
+<p><code>python-smoke</code> does not run the runtime unit suite. It runs suites that
+<code>just test</code> skips, each in its own pytest process, from the repository root:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>agentic-workflows-v2/tests<span class="w"> </span>agentic-v2-eval/tests<span class="w"> </span>--collect-only<span class="w"> </span>-q<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w">  </span>-m<span class="w"> </span><span class="s2">"not integration and not slow"</span><span class="w"> </span>--ignore<span class="o">=</span>agentic-workflows-v2/tests/e2e
+</span><span id="__span-18-3"><a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="o">(</span><span class="nb">cd</span><span class="w"> </span>agentic-workflows-v2/evals/swe_ab<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tools<span class="w"> </span>-q<span class="w"> </span>--timeout<span class="o">=</span><span class="m">120</span><span class="o">)</span>
+</span><span id="__span-18-4"><a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tools/tests<span class="w"> </span>-q<span class="w"> </span>--timeout<span class="o">=</span><span class="m">120</span>
+</span></code></pre></div>
+<p>The first command only collects, which catches name or <code>conftest</code> collisions
+between the runtime and eval test trees. On some local environments it fails
+on <code>tests/integrations/mcp</code> with <code>No module named 'mcp.conftest'</code>, which comes
+from the installed <code>mcp</code> package. CI does not hit that error. Add
+<code>--ignore=agentic-workflows-v2/tests/integrations/mcp</code>, then collect that
+directory on its own.</p>
+<p>Pull requests are classified by a <code>changes</code> job that gates whole jobs, never
+whole workflows, so every required check still reports on every pull request.
+Do not add workflow-level <code>paths:</code> or <code>paths-ignore:</code> to a workflow that
+reports a required check: a workflow that does not trigger reports nothing, and
+the pull request waits forever on a check that never runs.</p>
 <p>Pull requests that change only documentation (<code>docs/</code>, root and package-level
 <code>*.md</code>, <code>mkdocs.yml</code>, issue and PR templates, <code>.claude/</code>) skip the backend, UI and
 wire-format jobs; <code>lint</code> and the documentation-drift gates still run. Any other
@@ -3714,12 +3819,12 @@ changed path runs the full pipeline.</p>
 </ul>
 <h3 id="run-without-provider-keys">Run without provider keys<a class="headerlink" href="#run-without-provider-keys" title="Permanent link">&para;</a></h3>
 <p>Use:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AGENTIC_NO_LLM</span><span class="o">=</span><span class="m">1</span>
-</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>just<span class="w"> </span><span class="nb">test</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AGENTIC_NO_LLM</span><span class="o">=</span><span class="m">1</span>
+</span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>just<span class="w"> </span><span class="nb">test</span>
 </span></code></pre></div>
 <p>PowerShell:</p>
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="nv">$env:AGENTIC_NO_LLM</span> <span class="p">=</span> <span class="s2">"1"</span>
-</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="n">just</span> <span class="n">test</span>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="nv">$env:AGENTIC_NO_LLM</span> <span class="p">=</span> <span class="s2">"1"</span>
+</span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="n">just</span> <span class="n">test</span>
 </span></code></pre></div>
 <p>The <code>no-llm-smoke</code> CI job validates workflow loading, the deterministic run,
 the LangGraph placeholder path, and the unit suite without provider
@@ -3730,10 +3835,10 @@ behavior still need live or provider-specific tests.</p>
 <h2 id="change-generated-contracts">Change generated contracts<a class="headerlink" href="#change-generated-contracts" title="Permanent link">&para;</a></h2>
 <p>When a Pydantic event or server model changes, regenerate the committed
 schemas and TypeScript types:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="nb">cd</span><span class="w"> </span>agentic-workflows-v2
-</span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>python<span class="w"> </span>-m<span class="w"> </span>scripts.generate_ts_types
-</span><span id="__span-19-3"><a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="nb">cd</span><span class="w"> </span>ui
-</span><span id="__span-19-4"><a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>npm<span class="w"> </span>run<span class="w"> </span>generate:types
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="nb">cd</span><span class="w"> </span>agentic-workflows-v2
+</span><span id="__span-21-2"><a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>python<span class="w"> </span>-m<span class="w"> </span>scripts.generate_ts_types
+</span><span id="__span-21-3"><a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="nb">cd</span><span class="w"> </span>ui
+</span><span id="__span-21-4"><a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>npm<span class="w"> </span>run<span class="w"> </span>generate:types
 </span></code></pre></div>
 <p>Review the generated diff and check <code>git status --short</code> for new generated
 files, which <code>git diff</code> alone does not show. Do not edit generated TypeScript
@@ -3812,16 +3917,16 @@ the status of related decisions. Do not reuse a documented numbering gap.</p>
 <p>An ADR is not required for a local refactor that preserves public behavior.</p>
 <h2 id="commit">Commit<a class="headerlink" href="#commit" title="Permanent link">&para;</a></h2>
 <p>Use Conventional Commits:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>feat(ui): add run filter
-</span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>fix(server): validate adapter override
-</span><span id="__span-20-3"><a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>docs(engine): correct CLI persistence limits
-</span><span id="__span-20-4"><a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>test(engine): cover timeout cancellation
+<div class="language-text highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>feat(ui): add run filter
+</span><span id="__span-22-2"><a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>fix(server): validate adapter override
+</span><span id="__span-22-3"><a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>docs(engine): correct CLI persistence limits
+</span><span id="__span-22-4"><a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>test(engine): cover timeout cancellation
 </span></code></pre></div>
 <p>Use a short, present-tense subject and keep one concern per commit. Temporary
 <code>wip</code> commits may be used on a feature branch but must be squashed before
 merge.</p>
 <p>Install the commit-message hook with:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>pre-commit<span class="w"> </span>install<span class="w"> </span>--install-hooks
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>pre-commit<span class="w"> </span>install<span class="w"> </span>--install-hooks
 </span></code></pre></div>
 <p>The repository removes AI-assistant co-author trailers. Human and service-bot
 co-authors are preserved.</p>
@@ -3840,16 +3945,16 @@ co-authors are preserved.</p>
 </ul>
 <p>The pull request template in <code>.github/PULL_REQUEST_TEMPLATE.md</code> carries this
 checklist and the per-surface checks:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>- [ ] Change is focused and package boundaries are preserved
-</span><span id="__span-22-2"><a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>- [ ] Regression tests cover the behavior change
-</span><span id="__span-22-3"><a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>- [ ] just test passed, or narrower checks and omissions are listed
-</span><span id="__span-22-4"><a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>- [ ] just docs passed
-</span><span id="__span-22-5"><a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>- [ ] pre-commit run --all-files passed
-</span><span id="__span-22-6"><a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>- [ ] The checks for each surface you changed passed
-</span><span id="__span-22-7"><a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>- [ ] UI build passed when frontend or wire contracts changed
-</span><span id="__span-22-8"><a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>- [ ] Documentation and CHANGELOG.md are updated when needed
-</span><span id="__span-22-9"><a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a>- [ ] No credentials, .env files, run data, or private customer data are included
-</span><span id="__span-22-10"><a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>- [ ] Commit messages use Conventional Commits
+<div class="language-text highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>- [ ] Change is focused and package boundaries are preserved
+</span><span id="__span-24-2"><a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>- [ ] Regression tests cover the behavior change
+</span><span id="__span-24-3"><a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>- [ ] just test passed, or narrower checks and omissions are listed
+</span><span id="__span-24-4"><a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>- [ ] just docs passed
+</span><span id="__span-24-5"><a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>- [ ] pre-commit run --all-files passed
+</span><span id="__span-24-6"><a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>- [ ] The checks for each surface you changed passed
+</span><span id="__span-24-7"><a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>- [ ] UI build passed when frontend or wire contracts changed
+</span><span id="__span-24-8"><a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>- [ ] Documentation and CHANGELOG.md are updated when needed
+</span><span id="__span-24-9"><a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a>- [ ] No credentials, .env files, run data, or private customer data are included
+</span><span id="__span-24-10"><a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a>- [ ] Commit messages use Conventional Commits
 </span></code></pre></div>
 <h2 id="security-reports">Security reports<a class="headerlink" href="#security-reports" title="Permanent link">&para;</a></h2>
 <p>Do not open a public issue for a vulnerability. Follow
