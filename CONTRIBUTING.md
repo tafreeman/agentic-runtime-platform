@@ -284,6 +284,13 @@ python -m pytest tests/engine/test_step_ek_delegation.py tests/engine/test_step_
   `python -c "import agentic_evalkit"`, then run
   `tests/test_evalkit_bridge.py`, `tests/test_scoring_policy_differential.py`,
   and `tests/contract/test_evalkit_boundary.py`.
+- Runtime scoring without the legacy eval package, which CI runs last because
+  it uninstalls that package. Keep `agentic-evalkit` installed, run
+  `python -m pip uninstall -y agentic-v2-eval`, then
+  `python -m pytest tests/test_step_scoring_additional.py -q --timeout=120`
+  from `agentic-workflows-v2/`. Reinstall afterwards with
+  `python -m pip install -e "./agentic-v2-eval[dev]" -c ci-constraints.txt`
+  from the repository root.
 - `claude` extra: confirm `python -c "import claude_agent_sdk"`, then run
   `tests/models/test_backends_claude.py`, `tests/test_claude_sdk_agent.py`,
   `tests/test_sdk_task_orchestrator_example.py`, and
@@ -339,11 +346,29 @@ run and cancels the superseded one).
 | `lint` | Ruff, the suppression ratchet and `pydocstyle` under "Runtime Python"; `just docs`; `python scripts/validate-workflows.py`; the constraints sync under "Dependencies" |
 | `Mypy (strict engine + contracts)` | the strict `mypy` command under "Runtime Python" |
 | `test-coverage` | the `pytest` and `coverage report --fail-under=80` commands under "Runtime Python" |
-| `python-smoke`, `no-llm-smoke` | "Fast smoke check" above, plus `just test` |
+| `python-smoke` | its own suites, below the table |
+| `no-llm-smoke` | "Fast smoke check" above, plus `just test` |
 | `frontend-build` | `just ui-check` |
 | `wire-format-drift` | "Change generated contracts" below |
 | `e2e-streaming` | the Playwright commands under "Match the checks to what you changed" |
-| `EK step-delegation (approval-gate) tests` | the "Optional extras" commands under "Match the checks to what you changed" |
+| `EK step-delegation (approval-gate) tests` | the "Optional extras" commands under "Match the checks to what you changed", ending with the legacy-package-absent scoring run |
+
+`python-smoke` does not run the runtime unit suite. It runs suites that
+`just test` skips, each in its own pytest process, from the repository root:
+
+```bash
+python -m pytest agentic-workflows-v2/tests agentic-v2-eval/tests --collect-only -q \
+  -m "not integration and not slow" --ignore=agentic-workflows-v2/tests/e2e
+(cd agentic-workflows-v2/evals/swe_ab && python -m pytest tools -q --timeout=120)
+python -m pytest tools/tests -q --timeout=120
+```
+
+The first command only collects, which catches name or `conftest` collisions
+between the runtime and eval test trees. On some local environments it fails
+on `tests/integrations/mcp` with `No module named 'mcp.conftest'`, which comes
+from the installed `mcp` package. CI does not hit that error. Add
+`--ignore=agentic-workflows-v2/tests/integrations/mcp`, then collect that
+directory on its own.
 
 Pull requests are classified by a `changes` job that gates whole jobs, never
 whole workflows, so every required check still reports on every pull request.
