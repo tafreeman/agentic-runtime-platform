@@ -30,6 +30,7 @@ Tier-routed multi-agent LLM runtime (Python 3.11, FastAPI, Pydantic v2, asyncio)
 | `agentic_v2/integrations/mcp/**` | `McpToolAdapter` is not a `BaseTool`, so the structural gate does not cover it; unsanitized remote output; removed timeout or budget. |
 | `agentic_v2/scoring/**`, `agentic_v2/prompts/judges/**` | Rubric or judge-prompt changes that move scores without a golden update; scorer accepting missing criteria. |
 | `scripts/eval_gate.py` | Gate made easier to pass: lower threshold, ignored `missing_criteria`, skipped cases, exit 0 on error. |
+| `datasets/default/**` | The PR's own eval gate reads these (`eval-golden-gate`). Dropped, reordered or loosened cases; weakened `expected_criteria` or `threshold`; captured `*_output.json` edited to score higher rather than regenerated. |
 | `proofs/**` | `sorry`, new `axiom`, edited axiom guards, model drifting from the executor. |
 | `.github/**` | Unpinned action refs, `${{ }}` of untrusted values in `run:`, broader `permissions:`, new triggers, auto-merge scope, renamed required jobs. |
 
@@ -58,4 +59,5 @@ Tier-routed multi-agent LLM runtime (Python 3.11, FastAPI, Pydantic v2, asyncio)
 
 ## Out of scope for AI review
 - Generated files: `uv.lock`, `ci-constraints.txt`, `*.generated.ts`, `tests/schemas/*.json`, `package-lock.json`.
-- `docs/inventory/`, dated audit reports, `docs/adr/drafts/`, `datasets/` content.
+- `docs/inventory/`, dated audit reports, `docs/adr/drafts/`.
+- Never excluded: `datasets/default/**` (feeds the PR's own eval gate) and `scripts/eval_gate.py`.
