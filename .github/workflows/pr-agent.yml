@@ -48,7 +48,7 @@ jobs:
         # pragent/pr-agent:0.48.0-github_action, pinned by digest
         uses: docker://pragent/pr-agent@sha256:80edef71baa3df28c129d858d4b53784abfc14704c235efb32b6c461d5399a6d
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OLLAMA.API_KEY: ${{ secrets.OLLAMA_API_KEY }}
           OLLAMA.API_BASE: https://ollama.com
           config.model: ollama/beam:cloud
