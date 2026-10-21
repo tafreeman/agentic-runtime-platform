@@ -75,7 +75,7 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       - name: Resolve PR metadata
         id: pr
@@ -121,7 +121,7 @@ jobs:
           git checkout "${{ steps.pr.outputs.head_ref }}"
 
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: "3.11"
 
@@ -249,7 +249,7 @@ jobs:
       matrix:
         pr_number: ${{ fromJson(needs.discover-relock-candidates.outputs.prs) }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       # Re-validated here even though discover-relock-candidates already
       # filtered on author and head ref: a PR can close, merge, or (in theory)
@@ -297,7 +297,7 @@ jobs:
           git checkout "${{ steps.pr.outputs.head_ref }}"
 
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: "3.11"
 
