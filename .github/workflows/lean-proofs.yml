@@ -129,8 +129,8 @@ jobs:
       ARP_LEAN_REPLAY: '1'
       AGENTIC_NO_LLM: '1'
     steps:
-      - uses: actions/checkout@v7
-      - uses: leanprover/lean-action@v1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: leanprover/lean-action@24581d74d674803a25a81b10b059c5c0cdd344c6  # v1.6.2
         with:
           lake-package-directory: proofs
           leanchecker: 'true'
@@ -140,7 +140,7 @@ jobs:
           axiom-audit: 'true'
           axiom-audit-allow: 'propext,Quot.sound'
           axiom-audit-root: 'Scheduler'
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: '3.11'
       - name: Install packages as in ci.yml
