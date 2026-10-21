@@ -157,30 +157,36 @@ class ReviewerAgent(BaseAgent[CodeReviewInput, CodeReviewOutput], CodeReviewMixi
         try:
             data = self._extract_json(response)
         except Exception:
-            # Fallback: create minimal output
+            # An unparseable response is not a clean review: report failure
+            # so callers never read it as an approval.
             return CodeReviewOutput(
-                success=True, summary=response[:500], issues=[], confidence=0.5
+                success=False,
+                error="Failed to parse review JSON",
+                summary=response[:500],
+                issues=[],
+                approved=False,
+                confidence=0.0,
             )
 
         # Parse issues
+        raw_issues = data.get("issues") or []
         issues = []
-        for issue_data in data.get("issues", []):
+        first_error: Exception | None = None
+        for issue_data in raw_issues:
             try:
-                severity = self._parse_severity(issue_data.get("severity", "info"))
-                category = self._parse_category(issue_data.get("category", "style"))
-
-                issue = CodeIssue(
-                    severity=severity,
-                    category=category,
-                    line_number=issue_data.get("line"),
-                    description=issue_data.get("description", ""),
-                    suggestion=issue_data.get("suggestion"),
-                    code_suggestion=issue_data.get("code_suggestion"),
-                )
-                issues.append(issue)
+                issues.append(self._parse_issue(issue_data))
             except Exception as exc:
+                first_error = first_error or exc
                 logger.debug("Skipping malformed review issue: %s", exc)
-                continue
+
+        malformed_count = len(raw_issues) - len(issues)
+        if malformed_count:
+            logger.warning(
+                "Dropped %d of %d malformed review issues; first error: %s",
+                malformed_count,
+                len(raw_issues),
+                first_error,
+            )
 
         # Calculate approval based on issues
         critical_count = sum(1 for i in issues if i.severity == Severity.CRITICAL)
@@ -235,6 +241,24 @@ class ReviewerAgent(BaseAgent[CodeReviewInput, CodeReviewOutput], CodeReviewMixi
         )
 
         return {"content": result_dict.get("content", result_dict.get("message", ""))}
+
+    def _parse_issue(self, issue_data: dict[str, Any]) -> CodeIssue:
+        """Map one issue from the review prompt's JSON shape onto CodeIssue.
+
+        The prompt asks for ``description``/``code_suggestion``; the contract
+        names them ``message``/``code_snippet``. The contract names are
+        accepted too, in case the model echoes them.
+        """
+        return CodeIssue(
+            severity=self._parse_severity(issue_data.get("severity", "info")),
+            category=self._parse_category(issue_data.get("category", "style")),
+            message=issue_data.get("message") or issue_data.get("description", ""),
+            line_number=issue_data.get("line"),
+            suggestion=issue_data.get("suggestion"),
+            code_snippet=(
+                issue_data.get("code_snippet") or issue_data.get("code_suggestion")
+            ),
+        )
 
     def _extract_json(self, text: str) -> dict[str, Any]:
         """Extract JSON from response using balanced-brace extraction.
@@ -294,7 +318,7 @@ class ReviewerAgent(BaseAgent[CodeReviewInput, CodeReviewOutput], CodeReviewMixi
                     "severity": i.severity.value,
                     "category": i.category.value,
                     "line": i.line_number,
-                    "description": i.description,
+                    "description": i.message,
                     "suggestion": i.suggestion,
                 }
                 for i in result.issues
@@ -331,11 +355,11 @@ class ReviewerAgent(BaseAgent[CodeReviewInput, CodeReviewOutput], CodeReviewMixi
             all_issues.extend(result.issues)
             summaries.append(f"{focus}: {result.summary}")
 
-        # Deduplicate issues by line+description
+        # Deduplicate issues by line+message
         seen = set()
         unique_issues = []
         for issue in all_issues:
-            key = (issue.line_number, issue.description[:50])
+            key = (issue.line_number, issue.message[:50])
             if key not in seen:
                 seen.add(key)
                 unique_issues.append(issue)
