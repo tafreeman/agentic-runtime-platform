@@ -50,7 +50,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           OLLAMA.API_KEY: ${{ secrets.OLLAMA_API_KEY }}
-          OLLAMA.API_BASE: $OLLAMA_BASE_URL
+          OLLAMA.API_BASE: https://ollama.com
           config.model: ollama/beam:cloud
           config.fallback_models: '["deepseek-v4.1-flash:cloud"]'
           # Ollama models are absent from PR-Agent's token table.
