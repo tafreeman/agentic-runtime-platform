@@ -1,0 +1,60 @@
+# PR-Agent (open-source Qodo reviewer) on Ollama Cloud
+#
+# Reviews new PRs automatically and answers slash commands (/review, /describe,
+# /improve, /ask) left as PR comments. Model calls go to Ollama Cloud with the
+# OLLAMA_API_KEY repo secret; the Qodo-hosted app is not used.
+#
+# Quota guards: only same-repo, non-draft PRs are auto-reviewed (pushes to an
+# open PR do not re-trigger), and only the owner or collaborators can invoke
+# commands, so a drive-by comment on this public repo cannot spend the key.
+# issue_comment workflows run from the default branch, so commands only work
+# once this file is on main.
+#
+# Source: https://github.com/qodo-ai/pr-agent
+name: PR-Agent
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: pr-agent-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  pr-agent:
+    if: >-
+      github.event.sender.type != 'Bot' &&
+      (
+        (github.event_name == 'pull_request' &&
+          !github.event.pull_request.draft &&
+          github.event.pull_request.head.repo.full_name == github.repository) ||
+        (github.event_name == 'issue_comment' &&
+          github.event.issue.pull_request &&
+          startsWith(github.event.comment.body, '/') &&
+          contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association))
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Run PR-Agent
+        # pragent/pr-agent:0.48.0-github_action, pinned by digest
+        uses: docker://pragent/pr-agent@sha256:80edef71baa3df28c129d858d4b53784abfc14704c235efb32b6c461d5399a6d
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OLLAMA.API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+          OLLAMA.API_BASE: https://ollama.com
+          config.model: ollama/gpt-oss:120b
+          config.fallback_models: '["ollama/glm-5.3"]'
+          # Ollama models are absent from PR-Agent's token table.
+          config.custom_model_max_tokens: "128000"
+          github_action_config.auto_review: "true"
+          github_action_config.auto_describe: "false"
+          github_action_config.auto_improve: "false"
