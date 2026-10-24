@@ -108,7 +108,7 @@ tracing = [
 ]
 claude = [
     "anthropic>=0.40,<2",
-    "claude-agent-sdk>=0.1,<1",
+    "claude-agent-sdk>=0.2.121,<1",
 ]
 devex = [
     "psutil>=6.0",
