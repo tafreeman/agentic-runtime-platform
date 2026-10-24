@@ -239,11 +239,14 @@ just dev-stop
 cd agentic-workflows-v2/ui
 npx playwright install chromium
 npm run test:e2e -- streaming.spec.ts
+npm run test:e2e
 npm run test:e2e:5x
 ```
 
-The single spec is the fast subset. `test:e2e:5x` runs the whole Playwright
-suite five times and is the flake gate the nightly workflow uses.
+The single spec is the fast subset. `npm run test:e2e` runs the whole suite
+once, which is what the `e2e-streaming` pull request check runs.
+`test:e2e:5x` runs the whole suite five times and is the flake gate the
+nightly workflow uses, not a pull request check.
 
 Evaluation (`agentic-v2-eval/`, `datasets/`, `scripts/eval_gate.py`, or
 `agentic_v2/scoring/`):
@@ -266,13 +269,15 @@ secrets configured it exits successfully as skipped, which is not evidence of
 a live pass.
 
 Optional extras. These test modules skip themselves when the extra is missing,
-so a green run proves nothing until the extra is installed. Install it and
-confirm the import first. Run the pytest commands from
+so a green run proves nothing until the extra is installed. Install all three
+together, as the `EK step-delegation (approval-gate) tests` job does, and
+confirm each import first. Run the pytest commands from
 `agentic-workflows-v2/`:
 
 ```bash
-python -m pip install -e "./agentic-workflows-v2[dev,server,mcp,langchain,tracing,ek]" -c ci-constraints.txt
-python -c "import executionkit"
+python -m pip install -e "./agentic-workflows-v2[dev,server,mcp,langchain,tracing,claude,ek,eval]" -c ci-constraints.txt
+python -m pip install -e "./agentic-v2-eval[dev]" -c ci-constraints.txt
+python -c "import claude_agent_sdk, executionkit, agentic_evalkit"
 cd agentic-workflows-v2
 python -m pytest tests/engine/test_step_ek_delegation.py tests/engine/test_step_tool_path.py \
   tests/models/test_ek_adapters.py tests/models/test_ek_provider.py \
@@ -280,12 +285,16 @@ python -m pytest tests/engine/test_step_ek_delegation.py tests/engine/test_step_
   -q --timeout=120
 ```
 
-- `eval` extra (also install `agentic-v2-eval[dev]`): confirm
-  `python -c "import agentic_evalkit"`, then run
-  `tests/test_evalkit_bridge.py`, `tests/test_scoring_policy_differential.py`,
+- `eval` extra: run `tests/test_evalkit_bridge.py`, `tests/test_scoring_policy_differential.py`,
   and `tests/contract/test_evalkit_boundary.py`.
-- `claude` extra: confirm `python -c "import claude_agent_sdk"`, then run
-  `tests/models/test_backends_claude.py`, `tests/test_claude_sdk_agent.py`,
+- Runtime scoring without the legacy eval package, which CI runs last because
+  it uninstalls that package. Keep `agentic-evalkit` installed, run
+  `python -m pip uninstall -y agentic-v2-eval`, then
+  `python -m pytest tests/test_step_scoring_additional.py -q --timeout=120`
+  from `agentic-workflows-v2/`. Reinstall afterwards with
+  `python -m pip install -e "./agentic-v2-eval[dev]" -c ci-constraints.txt`
+  from the repository root.
+- `claude` extra: run `tests/models/test_backends_claude.py`, `tests/test_claude_sdk_agent.py`,
   `tests/test_sdk_task_orchestrator_example.py`, and
   `tests/test_implementations_sanitization.py`.
 - `tools/` needs only `[dev]`: `python -m pytest tools/tests -q --timeout=120`
@@ -304,7 +313,14 @@ just update-constraints
 Dependabot bumps `pyproject.toml` and `ci-constraints.txt` but not `uv.lock`;
 `just relock` (or the `dependabot-relock` workflow) reconciles it. Every
 `pip install` line in a Dockerfile except `--upgrade pip` must carry
-`-c ci-constraints.txt`.
+`-c ci-constraints.txt`. The `lint` job blocks on this. Check it from the
+repository root. Like the CI step, it exits non-zero on a violation and
+prints each line that is missing the constraints file:
+
+```bash
+! { grep -n "pip install" Dockerfile | grep -v -e "--upgrade pip" \
+  | grep -v -E -e "-c[[:space:]]+ci-constraints\.txt"; }
+```
 
 ## What CI checks
 
@@ -326,6 +342,48 @@ The blocking checks include:
 
 The workflow files under `.github/workflows/` are the current source of truth.
 Do not infer a green full matrix from one local test command.
+
+### Reproduce a CI job locally
+
+Each job in `.github/workflows/ci.yml` maps to commands this guide already
+gives; the table says where. Run a job's commands before pushing so a failing
+push does not spend a CI run (each push to an open pull request starts a new
+run and cancels the superseded one).
+
+| CI job | Reproduce with |
+|---|---|
+| `lint` | Ruff, the suppression ratchet and `pydocstyle` under "Runtime Python"; `just docs`; `python scripts/validate-workflows.py`; the constraints sync and the Dockerfile pin check under "Dependencies" |
+| `Mypy (strict engine + contracts)` | the strict `mypy` command under "Runtime Python" |
+| `test-coverage` | the `pytest` and `coverage report --fail-under=80` commands under "Runtime Python" |
+| `python-smoke` | its own suites, below the table |
+| `no-llm-smoke` | "Fast smoke check" above, plus `just test` |
+| `frontend-build` | `just ui-check` |
+| `wire-format-drift` | "Change generated contracts" below |
+| `e2e-streaming` | `npm run test:e2e` (the full Playwright suite, once) from the UI end-to-end block under "Match the checks to what you changed" |
+| `EK step-delegation (approval-gate) tests` | the "Optional extras" commands under "Match the checks to what you changed", ending with the legacy-package-absent scoring run |
+
+`python-smoke` does not run the runtime unit suite. It runs suites that
+`just test` skips, each in its own pytest process, from the repository root:
+
+```bash
+python -m pytest agentic-workflows-v2/tests agentic-v2-eval/tests --collect-only -q \
+  -m "not integration and not slow" --ignore=agentic-workflows-v2/tests/e2e
+(cd agentic-workflows-v2/evals/swe_ab && python -m pytest tools -q --timeout=120)
+python -m pytest tools/tests -q --timeout=120
+```
+
+The first command only collects, which catches name or `conftest` collisions
+between the runtime and eval test trees. On some local environments it fails
+on `tests/integrations/mcp` with `No module named 'mcp.conftest'`, which comes
+from the installed `mcp` package. CI does not hit that error. Add
+`--ignore=agentic-workflows-v2/tests/integrations/mcp`, then collect that
+directory on its own.
+
+Pull requests are classified by a `changes` job that gates whole jobs, never
+whole workflows, so every required check still reports on every pull request.
+Do not add workflow-level `paths:` or `paths-ignore:` to a workflow that
+reports a required check: a workflow that does not trigger reports nothing, and
+the pull request waits forever on a check that never runs.
 
 Pull requests that change only documentation (`docs/`, root and package-level
 `*.md`, `mkdocs.yml`, issue and PR templates, `.claude/`) skip the backend, UI and

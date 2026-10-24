@@ -275,3 +275,28 @@ async def test_server_preserves_unavailable_metadata(
     assert summary["passed"] == 0 and summary["avg_score"] is None
     assert summary["step_scores"][0]["status"] == "unavailable"
     assert summary["step_scores"][0]["passed"] is None
+
+
+@pytest.mark.asyncio
+async def test_native_stream_suppresses_engine_workflow_end(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The engine's workflow_end must not reach SSE ahead of evaluation events."""
+    from unittest.mock import AsyncMock
+
+    from agentic_v2.contracts import WorkflowResult
+    from agentic_v2.server import execution
+
+    async def adapter(*_args, on_update):
+        await on_update({"type": "step_end", "step": "a", "status": "success"})
+        await on_update({"type": "workflow_end", "run_id": "r", "status": "success"})
+        return WorkflowResult(
+            workflow_name="fixture", workflow_id="fixture", overall_status="success"
+        )
+
+    broadcast = AsyncMock()
+    monkeypatch.setattr(execution, "_run_via_native_adapter", adapter)
+    monkeypatch.setattr(execution.websocket.manager, "broadcast", broadcast)
+    await execution._run_native_stream("native", "fixture", "r", {})
+    sent = [call.args[1]["type"] for call in broadcast.await_args_list]
+    assert sent == ["step_end"]
