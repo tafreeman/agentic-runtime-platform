@@ -421,6 +421,8 @@ directory_analysis.log
 *.sln
 ANALYSIS.md
 REVIEW.md
+# The root REVIEW.md is the AI-reviewer rules file and is tracked.
+!/REVIEW.md
 REFACTORING_PLAN.md
 system.md
 

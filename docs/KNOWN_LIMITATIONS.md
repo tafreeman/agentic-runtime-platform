@@ -2,7 +2,7 @@
 
 > **Audience:** Operators, auditors, and contributors reading failing CI or trying to understand why something "works but not quite."
 > **Outcome:** After reading, you know what is intentionally unfinished and what the next sprint is expected to address.
-> **Last verified:** 2026-07-28
+> **Last verified:** 2026-10-18
 
 This page records limitations confirmed in the current checkout. Some describe
 accepted design boundaries; others describe work that is not complete. Check
@@ -36,10 +36,10 @@ payloads remain manually maintained.
 
 ### 1.2 The 80% coverage gate scopes out optional provider/plugin surfaces
 
-The `--cov-fail-under=80` gate measures the core runtime only. By design, `[tool.coverage.run] omit` in `agentic-workflows-v2/pyproject.toml` excludes optional provider and plugin surfaces from the gated number — notably the **LangChain adapter** (`agentic_v2/langchain/*`), the **model backends/router** (`agentic_v2/models/*`), MCP integrations, and CLI/prompt scaffolding.
+The 80% gate (`fail_under = 80` in `[tool.coverage.report]`, enforced by a `coverage report --fail-under=80` step) measures the core runtime only. By design, `[tool.coverage.run] omit` in `agentic-workflows-v2/pyproject.toml` excludes specific optional provider and plugin files from the gated number — notably three **LangChain adapter** modules (`agentic_v2/langchain/agents.py`, `model_builders.py`, `tools.py`), the per-provider **model backends and client glue** (`agentic_v2/models/backends_*.py`, `client.py`, `llm.py`, the ExecutionKit bridge modules), MCP integrations (`agentic_v2/integrations/mcp/*`), `workflows/runner.py`, the concrete agent implementations, and CLI/prompt scaffolding. Other modules in those packages, including the smart router, are inside the gated figure.
 
 - **Why:** These surfaces require external services or extras installs and are exercised by their own targeted suites rather than the core unit run, so folding them into the gated percentage would make the number reflect provider availability rather than core-code health.
-- **Surface:** The "coverage gate 80%+" badge therefore reflects core coverage, not whole-repo coverage. The LangChain adapter and model router are tested, but not inside the gated figure — explicitly, `agentic_v2/langchain/tools.py` (the LangChain adapter's own approval-gate re-implementation, see §4.3) and `agentic_v2/models/backends_base.py` / `backends_cloud.py` / `backends_local.py` (per-provider format translation) are listed individually by name in the coverage `omit` array (not merely swept in by a glob) and covered only by their own targeted suites, not the gated 80% figure.
+- **Surface:** The "coverage gate 80%+" badge therefore reflects core coverage, not whole-repo coverage. The omitted files are tested, but not inside the gated figure — explicitly, `agentic_v2/langchain/tools.py` (the LangChain adapter's own approval-gate re-implementation, see §4.3) and `agentic_v2/models/backends_base.py` / `backends_cloud.py` / `backends_local.py` (per-provider format translation) are listed individually by name in the coverage `omit` array and covered only by their own targeted suites.
 - **Status:** Intentional. Documented here so the badge is not read as a whole-repo claim.
 - **Visibility:** CI now publishes a separate ungated `whole-repo-coverage` artifact across the runtime, eval package, and shared tools using the same fast test selection without the core-only coverage omit list.
 - **Upstream fix:** Future sprint — decide whether any optional surface should move from visibility-only reporting into a blocking gate.
@@ -65,7 +65,7 @@ A runtime install without the `langchain` extra succeeds, but
 - **Risk:** Confusing first-run failure if a contributor installed minimal extras.
 - **Workaround:** Install with `langchain` extras (included in `just setup`), or pass `--adapter native` explicitly.
 - **Status:** The _late_ error has been resolved by S1-6: `AdapterRegistry.validate_selected()` now runs at FastAPI lifespan startup and raises `ConfigurationError` with an install hint before any request is processed. The optional-extras design is still correct; only the error timing improved. See [ADR-020](adr/ADR-020-langchain-adapter-eager-validation.md).
-- **Upstream fix:** None further needed for the server path. CLI `agentic run --adapter langchain` surfaces the error at adapter resolution time (outside the FastAPI lifespan); may benefit from an explicit pre-flight check in a future sprint.
+- **Upstream fix:** None further needed. The CLI path also calls `validate_selected()` (in `agentic_v2/adapters/workflows.py`, used by `agentic run` and `agentic compare`), so `agentic run --adapter langchain` fails with the same install hint before any step runs.
 
 ---
 
@@ -131,14 +131,14 @@ The `slowapi` global rate limiter and the `AuthThrottle` per-IP auth throttle (b
 
 ### 4.3 Human approval gates are programmatic only (no UI pause/resume yet)
 
-P1 #12 added real, tested human-approval gates on the tool-execution hot path: an injectable `ApprovalProvider` (`agentic_v2/governance/approval.py`) is consulted at **both** dispatch points before any high-impact tool runs, and the gate **fails closed** (a gated tool with no provider registered is denied, never executed). High-impact builtins (`shell`/`shell_exec`/`execute_python`, `file_write`/`file_delete`/`file_move`/`file_copy`/`directory_create`, `http`/`http_post`) are gated by default.
+P1 #12 added real, tested human-approval gates on the tool-execution hot path: an injectable `ApprovalProvider` (`agentic_v2/governance/approval.py`) is consulted at **both** dispatch points before any high-impact tool runs, and the gate **fails closed** (a gated tool with no provider registered is denied, never executed). High-impact builtins (`shell`/`shell_exec`/`execute_python`, `file_write`/`file_delete`/`file_move`/`file_copy`/`directory_create`, `http`/`http_post`, `build_app`) are gated by default.
 
 What is **not** built yet is the full UI-driven *pause-and-resume* flow — suspending a run, surfacing an approval prompt to a human operator in the web UI, and resuming on their click.
 
 - **Surface:** `agentic_v2/governance/approval.py` (gate + providers), `agentic_v2/engine/tool_execution.py` and `agentic_v2/agents/base.py` (dispatch-point wiring), `agentic_v2/contracts/events.py` (`approval_required` / `approval_decision` events).
 - **Current behavior:** approval is decided synchronously by the registered provider. The agent loop emits the contract events on its event bus; the engine tool loop surfaces approval request/decision via the logger (WARNING for request, INFO for decision) and in the serialized result metadata rather than streaming the new events — the engine dispatch point has no clean event channel without threading an emitter through the tool loop.
 - **Risk:** Operators must wire a provider programmatically (`set_approval_provider(...)`) at process start; there is no web-UI approval queue. Gated tools fail closed until a provider is registered, which is the intended safe default but will block runs that expected those tools to execute unattended.
-- **Workaround:** Register an `ApprovalProvider` at startup (`AutoApproveProvider` for trusted environments, `CallbackApprovalProvider`/`PolicyApprovalProvider` for selective approval), or disable the requirement per tool/globally. See [security-hardening.md §11](operations/security-hardening.md).
+- **Workaround:** Register an `ApprovalProvider` at startup (`AutoApproveProvider` for trusted environments, `CallbackApprovalProvider`/`PolicyApprovalProvider` for selective approval), or disable the requirement per tool/globally. See [Approval gates in security-hardening.md](operations/security-hardening.md#approval-gates).
 - **Status:** Programmatic gate shipped and tested (`tests/test_approval_gates.py`). UI pause/resume is an explicit follow-on; the wire events exist so the server/UI can build on them.
 - **Upstream fix:** Future sprint — server-side approval queue + WebSocket-driven pause/resume in the UI, streaming the `approval_required`/`approval_decision` events from the engine path.
 
@@ -150,7 +150,7 @@ The SSRF guard (`agentic_v2/security/url_guard.py`) validates a URL's resolved a
 - **Residual risk:** Pinning relies on the resolver returning the same answer the guard validated, and OS-level resolver caching is outside the application's control. A hostile authoritative DNS server with a near-zero TTL is a real threat model that application-layer checks alone cannot fully defeat. The guard is **defense-in-depth**, not a complete boundary.
 - **Risk:** In an environment where the server has network reachability to internal services, an attacker controlling DNS for a hostname a workflow fetches could, in principle, steer a connection to a private/metadata address on any code path not covered by pinning.
 - **Workaround:** For hostile-DNS threat models, add a **network-layer egress control** — an egress firewall, service-mesh authorization policy, or Kubernetes `NetworkPolicy` — restricting which addresses the server process may reach. Keep `AGENTIC_BLOCK_PRIVATE_IPS` on (the default).
-- **Status:** Accepted. Application-layer guard + connection pinning shipped and tested (`tests/test_ssrf_guard.py`); network-layer egress control is an operator responsibility documented in [security-hardening.md §10](operations/security-hardening.md).
+- **Status:** Accepted. Application-layer guard + connection pinning shipped and tested (`tests/test_ssrf_guard.py`); network-layer egress control is an operator responsibility documented under [HTTP tool and SSRF controls in security-hardening.md](operations/security-hardening.md#http-tool-and-ssrf-controls).
 - **Upstream fix:** None planned at the application layer — this is an inherent limitation of resolving names in userspace. Operators must apply network controls for hostile-DNS threat models.
 
 ### 4.5 `X-Tenant-ID` is client-supplied and spoofable in the default configuration
@@ -170,96 +170,13 @@ ARP behavior because the package and command surface were removed. The removal,
 migration boundary, and historical defects remain recorded in
 [ADR-057](adr/ADR-057-remove-rag-package.md) and the changelog.
 
-### 4.12 The model inventory command fails from the repository root
-
-`python -m tools.llm.model_inventory` imports `llm_client` as a top-level
-module. In the installed repository package, that module is
-`tools.llm.llm_client`, so the command exits with
-`No module named 'llm_client'`.
-
-- **Surface:** `tools/llm/model_inventory.py`.
-- **Risk:** A model discovery run fails before checking any provider.
-- **Workaround:** Use `python -m tools.llm.model_probe` for live discovery.
-- **Status:** Known command defect.
-- **Upstream fix:** Change the command to package-relative imports and add a
-  repository-root CLI smoke test.
-
-### 4.13 The model catalog exposes `onnx:` IDs that exact-model chat cannot use
-
-ONNX discovery emits `onnx:<relative-path>` IDs and the native model backend
-supports that prefix. The LangChain model builder uses `local:` for its ONNX
-path and has no `onnx:` prefix builder. `POST /api/chat` uses the LangChain
-builder, so selecting a discovered `onnx:` entry there produces an unsupported
-provider error.
-
-- **Surface:** `agentic_v2/models/local_discovery.py`,
-  `agentic_v2/models/backends.py`, `agentic_v2/langchain/models.py`, and
-  `agentic_v2/server/routes/chat.py`.
-- **Risk:** The model page can list a local model that its chat playground
-  cannot test.
-- **Workaround:** Use the native backend for `onnx:` models. Use `local:` only
-  where the LangChain ONNX builder's path contract is appropriate.
-- **Status:** Known cross-adapter mismatch.
-- **Upstream fix:** Normalize the prefix contract across discovery and both
-  execution paths, then add an end-to-end discovered-model chat test.
-
-### 4.14 Strict model-weight verification is not wired into every model loader
-
-The SHA-256 verifier and strict-mode behavior are implemented in
-`agentic_v2/models/weight_integrity.py`. The shared-tools local provider calls
-it before loading a local model. The runtime's native `OnnxBackend` and
-LangChain local ONNX builder do not call it.
-
-- **Surface:** `tools/llm/provider_adapters.py`,
-  `agentic_v2/models/backends_local.py`, and
-  `agentic_v2/langchain/model_builders.py`.
-- **Risk:** `AGENTIC_STRICT_MODEL_VERIFY=1` can be set while a runtime ONNX
-  load still proceeds without consulting the trusted hash file.
-- **Workaround:** Call `verify_model_weights()` explicitly before starting the
-  runtime and restrict the model directory against later changes.
-- **Status:** Partial enforcement.
-- **Upstream fix:** Put verification in the common runtime load boundary and
-  add strict-mode tests for every local model backend.
-
 ---
-
-### 4.15 One `tools/tests` case asserts an API that no longer exists
-
-`tools/tests` holds 17 test files that **no CI job had ever collected**. The whole-repo
-coverage step measures `--cov=tools` but only collects `agentic-workflows-v2/tests` and
-`agentic-v2-eval/tests`, so `tools/` was *measured* but never *exercised* — its coverage
-number was whatever the workflow suites happened to import.
-
-The `tools-tests` job in `ci.yml` now collects them. Running them for the first time
-surfaced 11 failures. They are not flaky; they are stale, and they are stale precisely
-because nothing ever ran them:
-
-- `test_errors.py::TestClassifyError::test_return_code_param_accepted` calls
-  `classify_error(..., return_code=124)`; the parameter no longer exists.
-- ~~Ten cases across `test_benchmark_pipeline.py` and `test_evaluation_pipeline.py`
-  (`TestEvaluateTaskOutputLlm`)~~ — **resolved.** These were not stale tests but a real
-  bug: `evaluation_pipeline` imported the reporting helpers from `llm_evaluator` after they
-  had moved to `evaluator_reporting`, the optional-import guard swallowed the
-  `ImportError`, and `HAS_LLM_EVALUATOR` was always `False`, silently disabling the
-  LLM-judge path. The import is fixed, the ten cases pass and are no longer deselected,
-  and `test_llm_evaluator_imports_resolve` now fails if the guard masks a broken import.
-
-- **Surface:** `tools/tests/test_errors.py`; the `tools-tests` job in `.github/workflows/ci.yml`.
-- **Risk:** Low for runtime behaviour — the implementation is current and every other case
-  passes. The cost is that this one case's intent is unverified.
-- **Workaround:** None needed; it is deselected by node id in the CI job, so the
-  remaining cases in that file still gate.
-- **Status:** Accepted, short-term. Deselecting by node id rather than by file is
-  deliberate — it keeps the debt greppable and keeps the rest of each file enforcing.
-- **Upstream fix:** Decide per case whether the test or the API is right, then either
-  update the assertions or delete the case. Once the list is empty, drop the `--deselect`
-  flags so the whole suite gates unconditionally.
 
 ## 5. Documentation and process
 
 ### 5.1 Implementation plans for Epics 3, 5, and 6 are retrospective
 
-Epics 1 and 2 have proper pre-implementation plan docs. Epics 3, 5, and 6 shipped without prospective plan docs — decision history for those epics is reconstructed from commit messages and ADRs rather than dedicated planning artifacts.
+Epics 1 and 2 had pre-implementation plans, but those internal planning artifacts are not carried in this repository (see [ROADMAP.md](ROADMAP.md)). Epics 3, 5, and 6 shipped without prospective plan docs. Decision history for all of them is reconstructed from the changelog and ADRs rather than dedicated planning artifacts.
 
 - **Risk:** Decision rationale may be under-documented compared to prospective plans.
 - **Mitigation:** Load-bearing decisions are captured in ADRs (`docs/adr/`).

@@ -3,7 +3,7 @@
 This page is a compact repository map for tools and contributors that need
 orientation before reading source. It avoids counts that become stale.
 
-Updated: 2026-07-28.
+Updated: 2026-10-18.
 
 ## Identity
 
@@ -12,7 +12,7 @@ Updated: 2026-07-28.
 | Repository | `tafreeman/agentic-runtime-platform` |
 | Primary branch | `main` |
 | Python | 3.11 or newer |
-| Node.js | 20 or newer |
+| Node.js | 22.22.2 or newer (CI uses Node 22) |
 | Workspace | Root `agentic-tools` project plus two Python workspace members |
 | UI | React 19 and Vite 8 |
 
@@ -34,8 +34,8 @@ Updated: 2026-07-28.
   package.
 - Do not add source-path imports between packages.
 - The native and LangGraph engines are both active.
-- Native owns platform-specific DAG features; LangGraph runs compatible
-  workflows.
+- Native runs runtime-built `DAG` and `Pipeline` objects; LangGraph runs named
+  YAML workflows by default. Their behavior is not identical in every case.
 - Pydantic is the Python wire-format source of truth.
 - Committed JSON Schemas generate the dashboard's TypeScript types.
 - Secrets stay in environment variables or the secret-provider layer.

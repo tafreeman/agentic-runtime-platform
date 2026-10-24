@@ -6,10 +6,10 @@ The store implementations are append-only from the application perspective:
 to Redis Streams via ``XADD`` with ``MAXLEN`` trimming.
 
 OIDC integration note for E8-1:
-    ``auth_oidc.py`` is not present yet.  When that module lands, call
-    :func:`audit_auth_request_event` from login/callback/logout branches with
-    event types such as ``"auth.oidc.login_succeeded"`` and metadata that
-    contains issuer/client identifiers but never raw tokens.
+    ``auth_oidc.py`` calls :func:`audit_auth_request_event` for auth outcomes.
+    New login/callback/logout branches should do the same, with event types
+    such as ``"auth.oidc.login_succeeded"`` and metadata that contains
+    issuer/client identifiers but never raw tokens.
 """
 
 from __future__ import annotations

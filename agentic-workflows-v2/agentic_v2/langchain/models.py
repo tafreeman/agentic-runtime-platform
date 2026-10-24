@@ -81,6 +81,7 @@ from .model_builders import (
     build_notebooklm_model,
     build_nvidia_model,
     build_ollama_model,
+    build_onnx_model,
     build_openai_model,
     build_openrouter_model,
     build_placeholder_model,
@@ -621,6 +622,7 @@ _PREFIX_BUILDERS: tuple[tuple[str, Any], ...] = (
     ("local-api:", build_local_api_model),
     ("local:", build_local_onnx_model),
     ("lmstudio:", build_lmstudio_model),
+    ("onnx:", build_onnx_model),
 )
 
 # Prefixes that are recognized provider namespaces.  A bare name that does not
@@ -640,6 +642,7 @@ _KNOWN_PREFIXES: tuple[str, ...] = (
     "notebooklm:",
     "lmstudio:",
     "local-api:",
+    "onnx:",
 )
 
 
@@ -875,6 +878,7 @@ __all__ = [
     "build_lmstudio_model",
     "build_local_api_model",
     "build_local_onnx_model",
+    "build_onnx_model",
     "_resolve_notebooklm_model_name",
     # re-exported from model_utils
     "is_retryable_model_error",

@@ -726,6 +726,11 @@
     },
     "WorkflowEndEvent": {
       "properties": {
+        "evaluation_enabled": {
+          "default": false,
+          "title": "Evaluation Enabled",
+          "type": "boolean"
+        },
         "run_id": {
           "title": "Run Id",
           "type": "string"

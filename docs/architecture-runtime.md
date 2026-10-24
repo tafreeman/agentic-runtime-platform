@@ -2,7 +2,7 @@
 
 > **Audience:** Engineers onboarding to the platform, architects doing design reviews, and senior contributors planning major changes.
 > **Scope:** The `agentic-workflows-v2` Python package and its direct dependencies. The evaluation framework (`agentic-v2-eval`) and React UI are covered in separate documents.
-> **Last verified:** 2026-07-28
+> **Last verified:** 2026-10-18
 
 **Package:** `agentic-workflows-v2` | **Python:** 3.11+ | **Build:** hatchling
 
@@ -58,7 +58,7 @@ agentic-workflows-v2/
 │   ├── governance/          # Approval gate + escalation sink
 │   ├── prompts/             # 7 agent persona definitions (.md)
 │   ├── tools/builtin/       # Built-in runtime tools
-│   ├── workflows/           # YAML loader, run logger, definitions/ (8 YAML workflows)
+│   ├── workflows/           # YAML loader, run logger, definitions/ (10 YAML files: 8 production + 2 test fixtures)
 │   ├── middleware/          # Sanitization detectors
 │   ├── integrations/        # OTEL tracing, metrics, MCP adapters
 │   └── cli/                 # Typer CLI entry points
@@ -82,7 +82,7 @@ The native engine represents a workflow as a `DAG` dataclass containing `StepDef
 
 - `asyncio.wait(FIRST_COMPLETED)` unblocks downstream steps the instant an upstream step finishes, rather than waiting for an entire wave.
 - **Cascade skip via BFS**: when a step fails, all transitive dependents are immediately marked `SKIPPED` and the executor continues cleanly.
-- **Deadlock detection**: if no tasks are running and unresolved steps remain, they are skipped with reason `"unmet dependencies"`.
+- **Deadlock backstop**: unreachable for a validated DAG, but if no tasks are running and unfinished steps remain, those steps are marked skipped with reason `"scheduler deadlock"` and the run fails (`overall_status` FAILED, `metadata["error"]` set) rather than reporting success ([ADR-060](adr/ADR-060-scheduler-guarantees-lean.md)).
 - **Configurable concurrency**: `max_concurrency` kwarg (default 10) limits simultaneously running `asyncio` tasks.
 
 ```python
@@ -96,7 +96,7 @@ dag.add(StepDefinition("summarize", func=summarize_fn, depends_on=["load_data"])
 
 **Cycle detection** uses a DFS three-color (white/gray/black) algorithm at `DAG.validate()` time. A gray-to-gray back-edge is a cycle; the full cycle path is reported in `CycleDetectedError`.
 
-**Top-level timeout watchdog:** `DAGExecutor.execute()` accepts an optional `timeout: float | None` parameter. When set, the entire scheduling loop is wrapped with `asyncio.wait_for`. On expiry, all in-flight tasks are structurally cancelled, every RUNNING step transitions to FAILED, and transitive dependents are cascade-skipped via BFS — the same mechanism used for step-level failure propagation. OTEL span attributes `workflow.timeout_exceeded=True` and `workflow.timeout_seconds=<n>` are emitted. This watchdog is additive to the existing per-step timeouts in `StepExecutor`; both can be active simultaneously. See [ADR-019](adr/ADR-019-dag-executor-top-level-timeout.md).
+**Top-level timeout watchdog:** `DAGExecutor.execute()` accepts an optional `timeout: float | None` parameter. When set, the entire scheduling loop runs under `asyncio.timeout`. On expiry, all in-flight tasks are structurally cancelled, every RUNNING step transitions to FAILED, and transitive dependents are cascade-skipped via BFS — the same mechanism used for step-level failure propagation. OTEL span attributes `workflow.timeout_exceeded=True` and `workflow.timeout_seconds=<n>` are emitted. This watchdog is additive to the existing per-step timeouts in `StepExecutor`; both can be active simultaneously. See [ADR-019](adr/ADR-019-dag-executor-top-level-timeout.md).
 
 ### 4.2 LangGraph execution engine
 
@@ -106,8 +106,8 @@ The LangGraph engine compiles a YAML workflow configuration into a LangGraph `St
 
 **Characteristics:**
 
-- Full LangGraph checkpointing support when configured.
-- Richer conditional edge support via `when:` expressions in YAML.
+- LangGraph checkpointing: in-memory (`MemorySaver`) by default, PostgreSQL when `AGENTIC_CHECKPOINTER_URL` is set (`postgres` extra), or any checkpointer injected into `WorkflowRunner`.
+- Honors the same `when:` conditions, `loop_until` loops and per-step observers as the native path; differences between the engines (for example failure propagation) are listed in [ADR-062](adr/ADR-062-langgraph-join-once-semantics.md).
 - Requires the `langchain` optional extras: `pip install -e ".[langchain]"`.
 - Falls back gracefully at import time — guarded with `try/except ImportError` throughout.
 
@@ -141,7 +141,7 @@ engine = get_registry().get_adapter("native")
 result = await engine.execute(dag, ctx, on_update=broadcast_fn)
 ```
 
-Instances are cached — the same engine object is returned on every subsequent call for the same name.
+Instances are cached — the same engine object is returned on every subsequent call for the same name. Runnable examples for both engines are in [Integration recipes](getting-started/adapter-recipes.md).
 
 **Eager startup validation:** At FastAPI lifespan startup, `AdapterRegistry.validate_selected(name)` is called for the adapter named by `AGENTIC_DEFAULT_ADAPTER` (default `langchain`). If the required extras are absent, the server raises `ConfigurationError` with an install hint and refuses to start, replacing the prior behavior of deferring the `ImportError` until the first workflow run. See [ADR-020](adr/ADR-020-langchain-adapter-eager-validation.md).
 
@@ -161,7 +161,7 @@ Middleware is applied in the following order (outermost → innermost, i.e. requ
 2. **`SlowAPIMiddleware`** — global per-IP sliding-window rate limit (default 60 requests/minute; configurable via `AGENTIC_RATE_LIMIT_DEFAULT`). Requests over the limit receive `429 Too Many Requests` with a `Retry-After` header. Limits are tracked in-process; multi-replica deployments do not share state. See [ADR-018](adr/ADR-018-api-rate-limiting-and-auth-throttle.md).
 3. **`MetricsMiddleware`** — HTTP request duration histograms and request-count counters per route, method, and status code.
 4. **`TraceparentMiddleware`** — injects W3C `traceparent` / `tracestate` response headers (plus `Server-Timing`) so the browser can correlate frontend and backend OTEL spans.
-5. **`SanitizationASGIMiddleware`** — runs inbound request bodies through the sanitization detector pipeline. Requests classified `BLOCKED` are rejected with `400 Bad Request` before reaching any route handler.
+5. **`SanitizationASGIMiddleware`** — runs inbound request bodies through the sanitization detector pipeline. Requests classified `BLOCKED` are rejected with `422` (`"Request blocked by sanitization policy"`) before reaching any route handler.
 6. **`APIKeyMiddleware` (or `OIDCAuthMiddleware`)** — validates `Authorization: Bearer` or `X-API-Key` headers using `secrets.compare_digest()`. Passes through configured public paths without authentication. An `AuthThrottle` class in `server/auth.py` tracks per-IP `401` failures: 5 failures within a 60-second window trigger a 300-second `429` lockout with `Retry-After`. Thresholds are configurable via `AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS`, `AGENTIC_AUTH_LOCKOUT_THRESHOLD`, and `AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS`. In-process only. See [ADR-018](adr/ADR-018-api-rate-limiting-and-auth-throttle.md).
 
 ### 5.2 Request lifecycle
@@ -216,6 +216,9 @@ The HTTP response to `POST /api/run` returns immediately with `{"run_id": "...",
 | `server/routes/health.py` | `/api/health` and `/api/health/ready` liveness/readiness endpoints |
 | `server/routes/agents.py` | Agent listing |
 | `server/routes/models.py` | Model probe endpoint (`/api/models/probe`) |
+| `server/routes/catalog.py` | Read-only editor pickers: `/api/personas`, `/api/tools`, `/api/observers` |
+| `server/routes/chat.py` | `POST /api/chat` model playground (SSE) |
+| `server/routes/settings_routes.py` | `/api/settings/*`: provider endpoints, tier overrides, model packs |
 | `server/routes/workflows.py` | Workflow listing, DAG, capabilities, editor, validation, adapters, `POST /run` |
 | `server/routes/runs.py` | Run list, summary, detail, per-run evaluation, SSE stream |
 | `server/routes/evaluation_routes.py` | Evaluation dataset listing, sample browsing, dataset-input preview (GET only) |
@@ -320,8 +323,8 @@ The shared `LLMClient` in `agentic-tools` routes **multiple providers across sev
 | Google Gemini | `GEMINI_API_KEY` | Direct API |
 | Azure OpenAI | `AZURE_OPENAI_API_KEY_0..n` | Supports `_0` through `_n` suffix for multiple deployments and failover |
 | Azure AI Foundry | `AZURE_FOUNDRY_*` | Foundry model catalog |
-| GitHub Models | `GITHUB_TOKEN` | Models API |
-| Ollama | `OLLAMA_HOST` | Local inference |
+| GitHub Models | `GITHUB_TOKEN` | Retired upstream 2026-07-30; no tier chain routes to it |
+| Ollama | `OLLAMA_HOST` (shared `LLMClient`); the runtime's own Ollama backend reads `OLLAMA_BASE_URL` | Local inference |
 | Local (two backends) | `LOCAL_MODEL_PATH` (ONNX, auto-detected from `~/.cache/aigallery`); Windows AI / Phi Silica via .NET bridge | On-device inference |
 
 ### Circuit breaker and fallback
@@ -461,7 +464,7 @@ All inbound request bodies pass through the detector pipeline (`agentic_v2/middl
 | Unicode anomaly detector | Zero-width characters, directional overrides, BOM markers |
 | Classification engine | Assigns `CLEAN`, `REDACTED`, `BLOCKED`, or `REQUIRES_APPROVAL` |
 
-Requests classified `BLOCKED` are rejected with `400 Bad Request` before any business logic executes. Requests classified `REDACTED` proceed with sensitive values replaced by `[REDACTED]` markers. The middleware is fail-closed by default (`AGENTIC_SANITIZER_FAIL_OPEN=1` to override).
+Requests classified `BLOCKED` are rejected with `422` before any business logic executes (a malformed body gets `400`; `POST /api/run` additionally re-checks workflow inputs and answers `400` for blocked values). Requests classified `REDACTED` proceed with sensitive values replaced by `[REDACTED]` markers. The middleware is fail-closed by default (`AGENTIC_SANITIZER_FAIL_OPEN=1` to override).
 
 ### 13.3 Runtime safety controls
 
@@ -598,7 +601,7 @@ All environment variables are routed through a single `pydantic-settings` class 
 
 See `.env.example` for the full variable list with documentation.
 
-Workflow definitions are configured in YAML under `agentic_v2/workflows/definitions/` (8 built-in definitions). A `SecretProvider` abstraction centralises secret access at runtime (environment-variable backend by default, file-based backend for mounted secrets, or a custom protocol implementation).
+Workflow definitions are configured in YAML under `agentic_v2/workflows/definitions/` (10 built-in definitions: 8 production workflows plus 2 test fixtures). A `SecretProvider` abstraction centralises secret access at runtime (environment-variable backend by default, file-based backend for mounted secrets, or a custom protocol implementation).
 
 ---
 
@@ -612,12 +615,12 @@ The CLI is implemented with **Typer**. `devex` is a command group:
 |---------|-------------|
 | `agentic run <workflow> --input <file.json>` | Execute a workflow with inputs from a JSON file |
 | `agentic compare <workflow> --input <file>` | Run the same workflow on both engines and compare outputs |
-| `agentic orchestrate` | Run an orchestrator-driven task decomposition |
-| `agentic resume <run_id>` | Resume an interrupted workflow run |
-| `agentic list workflows\|agents\|tools` | List available workflows, agents, or tools |
+| `agentic orchestrate` | Stub: prints a notice and exits 1 (see the [CLI reference](cli-reference.md)) |
+| `agentic resume <name>` | Rehydrate a saved `ExecutionContext` checkpoint and report changed files; it does not re-run the workflow |
+| `agentic list workflows\|agents\|tools\|adapters` | List available workflows, agents, tools, or adapters |
 | `agentic validate <workflow>` | Validate a workflow YAML without executing it |
 | `agentic serve` | Start the FastAPI development server |
-| `agentic version` | Print version information |
+| `agentic version` | Print the installed version |
 
 The `compare` command is useful for verifying that the native and LangGraph engines produce equivalent outputs for a given workflow, which is important when migrating workflows between engines.
 
@@ -651,7 +654,8 @@ The event streaming system uses in-process `asyncio.Queue` with a 500-event circ
 
 Saved run results are JSON files, so they remain directly inspectable. Other
 state has separate backends: replay can use memory, SQLite, or Redis; LangGraph
-checkpoints can use SQLite or PostgreSQL; and model-router circuit state can
+checkpoints are in-memory unless `AGENTIC_CHECKPOINTER_URL` selects PostgreSQL
+(or the caller injects a checkpointer); and model-router circuit state can
 use Redis. The run-list API still scans and filters JSON metadata in process,
 which is not designed for large-scale analytical queries.
 
@@ -667,13 +671,13 @@ Merged from the 2026-03-03 architecture review. Captures weaknesses and recommen
 
 ### Protocol type-safety weaknesses
 
-- `ExecutionEngine.execute()` uses `Any` for `workflow`, `ctx`, and return type — loses compile-time type safety and pushes validation to runtime.
-- `AgentProtocol.run()` uses `Any` for both input and output. `BaseAgent` is generic over `TInput`/`TOutput`, but the protocol itself does not enforce it.
+- `ExecutionEngine.execute()` still uses `Any` for `workflow` (engines accept different representations) and `ctx`; its return type is `WorkflowResult`.
+- `AgentProtocol.run()` uses `object` for input and output since the Epic 1 tightening ([Migrations](MIGRATIONS.md)). `BaseAgent` is generic over `TInput`/`TOutput`, but the protocol itself does not enforce it.
 - No protocol exists for `WorkflowLoader` or config validation — these remain concrete classes.
 
 ### Adapter gaps
 
-- **Context bridging missing.** `LangChainEngine` accepts `ctx: Any` but does not forward the `ExecutionContext` to the underlying `WorkflowRunner`. Shared state (variables, services, step tracking) from the native context system is not available in LangGraph executions. `ctx` is currently reserved for "future use."
+- **Context bridging is partial.** `LangChainEngine` forwards `ctx` to `WorkflowRunner`, which merges the context's variables into the LangGraph `state["context"]` and writes safe final values back. Other `ExecutionContext` state (services, step tracking) is not shared with LangGraph executions.
 - **Instance caching.** `AdapterRegistry` caches adapter instances. Configuration changes after first access require a registry reset — production-safe but forces `object.__new__()` workarounds in tests.
 
 ### Route-module size
@@ -682,24 +686,23 @@ Merged from the 2026-03-03 architecture review. Captures weaknesses and recommen
 
 ### Code-quality configuration drift
 
-- `agentic-workflows-v2/pyproject.toml` has **no `[tool.ruff]` section** of its own; the ruff rule set is inherited from the workspace root. Some documented standards are aspirational rather than tool-enforced for the main package.
+- `agentic-workflows-v2/pyproject.toml` has no `[tool.ruff]` table of its own (line length and target version come from the workspace root) but does define `[tool.ruff.lint]` rules and per-file ignores.
 
 ### Current architecture gaps
 
-- The only memory implementation is in-memory (`InMemoryStore`); there is no durable backend.
+- The `MemoryStoreProtocol` store (`core/memory.py`) has only an in-memory implementation (`InMemoryStore`); durable memory exists only as the file-backed built-in memory tool (`AGENTIC_MEMORY_PATH`).
 - No adapter/tool plugin discovery — registration is import-time only (no `entry_points` or directory scan).
 
 ### Prioritized recommendations
 
 | # | Recommendation | Impact | Effort | Priority |
 |---|---|:---:|:---:|:---:|
-| 1 | Tighten protocol signatures — replace `Any` in `ExecutionEngine.execute()` / `AgentProtocol.run()` with bounded TypeVars or Union types | 4 | M | High |
-| 2 | Bridge `ExecutionContext` into `LangChainEngine` so both engines share state during adapter-routed execution | 4 | M | High |
+| 1 | Tighten the remaining `Any` in `ExecutionEngine.execute()` (`workflow`, `ctx`) with bounded TypeVars or Union types | 3 | M | Medium |
+| 2 | Extend the `ExecutionContext` bridge in `LangChainEngine` beyond variables (services, step tracking) | 3 | M | Medium |
 | 3 | Add cross-package integration tests covering the LLM client → engine → eval scoring path | 4 | M | High |
 | 4 | Continue splitting `server/routes/workflows.py` into smaller route modules | 3 | S | Medium |
-| 5 | Add a standalone `quickstart.py` / CLI command running a simple workflow end-to-end | 3 | S | Medium |
-| 6 | Document "How to implement ExecutionEngine" with test templates | 3 | S | Medium |
-| 7 | Add adapter/tool plugin discovery via `entry_points` or directory scan | 3 | M | Low |
+| 5 | Document "How to implement ExecutionEngine" with test templates | 3 | S | Medium |
+| 6 | Add adapter/tool plugin discovery via `entry_points` or directory scan | 3 | M | Low |
 
 ---
 

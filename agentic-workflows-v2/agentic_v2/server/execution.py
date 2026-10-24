@@ -333,6 +333,11 @@ async def _run_native_stream(
         """Broadcast to WebSocket clients and collect per-step scores."""
         if scoring_listener is not None:
             await scoring_listener.handle_update(event)
+        if event.get("type") == "workflow_end":
+            # _run_and_evaluate broadcasts the authoritative workflow_end
+            # (with evaluation_enabled); the engine's own copy would end SSE
+            # streams before evaluation events arrive.
+            return
         await websocket.manager.broadcast(run_id, event)
 
     result = await _run_via_native_adapter(
@@ -541,6 +546,7 @@ async def _run_and_evaluate(
     """
     try:
         logger.info("Starting background execution for run_id=%s", run_id)
+        websocket.manager.bind_run_tenant(run_id, tenant_id)
         await websocket.manager.broadcast(
             run_id,
             {
@@ -588,6 +594,9 @@ async def _run_and_evaluate(
                     else 0.0
                 ),
                 "errors": workflow_errors,
+                # Tells SSE consumers whether evaluation events follow, so
+                # they keep the stream open past workflow_end.
+                "evaluation_enabled": bool(evaluation and evaluation.enabled),
                 "timestamp": datetime.now(UTC).isoformat(),
             },
         )

@@ -30,7 +30,7 @@ get a change through.
 - Type: `text-micro` (11px) is the floor for labels, IDs and metadata; `text-xs`
   (12px) for secondary copy and anything on an interactive control.
 - Colour: `el-*` utilities and `--el-graph-*` tokens for graph code. Raw `accent`
-  is for fills and marks; accent *text* uses `accent-strong`. One vermilion
+  is for fills and marks; accent *text* uses `accent-strong`. One orange
   emphasis per view.
 - Focus: the global `:focus-visible` rule draws the 2px `--el-focus` ring. Don't
   add a weaker `ring-1`/`ring-*/50` on top; use `focus-ring` / `focus-ring-inset`

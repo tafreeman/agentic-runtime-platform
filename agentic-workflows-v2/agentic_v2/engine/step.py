@@ -260,7 +260,9 @@ class StepExecutor:
     """Executes StepDefinition instances with full lifecycle management."""
 
     def __init__(self) -> None:
-        self._running_tasks: dict[str, asyncio.Task[dict[str, Any]]] = {}
+        # Keyed by (run_id, step_name): one StepExecutor is shared by concurrent
+        # runs, so a bare step name would let same-named steps collide.
+        self._running_tasks: dict[tuple[str, str], asyncio.Task[dict[str, Any]]] = {}
 
     async def execute(
         self, step_def: StepDefinition, ctx: ExecutionContext
@@ -780,29 +782,44 @@ class StepExecutor:
         wraps this call in an ``asyncio.timeout`` context manager when a timeout is
         configured.
         """
+        key = (ctx.run_id, step_name)
         task = asyncio.create_task(func(ctx))
-        self._running_tasks[step_name] = task
+        self._running_tasks[key] = task
 
         try:
             return await task
         finally:
-            self._running_tasks.pop(step_name, None)
+            if self._running_tasks.get(key) is task:
+                del self._running_tasks[key]
 
-    async def cancel(self, step_name: str) -> bool:
-        """Cancel a running step by name (returns True if found and cancelled)."""
-        task = self._running_tasks.get(step_name)
-        if task and not task.done():
-            task.cancel()
-            return True
-        return False
+    async def cancel(self, step_name: str, run_id: str | None = None) -> bool:
+        """Cancel running steps named ``step_name`` (True if any was cancelled).
 
-    async def cancel_all(self) -> int:
-        """Cancel all running steps (returns count of cancelled tasks)."""
+        With ``run_id`` only that run's step is cancelled; without it every
+        run's step of that name is.
+        """
+        cancelled = False
+        for (task_run_id, name), task in list(self._running_tasks.items()):
+            if name != step_name or (run_id is not None and task_run_id != run_id):
+                continue
+            if not task.done():
+                task.cancel()
+                cancelled = True
+        return cancelled
+
+    async def cancel_all(self, run_id: str | None = None) -> int:
+        """Cancel running steps (returns count of cancelled tasks).
+
+        With ``run_id`` only that run's steps are cancelled; without it every
+        run sharing this executor is.
+        """
         count = 0
-        # Snapshot keys: cancel() awaits, letting cancelled tasks' finally
-        # blocks pop from _running_tasks mid-iteration (RuntimeError otherwise).
-        for name in list(self._running_tasks):
-            if await self.cancel(name):
+        # Snapshot: cancelled tasks' finally blocks mutate _running_tasks.
+        for (task_run_id, _name), task in list(self._running_tasks.items()):
+            if run_id is not None and task_run_id != run_id:
+                continue
+            if not task.done():
+                task.cancel()
                 count += 1
         return count
 

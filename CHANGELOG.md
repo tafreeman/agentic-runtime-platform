@@ -1,5 +1,59 @@
 # Changelog
 
+## Unreleased - CI pruning: fewer jobs, same required checks
+
+- **No required status check changed.** Every required context keeps its job id
+  and name; path gating is job-level only (a `changes` job in `ci.yml` and
+  `eval-package-ci.yml`, CodeQL gates its steps), pushes to `main` run
+  everything, and the gates fail open.
+- **Consolidated jobs.** `lint` now also runs the suppression ratchet, pydocstyle,
+  workflow validation, doc-drift and homepage-stat checks, the Dockerfile
+  constraint pins and the `ci-constraints.txt` vs `uv.lock` check;
+  `ek-delegation-tests` also runs the claude, EvalKit and scoring-without-legacy
+  suites; `python-smoke` also runs `tools/tests` and no longer repeats the runtime
+  unit suite; `frontend-build` also runs the vitest coverage gate. The absorbed
+  checks are now merge-blocking.
+- **PR concurrency.** A newer push cancels the superseded PR run; main-branch runs are
+  never cancelled. The non-existent `agenticv2` branch is gone from every trigger.
+- **Playwright runs once per PR.** The 5x repeat moved to `nightly.yml`, which now
+  runs the streaming spec 50x, the first-span sample, the SLO-data publish, then the
+  full suite 5x (last, so it cannot affect SLO publishing).
+- **Pages publishing is one workflow.** `load-report-pages.yml` is folded into
+  `docs.yml` (serialized, with the load-report drift check), which also fixes three
+  broken links that had failed the strict docs build.
+- **New:** `weekly-telemetry-snapshot.yml` (CI-run statistics ledger).
+
+## Unreleased - Discovered ONNX models run in chat, with weight verification
+
+- **`onnx:<folder>` model ids now work in `/api/chat` and `get_chat_model`.**
+  They route to a new `build_onnx_model` over `OnnxBackend` (prompt-only, no
+  tool-calling) instead of falling through to Ollama. Ids must be relative
+  folders containing `genai_config.json` under the configured ONNX roots; the
+  backend keeps one model loaded at a time.
+- **`AGENTIC_STRICT_MODEL_VERIFY=1` now covers `OnnxBackend`.** Weights are
+  verified once per cached path before loading; non-strict mode only logs.
+
+## Unreleased - Run logger filters safely and writes records atomically
+
+- **`RunLogger.list_runs(workflow_name)` no longer treats the name as a glob.**
+  The name is sanitized like the filename segment, and when sanitizing is lossy
+  (for example `team/flow` vs `team_flow`) the recorded `workflow_name` is
+  confirmed, so unrelated runs are not returned. Non-run JSON files are skipped.
+- **Run records are written atomically.** `log()` and `annotate_run()` write a
+  temp file and replace the record, so readers never see a partial file. The
+  replacement keeps the original mode bits, extended attributes/ACLs and (when
+  permitted) ownership.
+
+## Unreleased - Tools inventory command and classify_error repaired
+
+- **`python -m tools.llm.model_inventory` works from the repository root.** It
+  imported `llm_client` as a top-level module, resolved the repo root one level
+  too shallow and pointed at a missing Windows AI bridge path. This resolves
+  Known Limitations 4.12.
+- **`tools.core.errors.classify_error` accepts `return_code` again** (accepted,
+  currently unused). The `tools-tests` job no longer deselects its test, which
+  resolves Known Limitations 4.15.
+
 ## Unreleased - NVIDIA free-tier discovery reports what the catalog says
 
 - **`model_probe --discover` no longer lists every hosted NVIDIA model as free.**
@@ -14,6 +68,23 @@
   `NVIDIA_NIM_HOST`, an unset host, or a failed `/models` call sets
   `free_status` to `unknown` with empty free lists, rather than classifying
   on-prem or unavailable models.
+
+## Unreleased - Benchmark LLM judge runs again
+
+- **The benchmark pipeline's LLM-judge path was silently off, and is back.**
+  `tools/agents/benchmarks/evaluation_pipeline.py` imported its report helpers
+  from `llm_evaluator` after they had moved to `evaluator_reporting`. The
+  optional-import guard swallowed the `ImportError`, so `HAS_LLM_EVALUATOR`
+  was always `False` and every `evaluate_task_output_llm` call fell back to
+  legacy pattern matching. It now makes the LLM-judge call again. Benchmark
+  scores produced from here on are judge scores, not pattern-match scores, and
+  each scored task costs one extra provider call, so compare runs only within
+  one side of this change.
+- **Ten `tools/tests` cases gate again.** They were deselected in the
+  `tools-tests` CI job as "stale"; they were catching this bug. A new test
+  fails if the import guard masks a broken in-repo import. One unrelated case
+  stayed deselected until `classify_error` was repaired (see "Tools inventory
+  command and classify_error repaired" above).
 
 ## Unreleased - Eval gate scores through the runtime, and rejects bad inputs
 

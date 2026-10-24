@@ -11,7 +11,29 @@ name: 'Dependency review'
 on:
   pull_request:
     branches: [main]
+    # SAFE ONLY while 'dependency-review' is NOT a required status check on main
+    # (verified: it is not among the required contexts). If it is ever made
+    # required, REMOVE this paths filter, or the check deadlocks as "Expected"
+    # on every PR that touches none of these files. The list is every
+    # dependency-graph manifest in the repo plus the workflows (action pins).
+    paths:
+      - '**/pyproject.toml'
+      - 'uv.lock'
+      - 'ci-constraints.txt'
+      - '**/requirements*.txt'
+      - '**/package.json'
+      - '**/package-lock.json'
+      - '**/*.csproj'
+      - '**/Dockerfile*'
+      - 'docker-compose*.yml'
+      - '.devcontainer/**'
+      - '.github/workflows/**'
   workflow_dispatch:
+
+concurrency:
+  # PRs: one group per PR number, newer push cancels the older run.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # If using a dependency submission action in this workflow this permission will need to be set to:
 #
@@ -29,9 +51,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout repository'
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - name: 'Dependency Review'
-        uses: actions/dependency-review-action@v5
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294  # v5.0.0
         with:
           comment-summary-in-pr: always
           fail-on-severity: high

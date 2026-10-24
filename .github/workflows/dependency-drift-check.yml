@@ -10,9 +10,9 @@
 # `agentic_v2/scoring/evalkit_bridge.py`) with no consumer contract test on
 # the upstream side. A tight pin protects TODAY's build.
 #
-# It does nothing for TOMORROW's. `ci.yml`'s `ek-delegation-tests` and
-# `evalkit-bridge-tests` jobs are the only places CI ever exercises these two
-# integrations, and both always install with `-c ci-constraints.txt` — the
+# It does nothing for TOMORROW's. `ci.yml`'s consolidated `ek-delegation-tests`
+# job (its EK and EvalKit steps) is the only place CI ever exercises these two
+# integrations, and it always installs with `-c ci-constraints.txt` — the
 # exact lockfile-pinned versions. Nobody finds out a new EK or EVK release
 # breaks ARP's usage until someone manually bumps the upper bound in
 # pyproject.toml, by which point the incompatible release is already the one
@@ -56,9 +56,9 @@ jobs:
     name: EK step-delegation drift check (unpinned ek extra)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: "3.11"
       - name: Install packages (ek extra, no constraints pin)
@@ -94,14 +94,14 @@ jobs:
             -q --timeout=120
 
   evalkit-bridge-drift:
-    # Unpinned mirror of ci.yml's evalkit-bridge-tests job — same reasoning
+    # Unpinned mirror of the EvalKit steps of ci.yml's ek-delegation-tests job — same reasoning
     # as ek-delegation-drift above, for the `eval` extra instead.
     name: EvalKit bridge drift check (unpinned eval extra)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: "3.11"
       - name: Install packages (eval extra, no constraints pin)

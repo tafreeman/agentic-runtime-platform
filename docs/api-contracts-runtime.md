@@ -14,7 +14,9 @@ clients. In the standard development environment, the base URL is
 - `X-API-Key: <key>` header
 
 The `/api/health` prefix, `/docs`, `/openapi.json`, and `/redoc` bypass API-key
-authentication. This includes `/api/health/ready`. If OIDC is enabled, use the
+authentication. This includes `/api/health/ready`. So does every path outside
+`/api/` (the static UI, `/metrics` and `/ws/*`); WebSocket connections are
+authenticated by their own handler. If OIDC is enabled, use the
 OIDC settings described in [Configuration](configuration.md#http-authentication).
 
 ## Route map
@@ -75,13 +77,13 @@ values.
 | `GET` | `/api/workflows` | List discovered workflows |
 | `GET` | `/api/adapters` | List execution adapters |
 | `GET` | `/api/workflows/{name}/dag` | Return the workflow graph |
-| `GET` | `/api/workflows/{name}/capabilities` | Describe workflow features and engine compatibility |
+| `GET` | `/api/workflows/{name}/capabilities` | Return the workflow's declared input and output capabilities (used for dataset matching, not engine support) |
 | `GET` | `/api/workflows/{name}/editor` | Return an editable workflow document |
 | `PUT` | `/api/workflows/{name}` | Save a workflow document |
 | `POST` | `/api/workflows/validate` | Validate an unsaved workflow document |
 | `POST` | `/api/run` | Start a workflow run |
 | `GET` | `/api/workflows/{workflow_name}/preview-dataset-inputs` | Preview how dataset samples map to workflow inputs |
-| `WS` | `/ws/execution/{run_id}` | Start and observe an interactive run |
+| `WS` | `/ws/execution/{run_id}` | Observe a run started with `POST /api/run` (replays buffered events, then streams live ones) |
 
 ### Runs and evaluation
 
@@ -119,15 +121,33 @@ Liveness probe. No authentication required.
 ```json
 {
   "status": "ok",
-  "version": "0.1.0"
+  "version": "0.1.0",
+  "no_llm_mode": false
 }
 ```
+
+`no_llm_mode` is `true` when the server runs under `AGENTIC_NO_LLM=1`; it is read
+from the environment on every request.
 
 #### `GET /api/health/ready`
 
 Readiness probe. It checks the state needed to accept work and returns `503`
 when a required dependency is unavailable. Use this route for deployment
 readiness checks; use `/api/health` for liveness checks.
+
+```json
+{
+  "status": "ready",
+  "dependencies": [{"name": "redis", "status": "skipped", "detail": null}],
+  "degraded_selection_count": 0,
+  "open_circuit_breakers": []
+}
+```
+
+`status` is `ready` (HTTP 200) or `not_ready` (HTTP 503). Today the only critical
+dependency is Redis, and only when `REDIS_URL` is set (`ok`, `down`, or
+`skipped`). Open circuit breakers are reported but do not by themselves cause
+`503`.
 
 ---
 
@@ -235,7 +255,7 @@ List all available workflow definitions discovered from the YAML definitions dir
 
 ```json
 {
-  "workflows": ["code_review", "research_report", "code_generation"]
+  "workflows": ["bug_resolution", "code_review", "test_deterministic"]
 }
 ```
 
@@ -392,6 +412,8 @@ Execute a workflow asynchronously. Returns immediately with a run ID; execution 
   },
   "run_id": "my-run-001",
   "adapter": "langchain",
+  "model_override": "ollama:qwen3-coder:30b",
+  "model_pack": {"id": "my-pack", "version": 1},
   "evaluation": {
     "enabled": true,
     "dataset_source": "repository",
@@ -413,6 +435,8 @@ Execute a workflow asynchronously. Returns immediately with a run ID; execution 
 | `input_data` | `object` | No | `{}` | Key-value workflow inputs |
 | `run_id` | `string` | No | auto | 1–128 chars: `[a-zA-Z0-9_-]` |
 | `adapter` | `string` | No | `"langchain"` | `"langchain"` or `"native"` |
+| `model_override` | `string` | No | `null` | Full prefixed model id applied to every step (max 200 chars; `langchain` adapter only, else `422`) |
+| `model_pack` | `{id, version}` | No | `null` | Immutable model-pack reference (`langchain` adapter only; validated at submit time) |
 | `evaluation` | `object` | No | `null` | Evaluation settings |
 | `execution_profile` | `object` | No | `null` | Runtime controls |
 
@@ -421,9 +445,14 @@ Execute a workflow asynchronously. Returns immediately with a run ID; execution 
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `runtime` | `"subprocess"` \| `"docker"` | `"subprocess"` | Execution isolation |
-| `max_attempts` | `int` | `null` | Max retry attempts per step |
-| `max_duration_minutes` | `int` | `null` | Hard timeout for entire run |
+| `max_attempts` | `int` (>= 1) | `null` | Max retry attempts per step |
+| `max_duration_minutes` | `int` (>= 1) | `null` | Hard timeout for entire run |
 | `container_image` | `string` | `null` | Docker image (when `runtime="docker"`) |
+
+`evaluation` fields: `enabled` (default `false`), `enforce_hard_gates` (default
+`true`), `dataset_source` (`none`, `repository`, or `local`), `dataset_id`,
+`local_dataset_path`, `sample_index` (>= 0), `rubric_id`, and the deprecated
+`rubric`.
 
 **Response `200` — `WorkflowRunResponse`**
 
@@ -434,10 +463,12 @@ Execute a workflow asynchronously. Returns immediately with a run ID; execution 
 }
 ```
 
-**Error `400`** — Input blocked by sanitization policy.
-**Error `422`** — Unknown adapter, invalid `run_id` format, or workflow not found.
-**Error `500`** — Unexpected server error.
+**Error `400`** — A workflow input value was blocked by the sanitization policy.
+**Error `409`** — `run_id` is already in use.
+**Error `422`** — Unknown adapter, invalid `run_id` format, a required workflow input missing or empty, `model_override` or `model_pack` with a non-`langchain` adapter, or an invalid model pack.
+**Error `500`** — Unexpected server error. An unknown workflow name currently also surfaces as `500`, with the available names in `detail`.
 **Error `501`** — LangChain extras not installed (when `adapter="langchain"`).
+**Error `503`** — Sanitization layer not initialized.
 
 ---
 
@@ -557,7 +588,7 @@ Full rubric breakdown for a scored workflow run. Returns criterion-level scores,
 
 #### `GET /api/runs/{run_id}/stream`
 
-Server-Sent Events stream of real-time execution events for a running (or recently completed) workflow. Terminates when a `workflow_end` or `evaluation_complete` event is received, or after a 30-second keepalive timeout.
+Server-Sent Events stream of real-time execution events for a running (or recently completed) workflow of the caller's tenant; an unknown run or another tenant's run returns `404`. The stream ends after an `error` event, an `evaluation_complete` event, or a `workflow_end` event with no evaluation pending (`evaluation_enabled` false). While idle it sends a `keepalive` event every 30 seconds and stays open.
 
 **Response** — `text/event-stream`
 
@@ -571,7 +602,7 @@ data: {"type": "step_end", "run_id": "...", "step": "load_code", "status": "succ
 data: {"type": "workflow_end", "run_id": "...", "status": "success", "timestamp": "..."}
 ```
 
-Keepalive events (no-op):
+Keepalive events (no-op; sent after every 30 seconds of silence, the stream stays open):
 ```
 data: {"type": "keepalive"}
 ```
@@ -721,10 +752,11 @@ WebSocket endpoint for real-time execution streaming. Preferred over SSE for bid
 
 1. Validate browser origin (when `Origin` header is present).
 2. Validate API key via `Authorization: Bearer <key>` or `X-API-Key: <key>` header. Query-string tokens are **rejected** (close code 1008).
-3. Accept the connection and replay all buffered events (up to 500 events) so late-connecting clients can reconstruct current state.
-4. Receive live events as the engine broadcasts them.
-5. Client may send any text (ping); server ignores content.
-6. On disconnect: connection is removed; replay buffer is retained until `clear_buffer()` is called.
+3. Resolve the caller's tenant and confirm the run exists for it; the socket does not start a run, so connect after `POST /api/run`.
+4. Accept the connection (when tracing is enabled the first message carries the W3C trace context) and replay all buffered events (up to 500 events) so late-connecting clients can reconstruct current state.
+5. Receive live events as the engine broadcasts them.
+6. Client may send any text (ping); server ignores content.
+7. On disconnect: connection is removed; replay buffer is retained until `clear_buffer()` is called.
 
 **Close codes:**
 
@@ -733,6 +765,8 @@ WebSocket endpoint for real-time execution streaming. Preferred over SSE for bid
 | 1008 | Origin not in allowlist |
 | 1008 | Query-string API key rejected |
 | 1008 | Invalid or missing API key |
+| 1008 | Too many failed authentication attempts from this IP |
+| 1008 | Run not found (unknown run, or owned by another tenant) |
 
 **Event payloads** — see
 [Runtime data contracts](data-models-runtime.md#execution-events) for the full
@@ -765,10 +799,11 @@ For `422 Unprocessable Entity` (request body validation failures), FastAPI retur
 
 | HTTP status | Meaning |
 |---|---|
-| 400 | Input blocked by sanitization or malformed body |
+| 400 | Workflow input blocked by the sanitization policy, or a malformed JSON body |
 | 401 | Missing or invalid API key |
 | 404 | Workflow, run, or dataset not found |
-| 422 | Validation error (invalid schema, cycle in DAG, etc.) |
+| 409 | Run id already in use |
+| 422 | Validation error (invalid schema, cycle in DAG, missing required input, etc.) or a request body blocked by the sanitization middleware |
 | 429 | Global rate limit exceeded, or per-IP auth throttle active. Check the `Retry-After` header. |
 | 500 | Unhandled internal error |
 | 501 | LangChain extras not installed |

@@ -47,6 +47,7 @@ from ...langchain.dependencies import (
 )
 from ...ui_settings import load_ui_settings, resolve_model_pack
 from ...workflows.run_logger import RunLogger
+from .. import websocket
 from ..audit_log import audit_request_event
 from ..execution import _run_and_evaluate, invalidate_compiled_workflow
 from ..models import (
@@ -485,6 +486,12 @@ async def run_workflow(
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
 
+        # Bind before the task starts so a stream opened right after submit
+        # is already tenant-scoped.
+        if not websocket.manager.bind_run_tenant(run_id, tenant_ctx.tenant_id):
+            raise HTTPException(
+                status_code=409, detail=f"Run id already in use: {run_id}"
+            )
         background_tasks.add_task(
             _run_and_evaluate,
             request.workflow,
