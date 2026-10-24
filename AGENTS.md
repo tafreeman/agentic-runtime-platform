@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This is a Python 3.11+/Node 20 monorepo. `agentic-workflows-v2/` contains the runtime, CLI, FastAPI server, and DAG engine; its React/Vite dashboard lives in `agentic-workflows-v2/ui/`. `agentic-v2-eval/` is the rubric-based evaluation package, while `tools/` contains shared LLM and benchmark utilities. Python tests sit beside each package in `tests/`, with cross-package checks in root `tests/e2e/`. Documentation and ADRs are under `docs/`; sample workflows, datasets, deployment files, and telemetry configuration live in `examples/`, `datasets/`, `infra/`, and `otel/`.
+This is a Python 3.11+/Node 22.22+ monorepo. `agentic-workflows-v2/` contains the runtime, CLI, FastAPI server, and DAG engine; its React/Vite dashboard lives in `agentic-workflows-v2/ui/`. `agentic-v2-eval/` is the rubric-based evaluation package, while `tools/` contains shared LLM and benchmark utilities. Python tests sit beside each package in `tests/`, with cross-package checks in root `tests/e2e/`. Documentation and ADRs are under `docs/`; sample workflows, datasets, deployment files, and telemetry configuration live in `examples/`, `datasets/`, `infra/`, and `otel/`.
 
 Keep package boundaries intact. In particular, do not introduce cross-package imports without reviewing the architecture guidance in `docs/ARCHITECTURE.md` and relevant ADRs.
 
@@ -23,7 +23,7 @@ Python uses 4-space indentation, Black formatting and an 88-character target, Ru
 
 ## Testing Guidelines
 
-Use pytest for Python, Vitest for UI unit tests, and Playwright for browser flows. Name Python tests `test_*.py`, UI unit tests `*.test.ts(x)`, and E2E tests `*.spec.ts`. Add regression coverage with behavior changes. Maintain at least 80% runtime coverage and the UI's 60% configured floor; mark slow or end-to-end Python tests with the registered `slow` or `e2e` markers.
+Use pytest for Python, Vitest for UI unit tests, and Playwright for browser flows. Name Python tests `test_*.py`, UI unit tests `*.test.ts(x)`, and E2E tests `*.spec.ts`. Add regression coverage with behavior changes. Maintain at least 80% runtime coverage and the UI's configured floors (60% lines/statements/functions, 56% branches, ratcheting up; see `agentic-workflows-v2/ui/vitest.config.ts`); mark slow or end-to-end Python tests with the registered `slow` or `e2e` markers.
 
 ## Commit & Pull Request Guidelines
 

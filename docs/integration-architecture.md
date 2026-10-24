@@ -18,7 +18,7 @@ agentic-workflows-v2                  agentic-v2-eval
 agentic-workflows-v2/ui
 ```
 
-Dependency direction is always downward or lateral. `agentic-workflows-v2` does not import from `agentic-v2-eval`. The eval package does not import from the runtime. The UI has no Python imports; it communicates only over HTTP and WebSocket.
+Dependency direction is always downward or lateral. `agentic-workflows-v2` has no runtime import of `agentic-v2-eval`: the one source-level reference is `agentic_v2/models/llm.py`, an unreferenced adapter (omitted from coverage) that imports `agentic_v2_eval.interfaces.LLMClientProtocol`, and `devex/workspace_test_runner.py` mentions the package by name. The eval package does not import from the runtime. The UI has no Python imports; it communicates only over HTTP and WebSocket.
 
 ---
 
@@ -59,7 +59,7 @@ This means a single `uvicorn` process can serve both the API and the UI, with no
 
 ### REST API endpoint reference
 
-All endpoints are prefixed with `/api/`. Authentication is controlled by `AGENTIC_API_KEY` (see [Deployment Guide](deployment-guide.md)).
+All endpoints are prefixed with `/api/`. Authentication is controlled by `AGENTIC_API_KEY` (see [Deployment Guide](deployment-guide.md)). This table is the integration-relevant subset; the full route list, including chat, settings, model finder, catalog and evaluation routes, is in [Runtime API contracts](api-contracts-runtime.md).
 
 | Method | Path | Description |
 |---|---|---|
@@ -124,7 +124,7 @@ The `useWorkflowStream` hook in `ui/src/hooks/useWorkflowStream.ts` implements t
 from tools.llm.llm_client import LLMClient as LegacyClient
 ```
 
-`LegacyClient` is the alias used inside the runtime for the shared `LLMClient`. The runtime's `ModelRouter` and `SmartRouter` use this as the underlying async completion client. Provider credentials are injected at runtime via the `SecretProvider` abstraction in `models/secrets.py`.
+`LegacyClient` is the alias this module uses for the shared `LLMClient`. Nothing else in the runtime imports `models/llm.py` today, so neither `ModelRouter` nor `SmartModelRouter` routes through it; their provider backends are the runtime's own (`models/backends_*.py`). Runtime provider credentials are resolved through the `SecretProvider` abstraction in `models/secrets.py`.
 
 ### LangGraph model builders
 
@@ -134,7 +134,7 @@ from tools.llm.llm_client import LLMClient as LegacyClient
 from tools.llm.llm_client import LLMClient
 ```
 
-The LangGraph engine's model builders import the shared `LLMClient` lazily (inside `_import_repo_llm_client()`) to back the local ONNX provider path. The import is deferred and error-guarded, so the runtime works without the shared package installed as long as no local ONNX model is requested.
+The LangGraph engine's model builders import the shared `LLMClient` lazily to back the legacy `local:` provider path. The import is deferred and error-guarded, so the runtime works without the shared package importable as long as no `local:` model is requested. (`onnx:<folder>` ids use the runtime's own `OnnxBackend` instead.)
 
 ### Benchmarks and datasets
 
@@ -163,7 +163,7 @@ def get_llm_client():
     return LLMClient
 ```
 
-The LLM evaluator (`evaluators/llm.py`) calls `get_llm_client()` at evaluation time. If `agentic-tools` is not installed, this raises `ImportError` with a clear message directing the user to install the `[llm]` extra.
+The LLM evaluator (`evaluators/llm.py`) obtains the client from this adapter at evaluation time. `agentic-tools` is a hard dependency of the package (`dependencies = ["pyyaml", "agentic-tools"]`); if the import fails anyway, the adapter logs a warning and the evaluator needs an injected client.
 
 ### Benchmarks (lazy import)
 
@@ -181,7 +181,7 @@ The eval package can reference the same benchmark datasets as the runtime server
 
 ## Eval ↔ Runtime
 
-The evaluation package and the runtime package have **no direct Python import relationship**. They are integrated at the data level: the runtime writes run results as JSON files (default location: `runs/` in the project root), and the eval framework reads those files as input.
+The evaluation package and the runtime package have **no direct Python import relationship**. They are integrated at the data level: the runtime writes run results as JSON files (default location: `runs/` in the project root). The eval CLI does not read those run files directly: `agentic-v2-eval evaluate` takes a JSON list of per-criterion score objects (see [Evaluation architecture](architecture-eval.md)), so a run file has to be converted into that shape first.
 
 This separation is intentional. It allows the eval framework to be used for offline analysis, CI batch scoring, or evaluation of outputs from any source, not just the runtime.
 
@@ -189,7 +189,8 @@ This separation is intentional. It allows the eval framework to be used for offl
 [Runtime] → writes → runs/{run_id}.json
                               │
                               ▼
-[Eval CLI] → reads → agentic_v2_eval evaluate runs/{run_id}.json
+[Converter] → reads runs/{run_id}.json → writes results.json (list of score dicts)
+[Eval CLI] → reads → agentic-v2-eval evaluate results.json
                               │
                               ▼
                     reports/{run_id}.{json|md|html}
@@ -205,12 +206,14 @@ The following dependencies are declared across multiple packages and must remain
 
 | Dependency | Runtime (`agentic-workflows-v2`) | Eval (`agentic-v2-eval`) | Tools (`agentic-tools`, repo-root `pyproject.toml`) |
 |---|---|---|---|
-| `pydantic` | `>=2.0,<3` | (via `agentic-tools`) | `>=2.13.4` |
+| `pydantic` | `>=2.0,<3` | (via `agentic-tools`) | `>=2.14.0` |
 | `pyyaml` | `>=6.0,<7` | `>=6.0` | `>=6.0.3` |
-| `aiohttp` | `>=3.9,<4` | No | `>=3.14.1` |
-| `openai` | No (only `langchain-openai` via the `[langchain]` extra) | No | `>=2.41.1,<3` |
-| `anthropic` | `>=0.40,<1` (optional `[claude]` extra) | No | `>=0.109.1,<1` |
-| `numpy` | No | No | `>=1.26.4,<3` |
+| `aiohttp` | `>=3.14.3,<4` | No | `>=3.14.4` |
+| `openai` | No (only `langchain-openai` via the `[langchain]` extra) | No | `>=3.27.0,<4` |
+| `anthropic` | `>=0.40,<2` (optional `[claude]` extra) | No | `>=1.13.0,<2` |
+| `numpy` | No | No | `>=2.4.6,<3` |
+
+The ranges mirror each `pyproject.toml`; those files and `uv.lock` are the source of truth.
 
 All packages use Pydantic v2 APIs exclusively (`model_dump()`, `model_validate()`, `model_fields`). The legacy Pydantic v1 `.dict()` and `.parse_obj()` methods are not used anywhere.
 
@@ -223,18 +226,18 @@ The following describes the complete lifecycle of a workflow execution request, 
 ```
 Browser (React UI)
     │
-    │  POST /api/run { workflow: "code_review", input: {...}, engine: "native" }
+    │  POST /api/run { workflow: "code_review", input_data: {...}, adapter: "native" }
     ▼
 Sanitization ASGI middleware (server/middleware/ + agentic_v2/middleware/)
     │     ├── secrets detector
     │     ├── PII detector
     │     ├── injection detector
     │     └── unicode anomaly detector
-    │     (BLOCKED requests are rejected with 400 before any route handler runs)
+    │     (BLOCKED requests are rejected with 422 before any route handler runs)
     ▼
 FastAPI /api/run route (server/routes/workflows.py)
     │
-    ├── Validates request against workflow I/O schema (contracts/schemas.py)
+    ├── Validates request against the workflow input schema (422 on failure)
     ├── Starts background execution task (server/execution.py)
     └── Returns { run_id: "uuid" }
     │
@@ -243,7 +246,7 @@ FastAPI /api/run route (server/routes/workflows.py)
 Background Execution (server/execution.py)
     │
     ├── Adapter dispatch (adapters/registry.py)
-    │     └── native → engine/executor.py  OR  langchain → langchain/runner.py
+    │     └── native → adapters/native (DAGExecutor / PipelineExecutor)  OR  langchain → langchain/runner.py
     │
     ├── DAG step scheduling (engine/dag_executor.py — Kahn's algorithm)
     │     For each step in topological order:
@@ -279,15 +282,14 @@ Evaluation Framework (agentic-v2-eval)
 
 ## OpenTelemetry Tracing
 
-When `AGENTIC_TRACING=1`, the runtime instruments the following spans:
+When `AGENTIC_TRACING=1`, the native path creates these spans:
 
 | Span | Module | Description |
 |---|---|---|
-| `http.request` | FastAPI middleware | Incoming HTTP request |
-| `workflow.execute` | `server/execution.py` | Full workflow execution |
-| `step.execute` | `engine/step.py` | Individual DAG step |
-| `llm.call` | `models/client.py` | LLM API call (model, tokens, latency) |
-| `tool.execute` | `engine/tool_execution.py` | Built-in tool invocation |
+| `engine.execute` | `engine/dag_executor.py` | Top-level workflow span on `DAGExecutor.execute()` |
+| `agent.<name>` | `agents/base.py`, `engine/agent_resolver.py` | One span per agent run |
+
+The LangGraph path emits `workflow_start`/`workflow_end` and `step_start`/`step_complete` trace events through the `TraceAdapter`; the OpenTelemetry adapter (`integrations/tracing.py`) turns them into workflow and step spans named after the event type, with step spans parented to the workflow span. `TraceparentMiddleware` adds W3C `traceparent` response headers for browser correlation. There are no dedicated `llm.call` or `tool.execute` spans.
 
 Spans are exported via OTLP to `OTEL_EXPORTER_OTLP_ENDPOINT` (default: `http://localhost:4317`). The `otel/` directory contains a Docker Compose configuration for running a local OpenTelemetry Collector.
 

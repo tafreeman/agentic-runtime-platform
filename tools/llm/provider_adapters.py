@@ -232,6 +232,13 @@ def call_local(
 
     if model_path_obj is not None:
         _verify_local_model_weights(model_path_obj)
+    elif _strict_verify_requested():
+        # LocalModel would fall back to whichever model is installed, which
+        # would load weights that were never verified.
+        raise RuntimeError(
+            f"Local model {model_key!r} could not be resolved to a path; "
+            "refusing to load an unverified fallback in strict mode"
+        )
 
     try:
         from tools.llm.model_locks import create_model_lock
@@ -254,6 +261,16 @@ def call_local(
         raise RuntimeError(f"Local model inference failed: {exc}") from exc
 
 
+def _strict_verify_requested() -> bool:
+    return os.getenv("AGENTIC_STRICT_MODEL_VERIFY", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "y",
+        "on",
+    }
+
+
 def _verify_local_model_weights(model_path: Path) -> None:
     """Run optional local model weight verification before loading weights."""
     try:
@@ -262,13 +279,7 @@ def _verify_local_model_weights(model_path: Path) -> None:
             verify_model_weights,
         )
     except Exception as exc:
-        if os.getenv("AGENTIC_STRICT_MODEL_VERIFY", "").strip().lower() in {
-            "1",
-            "true",
-            "yes",
-            "y",
-            "on",
-        }:
+        if _strict_verify_requested():
             raise RuntimeError(
                 f"Local model weight verifier unavailable in strict mode: {exc}"
             ) from exc
@@ -280,6 +291,10 @@ def _verify_local_model_weights(model_path: Path) -> None:
     except ModelWeightVerificationError as exc:
         raise RuntimeError(f"Local model weight verification failed: {exc}") from exc
     except Exception as exc:
+        if _strict_verify_requested():
+            raise RuntimeError(
+                f"Local model weight verification failed in strict mode: {exc}"
+            ) from exc
         logger.warning("Local model weight verification skipped: %s", exc)
         return
 

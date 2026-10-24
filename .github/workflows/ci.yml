@@ -1,24 +1,143 @@
 name: CI
 
-# CI: verifies Python imports + smoke tests, frontend build, ruff lint, strict
-# mypy on the core runtime surface, and the 80% coverage gate.
-# Integration and slow tests are excluded from the fast CI pass.
+# CI: verifies Python imports + smoke tests, frontend build + UI tests, ruff lint
+# and the static/doc/lockfile gates, strict mypy on the core runtime surface, and
+# the 80% coverage gate. Integration and slow tests are excluded from the fast
+# CI pass.
+#
+# REQUIRED STATUS CHECKS (branch protection on main). The check context of a job
+# is its `name:` if set, otherwise its job id, so renaming a job or adding a
+# `name:` to one of these strands the requirement at "Expected" and blocks every
+# PR:
+#   lint, test-coverage, python-smoke, frontend-build, wire-format-drift,
+#   e2e-streaming, no-llm-smoke,
+#   "Mypy (strict engine + contracts)" (typecheck-core-contracts),
+#   "EK step-delegation (approval-gate) tests" (ek-delegation-tests)
+# (CodeQL and eval-golden-gate are also required; they live in codeql.yml and
+# eval-package-ci.yml.)
+# Path gating is JOB-LEVEL only (the `changes` job below): a job skipped by its
+# `if:` reports as skipped, which satisfies a required check. Never add
+# workflow-level `paths:` / `paths-ignore:` here -- a workflow that does not
+# trigger reports nothing and the required checks deadlock.
+#
+# If a long-lived branch other than main is ever introduced (a former `agenticv2`
+# branch was listed here but never existed on the remote), add it to the
+# triggers of every workflow, and to dependency-review.yml.
 
 on:
   push:
-    branches: [main, agenticv2]
+    branches: [main]
   pull_request:
-    branches: [main, agenticv2]
+    branches: [main]
+
+concurrency:
+  # PRs: one group per PR number, so a newer push cancels the superseded run
+  # (the newer SHA reports the same job names, so no required check is stranded).
+  # Everything else (push to main, schedule, dispatch): group per run and never
+  # cancel, so every main commit keeps a complete CI result.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  changes:
+    # Path classification for PRs only. The gating is the JOB-LEVEL `if:` on the
+    # jobs below, never workflow-level `paths:`, so every REQUIRED check context
+    # still reports (skipped == success) on every PR. `lint` is deliberately NOT
+    # gated: it carries the doc-drift / lockfile / static gates that docs-only
+    # PRs need. Pushes to main skip this job and run everything.
+    #
+    # Fail OPEN: every gate below treats `needs.changes.result != 'success'` as
+    # "run everything" and uses `!cancelled()`. A skipped-because-needs-failed
+    # job would otherwise report success with nothing run.
+    name: Detect changed surfaces
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      backend: ${{ steps.backend.outputs.backend }}
+      ui: ${{ steps.surfaces.outputs.ui }}
+      wire_format: ${{ steps.surfaces.outputs.wire_format }}
+    steps:
+      # Step 1 (every): backend=true when ANY changed file is not docs-only and
+      # not UI-only. A deny-list on purpose: an unknown or new path runs the full
+      # pipeline. Only root-level and package-level *.md are docs -- NOT `**/*.md`
+      # (runtime prompts under agentic_v2/prompts/*.md and test fixtures are
+      # markdown). A rename is reported as old-path-deleted + new-path-added, so
+      # moving a code file into docs/ still counts as a code change.
+      - name: Classify backend-affecting changes
+        id: backend
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d  # v4.0.3
+        with:
+          predicate-quantifier: every
+          filters: |
+            backend:
+              - '**'
+              - '!docs/**'
+              - '!agentic-workflows-v2/docs/**'
+              - '!agentic-workflows-v2/ui/**'
+              - '!*.md'
+              - '!agentic-workflows-v2/*.md'
+              - '!LICENSE'
+              - '!mkdocs.yml'
+              - '!.claude/**'
+              - '!.github/ISSUE_TEMPLATE/**'
+              - '!.github/PULL_REQUEST_TEMPLATE.md'
+              - '!.github/CODEOWNERS'
+              - '!agentic-workflows-v2/.github/PULL_REQUEST_TEMPLATE.md'
+      # Step 2 (some, the default): positive lists for the narrower surfaces.
+      # wire_format must list every input of the wire-format-drift job (the
+      # generators' sources and the committed schemas/types); add new inputs here.
+      - name: Classify UI and wire-format surfaces
+        id: surfaces
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d  # v4.0.3
+        with:
+          filters: |
+            ui:
+              - 'agentic-workflows-v2/ui/**'
+              - '.github/workflows/ci.yml'
+              - '.nvmrc'
+            wire_format:
+              - 'agentic-workflows-v2/agentic_v2/**'
+              - 'agentic-workflows-v2/scripts/**'
+              - 'agentic-workflows-v2/tests/schemas/**'
+              - 'agentic-workflows-v2/ui/src/api/**'
+              - 'agentic-workflows-v2/ui/scripts/**'
+              - 'agentic-workflows-v2/ui/package.json'
+              - 'agentic-workflows-v2/ui/package-lock.json'
+              - 'agentic-workflows-v2/pyproject.toml'
+              - 'pyproject.toml'
+              - 'uv.lock'
+              - 'ci-constraints.txt'
+              - '.python-version'
+              - '.nvmrc'
+              - '.github/workflows/ci.yml'
+
   python-smoke:
+    # REQUIRED check: the context is the job id `python-smoke`; no `name:`.
+    # The runtime unit suite is NOT run here: test-coverage runs the identical
+    # selection (same extras, same markers) with coverage, and no-llm-smoke runs
+    # it under AGENTIC_NO_LLM=1. This job owns: the all-extras + eval install
+    # resolving under ci-constraints.txt, the critical imports, the combined
+    # runtime + eval test collection, the swe_ab tool tests and the tools/ tests.
+    needs: changes
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.result != 'success' || needs.changes.outputs.backend == 'true') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: "3.11"
+      - name: Cache pip downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-py3.11-${{ github.job }}-${{ hashFiles('ci-constraints.txt') }}
+          restore-keys: |
+            pip-${{ runner.os }}-py3.11-${{ github.job }}-
       - name: Install packages
         run: |
           python -m pip install --upgrade pip
@@ -33,84 +152,222 @@ jobs:
           from agentic_v2.workflows import WorkflowLoader
           print('Critical imports OK')
           "
-      - name: Pytest smoke (unit only)
-        # pipefail is NOT the default for workflow `run:` steps (only an
-        # explicit `shell: bash` opts in), so without it the `| tail` pipe
-        # swallows pytest's exit code and a red suite reports green.
+      - name: Verify combined test collection (runtime + eval, no execution)
+        # Collection only. Replaces the PR-time role of the whole-repo coverage
+        # pass (which now runs on pushes to main only): catching basename or
+        # conftest collisions between the runtime and eval test trees. pipefail is
+        # NOT the default for workflow `run:` steps, so without it the `| tail`
+        # pipe swallows pytest's exit code and a collection error reports green.
+        if: ${{ !cancelled() }}
         run: |
           set -euo pipefail
-          cd agentic-workflows-v2
-          python -m pytest tests/ -q \
+          python -m pytest agentic-workflows-v2/tests agentic-v2-eval/tests \
+            --collect-only -q \
             -m "not integration and not slow" \
-            --ignore=tests/e2e \
-            -x --timeout=120 2>&1 | tail -30
+            --ignore=agentic-workflows-v2/tests/e2e 2>&1 | tail -5
       - name: Pytest swe_ab tool tests
         # The A/B kit's tool tests live beside the scripts in evals/swe_ab/tools,
         # so pytest's rootdir insertion puts tools/ on sys.path the way the
         # scripts import each other. They are outside the runtime's `tests/`
-        # path above and ran nowhere in CI before this step. Offline: docker and
+        # path and ran nowhere in CI before this step. Offline: docker and
         # the datasets loader are faked.
+        if: ${{ !cancelled() }}
         run: |
           set -euo pipefail
           cd agentic-workflows-v2/evals/swe_ab
           python -m pytest tools -q --timeout=120 2>&1 | tail -30
+      - name: Run the tools suite
+        # tools/tests holds 17 files that NO job collected before this step: the
+        # whole-repo coverage step measures --cov=tools but only collects
+        # agentic-workflows-v2 and agentic-v2-eval. So tools/ was measured but
+        # never exercised, and the redaction tests guarding the clear-text
+        # CodeQL fixes would never run. Its own pytest process: tools/tests and
+        # agentic-workflows-v2/tests are both packages named `tests`.
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          python -m pytest tools/tests -q --timeout=120
 
   frontend-build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - name: Set up Node
-        uses: actions/setup-node@v7
-        with:
-          node-version: "22"
-          cache: "npm"
-          cache-dependency-path: agentic-workflows-v2/ui/package-lock.json
-      - name: Install and build UI
-        run: |
-          cd agentic-workflows-v2/ui
-          npm ci
-          npm run build
-
-  frontend-test:
-    # UI unit tests + vitest coverage gate. The floors live in
-    # agentic-workflows-v2/ui/vitest.config.ts (`test.coverage.thresholds`);
+    # REQUIRED check: the context is the job id `frontend-build`. Do NOT add a
+    # `name:` (it would replace the context and deadlock every PR). Runs the
+    # production build (tsc -b, which also type-checks src/**/__tests__, then
+    # vite build) AND the vitest unit suite + coverage gate. The coverage floors
+    # live in agentic-workflows-v2/ui/vitest.config.ts (`test.coverage.thresholds`);
     # `npm run test:coverage` fails the job if any metric drops below its floor.
+    # The two steps are independent (build writes dist/, coverage writes
+    # coverage/, vitest excludes dist/**, tsc has noEmit, and neither
+    # regenerates the committed src/api/*.generated.ts -- wire-format-drift does),
+    # so the test step runs even when the build fails and both signals are
+    # reported every run. This folds in the former `frontend-test` job, which
+    # makes the UI test/coverage gate merge-blocking.
+    needs: changes
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.result != 'success' || needs.changes.outputs.ui == 'true') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - name: Set up Node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
         with:
           node-version: "22"
           cache: "npm"
           cache-dependency-path: agentic-workflows-v2/ui/package-lock.json
       - name: Install UI dependencies
-        run: |
-          cd agentic-workflows-v2/ui
-          npm ci
-      - name: Run UI tests with coverage
-        run: |
-          cd agentic-workflows-v2/ui
-          npm run test:coverage
+        id: ui-install
+        working-directory: agentic-workflows-v2/ui
+        run: npm ci
+      - name: Build UI (tsc -b && vite build)
+        working-directory: agentic-workflows-v2/ui
+        run: npm run build
+      - name: Run UI tests with coverage gate
+        if: ${{ !cancelled() && steps.ui-install.outcome == 'success' }}
+        working-directory: agentic-workflows-v2/ui
+        run: npm run test:coverage
 
   lint:
+    # REQUIRED check: the context is the job id `lint`. Do NOT add a `name:` (a
+    # display name would replace the context and strand the branch-protection
+    # requirement), and do NOT add `needs:` / a job-level `if:` / a paths filter:
+    # this job carries the doc-drift and lockfile gates that docs-only PRs need.
+    # (eval-package-ci.yml also has a job with id `lint`, which shares this
+    # context; both must stay green.)
+    #
+    # Consolidates the formerly separate static gates. Every check step uses
+    # `if: !cancelled()` so ONE failure never hides the others; the job is
+    # still red if any step fails. Rules for editing this job:
+    #   * the single `pip install -c ci-constraints.txt` stays BEFORE the
+    #     lockfile step, which rewrites ci-constraints.txt in place;
+    #   * the ruff autofix check stays LAST, because `ruff check --fix` mutates
+    #     tracked sources that the other steps read, and each drift check diffs
+    #     only its own paths so no step pollutes another's result.
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: "3.11"
+      - name: Cache pip downloads
+        # The key is computed before the lockfile step below rewrites
+        # ci-constraints.txt, so it hashes the committed file.
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-py3.11-${{ github.job }}-${{ hashFiles('ci-constraints.txt') }}
+          restore-keys: |
+            pip-${{ runner.os }}-py3.11-${{ github.job }}-
       - name: Install packages
+        id: install
         run: |
           python -m pip install --upgrade pip
-          pip install -e "agentic-workflows-v2/[dev]" -c ci-constraints.txt
+          pip install -e "agentic-workflows-v2/[dev]" "uv==0.11.2" -c ci-constraints.txt
+      - name: Verify lint tooling is importable
+        # validate-workflows.py silently degrades to a weaker structural check
+        # if jsonschema is missing; fail loudly instead.
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        shell: bash
+        run: |
+          python -c "import yaml, jsonschema, pydocstyle; print('lint tooling OK')"
+          uv --version | grep -q '0.11.2'
       - name: Ruff lint (blocking)
+        id: ruff
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         shell: bash
         run: |
           cd agentic-workflows-v2
           python -m ruff check --show-fixes agentic_v2/ tests/
+      - name: Suppression ratchet (ruff ignores + mypy overrides)
+        # ARP-9: prevents the ruff `ignore` list, `per-file-ignores`, and mypy
+        # `ignore_errors` overrides in pyproject.toml from silently growing.
+        # Counts may shrink freely; a PR that adds a new suppression beyond the
+        # committed baseline (agentic-workflows-v2/.ruff-suppression-baseline.json)
+        # fails here. Uses only the stdlib (tomllib/json/argparse).
+        if: ${{ !cancelled() }}
+        run: |
+          cd agentic-workflows-v2
+          python scripts/check_suppression_ratchet.py
+      - name: pydocstyle (core)
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: |
+          pydocstyle \
+            --convention=google \
+            --add-ignore=D100,D104 \
+            agentic-workflows-v2/agentic_v2/core/
+      - name: pydocstyle (contracts)
+        # D101: missing docstring in public class -- Pydantic model classes
+        # routinely skip class-level docstrings in favour of field-level
+        # documentation.  Enforce only function/method docstrings here.
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: |
+          pydocstyle \
+            --convention=google \
+            --add-ignore=D100,D101,D104 \
+            agentic-workflows-v2/agentic_v2/contracts/
+      - name: Validate workflow YAML definitions
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: python scripts/validate-workflows.py
+      - name: Check protocol and ADR documentation drift
+        if: ${{ !cancelled() }}
+        run: python scripts/check-doc-drift.py
+      - name: Check current documentation paths and retired surfaces
+        if: ${{ !cancelled() }}
+        run: python agentic-workflows-v2/scripts/check_docs_refs.py
+      - name: Check homepage stats match source (docs/index.md, README.md)
+        # Fail the build if docs/index.md's derived "by the numbers" stats
+        # (backend test count, ADR count, production workflow count) no longer
+        # match what scripts/generate_doc_stats.py recomputes from source.
+        # Regenerate with `python scripts/generate_doc_stats.py` and commit.
+        # Stdlib-only; --check never writes.
+        if: ${{ !cancelled() }}
+        run: python scripts/generate_doc_stats.py --check
+      - name: Dockerfile pip installs pin to ci-constraints.txt
+        # Reproducible Docker builds: every `pip install` in the Dockerfile must
+        # pin to `-c ci-constraints.txt` (see the lockfile step below), or two
+        # builds of the same commit can resolve different transitive dependency
+        # versions. Fails if any real `pip install` line in the Dockerfile omits
+        # the constraints file.
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          dockerfile="Dockerfile"
+          failed=0
+          while IFS= read -r line; do
+            if [[ "$line" == *"pip install"* ]] && [[ "$line" != *"--upgrade pip"* ]]; then
+              if ! [[ "$line" =~ -c[[:space:]]+ci-constraints\.txt ]]; then
+                echo "::error::Dockerfile pip install line missing '-c ci-constraints.txt': ${line}"
+                failed=1
+              fi
+            fi
+          done < "$dockerfile"
+          if [[ "$failed" -eq 1 ]]; then
+            echo "One or more 'pip install' lines in $dockerfile do not pin to ci-constraints.txt. Add '-c ci-constraints.txt' to each (except the 'pip install --upgrade pip' bootstrap line)."
+            exit 1
+          fi
+          echo "All pip install lines in $dockerfile reference ci-constraints.txt."
+      - name: ci-constraints.txt in sync with uv.lock
+        # Reproducible installs: every Python job installs with
+        # `-c ci-constraints.txt`, a pip constraints file derived from uv.lock so
+        # transitive versions match the lock instead of resolving latest. This
+        # step keeps uv.lock the single source of truth by regenerating the file
+        # and failing on drift (mirrors wire-format-drift). The output path must
+        # stay `-o ci-constraints.txt`: uv embeds the command line in the file
+        # header, so exporting to a temp path would always diff. The pip-based
+        # Dependabot PRs fail here until `just relock` has been run.
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        shell: bash
+        run: |
+          uv export --locked --no-hashes --no-emit-workspace \
+            --all-packages --all-extras -o ci-constraints.txt
+          if ! git diff --exit-code -- ci-constraints.txt; then
+            echo "::error::ci-constraints.txt is out of sync with uv.lock. Regenerate with 'uv export --locked --no-hashes --no-emit-workspace --all-packages --all-extras -o ci-constraints.txt' (or 'just relock') and commit the result."
+            exit 1
+          fi
       - name: Check for unfixed autofixes
+        # LAST on purpose: `ruff check --fix` rewrites tracked sources. Gated on
+        # the blocking ruff step so a real lint failure is not reported twice.
+        if: ${{ !cancelled() && steps.ruff.outcome == 'success' }}
         shell: bash
         run: |
           cd agentic-workflows-v2
@@ -120,35 +377,24 @@ jobs:
             exit 1
           fi
 
-  suppression-ratchet:
-    # ARP-9: prevents the ruff `ignore` list, `per-file-ignores`, and mypy
-    # `ignore_errors` overrides in pyproject.toml from silently growing.
-    # Counts may shrink freely; a PR that adds a new suppression beyond the
-    # committed baseline (agentic-workflows-v2/.ruff-suppression-baseline.json)
-    # fails here. Uses only the stdlib (tomllib/json/argparse), so no package
-    # install is required.
-    name: Suppression ratchet (ruff ignores + mypy overrides)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.11"
-      - name: Check suppression counts against committed baseline
-        run: |
-          cd agentic-workflows-v2
-          python scripts/check_suppression_ratchet.py
-
   typecheck-core-contracts:
     name: Mypy (strict engine + contracts)
+    needs: changes
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.result != 'success' || needs.changes.outputs.backend == 'true') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: "3.11"
+      - name: Cache pip downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-py3.11-${{ github.job }}-${{ hashFiles('ci-constraints.txt') }}
+          restore-keys: |
+            pip-${{ runner.os }}-py3.11-${{ github.job }}-
       - name: Install packages
         run: |
           python -m pip install --upgrade pip
@@ -165,13 +411,23 @@ jobs:
             --no-incremental
 
   test-coverage:
+    # REQUIRED check: the context is the job id `test-coverage`; no `name:`.
+    needs: changes
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.result != 'success' || needs.changes.outputs.backend == 'true') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: "3.11"
+      - name: Cache pip downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-py3.11-${{ github.job }}-${{ hashFiles('ci-constraints.txt') }}
+          restore-keys: |
+            pip-${{ runner.os }}-py3.11-${{ github.job }}-
       - name: Install packages
         run: |
           python -m pip install --upgrade pip
@@ -192,13 +448,30 @@ jobs:
           python -m pytest tests/ -q \
             -m "not integration and not slow" \
             --cov=agentic_v2 \
-            --cov-report=term-missing
+            --cov-report=term-missing \
+            --cov-report=xml:coverage.xml
       - name: Enforce 80% coverage gate
         run: |
           cd agentic-workflows-v2
           python -m coverage report --fail-under=80
-      - name: Report whole-repo coverage (visibility only)
-        if: success() || failure()
+      - name: Upload runtime coverage to Codecov (PRs)
+        # Keeps the Codecov PR signal now that the whole-repo pass (below) runs
+        # on main only. On main pushes the whole-repo upload replaces this one.
+        # Never fails the job and needs no artifact, so it is safe without
+        # `if-no-files-found`.
+        if: ${{ success() && !(github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5  # v7.1.1
+        with:
+          files: agentic-workflows-v2/coverage.xml
+          fail_ci_if_error: false
+      # The three steps below run on pushes to main only. The second, whole-repo
+      # pass is visibility-only and was the critical path of this job; its eval
+      # tests already run on every PR in eval-package-ci.yml, and the PR-time
+      # combined-collection check lives in python-smoke. All three MUST be gated
+      # together: the artifact upload has `if-no-files-found: error`, so gating
+      # only the pytest step would turn every PR red.
+      - name: Report whole-repo coverage (visibility only; main pushes)
+        if: ${{ (success() || failure()) && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: |
           pip install -e "agentic-v2-eval/[dev]" -c ci-constraints.txt
           COVERAGE_FILE=.coverage-whole-repo python -m pytest \
@@ -214,90 +487,116 @@ jobs:
             --cov-report=term-missing \
             --cov-report=xml:coverage-whole-repo.xml
       - name: Upload whole-repo coverage report
-        if: always()
-        uses: actions/upload-artifact@v7
+        if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: whole-repo-coverage
           path: coverage-whole-repo.xml
           if-no-files-found: error
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v7
+        if: ${{ success() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5  # v7.1.1
         with:
           files: coverage-whole-repo.xml
           fail_ci_if_error: false
 
-  claude-subscription-tests:
-    # The subscription-authenticated Claude surfaces (agentic_v2/models/
-    # backends_claude.py and the ClaudeSDKAgent wrapper) are gated on the
-    # optional `claude` extra, which no other job installs -- every other job
-    # installs dev,server,mcp,langchain,tracing. Their tests therefore
-    # importorskip themselves everywhere else, exactly the blind spot that let
-    # an ADR-047 regression through on the EK side. This job installs the extra
-    # so the suite actually runs.
-    #
-    # The last two files are pre-existing and were already skipping in every
-    # job for the same reason -- `tests/integrations/mcp/` is a package whose
-    # parent is not, so pytest puts `tests/integrations/` on sys.path and
-    # `import mcp` then resolves to that directory instead of the installed
-    # distribution, which makes `import claude_agent_sdk` fail. Running the
-    # files alone avoids collecting that directory at all, so 15 tests that
-    # have never actually executed in CI now do.
-    #
-    # No CLI, sign-in, or network needed: the tests monkeypatch `query` and
-    # replay the SDK's own message dataclasses.
-    name: Claude subscription backend tests
+  ek-delegation-tests:
+    # Consolidated optional-extra job. REQUIRED CHECK: the `name:` below is a
+    # branch-protection context -- do not rename it. It carries the suites that
+    # module-skip (importorskip) in every other job because only this one
+    # installs the optional extras:
+    #   - ek     : ADR-047 approval-gate regressions (tests/engine/test_step_ek_*,
+    #              tests/models/test_ek_*). The EK bridge suite module-skips itself
+    #              when `executionkit` is not importable; that blind spot let an
+    #              ADR-047 regression pass CI (caught only by manual review).
+    #   - eval   : the EvalKit bridge, scoring-policy differential and boundary
+    #              contract (both importorskip agentic_evalkit), so an EVK rename
+    #              surfaces here instead of only on a dev machine.
+    #   - claude : the subscription-authenticated Claude surfaces
+    #              (agentic_v2/models/backends_claude.py and the ClaudeSDKAgent
+    #              wrapper), gated on the optional `claude` extra.
+    # Invariants -- each is load-bearing:
+    #   * Every suite is its OWN pytest process (the runtime tests/ package and
+    #     tools/tests collide on the package name `tests` in one process).
+    #   * The claude suite is invoked with explicit file paths and must never
+    #     collect `tests/` or `tests/integrations`: `tests/integrations/mcp/` is
+    #     a package whose parent is not, so pytest puts `tests/integrations/` on
+    #     sys.path and `import mcp` then resolves to that directory instead of the
+    #     installed distribution, which makes `import claude_agent_sdk` fail.
+    #     Running the last two files alone avoids collecting that directory, so
+    #     15 tests that have never actually executed in CI now do. No CLI,
+    #     sign-in, or network needed: the tests monkeypatch `query` and replay the
+    #     SDK's own message dataclasses.
+    #   * The legacy-package-absent step MUST stay last and uninstalls only
+    #     agentic-v2-eval. Keep agentic-evalkit installed: removing it skips the
+    #     very tests (including the proof that scoring works without the legacy
+    #     package) that step exists to run.
+    #   * Test steps use `!cancelled()` so one failing suite does not hide the
+    #     others, but each is gated on its extra's import guard so a missing
+    #     extra can never degrade into a silent importorskip pass.
+    name: EK step-delegation (approval-gate) tests
+    needs: changes
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.result != 'success' || needs.changes.outputs.backend == 'true') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: "3.11"
-      - name: Install packages (with the claude extra)
+      - name: Cache pip downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-py3.11-${{ github.job }}-${{ hashFiles('ci-constraints.txt') }}
+          restore-keys: |
+            pip-${{ runner.os }}-py3.11-${{ github.job }}-
+      - name: Install packages (claude + ek + eval extras)
+        id: install
         run: |
           python -m pip install --upgrade pip
           pip install -e "." -c ci-constraints.txt
-          pip install -e "agentic-workflows-v2/[dev,server,mcp,langchain,tracing,claude]" -c ci-constraints.txt
+          pip install -e "agentic-workflows-v2/[dev,server,mcp,langchain,tracing,claude,ek,eval]" -c ci-constraints.txt
+          # tests/test_evalkit_bridge.py imports agentic_v2_eval (the in-tree
+          # legacy eval package). Without this the job dies at COLLECTION with
+          # ModuleNotFoundError, not on an assertion.
+          pip install -e "agentic-v2-eval/[dev]" -c ci-constraints.txt
       - name: Verify claude-agent-sdk is importable
         # Guard against the silent-skip failure mode this job exists to close:
         # if the claude extra ever fails to resolve, fail loudly here rather
         # than let the tests below quietly skip and report green.
+        id: guard_claude
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: |
           python -c "import claude_agent_sdk; print('claude-agent-sdk', getattr(claude_agent_sdk, '__version__', '?'))"
-      - name: Run the claude-gated suite
-        run: |
-          set -euo pipefail
-          cd agentic-workflows-v2
-          python -m pytest             tests/models/test_backends_claude.py             tests/test_claude_sdk_agent.py             tests/test_sdk_task_orchestrator_example.py             tests/test_implementations_sanitization.py             -q --timeout=120 -rs
-
-  ek-delegation-tests:
-    # The EK bridge suite (tests/engine/test_step_ek_*, tests/models/test_ek_*)
-    # module-skips itself when `executionkit` is not importable, and no other
-    # CI job installs the optional `ek` extra — so those tests, including the
-    # ADR-047 approval-gate regressions (a non-BaseTool runtime tool must be
-    # denied / fail-closed), SKIP in every other job. That blind spot let an
-    # ADR-047 regression pass CI (caught only by manual review). This job
-    # installs the `ek` extra so the suite actually runs.
-    name: EK step-delegation (approval-gate) tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.11"
-      - name: Install packages (with the ek extra)
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e "." -c ci-constraints.txt
-          pip install -e "agentic-workflows-v2/[dev,server,mcp,langchain,tracing,ek]" -c ci-constraints.txt
       - name: Verify executionkit is importable
         # Guard against the silent-skip failure mode this job exists to close:
         # if the ek extra ever fails to resolve/install, fail loudly here rather
         # than let the tests below quietly module-skip and report green.
+        id: guard_ek
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: |
           python -c "import executionkit; print('executionkit', getattr(executionkit, '__version__', '?'))"
+      - name: Verify agentic_evalkit is importable
+        # Fail loudly if the extra stops resolving, rather than letting the
+        # tests below quietly importorskip and report green.
+        id: guard_evalkit
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: |
+          python -c "import agentic_evalkit; print('agentic-evalkit', getattr(agentic_evalkit, '__version__', '?'))"
+      - name: Run the claude-gated suite
+        if: ${{ !cancelled() && steps.guard_claude.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          cd agentic-workflows-v2
+          python -m pytest \
+            tests/models/test_backends_claude.py \
+            tests/test_claude_sdk_agent.py \
+            tests/test_sdk_task_orchestrator_example.py \
+            tests/test_implementations_sanitization.py \
+            -q --timeout=120 -rs
       - name: Run the EK-gated suite
+        if: ${{ !cancelled() && steps.guard_ek.outcome == 'success' }}
         run: |
           set -euo pipefail
           cd agentic-workflows-v2
@@ -309,38 +608,8 @@ jobs:
             tests/models/test_ek_provider_attempts.py \
             tests/models/test_ek_provider_wrapper.py \
             -q --timeout=120
-
-  evalkit-bridge-tests:
-    # Same blind spot as ek-delegation-tests, for the other optional extra.
-    # tests/test_evalkit_bridge.py and tests/contract/test_evalkit_boundary.py
-    # both `importorskip` agentic_evalkit, and no other job installs the `eval`
-    # extra — so the bridge that adapts EVK's Rubric/RubricCriterion/
-    # CallableTarget into ARP has never actually been exercised in CI. An EVK
-    # rename would surface only on a dev machine. This job installs the extra
-    # so the bridge runs.
-    name: EvalKit bridge (eval extra) tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.11"
-      - name: Install packages (with the eval extra)
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e "." -c ci-constraints.txt
-          pip install -e "agentic-workflows-v2/[dev,server,mcp,langchain,tracing,eval]" -c ci-constraints.txt
-          # tests/test_evalkit_bridge.py imports agentic_v2_eval (the in-tree
-          # legacy eval package). Without this the job dies at COLLECTION with
-          # ModuleNotFoundError, not on an assertion.
-          pip install -e "agentic-v2-eval/[dev]" -c ci-constraints.txt
-      - name: Verify agentic_evalkit is importable
-        # Fail loudly if the extra stops resolving, rather than letting the
-        # tests below quietly importorskip and report green.
-        run: |
-          python -c "import agentic_evalkit; print('agentic-evalkit', getattr(agentic_evalkit, '__version__', '?'))"
       - name: Run the EvalKit-gated suite
+        if: ${{ !cancelled() && steps.guard_evalkit.outcome == 'success' }}
         run: |
           set -euo pipefail
           cd agentic-workflows-v2
@@ -350,13 +619,20 @@ jobs:
             tests/contract/test_evalkit_boundary.py \
             -q --timeout=120
       - name: Verify runtime scoring without the legacy evaluation package
+        # MUST be last: it uninstalls agentic-v2-eval. Do NOT also uninstall
+        # agentic-evalkit (that skips the tests this step exists to run).
+        if: ${{ !cancelled() && steps.guard_evalkit.outcome == 'success' }}
         run: |
+          set -euo pipefail
           python -m pip uninstall -y agentic-v2-eval
           cd agentic-workflows-v2
           python -m pytest tests/test_step_scoring_additional.py -q --timeout=120
 
   wire-format-drift:
     # Sprint B #3 / S1-1 — prevent silent Python <-> TypeScript wire-format drift.
+    # REQUIRED check: the context is the job id `wire-format-drift`; no `name:`.
+    # Gated by the `changes` job's `wire_format` filter -- keep that list in sync
+    # with the inputs below.
     # Sources of truth:
     #   agentic_v2/contracts/events.py              → events.schema.json + events.generated.ts
     #   agentic_v2/contracts/messages.StepResultRecord → step_result.schema.json + step_result.generated.ts
@@ -368,19 +644,28 @@ jobs:
     #   agentic_v2/contracts/chat.py (ChatStreamEvent) → chat_stream_event.schema.json + chat_stream_event.generated.ts
     # This job regenerates all committed artifacts and fails the PR if the
     # working tree no longer matches what's checked in.
+    needs: changes
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.result != 'success' || needs.changes.outputs.wire_format == 'true') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: "3.11"
       - name: Set up Node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
         with:
           node-version: "22"
           cache: "npm"
           cache-dependency-path: agentic-workflows-v2/ui/package-lock.json
+      - name: Cache pip downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-py3.11-${{ github.job }}-${{ hashFiles('ci-constraints.txt') }}
+          restore-keys: |
+            pip-${{ runner.os }}-py3.11-${{ github.job }}-
       - name: Install backend
         run: |
           python -m pip install --upgrade pip
@@ -421,48 +706,72 @@ jobs:
           fi
 
   e2e-streaming:
-    # Epic 2 Story 2.2 — Playwright streaming PR gate.
-    # Runs the streaming spec 5× to catch flakes early. The rolling nightly
-    # 50× job (Story 2.4) measures the long-term flake rate.
+    # Epic 2 Story 2.2 — Playwright PR gate. REQUIRED check: the context is the
+    # job id `e2e-streaming`; no `name:`.
+    # Runs the full Playwright e2e suite (every spec under ui/e2e) ONCE per
+    # PR/push (`npm run test:e2e`, retries=0). Repeat-run flake detection lives
+    # in nightly.yml instead: the full suite 5x (`test:e2e:5x`) plus the rolling
+    # streaming 50x (Story 2.4) that feeds the flake-rate / SLO gates.
     #
     # Uses AGENTIC_NO_LLM=1 so the backend spawns PlaceholderChatModel for
     # all tier-1/tier-2 agents. This eliminates GitHub Models rate-limit
     # failures on back-to-back runs (429 → 41 s retry > 30 s Playwright
     # timeout) while still exercising the full streaming + reconnect path.
+    needs: changes
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.result != 'success' || needs.changes.outputs.backend == 'true' || needs.changes.outputs.ui == 'true') }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: "3.11"
       - name: Set up Node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
         with:
           node-version: "22"
           cache: "npm"
           cache-dependency-path: agentic-workflows-v2/ui/package-lock.json
+      - name: Cache pip downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-py3.11-${{ github.job }}-${{ hashFiles('ci-constraints.txt') }}
+          restore-keys: |
+            pip-${{ runner.os }}-py3.11-${{ github.job }}-
+      - name: Cache Playwright browsers
+        # Browser dirs are revision-named (chromium-NNNN), so a package-lock
+        # change that bumps Playwright misses the cache and fetches cleanly.
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('agentic-workflows-v2/ui/package-lock.json') }}
       - name: Install backend (server extra)
         run: |
           python -m pip install --upgrade pip
           pip install -e "." -c ci-constraints.txt
           pip install -e "agentic-workflows-v2/[dev,server,langchain]" -c ci-constraints.txt
       - name: Install UI + Playwright
+        # `playwright install --with-deps` runs UNCONDITIONALLY, cache hit or
+        # miss: it skips the browser download when the revision directory is
+        # already cached but still installs the apt system dependencies, which
+        # are never in ~/.cache/ms-playwright.
         run: |
           cd agentic-workflows-v2/ui
           npm ci
           npx playwright install --with-deps chromium
-      - name: Run streaming E2E 5×
+      - name: Run Playwright E2E suite
         env:
           AGENTIC_NO_LLM: "1"
         run: |
           cd agentic-workflows-v2/ui
-          npm run test:e2e:5x
+          npm run test:e2e
       - name: Upload Playwright artifacts on failure
         if: failure()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: playwright-artifacts
           path: |
@@ -475,18 +784,32 @@ jobs:
   no-llm-smoke:
     # SB-2: runs the full unit suite with AGENTIC_NO_LLM=1 and zero API keys.
     # Contributors without provider credentials can use this job as their local CI baseline.
+    # REQUIRED check: the context is the job id `no-llm-smoke`; no `name:`.
+    needs: changes
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.result != 'success' || needs.changes.outputs.backend == 'true') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: "3.11"
+      - name: Cache pip downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-py3.11-${{ github.job }}-${{ hashFiles('ci-constraints.txt') }}
+          restore-keys: |
+            pip-${{ runner.os }}-py3.11-${{ github.job }}-
       - name: Install packages
         run: |
           python -m pip install --upgrade pip
           pip install -e "." -c ci-constraints.txt
           pip install -e "agentic-workflows-v2/[dev,server,langchain]" -c ci-constraints.txt
+          # The runtime unit suite no longer runs anywhere else with the legacy
+          # agentic-v2-eval package installed (python-smoke dropped its unit
+          # run), so keep that configuration covered here.
+          pip install -e "agentic-v2-eval/[dev]" -c ci-constraints.txt
       - name: Validate deterministic workflow
         env:
           AGENTIC_NO_LLM: "1"
@@ -508,6 +831,12 @@ jobs:
       - name: Run unit tests (no API keys)
         env:
           AGENTIC_NO_LLM: "1"
+        # Do NOT dedupe against test-coverage: this is the only job running the
+        # suite with ambient AGENTIC_NO_LLM=1 (a MockBackend client, see
+        # tests/conftest.py backendless_baseline) and without the mcp/tracing
+        # extras, which is a genuinely different configuration. It also runs with
+        # agentic-v2-eval installed, the configuration python-smoke used to cover.
+        #
         # pipefail is NOT the default for workflow `run:` steps (only an
         # explicit `shell: bash` opts in), so without it the `| tail` pipe
         # swallows pytest's exit code and a red suite reports green.
@@ -518,164 +847,3 @@ jobs:
             -m "not integration and not slow" \
             --ignore=tests/e2e \
             -x --timeout=120 2>&1 | tail -30
-
-  # ── Documentation & schema quality gates (merged from doc-drift.yml) ──────
-  # Cheap, high-signal checks; each completes in well under 30s on a warm runner.
-  validate-workflows:
-    name: Validate workflow YAMLs
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.11"
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install pyyaml jsonschema
-      - name: Validate workflow YAML definitions
-        run: python scripts/validate-workflows.py
-
-  check-doc-drift:
-    name: Documentation and ADR governance drift
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.11"
-      - name: Check protocol and ADR documentation drift
-        run: python scripts/check-doc-drift.py
-
-      - name: Check current documentation paths and retired surfaces
-        run: python agentic-workflows-v2/scripts/check_docs_refs.py
-
-  doc-stats-drift:
-    # Fail the build if docs/index.md's derived "by the numbers" stats (backend
-    # test count, ADR count, production workflow count) no longer match what
-    # scripts/generate_doc_stats.py recomputes from source. Keeps the homepage
-    # figures from silently drifting — regenerate with
-    # `python scripts/generate_doc_stats.py` and commit. Stdlib-only, so no
-    # dependency install step is needed (mirrors check-doc-drift above).
-    name: docs/index.md derived stats in sync
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.11"
-      - name: Check homepage stats match source
-        run: python scripts/generate_doc_stats.py --check
-
-  pydocstyle:
-    name: pydocstyle (core + contracts)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.11"
-      - name: Install pydocstyle
-        run: |
-          python -m pip install --upgrade pip
-          pip install pydocstyle
-      - name: Run pydocstyle on core/
-        run: |
-          pydocstyle \
-            --convention=google \
-            --add-ignore=D100,D104 \
-            agentic-workflows-v2/agentic_v2/core/
-      - name: Run pydocstyle on contracts/
-        # D101: missing docstring in public class — Pydantic model classes
-        # routinely skip class-level docstrings in favour of field-level
-        # documentation.  Enforce only function/method docstrings here.
-        run: |
-          pydocstyle \
-            --convention=google \
-            --add-ignore=D100,D101,D104 \
-            agentic-workflows-v2/agentic_v2/contracts/
-
-  lockfile-constraints:
-    # Reproducible installs: every Python job installs with
-    # `-c ci-constraints.txt`, a pip constraints file derived from uv.lock so
-    # transitive versions match the lock instead of resolving latest. This job
-    # keeps uv.lock the single source of truth by regenerating the file and
-    # failing on drift (mirrors the wire-format-drift gate). Without it, the
-    # committed constraints could silently lag the lock.
-    name: ci-constraints.txt in sync with uv.lock
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.11"
-      - name: Regenerate constraints from uv.lock
-        run: |
-          python -m pip install --upgrade pip
-          pip install "uv==0.11.2"
-          uv export --locked --no-hashes --no-emit-workspace \
-            --all-packages --all-extras -o ci-constraints.txt
-      - name: Fail on drift
-        run: |
-          if ! git diff --exit-code -- ci-constraints.txt; then
-            echo "::error::ci-constraints.txt is out of sync with uv.lock. Regenerate with 'uv export --locked --no-hashes --no-emit-workspace --all-packages --all-extras -o ci-constraints.txt' and commit the result."
-            exit 1
-          fi
-
-  dockerfile-constraints:
-    # Reproducible Docker builds: every `pip install` in the Dockerfile must
-    # pin to `-c ci-constraints.txt` (see lockfile-constraints above), or two
-    # builds of the same commit can resolve different transitive dependency
-    # versions. This job fails if any real `pip install` line in the
-    # Dockerfile omits the constraints file.
-    name: Dockerfile pip installs pin to ci-constraints.txt
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - name: Verify every pip install pins ci-constraints.txt
-        shell: bash
-        run: |
-          set -euo pipefail
-          dockerfile="Dockerfile"
-          failed=0
-          while IFS= read -r line; do
-            if [[ "$line" == *"pip install"* ]] && [[ "$line" != *"--upgrade pip"* ]]; then
-              if ! [[ "$line" =~ -c[[:space:]]+ci-constraints\.txt ]]; then
-                echo "::error::Dockerfile pip install line missing '-c ci-constraints.txt': ${line}"
-                failed=1
-              fi
-            fi
-          done < "$dockerfile"
-          if [[ "$failed" -eq 1 ]]; then
-            echo "One or more 'pip install' lines in $dockerfile do not pin to ci-constraints.txt. Add '-c ci-constraints.txt' to each (except the 'pip install --upgrade pip' bootstrap line)."
-            exit 1
-          fi
-          echo "All pip install lines in $dockerfile reference ci-constraints.txt."
-
-  tools-tests:
-    # tools/tests holds 17 files that NO job has ever collected: the whole-repo
-    # coverage step measures --cov=tools but only collects agentic-workflows-v2
-    # and agentic-v2-eval. So tools/ was measured but never exercised, and the
-    # redaction tests guarding the clear-text CodeQL fixes would never run.
-    name: tools/ tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.11"
-      - name: Install packages
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e "." -c ci-constraints.txt
-          pip install -e "agentic-workflows-v2/[dev]" -c ci-constraints.txt
-      - name: Run the tools suite
-        run: |
-          set -euo pipefail
-          python -m pytest tools/tests -q --timeout=120

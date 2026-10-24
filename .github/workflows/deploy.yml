@@ -5,6 +5,14 @@ on:
     tags:
       - "v*"
   pull_request:
+    # Not a required check, so a path filter cannot deadlock a PR. The negated
+    # entries (evaluated in order, after the broad globs above them) drop the
+    # trees that cannot change what this pipeline builds: the wheels package only
+    # agentic_v2 / the eval src / tools, the Dockerfiles install editable
+    # packages and never run tests, and docs/ is dockerignored. Deliberately NOT
+    # excluded: *.md (each package README is its wheel long_description, which
+    # `twine check` validates), ui/** (Dockerfile.ui builds it and no other job
+    # builds that image), and every pyproject.toml / lock input.
     paths:
       - ".github/workflows/deploy.yml"
       - "Dockerfile"
@@ -12,9 +20,16 @@ on:
       - "release-manifest.toml"
       - "scripts/verify_release_artifacts.py"
       - "pyproject.toml"
+      - "uv.lock"
+      - "ci-constraints.txt"
       - "tools/**"
       - "agentic-workflows-v2/**"
       - "agentic-v2-eval/**"
+      - "!tools/tests/**"
+      - "!agentic-workflows-v2/tests/**"
+      - "!agentic-workflows-v2/docs/**"
+      - "!agentic-workflows-v2/evals/**"
+      - "!agentic-v2-eval/tests/**"
   workflow_dispatch:
     inputs:
       publish_release:
@@ -47,10 +62,10 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: "3.11"
 
@@ -99,7 +114,7 @@ jobs:
 
       - name: Set up Docker Buildx
         if: steps.docker_backend.outputs.exists == 'true' || steps.docker_frontend.outputs.exists == 'true'
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069  # v4.4.1
 
       - name: Prepare image artifact directory
         if: steps.docker_backend.outputs.exists == 'true' || steps.docker_frontend.outputs.exists == 'true'
@@ -107,7 +122,7 @@ jobs:
 
       - name: Build backend OCI image archive
         if: steps.docker_backend.outputs.exists == 'true'
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc  # v7.4.0
         with:
           context: .
           file: ./Dockerfile
@@ -117,7 +132,7 @@ jobs:
 
       - name: Build frontend OCI image archive
         if: steps.docker_frontend.outputs.exists == 'true'
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc  # v7.4.0
         with:
           context: .
           file: ./Dockerfile.ui
@@ -147,7 +162,7 @@ jobs:
           (cd release-assets && find . -type f -print0 | xargs -0 sha256sum) > release-assets/SHA256SUMS
 
       - name: Upload release assets
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: release-assets
           path: release-assets/
@@ -164,13 +179,13 @@ jobs:
       id-token: write
     steps:
       - name: Download release assets
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
         with:
           name: release-assets
           path: release-assets
 
       - name: Generate build provenance attestation
-        uses: actions/attest-build-provenance@v4
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8  # v4.2.2
         with:
           subject-path: "release-assets/**"
 
@@ -189,10 +204,10 @@ jobs:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       - name: Download release assets
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
         with:
           name: release-assets
           path: release-assets
@@ -229,7 +244,7 @@ jobs:
           fi
 
       - name: Publish release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64  # v3.0.3
         with:
           tag_name: ${{ steps.tag.outputs.value }}
           prerelease: ${{ contains(steps.tag.outputs.value, '-') || (github.event_name == 'workflow_dispatch' && inputs.prerelease) }}

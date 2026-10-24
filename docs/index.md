@@ -43,7 +43,7 @@ PowerShell:
 
 ```powershell
 '{"input_text":"Hello World"}' |
-  Set-Content -Encoding utf8 .\agentic-input.json
+  Set-Content -Encoding ascii .\agentic-input.json
 $env:AGENTIC_NO_LLM = "1"
 agentic run test_deterministic --input .\agentic-input.json
 ```
@@ -67,6 +67,7 @@ verify response quality or structured model output.
 | Understand engine behavior | [Architecture](ARCHITECTURE.md) |
 | Integrate with the API | [Runtime API contracts](api-contracts-runtime.md) |
 | Configure providers and security | [Configuration](configuration.md) |
+| Switch engines, cap model cost, wire approvals, score output | [Integration recipes](getting-started/adapter-recipes.md) |
 | Evaluate workflow output | [Evaluation architecture](architecture-eval.md) |
 | Deploy or troubleshoot the service | [Operations](operations/index.md) |
 
@@ -127,7 +128,7 @@ These values are generated from the current source tree:
 
 <div class="stat-strip" markdown>
 <div class="stat-item">
-  <div class="stat-value">4,300</div>
+  <div class="stat-value">4,349</div>
   <div class="stat-label">Backend tests</div>
 </div>
 <div class="stat-item">
@@ -175,7 +176,7 @@ but deployment still requires operator decisions:
 
 - configure API-key or OIDC authentication;
 - place shared rate limiting at the edge for multiple replicas;
-- choose durable stores for run and retrieval data;
+- choose durable stores for run records and replay data;
 - register an approval provider for approval-required tools;
 - apply network-level egress controls for high-assurance environments;
 - run provider-specific integration tests for every configured provider.

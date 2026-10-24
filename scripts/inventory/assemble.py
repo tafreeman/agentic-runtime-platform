@@ -16,11 +16,15 @@ from _common import HOME_REPO
 INV = HOME_REPO / "docs" / "inventory"
 SECTIONS = INV / "sections"
 HEADING_RE = re.compile(r"^## (.+)$", re.M)
-# Snapshot declarations in the front matter and sections, e.g. "revision `c3b2d328`",
-# "rev c3b2d328", "at c3b2d328", "against `c3b2d328`", and the fullwidth-at form
-# (U+FF20) that the earlier sections use.
+# Snapshot declarations in the front matter and sections, in the forms the
+# narrative uses: "revision `h`", "rev h", "at h", "against `h`", "source: h",
+# "origin/main @ `h`", "origin/main = `h`", and "main (`h`)".
+# Branch-tip mentions such as "branch @ `h`" are not declarations: "@" and
+# "=" only count directly after main or origin/main.
 DECLARED_REV_RE = re.compile(
-    r"(?:revision|rev|at|against|source|\uff20)\s*[`\uff20@ ]{0,3}([0-9a-f]{7,40})\b",
+    r"\b(?:revision|rev|at|against|source)\b\s*[`\uff20@ ]{0,3}([0-9a-f]{7,40})\b"
+    r"|\b(?:origin/)?main\b[`*_ ]*(?:[@\uff20=]|\bat\b|\bagainst\b|\()?\s*`?"
+    r"([0-9a-f]{7,40})\b",
     re.IGNORECASE,
 )
 
@@ -28,16 +32,17 @@ DECLARED_REV_RE = re.compile(
 def _check_revision(texts: list[str]) -> None:
     """Refuse to assemble narrative that describes a different revision than the data.
 
-    The sections are hand-written against one revision; the JSON is regenerated
-    per run. Mixing them produces a report dated today whose body describes an
-    older tree than its numbers. Every declaration in the front matter and in
-    each section is checked, not just the first form.
+    The sections are hand-written against one revision; the JSON is
+    regenerated per run. Mixing them produces a report dated today whose
+    body describes an older tree than its numbers. Every declaration in
+    the front matter and in each section is checked, not just the first
+    form.
     """
     data = json.loads(
         (INV / "data" / "meta_inventory.json").read_text(encoding="utf-8")
     )
     rev = str(data["revision"]).split()[0]
-    declared = set(DECLARED_REV_RE.findall("\n".join(texts)))
+    declared = {g1 or g2 for g1, g2 in DECLARED_REV_RE.findall("\n".join(texts))}
     stale = sorted(d for d in declared if not (rev.startswith(d) or d.startswith(rev)))
     if stale:
         raise SystemExit(

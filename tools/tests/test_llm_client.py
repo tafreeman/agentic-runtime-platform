@@ -185,3 +185,36 @@ class TestGenerateTextRouting:
         ):
             LLMClient.generate_text("gh:gpt-4o-mini", "prompt")
         assert isinstance(exc_info.value.original_error, ConnectionError)
+
+
+class TestStrictWeightVerification:
+    def test_operational_verifier_error_blocks_load_in_strict_mode(
+        self, monkeypatch, tmp_path
+    ):
+        from tools.llm import provider_adapters as pa
+
+        def _boom(path):
+            raise PermissionError("unreadable trust file")
+
+        monkeypatch.setattr(
+            "agentic_v2.models.weight_integrity.verify_model_weights", _boom
+        )
+        monkeypatch.delenv("AGENTIC_STRICT_MODEL_VERIFY", raising=False)
+        pa._verify_local_model_weights(tmp_path)  # non-strict: logs, continues
+        monkeypatch.setenv("AGENTIC_STRICT_MODEL_VERIFY", "1")
+        with pytest.raises(RuntimeError, match="strict mode"):
+            pa._verify_local_model_weights(tmp_path)
+
+    def test_unresolved_local_model_refused_in_strict_mode(self, monkeypatch):
+        pytest.importorskip("tools.llm.local_model")
+        from tools.llm import provider_adapters as pa
+
+        monkeypatch.setenv("AGENTIC_STRICT_MODEL_VERIFY", "1")
+        with pytest.raises(RuntimeError, match="unverified fallback"):
+            pa.call_local(
+                "local:phi4mini",
+                "hi",
+                None,
+                local_models={"phi4mini": "spec"},
+                resolve_model_path=lambda key: None,
+            )

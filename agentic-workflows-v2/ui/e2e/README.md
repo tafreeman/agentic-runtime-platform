@@ -21,7 +21,10 @@ npm run test:e2e:5x
 npm run test:e2e:ui
 ```
 
-`test:e2e:5x` is the repeated CI flake gate.
+`test:e2e:5x` runs the whole suite five times in a row and stops at the first failure.
+PRs run the suite once (`npm run test:e2e` in the `e2e-streaming` CI job); the nightly
+workflow (`nightly.yml`) runs `test:e2e:5x` for the full suite plus a 50x loop of
+`streaming.spec.ts` that feeds the flake-rate and SLO gates.
 
 ## Test environment
 

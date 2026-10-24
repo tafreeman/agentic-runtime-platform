@@ -6,7 +6,7 @@ This guide covers the normal edit, run, and test loop. See
 ## Requirements
 
 - Python 3.11 or newer
-- Node.js 20 or newer
+- Node.js 22.22.2 or newer (CI uses Node 22)
 - Git
 - PowerShell for the repository's `just` recipes and `.ps1` scripts
 
@@ -141,7 +141,7 @@ Registered Python markers vary by package:
 | Marker | Use |
 |---|---|
 | `slow` | Long-running local checks |
-| `e2e` | End-to-end runtime checks |
+| `e2e` | Cross-package end-to-end checks (registered in the root `pyproject.toml` for `tests/e2e/`) |
 | `integration` | External or multi-component integration checks |
 
 Check each package's `pyproject.toml` before adding a marker. Do not invent an
@@ -260,7 +260,7 @@ Stop it with:
 docker compose down --remove-orphans
 ```
 
-Redis, SQLite, PostgreSQL, LanceDB, MCP, Claude SDK, and tracing dependencies
+Redis, SQLite, PostgreSQL, MCP, Claude SDK, and tracing dependencies
 are installed through runtime extras. See
 [Installation](getting-started/installation.md#runtime-extras) before testing
 one of those paths.

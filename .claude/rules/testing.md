@@ -53,10 +53,14 @@ the model client) instead of calling a real provider.
 - Golden outputs live in `tests/golden/`; compare against them with LLM calls
   mocked so the result is stable without API keys (see
   `tests/test_golden_workflow.py`).
-- Strip volatile keys (`start_time`, `end_time`, `*_id`, `*_duration_ms`) before
+- Strip volatile keys (`start_time`, `end_time`, `workflow_id`,
+  `total_duration_ms`, `duration_ms` — see `_VOLATILE_KEYS` in the test) before
   comparing — never assert on wall-clock timing or generated ids.
-- Regenerate a golden file deliberately (delete it, rerun with the documented
-  `--update-golden` flow) and commit the diff; do not hand-edit golden JSON.
+- Regenerate a golden file deliberately: delete it and rerun
+  `tests/test_golden_workflow.py`. The test writes the new file and **skips**;
+  rerun once more to confirm it passes, then commit the diff. There is no
+  `--update-golden` pytest option (the test module's docstring still mentions
+  one); do not hand-edit golden JSON.
 - Pydantic wire-format schemas under `tests/schemas/` are generated artifacts —
   a contract change must regenerate and commit them (the `wire-format-drift`
   CI job enforces this). Do not edit them by hand.
