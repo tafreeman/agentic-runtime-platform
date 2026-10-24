@@ -52,7 +52,7 @@ jobs:
         id: scope
         if: github.event_name == 'pull_request'
         continue-on-error: true
-        uses: dorny/paths-filter@v4
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d  # v4.0.3
         with:
           predicate-quantifier: every
           filters: |
@@ -71,20 +71,20 @@ jobs:
 
       - name: Checkout repository
         if: steps.scope.outputs.analyzable != 'false'
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       - name: Initialize CodeQL
         if: steps.scope.outputs.analyzable != 'false'
-        uses: github/codeql-action/init@v4
+        uses: github/codeql-action/init@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee  # v4.39.0
         with:
           languages: ${{ matrix.language }}
 
       - name: Autobuild
         if: steps.scope.outputs.analyzable != 'false'
-        uses: github/codeql-action/autobuild@v4
+        uses: github/codeql-action/autobuild@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee  # v4.39.0
 
       - name: Perform CodeQL Analysis
         if: steps.scope.outputs.analyzable != 'false'
-        uses: github/codeql-action/analyze@v4
+        uses: github/codeql-action/analyze@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee  # v4.39.0
         with:
           category: "/language:${{ matrix.language }}"
