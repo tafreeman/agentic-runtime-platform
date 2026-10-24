@@ -22,7 +22,7 @@ annotated-doc==0.0.5
     #   typer
 annotated-types==0.8.0
     # via pydantic
-anthropic==1.13.0
+anthropic==1.15.0
     # via
     #   agentic-tools
     #   agentic-workflows-v2
@@ -201,7 +201,7 @@ langchain==1.3.11
     # via agentic-workflows-v2
 langchain-anthropic==1.7.4
     # via agentic-workflows-v2
-langchain-core==1.6.10
+langchain-core==1.6.12
     # via
     #   agentic-tools
     #   agentic-workflows-v2
@@ -246,7 +246,7 @@ langgraph-prebuilt==1.1.0
     # via langgraph
 langgraph-sdk==0.4.5
     # via langgraph
-langsmith==0.14.3
+langsmith==0.14.11
     # via
     #   agentic-workflows-v2
     #   langchain-core
@@ -290,12 +290,13 @@ ollama==0.6.3
     # via
     #   agentic-workflows-v2
     #   langchain-ollama
-openai==3.29.0
+openai==3.35.1
     # via
     #   agentic-tools
     #   langchain-openai
 opentelemetry-api==1.45.0
     # via
+    #   anthropic
     #   fastapi
     #   opentelemetry-exporter-http-transport
     #   opentelemetry-exporter-otlp-proto-grpc
