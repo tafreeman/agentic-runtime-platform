@@ -115,7 +115,7 @@ fsspec==2026.9.0
     # via huggingface-hub
 google-auth==2.62.0
     # via google-genai
-google-genai==2.7.0
+google-genai==2.33.0
     # via langchain-google-genai
 googleapis-common-protos==1.75.5
     # via
@@ -160,7 +160,7 @@ httpx2==2.13.1
     #   openai
 httpx2-jsfetch==1.0 ; python_full_version >= '3.12' and sys_platform == 'emscripten'
     # via httpx2
-huggingface-hub==2.2.0
+huggingface-hub==1.33.0
     # via
     #   agentic-evalkit
     #   tokenizers
@@ -244,7 +244,7 @@ langgraph-checkpoint-sqlite==3.1.1
     # via agentic-workflows-v2
 langgraph-prebuilt==1.1.0
     # via langgraph
-langgraph-sdk==0.4.5
+langgraph-sdk==0.4.9
     # via langgraph
 langsmith==0.14.9
     # via
@@ -491,6 +491,8 @@ requests==2.34.2
     #   google-auth
     #   google-genai
     #   langsmith
+    #   opentelemetry-exporter-http-transport
+    #   opentelemetry-exporter-otlp-proto-http
     #   requests-toolbelt
     #   tiktoken
 requests-toolbelt==1.0.0
@@ -536,7 +538,7 @@ starlette==1.8.0
     #   fastapi
     #   mcp
     #   sse-starlette
-tenacity==9.2.1
+tenacity==9.1.4
     # via
     #   google-genai
     #   langchain-core
@@ -585,6 +587,7 @@ typing-extensions==4.16.0
     #   psycopg-pool
     #   pydantic
     #   pydantic-core
+    #   pydantic-settings
     #   pytest-asyncio
     #   referencing
     #   starlette
@@ -600,10 +603,8 @@ tzdata==2026.5 ; sys_platform == 'emscripten' or sys_platform == 'win32'
     #   pandas
     #   psycopg
 urllib3==2.8.0
-    # via
-    #   opentelemetry-exporter-http-transport
-    #   requests
-uuid-utils==1.0.0
+    # via requests
+uuid-utils==0.18.0
     # via
     #   langchain-core
     #   langsmith
