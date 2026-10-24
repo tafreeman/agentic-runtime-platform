@@ -363,7 +363,7 @@ pluggy==1.6.0
     # via
     #   pytest
     #   pytest-cov
-pre-commit==4.6.2
+pre-commit==4.7.0
 prometheus-client==0.26.0
     # via
     #   agentic-workflows-v2
@@ -504,7 +504,7 @@ rpds-py==2026.6.3
     # via
     #   jsonschema
     #   referencing
-ruff==0.16.10
+ruff==0.17.1
     # via
     #   agentic-v2-eval
     #   agentic-workflows-v2
