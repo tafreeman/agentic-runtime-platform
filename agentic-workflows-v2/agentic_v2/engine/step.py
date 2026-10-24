@@ -85,6 +85,14 @@ HookFunction = Callable[[ExecutionContext, "StepDefinition"], Awaitable[None]]
 ConditionFunction = Callable[[ExecutionContext], bool]
 
 
+def _validate_timeout_seconds(seconds: float | None) -> None:
+    """Reject non-positive timeouts; ``None`` means no timeout."""
+    if seconds is not None and seconds <= 0:
+        raise ValueError(
+            f"timeout_seconds must be > 0 or None (no timeout), got {seconds!r}"
+        )
+
+
 @dataclass
 class StepDefinition:
     """Declarative step definition for workflow DAGs with fluent builder API."""
@@ -136,6 +144,9 @@ class StepDefinition:
     tags: list[str] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
 
+    def __post_init__(self) -> None:
+        _validate_timeout_seconds(self.timeout_seconds)
+
     def should_run(self, ctx: ExecutionContext) -> bool:
         """Check if step is eligible to run (dependencies met, when/unless
         satisfied)."""
@@ -170,6 +181,7 @@ class StepDefinition:
 
     def with_timeout(self, seconds: float) -> "StepDefinition":
         """Fluent builder: Set timeout."""
+        _validate_timeout_seconds(seconds)
         self.timeout_seconds = seconds
         return self
 
@@ -342,7 +354,7 @@ class StepExecutor:
         assert func is not None
         try:
             timeout = step_def.timeout_seconds
-            if timeout:
+            if timeout is not None:
                 async with asyncio.timeout(timeout):
                     output = await self._execute_with_timeout(
                         func, child_ctx, step_def.name

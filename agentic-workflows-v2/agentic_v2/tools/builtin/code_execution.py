@@ -20,6 +20,9 @@ from typing import Any
 
 from ..base import BaseTool, ToolResult
 
+# Upper bound on waiting for a killed child to be reaped.
+_REAP_TIMEOUT_S = 5.0
+
 
 class CodeExecutionTool(BaseTool):
     """Execute Python code in a controlled environment."""
@@ -205,6 +208,20 @@ class CodeExecutionTool(BaseTool):
         # Max 32 child processes (blocks fork bombs)
         resource.setrlimit(resource.RLIMIT_NPROC, (32, 32))
 
+    @staticmethod
+    async def _terminate_process(proc: asyncio.subprocess.Process | None) -> None:
+        """Kill a still-running child and reap it; never raises or hangs."""
+        if proc is None:
+            return
+        try:
+            if proc.returncode is None:
+                proc.kill()
+            await asyncio.wait_for(proc.wait(), timeout=_REAP_TIMEOUT_S)
+        except (ProcessLookupError, TimeoutError, OSError):
+            # Already gone or unreapable in time; teardown must not mask the
+            # original outcome.
+            return
+
     async def execute(self, code: str, timeout: float = 30.0, **kwargs) -> ToolResult:
         """Execute Python code in a sandboxed subprocess."""
         # Safety check
@@ -280,6 +297,7 @@ class CodeExecutionTool(BaseTool):
         try:
             tmp_path = await asyncio.to_thread(_write_temp_file, wrapper)
 
+            proc: asyncio.subprocess.Process | None = None
             try:
                 proc = await asyncio.create_subprocess_exec(
                     sys.executable,
@@ -294,6 +312,11 @@ class CodeExecutionTool(BaseTool):
                 stdout_bytes, stderr_bytes = await asyncio.wait_for(
                     proc.communicate(), timeout=timeout
                 )
+            except BaseException:
+                # Timeout, cancellation or any other failure after spawn:
+                # tear the child down deterministically instead of leaking it.
+                await self._terminate_process(proc)
+                raise
             finally:
                 Path(tmp_path).unlink(missing_ok=True)
 

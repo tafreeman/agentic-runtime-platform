@@ -606,6 +606,11 @@ class ExecutionContext:
             raise FileNotFoundError(f"Checkpoint not found: {checkpoint_path}")
 
         data = json.loads(checkpoint_path.read_text())
+        if not isinstance(data, dict):
+            raise ValueError(
+                "Invalid checkpoint: expected a JSON object, got "
+                f"{type(data).__name__}"
+            )
         # Validate every untrusted field BEFORE mutating any state so a rejected
         # (e.g. attacker-tampered) checkpoint leaves the context unchanged.
         variables = self._validate_checkpoint_variables(data.get("variables", {}))

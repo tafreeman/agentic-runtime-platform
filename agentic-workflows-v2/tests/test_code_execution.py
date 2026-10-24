@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from unittest.mock import patch
 
 import pytest
 
@@ -167,6 +168,43 @@ class TestCodeExecution:
         )
         assert not result.success
         assert "timed out" in result.error
+
+    @pytest.mark.asyncio
+    @pytest.mark.timeout(20)
+    async def test_timeout_kills_and_reaps_subprocess(self) -> None:
+        """On timeout the child is explicitly killed and awaited, not left to GC."""
+        import asyncio
+
+        spawned: list[asyncio.subprocess.Process] = []
+        real_create = asyncio.create_subprocess_exec
+        calls: list[str] = []
+
+        async def _spy_create(*args, **kwargs):
+            proc = await real_create(*args, **kwargs)
+            real_kill, real_wait = proc.kill, proc.wait
+
+            def _kill() -> None:
+                calls.append("kill")
+                real_kill()
+
+            async def _wait() -> int:
+                calls.append("wait")
+                return await real_wait()
+
+            proc.kill = _kill  # type: ignore[method-assign]
+            proc.wait = _wait  # type: ignore[method-assign]
+            spawned.append(proc)
+            return proc
+
+        tool = CodeExecutionTool(sandbox=False)
+        with patch("asyncio.create_subprocess_exec", _spy_create):
+            result = await tool.execute("import time\ntime.sleep(60)", timeout=1.0)
+
+        assert not result.success
+        assert "timed out" in result.error
+        assert len(spawned) == 1
+        assert calls.index("kill") < calls.index("wait")
+        assert spawned[0].returncode is not None
 
     @pytest.mark.asyncio
     async def test_multiple_print_statements(self) -> None:
