@@ -2,7 +2,7 @@ name: Windows Workflow Verification
 
 on:
   push:
-    branches: [main, agenticv2]
+    branches: [main]
     paths:
       - 'agentic-workflows-v2/agentic_v2/workflows/definitions/**'
       - 'agentic-workflows-v2/agentic_v2/cli/**'
@@ -10,13 +10,20 @@ on:
       - 'agentic-workflows-v2/scripts/fixtures/**'
       - '.github/workflows/windows-workflows-ci.yml'
   pull_request:
-    branches: [main, agenticv2]
+    branches: [main]
     paths:
       - 'agentic-workflows-v2/agentic_v2/workflows/definitions/**'
       - 'agentic-workflows-v2/agentic_v2/cli/**'
       - 'agentic-workflows-v2/scripts/setup-dev.ps1'
       - 'agentic-workflows-v2/scripts/fixtures/**'
       - '.github/workflows/windows-workflows-ci.yml'
+
+concurrency:
+  # PRs: one group per PR number, newer push cancels the older run. Everything
+  # else (push to main, dispatch): group per run, never cancelled. Not a
+  # required check and already path-filtered, so there is no deadlock risk.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   verify-workflows:
@@ -29,10 +36,10 @@ jobs:
       PYTHONUTF8: 1
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v10.3.0  # v8 drops floating major tags
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
         with:
           python-version: '3.11'
 

@@ -4,9 +4,9 @@ name: Relock Dependabot pip PR
 # alerts raised against the generated ci-constraints.txt, that file
 # directly) but never touches uv.lock — see dependabot.yml and the
 # justfile's `relock` recipe. `uv export --locked` in the
-# "ci-constraints.txt in sync with uv.lock" CI job then hard-fails with
-# "the lockfile needs to be updated" before it ever reaches the diff check,
-# so every pip Dependabot PR opens red on a required check. The fix was
+# "ci-constraints.txt in sync with uv.lock" step of the `lint` CI job then
+# hard-fails with "the lockfile needs to be updated" before it ever reaches the
+# diff check, so every pip Dependabot PR opens red on a required check. The fix was
 # already documented as a manual step — clone, `just relock`, review,
 # commit, push — the `relock` job below runs those same three commands on
 # demand so a maintainer can unblock a PR from the Actions tab instead of a
@@ -75,59 +75,68 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       - name: Resolve PR metadata
         id: pr
+        env:
+          PR_NUMBER: ${{ inputs.pr_number }}
         run: |
           set -euo pipefail
-          state=$(gh pr view "${{ inputs.pr_number }}" --json state --jq .state)
-          author=$(gh pr view "${{ inputs.pr_number }}" --json author --jq .author.login)
-          head_ref=$(gh pr view "${{ inputs.pr_number }}" --json headRefName --jq .headRefName)
+          state=$(gh pr view "$PR_NUMBER" --json state --jq .state)
+          author=$(gh pr view "$PR_NUMBER" --json author --jq .author.login)
+          head_ref=$(gh pr view "$PR_NUMBER" --json headRefName --jq .headRefName)
           echo "state=$state" >> "$GITHUB_OUTPUT"
           echo "author=$author" >> "$GITHUB_OUTPUT"
           echo "head_ref=$head_ref" >> "$GITHUB_OUTPUT"
 
       - name: Guard — only relock open Dependabot pip/uv PRs
+        env:
+          PR_NUMBER: ${{ inputs.pr_number }}
+          PR_STATE: ${{ steps.pr.outputs.state }}
+          PR_AUTHOR: ${{ steps.pr.outputs.author }}
+          PR_HEAD_REF: ${{ steps.pr.outputs.head_ref }}
         run: |
           set -euo pipefail
-          if [ "${{ steps.pr.outputs.state }}" != "OPEN" ]; then
-            echo "::error::PR #${{ inputs.pr_number }} is ${{ steps.pr.outputs.state }}, not OPEN"
+          if [ "$PR_STATE" != "OPEN" ]; then
+            echo "::error::PR #$PR_NUMBER is $PR_STATE, not OPEN"
             exit 1
           fi
           # `gh pr view --json author --jq .author.login` reports a GitHub App as
           # `app/dependabot`, not the `dependabot[bot]` form that appears in the
           # web UI and in `github.actor`. Accept both so the guard does not reject
           # every real Dependabot PR (it did, on run 31347536267).
-          case "${{ steps.pr.outputs.author }}" in
+          case "$PR_AUTHOR" in
             "app/dependabot"|"dependabot[bot]") ;;
             *)
-              echo "::error::PR #${{ inputs.pr_number }} author is '${{ steps.pr.outputs.author }}', not Dependabot — refusing to relock a human PR"
+              echo "::error::PR #$PR_NUMBER author is '$PR_AUTHOR', not Dependabot — refusing to relock a human PR"
               exit 1
               ;;
           esac
-          case "${{ steps.pr.outputs.head_ref }}" in
+          case "$PR_HEAD_REF" in
             dependabot/pip/*|dependabot/uv/*) ;;
             *)
-              echo "::error::Head ref '${{ steps.pr.outputs.head_ref }}' doesn't look like a pip/uv Dependabot branch — refusing"
+              echo "::error::Head ref '$PR_HEAD_REF' doesn't look like a pip/uv Dependabot branch — refusing"
               exit 1
               ;;
           esac
 
       - name: Check out the PR branch
+        env:
+          PR_HEAD_REF: ${{ steps.pr.outputs.head_ref }}
         run: |
           set -euo pipefail
-          git fetch origin "${{ steps.pr.outputs.head_ref }}"
-          git checkout "${{ steps.pr.outputs.head_ref }}"
+          git fetch origin "$PR_HEAD_REF"
+          git checkout "$PR_HEAD_REF"
 
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: "3.11"
 
       - name: Relock uv.lock and regenerate ci-constraints.txt
-        # Pins the same uv version the lockfile-constraints CI job uses so the
-        # two never disagree over what "in sync" means.
+        # Pins the same uv version the `lint` CI job's ci-constraints.txt step
+        # uses so the two never disagree over what "in sync" means.
         #
         # Deliberately `uv lock`, NOT `uv lock --upgrade` as `just relock` does.
         # The failure being fixed is that Dependabot edits pyproject.toml and
@@ -142,13 +151,15 @@ jobs:
         # pin in ci-constraints.txt directly and never touch pyproject.toml
         # (e.g. #246, cryptography): plain `uv lock` would regenerate the
         # constraint from the still-old lock and silently revert the bump.
+        env:
+          UPGRADE_PACKAGE: ${{ inputs.upgrade_package }}
         run: |
           set -euo pipefail
           python -m pip install --upgrade pip
           pip install "uv==0.11.2"
-          if [ -n "${{ inputs.upgrade_package }}" ]; then
-            echo "Upgrading single package: ${{ inputs.upgrade_package }}"
-            uv lock --upgrade-package "${{ inputs.upgrade_package }}"
+          if [ -n "$UPGRADE_PACKAGE" ]; then
+            echo "Upgrading single package: $UPGRADE_PACKAGE"
+            uv lock --upgrade-package "$UPGRADE_PACKAGE"
           else
             uv lock
           fi
@@ -156,6 +167,9 @@ jobs:
             --all-packages --all-extras -o ci-constraints.txt
 
       - name: Commit and push if changed
+        env:
+          PR_NUMBER: ${{ inputs.pr_number }}
+          PR_HEAD_REF: ${{ steps.pr.outputs.head_ref }}
         run: |
           set -euo pipefail
           if git diff --quiet -- uv.lock ci-constraints.txt; then
@@ -165,8 +179,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add uv.lock ci-constraints.txt
-          git commit -m "chore(deps): relock uv.lock for PR #${{ inputs.pr_number }}"
-          git push origin "HEAD:refs/heads/${{ steps.pr.outputs.head_ref }}"
+          git commit -m "chore(deps): relock uv.lock for PR #$PR_NUMBER"
+          git push origin "HEAD:refs/heads/$PR_HEAD_REF"
 
   discover-relock-candidates:
     name: Find open Dependabot pip/uv PRs
@@ -174,11 +188,13 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # No checkout here: this job only calls `gh pr list` / `gh pr view` and jq
+      # (preinstalled on ubuntu runners). `gh` normally infers the repo from the
+      # checkout's git remote, so name it explicitly instead.
+      GH_REPO: ${{ github.repository }}
     outputs:
       prs: ${{ steps.list.outputs.prs }}
     steps:
-      - uses: actions/checkout@v7
-
       - name: List open Dependabot pip/uv PRs
         id: list
         run: |
@@ -247,7 +263,7 @@ jobs:
       matrix:
         pr_number: ${{ fromJson(needs.discover-relock-candidates.outputs.prs) }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       # Re-validated here even though discover-relock-candidates already
       # filtered on author and head ref: a PR can close, merge, or (in theory)
@@ -255,47 +271,56 @@ jobs:
       # Same guard, same acceptance list, as the manual job above.
       - name: Resolve PR metadata
         id: pr
+        env:
+          PR_NUMBER: ${{ matrix.pr_number }}
         run: |
           set -euo pipefail
-          state=$(gh pr view "${{ matrix.pr_number }}" --json state --jq .state)
-          author=$(gh pr view "${{ matrix.pr_number }}" --json author --jq .author.login)
-          head_ref=$(gh pr view "${{ matrix.pr_number }}" --json headRefName --jq .headRefName)
+          state=$(gh pr view "$PR_NUMBER" --json state --jq .state)
+          author=$(gh pr view "$PR_NUMBER" --json author --jq .author.login)
+          head_ref=$(gh pr view "$PR_NUMBER" --json headRefName --jq .headRefName)
           echo "state=$state" >> "$GITHUB_OUTPUT"
           echo "author=$author" >> "$GITHUB_OUTPUT"
           echo "head_ref=$head_ref" >> "$GITHUB_OUTPUT"
 
       - name: Guard — only relock open Dependabot pip/uv PRs
+        env:
+          PR_NUMBER: ${{ matrix.pr_number }}
+          PR_STATE: ${{ steps.pr.outputs.state }}
+          PR_AUTHOR: ${{ steps.pr.outputs.author }}
+          PR_HEAD_REF: ${{ steps.pr.outputs.head_ref }}
         run: |
           set -euo pipefail
-          if [ "${{ steps.pr.outputs.state }}" != "OPEN" ]; then
-            echo "::error::PR #${{ matrix.pr_number }} is ${{ steps.pr.outputs.state }}, not OPEN"
+          if [ "$PR_STATE" != "OPEN" ]; then
+            echo "::error::PR #$PR_NUMBER is $PR_STATE, not OPEN"
             exit 1
           fi
           # See the manual `relock` job's identical guard step for why both
           # author forms and both branch prefixes are accepted.
-          case "${{ steps.pr.outputs.author }}" in
+          case "$PR_AUTHOR" in
             "app/dependabot"|"dependabot[bot]") ;;
             *)
-              echo "::error::PR #${{ matrix.pr_number }} author is '${{ steps.pr.outputs.author }}', not Dependabot — refusing to relock a human PR"
+              echo "::error::PR #$PR_NUMBER author is '$PR_AUTHOR', not Dependabot — refusing to relock a human PR"
               exit 1
               ;;
           esac
-          case "${{ steps.pr.outputs.head_ref }}" in
+          case "$PR_HEAD_REF" in
             dependabot/pip/*|dependabot/uv/*) ;;
             *)
-              echo "::error::Head ref '${{ steps.pr.outputs.head_ref }}' doesn't look like a pip/uv Dependabot branch — refusing"
+              echo "::error::Head ref '$PR_HEAD_REF' doesn't look like a pip/uv Dependabot branch — refusing"
               exit 1
               ;;
           esac
 
       - name: Check out the PR branch
+        env:
+          PR_HEAD_REF: ${{ steps.pr.outputs.head_ref }}
         run: |
           set -euo pipefail
-          git fetch origin "${{ steps.pr.outputs.head_ref }}"
-          git checkout "${{ steps.pr.outputs.head_ref }}"
+          git fetch origin "$PR_HEAD_REF"
+          git checkout "$PR_HEAD_REF"
 
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: "3.11"
 
@@ -318,6 +343,9 @@ jobs:
             --all-packages --all-extras -o ci-constraints.txt
 
       - name: Commit and push if changed
+        env:
+          PR_NUMBER: ${{ matrix.pr_number }}
+          PR_HEAD_REF: ${{ steps.pr.outputs.head_ref }}
         run: |
           set -euo pipefail
           if git diff --quiet -- uv.lock ci-constraints.txt; then
@@ -327,5 +355,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add uv.lock ci-constraints.txt
-          git commit -m "chore(deps): relock uv.lock for PR #${{ matrix.pr_number }}"
-          git push origin "HEAD:refs/heads/${{ steps.pr.outputs.head_ref }}"
+          git commit -m "chore(deps): relock uv.lock for PR #$PR_NUMBER"
+          git push origin "HEAD:refs/heads/$PR_HEAD_REF"

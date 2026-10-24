@@ -36,9 +36,9 @@ a numeric quality score. The evaluation package does not import the runtime.
 
 | Component | Technology | Notes |
 |-----------|-----------|-------|
-| Language | Python 3.11+ | `match` statements and `tomllib` used |
+| Language | Python 3.11+ | `requires-python = ">=3.11"` |
 | Build backend | hatchling | `pyproject.toml` as single config source |
-| Rubric format | YAML (PyYAML 6.0+) | Loaded at call time, not import time |
+| Rubric format | YAML (PyYAML 6.0+) | `Scorer` rubrics load at construction; evaluator prompt YAML loads when the evaluator module is imported |
 | LLM access | `agentic-tools` workspace dependency | Concrete client loaded by the adapter when needed |
 | Test runner | pytest + pytest-asyncio | `asyncio_mode = "auto"` |
 | Coverage gate | pytest-cov | `fail_under = 80`, branch coverage on |
@@ -88,7 +88,7 @@ graph LR
 method matches the signature can be injected into an evaluator. Tests use
 small fakes instead of calling a provider.
 
-**Rubric YAML loaded at call time, not import time.** Rubric YAML files are opened when a `Scorer` is constructed or an evaluator method is first called. The module-level `__init__.py` exports are pure class symbols with no file I/O. This keeps import overhead negligible and allows test code to override the rubric path trivially.
+**Scorer rubrics loaded at construction.** A `Scorer` opens its rubric YAML when it is constructed (`load_rubric()` reads the file on each call), so test code can pass any path or dict. The evaluator prompt files (`quality.yaml`, `prompt_standard.yaml`, `prompt_pattern.yaml`) are read once when `evaluators.quality`, `evaluators.standard` and `evaluators.pattern` are imported, which the package `__init__.py` does; a load failure prints a warning and leaves the affected definitions empty.
 
 **EvaluatorRegistry as a classvar singleton.** The registry is a class-level dict rather than a module-level global. Evaluators register themselves at class-definition time via the `@EvaluatorRegistry.register("name")` decorator. Discovery is automatic: importing any evaluator module is sufficient for it to appear in the registry.
 
@@ -143,7 +143,7 @@ agentic-v2-eval/
 │   │   ├── batch.py         # BatchRunner[T,R] + run_batch_evaluation()
 │   │   └── streaming.py     # StreamingRunner + AsyncStreamingRunner + run_streaming_evaluation()
 │   └── sandbox/
-│       ├── base.py          # BaseSandbox abstract class
+│       ├── base.py          # Sandbox abstract class + ExecutionResult
 │       └── local.py         # LocalSubprocessSandbox (subprocess isolation, safe_mode)
 └── tests/                   # Package tests
     ├── conftest.py
@@ -327,11 +327,11 @@ All reporters share `calculate_summary()` from `reporters/_summary.py`, which co
 
 ## Sandbox
 
-`LocalSubprocessSandbox` (in `sandbox/local.py`) runs evaluated code in a subprocess with a configurable timeout (default 30 s) and an optional blocked-command list (`safe_mode=True`).
+`LocalSubprocessSandbox` (in `sandbox/local.py`) runs commands in a subprocess with a configurable timeout (default 30 s) and an optional blocked-command list (`safe_mode=True`).
 
-Blocked commands in safe mode include: `rm`, `wget`, `curl`, `nc`, `kill`, `chmod`, `chown`, `dd`, `mkfs`, and other destructive or network-accessing commands.
+Blocked commands in safe mode include: `rm`, `wget`, `curl`, `nc`, `kill`, `dd`, `mkfs`, and other destructive or network-accessing commands.
 
-The sandbox prevents path-escape by rejecting absolute paths outside the configured sandbox root before execution. It does not provide container-level isolation; for higher assurance, wrap the evaluator in a Docker image.
+The sandbox prevents path-escape by rejecting a working directory, or a file read/write path, that resolves outside the sandbox root. It does not provide container-level isolation; for higher assurance, wrap the evaluator in a Docker image.
 
 ---
 
@@ -347,7 +347,9 @@ Available benchmarks:
 | `swe-bench-lite` | SWE-bench Lite | 300 | Quick evaluation subset |
 | `swe-bench-verified` | SWE-bench Verified | Subset | Human-validated |
 | `humaneval` | HumanEval | 164 | Python function-level tasks |
+| `humaneval-plus` | HumanEval+ | 164 | HumanEval with additional tests |
 | `mbpp` | MBPP | 974 | Basic Python programming |
+| `mbpp-sanitized` | MBPP Sanitized | 427 | Cleaned MBPP subset |
 | `codeclash` | CodeClash | Variable | Competitive programming |
 | `custom-local` | Custom Local | Variable | User-defined tasks |
 
@@ -363,7 +365,7 @@ for task in tasks:
 
 ## Server-side integration
 
-The `agentic-workflows-v2` server runs its own three-stage evaluation pipeline that is architecturally parallel to but distinct from the standalone `agentic-v2-eval` package. The integration point is the `GET /runs/{filename}/evaluation` API endpoint.
+The `agentic-workflows-v2` server runs its own three-stage evaluation pipeline that is architecturally parallel to but distinct from the standalone `agentic-v2-eval` package. The integration point is the `GET /api/runs/{filename}/evaluation` API endpoint.
 
 See `docs/evaluation/gating.md` for the full server-side scoring pipeline, scoring profiles, and hard gate specification.
 
@@ -446,7 +448,7 @@ ruff check src/agentic_v2_eval/
 | Property | Value |
 |----------|-------|
 | Test files | 13 |
-| Approximate test count | ~215 |
+| Approximate test count | ~275 |
 | asyncio mode | auto |
 | Coverage gate | 80%, branch coverage on |
 | Live API calls in tests | None — all mock `LLMClientProtocol` |
