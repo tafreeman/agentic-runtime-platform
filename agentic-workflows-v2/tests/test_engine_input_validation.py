@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from agentic_v2.engine import ExecutionContext, StepDefinition
+from agentic_v2.engine.executor import ExecutionConfig
 from agentic_v2.engine.pipeline import ParallelGroup
 
 
@@ -32,6 +33,19 @@ def test_with_timeout_rejects_non_positive_and_leaves_value_unchanged(
 def test_step_definition_accepts_none_and_positive_timeout() -> None:
     assert StepDefinition(name="a", func=_noop).timeout_seconds is None
     assert StepDefinition(name="b", func=_noop, timeout_seconds=0.1).timeout_seconds
+
+
+@pytest.mark.parametrize("bad", [0, 0.0, -1])
+def test_execution_config_rejects_non_positive_step_default_timeout(
+    bad: float,
+) -> None:
+    with pytest.raises(ValueError, match="step_default_timeout_seconds"):
+        ExecutionConfig(step_default_timeout_seconds=bad)
+
+
+def test_execution_config_accepts_positive_step_default_timeout() -> None:
+    assert ExecutionConfig().step_default_timeout_seconds == 300.0
+    assert ExecutionConfig(step_default_timeout_seconds=0.5)
 
 
 @pytest.mark.parametrize("bad", [0, -1])
