@@ -231,7 +231,7 @@ langgraph==1.2.9
     # via
     #   agentic-workflows-v2
     #   langchain
-langgraph-checkpoint==4.1.1
+langgraph-checkpoint==4.3.0
     # via
     #   agentic-workflows-v2
     #   langgraph
