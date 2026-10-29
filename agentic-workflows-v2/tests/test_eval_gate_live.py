@@ -616,6 +616,7 @@ class TestScoreCaseLiveMedian:
         result_obj.steps[1].output_data = {
             "agent": "tier2_reviewer",
             "status": "llm_unavailable",
+            "description": "Deep code review with suggestions",
             "note": "No LLM provider configured.",
         }
         mock_run = AsyncMock(return_value=result_obj)
@@ -626,6 +627,28 @@ class TestScoreCaseLiveMedian:
         assert "reached no model" in result["error"]
         assert "step2" in result["error"]
         assert mock_run.await_count == 1
+
+    @pytest.mark.asyncio
+    async def test_model_reply_with_placeholder_status_still_scores(
+        self, eval_gate: ModuleType
+    ) -> None:
+        """A model may emit its own ``status`` field; only the resolver's full
+        placeholder shape (agent/description/note strings) marks a no-model run."""
+        result_obj = _make_workflow_result(
+            "test_deterministic",
+            step_statuses=[StepStatus.SUCCESS, StepStatus.SUCCESS],
+            step_names=["step1", "step2"],
+        )
+        result_obj.steps[1].output_data = {
+            "status": "llm_unavailable",
+            "summary": "The upstream service reported llm_unavailable.",
+        }
+        mock_run = AsyncMock(return_value=result_obj)
+        with patch("agentic_v2.workflows.run_workflow", mock_run):
+            result = await eval_gate.score_case_live(_base_case(threshold=0.0), 0.0)
+
+        assert result["error"] is None
+        assert mock_run.await_count == 3
 
     @pytest.mark.asyncio
     async def test_real_output_is_not_mistaken_for_placeholder(

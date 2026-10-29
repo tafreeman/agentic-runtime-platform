@@ -368,20 +368,33 @@ def _has_live_provider_credentials() -> bool:
 
 
 _PLACEHOLDER_STATUS = "llm_unavailable"
+# Keys agent_resolver._build_placeholder_output always writes as strings.
+_PLACEHOLDER_STR_KEYS = ("agent", "description", "note")
+
+
+def _is_placeholder_output(output: object) -> bool:
+    """True when ``output`` has the resolver's full no-model placeholder shape.
+
+    ``status`` alone is not enough: a model may legitimately emit a ``status``
+    field, so the payload must also carry the resolver's ``agent`` /
+    ``description`` / ``note`` strings.
+    """
+    if not isinstance(output, dict) or output.get("status") != _PLACEHOLDER_STATUS:
+        return False
+    return all(isinstance(output.get(key), str) for key in _PLACEHOLDER_STR_KEYS)
 
 
 def _placeholder_steps(result: dict[str, Any]) -> list[str]:
     """Return the names of steps whose output is the no-model placeholder.
 
-    ``agent_resolver._build_placeholder_output`` marks its payload with
-    ``status: "llm_unavailable"`` when every model in a tier's chain failed.
+    ``agent_resolver._build_placeholder_output`` builds that payload when
+    every model in a tier's chain failed (see :func:`_is_placeholder_output`).
     """
     names: list[str] = []
     for step in result.get("steps") or []:
         if not isinstance(step, dict):
             continue
-        output = step.get("output_data")
-        if isinstance(output, dict) and output.get("status") == _PLACEHOLDER_STATUS:
+        if _is_placeholder_output(step.get("output_data")):
             names.append(str(step.get("step_name", "<unnamed>")))
     return names
 

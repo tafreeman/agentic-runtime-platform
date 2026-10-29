@@ -259,6 +259,12 @@ jobs:
     # to the job summary. A labelled PR keeps the plain skip (exit 0). A run
     # whose steps fall back to the no-model placeholder fails its case either
     # way -- see the --live docstring in scripts/eval_gate.py.
+    #
+    # Provider secrets reach ONLY schedule and workflow_dispatch runs. A
+    # labelled pull_request run executes the PR's own code, so it gets no keys
+    # (a same-repo branch could otherwise read them) and therefore skips. To
+    # run the live gate against a branch, use "Run workflow" on that branch:
+    # dispatch needs write access, which is the trust boundary here.
     runs-on: ubuntu-latest
     if: >
       (github.event_name == 'pull_request' &&
@@ -290,13 +296,14 @@ jobs:
           # relying on a specific falsy string). Provider keys come from repo
           # secrets; any that are not configured resolve to an empty string,
           # which scripts/eval_gate.py's _has_live_provider_credentials()
-          # treats the same as "not configured".
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
-          AZURE_FOUNDRY_API_KEY: ${{ secrets.AZURE_FOUNDRY_API_KEY }}
-          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+          # treats the same as "not configured". Each is withheld (empty) on
+          # pull_request events -- see the job comment above.
+          ANTHROPIC_API_KEY: ${{ github.event_name != 'pull_request' && secrets.ANTHROPIC_API_KEY || '' }}
+          OPENAI_API_KEY: ${{ github.event_name != 'pull_request' && secrets.OPENAI_API_KEY || '' }}
+          GEMINI_API_KEY: ${{ github.event_name != 'pull_request' && secrets.GEMINI_API_KEY || '' }}
+          AZURE_OPENAI_API_KEY: ${{ github.event_name != 'pull_request' && secrets.AZURE_OPENAI_API_KEY || '' }}
+          AZURE_FOUNDRY_API_KEY: ${{ github.event_name != 'pull_request' && secrets.AZURE_FOUNDRY_API_KEY || '' }}
+          OLLAMA_API_KEY: ${{ github.event_name != 'pull_request' && secrets.OLLAMA_API_KEY || '' }}
           REQUIRE_LIVE: ${{ github.event_name != 'pull_request' && '--require-live' || '' }}
         run: |
           python scripts/eval_gate.py --cases datasets/default/golden_cases.json --threshold 0.80 --live $REQUIRE_LIVE

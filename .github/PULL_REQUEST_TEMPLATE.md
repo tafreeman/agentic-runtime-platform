@@ -35,7 +35,7 @@ Tick what applies to this change and delete the rest:
 - [ ] Runtime Python: from `agentic-workflows-v2/`, `python -m ruff check agentic_v2/ tests/` and the strict `mypy` command in `CONTRIBUTING.md`; coverage held at the 80% gate; `python scripts/check_suppression_ratchet.py` shows no new suppressions
 - [ ] Wire contracts (`agentic_v2/contracts/` or `agentic_v2/server/models.py`): from `agentic-workflows-v2/`, `python -m scripts.generate_ts_types`, then `npm --prefix ui run generate:types`; generated files committed, `git status` clean
 - [ ] UI: `just ui-check` (unit tests, coverage floors, build)
-- [ ] Eval, live provider routing, or judge prompts: `scripts/eval_gate.py` passes; add the `run-live-eval` label (without provider secrets that job exits as skipped, so it is not a live pass)
+- [ ] Eval, live provider routing, or judge prompts: `scripts/eval_gate.py` passes; run the live gate with "Run workflow" on the branch (a `run-live-eval`-labelled PR gets no provider secrets and only skips)
 - [ ] Dependencies (`pyproject.toml`, `uv.lock`, `ci-constraints.txt`): `uv.lock` and `ci-constraints.txt` regenerated and committed (`just update-constraints` or `just relock`)
 - [ ] Workflow YAML: `python scripts/validate-workflows.py`
 - [ ] `tools/`: `python -m pytest tools/tests -q`
