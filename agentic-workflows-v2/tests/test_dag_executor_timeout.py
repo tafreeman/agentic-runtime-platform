@@ -263,8 +263,11 @@ class TestDAGExecutorTimeoutMixed:
         dag.add(StepDefinition(name="hung", func=hung_step))
 
         executor = DAGExecutor()
-        # Give enough time for 'fast' to complete but not 'hung'
-        result = await executor.execute(dag, timeout=0.15)
+        # Give 'fast' (a 10 ms sleep) ample time to finish but not 'hung' (10 s).
+        # The window was 0.15 s, which a stalled CI runner can exhaust before
+        # 'fast' finishes, so the watchdog cancelled it too (flaky in
+        # no-llm-smoke). 1 s keeps a wide margin on both sides.
+        result = await executor.execute(dag, timeout=1.0)
 
         assert result.overall_status == StepStatus.FAILED
         step_map = {s.step_name: s for s in result.steps}
