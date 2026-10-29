@@ -71,6 +71,7 @@ class OllamaBackend(LLMBackend):
     think: bool | None = None
     _client: ollama.AsyncClient | None = field(default=None, repr=False)
     _cloud_client: ollama.AsyncClient | None = field(default=None, repr=False)
+    _cloud_key: str | None = field(default=None, repr=False)
 
     def _get_client(self) -> ollama.AsyncClient:
         if self._client is None:
@@ -92,15 +93,20 @@ class OllamaBackend(LLMBackend):
         api_key = os.environ.get(ENV_API_KEY)
         if not api_key:
             return self._get_client()
-        # The tags probe is a blocking HTTP call (cached); keep it off the loop.
-        if await asyncio.to_thread(is_served_locally, model_name):
+        # Ask the daemon THIS backend talks to, not the process default. The
+        # tags probe is a blocking HTTP call (cached per URL); keep it off the
+        # loop.
+        if await asyncio.to_thread(is_served_locally, model_name, self.base_url):
             return self._get_client()
-        if self._cloud_client is None:
+        if self._cloud_client is None or self._cloud_key != api_key:
+            # First use, or the key was rotated: never keep sending an old one.
+            await self._close_client(self._cloud_client)
             self._cloud_client = ollama.AsyncClient(
                 host=CLOUD_HOST,
                 timeout=self.timeout,
                 headers={"Authorization": f"Bearer {api_key}"},
             )
+            self._cloud_key = api_key
             logger.debug("Using Ollama cloud for %s at %s", model_name, CLOUD_HOST)
         return self._cloud_client
 
@@ -202,19 +208,25 @@ class OllamaBackend(LLMBackend):
             "_raw_ollama": response.model_dump(),
         }
 
+    @staticmethod
+    async def _close_client(client: ollama.AsyncClient | None) -> None:
+        """Release one SDK client's connection pool (no-op for ``None``)."""
+        if client is None:
+            return
+        # ``ollama.AsyncClient`` owns an inner ``httpx.AsyncClient``; close it
+        # so the connection pool is released. Guarded with getattr so a test
+        # double without the inner client (or already closed) is a no-op.
+        inner = getattr(client, "_client", None)
+        if inner is not None and not getattr(inner, "is_closed", False):
+            await inner.aclose()
+
     async def close(self) -> None:
         """Close the HTTP clients (local and cloud) owned by the Ollama SDK."""
-        for client in (self._client, self._cloud_client):
-            if client is None:
-                continue
-            # ``ollama.AsyncClient`` owns an inner ``httpx.AsyncClient``; close
-            # it so the connection pool is released. Guarded with getattr so a
-            # test double without the inner client (or already closed) is a no-op.
-            inner = getattr(client, "_client", None)
-            if inner is not None and not getattr(inner, "is_closed", False):
-                await inner.aclose()
+        await self._close_client(self._client)
+        await self._close_client(self._cloud_client)
         self._client = None
         self._cloud_client = None
+        self._cloud_key = None
 
 
 # ---------------------------------------------------------------------------

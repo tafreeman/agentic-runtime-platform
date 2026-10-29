@@ -112,4 +112,6 @@ locally (`is_served_locally`), it uses a second client bound to
 `https://ollama.com` with bearer auth. `ModelRouter.get_chain` also honours
 `AGENTIC_MODEL_TIER_{N}` (that tier's override is tried first, then the
 registry chain), which the LangChain engine already did, so a deployment can
-pin the native engine to a model too.
+pin the native engine to a model too. `SmartModelRouter.get_model_for_tier`
+selects an eligible pin before applying its health ranking, and the probe
+asks the daemon at the backend's own `base_url` (the tags cache is per URL).

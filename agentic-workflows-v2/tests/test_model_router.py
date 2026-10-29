@@ -486,6 +486,38 @@ class TestSmartModelRouter:
 
         assert second_cooldown > first_cooldown
 
+    def test_env_tier_pin_stays_selected_after_a_slow_success(self, monkeypatch):
+        """Health ranking scores an untried model above a proven but slow one;
+        an eligible AGENTIC_MODEL_TIER_N pin must still be chosen every time."""
+        monkeypatch.setenv("AGENTIC_MODEL_TIER_2", "ollama:beam:cloud")
+        router = SmartModelRouter()
+
+        assert router.get_model_for_tier(ModelTier.TIER_2) == "ollama:beam:cloud"
+        router.record_success("ollama:beam:cloud", latency_ms=8000)
+        assert router.get_model_for_tier(ModelTier.TIER_2) == "ollama:beam:cloud"
+
+    def test_unavailable_env_tier_pin_falls_back_by_health(self, monkeypatch):
+        monkeypatch.setenv("AGENTIC_MODEL_TIER_2", "ollama:beam:cloud")
+        router = SmartModelRouter()
+        router.mark_unavailable("ollama:beam:cloud")
+
+        selected = router.get_model_for_tier(ModelTier.TIER_2)
+        assert selected is not None and selected != "ollama:beam:cloud"
+        assert selected in tuple(DEFAULT_CHAINS[ModelTier.TIER_2])
+
+    def test_registered_chain_ignores_env_tier_pin_in_selection(self, monkeypatch):
+        monkeypatch.setenv("AGENTIC_MODEL_TIER_2", "model2")
+        router = SmartModelRouter()
+        router.register_chain(
+            ModelTier.TIER_2, FallbackChain(("model1", "model2"), "test")
+        )
+        # Both healthy; health ranking prefers the faster model1, the env pin
+        # would pick model2 -- the registered chain must win, so health decides.
+        router.record_success("model2", latency_ms=9000)
+        router.record_success("model1", latency_ms=10)
+
+        assert router.get_model_for_tier(ModelTier.TIER_2) == "model1"
+
     def test_health_weighted_selection(self):
         """Test selection prefers healthy models."""
         router = SmartModelRouter()

@@ -454,3 +454,29 @@ def test_local_model_names_honors_base_url_override(
 
     assert ollama_discovery.local_model_names() == frozenset({"phi4"})
     assert calls[0][0] == "http://box:11434/api/tags"
+
+
+@pytest.mark.unit
+def test_local_model_names_caches_each_base_url_separately(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An explicit base URL is probed and cached on its own: one daemon's tag
+    list never answers for another daemon."""
+    calls: list[tuple[str, dict[str, str] | None]] = []
+    routes = {
+        "http://localhost:11434/api/tags": {"models": [{"name": "phi4"}]},
+        "http://gpu-box:11434/api/tags": {"models": [{"name": "qwen3:8b"}]},
+    }
+    _install_fake_get(monkeypatch, routes, calls)
+    monkeypatch.delenv("OLLAMA_BASE_URL", raising=False)
+
+    assert ollama_discovery.local_model_names() == frozenset({"phi4"})
+    assert ollama_discovery.local_model_names("http://gpu-box:11434/") == frozenset(
+        {"qwen3:8b"}
+    )
+    assert ollama_discovery.is_served_locally("qwen3:8b", "http://gpu-box:11434")
+    assert not ollama_discovery.is_served_locally("qwen3:8b")
+    assert [c[0] for c in calls] == [
+        "http://localhost:11434/api/tags",
+        "http://gpu-box:11434/api/tags",
+    ]

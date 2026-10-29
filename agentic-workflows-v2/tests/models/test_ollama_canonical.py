@@ -269,7 +269,8 @@ async def test_cloud_model_routes_to_ollama_com_when_key_set(
 ) -> None:
     monkeypatch.setenv("OLLAMA_API_KEY", "test-key")
     monkeypatch.setattr(
-        "agentic_v2.models.ollama_discovery.is_served_locally", lambda name: False
+        "agentic_v2.models.ollama_discovery.is_served_locally",
+        lambda name, base_url=None: False,
     )
     factory = _RecordingClientFactory(_chat_ok())
     monkeypatch.setattr("agentic_v2.models.backends_local.ollama.AsyncClient", factory)
@@ -299,7 +300,8 @@ async def test_locally_served_model_stays_local_with_key_set(
 ) -> None:
     monkeypatch.setenv("OLLAMA_API_KEY", "test-key")
     monkeypatch.setattr(
-        "agentic_v2.models.ollama_discovery.is_served_locally", lambda name: True
+        "agentic_v2.models.ollama_discovery.is_served_locally",
+        lambda name, base_url=None: True,
     )
     factory = _RecordingClientFactory(_chat_ok())
     monkeypatch.setattr("agentic_v2.models.backends_local.ollama.AsyncClient", factory)
@@ -319,7 +321,7 @@ async def test_locally_served_model_stays_local_with_key_set(
 async def test_no_key_never_probes_or_routes_to_cloud(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    def _fail(name: str) -> bool:
+    def _fail(name: str, base_url: str | None = None) -> bool:
         raise AssertionError("must not probe the daemon without a key")
 
     monkeypatch.setattr("agentic_v2.models.ollama_discovery.is_served_locally", _fail)
@@ -355,3 +357,56 @@ async def test_close_releases_local_and_cloud_clients() -> None:
 
     assert local._client.is_closed and cloud._client.is_closed  # type: ignore[attr-defined]
     assert backend._client is None and backend._cloud_client is None
+
+
+@pytest.mark.unit
+async def test_probe_asks_the_backends_own_daemon(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A backend bound to a non-default daemon must ask THAT daemon whether it
+    serves the model, not the process-level OLLAMA_BASE_URL."""
+    monkeypatch.setenv("OLLAMA_API_KEY", "test-key")
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://elsewhere:11434")
+    seen: list[str | None] = []
+
+    def _served(name: str, base_url: str | None = None) -> bool:
+        seen.append(base_url)
+        return base_url == "http://gpu-box:11434"
+
+    monkeypatch.setattr("agentic_v2.models.ollama_discovery.is_served_locally", _served)
+    backend = OllamaBackend(base_url="http://gpu-box:11434")
+    local = _StubAsyncClient(_chat_ok())
+    backend._client = local  # type: ignore[assignment]
+
+    await backend.complete_chat(
+        model="ollama:qwen3:8b", messages=[{"role": "user", "content": "hi"}]
+    )
+
+    assert seen == ["http://gpu-box:11434"]
+    assert len(local.calls) == 1
+    assert backend._cloud_client is None
+
+
+@pytest.mark.unit
+async def test_rotated_key_rebuilds_the_cloud_client(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "agentic_v2.models.ollama_discovery.is_served_locally",
+        lambda name, base_url=None: False,
+    )
+    factory = _RecordingClientFactory(_chat_ok())
+    monkeypatch.setattr("agentic_v2.models.backends_local.ollama.AsyncClient", factory)
+    backend = OllamaBackend()
+    messages = [{"role": "user", "content": "hi"}]
+
+    monkeypatch.setenv("OLLAMA_API_KEY", "key-one")
+    await backend.complete_chat(model="ollama:beam:cloud", messages=messages)
+    await backend.complete_chat(model="ollama:beam:cloud", messages=messages)
+    monkeypatch.setenv("OLLAMA_API_KEY", "key-two")
+    await backend.complete_chat(model="ollama:beam:cloud", messages=messages)
+
+    headers = [c["headers"]["Authorization"] for c in factory.created]
+    assert headers == ["Bearer key-one", "Bearer key-two"]
+    assert len(factory.stubs[0].calls) == 2
+    assert len(factory.stubs[1].calls) == 1

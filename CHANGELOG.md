@@ -9,8 +9,13 @@
   daemon could never reach a cloud model.
 - **`AGENTIC_MODEL_TIER_{N}` is honoured by the native router.**
   `ModelRouter.get_chain` tries that tier's override first, then the registry
-  chain; a registered or scoped chain still wins. The LangChain engine already
-  read it.
+  chain; a registered or scoped chain still wins. `SmartModelRouter` keeps an
+  eligible pin ahead of its health ranking (which would otherwise prefer an
+  untried fallback after the pin's first slow success). The LangChain engine
+  already read it.
+- **The cloud reroute asks the backend's own daemon** (`is_served_locally` and
+  its tags cache now take a base URL) and rebuilds the ollama.com client when
+  `OLLAMA_API_KEY` changes.
 - **`ollama:beam:cloud` is in the registry** with cost lane `free` (tagged free
   in the ollama.com library, 2026-10-29), in no tier chain.
 - **The nightly `eval-live-gate` pins every tier to `ollama:beam:cloud`**, using

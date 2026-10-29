@@ -18,7 +18,7 @@ from .model_registry import is_quarantined, is_within_cost_lane, max_cost_lane_c
 from .model_stats import CircuitState, ModelStats
 from .rate_limit_tracker import RateLimitTracker, _extract_provider
 from .redis_state import _COUNTER_FIELDS, RedisCircuitBreakerStore
-from .router import ModelRouter, ModelTier
+from .router import ModelRouter, ModelTier, _env_tier_pin
 
 logger = logging.getLogger(__name__)
 
@@ -503,6 +503,20 @@ class SmartModelRouter(ModelRouter):
 
                 raise NoProviderConfiguredError()
             return None
+
+        # An eligible AGENTIC_MODEL_TIER_N pin is a deliberate choice: keep it
+        # ahead of health ranking, which would otherwise prefer an untried
+        # fallback (score 1.0) over a proven but slower pin after its first
+        # call. Health ranking still orders the fallbacks once the pin is
+        # unavailable, cooling down or circuit-open (it is then not a
+        # candidate). Only for the requested tier, never a degraded one, and
+        # not when a registered/scoped chain owns the tier (as in get_chain).
+        pinned = (
+            None if is_degraded or tier in self.custom_chains else _env_tier_pin(tier)
+        )
+        pinned_hit = next((c for c in candidates if c[0] == pinned), None)
+        if pinned_hit is not None:
+            candidates = [pinned_hit]
 
         if not prefer_healthy or len(candidates) == 1:
             selected = candidates[0][0]
