@@ -13,6 +13,10 @@
   eligible pin ahead of its health ranking (which would otherwise prefer an
   untried fallback after the pin's first slow success). The LangChain engine
   already read it.
+- **A skipped attempt moves on to the next model.** `get_model_for_tier` takes
+  `exclude=` and both retry loops (`call_with_fallback`, `run_with_fallback`)
+  pass the models already attempted, so a full bulkhead or a resolved circuit
+  no longer reselects the same model and ends the request.
 - **The cloud reroute asks the backend's own daemon** (`is_served_locally` and
   its tags cache now take a base URL) and rebuilds the ollama.com client when
   `OLLAMA_API_KEY` changes.

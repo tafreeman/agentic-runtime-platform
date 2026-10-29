@@ -5,7 +5,7 @@ import json
 import logging
 import os
 import time
-from collections.abc import AsyncIterator, Mapping
+from collections.abc import AsyncIterator, Collection, Mapping
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -475,13 +475,26 @@ class SmartModelRouter(ModelRouter):
         prefer_healthy: bool = True,
         max_cost: float | None = None,
         allow_cross_tier: bool = True,
+        exclude: Collection[str] = (),
     ) -> str | None:
         """Get best available model for a tier with cross-tier degradation.
 
         After calling this method, inspect ``last_selection`` to determine
         whether cross-tier fallback was used (``is_degraded=True``).
+
+        ``exclude`` names models a retry loop already attempted in this
+        request. They are dropped from the tier's candidates, so a skipped
+        attempt (full bulkhead, resolved circuit) moves on to the next model
+        instead of reselecting the same one. When every eligible model in the
+        tier was already attempted this returns ``None`` -- the caller reports
+        its own last error -- rather than degrading across tiers or raising.
         """
         candidates = self._find_candidates_in_tier(tier, max_cost)
+        if exclude and candidates:
+            candidates = [c for c in candidates if c[0] not in exclude]
+            if not candidates:
+                self._last_selection = None
+                return None
         actual_tier = tier
         is_degraded = False
 
@@ -1008,7 +1021,7 @@ class SmartModelRouter(ModelRouter):
         last_error: Exception | None = None
 
         for _ in range(max_retries):
-            model = self.get_model_for_tier(tier)
+            model = self.get_model_for_tier(tier, exclude=tried)
             if model is None or model in tried:
                 break
 

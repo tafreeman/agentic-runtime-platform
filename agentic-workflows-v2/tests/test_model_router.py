@@ -518,6 +518,49 @@ class TestSmartModelRouter:
 
         assert router.get_model_for_tier(ModelTier.TIER_2) == "model1"
 
+    def test_exclude_moves_past_an_attempted_pin(self, monkeypatch):
+        monkeypatch.setenv("AGENTIC_MODEL_TIER_2", "ollama:beam:cloud")
+        router = SmartModelRouter()
+
+        nxt = router.get_model_for_tier(ModelTier.TIER_2, exclude=["ollama:beam:cloud"])
+        assert nxt is not None and nxt != "ollama:beam:cloud"
+        assert nxt in tuple(DEFAULT_CHAINS[ModelTier.TIER_2])
+
+    def test_exclude_exhausting_the_tier_returns_none_not_cross_tier(self):
+        router = SmartModelRouter()
+        router.register_chain(ModelTier.TIER_2, FallbackChain(("m1", "m2"), "test"))
+
+        assert router.get_model_for_tier(ModelTier.TIER_2, exclude=["m1", "m2"]) is None
+        assert router.last_selection is None
+
+    @pytest.mark.asyncio
+    async def test_call_with_fallback_skips_a_busy_pin_to_the_next_model(
+        self, monkeypatch
+    ):
+        """A pin whose attempt is skipped (bulkhead full) must not end the
+        request: the loop moves on to the tier's next eligible model."""
+        monkeypatch.setenv("AGENTIC_MODEL_TIER_2", "ollama:beam:cloud")
+        router = SmartModelRouter()
+        real_ready = router._is_model_ready_for_attempt
+        monkeypatch.setattr(
+            router,
+            "_is_model_ready_for_attempt",
+            lambda m: m != "ollama:beam:cloud" and real_ready(m),
+        )
+        called: list[str] = []
+
+        async def caller(model: str, prompt: str) -> str:
+            called.append(model)
+            return f"ok-{model}"
+
+        model, response = await router.call_with_fallback(
+            caller, "hi", ModelTier.TIER_2
+        )
+
+        assert model != "ollama:beam:cloud"
+        assert called == [model]
+        assert response == f"ok-{model}"
+
     def test_health_weighted_selection(self):
         """Test selection prefers healthy models."""
         router = SmartModelRouter()

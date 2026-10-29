@@ -431,7 +431,7 @@ class _NoModelsRouter:
     sleeping through EK's ``ProviderError`` retry backoff.
     """
 
-    def get_model_for_tier(self, tier: Any) -> str:
+    def get_model_for_tier(self, tier: Any, **_: Any) -> str:
         raise NoProviderConfiguredError("test stub: no providers configured")
 
 
