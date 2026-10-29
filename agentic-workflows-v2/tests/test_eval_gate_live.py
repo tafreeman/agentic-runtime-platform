@@ -12,7 +12,8 @@ Covers:
 - ``--live`` CLI arg plumbing (parsed, defaults to False, doesn't affect the
   mocked path).
 - The credential-gated skip (``AGENTIC_NO_LLM`` set, or no provider key
-  configured) exits 0 without ever importing/calling ``run_workflow``.
+  configured) exits 0 without ever importing/calling ``run_workflow``, and
+  exits 1 under ``--require-live``, with the skip written to the job summary.
 - The median-of-3 scoring logic in ``score_case_live``, using mocked
   ``WorkflowResult`` objects with varying success rates.
 - ``--live --threshold 0.99`` exits 1 given low mocked scores.
@@ -307,6 +308,138 @@ class TestLiveCredentialGate:
 
 
 # ---------------------------------------------------------------------------
+# --require-live: a skipped live run fails instead of passing
+# ---------------------------------------------------------------------------
+
+
+class TestRequireLive:
+    @pytest.fixture(autouse=True)
+    def _no_job_summary(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        # CI sets GITHUB_STEP_SUMMARY; never append to the real run's summary.
+        monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+
+    def _cases(self, tmp_path: Path) -> Path:
+        cases_path = tmp_path / "cases.json"
+        cases_path.write_text(json.dumps([_base_case()]), encoding="utf-8")
+        return cases_path
+
+    def test_missing_key_fails_under_require_live(
+        self,
+        eval_gate: ModuleType,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        with (
+            patch.object(
+                eval_gate, "_has_live_provider_credentials", return_value=False
+            ),
+            patch.object(
+                eval_gate, "score_case_live", new_callable=AsyncMock
+            ) as mock_live,
+        ):
+            exit_code = eval_gate.main(
+                ["--cases", str(self._cases(tmp_path)), "--live", "--require-live"]
+            )
+        assert exit_code == 1
+        mock_live.assert_not_called()
+        err = capsys.readouterr().err
+        assert "FAILED (--require-live)" in err
+        assert "no provider API key" in err
+
+    def test_agentic_no_llm_fails_under_require_live(
+        self,
+        eval_gate: ModuleType,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setenv("AGENTIC_NO_LLM", "1")
+        with patch.object(
+            eval_gate, "score_case_live", new_callable=AsyncMock
+        ) as mock_live:
+            exit_code = eval_gate.main(
+                ["--cases", str(self._cases(tmp_path)), "--live", "--require-live"]
+            )
+        assert exit_code == 1
+        mock_live.assert_not_called()
+
+    def test_require_live_still_runs_when_key_configured(
+        self, eval_gate: ModuleType, tmp_path: Path
+    ) -> None:
+        fake_result = {
+            "case_id": "unit_test_case_v1",
+            "rubric": "code",
+            "weighted_score": 1.0,
+            "total_score": 1.0,
+            "criterion_scores": {},
+            "missing_criteria": [],
+            "threshold": 0.80,
+            "passed": True,
+            "error": None,
+            "live_run_scores": [1.0, 1.0, 1.0],
+        }
+        with (
+            patch.object(
+                eval_gate, "_has_live_provider_credentials", return_value=True
+            ),
+            patch.object(
+                eval_gate,
+                "score_case_live",
+                new_callable=AsyncMock,
+                return_value=fake_result,
+            ) as mock_live,
+        ):
+            exit_code = eval_gate.main(
+                ["--cases", str(self._cases(tmp_path)), "--live", "--require-live"]
+            )
+        assert exit_code == 0
+        mock_live.assert_awaited_once()
+
+    @pytest.mark.parametrize("require_live", [False, True])
+    def test_skip_is_written_to_the_job_summary(
+        self,
+        eval_gate: ModuleType,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        require_live: bool,
+    ) -> None:
+        summary = tmp_path / "summary.md"
+        monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(summary))
+        argv = ["--cases", str(self._cases(tmp_path)), "--live"]
+        if require_live:
+            argv.append("--require-live")
+        with patch.object(
+            eval_gate, "_has_live_provider_credentials", return_value=False
+        ):
+            exit_code = eval_gate.main(argv)
+        assert exit_code == (1 if require_live else 0)
+        text = summary.read_text(encoding="utf-8")
+        verdict = "FAILED (--require-live)" if require_live else "SKIPPED"
+        assert f"### Live eval gate: {verdict}" in text
+
+    def test_ollama_cloud_key_alone_counts_as_credentials(
+        self, eval_gate: ModuleType
+    ) -> None:
+        """OLLAMA_API_KEY is what the scheduled gate uses (ollama:beam:cloud on
+        ollama.com, ADR-051), so on its own it must arm the live run."""
+        from agentic_v2.models.secrets import (
+            EnvSecretProvider,
+            reset_default_secret_provider,
+            set_default_secret_provider,
+        )
+
+        set_default_secret_provider(
+            EnvSecretProvider(env={"OLLAMA_API_KEY": "test-key"}, load_dotenv=False)
+        )
+        try:
+            assert eval_gate._has_live_provider_credentials() is True
+            set_default_secret_provider(EnvSecretProvider(env={}, load_dotenv=False))
+            assert eval_gate._has_live_provider_credentials() is False
+        finally:
+            reset_default_secret_provider()
+
+
+# ---------------------------------------------------------------------------
 # score_case_live: median-of-3 logic, all model calls mocked
 # ---------------------------------------------------------------------------
 
@@ -467,6 +600,49 @@ class TestScoreCaseLiveMedian:
         assert result["passed"] is False
         assert "provider unavailable" in result["error"]
         assert result["weighted_score"] == 0.0
+
+    @pytest.mark.asyncio
+    async def test_placeholder_output_fails_the_case(
+        self, eval_gate: ModuleType
+    ) -> None:
+        """A step whose model call failed still reports SUCCESS with the
+        agent_resolver placeholder payload; scoring step structure alone would
+        pass it, so the live gate must fail the case instead."""
+        result_obj = _make_workflow_result(
+            "test_deterministic",
+            step_statuses=[StepStatus.SUCCESS, StepStatus.SUCCESS],
+            step_names=["step1", "step2"],
+        )
+        result_obj.steps[1].output_data = {
+            "agent": "tier2_reviewer",
+            "status": "llm_unavailable",
+            "note": "No LLM provider configured.",
+        }
+        mock_run = AsyncMock(return_value=result_obj)
+        with patch("agentic_v2.workflows.run_workflow", mock_run):
+            result = await eval_gate.score_case_live(_base_case(threshold=0.0), 0.0)
+
+        assert result["passed"] is False
+        assert "reached no model" in result["error"]
+        assert "step2" in result["error"]
+        assert mock_run.await_count == 1
+
+    @pytest.mark.asyncio
+    async def test_real_output_is_not_mistaken_for_placeholder(
+        self, eval_gate: ModuleType
+    ) -> None:
+        result_obj = _make_workflow_result(
+            "test_deterministic",
+            step_statuses=[StepStatus.SUCCESS, StepStatus.SUCCESS],
+            step_names=["step1", "step2"],
+        )
+        result_obj.steps[1].output_data = {"status": "APPROVED", "summary": "ok"}
+        mock_run = AsyncMock(return_value=result_obj)
+        with patch("agentic_v2.workflows.run_workflow", mock_run):
+            result = await eval_gate.score_case_live(_base_case(threshold=0.0), 0.0)
+
+        assert result["error"] is None
+        assert mock_run.await_count == 3
 
     @pytest.mark.asyncio
     async def test_default_live_inputs_to_empty_dict_when_absent(
