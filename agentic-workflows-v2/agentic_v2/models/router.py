@@ -18,6 +18,7 @@ Model identifiers use a ``provider:model_name`` format, e.g.
 """
 
 import asyncio
+import os
 from dataclasses import dataclass, field
 from enum import IntEnum
 from typing import Callable, Sequence
@@ -129,6 +130,17 @@ def _build_default_chains() -> dict[ModelTier, FallbackChain]:
 DEFAULT_CHAINS: dict[ModelTier, FallbackChain] = _build_default_chains()
 
 
+def _env_tier_pin(tier: ModelTier) -> str | None:
+    """Return ``AGENTIC_MODEL_TIER_{N}`` for ``tier`` when set, else ``None``.
+
+    Read per call, not at import, so a test or a CI step can set it late.
+    """
+    if tier == ModelTier.TIER_0:
+        return None
+    value = (os.environ.get(f"AGENTIC_MODEL_TIER_{int(tier)}") or "").strip()
+    return value or None
+
+
 @dataclass
 class ModelRouter:
     """Routes requests to models based on tier and runtime availability.
@@ -180,15 +192,26 @@ class ModelRouter:
     def get_chain(self, tier: ModelTier) -> FallbackChain:
         """Get the fallback chain for a tier.
 
+        Resolution order: a chain registered via :meth:`register_chain` (or
+        :meth:`scoped`), then the default chain with ``AGENTIC_MODEL_TIER_{N}``
+        tried first when that env var is set -- the same per-tier override the
+        LangChain engine honours (``langchain.models.get_model_candidates_for_tier``).
+
         Args:
             tier: Model tier
 
         Returns:
             Configured or default chain
         """
-        return self.custom_chains.get(
-            tier, DEFAULT_CHAINS.get(tier, DEFAULT_CHAINS[ModelTier.TIER_2])
-        )
+        custom = self.custom_chains.get(tier)
+        if custom is not None:
+            return custom
+        default = DEFAULT_CHAINS.get(tier, DEFAULT_CHAINS[ModelTier.TIER_2])
+        pinned = _env_tier_pin(tier)
+        if not pinned:
+            return default
+        rest = tuple(model for model in default.models if model != pinned)
+        return FallbackChain((pinned, *rest), f"tier{int(tier)}-env")
 
     def is_model_available(self, model: str) -> bool:
         """Check if a model is available.

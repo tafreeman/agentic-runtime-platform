@@ -99,3 +99,17 @@ lists them; they revive when the token is rotated.
 - The quarantine mechanism (ADR-040) stays the drift alarm: this ADR clears
   today's standing quarantines; future retirements should get the same
   deliberate registry edit rather than permanent warn-noise.
+
+## Amendment (2026-10-29): the native engine follows the same rule
+
+The decision above was implemented only in the LangChain builder
+(`build_ollama_model`). `run_workflow` resolves agents through the native
+`OllamaBackend`, which always called `OLLAMA_BASE_URL` or localhost, so on a
+host with no daemon (a CI runner) an `ollama:` cloud id could not be served
+and the step fell back to placeholder output. `OllamaBackend` now applies the
+same test per call: with `OLLAMA_API_KEY` set and the model not served
+locally (`is_served_locally`), it uses a second client bound to
+`https://ollama.com` with bearer auth. `ModelRouter.get_chain` also honours
+`AGENTIC_MODEL_TIER_{N}` (that tier's override is tried first, then the
+registry chain), which the LangChain engine already did, so a deployment can
+pin the native engine to a model too.

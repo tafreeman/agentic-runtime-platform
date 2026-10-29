@@ -23,6 +23,7 @@ from agentic_v2.models import (  # Stats; Router; Smart router; Client
     reset_router,
     reset_smart_router,
 )
+from agentic_v2.models.router import DEFAULT_CHAINS
 
 # ============================================================================
 # ModelStats Tests
@@ -243,6 +244,45 @@ class TestModelRouter:
         chain = router.get_chain(ModelTier.TIER_2)
         assert chain.name == "custom"
         assert chain[0] == "custom:model1"
+
+    def test_env_tier_pin_is_tried_first(self, monkeypatch):
+        """AGENTIC_MODEL_TIER_N puts its model at the head of the default chain,
+        matching the LangChain engine's per-tier override."""
+        monkeypatch.setenv("AGENTIC_MODEL_TIER_2", "ollama:beam:cloud")
+        router = ModelRouter()
+
+        chain = router.get_chain(ModelTier.TIER_2)
+        default = DEFAULT_CHAINS[ModelTier.TIER_2]
+        assert chain[0] == "ollama:beam:cloud"
+        assert tuple(chain)[1:] == tuple(default)
+        assert chain.name == "tier2-env"
+
+    def test_env_tier_pin_already_in_chain_is_not_duplicated(self, monkeypatch):
+        default = DEFAULT_CHAINS[ModelTier.TIER_2]
+        last = tuple(default)[-1]
+        monkeypatch.setenv("AGENTIC_MODEL_TIER_2", last)
+
+        chain = ModelRouter().get_chain(ModelTier.TIER_2)
+        assert chain[0] == last
+        assert tuple(chain).count(last) == 1
+        assert len(chain) == len(default)
+
+    def test_env_tier_pin_applies_only_to_its_tier(self, monkeypatch):
+        monkeypatch.setenv("AGENTIC_MODEL_TIER_2", "ollama:beam:cloud")
+        chain = ModelRouter().get_chain(ModelTier.TIER_1)
+        assert chain is DEFAULT_CHAINS[ModelTier.TIER_1]
+
+    def test_blank_env_tier_pin_is_ignored(self, monkeypatch):
+        monkeypatch.setenv("AGENTIC_MODEL_TIER_2", "   ")
+        chain = ModelRouter().get_chain(ModelTier.TIER_2)
+        assert chain is DEFAULT_CHAINS[ModelTier.TIER_2]
+
+    def test_custom_chain_wins_over_env_tier_pin(self, monkeypatch):
+        monkeypatch.setenv("AGENTIC_MODEL_TIER_2", "ollama:beam:cloud")
+        router = ModelRouter()
+        custom = FallbackChain(("custom:model1",), "custom")
+        router.register_chain(ModelTier.TIER_2, custom)
+        assert router.get_chain(ModelTier.TIER_2) is custom
 
     def test_model_availability(self):
         """Test model availability tracking."""
