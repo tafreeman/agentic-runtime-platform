@@ -194,7 +194,8 @@ from `agentic-workflows-v2/`:
 ```bash
 cd agentic-workflows-v2
 python -m ruff check agentic_v2/ tests/
-python -m mypy agentic_v2/engine agentic_v2/contracts --config-file pyproject.toml \
+python -m mypy agentic_v2/engine agentic_v2/contracts agentic_v2/tools/builtin \
+  agentic_v2/security agentic_v2/governance --config-file pyproject.toml \
   --follow-imports=skip --disallow-untyped-defs --warn-return-any --no-incremental
 python -m pytest tests/ -q -m "not integration and not slow" \
   --cov=agentic_v2 --cov-report=term-missing

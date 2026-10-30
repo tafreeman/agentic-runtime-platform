@@ -274,7 +274,10 @@ class BuildAppTool(BaseTool):
         if not pkg_path.exists():
             return {}
         try:
-            return json.loads(pkg_path.read_text(encoding="utf-8")).get("scripts", {})
+            scripts: dict[str, Any] = json.loads(
+                pkg_path.read_text(encoding="utf-8")
+            ).get("scripts", {})
+            return scripts
         except Exception:
             return {}
 

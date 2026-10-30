@@ -403,6 +403,7 @@ jobs:
         run: |
           cd agentic-workflows-v2
           python -m mypy agentic_v2/engine agentic_v2/contracts \
+            agentic_v2/tools/builtin agentic_v2/security agentic_v2/governance \
             --config-file pyproject.toml \
             --follow-imports=skip \
             --disallow-untyped-defs \

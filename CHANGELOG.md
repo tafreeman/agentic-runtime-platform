@@ -6,6 +6,16 @@
   access" or a Docker sandbox. Neither is a real boundary: the denylist runs in the
   child, rlimits are POSIX-only, and there is no container backend. New
   `docs/KNOWN_LIMITATIONS.md` section 4.12; a test pins `requires_approval is True`.
+## Unreleased - Strict mypy extended to tools/builtin, security and governance
+
+- Removed the `ignore_errors = true` mypy override for `agentic_v2.tools.builtin.*`
+  and fixed the errors it hid (annotations and `Any`-returning calls; no
+  `type: ignore` added). `_FileMemoryStore` annotations that its own `list` method
+  shadowed now use `builtins.list`.
+- CI's `Mypy (strict engine + contracts)` step now also checks
+  `agentic_v2/tools/builtin`, `agentic_v2/security` and `agentic_v2/governance`
+  (same flags); the check name is unchanged. Suppression baseline lowered (7 -> 6
+  `ignore_errors` modules).
 
 ## Unreleased - Native engine reaches Ollama Cloud; nightly live gate pinned to Beam
 

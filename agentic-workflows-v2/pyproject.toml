@@ -398,7 +398,6 @@ exclude = ["tests/", "examples/"]
 # ---------------------------------------------------------------------------
 [[tool.mypy.overrides]]
 module = [
-    "agentic_v2.tools.builtin.*",
     "agentic_v2.integrations.mcp.*",
     "agentic_v2.integrations.tracing",
     "agentic_v2.integrations.langchain",

@@ -186,7 +186,7 @@ class ConfigMergeTool(BaseTool):
             if not configs:
                 return ToolResult(success=False, error="No configs provided to merge")
 
-            result = {}
+            result: dict[str, Any] = {}
             for config in configs:
                 result = self._deep_merge(result, config)
 
