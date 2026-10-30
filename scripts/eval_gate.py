@@ -23,8 +23,9 @@ Usage::
 
 Exit codes:
     0  All cases passed at or above threshold (or ``--live`` was skipped for
-       lack of provider credentials -- see below).
-    1  One or more cases failed, or a dataset/golden load error occurred.
+       lack of provider credentials without ``--require-live`` -- see below).
+    1  One or more cases failed, a dataset/golden load error occurred, or a
+       ``--live --require-live`` run was skipped.
 
 ``--live`` mode
 ----------------
@@ -33,14 +34,20 @@ case's workflow through ``agentic_v2.workflows.run_workflow`` (the platform's
 existing engine, itself backed by ``SmartModelRouter`` / the shared model
 client). Each case runs 3x and the MEDIAN of the 3 ``weighted_score`` values is
 used, to damp single-call variance from a live model -- a single unlucky or
-lucky sample never flips the gate on its own.
+lucky sample never flips the gate on its own. A run in which any step returned
+the ``llm_unavailable`` placeholder (every model in its tier chain failed) fails
+the case outright: the step still reports success, and the structural score
+alone would pass it.
 
 ``--live`` degrades cleanly rather than crashing: if ``AGENTIC_NO_LLM`` is
 truthy, or none of the canonical provider key env vars (``ANTHROPIC_API_KEY``,
 ``OPENAI_API_KEY``, ``GEMINI_API_KEY``, ``AZURE_OPENAI_API_KEY``,
-``AZURE_FOUNDRY_API_KEY``) are CONFIGURED, the gate prints a clear message and
-exits 0 (collected-but-skipped) without importing the workflow engine or attempting
-a call -- it never fails a run merely for lacking a key. This is a presence
+``AZURE_FOUNDRY_API_KEY``, ``OLLAMA_API_KEY``) are CONFIGURED, the gate prints a
+clear message and exits 0 (collected-but-skipped) without importing the workflow
+engine or attempting a call. ``--require-live`` turns that skip into exit 1, so a
+scheduled CI run that was meant to call a model cannot report a pass without
+having called one; under GitHub Actions the skip is also written to the job
+summary (``$GITHUB_STEP_SUMMARY``) either way. This is a presence
 check, not a validity check (it does not authenticate the key), and it reads
 through the platform's own secret resolver, which also honours a ``.env``
 file -- a repo with a stale/expired key in ``.env`` will NOT be classified as
@@ -58,6 +65,7 @@ import argparse
 import asyncio
 import json
 import math
+import os
 import statistics
 import sys
 from pathlib import Path
@@ -100,6 +108,10 @@ _LIVE_PROVIDER_KEY_NAMES = (
     "GEMINI_API_KEY",
     "AZURE_OPENAI_API_KEY",
     "AZURE_FOUNDRY_API_KEY",
+    # Ollama Cloud: with this key set, an ``ollama:`` id that is not pulled on a
+    # local daemon is routed to ollama.com (ADR-051) -- the path the scheduled
+    # eval-live-gate uses, since a CI runner has no local daemon.
+    "OLLAMA_API_KEY",
 )
 
 # Number of independent live runs per case; the gate scores the MEDIAN
@@ -355,6 +367,38 @@ def _has_live_provider_credentials() -> bool:
     return any(get_secret(name) for name in _LIVE_PROVIDER_KEY_NAMES)
 
 
+_PLACEHOLDER_STATUS = "llm_unavailable"
+# Keys agent_resolver._build_placeholder_output always writes as strings.
+_PLACEHOLDER_STR_KEYS = ("agent", "description", "note")
+
+
+def _is_placeholder_output(output: object) -> bool:
+    """True when ``output`` has the resolver's full no-model placeholder shape.
+
+    ``status`` alone is not enough: a model may legitimately emit a ``status``
+    field, so the payload must also carry the resolver's ``agent`` /
+    ``description`` / ``note`` strings.
+    """
+    if not isinstance(output, dict) or output.get("status") != _PLACEHOLDER_STATUS:
+        return False
+    return all(isinstance(output.get(key), str) for key in _PLACEHOLDER_STR_KEYS)
+
+
+def _placeholder_steps(result: dict[str, Any]) -> list[str]:
+    """Return the names of steps whose output is the no-model placeholder.
+
+    ``agent_resolver._build_placeholder_output`` builds that payload when
+    every model in a tier's chain failed (see :func:`_is_placeholder_output`).
+    """
+    names: list[str] = []
+    for step in result.get("steps") or []:
+        if not isinstance(step, dict):
+            continue
+        if _is_placeholder_output(step.get("output_data")):
+            names.append(str(step.get("step_name", "<unnamed>")))
+    return names
+
+
 async def score_case_live(
     case: dict[str, Any], global_threshold: float
 ) -> dict[str, Any]:
@@ -423,6 +467,19 @@ async def score_case_live(
             )
         try:
             golden = live_result.model_dump(mode="json")
+            unserved = _placeholder_steps(golden)
+            if unserved:
+                # A step whose model call failed still reports SUCCESS with a
+                # placeholder payload (agent_resolver._build_placeholder_output),
+                # and derive_criteria scores step structure -- so without this
+                # check a run that never reached a model can clear the bar.
+                return _error_result(
+                    case_id,
+                    threshold,
+                    f"live run {run_index + 1}/{_LIVE_RUNS_PER_CASE} of "
+                    f"'{workflow_name}' reached no model: placeholder output "
+                    f"from step(s) {', '.join(unserved)}",
+                )
             criteria = derive_criteria(golden, case)
             per_run.append(scorer.score(criteria))
         except (AttributeError, TypeError, ValueError, OverflowError) as err:
@@ -517,11 +574,32 @@ def _report_and_exit(scored: list[dict[str, Any]], global_threshold: float) -> i
     return 0
 
 
+def _skip_live(reason: str, *, require_live: bool) -> int:
+    """Report a skipped --live run and return its exit code.
+
+    Prints the reason and, under GitHub Actions, appends it to the job summary
+    so a skipped live gate is visible on the run page rather than reading as an
+    ordinary green job. Returns 1 when ``require_live`` is set, else 0.
+    """
+    verdict = "FAILED (--require-live)" if require_live else "SKIPPED"
+    message = f"{verdict}: {reason}"
+    print(message, file=sys.stderr if require_live else sys.stdout)
+    summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+    if summary_path:
+        try:
+            with open(summary_path, "a", encoding="utf-8") as summary:
+                summary.write(f"### Live eval gate: {verdict}\n\n{reason}\n")
+        except OSError as err:
+            print(f"WARNING: could not write job summary: {err}", file=sys.stderr)
+    return 1 if require_live else 0
+
+
 def main(argv: list[str] | None = None) -> int:
     """Entry point.
 
-    Returns 0 (all cases pass, or --live was skipped for lack of
-    provider credentials) or 1 (any fail / load error).
+    Returns 0 (all cases pass, or --live was skipped without
+    ``--require-live``) or 1 (any fail / load error, or a skipped --live
+    run under ``--require-live``).
     """
     parser = argparse.ArgumentParser(
         prog="eval_gate",
@@ -558,6 +636,15 @@ def main(argv: list[str] | None = None) -> int:
             "otherwise this gate is collected-but-skipped (exit 0) rather than "
             "failing for lack of a key. The mocked path (no --live) is "
             "completely unaffected and remains the every-commit, key-free floor."
+        ),
+    )
+    parser.add_argument(
+        "--require-live",
+        action="store_true",
+        help=(
+            "With --live: exit 1 instead of 0 when the live run is skipped "
+            "(AGENTIC_NO_LLM set, or no provider key configured). For CI runs "
+            "that exist to call a real model, so a skip cannot read as a pass."
         ),
     )
     args = parser.parse_args(argv)
@@ -603,23 +690,22 @@ def main(argv: list[str] | None = None) -> int:
         from agentic_v2.settings import is_agentic_no_llm_enabled
 
         if is_agentic_no_llm_enabled():
-            print(
-                "SKIPPED: --live requested but AGENTIC_NO_LLM is set -- refusing "
+            return _skip_live(
+                "--live requested but AGENTIC_NO_LLM is set -- refusing "
                 "to run a 'live' gate against the placeholder backend. Unset "
                 "AGENTIC_NO_LLM (and configure a provider key) to run this gate "
                 "for real.",
+                require_live=args.require_live,
             )
-            return 0
         if not _has_live_provider_credentials():
             key_list = ", ".join(_LIVE_PROVIDER_KEY_NAMES)
-            print(
-                "SKIPPED: --live requested but no provider API key is configured "
+            return _skip_live(
+                "--live requested but no provider API key is configured "
                 f"(checked: {key_list}). This is expected in environments with no "
                 "credentials -- the mocked eval-golden-gate remains the "
-                "every-commit floor; this --live gate is collected-but-skipped, "
-                "not failed.",
+                "every-commit floor.",
+                require_live=args.require_live,
             )
-            return 0
 
         print(
             f"--live: running {len(loaded)} case(s) x {_LIVE_RUNS_PER_CASE} "

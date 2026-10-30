@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import threading
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -69,11 +70,45 @@ class OllamaBackend(LLMBackend):
     timeout: float = 300.0  # Local models can be slower
     think: bool | None = None
     _client: ollama.AsyncClient | None = field(default=None, repr=False)
+    _cloud_client: ollama.AsyncClient | None = field(default=None, repr=False)
+    _cloud_key: str | None = field(default=None, repr=False)
 
     def _get_client(self) -> ollama.AsyncClient:
         if self._client is None:
             self._client = ollama.AsyncClient(host=self.base_url, timeout=self.timeout)
         return self._client
+
+    async def _client_for(self, model_name: str) -> ollama.AsyncClient:
+        """Return the local client, or the ollama.com client for a cloud model.
+
+        Same rule as the LangChain builder
+        (:func:`agentic_v2.langchain.model_builders.build_ollama_model`,
+        ADR-051): with ``OLLAMA_API_KEY`` set and the model not served by the
+        local daemon, call the account-bound ``https://ollama.com`` API with
+        bearer auth. Without this, a CI runner (no daemon) could never reach a
+        cloud model on the native engine.
+        """
+        from .ollama_discovery import CLOUD_HOST, ENV_API_KEY, is_served_locally
+
+        api_key = os.environ.get(ENV_API_KEY)
+        if not api_key:
+            return self._get_client()
+        # Ask the daemon THIS backend talks to, not the process default. The
+        # tags probe is a blocking HTTP call (cached per URL); keep it off the
+        # loop.
+        if await asyncio.to_thread(is_served_locally, model_name, self.base_url):
+            return self._get_client()
+        if self._cloud_client is None or self._cloud_key != api_key:
+            # First use, or the key was rotated: never keep sending an old one.
+            await self._close_client(self._cloud_client)
+            self._cloud_client = ollama.AsyncClient(
+                host=CLOUD_HOST,
+                timeout=self.timeout,
+                headers={"Authorization": f"Bearer {api_key}"},
+            )
+            self._cloud_key = api_key
+            logger.debug("Using Ollama cloud for %s at %s", model_name, CLOUD_HOST)
+        return self._cloud_client
 
     def _resolve_think(self, model_name: str) -> bool | None:
         """Decide whether to request a separated ``thinking`` channel.
@@ -109,10 +144,9 @@ class OllamaBackend(LLMBackend):
         **kwargs: Any,
     ) -> str:
         """Send a raw-prompt completion request to Ollama (``/api/generate``)."""
-        client = self._get_client()
-
         # Strip provider prefix if present
         model_name = model.replace("ollama:", "")
+        client = await self._client_for(model_name)
 
         try:
             response = await client.generate(
@@ -149,10 +183,9 @@ class OllamaBackend(LLMBackend):
         so no inline-marker fold-in is needed — reasoning-only turns keep an
         empty ``content`` and a populated ``thinking``.
         """
-        client = self._get_client()
-
         # Strip provider prefix if present
         model_name = model.replace("ollama:", "")
+        client = await self._client_for(model_name)
 
         try:
             response = await client.chat(
@@ -175,9 +208,9 @@ class OllamaBackend(LLMBackend):
             "_raw_ollama": response.model_dump(),
         }
 
-    async def close(self) -> None:
-        """Close the HTTP client owned by the Ollama SDK."""
-        client = self._client
+    @staticmethod
+    async def _close_client(client: ollama.AsyncClient | None) -> None:
+        """Release one SDK client's connection pool (no-op for ``None``)."""
         if client is None:
             return
         # ``ollama.AsyncClient`` owns an inner ``httpx.AsyncClient``; close it
@@ -186,7 +219,14 @@ class OllamaBackend(LLMBackend):
         inner = getattr(client, "_client", None)
         if inner is not None and not getattr(inner, "is_closed", False):
             await inner.aclose()
+
+    async def close(self) -> None:
+        """Close the HTTP clients (local and cloud) owned by the Ollama SDK."""
+        await self._close_client(self._client)
+        await self._close_client(self._cloud_client)
         self._client = None
+        self._cloud_client = None
+        self._cloud_key = None
 
 
 # ---------------------------------------------------------------------------

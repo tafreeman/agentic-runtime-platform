@@ -164,26 +164,30 @@ def _parse_tags(
 # cache stores (expires_at, names); a failed probe caches an empty set so a
 # down daemon costs one timeout per window, not one per build.
 _LOCAL_TAGS_TTL_SECONDS = 60.0
-_local_tags_cache: tuple[float, frozenset[str]] | None = None
+# Keyed by daemon base URL, so a backend bound to a non-default daemon never
+# reads another daemon's answer. ``None`` means empty (tests reset it so).
+_local_tags_cache: dict[str, tuple[float, frozenset[str]]] | None = None
 
 
-def local_model_names() -> frozenset[str]:
-    """Return model names the local daemon can serve right now (cached).
+def local_model_names(base_url: str | None = None) -> frozenset[str]:
+    """Return model names the daemon at ``base_url`` can serve right now (cached).
 
-    Reads ``GET {OLLAMA_BASE_URL}/api/tags`` and caches the resulting name set
+    ``base_url`` defaults to ``OLLAMA_BASE_URL`` (else the local default). Reads
+    ``GET {base_url}/api/tags`` and caches the resulting name set per base URL
     for ``_LOCAL_TAGS_TTL_SECONDS``. Best-effort like the rest of this module:
     any probe failure yields (and caches) an empty set. Never raises.
     """
     global _local_tags_cache
     now = time.monotonic()
-    # Snapshot the global before checking: another thread may rebind or clear
-    # it between the null check and the tuple access.
-    cache = _local_tags_cache
-    if cache is not None and now < cache[0]:
-        return cache[1]
+    host = (base_url or os.environ.get(ENV_BASE_URL, DEFAULT_LOCAL_HOST)).rstrip("/")
+    # Snapshot the global before reading: another thread may rebind or clear
+    # it between the lookup and the tuple access.
+    cache = _local_tags_cache or {}
+    hit = cache.get(host)
+    if hit is not None and now < hit[0]:
+        return hit[1]
 
-    base_url = os.environ.get(ENV_BASE_URL, DEFAULT_LOCAL_HOST).rstrip("/")
-    data = _get_json(f"{base_url}{_TAGS_PATH}")
+    data = _get_json(f"{host}{_TAGS_PATH}")
     names: set[str] = set()
     for entry in (data or {}).get("models", []) or []:
         if not isinstance(entry, dict):
@@ -192,7 +196,7 @@ def local_model_names() -> frozenset[str]:
         if isinstance(name, str) and name:
             names.add(name)
     resolved = frozenset(names)
-    _local_tags_cache = (now + _LOCAL_TAGS_TTL_SECONDS, resolved)
+    _local_tags_cache = {**cache, host: (now + _LOCAL_TAGS_TTL_SECONDS, resolved)}
     return resolved
 
 
@@ -209,8 +213,11 @@ def name_is_listed(model_name: str, names: Iterable[str]) -> bool:
     return requested in lowered or f"{requested}:latest" in lowered
 
 
-def is_served_locally(model_name: str) -> bool:
-    """True when the local daemon's ``/api/tags`` can serve ``model_name``.
+def is_served_locally(model_name: str, base_url: str | None = None) -> bool:
+    """True when the daemon's ``/api/tags`` can serve ``model_name``.
+
+    ``base_url`` names the daemon to ask (default: ``OLLAMA_BASE_URL``, else
+    localhost); a backend bound to its own daemon must pass its own URL.
 
     Tag names are fully qualified (``qwen3-coder:30b``); a bare request name
     also matches its ``:latest`` alias, mirroring the daemon's own resolution.
@@ -227,7 +234,8 @@ def is_served_locally(model_name: str) -> bool:
     an ``AGENTIC_MAX_COST_LANE=local`` ceiling (ARP-IMPROVEMENTS F1) --
     both must agree, since they are answering the same question.
     """
-    return name_is_listed(model_name, local_model_names())
+    names = local_model_names() if base_url is None else local_model_names(base_url)
+    return name_is_listed(model_name, names)
 
 
 def discover_ollama_models() -> list[OllamaModelInfo]:

@@ -310,6 +310,18 @@ models:
     price_in: 1.40
     price_out: 4.40
     context_window: null
+  # Reflection's Beam, tagged "free" in the ollama.com cloud library (checked
+  # 2026-10-29; /pricing lists no free cloud models, the library tag is the
+  # authority). Needs OLLAMA_API_KEY. The scheduled eval-live-gate pins every
+  # tier to it (eval-package-ci.yml); it is in no tier chain.
+  - id: ollama:beam:cloud
+    provider: ollama
+    tiers: []
+    status: active
+    cost_lane: free
+    price_in: 0.0
+    price_out: 0.0
+    context_window: 1000000
   # openrouter: the ":free" suffix is a distinct id for the zero-price variant,
   # not a flag on the metered one -- minimax/minimax-m3 is $0.30/$1.20 and stays
   # uncurated (therefore `paid` by the fail-closed default). Each ":free" id
