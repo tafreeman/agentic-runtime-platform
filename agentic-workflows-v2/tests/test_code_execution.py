@@ -119,6 +119,19 @@ def test_sandbox_keyword_is_a_deprecated_alias_for_denylist(value: bool) -> None
     assert blocked is value
 
 
+@pytest.mark.parametrize(("denylist", "sandbox"), [(True, False), (False, True)])
+def test_sandbox_and_denylist_together_are_rejected(
+    denylist: bool, sandbox: bool
+) -> None:
+    """A half-migrated call must not let the old keyword override the new one."""
+    with pytest.raises(TypeError, match="denylist= only"):
+        CodeExecutionTool(denylist=denylist, sandbox=sandbox)
+
+
+def test_denylist_defaults_on() -> None:
+    assert CodeExecutionTool()._check_code_safety("import os") is not None
+
+
 def test_denylist_keyword_does_not_warn() -> None:
     """The new keyword and the default emit no deprecation warning."""
     import warnings

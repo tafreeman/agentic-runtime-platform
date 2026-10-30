@@ -40,13 +40,17 @@ class CodeExecutionTool(BaseTool):
         self,
         *,
         allow_imports: bool = True,
-        denylist: bool = True,
+        denylist: bool | None = None,
         sandbox: bool | None = None,
     ) -> None:
         super().__init__()
         if sandbox is not None:
             # Deprecated alias: the flag only ever toggled the denylist, it
             # never isolated the child process.
+            if denylist is not None:
+                # Refuse rather than pick a winner: a half-migrated call such
+                # as denylist=True, sandbox=False must not silently disable it.
+                raise TypeError("pass denylist= only; sandbox= is its deprecated alias")
             warnings.warn(
                 "CodeExecutionTool(sandbox=...) is deprecated; use denylist=...",
                 DeprecationWarning,
@@ -54,7 +58,7 @@ class CodeExecutionTool(BaseTool):
             )
             denylist = sandbox
         self._allow_imports = allow_imports
-        self._denylist = denylist
+        self._denylist = True if denylist is None else denylist
 
     @property
     def name(self) -> str:
