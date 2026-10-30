@@ -13,9 +13,13 @@ const RUNS = Number(process.env.E2E_5X_RUNS ?? 5);
 // can fall through to a global/cached binary with a stale version.
 for (let i = 1; i <= RUNS; i++) {
   console.log(`\n=== E2E run ${i} / ${RUNS} ===`);
+  // E2E_REPEAT_RUN tells slo-first-span.spec.ts to skip: under repeat-run
+  // flake detection it shares CPU with 3 other workers and records 4-7s
+  // samples that are not representative of the isolated SLO measurement.
   const result = spawnSync('npm', ['run', 'test:e2e'], {
     stdio: 'inherit',
     shell: true,
+    env: { ...process.env, E2E_REPEAT_RUN: '1' },
   });
   if (result.status !== 0) {
     console.error(`\nE2E run ${i} failed with exit code ${result.status}`);

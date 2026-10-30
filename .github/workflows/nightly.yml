@@ -85,12 +85,19 @@ jobs:
         run: |
           node --experimental-strip-types e2e/flake-gate.ts "${{ steps.run50.outputs.fails }}"
 
-      # Run the first-span SLO spec once to append a new latency sample to
+      # Run the first-span SLO spec to append new latency samples to
       # first-span-latency.json. This is what makes the Task 7 p95 gate
       # actually activate — without this step the gate reads an empty file
       # forever and passes trivially.
+      #
+      # --repeat-each=3 --workers=1: three sequential, uncontended samples per
+      # run (each repeat appends one record via recordLatency, and all are
+      # published below). The p95 gate needs DEFAULT_MIN_SAMPLES (10) in the
+      # 7-day window (e2e/slo-storage.ts); one sample a day would leave it
+      # deferred indefinitely now that the full-suite 5x loop no longer feeds
+      # it (that loop skips this spec via E2E_REPEAT_RUN). 3/day gives 21/week.
       - name: Record time-to-first-span sample + enforce p95 gate
-        run: npm --prefix agentic-workflows-v2/ui run test:e2e -- slo-first-span.spec.ts
+        run: npm --prefix agentic-workflows-v2/ui run test:e2e -- slo-first-span.spec.ts --repeat-each=3 --workers=1
 
       - name: Publish SLO data to slo-data branch
         run: |
