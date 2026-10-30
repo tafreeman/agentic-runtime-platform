@@ -76,7 +76,7 @@ def _semantic_search(pattern: str, content: str, file_path: Path) -> list[dict]:
     """Perform simple semantic search (word-based matching)."""
     # Extract key words from pattern
     pattern_words = set(re.findall(r"\w+", pattern.lower()))
-    matches = []
+    matches: list[dict[str, Any]] = []
 
     for i, line in enumerate(content.splitlines(), 1):
         line_lower = line.lower()
@@ -124,7 +124,7 @@ async def _run_search(
         if not search_path.exists():
             return ToolResult(success=False, error=f"Path does not exist: {path}")
 
-        results = []
+        results: list[dict[str, Any]] = []
         files_searched = 0
 
         # Get files to search

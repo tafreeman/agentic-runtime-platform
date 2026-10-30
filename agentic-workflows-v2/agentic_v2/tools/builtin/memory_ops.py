@@ -15,6 +15,7 @@ Storage location:
 
 from __future__ import annotations
 
+import builtins
 import json
 import os
 import threading
@@ -67,7 +68,8 @@ class _FileMemoryStore:
         raw = self._path.read_text(encoding="utf-8").strip()
         if not raw:
             return {}
-        return json.loads(raw)
+        data: dict[str, Any] = json.loads(raw)
+        return data
 
     def _save(self, data: dict[str, Any]) -> None:
         self._path.parent.mkdir(parents=True, exist_ok=True)
@@ -163,7 +165,7 @@ class _FileMemoryStore:
         with self._lock:
             data = self._load()
 
-        hits: list[dict[str, Any]] = []
+        hits: builtins.list[dict[str, Any]] = []
         for key, entry in data.items():
             haystacks = self._entry_haystacks(key, entry)
             if any(q in h.lower() for h in haystacks):
@@ -174,7 +176,7 @@ class _FileMemoryStore:
         return {"query": q, "results": hits, "count": len(hits)}
 
     @staticmethod
-    def _entry_haystacks(key: str, entry: Any) -> list[str]:
+    def _entry_haystacks(key: str, entry: Any) -> builtins.list[str]:
         """Build the searchable text fragments for one stored entry."""
         haystacks = [str(key)]
         if isinstance(entry, dict) and "value" in entry:
@@ -193,7 +195,7 @@ class _FileMemoryStore:
 class _MemoryToolBase(BaseTool):
     """Base class for memory tools sharing a store."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         # Instantiate per-tool so env var overrides (AGENTIC_MEMORY_PATH) are
         # respected in tests and per-process configuration.

@@ -24,7 +24,8 @@ python -m pytest tests/ -q -m "not integration and not slow" --ignore=tests/e2e 
 python -m pytest tests/ -q -m "not integration and not slow" --cov=agentic_v2 --cov-report=term-missing
 python -m coverage report --fail-under=80    # the step that actually blocks
 python -m ruff check --fix --show-fixes agentic_v2/ tests/   # CI diffs after --fix; commit the result
-python -m mypy agentic_v2/engine agentic_v2/contracts --config-file pyproject.toml \
+python -m mypy agentic_v2/engine agentic_v2/contracts agentic_v2/tools/builtin \
+  agentic_v2/security agentic_v2/governance --config-file pyproject.toml \
   --follow-imports=skip --disallow-untyped-defs --warn-return-any --no-incremental
 python scripts/check_suppression_ratchet.py
 python -m scripts.generate_ts_types          # then, from ui/: npm run generate:types
