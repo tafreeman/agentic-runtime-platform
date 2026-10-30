@@ -53,8 +53,8 @@ on:
         required: false
         type: string
   schedule:
-    # Daily rather than pinned to dependabot.yml's Monday 05:15-05:30 UTC pip
-    # PR-open window: catches that week's grouped PRs the same day, plus any
+    # Daily rather than pinned to dependabot.yml's monthly 05:15-05:45 UTC pip
+    # PR-open window: catches that month's grouped PRs the same day, plus any
     # out-of-band security PR Dependabot opens on a pip advisory any other
     # day. Cheap to run daily — the commit/push step below no-ops in seconds
     # whenever nothing needs relocking.
