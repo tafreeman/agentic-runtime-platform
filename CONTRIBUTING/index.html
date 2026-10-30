@@ -3494,8 +3494,10 @@ the ignored <code>.env</code> file when a live-provider test is required.</p>
 <li>Add or update tests with behavior changes.</li>
 <li>Update user documentation when a command, endpoint, environment variable,
   schema, workflow, or UI behavior changes.</li>
-<li>Add a <code>## Unreleased - &lt;title&gt;</code> entry to <code>CHANGELOG.md</code> for user-visible
-  changes.</li>
+<li>Do not edit <code>CHANGELOG.md</code> in a feature PR: every open PR editing its top
+  conflicted with every other. Write a clear squash-merge title instead; release
+  notes are generated from those titles (<code>.github/release.yml</code>) and the
+  changelog is updated once, when a release is cut.</li>
 <li>Add an ADR for a material architecture or security-boundary decision.</li>
 <li>Do not reformat unrelated files.</li>
 <li>Preserve generated files unless the source contract changed.</li>
@@ -3898,7 +3900,7 @@ or JSON schema files by hand.</p>
 </tr>
 <tr>
 <td>User-visible behavior</td>
-<td><code>CHANGELOG.md</code></td>
+<td>the PR title (release notes are generated from it)</td>
 </tr>
 <tr>
 <td>Breaking change</td>
@@ -3959,7 +3961,7 @@ checklist and the per-surface checks:</p>
 </span><span id="__span-24-5"><a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>- [ ] pre-commit run --all-files passed
 </span><span id="__span-24-6"><a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>- [ ] The checks for each surface you changed passed
 </span><span id="__span-24-7"><a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>- [ ] UI build passed when frontend or wire contracts changed
-</span><span id="__span-24-8"><a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>- [ ] Documentation and CHANGELOG.md are updated when needed
+</span><span id="__span-24-8"><a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>- [ ] Documentation is updated when needed (not CHANGELOG.md; it is updated at release)
 </span><span id="__span-24-9"><a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a>- [ ] No credentials, .env files, run data, or private customer data are included
 </span><span id="__span-24-10"><a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a>- [ ] Commit messages use Conventional Commits
 </span></code></pre></div>
@@ -3999,7 +4001,7 @@ reviewing the existing provider path.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 30, 2026 11:17:37 UTC">October 30, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 30, 2026 13:27:55 UTC">October 30, 2026</span>
   </span>
 
     
