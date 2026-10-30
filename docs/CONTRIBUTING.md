@@ -93,8 +93,10 @@ Do not push directly to `main`.
 - Add or update tests with behavior changes.
 - Update user documentation when a command, endpoint, environment variable,
   schema, workflow, or UI behavior changes.
-- Add a `## Unreleased - <title>` entry to `CHANGELOG.md` for user-visible
-  changes.
+- Do not edit `CHANGELOG.md` in a feature PR: every open PR editing its top
+  conflicted with every other. Write a clear squash-merge title instead; release
+  notes are generated from those titles (`.github/release.yml`) and the
+  changelog is updated once, when a release is cut.
 - Add an ADR for a material architecture or security-boundary decision.
 - Do not reformat unrelated files.
 - Preserve generated files unless the source contract changed.
@@ -419,7 +421,7 @@ Update these documents with the matching change:
 | UI route or component contract | `docs/ui/pages.md` or `docs/ui/api-integration.md` |
 | Architecture boundary | `docs/ARCHITECTURE.md` and the relevant deep dive |
 | Known defect or deployment gap | `docs/KNOWN_LIMITATIONS.md` |
-| User-visible behavior | `CHANGELOG.md` |
+| User-visible behavior | the PR title (release notes are generated from it) |
 | Breaking change | `docs/MIGRATIONS.md` |
 
 The root
@@ -492,7 +494,7 @@ checklist and the per-surface checks:
 - [ ] pre-commit run --all-files passed
 - [ ] The checks for each surface you changed passed
 - [ ] UI build passed when frontend or wire contracts changed
-- [ ] Documentation and CHANGELOG.md are updated when needed
+- [ ] Documentation is updated when needed (not CHANGELOG.md; it is updated at release)
 - [ ] No credentials, .env files, run data, or private customer data are included
 - [ ] Commit messages use Conventional Commits
 ```

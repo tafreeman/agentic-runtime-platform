@@ -88,9 +88,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
+      # PRs: oldest Python on Ubuntu + newest on Windows (each axis covered once);
+      # pushes to main run the full grid.
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        python-version: ['3.11', '3.12']
+        include: ${{ fromJSON(github.event_name == 'pull_request' && '[{"os":"ubuntu-latest","python-version":"3.11"},{"os":"windows-latest","python-version":"3.12"}]' || '[{"os":"ubuntu-latest","python-version":"3.11"},{"os":"ubuntu-latest","python-version":"3.12"},{"os":"windows-latest","python-version":"3.11"},{"os":"windows-latest","python-version":"3.12"}]') }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1

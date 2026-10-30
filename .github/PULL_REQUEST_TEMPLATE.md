@@ -52,7 +52,7 @@ configuration step the revert needs.
 - [ ] Updated `README.md` if setup or behavior changed
 - [ ] Updated docs in `docs/` for API, workflow, or architecture changes
 - [ ] Added migration notes in `docs/MIGRATIONS.md` if behavior is breaking
-- [ ] Added a `## Unreleased - <title>` entry to `CHANGELOG.md` for user-visible changes
+- [ ] PR title is a clear `type(scope): subject` (release notes are generated from it; do not edit `CHANGELOG.md`)
 - [ ] Added an ADR if a security boundary or wire format changed (`docs/adr/ADR-INDEX.md` has the next number)
 - [ ] Regenerated schemas or statistics through their generator, if affected
 
