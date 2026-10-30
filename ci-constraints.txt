@@ -227,7 +227,7 @@ langchain-protocol==0.0.19
     # via
     #   langchain-core
     #   langgraph-sdk
-langgraph==1.2.9
+langgraph==1.2.14
     # via
     #   agentic-workflows-v2
     #   langchain

@@ -85,7 +85,7 @@ langchain = [
     # was outside the previous pins, so a major-line bump was required.
     "langchain>=1.3.9,<2",
     "langchain-core>=1.3,<2",
-    "langgraph>=1.2,<2",
+    "langgraph>=1.2.14,<2",
     "langchain-openai>=1.2,<2",
     "langchain-anthropic>=1.4.6,<2",
     "langchain-google-genai>=4.2,<5",
