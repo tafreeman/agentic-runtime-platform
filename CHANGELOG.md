@@ -1,5 +1,30 @@
 # Changelog
 
+## Unreleased - Native engine reaches Ollama Cloud; nightly live gate pinned to Beam
+
+- **`OllamaBackend` routes cloud models to ollama.com.** With `OLLAMA_API_KEY`
+  set and the model not served by the local daemon, the native backend now
+  calls `https://ollama.com` with bearer auth, the rule the LangChain builder
+  already applied (ADR-051 amendment). Before, `run_workflow` on a host with no
+  daemon could never reach a cloud model.
+- **`AGENTIC_MODEL_TIER_{N}` is honoured by the native router.**
+  `ModelRouter.get_chain` tries that tier's override first, then the registry
+  chain; a registered or scoped chain still wins. `SmartModelRouter` keeps an
+  eligible pin ahead of its health ranking (which would otherwise prefer an
+  untried fallback after the pin's first slow success). The LangChain engine
+  already read it.
+- **A skipped attempt moves on to the next model.** `get_model_for_tier` takes
+  `exclude=` and both retry loops (`call_with_fallback`, `run_with_fallback`)
+  pass the models already attempted, so a full bulkhead or a resolved circuit
+  no longer reselects the same model and ends the request.
+- **The cloud reroute asks the backend's own daemon** (`is_served_locally` and
+  its tags cache now take a base URL) and rebuilds the ollama.com client when
+  `OLLAMA_API_KEY` changes.
+- **`ollama:beam:cloud` is in the registry** with cost lane `free` (tagged free
+  in the ollama.com library, 2026-10-29), in no tier chain.
+- **The nightly `eval-live-gate` pins every tier to `ollama:beam:cloud`**, using
+  the existing `OLLAMA_API_KEY` repo secret.
+
 ## Unreleased - Live eval gate can no longer pass without calling a model
 
 - **A live run that reached no model now fails.** When every model in a tier's

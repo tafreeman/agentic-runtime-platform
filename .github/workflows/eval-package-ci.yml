@@ -271,6 +271,16 @@ jobs:
       contains(github.event.pull_request.labels.*.name, 'run-live-eval')) ||
       github.event_name == 'schedule' ||
       github.event_name == 'workflow_dispatch'
+    env:
+      # Pin every tier to Ollama Cloud's Beam, tagged free in the ollama.com
+      # library (2026-10-29). It needs OLLAMA_API_KEY; with no local daemon on
+      # the runner, OllamaBackend sends it to ollama.com (ADR-051). The rest of
+      # each tier's registry chain stays behind it as fallback.
+      AGENTIC_MODEL_TIER_1: ollama:beam:cloud
+      AGENTIC_MODEL_TIER_2: ollama:beam:cloud
+      AGENTIC_MODEL_TIER_3: ollama:beam:cloud
+      AGENTIC_MODEL_TIER_4: ollama:beam:cloud
+      AGENTIC_MODEL_TIER_5: ollama:beam:cloud
     defaults:
       run:
         working-directory: .

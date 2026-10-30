@@ -265,7 +265,7 @@ class TestRunWithFallback:
 
         router = SmartModelRouter()
         candidates = iter(["m1", "m2"])
-        router.get_model_for_tier = lambda tier: next(candidates, None)
+        router.get_model_for_tier = lambda tier, exclude=(): next(candidates, None)
 
         errors: list[tuple[str, Exception]] = []
 
@@ -287,11 +287,43 @@ class TestRunWithFallback:
         assert errors == [], "circuit-resolved skip must not record a failure"
 
     @pytest.mark.asyncio
+    async def test_skipped_pin_moves_on_with_a_real_router(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """With a real SmartModelRouter and a tier pin, a skipped attempt on
+        the pin (circuit resolved by another probe) must reach the next model
+        rather than reselecting the pin and stopping."""
+        from agentic_v2.models.model_stats import CircuitState
+        from agentic_v2.models.smart_router import CircuitResolvedError
+
+        monkeypatch.setenv("AGENTIC_MODEL_TIER_2", "ollama:beam:cloud")
+        router = SmartModelRouter()
+        seen: list[str] = []
+
+        async def attempt(m: str) -> str:
+            seen.append(m)
+            if m == "ollama:beam:cloud":
+                raise CircuitResolvedError(m, CircuitState.CLOSED)
+            return f"ok-{m}"
+
+        result = await run_with_fallback(
+            router,
+            tier=ModelTier.TIER_2,
+            model=None,
+            max_retries=3,
+            pre_attempt=lambda m: None,
+            attempt=attempt,
+            on_error=lambda m, e: None,
+        )
+        assert seen[0] == "ollama:beam:cloud"
+        assert len(seen) == 2 and result == f"ok-{seen[1]}"
+
+    @pytest.mark.asyncio
     async def test_raises_last_error_when_all_fail(self) -> None:
         router = SmartModelRouter()
         call_count = 0
 
-        def get_model(tier: ModelTier):
+        def get_model(tier: ModelTier, exclude=()):
             nonlocal call_count
             call_count += 1
             return "m1" if call_count == 1 else "m2" if call_count == 2 else None
