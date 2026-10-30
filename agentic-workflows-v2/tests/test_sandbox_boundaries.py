@@ -66,14 +66,14 @@ def no_file_base(monkeypatch: pytest.MonkeyPatch) -> None:
     ],
 )
 def test_filesystem_and_process_modules_are_blocked(code: str) -> None:
-    assert CodeExecutionTool(sandbox=True)._check_code_safety(code) is not None
+    assert CodeExecutionTool(denylist=True)._check_code_safety(code) is not None
 
 
 @pytest.mark.asyncio
 async def test_runtime_import_of_os_is_blocked() -> None:
     """The in-child constrained __import__ also rejects os."""
     code = "import importlib\nm = importlib.import_module"  # pre-flight pattern hit
-    result = await CodeExecutionTool(sandbox=True).execute(code=code)
+    result = await CodeExecutionTool(denylist=True).execute(code=code)
     assert not result.success
 
 
@@ -88,7 +88,7 @@ async def test_timeout_kills_and_reaps_child(monkeypatch: pytest.MonkeyPatch) ->
         return proc
 
     monkeypatch.setattr(asyncio, "create_subprocess_exec", _spy)
-    result = await CodeExecutionTool(sandbox=True).execute(
+    result = await CodeExecutionTool(denylist=True).execute(
         code="while True:\n    pass\n", timeout=1.0
     )
 
@@ -261,7 +261,7 @@ async def test_code_analysis_from_file_inside_base_works(file_base: Path) -> Non
     ],
 )
 def test_reexported_os_and_private_modules_are_blocked(code: str) -> None:
-    assert CodeExecutionTool(sandbox=True)._check_code_safety(code) is not None
+    assert CodeExecutionTool(denylist=True)._check_code_safety(code) is not None
 
 
 def test_shell_run_cwd_must_be_inside_file_base(

@@ -165,9 +165,9 @@ Tenant scoping ([ADR-022](adr/ADR-022-tenant-isolation.md)) resolves a tenant fr
 
 ### 4.12 `execute_python` is a best-effort denylist, not a sandbox
 
-`CodeExecutionTool` (`execute_python`) runs model-supplied Python in a child process. Before running, it rejects code matching a denylist of risky imports, attributes and patterns. The `sandbox=True` default enables that denylist; it does not isolate the process.
+`CodeExecutionTool` (`execute_python`) runs model-supplied Python in a child process. Before running, it rejects code matching a denylist of risky imports, attributes and patterns. The `denylist=True` default enables that pre-flight check (the old `sandbox=` keyword is a deprecated alias for it); it does not isolate the process.
 
-- **Surface:** `agentic_v2/tools/builtin/code_execution.py` (`_check_code_safety`, `_sandbox_preexec`); tests in `tests/test_code_execution.py`.
+- **Surface:** `agentic_v2/tools/builtin/code_execution.py` (`_check_code_safety`, `_child_preexec`); tests in `tests/test_code_execution.py`.
 - **Risk:** The denylist is in-child and bypassable; the child inherits the server's file system and network access and environment. Memory and process rlimits are applied only on POSIX (`os.name != "nt"`), so on Windows only the timeout bounds the child. There is no Docker or container backend.
 - **Workaround:** Keep `requires_approval` on (it is `True`, pinned by a test) and register an `ApprovalProvider`; with none registered the call is denied. For untrusted code, run the server itself inside a container or VM with network-layer egress control.
 - **Status:** Accepted. Documented as approval-gated and best-effort only.
