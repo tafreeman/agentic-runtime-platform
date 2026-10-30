@@ -43,7 +43,6 @@ The other workflows in `.github/workflows/`:
 | `eval-package-ci.yml` | Isolated CI for the `agentic-v2-eval` package |
 | `infra-deploy.yml` | Reference infrastructure deployment workflow (manual dispatch only; never run automatically) |
 | `nightly.yml` | Nightly E2E reliability run (scheduled): the streaming spec 50x feeding the flake-rate gate, the first-span SLO sample, the SLO-data publish, then the full Playwright suite 5x |
-| `pr-agent.yml` | Open-source PR-Agent on Ollama Cloud: auto-reviews new same-repo PRs and answers `/review`, `/describe`, `/improve`, `/ask` comments from the owner or collaborators (needs the `OLLAMA_API_KEY` secret) |
 | `sbom.yml` | SBOM generation on release and weekly |
 | `weekly-telemetry-snapshot.yml` | Weekly CI-run statistics (and optional repository traffic) appended to a rolling ledger issue; never a PR check |
 | `windows-workflows-ci.yml` | Windows workflow verification |

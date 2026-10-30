@@ -128,10 +128,6 @@ These values are generated from the current source tree:
 
 <div class="stat-strip" markdown>
 <div class="stat-item">
-  <div class="stat-value">4,390</div>
-  <div class="stat-label">Backend tests</div>
-</div>
-<div class="stat-item">
   <div class="stat-value">80%</div>
   <div class="stat-label">Coverage gate, CI-enforced</div>
 </div>

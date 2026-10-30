@@ -2,7 +2,7 @@
 """Derive the homepage "by the numbers" stats from source, not hand-typed copy.
 
 ``docs/index.md`` carried hand-maintained literals (ADR count, production
-workflow count, backend test count) that silently drifted from reality — the
+workflow count) that silently drifted from reality — the
 ADR count was hard-typed as 38 while the repo had already grown to 43 formal
 ADRs. This script recomputes each value from the actual repository state and
 rewrites the two spots in ``docs/index.md`` that quote it (the "By the
@@ -10,6 +10,10 @@ numbers" stat strip and the "written decision record" blurb), so the copy
 can never go stale silently again. The ``README.md`` coverage badge is
 stamped the same way, from the enforced ``fail_under`` gate in
 ``agentic-workflows-v2/pyproject.toml``.
+
+The backend test count was dropped on purpose: it changed on almost every PR,
+so each test-adding PR failed ``--check`` and conflicted with every other open
+PR on the same line, which cost far more than the number was worth.
 
 Usage:
     python scripts/generate_doc_stats.py            # regenerate in place
@@ -19,7 +23,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import ast
 import re
 import sys
 import tomllib
@@ -30,11 +33,6 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 ADR_DIR = REPO_ROOT / "docs" / "adr"
 WORKFLOW_DEFS_DIR = (
     REPO_ROOT / "agentic-workflows-v2" / "agentic_v2" / "workflows" / "definitions"
-)
-TEST_ROOTS = (
-    REPO_ROOT / "agentic-workflows-v2" / "tests",
-    REPO_ROOT / "agentic-v2-eval" / "tests",
-    REPO_ROOT / "tests",
 )
 INDEX_MD = REPO_ROOT / "docs" / "index.md"
 README_MD = REPO_ROOT / "README.md"
@@ -49,7 +47,6 @@ class DocStats:
 
     adr_count: int
     production_workflow_count: int
-    backend_test_count: int
     coverage_gate: int
 
 
@@ -85,42 +82,6 @@ def count_production_workflows(defs_dir: Path = WORKFLOW_DEFS_DIR) -> int:
     )
 
 
-def _count_test_functions_in_file(path: Path) -> int:
-    try:
-        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-    except SyntaxError:
-        return 0
-    return sum(
-        1
-        for node in ast.walk(tree)
-        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef)
-        and node.name.startswith("test_")
-    )
-
-
-def count_backend_tests(test_roots: tuple[Path, ...] = TEST_ROOTS) -> int:
-    """Count Python test functions (``def test_*`` / ``async def test_*``).
-
-    A static AST count across the three pytest roots (runtime unit suite,
-    eval package, repo-root e2e) — a proxy for "tests in the repo", not a
-    claim that every one currently passes (verifying that would mean
-    executing the full suite, network- and slow-marked tests included, at
-    docs-build time). UI (Vitest) tests are intentionally out of scope: the
-    Python suite is the large majority of the count, and AST parsing keeps
-    this exact rather than an approximation over JS/TS `it`/`test`/`it.each`
-    call forms.
-    """
-    total = 0
-    for root in test_roots:
-        if not root.exists():
-            continue
-        for path in sorted(root.rglob("test_*.py")):
-            if "__pycache__" in path.parts:
-                continue
-            total += _count_test_functions_in_file(path)
-    return total
-
-
 def read_coverage_gate(pyproject: Path = RUNTIME_PYPROJECT) -> int:
     """Read the enforced coverage floor from ``[tool.coverage.report] fail_under``.
 
@@ -139,13 +100,8 @@ def gather_stats() -> DocStats:
     return DocStats(
         adr_count=count_adrs(),
         production_workflow_count=count_production_workflows(),
-        backend_test_count=count_backend_tests(),
         coverage_gate=read_coverage_gate(),
     )
-
-
-def _format_int(value: int) -> str:
-    return f"{value:,}"
 
 
 def _replace_stat_value(text: str, label: str, new_value: str) -> str:
@@ -178,9 +134,6 @@ def _replace_prose_adr_count(text: str, new_value: str) -> str:
 
 def render_index_md(text: str, stats: DocStats) -> str:
     """Return ``docs/index.md`` with every derived stat substituted in place."""
-    text = _replace_stat_value(
-        text, "Backend tests", _format_int(stats.backend_test_count)
-    )
     text = _replace_stat_value(text, "ADRs", str(stats.adr_count))
     text = _replace_stat_value(
         text, "Production workflows", str(stats.production_workflow_count)
@@ -261,7 +214,6 @@ def main() -> int:
             print(
                 f"  ADRs={stats.adr_count} "
                 f"production_workflows={stats.production_workflow_count} "
-                f"backend_tests={stats.backend_test_count} "
                 f"coverage_gate={stats.coverage_gate}",
                 file=sys.stderr,
             )
