@@ -21,6 +21,11 @@ The template's minimum replica count defaults to two.
 `main.bicepparam.example` is a placeholder file. Copy it to the ignored
 `main.bicepparam` before an authorized deployment.
 
+`agenticApiKey` is a required `@secure()` parameter (no default) wired to the
+container's `AGENTIC_API_KEY`, so the externally exposed API cannot be deployed
+unauthenticated. Export `AGENTIC_API_KEY` in the deploying environment; the
+example param file reads it with `readEnvironmentVariable`.
+
 The template resolves service-generated values at deployment time and uses a
 managed identity for registry pulls. Do not add Redis keys, connection strings,
 provider tokens, or service-principal secrets to committed parameter files.

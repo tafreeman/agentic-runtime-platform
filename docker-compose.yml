@@ -25,7 +25,7 @@ services:
     volumes:
       - ./:/workspace
     ports:
-      - "8010:8010"
+      - "127.0.0.1:8010:8010"
     depends_on:
       otel-collector:
         condition: service_started

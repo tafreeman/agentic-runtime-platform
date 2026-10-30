@@ -57,6 +57,11 @@ param cpuCores string = '0.5'
 @description('Container memory per replica.')
 param memorySize string = '1.0Gi'
 
+@description('API key the backend requires on every request (AGENTIC_API_KEY). Required, no default: the template cannot be deployed with unauthenticated ingress.')
+@secure()
+@minLength(16)
+param agenticApiKey string
+
 // Deterministic, collision-resistant suffix derived from the RG id.
 var suffix = uniqueString(resourceGroup().id)
 var names = {
@@ -234,6 +239,12 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
           name: 'appinsights-connection-string'
           value: appInsights.properties.ConnectionString
         }
+        {
+          // Supplied by the deployer through the @secure() parameter; never
+          // committed. Ingress is external, so the API must be authenticated.
+          name: 'agentic-api-key'
+          value: agenticApiKey
+        }
       ]
     }
     template: {
@@ -253,6 +264,10 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
             {
               name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
               secretRef: 'appinsights-connection-string'
+            }
+            {
+              name: 'AGENTIC_API_KEY'
+              secretRef: 'agentic-api-key'
             }
             {
               name: 'AGENTIC_DEFAULT_ADAPTER'

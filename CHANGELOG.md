@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased - Network exposure: loopback-only compose, authenticated Azure ingress
+
+- `docker-compose.yml` now publishes the backend as `127.0.0.1:8010:8010`; the
+  dev stack runs without `AGENTIC_API_KEY`, so it must not listen on all interfaces.
+- `infra/azure/main.bicep` gains a required `@secure()` `agenticApiKey` parameter
+  (no default) wired to a container-app secret and the `AGENTIC_API_KEY` env var,
+  so the externally ingressed app cannot be deployed unauthenticated. The example
+  param file reads it from the environment. No bind-address startup guard was added:
+  the image binds `0.0.0.0` by design inside the container.
+
 ## Unreleased - Native engine reaches Ollama Cloud; nightly live gate pinned to Beam
 
 - **`OllamaBackend` routes cloud models to ollama.com.** With `OLLAMA_API_KEY`

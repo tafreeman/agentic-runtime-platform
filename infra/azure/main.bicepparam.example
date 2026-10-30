@@ -2,7 +2,8 @@
 //
 // COPY to main.bicepparam and fill in real values BEFORE any deploy. This file
 // is the committed, secret-free template — main.bicepparam is gitignored.
-// There are NO secrets here: Redis keys, App Insights connection strings, and
+// There are NO secrets here (the API key is read from the AGENTIC_API_KEY
+// environment variable at deploy time): Redis keys, App Insights connection strings, and
 // ACR credentials are all resolved at deploy time inside the template via
 // listKeys()/managed identity, never passed as parameters.
 //
@@ -22,6 +23,10 @@ param containerImage = 'mcr.microsoft.com/k8se/quickstart:latest'
 param minReplicas = 2
 param maxReplicas = 10
 param concurrentRequestsPerReplica = 50
+
+// REQUIRED, no default: the backend ingress is external, so the API key must be
+// supplied at deploy time from the environment (never committed here).
+param agenticApiKey = readEnvironmentVariable('AGENTIC_API_KEY')
 
 param cpuCores = '0.5'
 param memorySize = '1.0Gi'
