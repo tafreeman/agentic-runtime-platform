@@ -211,7 +211,7 @@ class CodeExecutionTool(BaseTool):
     def _first_blocked_import(self, module_names: Any) -> str | None:
         """Return the first top-level module name that is on the blocklist."""
         for module_name in module_names:
-            top = module_name.split(".")[0]
+            top: str = module_name.split(".")[0]
             if top in self._DANGEROUS_IMPORTS:
                 return top
         return None
@@ -256,7 +256,9 @@ class CodeExecutionTool(BaseTool):
             # original outcome.
             return
 
-    async def execute(self, code: str, timeout: float = 30.0, **kwargs) -> ToolResult:
+    async def execute(
+        self, code: str, timeout: float = 30.0, **kwargs: Any
+    ) -> ToolResult:
         """Execute Python code in a sandboxed subprocess."""
         # Safety check
         safety_error = self._check_code_safety(code)
@@ -332,6 +334,9 @@ class CodeExecutionTool(BaseTool):
             tmp_path = await asyncio.to_thread(_write_temp_file, wrapper)
 
             proc: asyncio.subprocess.Process | None = None
+            spawn_kwargs: dict[str, Any] = (
+                {"preexec_fn": self._sandbox_preexec} if os.name != "nt" else {}
+            )
             try:
                 proc = await asyncio.create_subprocess_exec(
                     sys.executable,
@@ -339,9 +344,7 @@ class CodeExecutionTool(BaseTool):
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
                     env=self._subprocess_env(),
-                    **(
-                        {"preexec_fn": self._sandbox_preexec} if os.name != "nt" else {}
-                    ),
+                    **spawn_kwargs,
                 )
                 stdout_bytes, stderr_bytes = await asyncio.wait_for(
                     proc.communicate(), timeout=timeout

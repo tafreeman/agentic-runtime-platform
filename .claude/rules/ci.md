@@ -69,7 +69,8 @@ omitted module expecting it to be measured.
   changed files: `cd agentic-workflows-v2 && python -m ruff check agentic_v2/ tests/`.
   CI also fails if `ruff check --fix` would still change anything, so apply
   autofixes and commit them.
-- **mypy** runs strict on `agentic_v2/engine` + `agentic_v2/contracts`
+- **mypy** runs strict on `agentic_v2/engine`, `agentic_v2/contracts`,
+  `agentic_v2/tools/builtin`, `agentic_v2/security` and `agentic_v2/governance`
   (`--disallow-untyped-defs --warn-return-any`).
 - `pre-commit run --all-files` covers black, ruff,
   docformatter, detect-secrets, and the scoped mypy hook.

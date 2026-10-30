@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased - Strict mypy extended to tools/builtin, security and governance
+
+- Removed the `ignore_errors = true` mypy override for `agentic_v2.tools.builtin.*`
+  and fixed the errors it hid (annotations and `Any`-returning calls; no
+  `type: ignore` added). `_FileMemoryStore` annotations that its own `list` method
+  shadowed now use `builtins.list`.
+- CI's `Mypy (strict engine + contracts)` step now also checks
+  `agentic_v2/tools/builtin`, `agentic_v2/security` and `agentic_v2/governance`
+  (same flags); the check name is unchanged. Suppression baseline lowered (7 -> 6
+  `ignore_errors` modules).
+
 ## Unreleased - Native engine reaches Ollama Cloud; nightly live gate pinned to Beam
 
 - **`OllamaBackend` routes cloud models to ollama.com.** With `OLLAMA_API_KEY`
