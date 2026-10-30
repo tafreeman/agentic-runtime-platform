@@ -38,7 +38,8 @@ import json
 import logging
 import uuid
 from abc import ABC, abstractmethod
-from typing import Any, AsyncIterator, Generic, TypeVar
+from collections.abc import AsyncIterator
+from typing import Any, Generic, TypeVar
 
 from ..contracts import TaskInput, TaskOutput
 from ..engine import ExecutionContext, StepDefinition

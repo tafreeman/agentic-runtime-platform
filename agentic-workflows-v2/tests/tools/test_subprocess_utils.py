@@ -20,7 +20,7 @@ _SECRET_KEYS = [
 
 def test_api_keys_excluded():
     """API keys must never appear in the subprocess environment."""
-    fake_secrets = {k: "sk-fake-value-1234" for k in _SECRET_KEYS}
+    fake_secrets = dict.fromkeys(_SECRET_KEYS, "sk-fake-value-1234")
     with patch.dict(os.environ, fake_secrets):
         env = minimal_subprocess_env()
     for key in _SECRET_KEYS:

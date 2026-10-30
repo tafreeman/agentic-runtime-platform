@@ -100,7 +100,7 @@ def test_uneven_depth_join_runs_once_with_every_dependency(
     final = _run(config)
 
     assert agent.calls == Counter(
-        {name: 1 for name in ("a", "b", "c", "d", "e", "join", "tail")}
+        dict.fromkeys(("a", "b", "c", "d", "e", "join", "tail"), 1)
     )
     assert agent.inputs["join"] == [{"b": "b#1", "c": "c#1", "e": "e#1"}]
     assert agent.inputs["tail"] == [{"join": "join#1", "a": "a#1"}]

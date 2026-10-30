@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 import re
 from collections import Counter
-from typing import Sequence
+from collections.abc import Sequence
 
 from agentic_v2.contracts.sanitization import (
     Finding,

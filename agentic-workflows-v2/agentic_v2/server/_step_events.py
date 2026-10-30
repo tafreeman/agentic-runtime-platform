@@ -21,8 +21,9 @@ Internal protocol
 from __future__ import annotations
 
 import time
+from collections.abc import Callable, Mapping
 from datetime import datetime
-from typing import Any, Callable, Mapping
+from typing import Any
 
 from . import websocket
 from .result_normalization import extract_tokens

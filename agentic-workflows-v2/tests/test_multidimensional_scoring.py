@@ -307,11 +307,11 @@ class TestEvaluateResearchRound:
 
 class TestComputeCiTiebreaker:
     def test_all_ones(self) -> None:
-        scores = {dim: 1.0 for dim in RESEARCH_DIMENSIONS}
+        scores = dict.fromkeys(RESEARCH_DIMENSIONS, 1.0)
         assert compute_ci_tiebreaker(scores) == pytest.approx(1.0)
 
     def test_all_zeros(self) -> None:
-        scores = {dim: 0.0 for dim in RESEARCH_DIMENSIONS}
+        scores = dict.fromkeys(RESEARCH_DIMENSIONS, 0.0)
         assert compute_ci_tiebreaker(scores) == pytest.approx(0.0)
 
     def test_known_value(self) -> None:
@@ -326,16 +326,16 @@ class TestComputeCiTiebreaker:
         assert compute_ci_tiebreaker(scores) == pytest.approx(0.25)
 
     def test_equal_weights_override(self) -> None:
-        equal_w = {dim: 0.20 for dim in RESEARCH_DIMENSIONS}
-        scores = {dim: 0.50 for dim in RESEARCH_DIMENSIONS}
+        equal_w = dict.fromkeys(RESEARCH_DIMENSIONS, 0.2)
+        scores = dict.fromkeys(RESEARCH_DIMENSIONS, 0.5)
         assert compute_ci_tiebreaker(scores, weights=equal_w) == pytest.approx(0.50)
 
     def test_clamped_above_one(self) -> None:
-        scores = {dim: 2.0 for dim in RESEARCH_DIMENSIONS}
+        scores = dict.fromkeys(RESEARCH_DIMENSIONS, 2.0)
         assert compute_ci_tiebreaker(scores) <= 1.0
 
     def test_clamped_below_zero(self) -> None:
-        scores = {dim: -1.0 for dim in RESEARCH_DIMENSIONS}
+        scores = dict.fromkeys(RESEARCH_DIMENSIONS, -1.0)
         assert compute_ci_tiebreaker(scores) >= 0.0
 
 

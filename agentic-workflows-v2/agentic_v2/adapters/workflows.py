@@ -7,8 +7,9 @@ keep workflow data separate from execution controls.
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable, Mapping
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Mapping
+from typing import Any
 
 from ..contracts import WorkflowResult
 from ..engine.context import ExecutionContext

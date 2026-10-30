@@ -20,11 +20,12 @@ import logging
 import sys
 import time
 import uuid
+from collections.abc import AsyncIterator, Awaitable, Callable, Iterator, Mapping
 from contextlib import aclosing
 from copy import deepcopy
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, AsyncIterator, Awaitable, Callable, Iterator, Mapping
+from typing import Any
 
 from ..contracts import WorkflowResult
 from ..integrations.base import TraceAdapter

@@ -25,13 +25,13 @@ class TestComputeCiTiebreakerDelegation:
     """Verify backward-compatible delegation from server module to lib."""
 
     def test_all_ones_matches_lib(self) -> None:
-        scores = {dim: 1.0 for dim in RESEARCH_DIMENSIONS}
+        scores = dict.fromkeys(RESEARCH_DIMENSIONS, 1.0)
         server_result = compute_ci_tiebreaker(scores)
         lib_result = compute_ci(scores, method="arithmetic")
         assert server_result == pytest.approx(lib_result)
 
     def test_all_zeros_matches_lib(self) -> None:
-        scores = {dim: 0.0 for dim in RESEARCH_DIMENSIONS}
+        scores = dict.fromkeys(RESEARCH_DIMENSIONS, 0.0)
         server_result = compute_ci_tiebreaker(scores)
         lib_result = compute_ci(scores, method="arithmetic")
         assert server_result == pytest.approx(lib_result)
@@ -49,15 +49,15 @@ class TestComputeCiTiebreakerDelegation:
         assert server_result == pytest.approx(lib_result)
 
     def test_custom_weights_match_lib(self) -> None:
-        equal_w = {dim: 0.20 for dim in RESEARCH_DIMENSIONS}
-        scores = {dim: 0.50 for dim in RESEARCH_DIMENSIONS}
+        equal_w = dict.fromkeys(RESEARCH_DIMENSIONS, 0.2)
+        scores = dict.fromkeys(RESEARCH_DIMENSIONS, 0.5)
         server_result = compute_ci_tiebreaker(scores, weights=equal_w)
         lib_result = compute_ci(scores, weights=equal_w, method="arithmetic")
         assert server_result == pytest.approx(lib_result)
 
     def test_existing_api_signature_unchanged(self) -> None:
         """The server function still accepts the same kwargs."""
-        scores = {dim: 0.80 for dim in RESEARCH_DIMENSIONS}
+        scores = dict.fromkeys(RESEARCH_DIMENSIONS, 0.8)
         # Positional: scores only
         result1 = compute_ci_tiebreaker(scores)
         # With keyword weights

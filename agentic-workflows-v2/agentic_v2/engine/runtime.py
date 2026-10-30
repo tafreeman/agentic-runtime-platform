@@ -31,9 +31,10 @@ import shutil
 import tempfile
 import uuid
 from abc import ABC, abstractmethod
+from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 logger = logging.getLogger(__name__)
 

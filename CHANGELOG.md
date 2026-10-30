@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased - Ruff baseline: autofix UP045/UP017/UP035/UP006/C420, re-date the rest
+
+- Applied the mechanical rules the `agentic-workflows-v2/pyproject.toml` baseline named
+  (`ruff check --fix`), and dropped the now-unneeded `UP045`, `UP017`, `UP035` and `C420`
+  ignores (`UP006` was never ignored). Import re-sorting from the autofix is included.
+- The remaining ignores and the mypy relaxations had a lapsed "target Q3 2026"; they now
+  carry "target Q1 2027". No new suppression was added.
+
 ## Unreleased - Live eval gate can no longer pass without calling a model
 
 - **A live run that reached no model now fails.** When every model in a tier's

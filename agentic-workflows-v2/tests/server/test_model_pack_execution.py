@@ -434,9 +434,8 @@ async def test_run_and_evaluate_passes_pack_to_judge_resolution(
         def __init__(self, model: str | None = None) -> None:
             judge_models.append(model)
 
-    scored = {
-        key: None
-        for key in (
+    scored = dict.fromkeys(
+        (
             "rubric",
             "rubric_id",
             "rubric_version",
@@ -454,7 +453,7 @@ async def test_run_and_evaluate_passes_pack_to_judge_resolution(
             "judge_skip_code",
             "expected_text_present",
         )
-    }
+    )
     monkeypatch.setattr(execution, "LLMJudge", _CapturingJudge)
     monkeypatch.setattr(
         execution, "score_workflow_result", lambda *_a, **_k: dict(scored)

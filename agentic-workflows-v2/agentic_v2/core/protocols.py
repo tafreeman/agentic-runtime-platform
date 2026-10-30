@@ -27,14 +27,11 @@ Type-safety notes (Sprint C1):
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
 from typing import (
     TYPE_CHECKING,
     Any,
-    AsyncIterator,
-    Awaitable,
-    Callable,
     Protocol,
-    Sequence,
     runtime_checkable,
 )
 

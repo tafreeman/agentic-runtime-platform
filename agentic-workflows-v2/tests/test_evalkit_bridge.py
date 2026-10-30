@@ -213,7 +213,7 @@ def test_all_rubric_files_on_disk_with_criteria_convert_and_score_identically() 
             continue  # judge-prompt/definitions-only rubrics: out of scope
         swept_any = True
         names = [criterion["name"] for criterion in rubric_data["criteria"]]
-        scores = {name: 0.8 for name in names}
+        scores = dict.fromkeys(names, 0.8)
 
         # Act
         legacy_result = Scorer(rubric_data).score(scores)

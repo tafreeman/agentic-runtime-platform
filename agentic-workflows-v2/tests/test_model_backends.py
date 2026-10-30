@@ -10,7 +10,8 @@ Tier 2: happy-path contracts, integration boundaries.
 from __future__ import annotations
 
 import sys
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 from unittest.mock import patch
 
 import pytest

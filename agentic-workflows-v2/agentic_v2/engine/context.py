@@ -29,10 +29,11 @@ import hashlib
 import json
 import logging
 import uuid
+from collections.abc import Callable
 from dataclasses import InitVar, dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable, TypeVar, cast
+from typing import Any, TypeVar, cast
 
 logger = logging.getLogger(__name__)
 

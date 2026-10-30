@@ -19,9 +19,10 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections import deque
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import Any, Awaitable, Callable
+from typing import Any
 
 from ..contracts import StepResult, StepStatus, WorkflowResult
 from ..integrations.otel import get_tracer as _get_tracer

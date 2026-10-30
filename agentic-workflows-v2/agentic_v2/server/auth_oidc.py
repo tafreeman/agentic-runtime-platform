@@ -12,8 +12,9 @@ import inspect
 import json
 import logging
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 
 import httpx
 from fastapi.responses import JSONResponse

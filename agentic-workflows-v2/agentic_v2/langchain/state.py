@@ -7,7 +7,8 @@ Uses LangGraph annotation reducers for append-only fields.
 from __future__ import annotations
 
 import operator
-from typing import Annotated, Any, Sequence
+from collections.abc import Sequence
+from typing import Annotated, Any
 
 from langchain_core.messages import BaseMessage
 from typing_extensions import TypedDict

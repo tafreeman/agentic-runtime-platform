@@ -256,66 +256,46 @@ ignore = [
     "S105",
     # S603: subprocess call — the codebase has intentional shell_ops.py
     #       wrappers; those are reviewed manually.
-    #       Cleanup (target Q3 2026): audit each S603 site and replace with safer
+    #       Cleanup (target Q1 2027): audit each S603 site and replace with safer
     #       alternatives where possible.
     "S603",
     # S607: Starting a process with a partial executable path — same rationale
     #       as S603; shell_ops wrappers already validate paths.
-    #       Cleanup (target Q3 2026): add which() resolution to all shell_ops callsites.
+    #       Cleanup (target Q1 2027): add which() resolution to all shell_ops callsites.
     "S607",
     # UP007: Use `X | Y` for Union — codebase still uses Optional[X] and
     #        Union[X, Y] in many places for clarity and shared-module compat.
-    #        PEP 604 migration target Q3 2026.
+    #        PEP 604 migration target Q1 2027.
     "UP007",
 
     # -------------------------------------------------------------------------
-    # High-volume violations (>20 hits) — baselined 2026-04-21, target Q3 2026
+    # High-volume violations (>20 hits) — baselined 2026-04-21, target Q1 2027
     # -------------------------------------------------------------------------
 
-    # UP045 (264 violations): `Optional[X]` → `X | None` — same PEP 604
-    #   migration as UP007; addressing both together avoids a half-finished
-    #   annotation pass.
-    #   Cleanup (target Q3 2026): run `ruff check --fix --select UP045` then review diffs.
-    "UP045",
     # E501 (118 violations): line-too-long (>88 chars) — majority are long
     #   string literals, URLs in comments, and auto-generated docstrings that
     #   cannot be auto-fixed without semantic review.
-    #   Cleanup (target Q3 2026): reformat manually where wrapping improves readability;
+    #   Cleanup (target Q1 2027): reformat manually where wrapping improves readability;
     #   leave URL-only lines alone (add `# noqa: E501` per-line).
     "E501",
-    # UP017 (66 violations): `datetime.timezone.utc` → `datetime.UTC` —
-    #   datetime.UTC was introduced in Python 3.11; safe to migrate but the
-    #   change touches ~20 files and warrants a dedicated commit.
-    #   Cleanup (target Q3 2026): run `ruff check --fix --select UP017`.
-    "UP017",
     # TC001 (43 violations): typing-only first-party imports not inside
     #   TYPE_CHECKING block — requires adding `if TYPE_CHECKING:` guards and
     #   quoting the affected annotations throughout the codebase.
-    #   Cleanup (target Q3 2026): enable TC001 after wrapping imports; verify no circular
+    #   Cleanup (target Q1 2027): enable TC001 after wrapping imports; verify no circular
     #   import regressions.
     "TC001",
     # UP037 (41 violations): quoted annotations (string literals used as type
     #   hints) — fixable by either adding `from __future__ import annotations`
     #   or de-quoting; strategy should be uniform across the package.
-    #   Cleanup (target Q3 2026): decide on PEP 563 vs. PEP 649 strategy, then apply.
+    #   Cleanup (target Q1 2027): decide on PEP 563 vs. PEP 649 strategy, then apply.
     "UP037",
-    # UP035 (32 violations): deprecated typing imports (`typing.List`,
-    #   `typing.Dict`, etc.) — migrate to built-in generics (`list`, `dict`).
-    #   Overlaps with UP006/UP007 migration; best done in one combined pass.
-    #   Cleanup (target Q3 2026): run `ruff check --fix --select UP035,UP006`.
-    "UP035",
-    # C420 (29 violations): unnecessary dict comprehension for an iterable
-    #   (use `dict(...)` or `{k: v for ...}` → `dict.fromkeys(...)`).
-    #   Auto-fixable but produces semantically identical code; safe to defer.
-    #   Cleanup (target Q3 2026): run `ruff check --fix --select C420`.
-    "C420",
     # RUF022: unsorted `__all__` — the codebase intentionally groups __all__
     #   entries by logical category (phases, feature domains) rather than
     #   alphabetically; sorting would destroy semantic organization.
     "RUF022",
 
     # -------------------------------------------------------------------------
-    # CI-unblock deferrals — baselined 2026-04-21, target Q3 2026
+    # CI-unblock deferrals — baselined 2026-04-21, target Q1 2027
     # These rules each have <25 hits and are safe style-class suppressions
     # while we unblock CI. Tracked in tech-debt backlog.
     # -------------------------------------------------------------------------
@@ -343,7 +323,7 @@ ignore = [
     "SIM101",  # duplicate-isinstance-call (1 hit)
 
     # -------------------------------------------------------------------------
-    # Story 1.8 CI-unblock additions — baselined 2026-04-21, target Q3 2026
+    # Story 1.8 CI-unblock additions — baselined 2026-04-21, target Q1 2027
     # These fire in pre-existing code; tracked in tech-debt backlog.
     # -------------------------------------------------------------------------
     "SIM117",  # multiple-with-statements (11 hits) — merge nested `with` blocks
@@ -383,7 +363,7 @@ known-first-party = ["agentic_v2"]
 python_version = "3.11"
 # Strict annotation enforcement is relaxed while we pay down pre-existing type
 # debt across agentic_v2/tools, integrations/mcp, and agentic_v2/integrations.
-# Ratchet these back to true as modules are cleaned (target Q3 2026).
+# Ratchet these back to true as modules are cleaned (target Q1 2027).
 disallow_untyped_defs = false
 warn_return_any = false
 warn_unused_ignores = false
@@ -394,7 +374,7 @@ exclude = ["tests/", "examples/"]
 
 # ---------------------------------------------------------------------------
 # Per-module overrides — modules with pre-existing type debt.
-# Address module-by-module and remove overrides (target Q3 2026).
+# Address module-by-module and remove overrides (target Q1 2027).
 # ---------------------------------------------------------------------------
 [[tool.mypy.overrides]]
 module = [

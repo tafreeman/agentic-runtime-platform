@@ -32,9 +32,10 @@ and hybrid score composition live in :mod:`~agentic_v2.scoring.scoring_criteria`
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Any, Callable
+from typing import Any
 
 from ..contracts import StepStatus, WorkflowResult
 from ..evaluation.normalization import adjust_for_sample_size, normalize_score

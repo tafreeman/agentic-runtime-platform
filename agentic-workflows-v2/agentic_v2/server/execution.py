@@ -43,9 +43,10 @@ import asyncio
 import logging
 import os
 import time
+from collections.abc import Awaitable, Callable, Mapping
 from datetime import UTC, datetime
 from types import SimpleNamespace
-from typing import Any, Awaitable, Callable, Mapping
+from typing import Any
 
 from ..contracts import StepStatus, WorkflowResult
 from ..core.tenant import DEFAULT_TENANT_ID

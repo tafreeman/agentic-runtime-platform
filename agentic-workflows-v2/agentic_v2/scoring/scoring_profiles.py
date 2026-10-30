@@ -25,9 +25,9 @@ Profiles are selected via the ``scoring_profile`` field in a workflow's
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Mapping
 
 
 @dataclass(frozen=True)

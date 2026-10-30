@@ -25,8 +25,9 @@ working unchanged.
 from __future__ import annotations
 
 import logging
+from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator, Callable
+from typing import Any
 
 # Shared placeholder string used by both the native MockBackend path
 # (agentic_v2.models.client.get_client) and the LangChain path

@@ -7,7 +7,8 @@ Strictly separated from transport layer (doesn't know about WebSocket vs stdio).
 
 import asyncio
 import logging
-from typing import Any, Callable, Union
+from collections.abc import Callable
+from typing import Any, Union
 
 from agentic_v2.integrations.mcp.protocol.messages import MessageBuilder
 from agentic_v2.integrations.mcp.transports.base import McpTransport

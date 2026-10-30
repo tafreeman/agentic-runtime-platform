@@ -10,8 +10,8 @@ Provides:
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
-from typing import Iterable, Iterator
 
 from .step import StepDefinition
 
@@ -168,7 +168,7 @@ class DAG:
             CycleDetectedError: With the cycle path from the repeated node
                 back to itself (e.g. ``["A", "B", "C", "A"]``).
         """
-        color: dict[str, str] = {name: "white" for name in self.steps}
+        color: dict[str, str] = dict.fromkeys(self.steps, "white")
         stack: list[tuple[str, Iterator[str]]] = []
 
         def enter(node: str) -> None:

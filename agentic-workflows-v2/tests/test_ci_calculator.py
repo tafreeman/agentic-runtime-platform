@@ -39,15 +39,15 @@ class TestComputeCiArithmetic:
     """Arithmetic (weighted mean) CI computation."""
 
     def test_all_perfect_scores(self) -> None:
-        scores = {dim: 1.0 for dim in RESEARCH_DIMENSIONS}
+        scores = dict.fromkeys(RESEARCH_DIMENSIONS, 1.0)
         assert compute_ci(scores) == pytest.approx(1.0)
 
     def test_all_zero_scores(self) -> None:
-        scores = {dim: 0.0 for dim in RESEARCH_DIMENSIONS}
+        scores = dict.fromkeys(RESEARCH_DIMENSIONS, 0.0)
         assert compute_ci(scores) == pytest.approx(0.0)
 
     def test_partial_scores(self) -> None:
-        scores = {dim: 0.5 for dim in RESEARCH_DIMENSIONS}
+        scores = dict.fromkeys(RESEARCH_DIMENSIONS, 0.5)
         assert compute_ci(scores) == pytest.approx(0.5)
 
     def test_custom_weights(self) -> None:
@@ -59,7 +59,7 @@ class TestComputeCiArithmetic:
             "recency": 0.0,
         }
         # Equal weights: 1.0 * 0.20 / 1.0 = 0.20
-        equal_weights = {dim: 0.20 for dim in RESEARCH_DIMENSIONS}
+        equal_weights = dict.fromkeys(RESEARCH_DIMENSIONS, 0.2)
         result = compute_ci(scores, weights=equal_weights)
         assert result == pytest.approx(0.20)
 
@@ -71,11 +71,11 @@ class TestComputeCiArithmetic:
         assert result == pytest.approx(0.25)
 
     def test_clamped_above_one(self) -> None:
-        scores = {dim: 5.0 for dim in RESEARCH_DIMENSIONS}
+        scores = dict.fromkeys(RESEARCH_DIMENSIONS, 5.0)
         assert compute_ci(scores) <= 1.0
 
     def test_clamped_below_zero(self) -> None:
-        scores = {dim: -5.0 for dim in RESEARCH_DIMENSIONS}
+        scores = dict.fromkeys(RESEARCH_DIMENSIONS, -5.0)
         assert compute_ci(scores) >= 0.0
 
     def test_single_dimension_with_default_weights(self) -> None:
@@ -107,18 +107,18 @@ class TestComputeCiGeometric:
     """Geometric (weighted geometric mean) CI computation."""
 
     def test_all_perfect_scores(self) -> None:
-        scores = {dim: 1.0 for dim in RESEARCH_DIMENSIONS}
+        scores = dict.fromkeys(RESEARCH_DIMENSIONS, 1.0)
         assert compute_ci(scores, method="geometric") == pytest.approx(1.0)
 
     def test_one_zero_collapses_to_zero(self) -> None:
         """Geometric mean with any zero input should be 0.0."""
-        scores = {dim: 0.8 for dim in RESEARCH_DIMENSIONS}
+        scores = dict.fromkeys(RESEARCH_DIMENSIONS, 0.8)
         scores["verification"] = 0.0
         assert compute_ci(scores, method="geometric") == pytest.approx(0.0)
 
     def test_partial_scores(self) -> None:
         """All 0.5 -> geometric mean should equal 0.5."""
-        scores = {dim: 0.5 for dim in RESEARCH_DIMENSIONS}
+        scores = dict.fromkeys(RESEARCH_DIMENSIONS, 0.5)
         result = compute_ci(scores, method="geometric")
         # prod(0.5^w_i)^(1/sum_w) = 0.5^(sum_w/sum_w) = 0.5
         assert result == pytest.approx(0.5)
@@ -138,7 +138,7 @@ class TestComputeCiGeometric:
 
     def test_all_equal_scores(self) -> None:
         """When all scores are equal, geometric == arithmetic."""
-        scores = {dim: 0.7 for dim in RESEARCH_DIMENSIONS}
+        scores = dict.fromkeys(RESEARCH_DIMENSIONS, 0.7)
         arith = compute_ci(scores, method="arithmetic")
         geo = compute_ci(scores, method="geometric")
         assert geo == pytest.approx(arith, abs=1e-9)
@@ -151,16 +151,16 @@ class TestComputeCiGeometric:
 
 class TestComputeCiValidation:
     def test_invalid_method_raises_value_error(self) -> None:
-        scores = {dim: 0.5 for dim in RESEARCH_DIMENSIONS}
+        scores = dict.fromkeys(RESEARCH_DIMENSIONS, 0.5)
         with pytest.raises(ValueError, match="method"):
             compute_ci(scores, method="harmonic")
 
     def test_arithmetic_method_accepted(self) -> None:
-        scores = {dim: 0.5 for dim in RESEARCH_DIMENSIONS}
+        scores = dict.fromkeys(RESEARCH_DIMENSIONS, 0.5)
         compute_ci(scores, method="arithmetic")  # should not raise
 
     def test_geometric_method_accepted(self) -> None:
-        scores = {dim: 0.5 for dim in RESEARCH_DIMENSIONS}
+        scores = dict.fromkeys(RESEARCH_DIMENSIONS, 0.5)
         compute_ci(scores, method="geometric")  # should not raise
 
 
@@ -171,7 +171,7 @@ class TestComputeCiValidation:
 
 class TestCheckGate:
     def _all_high_scores(self) -> dict[str, float]:
-        return {dim: 0.80 for dim in RESEARCH_DIMENSIONS}
+        return dict.fromkeys(RESEARCH_DIMENSIONS, 0.8)
 
     def test_all_pass(self) -> None:
         result = check_gate(
@@ -253,7 +253,7 @@ class TestCheckGate:
         assert result.no_regression is True
 
     def test_custom_high_threshold(self) -> None:
-        scores = {dim: 0.80 for dim in RESEARCH_DIMENSIONS}
+        scores = dict.fromkeys(RESEARCH_DIMENSIONS, 0.8)
         # With higher threshold, 0.80 should fail
         result = check_gate(
             scores, high_threshold=0.90, recent_source_count=5, min_recent_sources=3
@@ -280,7 +280,7 @@ class TestCheckGate:
 class TestGateResultFrozen:
     def test_gate_result_is_frozen_dataclass(self) -> None:
         result = check_gate(
-            {dim: 0.80 for dim in RESEARCH_DIMENSIONS},
+            dict.fromkeys(RESEARCH_DIMENSIONS, 0.8),
             recent_source_count=5,
             min_recent_sources=3,
         )

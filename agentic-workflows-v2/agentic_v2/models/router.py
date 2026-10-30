@@ -18,9 +18,9 @@ Model identifiers use a ``provider:model_name`` format, e.g.
 """
 
 import asyncio
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from enum import IntEnum
-from typing import Callable, Sequence
 
 from .model_registry import (
     CostLaneCeilingExceededError,
@@ -306,7 +306,7 @@ class ModelRouter:
             Dict mapping model -> available
         """
         if not self._health_checker:
-            return {m: True for m in models}
+            return dict.fromkeys(models, True)
 
         async def check_one(model: str) -> tuple[str, bool]:
             # Run sync checker in a worker thread (idiomatic 3.9+ replacement for

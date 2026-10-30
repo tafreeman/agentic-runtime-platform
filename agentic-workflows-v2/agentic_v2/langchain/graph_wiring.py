@@ -24,9 +24,10 @@ import ast as python_ast
 import json
 import logging
 import re
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 try:
     from langchain_core.messages import AIMessage, HumanMessage

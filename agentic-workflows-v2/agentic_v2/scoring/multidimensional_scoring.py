@@ -33,11 +33,12 @@ compatibility with the workflow YAML and the ``final_synthesis`` step.
 from __future__ import annotations
 
 import logging
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import Enum
 from types import MappingProxyType
-from typing import Any, Mapping
+from typing import Any
 
 from agentic_v2.evaluation.normalization import clamp01
 from agentic_v2.workflows.lib import ci_calculator

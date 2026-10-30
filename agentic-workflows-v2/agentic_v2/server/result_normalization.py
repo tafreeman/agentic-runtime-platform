@@ -30,9 +30,10 @@ from __future__ import annotations
 
 import inspect
 import logging
+from collections.abc import Mapping
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 from fastapi import HTTPException
 

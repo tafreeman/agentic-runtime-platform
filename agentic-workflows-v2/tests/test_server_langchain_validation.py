@@ -14,8 +14,8 @@ from __future__ import annotations
 
 import sys
 import types
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Generator
 
 import pytest
 

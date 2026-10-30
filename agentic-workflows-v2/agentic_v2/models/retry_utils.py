@@ -15,8 +15,9 @@ from __future__ import annotations
 import asyncio
 import logging
 import random
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 

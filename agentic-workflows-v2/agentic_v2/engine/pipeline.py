@@ -19,9 +19,10 @@ Key differences from DAG execution:
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Awaitable, Callable
+from typing import Any
 
 from ..contracts import StepResult, StepStatus, WorkflowResult
 from .context import ExecutionContext

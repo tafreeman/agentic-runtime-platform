@@ -32,8 +32,9 @@ import os
 import secrets
 import time
 from collections import defaultdict, deque
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Callable, Literal
+from typing import TYPE_CHECKING, Literal
 from urllib.parse import urlparse
 
 from fastapi.responses import JSONResponse

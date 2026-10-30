@@ -16,8 +16,9 @@ installed (registration simply won't occur).
 from __future__ import annotations
 
 import logging
+from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
 from pathlib import Path
-from typing import Any, AsyncIterator, Awaitable, Callable, Mapping
+from typing import Any
 
 from ...contracts import WorkflowResult
 from ...core.errors import ConfigurationError

@@ -6,7 +6,8 @@ into a mutable aggregate state dict produced by :func:`_stream_and_run`.
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 
 def _merge_stream_state(

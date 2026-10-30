@@ -1,7 +1,8 @@
 """Pytest configuration and shared fixtures for MCP integration tests."""
 
 import asyncio
-from typing import Any, AsyncGenerator
+from collections.abc import AsyncGenerator
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest

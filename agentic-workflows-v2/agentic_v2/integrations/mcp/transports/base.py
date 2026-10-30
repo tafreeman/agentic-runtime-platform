@@ -7,7 +7,7 @@ logic.
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Callable
+from collections.abc import Callable
 
 from agentic_v2.integrations.mcp.types import (
     JsonRpcMessage,
