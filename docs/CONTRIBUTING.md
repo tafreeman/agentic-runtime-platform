@@ -261,10 +261,16 @@ python -m ruff format --check src/
 python -m mypy src/agentic_v2_eval --config-file pyproject.toml
 ```
 
-The live evaluation gate is opt-in: add the `run-live-eval` label to a pull
-request that changes live provider routing or judge prompts. With no provider
-secrets configured it exits successfully as skipped, which is not evidence of
-a live pass.
+The first command above is a scorer regression gate: it scores committed
+results and never calls a model, so it says nothing about model output quality.
+The live evaluation gate (`--live`) runs nightly with `--require-live`, so a
+skip (no provider key) fails. Provider secrets reach only scheduled and manual
+runs: a pull request runs its own code, so a `run-live-eval`-labelled pull
+request gets no keys and exits as skipped, which is not evidence of a live
+pass. To run the live gate against a branch that changes live provider routing
+or judge prompts, start `eval-package-ci.yml` with "Run workflow" on that
+branch. Either way, a case fails if any step fell back to placeholder output
+(no model answered).
 
 Optional extras. These test modules skip themselves when the extra is missing,
 so a green run proves nothing until the extra is installed. Install it and

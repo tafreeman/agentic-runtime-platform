@@ -32,6 +32,21 @@ def case(gate):
     return gate._load_json(gate._DEFAULT_CASES)[0]
 
 
+def _served(golden):
+    """The golden as a live run that reached a model: the committed goldens were
+    captured under AGENTIC_NO_LLM=1, so their agent steps hold the
+    ``llm_unavailable`` placeholder the live gate rejects."""
+    steps = [
+        (
+            {**step, "output_data": {}}
+            if (step.get("output_data") or {}).get("status") == "llm_unavailable"
+            else step
+        )
+        for step in golden["steps"]
+    ]
+    return {**golden, "steps": steps}
+
+
 def test_committed_scores_and_json_contract(gate):
     cases = gate._load_json(gate._DEFAULT_CASES)
     results = [gate.score_case(case, gate._DEFAULT_CASES.parent, 0.8) for case in cases]
@@ -148,6 +163,13 @@ assert gate.main([]) == 0
 assert gate.main(['--threshold', '.99']) == 1
 case = gate._load_json(gate._DEFAULT_CASES)[0]
 golden = gate._load_json(gate._DEFAULT_CASES.parent / case['golden_output_path'])
+# The golden was captured under AGENTIC_NO_LLM=1; clear its placeholder steps so
+# it stands in for a live run that reached a model.
+golden['steps'] = [
+    {**s, 'output_data': {}}
+    if (s.get('output_data') or {}).get('status') == 'llm_unavailable' else s
+    for s in golden['steps']
+]
 workflows = ModuleType('agentic_v2.workflows')
 workflows.run_workflow = AsyncMock(return_value=SimpleNamespace(model_dump=lambda **kw: golden))
 sys.modules['agentic_v2.workflows'] = workflows
@@ -175,8 +197,21 @@ def test_null_case_threshold_uses_global(gate, case):
     case["threshold"] = None
     result = gate.score_case(case, gate._DEFAULT_CASES.parent, 0.9)
     assert result["passed"] and result["threshold"] == 0.9
-    golden = gate._load_json(gate._DEFAULT_CASES.parent / case["golden_output_path"])
+    golden = _served(
+        gate._load_json(gate._DEFAULT_CASES.parent / case["golden_output_path"])
+    )
     mocked = SimpleNamespace(model_dump=lambda **kwargs: golden)
     with patch("agentic_v2.workflows.run_workflow", AsyncMock(return_value=mocked)):
         result = asyncio.run(gate.score_case_live(case, 0.9))
     assert result["passed"] and result["threshold"] == 0.9
+
+
+def test_committed_golden_replayed_as_live_is_rejected(gate, case):
+    """The committed code_review golden is placeholder output; replayed through
+    the live path it must fail, not score 1.0."""
+    golden = gate._load_json(gate._DEFAULT_CASES.parent / case["golden_output_path"])
+    mocked = SimpleNamespace(model_dump=lambda **kwargs: golden)
+    with patch("agentic_v2.workflows.run_workflow", AsyncMock(return_value=mocked)):
+        result = asyncio.run(gate.score_case_live(case, 0.8))
+    assert not result["passed"]
+    assert "reached no model" in result["error"]

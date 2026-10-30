@@ -198,8 +198,9 @@ jobs:
           path: agentic-v2-eval/dist/
 
   eval-golden-gate:
-    # Scored, deterministic, key-free golden eval gate. Scores the committed
-    # dataset under datasets/default/ through the real runtime CriterionScorer and
+    # Scorer regression gate: deterministic and key-free, it guards the scoring
+    # path, not model output quality (that is eval-live-gate's job). Scores the
+    # committed dataset under datasets/default/ through the real runtime CriterionScorer and
     # exits non-zero when the weighted code-rubric score drops below the
     # committed threshold (0.80). AGENTIC_NO_LLM=1 is a fail-closed safety belt;
     # the gate path is pure arithmetic over committed JSON and never builds a
@@ -252,11 +253,18 @@ jobs:
     # behavior at the script level -- the two are independent, complementary
     # guards against running this unintentionally.
     #
-    # No API keys are assumed to be configured in this repo's secrets; if
-    # none of ANTHROPIC_API_KEY / OPENAI_API_KEY / GEMINI_API_KEY /
-    # AZURE_OPENAI_API_KEY / AZURE_FOUNDRY_API_KEY are set as repo secrets,
-    # eval_gate.py --live itself exits 0 with a clear SKIPPED message rather
-    # than failing the job -- see the --live docstring in scripts/eval_gate.py.
+    # Scheduled and manual runs pass --require-live: they exist to call a real
+    # model, so a run with no usable key (none of the provider secrets below
+    # set) FAILS instead of reporting a green skip, and every skip is written
+    # to the job summary. A labelled PR keeps the plain skip (exit 0). A run
+    # whose steps fall back to the no-model placeholder fails its case either
+    # way -- see the --live docstring in scripts/eval_gate.py.
+    #
+    # Provider secrets reach ONLY schedule and workflow_dispatch runs. A
+    # labelled pull_request run executes the PR's own code, so it gets no keys
+    # (a same-repo branch could otherwise read them) and therefore skips. To
+    # run the live gate against a branch, use "Run workflow" on that branch:
+    # dispatch needs write access, which is the trust boundary here.
     runs-on: ubuntu-latest
     if: >
       (github.event_name == 'pull_request' &&
@@ -298,12 +306,14 @@ jobs:
           # relying on a specific falsy string). Provider keys come from repo
           # secrets; any that are not configured resolve to an empty string,
           # which scripts/eval_gate.py's _has_live_provider_credentials()
-          # treats the same as "not configured" -- so this step degrades to a
-          # clean skip rather than a failure when no secrets are set.
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
-          AZURE_FOUNDRY_API_KEY: ${{ secrets.AZURE_FOUNDRY_API_KEY }}
+          # treats the same as "not configured". Each is withheld (empty) on
+          # pull_request events -- see the job comment above.
+          ANTHROPIC_API_KEY: ${{ github.event_name != 'pull_request' && secrets.ANTHROPIC_API_KEY || '' }}
+          OPENAI_API_KEY: ${{ github.event_name != 'pull_request' && secrets.OPENAI_API_KEY || '' }}
+          GEMINI_API_KEY: ${{ github.event_name != 'pull_request' && secrets.GEMINI_API_KEY || '' }}
+          AZURE_OPENAI_API_KEY: ${{ github.event_name != 'pull_request' && secrets.AZURE_OPENAI_API_KEY || '' }}
+          AZURE_FOUNDRY_API_KEY: ${{ github.event_name != 'pull_request' && secrets.AZURE_FOUNDRY_API_KEY || '' }}
+          OLLAMA_API_KEY: ${{ github.event_name != 'pull_request' && secrets.OLLAMA_API_KEY || '' }}
+          REQUIRE_LIVE: ${{ github.event_name != 'pull_request' && '--require-live' || '' }}
         run: |
-          python scripts/eval_gate.py --cases datasets/default/golden_cases.json --threshold 0.80 --live
+          python scripts/eval_gate.py --cases datasets/default/golden_cases.json --threshold 0.80 --live $REQUIRE_LIVE
