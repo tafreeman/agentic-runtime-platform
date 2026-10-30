@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased - `execute_python` honesty: best-effort denylist, not a sandbox
+
+- The `CodeExecutionTool` docstring and description no longer claim "no file/network
+  access" or a Docker sandbox. Neither is a real boundary: the denylist runs in the
+  child, rlimits are POSIX-only, and there is no container backend. New
+  `docs/KNOWN_LIMITATIONS.md` section 4.12; a test pins `requires_approval is True`.
+
 ## Unreleased - CI pruning: fewer jobs, same required checks
 
 - **No required status check changed.** Every required context keeps its job id

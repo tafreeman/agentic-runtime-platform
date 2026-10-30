@@ -104,6 +104,12 @@ class TestCodeSafetyChecker:
         assert result is not None
 
 
+def test_code_execution_requires_approval() -> None:
+    """The denylist is not a boundary; the approval gate is the real control."""
+    assert CodeExecutionTool().requires_approval is True
+    assert CodeExecutionTool(sandbox=False).requires_approval is True
+
+
 class TestCodeExecution:
     """Tests for CodeExecutionTool.execute."""
 

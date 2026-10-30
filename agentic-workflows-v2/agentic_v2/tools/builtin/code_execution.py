@@ -1,11 +1,19 @@
-"""Tier 0 Code execution tool with sandboxing.
+"""Tier 0 Code execution tool: best-effort denylist, approval-gated.
 
-Provides a structured tool for running Python code with:
-- Configurable timeout and memory limits
+Provides a structured tool for running Python code in a child process with:
+- Configurable timeout
 - stdout/stderr capture
 - Return-value extraction
-- Restricted builtins mode (no file/network access)
-- Optional Docker sandbox
+- A best-effort denylist (AST/pattern checks for risky imports, attributes and
+  builtins) applied before the code runs
+- Resource limits (memory, process count) applied via ``setrlimit`` on POSIX
+  only; they are skipped on Windows
+
+This is **not a security boundary**. The denylist can be bypassed and the child
+runs with the server's own file and network access; there is no container or
+Docker backend. The real control is ``requires_approval`` (human approval gate),
+so run it only for code you would run yourself. See
+``docs/KNOWN_LIMITATIONS.md`` section 4.12.
 """
 
 from __future__ import annotations
@@ -45,7 +53,8 @@ class CodeExecutionTool(BaseTool):
     def description(self) -> str:
         return (
             "Execute Python code and capture stdout, stderr, and return value. "
-            "Code runs in a restricted sandbox by default."
+            "Code runs in a child process behind a best-effort denylist (not a "
+            "security boundary) and requires approval."
         )
 
     @property
