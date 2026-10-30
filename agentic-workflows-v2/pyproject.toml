@@ -107,7 +107,7 @@ tracing = [
     "prometheus-client>=0.17,<1",
 ]
 claude = [
-    "anthropic>=0.40,<2",
+    "anthropic>=0.40,<3",
     "claude-agent-sdk>=0.2.121,<1",
 ]
 devex = [
