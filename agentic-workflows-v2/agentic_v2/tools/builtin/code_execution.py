@@ -1,11 +1,19 @@
-"""Tier 0 Code execution tool with sandboxing.
+"""Tier 0 Code execution tool: best-effort denylist, approval-gated.
 
-Provides a structured tool for running Python code with:
-- Configurable timeout and memory limits
+Provides a structured tool for running Python code in a child process with:
+- Configurable timeout
 - stdout/stderr capture
 - Return-value extraction
-- Restricted builtins mode (no file/network access)
-- Optional Docker sandbox
+- A best-effort denylist (AST/pattern checks for risky imports, attributes and
+  builtins) applied before the code runs
+- Resource limits (memory, process count) applied via ``setrlimit`` on POSIX
+  only; they are skipped on Windows
+
+This is **not a security boundary**. The denylist can be bypassed and the child
+runs with the server's own file and network access; there is no container or
+Docker backend. The real control is ``requires_approval`` (human approval gate),
+so run it only for code you would run yourself. See
+``docs/KNOWN_LIMITATIONS.md`` section 4.12.
 """
 
 from __future__ import annotations
@@ -15,6 +23,7 @@ import os
 import sys
 import tempfile
 import textwrap
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -27,10 +36,25 @@ _REAP_TIMEOUT_S = 5.0
 class CodeExecutionTool(BaseTool):
     """Execute Python code in a controlled environment."""
 
-    def __init__(self, *, allow_imports: bool = True, sandbox: bool = True):
+    def __init__(
+        self,
+        *,
+        allow_imports: bool = True,
+        denylist: bool = True,
+        sandbox: bool | None = None,
+    ) -> None:
         super().__init__()
+        if sandbox is not None:
+            # Deprecated alias: the flag only ever toggled the denylist, it
+            # never isolated the child process.
+            warnings.warn(
+                "CodeExecutionTool(sandbox=...) is deprecated; use denylist=...",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            denylist = sandbox
         self._allow_imports = allow_imports
-        self._sandbox = sandbox
+        self._denylist = denylist
 
     @property
     def name(self) -> str:
@@ -45,7 +69,8 @@ class CodeExecutionTool(BaseTool):
     def description(self) -> str:
         return (
             "Execute Python code and capture stdout, stderr, and return value. "
-            "Code runs in a restricted sandbox by default."
+            "Code runs in a child process behind a best-effort denylist (not a "
+            "security boundary) and requires approval."
         )
 
     @property
@@ -168,7 +193,7 @@ class CodeExecutionTool(BaseTool):
 
     def _check_code_safety(self, code: str) -> str | None:
         """Return an error message if code is unsafe, else None."""
-        if not self._sandbox:
+        if not self._denylist:
             return None
 
         code_lower = code.lower()
@@ -218,7 +243,7 @@ class CodeExecutionTool(BaseTool):
 
     @classmethod
     def _subprocess_env(cls) -> dict[str, str]:
-        """Build a minimal environment for the sandbox child process."""
+        """Build a minimal environment for the child process."""
         env = {
             key: value
             for key, value in os.environ.items()
@@ -232,8 +257,8 @@ class CodeExecutionTool(BaseTool):
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _sandbox_preexec() -> None:
-        """Set resource limits in the sandbox child process (POSIX only)."""
+    def _child_preexec() -> None:
+        """Set resource limits in the child process (POSIX only)."""
         import resource
 
         # 512 MB virtual address space limit
@@ -259,13 +284,13 @@ class CodeExecutionTool(BaseTool):
     async def execute(
         self, code: str, timeout: float = 30.0, **kwargs: Any
     ) -> ToolResult:
-        """Execute Python code in a sandboxed subprocess."""
+        """Execute Python code in a child process (denylist-checked, not isolated)."""
         # Safety check
         safety_error = self._check_code_safety(code)
         if safety_error:
             return ToolResult(success=False, error=safety_error, tool_name=self.name)
 
-        # Write code to a temp file and run in subprocess for isolation
+        # Write code to a temp file and run it in a separate Python process
         wrapper = textwrap.dedent(f"""\
             import sys, json, io, traceback
 
@@ -299,7 +324,8 @@ class CodeExecutionTool(BaseTool):
                 def _constrained_import(name, _g=None, _l=None, fromlist=(), level=0):
                     if name.split(".")[0] in _dangerous_mods:
                         raise ImportError(
-                            f"Import of '{{name}}' is not permitted in sandbox mode"
+                            f"Import of '{{name}}' is blocked by the "
+                            "execute_python denylist"
                         )
                     return _real_import(name, _g, _l, fromlist, level)
 
@@ -335,7 +361,7 @@ class CodeExecutionTool(BaseTool):
 
             proc: asyncio.subprocess.Process | None = None
             spawn_kwargs: dict[str, Any] = (
-                {"preexec_fn": self._sandbox_preexec} if os.name != "nt" else {}
+                {"preexec_fn": self._child_preexec} if os.name != "nt" else {}
             )
             try:
                 proc = await asyncio.create_subprocess_exec(

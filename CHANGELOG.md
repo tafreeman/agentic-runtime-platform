@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased - `execute_python` honesty: best-effort denylist, not a sandbox
+
+- The `CodeExecutionTool` docstring and description no longer claim "no file/network
+  access" or a Docker sandbox. Neither is a real boundary: the denylist runs in the
+  child, rlimits are POSIX-only, and there is no container backend. New
+  `docs/KNOWN_LIMITATIONS.md` section 4.12; a test pins `requires_approval is True`.
+- The constructor flag is renamed `sandbox=` → `denylist=`, since it only toggles the
+  denylist. `sandbox=` still works and emits a `DeprecationWarning`. `_sandbox_preexec`
+  is now `_child_preexec`, and the in-child import error says "blocked by the
+  execute_python denylist" instead of "not permitted in sandbox mode".
+
 ## Unreleased - Strict mypy extended to tools/builtin, security and governance
 
 - Removed the `ignore_errors = true` mypy override for `agentic_v2.tools.builtin.*`
