@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased - Live eval gate can no longer pass without calling a model
+
+- **A live run that reached no model now fails.** When every model in a tier's
+  chain fails, `agent_resolver` returns a placeholder (`status:
+  "llm_unavailable"`) and the step still reports success; `--live` scored that
+  structure and could pass. `eval_gate.py --live` now fails the case and names
+  the placeholder steps.
+- **`--require-live`.** A skipped live run (no provider key, or
+  `AGENTIC_NO_LLM` set) exits 1 under this flag. The nightly and manual
+  `eval-live-gate` runs pass it; labelled pull requests keep the plain skip.
+  Every skip is also written to the GitHub Actions job summary.
+- **`OLLAMA_API_KEY` counts as a live credential** and is passed to the job, so
+  `ollama:` ids that are not pulled locally can reach ollama.com (ADR-051).
+- **The PR-time gate is labelled for what it is.** `eval-golden-gate` is a
+  scorer regression gate over committed results; the docs no longer imply it
+  measures model output quality.
+
 ## Unreleased - CI pruning: fewer jobs, same required checks
 
 - **No required status check changed.** Every required context keeps its job id

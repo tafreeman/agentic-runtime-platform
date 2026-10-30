@@ -116,6 +116,15 @@ and the new value has independent review.
 ## Live gate
 
 `scripts/eval_gate.py --live` reruns cases through the native adapter and scores
-the results. It is separate from the key-free committed-golden gate and may
-require configured provider credentials. The CI schedule and trigger rules are
-defined in `.github/workflows/eval-package-ci.yml`.
+the results. It is separate from the key-free committed-golden gate, which is a
+scorer regression gate: it checks the scoring path, not model output. `--live`
+needs a configured provider credential (`OLLAMA_API_KEY` counts). A run whose
+steps return the `llm_unavailable` placeholder fails its case, because the
+structural score cannot tell a placeholder from a real reply. `--require-live`
+turns a skipped run (no key, or `AGENTIC_NO_LLM` set) into a failure; the
+nightly CI run uses it. The CI schedule and trigger rules are defined in
+`.github/workflows/eval-package-ci.yml`.
+
+The committed results here were captured under `AGENTIC_NO_LLM=1`, so
+`code_review_output.json` holds placeholder agent output. Replayed through
+`--live` it fails by design.
