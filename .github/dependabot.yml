@@ -1,6 +1,6 @@
 version: 2
 
-# Grouping: each ecosystem batches all of a week's minor/patch bumps into ONE
+# Grouping: each ecosystem batches all of a month's minor/patch bumps into ONE
 # pull request; a major bump is never folded into that grouped PR — it opens as
 # its own ungrouped PR per package, per the major-version policy below. This
 # collapses the ~16 individual PRs we used to get into ~5 grouped PRs, and
@@ -43,17 +43,22 @@ version: 2
 # agentic-workflows-v2, where the extras are declared — so both of those pip
 # blocks carry a per-name ignore for the two packages instead of the old
 # blanket wildcard.
+# Cadence: monthly (start of month, UTC times below) with a 7-day cooldown
+# (30 days for majors) so a release superseded within days never opens a PR.
+# Cooldown and these limits apply to version updates only; security PRs are
+# unaffected and still open as soon as an advisory lands.
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "monthly"
       time: "05:00"
+    cooldown:
+      default-days: 7
     labels:
       - "dependencies"
       - "ci"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 2
     groups:
       github-actions:
         patterns:
@@ -66,13 +71,15 @@ updates:
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "monthly"
       time: "05:15"
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
     labels:
       - "dependencies"
       - "python"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
     groups:
       # Order matters: Dependabot assigns each dependency to the FIRST group
       # whose patterns match, so the catch-all must stay last.
@@ -119,13 +126,15 @@ updates:
   - package-ecosystem: "pip"
     directory: "/agentic-workflows-v2"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "monthly"
       time: "05:30"
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
     labels:
       - "dependencies"
       - "python"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
     groups:
       pip-runtime:
         patterns:
@@ -144,13 +153,15 @@ updates:
   - package-ecosystem: "pip"
     directory: "/agentic-v2-eval"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "monthly"
       time: "05:45"
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
     labels:
       - "dependencies"
       - "python"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
     groups:
       pip-eval:
         patterns:
@@ -163,13 +174,15 @@ updates:
   - package-ecosystem: "npm"
     directory: "/agentic-workflows-v2/ui"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "monthly"
       time: "06:00"
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
     labels:
       - "dependencies"
       - "frontend"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
     groups:
       ui-npm:
         patterns:
@@ -180,13 +193,14 @@ updates:
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "monthly"
       time: "06:15"
+    cooldown:
+      default-days: 7
     labels:
       - "dependencies"
       - "docker"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
     groups:
       docker:
         patterns:
