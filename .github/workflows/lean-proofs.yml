@@ -130,7 +130,7 @@ jobs:
       AGENTIC_NO_LLM: '1'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-      - uses: leanprover/lean-action@fe408643ea7367d8c0404a8be3975bb145f5fb64  # v1.7.0
+      - uses: leanprover/lean-action@ba3fdfe5c4476c925da13bf11a005ddb47e47aee  # v1.7.1
         with:
           lake-package-directory: proofs
           leanchecker: 'true'
