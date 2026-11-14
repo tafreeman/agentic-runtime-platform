@@ -294,7 +294,7 @@ openai==3.35.1
     # via
     #   agentic-tools
     #   langchain-openai
-opentelemetry-api==1.45.1
+opentelemetry-api==1.45.2
     # via
     #   anthropic
     #   fastapi
