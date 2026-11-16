@@ -1,52 +1,40 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useRuns, useRunsSummary } from "../hooks/useRuns";
 import { useWorkflows } from "../hooks/useWorkflows";
 import { useHotkeys } from "../hooks/useHotkeys";
+import { useApiAvailability } from "../hooks/useApiAvailability";
 import { listAgents } from "../api/client";
-import BBox from "../components/common/BBox";
 import ConsoleStatus from "../components/common/ConsoleStatus";
+import Scoreline from "../components/common/Scoreline";
+import StatusBadge from "../components/common/StatusBadge";
+import TierMark from "../components/common/TierMark";
 import GettingStartedCard from "../components/dashboard/GettingStartedCard";
 import BTopBar from "../components/layout/BTopBar";
+import InlineError from "../components/states/InlineError";
+import NoData from "../components/states/NoData";
+import { Button } from "../components/ui/button";
 import type { AgentInfo, RunSummary } from "../api/types";
 import { gradeColorClass, gradeLetter } from "../lib/grades";
 
-const HEADING_FONT = { fontFamily: "var(--b-font-heading)" } as const;
+/** Section heading: sans section title, sentence case (no boxed panel). */
+const SECTION_HEADING_CLASS =
+  "m-0 whitespace-nowrap font-sans text-[15px] font-semibold text-el-ink";
 
-/** Token-driven card shell matching the brief's CARD pattern. */
-const CARD_STYLE = {
-  border: "var(--b-bw) solid rgb(var(--b-line))",
-  borderRadius: "var(--b-rad-lg)",
-} as const;
-
-const CLAY_CARD_STYLE = {
-  border: "var(--b-bw) solid rgb(var(--b-clay))",
-  borderRadius: "var(--b-rad-lg)",
-} as const;
-
-const TIER_BADGE_STYLE = {
-  border: "1px solid currentColor",
-  borderRadius: "var(--b-rad-sm)",
-} as const;
-
-/** Bracketed mono status glyph, colored by run status. */
-function statusAscii(status: string | null | undefined): string {
-  if (status === "success") return "[ ok ]";
-  if (status === "failed" || status === "error") return "[fail]";
-  if (status === "running" || status === "in_progress") return "[ •• ]";
-  if (status === "cancelled") return "[skip]";
-  return `[${status ?? "?"}]`;
-}
-
-function statusColorClass(status: string | null | undefined): string {
-  if (status === "success") return "text-b-green";
-  if (status === "failed" || status === "error") return "text-b-red";
-  if (status === "running" || status === "in_progress") return "text-b-blue";
-  if (status === "cancelled") return "text-b-amber";
-  return "text-b-text-dim";
-}
+/**
+ * Quiet header link ("View all"). Stays visually small; the ::after box
+ * expands the hit area to ≥36px tall without changing the row height.
+ */
+const SECTION_LINK_CLASS =
+  "focus-ring relative rounded-sm text-xs text-el-secondary underline-offset-2 after:absolute after:-inset-x-2 after:-inset-y-3 hover:text-el-ink hover:underline";
 
 /** A short human description for a run row (workflow context, not internal id). */
 function runDescription(run: RunSummary): string {
@@ -54,25 +42,11 @@ function runDescription(run: RunSummary): string {
   const failed = run.failed_step_count ?? 0;
   if (typeof steps === "number" && steps > 0) {
     const stepLabel = `${steps} step${steps === 1 ? "" : "s"}`;
+    // The status itself is the row's marker; repeat only the failure count.
     if (failed > 0) return `${stepLabel} · ${failed} failed`;
-    return `${stepLabel} · ${run.status ?? "unknown"}`;
+    return stepLabel;
   }
   return run.run_id ?? run.filename;
-}
-
-/** Map a tier string ("1".."4", "tier3", …) to a status color class. */
-function tierColorClass(tier: string | null | undefined): string {
-  const t = (tier ?? "").toLowerCase().replace(/[^0-9]/g, "");
-  if (t === "4") return "text-b-clay";
-  if (t === "3") return "text-b-amber";
-  if (t === "1") return "text-b-blue";
-  return "text-b-blue";
-}
-
-/** Short tier badge label, e.g. "2" → "T2". */
-function tierBadgeLabel(tier: string | null | undefined): string {
-  const t = (tier ?? "").toLowerCase().replace(/[^0-9]/g, "");
-  return t ? `T${t}` : "T?";
 }
 
 /** Best-effort provider label from a model/agent name like "openai:gpt-4o". */
@@ -86,76 +60,15 @@ function providerLabel(agent: AgentInfo): string {
   return tier ? `tier ${tier}` : "agent";
 }
 
-function StatCard({
-  label,
-  value,
-  unit,
-  onClick,
-}: Readonly<{
-  label: string;
-  value: string;
-  unit?: string;
-  onClick: () => void;
-}>) {
+function ScorelineSkeleton() {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={CARD_STYLE}
-      className="flex flex-col gap-[14px] bg-b-bg1 p-[22px] text-left transition-colors hover:border-b-clay focus:outline-hidden focus:ring-1 focus:ring-b-clay"
-    >
-      <div className="flex items-center justify-between">
-        <span className="font-mono text-[10.5px] uppercase tracking-[1.5px] text-b-text-faint">
-          {label}
-        </span>
-        <span className="text-[13px] text-b-text-faint">→</span>
-      </div>
-      <div
-        style={HEADING_FONT}
-        className="text-[46px] font-semibold leading-none tracking-[-1.5px] tabular-nums text-b-text"
-      >
-        {value}
-        {unit && <span className="text-[26px] text-b-text-dim">{unit}</span>}
-      </div>
-    </button>
-  );
-}
-
-/** The token spend card carries the clay top-bar + a live status dot. */
-function TokensCard({
-  value,
-  onClick,
-}: Readonly<{ value: string; onClick: () => void }>) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={CLAY_CARD_STYLE}
-      className="relative flex flex-col gap-[14px] overflow-hidden bg-b-bg1 p-[22px] text-left transition-colors hover:border-b-clay focus:outline-hidden focus:ring-1 focus:ring-b-clay"
-    >
-      <div className="absolute left-0 right-0 top-0 h-[3px] bg-b-clay" />
-      <div className="flex items-center justify-between">
-        <span className="flex items-center gap-[7px] font-mono text-[10.5px] uppercase tracking-[1.5px] text-b-clay">
-          <span className="h-[6px] w-[6px] flex-none rounded-full bg-b-clay animate-b-pulse" />
-          tokens (30d)
-        </span>
-        <span className="text-[13px] text-b-clay">→</span>
-      </div>
-      <div
-        style={HEADING_FONT}
-        className="text-[46px] font-semibold leading-none tracking-[-1.5px] tabular-nums text-b-text"
-      >
-        {value}
-      </div>
-    </button>
-  );
-}
-
-function StatCardSkeleton() {
-  return (
-    <div style={CARD_STYLE} className="bg-b-bg1 p-[22px]">
-      <div className="h-[11px] w-20 animate-pulse rounded bg-b-bg3" />
-      <div className="mt-[14px] h-[40px] w-24 animate-pulse rounded bg-b-bg3" />
+    <div className="grid grid-cols-1 border-y border-el-divider sm:grid-cols-3">
+      {["sk-stat-0", "sk-stat-1", "sk-stat-2"].map((k) => (
+        <div key={k} className="px-1 py-4 sm:px-5 sm:first:pl-0">
+          <div className="h-3 w-20 animate-pulse rounded-sm bg-el-hover" />
+          <div className="mt-3 h-8 w-24 animate-pulse rounded-sm bg-el-hover" />
+        </div>
+      ))}
     </div>
   );
 }
@@ -170,6 +83,8 @@ export default function DashboardPage() {
     queryFn: listAgents,
     retry: false,
   });
+  const { apiDown, reason: apiDownReason } = useApiAvailability();
+  const newRunReasonId = useId();
   const summary = summaryQuery.data;
   const runs = runsQuery.data;
   const workflows = workflowsQuery.data;
@@ -193,8 +108,11 @@ export default function DashboardPage() {
   }, []);
 
   // "n" mirrors the header button: both land on /workflows, where a new run
-  // is actually triggered.
-  const goWorkflows = useCallback(() => navigate("/workflows"), [navigate]);
+  // is actually triggered. Both are inert while the API is down — a run
+  // can't be started then, and the button says why.
+  const goWorkflows = useCallback(() => {
+    if (!apiDown) navigate("/workflows");
+  }, [apiDown, navigate]);
 
   useHotkeys({ new: goWorkflows, filter: focusFilter, escape: clearFilter });
 
@@ -209,36 +127,47 @@ export default function DashboardPage() {
     );
   }, [runs, filter]);
 
-  const totalRuns = summary?.total_runs ?? 0;
-  const success = summary?.success ?? 0;
+  // KPIs render "—" (NoData) whenever there is no underlying data — the
+  // summary is loading/failed, or a rate over zero runs — never a fake 0.
+  const totalRuns = summary?.total_runs;
+  const success = summary?.success;
   const successRate =
-    totalRuns > 0 ? Math.min(100, (success / totalRuns) * 100) : 0;
-  const activeCount = (runs ?? []).filter(
+    typeof totalRuns === "number" && totalRuns > 0 && typeof success === "number"
+      ? Math.min(100, (success / totalRuns) * 100)
+      : null;
+  const activeCount = runs?.filter(
     (r) => r.status === "running" || r.status === "in_progress",
   ).length;
 
-  const tokensValue =
-    typeof summary?.tokens_30d === "number"
-      ? summary.tokens_30d.toLocaleString()
-      : "—";
+  const tokens30d = summary?.tokens_30d;
 
   const modelRows = (agents ?? []).slice(0, 6);
 
   // Header status line — real data only: workflow count, live-run count, and
   // when the runs list actually last refreshed (no fake workspace/sync copy).
-  const workflowCount = workflows?.length ?? 0;
   const updatedLabel = runsQuery.dataUpdatedAt
     ? new Date(runsQuery.dataUpdatedAt).toLocaleTimeString()
     : "—";
 
-  const hasNoRuns = (runs?.length ?? 0) === 0;
+  // One notice above the data, at most:
+  //  - API down → none here; the shell's ApiOfflineBanner says so once and
+  //    whatever data is already loaded stays visible.
+  //  - a partial failure while the API is up → one compact InlineError with
+  //    the remedy (it collapses to a quiet note if the error itself says the
+  //    API is unreachable before the health check notices).
+  //  - otherwise, and only when the workspace is genuinely empty (runs loaded
+  //    and there are none), the getting-started guide.
   const loadError =
     runsQuery.error ?? summaryQuery.error ?? workflowsQuery.error ?? null;
-  let loadErrorMessage: string | null = null;
-  if (loadError instanceof Error) {
-    loadErrorMessage = loadError.message;
-  } else if (loadError) {
-    loadErrorMessage = String(loadError);
+  const showLoadError = !apiDown && loadError != null;
+  const showGettingStarted =
+    !apiDown && loadError == null && runs !== undefined && runs.length === 0;
+
+  let recentEmptyMessage = "no runs yet · select a workflow to start";
+  if (runs === undefined) {
+    recentEmptyMessage = "recent runs unavailable";
+  } else if (runs.length > 0) {
+    recentEmptyMessage = `no recent runs match "${filter.trim()}"`;
   }
 
   return (
@@ -250,233 +179,234 @@ export default function DashboardPage() {
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           onKeyDown={(e) => e.key === "Escape" && clearFilter()}
-          placeholder="[f] filter runs…"
+          placeholder="Filter runs…"
           aria-label="Filter runs"
-          className="hidden h-5 w-36 bg-transparent font-mono text-[11px] text-b-text placeholder:text-b-text-dim focus:outline-hidden focus:placeholder:text-b-text-faint focus:ring-0 sm:block"
+          aria-keyshortcuts="f /"
+          // A real control boundary (>= 3:1), sized to sit inside the 36px
+          // top bar; min-h-0 opts out of the 40px base form-control floor.
+          className="focus-ring hidden h-8 min-h-0 w-40 rounded-md border border-el-control-border bg-el-raised px-2 text-xs text-el-ink placeholder:text-el-muted sm:block"
         />
-        <button
+        {/* Starts a run (via /workflows), so it is gated on the API like the
+            other run actions; the visible reason sits in the page header.
+            Visible label at every width; the ::after box widens the 36px
+            button to a 44px touch target. */}
+        <Button
           type="button"
-          onClick={() => navigate("/workflows")}
-          className="btn-primary"
+          size="sm"
+          onClick={goWorkflows}
+          disabled={apiDown}
+          aria-keyshortcuts="n"
+          aria-describedby={apiDown ? newRunReasonId : undefined}
+          className="relative h-9 bg-el-action text-el-action-ink after:absolute after:-inset-1"
         >
-          <Plus className="h-3 w-3" />
-          <span className="hidden sm:inline">[n] new run</span>
-          <span className="sr-only sm:hidden">New run</span>
-        </button>
+          <Plus aria-hidden="true" />
+          <span>New run</span>
+          {/* Shortcut hint beside the sentence-case label; the name stays
+              "New run" (aria-keyshortcuts carries the key). */}
+          <kbd
+            aria-hidden="true"
+            className="hidden rounded-sm border border-el-action-ink/40 px-1 font-mono text-micro leading-4 sm:inline"
+          >
+            N
+          </kbd>
+        </Button>
       </BTopBar>
 
       <div className="h-full overflow-y-auto p-6">
         <div className="mx-auto flex max-w-[1120px] flex-col gap-6">
           {/* Header */}
-          <div className="flex items-end justify-between">
+          <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h1
-                style={HEADING_FONT}
-                className="text-[24px] font-semibold tracking-[-0.5px] text-b-text"
-              >
+              <h1 className="font-display text-[28px] font-semibold tracking-[-0.5px] text-el-ink">
                 Dashboard
               </h1>
-              <div className="mt-1 font-mono text-[11px] text-b-text-dim">
-                $ {workflowCount} workflows · {activeCount} running · updated{" "}
-                {updatedLabel}
-              </div>
+              <p className="mt-1 text-xs text-el-muted">
+                {workflows ? workflows.length : <NoData />} workflows ·{" "}
+                {activeCount ?? <NoData />} running · updated{" "}
+                <span className="tabular-nums">{updatedLabel}</span>
+              </p>
+              {apiDown ? (
+                <p id={newRunReasonId} className="mt-1 text-micro text-el-muted">
+                  New runs are unavailable. {apiDownReason}
+                </p>
+              ) : null}
             </div>
             <div className="flex items-center gap-3">
-              {hasNoRuns ? <GettingStartedCard showQuickStartWhenDismissed /> : null}
+              {showGettingStarted ? (
+                <GettingStartedCard showQuickStartWhenDismissed />
+              ) : null}
               <ConsoleStatus />
             </div>
           </div>
 
-          {hasNoRuns ? <GettingStartedCard /> : null}
-
-          {loadErrorMessage ? (
-            <BBox title="dashboard notice">
-              <div
-                role="alert"
-                className="flex items-center gap-2 p-[14px] font-mono text-[11px] text-b-amber"
-              >
-                <span className="flex-1">
-                  [!] some dashboard data could not be loaded · {loadErrorMessage}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    runsQuery.refetch();
-                    summaryQuery.refetch();
-                    workflowsQuery.refetch();
-                  }}
-                  className="rounded-none border border-b-amber/40 px-2 py-0.5 transition-colors hover:bg-b-amber/10 focus:outline-hidden focus:ring-1 focus:ring-b-amber/50"
-                >
-                  retry
-                </button>
-              </div>
-            </BBox>
+          {showLoadError ? (
+            <InlineError
+              message="Some dashboard data couldn't be loaded; the figures below may be incomplete."
+              error={loadError}
+              onRetry={() => {
+                void runsQuery.refetch();
+                void summaryQuery.refetch();
+                void workflowsQuery.refetch();
+              }}
+            />
           ) : null}
 
-          {/* Stat cards */}
+          {showGettingStarted ? <GettingStartedCard /> : null}
+
+          {/* Evidence scoreline (§11.1): ruled columns, no KPI cards. */}
           {isSummaryLoading ? (
-            <div className="grid grid-cols-1 gap-[14px] sm:grid-cols-3">
-              {["sk-stat-0", "sk-stat-1", "sk-stat-2"].map((k) => (
-                <StatCardSkeleton key={k} />
-              ))}
-            </div>
+            <ScorelineSkeleton />
           ) : (
-            <div className="grid grid-cols-1 gap-[14px] sm:grid-cols-3">
-              <StatCard
-                label="total runs"
-                value={totalRuns.toLocaleString()}
-                onClick={() => navigate("/runs")}
-              />
-              <StatCard
-                label="success rate"
-                value={successRate.toFixed(1)}
-                unit="%"
-                onClick={() => navigate("/runs")}
-              />
-              <TokensCard
-                value={tokensValue}
-                onClick={() => navigate("/models")}
-              />
-            </div>
+            <Scoreline
+              label="run summary"
+              items={[
+                {
+                  label: "Total runs",
+                  value:
+                    typeof totalRuns === "number" ? totalRuns.toLocaleString() : <NoData />,
+                  to: "/runs",
+                },
+                {
+                  label: "Success rate",
+                  value: successRate === null ? <NoData /> : successRate.toFixed(1),
+                  unit: successRate === null ? undefined : "%",
+                  to: "/runs",
+                },
+                {
+                  label: "Tokens (30d)",
+                  value:
+                    typeof tokens30d === "number" ? tokens30d.toLocaleString() : <NoData />,
+                  to: "/models",
+                },
+              ]}
+            />
           )}
 
-          {/* Recent runs + Models */}
-          <div className="grid grid-cols-1 gap-[18px] lg:grid-cols-[1.7fr_1fr]">
-            {/* Recent runs list */}
-            <div style={CARD_STYLE} className="bg-b-bg1 px-[18px] pb-2 pt-[18px]">
-              <div className="mb-1.5 flex items-center justify-between">
-                <h3
-                  style={HEADING_FONT}
-                  className="m-0 whitespace-nowrap text-[13.5px] font-semibold text-b-text"
-                >
+          {/* Recent runs + Models: headed, hairline-ruled lists (no boxed
+              panels around them). */}
+          <div className="grid grid-cols-1 gap-x-10 gap-y-8 lg:grid-cols-[1.7fr_1fr]">
+            <section aria-labelledby="dash-recent-runs">
+              <div className="mb-2 flex items-center justify-between">
+                <h2 id="dash-recent-runs" className={SECTION_HEADING_CLASS}>
                   Recent runs
-                </h3>
-                <Link
-                  to="/runs"
-                  className="font-mono text-[10.5px] text-b-clay hover:underline"
-                >
-                  view all →
+                </h2>
+                <Link to="/runs" className={SECTION_LINK_CLASS}>
+                  View all runs →
                 </Link>
               </div>
-              {isRunsLoading &&
-                ["sk-run-0", "sk-run-1", "sk-run-2"].map((k) => (
-                  <div
-                    key={k}
-                    className="flex items-center gap-[14px] border-t border-b-line-soft py-[11px]"
-                  >
-                    <div className="h-[14px] w-full animate-pulse rounded bg-b-bg2" />
-                  </div>
-                ))}
-              {!isRunsLoading && recent.length === 0 && (
-                <div className="border-t border-b-line-soft py-6 text-center font-mono text-[11px] text-b-text-dim">
-                  no runs yet · select a workflow to start
-                </div>
-              )}
-              {recent.map((r) => {
-                const letter = gradeLetter(
-                  r.evaluation_grade,
-                  r.evaluation_score,
-                );
-                return (
-                  <Link
-                    key={r.filename}
-                    to={`/runs/${encodeURIComponent(r.filename)}`}
-                    className="flex items-center gap-[14px] border-t border-b-line-soft py-[11px] transition-colors hover:bg-b-bg2"
-                  >
-                    <span
-                      className={`w-[46px] flex-none font-mono text-[9.5px] tracking-[0.5px] ${statusColorClass(r.status)}`}
-                    >
-                      {statusAscii(r.status)}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-[12px] text-b-text">
-                        {r.workflow_name ?? "—"}
-                      </div>
-                      <div className="mt-0.5 truncate font-mono text-[10px] text-b-text-dim">
-                        {runDescription(r)}
-                      </div>
-                    </div>
-                    <span
-                      style={HEADING_FONT}
-                      className={`w-[26px] flex-none text-center text-[13px] font-bold ${gradeColorClass(letter)}`}
-                    >
-                      {letter ?? "—"}
-                    </span>
-                  </Link>
-                );
-              })}
-            </div>
-
-            {/* Models panel */}
-            <div className="flex flex-col gap-[18px]">
-              <div style={CARD_STYLE} className="bg-b-bg1 p-[18px]">
-                <div className="mb-1.5 flex items-center justify-between">
-                  <h3
-                    style={HEADING_FONT}
-                    className="m-0 whitespace-nowrap text-[13.5px] font-semibold text-b-text"
-                  >
-                    Models
-                  </h3>
-                  <Link
-                    to="/models"
-                    className="font-mono text-[10.5px] text-b-clay hover:underline"
-                  >
-                    probe →
-                  </Link>
-                </div>
-                {agentsQuery.isLoading ? (
-                  <div className="border-t border-b-line-soft py-6 text-center font-mono text-[11px] text-b-text-dim animate-pulse">
-                    loading models...
-                  </div>
-                ) : modelRows.length === 0 ? (
-                  <div className="border-t border-b-line-soft py-6 text-center font-mono text-[11px] text-b-text-dim">
-                    no models configured
-                  </div>
-                ) : (
-                  modelRows.map((agent, i) => (
+              <div className="border-b border-el-divider-soft">
+                {isRunsLoading &&
+                  ["sk-run-0", "sk-run-1", "sk-run-2"].map((k) => (
                     <div
-                      key={`${agent.name}-${i}`}
-                      className="flex items-center gap-[10px] border-t border-b-line-soft py-2"
+                      key={k}
+                      className="flex items-center gap-3.5 border-t border-el-divider-soft py-[14px]"
                     >
-                      <span
-                        style={TIER_BADGE_STYLE}
-                        className={`flex-none px-[5px] py-px font-mono text-[8.5px] tracking-[0.3px] ${tierColorClass(agent.tier)}`}
-                      >
-                        {tierBadgeLabel(agent.tier)}
-                      </span>
-                      <span className="min-w-0 flex-1 truncate text-[11.5px] text-b-text-mid">
-                        {agent.name}
-                      </span>
-                      <span className="font-mono text-[9.5px] text-b-text-dim">
-                        {providerLabel(agent)}
-                      </span>
+                      <div className="h-3.5 w-full animate-pulse rounded-sm bg-el-subtle" />
                     </div>
-                  ))
+                  ))}
+                {!isRunsLoading && recent.length === 0 && (
+                  <div className="border-t border-el-divider-soft py-6 text-center text-xs text-el-muted">
+                    {recentEmptyMessage}
+                  </div>
                 )}
+                {recent.map((r) => {
+                  const letter = gradeLetter(
+                    r.evaluation_grade,
+                    r.evaluation_score,
+                  );
+                  return (
+                    <Link
+                      key={r.filename}
+                      to={`/runs/${encodeURIComponent(r.filename)}`}
+                      className="focus-ring-inset flex min-h-14 items-center gap-4 border-t border-el-divider-soft px-1 py-[10px] transition-colors hover:bg-el-hover"
+                    >
+                      <StatusBadge status={r.status} className="w-[84px] flex-none" />
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate font-mono text-xs text-el-ink">
+                          {r.workflow_name ?? "—"}
+                        </div>
+                        <div className="mt-0.5 truncate text-micro text-el-muted">
+                          {runDescription(r)}
+                        </div>
+                      </div>
+                      <span
+                        className={`w-[26px] flex-none text-center font-display text-[14px] font-bold ${gradeColorClass(letter)}`}
+                      >
+                        {letter ?? "—"}
+                        {letter ? <span className="sr-only"> grade</span> : null}
+                      </span>
+                    </Link>
+                  );
+                })}
               </div>
+            </section>
+
+            <div className="flex flex-col gap-8">
+              <section aria-labelledby="dash-models">
+                <div className="mb-2 flex items-center justify-between">
+                  <h2 id="dash-models" className={SECTION_HEADING_CLASS}>
+                    Models
+                  </h2>
+                  <Link to="/models" className={SECTION_LINK_CLASS}>
+                    Model router →
+                  </Link>
+                </div>
+                <div className="border-b border-el-divider-soft">
+                  {agentsQuery.isLoading ? (
+                    <div className="border-t border-el-divider-soft py-6 text-center text-xs text-el-muted motion-safe:animate-pulse">
+                      Loading models…
+                    </div>
+                  ) : agentsQuery.isError ? (
+                    <div className="border-t border-el-divider-soft py-6 text-center text-xs text-el-muted">
+                      models unavailable
+                    </div>
+                  ) : modelRows.length === 0 ? (
+                    <div className="border-t border-el-divider-soft py-6 text-center text-xs text-el-muted">
+                      no models configured
+                    </div>
+                  ) : (
+                    modelRows.map((agent, i) => (
+                      <div
+                        key={`${agent.name}-${i}`}
+                        className="flex min-h-10 items-center gap-2.5 border-t border-el-divider-soft py-2"
+                      >
+                        <TierMark tier={agent.tier} />
+                        <span className="min-w-0 flex-1 truncate text-xs text-el-secondary">
+                          {agent.name}
+                        </span>
+                        <span className="font-mono text-micro text-el-muted">
+                          {providerLabel(agent)}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </section>
 
               {/* Workflows quick list */}
               {workflows && (
-                <BBox title="workflows">
+                <section aria-labelledby="dash-workflows">
+                  <h2 id="dash-workflows" className={`mb-2 ${SECTION_HEADING_CLASS}`}>
+                    Workflows
+                  </h2>
                   {workflows.length === 0 ? (
-                    <div className="px-3 py-6 text-center font-mono text-[11px] text-b-text-dim">
+                    <div className="border-y border-el-divider-soft py-6 text-center text-xs text-el-muted">
                       no workflows yet
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 gap-px bg-b-line-soft">
+                    <div className="divide-y divide-el-divider-soft border-y border-el-divider-soft">
                       {workflows.slice(0, 9).map((name) => (
                         <Link
                           key={name}
                           to={`/workflows/${name}`}
-                          className="flex items-center gap-2 bg-b-bg1 px-3 py-2 font-mono text-[11px] text-b-text-mid transition-colors hover:bg-b-bg2 hover:text-b-text"
+                          className="focus-ring-inset flex min-h-10 items-center gap-2 px-1 font-mono text-xs text-el-secondary transition-colors hover:bg-el-hover hover:text-el-ink"
                         >
-                          <span className="text-b-blue">▣</span>
                           <span className="truncate">{name}</span>
                         </Link>
                       ))}
                     </div>
                   )}
-                </BBox>
+                </section>
               )}
             </div>
           </div>

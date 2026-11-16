@@ -128,17 +128,14 @@ def lint_workflow_by_name(name: str) -> list[LintViolation]:
     """Resolve workflow by *name* and lint its YAML file."""
     from ..workflows.loader import WorkflowLoader
 
-    loader = WorkflowLoader()
-    yaml_path = loader.definitions_dir / f"{name}.yaml"
-    if not yaml_path.exists():
-        yml_path = loader.definitions_dir / f"{name}.yml"
-        if yml_path.exists():
-            yaml_path = yml_path
-        else:
-            return [
-                LintViolation(
-                    field="name",
-                    message=f"workflow '{name}' not found in {loader.definitions_dir}",
-                )
-            ]
-    return lint_workflow_file(yaml_path)
+    definitions_dir = WorkflowLoader().definitions_dir
+    for suffix in (".yaml", ".yml"):
+        yaml_path = definitions_dir / f"{name}{suffix}"
+        if yaml_path.exists():
+            return lint_workflow_file(yaml_path)
+    return [
+        LintViolation(
+            field="name",
+            message=f"workflow '{name}' not found in {definitions_dir}",
+        )
+    ]

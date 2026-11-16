@@ -23,6 +23,7 @@ from agentic_v2.models import (  # Stats; Router; Smart router; Client
     reset_router,
     reset_smart_router,
 )
+from agentic_v2.models.router import DEFAULT_CHAINS
 
 # ============================================================================
 # ModelStats Tests
@@ -244,6 +245,45 @@ class TestModelRouter:
         assert chain.name == "custom"
         assert chain[0] == "custom:model1"
 
+    def test_env_tier_pin_is_tried_first(self, monkeypatch):
+        """AGENTIC_MODEL_TIER_N puts its model at the head of the default chain,
+        matching the LangChain engine's per-tier override."""
+        monkeypatch.setenv("AGENTIC_MODEL_TIER_2", "ollama:beam:cloud")
+        router = ModelRouter()
+
+        chain = router.get_chain(ModelTier.TIER_2)
+        default = DEFAULT_CHAINS[ModelTier.TIER_2]
+        assert chain[0] == "ollama:beam:cloud"
+        assert tuple(chain)[1:] == tuple(default)
+        assert chain.name == "tier2-env"
+
+    def test_env_tier_pin_already_in_chain_is_not_duplicated(self, monkeypatch):
+        default = DEFAULT_CHAINS[ModelTier.TIER_2]
+        last = tuple(default)[-1]
+        monkeypatch.setenv("AGENTIC_MODEL_TIER_2", last)
+
+        chain = ModelRouter().get_chain(ModelTier.TIER_2)
+        assert chain[0] == last
+        assert tuple(chain).count(last) == 1
+        assert len(chain) == len(default)
+
+    def test_env_tier_pin_applies_only_to_its_tier(self, monkeypatch):
+        monkeypatch.setenv("AGENTIC_MODEL_TIER_2", "ollama:beam:cloud")
+        chain = ModelRouter().get_chain(ModelTier.TIER_1)
+        assert chain is DEFAULT_CHAINS[ModelTier.TIER_1]
+
+    def test_blank_env_tier_pin_is_ignored(self, monkeypatch):
+        monkeypatch.setenv("AGENTIC_MODEL_TIER_2", "   ")
+        chain = ModelRouter().get_chain(ModelTier.TIER_2)
+        assert chain is DEFAULT_CHAINS[ModelTier.TIER_2]
+
+    def test_custom_chain_wins_over_env_tier_pin(self, monkeypatch):
+        monkeypatch.setenv("AGENTIC_MODEL_TIER_2", "ollama:beam:cloud")
+        router = ModelRouter()
+        custom = FallbackChain(("custom:model1",), "custom")
+        router.register_chain(ModelTier.TIER_2, custom)
+        assert router.get_chain(ModelTier.TIER_2) is custom
+
     def test_model_availability(self):
         """Test model availability tracking."""
         router = ModelRouter()
@@ -445,6 +485,81 @@ class TestSmartModelRouter:
         second_cooldown = stats.cooldown_remaining_seconds
 
         assert second_cooldown > first_cooldown
+
+    def test_env_tier_pin_stays_selected_after_a_slow_success(self, monkeypatch):
+        """Health ranking scores an untried model above a proven but slow one;
+        an eligible AGENTIC_MODEL_TIER_N pin must still be chosen every time."""
+        monkeypatch.setenv("AGENTIC_MODEL_TIER_2", "ollama:beam:cloud")
+        router = SmartModelRouter()
+
+        assert router.get_model_for_tier(ModelTier.TIER_2) == "ollama:beam:cloud"
+        router.record_success("ollama:beam:cloud", latency_ms=8000)
+        assert router.get_model_for_tier(ModelTier.TIER_2) == "ollama:beam:cloud"
+
+    def test_unavailable_env_tier_pin_falls_back_by_health(self, monkeypatch):
+        monkeypatch.setenv("AGENTIC_MODEL_TIER_2", "ollama:beam:cloud")
+        router = SmartModelRouter()
+        router.mark_unavailable("ollama:beam:cloud")
+
+        selected = router.get_model_for_tier(ModelTier.TIER_2)
+        assert selected is not None and selected != "ollama:beam:cloud"
+        assert selected in tuple(DEFAULT_CHAINS[ModelTier.TIER_2])
+
+    def test_registered_chain_ignores_env_tier_pin_in_selection(self, monkeypatch):
+        monkeypatch.setenv("AGENTIC_MODEL_TIER_2", "model2")
+        router = SmartModelRouter()
+        router.register_chain(
+            ModelTier.TIER_2, FallbackChain(("model1", "model2"), "test")
+        )
+        # Both healthy; health ranking prefers the faster model1, the env pin
+        # would pick model2 -- the registered chain must win, so health decides.
+        router.record_success("model2", latency_ms=9000)
+        router.record_success("model1", latency_ms=10)
+
+        assert router.get_model_for_tier(ModelTier.TIER_2) == "model1"
+
+    def test_exclude_moves_past_an_attempted_pin(self, monkeypatch):
+        monkeypatch.setenv("AGENTIC_MODEL_TIER_2", "ollama:beam:cloud")
+        router = SmartModelRouter()
+
+        nxt = router.get_model_for_tier(ModelTier.TIER_2, exclude=["ollama:beam:cloud"])
+        assert nxt is not None and nxt != "ollama:beam:cloud"
+        assert nxt in tuple(DEFAULT_CHAINS[ModelTier.TIER_2])
+
+    def test_exclude_exhausting_the_tier_returns_none_not_cross_tier(self):
+        router = SmartModelRouter()
+        router.register_chain(ModelTier.TIER_2, FallbackChain(("m1", "m2"), "test"))
+
+        assert router.get_model_for_tier(ModelTier.TIER_2, exclude=["m1", "m2"]) is None
+        assert router.last_selection is None
+
+    @pytest.mark.asyncio
+    async def test_call_with_fallback_skips_a_busy_pin_to_the_next_model(
+        self, monkeypatch
+    ):
+        """A pin whose attempt is skipped (bulkhead full) must not end the
+        request: the loop moves on to the tier's next eligible model."""
+        monkeypatch.setenv("AGENTIC_MODEL_TIER_2", "ollama:beam:cloud")
+        router = SmartModelRouter()
+        real_ready = router._is_model_ready_for_attempt
+        monkeypatch.setattr(
+            router,
+            "_is_model_ready_for_attempt",
+            lambda m: m != "ollama:beam:cloud" and real_ready(m),
+        )
+        called: list[str] = []
+
+        async def caller(model: str, prompt: str) -> str:
+            called.append(model)
+            return f"ok-{model}"
+
+        model, response = await router.call_with_fallback(
+            caller, "hi", ModelTier.TIER_2
+        )
+
+        assert model != "ollama:beam:cloud"
+        assert called == [model]
+        assert response == f"ok-{model}"
 
     def test_health_weighted_selection(self):
         """Test selection prefers healthy models."""

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useReducer, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Archive,
@@ -22,8 +22,10 @@ import {
   duplicateModelPack,
   exportModelPack,
   getModelPackDependencies,
+  getTierSettings,
   importModelPack,
   listModelPacks,
+  probeModels,
   validateModelPack,
   versionModelPack,
 } from "../../api/client";
@@ -34,57 +36,61 @@ import type {
   ModelPackUpdateRequest,
   ModelPackValidationResponse,
 } from "../../api/types";
+import { useApiAvailability } from "../../hooks/useApiAvailability";
+import { describeApiError } from "../../lib/apiErrors";
+import { apiErrorMessage, apiErrorText } from "../common/apiErrorText";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { Textarea } from "../ui/textarea";
+import { PackBuilder } from "./pack-builder/PackBuilder";
+import {
+  draftFromPack,
+  draftReducer,
+  draftToUpdate,
+  isDraftDirty,
+} from "./pack-builder/packDraft";
+import { mergeModelCatalog, type PriceInfo } from "./pack-builder/builderParts";
 
 interface EditorState {
   name: string;
   description: string;
-  tierChains: string;
-  allowedProviders: string;
-  capabilities: string;
-  judgeModel: string;
 }
 
-const EMPTY_EDITOR: EditorState = {
-  name: "",
-  description: "",
-  tierChains: "{}",
-  allowedProviders: "",
-  capabilities: "{}",
-  judgeModel: "",
-};
+const EMPTY_EDITOR: EditorState = { name: "", description: "" };
+
+/** Tier keys the backend accepts (ui_settings.ModelPack validates 0..5). */
+const DEFAULT_TIERS = ["0", "1", "2", "3", "4", "5"];
+
+const EMPTY_DRAFT = draftFromPack({
+  tier_chains: {},
+  capability_requirements: {},
+  allowed_providers: [],
+  judge_model: null,
+});
 
 function refKey(ref: ModelPackRef): string {
   return `${ref.id}@${ref.version}`;
 }
 
 function editorFor(pack: ModelPack): EditorState {
-  return {
-    name: pack.name,
-    description: pack.description,
-    tierChains: JSON.stringify(pack.tier_chains, null, 2),
-    allowedProviders: pack.allowed_providers.join(", "),
-    capabilities: JSON.stringify(pack.capability_requirements, null, 2),
-    judgeModel: pack.judge_model ?? "",
-  };
+  return { name: pack.name, description: pack.description };
 }
 
-function parseObjectOfStringArrays(
-  value: string,
-  label: string,
-): Record<string, string[]> {
-  const parsed: unknown = JSON.parse(value);
-  if (!parsed || Array.isArray(parsed) || typeof parsed !== "object") {
-    throw new Error(`${label} must be a JSON object.`);
+function sortedTiers(...groups: readonly (readonly string[])[]): string[] {
+  return [...new Set(groups.flat())].sort((a, b) => Number(a) - Number(b));
+}
+
+/**
+ * Failure toast. API errors get the shared human-readable summary (with the
+ * server's detail) and a recovery remedy; errors raised locally before any
+ * request (e.g. "Pack is still used by …") keep their own message.
+ */
+function toastFailure(error: unknown): void {
+  const described = describeApiError(error);
+  if (described.status === undefined && !described.unreachable) {
+    toast.error(described.summary);
+    return;
   }
-  for (const [key, item] of Object.entries(parsed)) {
-    if (!Array.isArray(item) || item.some((entry) => typeof entry !== "string")) {
-      throw new Error(`${label}.${key} must be an array of model IDs.`);
-    }
-  }
-  return parsed as Record<string, string[]>;
+  toast.error(apiErrorMessage(error), { description: described.remedy });
 }
 
 function downloadJson(filename: string, value: unknown): void {
@@ -101,9 +107,16 @@ function downloadJson(filename: string, value: unknown): void {
 
 export default function ModelPacksPanel() {
   const queryClient = useQueryClient();
+  // Every pack action reads or writes the API; while it is unreachable they
+  // are disabled and point at a visible reason (aria-describedby).
+  const { apiDown, reason: apiDownReason } = useApiAvailability();
+  const apiHintId = useId();
+  const saveHintId = useId();
+  const describedBy = apiDown ? apiHintId : undefined;
   const importRef = useRef<HTMLInputElement | null>(null);
   const [selectedKey, setSelectedKey] = useState("");
   const [editor, setEditor] = useState<EditorState>(EMPTY_EDITOR);
+  const [draft, dispatchDraft] = useReducer(draftReducer, EMPTY_DRAFT);
   const [createOpen, setCreateOpen] = useState(false);
   const [createDraft, setCreateDraft] = useState({
     id: "",
@@ -117,9 +130,25 @@ export default function ModelPacksPanel() {
   const [formError, setFormError] = useState<string | null>(null);
   const [archiveConfirm, setArchiveConfirm] = useState(false);
 
+  // Loading a pack replaces both the metadata fields and the builder draft.
+  const loadPack = useCallback((pack: ModelPack) => {
+    setEditor(editorFor(pack));
+    dispatchDraft({ type: "reset", draft: draftFromPack(pack) });
+  }, []);
+
   const packsQuery = useQuery({
     queryKey: ["model-packs"],
     queryFn: listModelPacks,
+  });
+  const tierSettingsQuery = useQuery({
+    queryKey: ["tier-settings"],
+    queryFn: getTierSettings,
+  });
+  // Read-only view of the Providers tab's probe: never triggers a new probe.
+  const probeQuery = useQuery({
+    queryKey: ["model-probe"],
+    queryFn: probeModels,
+    enabled: false,
   });
   const packs = packsQuery.data?.packs ?? [];
   const selected = useMemo(
@@ -140,10 +169,49 @@ export default function ModelPacksPanel() {
         packs[0];
       if (next) {
         setSelectedKey(refKey(next));
-        setEditor(editorFor(next));
+        loadPack(next);
       }
     }
-  }, [packs, packsQuery.data?.active, selectedKey]);
+  }, [packs, packsQuery.data?.active, selectedKey, loadPack]);
+
+  const baseline = useMemo(
+    () => (selected ? draftFromPack(selected) : EMPTY_DRAFT),
+    [selected],
+  );
+  const dirty =
+    selected !== null &&
+    (isDraftDirty(draft, baseline) ||
+      editor.name.trim() !== selected.name ||
+      editor.description.trim() !== selected.description);
+  // Curated tier-settings models first, then everything the shared probe found.
+  const models = useMemo(
+    () =>
+      mergeModelCatalog(
+        tierSettingsQuery.data?.models ?? [],
+        probeQuery.data?.models ?? [],
+      ),
+    [tierSettingsQuery.data, probeQuery.data],
+  );
+  // The probe is started by the page, not here; this only reflects its progress.
+  const catalogLoading = probeQuery.isFetching && !probeQuery.data;
+  const tiers = useMemo(
+    () =>
+      sortedTiers(
+        DEFAULT_TIERS,
+        (tierSettingsQuery.data?.tiers ?? []).map((tier) => String(tier.tier)),
+        Object.keys(draft.tierChains),
+      ),
+    [tierSettingsQuery.data, draft.tierChains],
+  );
+  const priceLabels = useMemo(() => {
+    const labels: Record<string, PriceInfo> = {};
+    for (const model of probeQuery.data?.models ?? []) {
+      if (model.price_label) {
+        labels[model.id] = { label: model.price_label, reason: model.price_reason };
+      }
+    }
+    return Object.keys(labels).length > 0 ? labels : undefined;
+  }, [probeQuery.data]);
 
   const refresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ["model-packs"] });
@@ -157,9 +225,9 @@ export default function ModelPacksPanel() {
       setCreateDraft({ id: "", name: "", description: "", source: "effective" });
       await refresh();
       setSelectedKey(refKey(pack));
-      setEditor(editorFor(pack));
+      loadPack(pack);
     },
-    onError: (error) => toast.error(error.message),
+    onError: toastFailure,
   });
 
   const versionMutation = useMutation({
@@ -174,33 +242,22 @@ export default function ModelPacksPanel() {
       toast.success(`Saved immutable version ${pack.version}`);
       await refresh();
       setSelectedKey(refKey(pack));
-      setEditor(editorFor(pack));
+      loadPack(pack);
     },
-    onError: (error) => setFormError(error.message),
+    onError: (error) => setFormError(apiErrorText(error)),
   });
 
   const saveNewVersion = () => {
     if (!selected) return;
-    try {
-      const update: ModelPackUpdateRequest = {
+    setFormError(null);
+    versionMutation.mutate({
+      packId: selected.id,
+      update: {
         name: editor.name.trim(),
         description: editor.description.trim(),
-        tier_chains: parseObjectOfStringArrays(editor.tierChains, "tier_chains"),
-        allowed_providers: editor.allowedProviders
-          .split(",")
-          .map((value) => value.trim())
-          .filter(Boolean),
-        capability_requirements: parseObjectOfStringArrays(
-          editor.capabilities,
-          "capability_requirements",
-        ),
-        judge_model: editor.judgeModel.trim() || null,
-      };
-      setFormError(null);
-      versionMutation.mutate({ packId: selected.id, update });
-    } catch (error) {
-      setFormError(error instanceof Error ? error.message : "Invalid model pack");
-    }
+        ...draftToUpdate(draft),
+      },
+    });
   };
 
   const actionMutation = useMutation({
@@ -244,7 +301,7 @@ export default function ModelPacksPanel() {
         await refresh();
       }
     },
-    onError: (error) => toast.error(error.message),
+    onError: toastFailure,
   });
 
   const bindMutation = useMutation({
@@ -260,7 +317,7 @@ export default function ModelPacksPanel() {
       setWorkflow("");
       await refresh();
     },
-    onError: (error) => toast.error(error.message),
+    onError: toastFailure,
   });
 
   const clearBindingMutation = useMutation({
@@ -269,7 +326,7 @@ export default function ModelPacksPanel() {
       toast.success(`Removed ${workflowName} binding`);
       await refresh();
     },
-    onError: (error) => toast.error(error.message),
+    onError: toastFailure,
   });
 
   const duplicateMutation = useMutation({
@@ -286,10 +343,10 @@ export default function ModelPacksPanel() {
       toast.success(`Duplicated as ${pack.id}`);
       await refresh();
       setSelectedKey(refKey(pack));
-      setEditor(editorFor(pack));
+      loadPack(pack);
     },
     onError: (error) => {
-      if (error.message !== "Duplicate cancelled.") toast.error(error.message);
+      if (error.message !== "Duplicate cancelled.") toastFailure(error);
     },
   });
 
@@ -304,8 +361,9 @@ export default function ModelPacksPanel() {
       toast.success(`Imported ${pack.name}`);
       await refresh();
       setSelectedKey(refKey(pack));
+      loadPack(pack);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Import failed");
+      toastFailure(error instanceof Error ? error : new Error("Import failed"));
     } finally {
       if (importRef.current) importRef.current.value = "";
     }
@@ -315,16 +373,14 @@ export default function ModelPacksPanel() {
     <div className="mx-auto w-full max-w-7xl space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="max-w-3xl">
-          <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-el-accent-strong">
-            Versioned routing policy
-          </div>
           <h1 className="font-display text-[36px] font-medium leading-tight text-el-ink">
             Model packs
           </h1>
-          <p className="mt-3 text-[14px] leading-6 text-el-muted">
-            Build immutable, instance-scoped routing policies. Validate them,
-            activate a global default, bind an exact version to a workflow,
-            and retain the selected snapshot with every run.
+          {/* Scope line (§8.2): what this tab controls, in product terms. */}
+          <p className="mt-3 max-w-[70ch] text-[14px] leading-6 text-el-muted">
+            A pack is a versioned set of tier chains. Activate one as the
+            default for every run or bind one to a workflow; each run records
+            the pack version it used, so editing a pack never changes past runs.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -336,7 +392,12 @@ export default function ModelPacksPanel() {
             aria-label="Import model pack"
             onChange={(event) => void handleImport(event.target.files?.[0])}
           />
-          <Button variant="outline" onClick={() => importRef.current?.click()}>
+          <Button
+            variant="outline"
+            onClick={() => importRef.current?.click()}
+            disabled={apiDown}
+            aria-describedby={describedBy}
+          >
             <Upload aria-hidden="true" /> Import
           </Button>
           <Button onClick={() => setCreateOpen((open) => !open)}>
@@ -344,6 +405,12 @@ export default function ModelPacksPanel() {
           </Button>
         </div>
       </div>
+
+      {apiDown && (
+        <p id={apiHintId} className="-mt-4 text-micro text-el-muted">
+          Pack actions are unavailable: {apiDownReason}
+        </p>
+      )}
 
       {createOpen && (
         <form
@@ -358,7 +425,7 @@ export default function ModelPacksPanel() {
             });
           }}
         >
-          <label className="space-y-2 text-[12px] font-semibold text-el-secondary">
+          <label className="space-y-2 text-xs font-semibold text-el-secondary">
             Stable ID
             <Input
               value={createDraft.id}
@@ -369,7 +436,7 @@ export default function ModelPacksPanel() {
               }
             />
           </label>
-          <label className="space-y-2 text-[12px] font-semibold text-el-secondary">
+          <label className="space-y-2 text-xs font-semibold text-el-secondary">
             Name
             <Input
               value={createDraft.name}
@@ -379,10 +446,10 @@ export default function ModelPacksPanel() {
               }
             />
           </label>
-          <label className="space-y-2 text-[12px] font-semibold text-el-secondary">
+          <label className="space-y-2 text-xs font-semibold text-el-secondary">
             Seed from
             <select
-              className="h-10 w-full border border-el-divider bg-el-raised px-3 text-[13px]"
+              className="h-10 w-full rounded-md border border-el-control-border bg-el-raised px-3 text-[13px] text-el-ink focus-ring focus-visible:border-el-focus"
               value={createDraft.source}
               onChange={(event) =>
                 setCreateDraft((draft) => ({
@@ -397,7 +464,11 @@ export default function ModelPacksPanel() {
             </select>
           </label>
           <div className="flex items-end gap-2">
-            <Button type="submit" disabled={createMutation.isPending}>
+            <Button
+              type="submit"
+              disabled={createMutation.isPending || apiDown}
+              aria-describedby={describedBy}
+            >
               Create version 1
             </Button>
             <Button type="button" variant="ghost" onClick={() => setCreateOpen(false)}>
@@ -407,15 +478,21 @@ export default function ModelPacksPanel() {
         </form>
       )}
 
-      {packsQuery.isError && (
-        <div role="alert" className="border border-el-danger bg-el-surface p-4 text-el-danger">
-          Could not load model packs: {packsQuery.error.message}
-        </div>
-      )}
+      {packsQuery.isError &&
+        (describeApiError(packsQuery.error).unreachable ? (
+          // The shell banner already reports the outage — stay quiet here.
+          <p className="text-micro text-el-muted">
+            Model packs unavailable — {describeApiError(packsQuery.error).summary}
+          </p>
+        ) : (
+          <div role="alert" className="rounded-lg border border-el-danger bg-el-surface p-4 text-sm text-el-danger">
+            Could not load model packs: {apiErrorText(packsQuery.error)}
+          </div>
+        ))}
 
       <div className="grid min-h-[520px] gap-8 lg:grid-cols-[300px_minmax(0,1fr)]">
         <aside className="border-r-0 border-el-divider lg:border-r lg:pr-6" aria-label="Model pack versions">
-          <div className="mb-3 flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.12em] text-el-muted">
+          <div className="mb-3 flex items-center justify-between text-micro font-semibold uppercase tracking-[0.12em] text-el-muted">
             <span>Pack versions</span>
             <span>{packs.length}</span>
           </div>
@@ -429,20 +506,22 @@ export default function ModelPacksPanel() {
             {packs.map((pack) => {
               const active =
                 packsQuery.data?.active && refKey(packsQuery.data.active) === refKey(pack);
+              const isSelected = refKey(pack) === selectedKey;
               return (
                 <button
                   key={refKey(pack)}
                   type="button"
+                  aria-current={isSelected ? "true" : undefined}
                   onClick={() => {
                     setSelectedKey(refKey(pack));
-                    setEditor(editorFor(pack));
+                    loadPack(pack);
                     setValidation(null);
                     setFormError(null);
                     setArchiveConfirm(false);
                   }}
-                  className={`w-full border-l-2 px-3 py-3 text-left transition-colors ${
-                    refKey(pack) === selectedKey
-                      ? "border-el-accent bg-el-subtle"
+                  className={`w-full border-l-2 px-3 py-3 text-left transition-colors focus-ring-inset ${
+                    isSelected
+                      ? "border-el-accent-strong bg-el-subtle"
                       : "border-transparent hover:bg-el-surface"
                   }`}
                 >
@@ -450,7 +529,7 @@ export default function ModelPacksPanel() {
                     {pack.name}
                     {active && <CheckCircle2 className="h-4 w-4 text-el-success" aria-label="Active" />}
                   </span>
-                  <span className="mt-1 block font-mono text-[10px] text-el-muted">
+                  <span className="mt-1 block text-xs text-el-muted">
                     {pack.id}@{pack.version} · {pack.source}
                     {pack.archived ? " · archived" : ""}
                   </span>
@@ -469,28 +548,28 @@ export default function ModelPacksPanel() {
             <div className="space-y-7">
               <div className="flex flex-wrap items-start justify-between gap-4 border-b border-el-divider pb-5">
                 <div>
-                  <div className="font-mono text-[11px] text-el-muted">
+                  <div className="text-xs text-el-muted">
                     {selected.id}@{selected.version}
                   </div>
                   <h2 className="mt-1 text-[22px] font-semibold text-el-ink">{selected.name}</h2>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Button type="button" data-testid="validate-pack" variant="outline" size="sm" onClick={() => actionMutation.mutate("validate")}>
+                  <Button type="button" data-testid="validate-pack" variant="outline" size="sm" onClick={() => actionMutation.mutate("validate")} disabled={apiDown} aria-describedby={describedBy}>
                     <ShieldCheck aria-hidden="true" /> Validate
                   </Button>
-                  <Button type="button" variant="outline" size="sm" onClick={() => actionMutation.mutate("activate")} disabled={selected.archived}>
+                  <Button type="button" variant="outline" size="sm" onClick={() => actionMutation.mutate("activate")} disabled={selected.archived || apiDown} aria-describedby={describedBy}>
                     <CheckCircle2 aria-hidden="true" /> Activate
                   </Button>
-                  <Button type="button" variant="outline" size="sm" onClick={() => actionMutation.mutate("deactivate")} disabled={!selectedIsActive}>
+                  <Button type="button" variant="outline" size="sm" onClick={() => actionMutation.mutate("deactivate")} disabled={!selectedIsActive || apiDown} aria-describedby={describedBy}>
                     <CircleOff aria-hidden="true" /> Deactivate
                   </Button>
-                  <Button type="button" variant="outline" size="sm" onClick={() => duplicateMutation.mutate()}>
+                  <Button type="button" variant="outline" size="sm" onClick={() => duplicateMutation.mutate()} disabled={apiDown} aria-describedby={describedBy}>
                     <Copy aria-hidden="true" /> Duplicate
                   </Button>
-                  <Button type="button" variant="outline" size="sm" onClick={() => actionMutation.mutate("export")}>
+                  <Button type="button" variant="outline" size="sm" onClick={() => actionMutation.mutate("export")} disabled={apiDown} aria-describedby={describedBy}>
                     <Download aria-hidden="true" /> Export
                   </Button>
-                  <Button type="button" variant="ghost" size="sm" onClick={() => setArchiveConfirm(true)} disabled={selected.archived}>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setArchiveConfirm(true)} disabled={selected.archived || apiDown} aria-describedby={describedBy}>
                     <Archive aria-hidden="true" /> Archive
                   </Button>
                 </div>
@@ -503,7 +582,7 @@ export default function ModelPacksPanel() {
                   </p>
                   <div className="flex gap-2">
                     <Button variant="ghost" size="sm" onClick={() => setArchiveConfirm(false)}>Cancel</Button>
-                    <Button variant="destructive" size="sm" onClick={() => actionMutation.mutate("archive")} disabled={actionMutation.isPending}>Confirm archive</Button>
+                    <Button variant="destructive" size="sm" onClick={() => actionMutation.mutate("archive")} disabled={actionMutation.isPending || apiDown} aria-describedby={describedBy}>Confirm archive</Button>
                   </div>
                 </div>
               )}
@@ -527,57 +606,76 @@ export default function ModelPacksPanel() {
               )}
 
               <div className="grid gap-5 md:grid-cols-2">
-                <label className="space-y-2 text-[12px] font-semibold text-el-secondary">
+                <label className="space-y-2 text-xs font-semibold text-el-secondary">
                   Name
                   <Input aria-label="Pack name" value={editor.name} onChange={(event) => setEditor((value) => ({ ...value, name: event.target.value }))} />
                 </label>
-                <label className="space-y-2 text-[12px] font-semibold text-el-secondary">
-                  Allowed providers
-                  <Input placeholder="openai, anthropic, ollama" value={editor.allowedProviders} onChange={(event) => setEditor((value) => ({ ...value, allowedProviders: event.target.value }))} />
-                </label>
-                <label className="space-y-2 text-[12px] font-semibold text-el-secondary md:col-span-2">
+                <label className="space-y-2 text-xs font-semibold text-el-secondary">
                   Description
                   <Input aria-label="Pack description" value={editor.description} onChange={(event) => setEditor((value) => ({ ...value, description: event.target.value }))} />
                 </label>
-                <label className="space-y-2 text-[12px] font-semibold text-el-secondary">
-                  Tier chains (JSON)
-                  <Textarea className="min-h-56 font-mono text-[12px]" value={editor.tierChains} onChange={(event) => setEditor((value) => ({ ...value, tierChains: event.target.value }))} />
-                </label>
-                <label className="space-y-2 text-[12px] font-semibold text-el-secondary">
-                  Capability requirements (JSON)
-                  <Textarea className="min-h-56 font-mono text-[12px]" value={editor.capabilities} onChange={(event) => setEditor((value) => ({ ...value, capabilities: event.target.value }))} />
-                </label>
-                <label className="space-y-2 text-[12px] font-semibold text-el-secondary md:col-span-2">
-                  Judge model
-                  <Input placeholder="provider:model" value={editor.judgeModel} onChange={(event) => setEditor((value) => ({ ...value, judgeModel: event.target.value }))} />
-                </label>
               </div>
+
+              {selected.archived && (
+                <p className="text-micro text-el-muted">
+                  This version is archived, so it is read-only.
+                </p>
+              )}
+              {tierSettingsQuery.isError && (
+                <p className="text-micro text-el-muted">
+                  Tier settings are unavailable, so the model list may be incomplete.
+                </p>
+              )}
+              <PackBuilder
+                key={selectedKey}
+                draft={draft}
+                dispatch={dispatchDraft}
+                models={models}
+                tiers={tiers}
+                knownCapabilities={tierSettingsQuery.data?.known_capabilities ?? []}
+                priceLabels={priceLabels}
+                catalogLoading={catalogLoading}
+                disabled={selected.archived}
+              />
 
               {formError && <p role="alert" className="text-[13px] text-el-danger">{formError}</p>}
 
               <div className="flex flex-wrap items-center gap-3 border-y border-el-divider py-4">
-                <Button onClick={saveNewVersion} disabled={versionMutation.isPending || selected.archived}>
+                <Button
+                  onClick={saveNewVersion}
+                  disabled={versionMutation.isPending || selected.archived || apiDown}
+                  aria-describedby={apiDown ? saveHintId : undefined}
+                >
                   Save as version {selected.version + 1}
                 </Button>
-                <span className="text-[12px] text-el-muted">Existing versions remain immutable.</span>
+                {dirty && (
+                  <span className="text-xs font-semibold text-el-warning">
+                    Unsaved changes
+                  </span>
+                )}
+                <span id={saveHintId} className="text-xs text-el-muted">
+                  {apiDown
+                    ? `Saving is unavailable: ${apiDownReason ?? "the API server is unreachable."}`
+                    : "Existing versions remain immutable."}
+                </span>
               </div>
 
               <section aria-labelledby="binding-title">
                 <div className="flex items-center gap-2">
-                  <GitBranch className="h-4 w-4 text-el-accent-strong" aria-hidden="true" />
+                  <GitBranch className="h-4 w-4 text-el-muted" aria-hidden="true" />
                   <h3 id="binding-title" className="text-[15px] font-semibold text-el-ink">Workflow binding</h3>
                 </div>
-                <p className="mt-2 text-[12px] leading-5 text-el-muted">
+                <p className="mt-2 text-xs leading-5 text-el-muted">
                   Bind this exact version to a workflow. A run-level selection can still override it.
                 </p>
                 <div className="mt-3 flex max-w-xl gap-2">
                   <Input aria-label="Workflow name" placeholder="code-review" value={workflow} onChange={(event) => setWorkflow(event.target.value)} />
-                  <Button variant="outline" onClick={() => bindMutation.mutate()} disabled={!workflow.trim() || selected.archived}>
+                  <Button variant="outline" onClick={() => bindMutation.mutate()} disabled={!workflow.trim() || selected.archived || apiDown} aria-describedby={describedBy}>
                     Bind
                   </Button>
                 </div>
                 {packsQuery.data && Object.keys(packsQuery.data.workflow_bindings).length > 0 && (
-                  <dl className="mt-4 grid gap-2 text-[12px] sm:grid-cols-2">
+                  <dl className="mt-4 grid gap-2 text-xs sm:grid-cols-2">
                     {Object.entries(packsQuery.data.workflow_bindings).map(([name, ref]) => (
                       <div key={name} className="flex items-center justify-between gap-3 border-b border-el-divider-soft py-2">
                         <dt className="text-el-secondary">{name}</dt>
@@ -589,7 +687,8 @@ export default function ModelPacksPanel() {
                             size="sm"
                             aria-label={`Remove ${name} binding`}
                             onClick={() => clearBindingMutation.mutate(name)}
-                            disabled={clearBindingMutation.isPending}
+                            disabled={clearBindingMutation.isPending || apiDown}
+                            aria-describedby={describedBy}
                           >
                             Remove
                           </Button>

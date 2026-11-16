@@ -1,5 +1,393 @@
 # Changelog
 
+## Unreleased - `execute_python` honesty: best-effort denylist, not a sandbox
+
+- The `CodeExecutionTool` docstring and description no longer claim "no file/network
+  access" or a Docker sandbox. Neither is a real boundary: the denylist runs in the
+  child, rlimits are POSIX-only, and there is no container backend. New
+  `docs/KNOWN_LIMITATIONS.md` section 4.12; a test pins `requires_approval is True`.
+- The constructor flag is renamed `sandbox=` → `denylist=`, since it only toggles the
+  denylist. `sandbox=` still works and emits a `DeprecationWarning`. `_sandbox_preexec`
+  is now `_child_preexec`, and the in-child import error says "blocked by the
+  execute_python denylist" instead of "not permitted in sandbox mode".
+
+## Unreleased - Strict mypy extended to tools/builtin, security and governance
+
+- Removed the `ignore_errors = true` mypy override for `agentic_v2.tools.builtin.*`
+  and fixed the errors it hid (annotations and `Any`-returning calls; no
+  `type: ignore` added). `_FileMemoryStore` annotations that its own `list` method
+  shadowed now use `builtins.list`.
+- CI's `Mypy (strict engine + contracts)` step now also checks
+  `agentic_v2/tools/builtin`, `agentic_v2/security` and `agentic_v2/governance`
+  (same flags); the check name is unchanged. Suppression baseline lowered (7 -> 6
+  `ignore_errors` modules).
+
+## Unreleased - Native engine reaches Ollama Cloud; nightly live gate pinned to Beam
+
+- **`OllamaBackend` routes cloud models to ollama.com.** With `OLLAMA_API_KEY`
+  set and the model not served by the local daemon, the native backend now
+  calls `https://ollama.com` with bearer auth, the rule the LangChain builder
+  already applied (ADR-051 amendment). Before, `run_workflow` on a host with no
+  daemon could never reach a cloud model.
+- **`AGENTIC_MODEL_TIER_{N}` is honoured by the native router.**
+  `ModelRouter.get_chain` tries that tier's override first, then the registry
+  chain; a registered or scoped chain still wins. `SmartModelRouter` keeps an
+  eligible pin ahead of its health ranking (which would otherwise prefer an
+  untried fallback after the pin's first slow success). The LangChain engine
+  already read it.
+- **A skipped attempt moves on to the next model.** `get_model_for_tier` takes
+  `exclude=` and both retry loops (`call_with_fallback`, `run_with_fallback`)
+  pass the models already attempted, so a full bulkhead or a resolved circuit
+  no longer reselects the same model and ends the request.
+- **The cloud reroute asks the backend's own daemon** (`is_served_locally` and
+  its tags cache now take a base URL) and rebuilds the ollama.com client when
+  `OLLAMA_API_KEY` changes.
+- **`ollama:beam:cloud` is in the registry** with cost lane `free` (tagged free
+  in the ollama.com library, 2026-10-29), in no tier chain.
+- **The nightly `eval-live-gate` pins every tier to `ollama:beam:cloud`**, using
+  the existing `OLLAMA_API_KEY` repo secret.
+
+## Unreleased - Live eval gate can no longer pass without calling a model
+
+- **A live run that reached no model now fails.** When every model in a tier's
+  chain fails, `agent_resolver` returns a placeholder (`status:
+  "llm_unavailable"`) and the step still reports success; `--live` scored that
+  structure and could pass. `eval_gate.py --live` now fails the case and names
+  the placeholder steps.
+- **`--require-live`.** A skipped live run (no provider key, or
+  `AGENTIC_NO_LLM` set) exits 1 under this flag. The nightly and manual
+  `eval-live-gate` runs pass it; labelled pull requests keep the plain skip.
+  Every skip is also written to the GitHub Actions job summary.
+- **`OLLAMA_API_KEY` counts as a live credential** and is passed to the job, so
+  `ollama:` ids that are not pulled locally can reach ollama.com (ADR-051).
+- **The PR-time gate is labelled for what it is.** `eval-golden-gate` is a
+  scorer regression gate over committed results; the docs no longer imply it
+  measures model output quality.
+
+## Unreleased - CI pruning: fewer jobs, same required checks
+
+- **No required status check changed.** Every required context keeps its job id
+  and name; path gating is job-level only (a `changes` job in `ci.yml` and
+  `eval-package-ci.yml`, CodeQL gates its steps), pushes to `main` run
+  everything, and the gates fail open.
+- **Consolidated jobs.** `lint` now also runs the suppression ratchet, pydocstyle,
+  workflow validation, doc-drift and homepage-stat checks, the Dockerfile
+  constraint pins and the `ci-constraints.txt` vs `uv.lock` check;
+  `ek-delegation-tests` also runs the claude, EvalKit and scoring-without-legacy
+  suites; `python-smoke` also runs `tools/tests` and no longer repeats the runtime
+  unit suite; `frontend-build` also runs the vitest coverage gate. The absorbed
+  checks are now merge-blocking.
+- **PR concurrency.** A newer push cancels the superseded PR run; main-branch runs are
+  never cancelled. The non-existent `agenticv2` branch is gone from every trigger.
+- **Playwright runs once per PR.** The 5x repeat moved to `nightly.yml`, which now
+  runs the streaming spec 50x, the first-span sample, the SLO-data publish, then the
+  full suite 5x (last, so it cannot affect SLO publishing).
+- **Pages publishing is one workflow.** `load-report-pages.yml` is folded into
+  `docs.yml` (serialized, with the load-report drift check), which also fixes three
+  broken links that had failed the strict docs build.
+- **New:** `weekly-telemetry-snapshot.yml` (CI-run statistics ledger).
+
+## Unreleased - Discovered ONNX models run in chat, with weight verification
+
+- **`onnx:<folder>` model ids now work in `/api/chat` and `get_chat_model`.**
+  They route to a new `build_onnx_model` over `OnnxBackend` (prompt-only, no
+  tool-calling) instead of falling through to Ollama. Ids must be relative
+  folders containing `genai_config.json` under the configured ONNX roots; the
+  backend keeps one model loaded at a time.
+- **`AGENTIC_STRICT_MODEL_VERIFY=1` now covers `OnnxBackend`.** Weights are
+  verified once per cached path before loading; non-strict mode only logs.
+
+## Unreleased - Run logger filters safely and writes records atomically
+
+- **`RunLogger.list_runs(workflow_name)` no longer treats the name as a glob.**
+  The name is sanitized like the filename segment, and when sanitizing is lossy
+  (for example `team/flow` vs `team_flow`) the recorded `workflow_name` is
+  confirmed, so unrelated runs are not returned. Non-run JSON files are skipped.
+- **Run records are written atomically.** `log()` and `annotate_run()` write a
+  temp file and replace the record, so readers never see a partial file. The
+  replacement keeps the original mode bits, extended attributes/ACLs and (when
+  permitted) ownership.
+
+## Unreleased - Tools inventory command and classify_error repaired
+
+- **`python -m tools.llm.model_inventory` works from the repository root.** It
+  imported `llm_client` as a top-level module, resolved the repo root one level
+  too shallow and pointed at a missing Windows AI bridge path. This resolves
+  Known Limitations 4.12.
+- **`tools.core.errors.classify_error` accepts `return_code` again** (accepted,
+  currently unused). The `tools-tests` job no longer deselects its test, which
+  resolves Known Limitations 4.15.
+
+## Unreleased - NVIDIA free-tier discovery reports what the catalog says
+
+- **`model_probe --discover` no longer lists every hosted NVIDIA model as free.**
+  `/v1/models` has no free-tier flag, so the NVIDIA entry now checks the
+  build.nvidia.com "Free Endpoint" catalog (38 entries) against the live list.
+  The entry reports `free_available` (catalog models the API serves),
+  `free_catalog_only` (catalog models the API does not serve), and
+  `free_endpoint_catalog_count`. Consumers of `-o` output that read the old
+  `available` list as "free" should read `free_available` instead.
+  The IDs in both lists carry the same `nvidia:` prefix as `available`.
+- **The free status is `unknown` unless the hosted API answered.** A self-hosted
+  `NVIDIA_NIM_HOST`, an unset host, or a failed `/models` call sets
+  `free_status` to `unknown` with empty free lists, rather than classifying
+  on-prem or unavailable models.
+
+## Unreleased - Benchmark LLM judge runs again
+
+- **The benchmark pipeline's LLM-judge path was silently off, and is back.**
+  `tools/agents/benchmarks/evaluation_pipeline.py` imported its report helpers
+  from `llm_evaluator` after they had moved to `evaluator_reporting`. The
+  optional-import guard swallowed the `ImportError`, so `HAS_LLM_EVALUATOR`
+  was always `False` and every `evaluate_task_output_llm` call fell back to
+  legacy pattern matching. It now makes the LLM-judge call again. Benchmark
+  scores produced from here on are judge scores, not pattern-match scores, and
+  each scored task costs one extra provider call, so compare runs only within
+  one side of this change.
+- **Ten `tools/tests` cases gate again.** They were deselected in the
+  `tools-tests` CI job as "stale"; they were catching this bug. A new test
+  fails if the import guard masks a broken in-repo import. One unrelated case
+  stayed deselected until `classify_error` was repaired (see "Tools inventory
+  command and classify_error repaired" above).
+
+## Unreleased - Eval gate scores through the runtime, and rejects bad inputs
+
+- **`eval-golden-gate` no longer needs `agentic-v2-eval`.** `scripts/eval_gate.py`
+  scores through the new `agentic_v2/scoring/criterion_aggregation.py`, and the
+  evalkit bridge uses the same arithmetic (ADR-042). A missing criterion keeps
+  its weight in the average, where EvalKit drops it. The CI job installs the
+  runtime package instead of the legacy one and also runs the gate-independence
+  and mocked-live tests. The legacy package is not removed yet.
+- **The gate now fails on bad score inputs instead of scoring them 0.** A null,
+  boolean, malformed or non-finite score in a manifest or golden result, a
+  missing rubric criterion, and a threshold outside `[0, 1]` each fail the
+  run. Before, they were coerced to 0 and could still pass. If a dataset
+  maintained outside this repo relied on that, fix its scores.
+
+## Unreleased - Secret masks keep JSON replies parseable
+
+- **Masking no longer corrupts JSON replies.** The response sanitizer masks
+  secrets before step outputs are parsed. Its `password=`/`api_key=`-style
+  masks ran to the next whitespace, so a secret inside a JSON string also took
+  the string's closing quote and the following comma, and the reply stopped
+  parsing. A mask now ends at that closing quote when the secret before it is
+  long enough to match. Detection is unchanged, and a value too short before
+  the quote is masked in full as before (ADR-061).
+- **More connection strings are masked, and fewer harmless URLs.**
+  `postgresql://`, driver URLs such as `postgresql+asyncpg://` and
+  `mysql+pymysql://`, `mongodb+srv://`, `rediss://` and password-only
+  `redis://:password@host` now match `connection_string`. Before, credentials
+  in those URLs reached step outputs unmasked. A match now needs a real
+  `user:password@` before the host. So a credential-free URL with a port and
+  an `@` in its query (`postgresql://db:5432/app?contact=ops@example.com`) is
+  no longer masked.
+- **`SecretDetector.version` is now `1.1.0`.** Sanitization results record
+  it, so they show which rules produced them.
+
+## Unreleased - GitHub Models out of the tier chains
+
+- **No tier chain routes to `gh:` any more.** GitHub retired GitHub Models on
+  2026-07-30 (ADR-016), and its legacy endpoint, `models.inference.ai.azure.com`,
+  no longer resolves. `gh:openai/gpt-4o-mini` is gone from tier 1 and
+  `gh:openai/gpt-4o` from tiers 2-5. Nothing replaces them: each tier still has
+  three cloud rungs ahead of its local Ollama tail. Both ids stay in
+  `model_registry.yaml` as `deprecated` with `tiers: []` and curated `paid`, so
+  `AGENTIC_MAX_COST_LANE=free` routing does not change.
+- **A `GITHUB_TOKEN` no longer appends backup models after the local tail.**
+  `get_model_candidates_for_tier` dropped its `include_gh_backup` parameter and
+  `langchain.model_utils.GH_BACKUP_MODELS` is gone. The backup append put
+  `gh:openai/gpt-4o-mini` after `ollama:qwen3-coder:30b`. So when the local
+  model failed, the step crossed into a dead paid provider and reported
+  "last model=gh:openai/gpt-4o-mini: Connection error" in place of the real
+  failure. The tier's local tail is now always the last candidate.
+- **An explicit `gh:` model id still builds.** The provider, its discovery and
+  the `GITHUB_TOKEN` gate are unchanged, so a pinned `gh:` id fails at the
+  network, not at build time.
+
+## Unreleased - Retired NVIDIA DeepSeek V4 models and judge default
+
+- **Tiers 2-3 now use `nvidia:z-ai/glm-5.3-flash` as their NVIDIA rung, and
+  tiers 4-5 use `nvidia:z-ai/glm-5.3`.** NIM retired
+  `deepseek-ai/deepseek-v4-flash` and `deepseek-ai/deepseek-v4-pro` on
+  2026-08-07 and now answers HTTP 410 Gone for both. The boot drift check had
+  already quarantined them, so these tiers were routing around the gap without
+  saying so. Both replacements were chat-verified through `POST /api/chat` on
+  2026-10-11. `deepseek-ai/deepseek-v4.1-flash` was correct on every call, but
+  six calls in a row took 45-66s each, so it lost the tier 2-3 slot to
+  `glm-5.3-flash`. Both new rungs stay curated `paid`, like the entries they
+  replace, so `AGENTIC_MAX_COST_LANE=free` routing does not change. A new
+  registry test pins that: under a free ceiling, each tier keeps only its local
+  Ollama tail.
+- **`special.judge_default` is now `nvidia:z-ai/glm-5.3`.** The old default,
+  `deepseek-v4-pro`, made every default `LLMJudge` call fail with a 410 from
+  2026-08-07 on. Explicit-model judging has no fallback, so those runs got no
+  score at all. Judge scores from now on are not comparable with
+  `deepseek-v4-pro` scores from before that date. The SWE-fix A/B campaign is
+  not affected, because its advisory judge (`evals/swe_ab/judge_free.py`, weight
+  0.0) doesn't read this slot.
+- **NIM requests for `z-ai/glm-*` also send `reasoning_effort: "low"`.** GLM
+  ignores the `chat_template_kwargs: {"thinking": false}` field every NIM
+  request already carries, and on a long input it spent the judge's whole
+  1,200-token budget reasoning, returning no answer. `"low"` is the lowest
+  level GLM honours. GLM also gets `chat_template_kwargs.clear_thinking: true`,
+  so an earlier turn's reasoning is never re-rendered into the prompt (702 vs 41
+  prompt tokens when one is present). Neither engine sends reasoning back today,
+  and a new test pins that. Both engines send these fields, and
+  `NVIDIA_DISABLE_THINKING=0` still turns all of it off. `LLMJudge` now raises a clear "returned no answer
+  (finish_reason=…, max_tokens=…)" error for an empty or null reply instead of
+  an `AttributeError`.
+- **Seven retired ids are gone from the NIM free-endpoint block:**
+  `deepseek-v4-flash-0731`, `deepseek-v4-pro-0813`, `minimax-m3`,
+  `mistral-nemotron`, `nemotron-3-nano-30b-a3b`, `gpt-oss-120b` and
+  `step-3.7-flash`. Each returned 410 on 2026-10-11. The registry comment now
+  lists their end-of-life dates. `tools/llm/model_registry.py` also drops the
+  three retired ids it still marked `working` and lists the two replacements.
+
+## Unreleased - Reviewer reports survive damaged JSON
+
+- **`review_report` keeps the whole report.** Before, a reviewer reply whose
+  JSON failed to parse was stored as only `{"overall_status": ...}`, dropping
+  `quality_score`, `summary` and `findings`. Two things broke that JSON: the
+  response sanitizer's secret mask removing a string's closing quote, and
+  output-token caps cutting the reply short. The parser now repairs both
+  kinds of damage and keeps the recovered report.
+- **Gating changes.** All of these follow the reviewer's actual report:
+  - An `<<<ARTIFACT review_report>>>` block that is not valid JSON now
+    supplies the status it states. Before, it always gated as
+    `NEEDS_FIXES`.
+  - A report returned without the `review_report` wrapper (a top-level
+    `overall_status`) now gates on its own status. Before, it was replaced by
+    the `NEEDS_FIXES` default.
+  - When a damaged reply's report is recovered, the gate uses that report's
+    own `overall_status`. Before, it used the first `overall_status` anywhere
+    in the text, which could be a preliminary one stated earlier.
+  - A full report outranks a preliminary status-only block in the same reply.
+- **Both engines pick the same JSON block.** Each now reads ```json blocks
+  surrounded by prose; the native engine previously parsed them only when it
+  could salvage the declared keys one by one. When a reply holds several
+  objects, both take the one carrying the step's declared outputs, so an
+  explanatory block before the result is skipped.
+
+## Unreleased - fullstack_generation ships and re-reviews its rework
+
+- **Reworked code now ships.** `developer_rework` declares `backend_code`,
+  `frontend_code`, `migrations` and `integration_tests`. A new deterministic
+  `apply_rework` step (`tier0_overlay`, on both engines) lays the reworked
+  files over the generated ones by path, and keeps the files the rework left
+  out. `assemble_feature`, `feature_package` and `all_code` now carry the
+  merged code. Before this change they always carried the pre-rework code.
+  A reworked artifact that fails the `code_artifact` contract is ignored
+  rather than partially applied.
+- **`review_report` is now the latest review.** When the overlay applied any
+  reworked code, `re_review_code` reviews the merged code once, and the
+  workflow's `review_report` output is that re-review. Otherwise it is still
+  the first review.
+- **Rework no longer runs on APPROVED reviews under the LangGraph adapter.**
+  `when:` conditions now resolve `${coalesce(...)}` the same way step inputs
+  and the native engine do. Before, the gate always resolved to `None`, so it
+  was true for every review.
+- **Native engine: a failed rework now skips assembly.** If `developer_rework`
+  fails, its dependents cascade-skip, so `feature_package` (optional) is
+  absent. The run already reported failure in that case.
+
+## Unreleased - Retired NVIDIA tier-1 model
+
+- **Tier 1's NVIDIA rung is now `nvidia:nvidia/nemotron-3-nano-omni-30b-a3b-reasoning`.**
+  NIM retired `meta/llama-3.1-8b-instruct` on 2026-08-26 and answers HTTP 410
+  Gone for it. The replacement was chat-verified on 2026-10-11 under both the
+  `nvidia:` prefix and the `openai:` alias, and stays curated `paid` like the
+  entry it replaces, so `AGENTIC_MAX_COST_LANE=free` routing does not change.
+- **HTTP 410 is a permanent "model retired" error.** `classify_error` returns
+  the new `ErrorCode.MODEL_RETIRED` (`model_retired`, not retryable) for a 410
+  status or end-of-life wording instead of falling through to `transient`, so
+  the `/api/chat` error frame and log name the real cause and retry loops stop.
+  `SmartModelRouter` evicts a model on a 410 status the same way it does on
+  401/403/404.
+
+## Unreleased - Mistral La Plateforme provider
+
+- **New `mistral:` prefix, probe and builder.** Ids are `mistral:<id>` exactly as
+  `GET https://api.mistral.ai/v1/models` lists them, gated on `MISTRAL_API_KEY`
+  (`PROVIDER_ENV_KEYS`, `.env.example`; optional `MISTRAL_BASE_URL`). The
+  LangChain builder uses the first-party `langchain-mistralai` (`ChatMistralAI`,
+  now in the `langchain` extra), not `ChatOpenAI`: Mistral's API is only partly
+  OpenAI-compatible. Discovery is a keyed header-auth listing that keeps exactly
+  the models advertising `capabilities.completion_chat`, so embeddings, OCR,
+  moderation and transcription models drop out while Labs models
+  (`labs-leanstral-…`, the same listing and endpoint) and `-latest` aliases stay.
+- **Price label.** Mistral's listing publishes no prices and its free tier belongs
+  to the account, so mistral models are `unknown` ("free tier not confirmed").
+  Setting `MISTRAL_FREE_TIER=1` declares a free account and labels them `free`
+  ("free tier declared for mistral"); a non-Mistral `MISTRAL_BASE_URL` voids it.
+- **Capabilities.** The listing's `function_calling`, `vision`, `reasoning` and
+  `audio` flags ride along as `tools`, `vision`, `reasoning` and `audio` tags
+  (`CloudModelInfo.capabilities`), which `enumerate_known_models` copies onto the
+  probe row as display-only `capabilities`. Pack validation uses pack overrides,
+  tier settings and registry capabilities; provider-reported tags are marked in
+  the builder and do not satisfy tier requirements until configured there.
+- **LangChain engine only**, like DigitalOcean: no native `MultiBackend` backend,
+  no `model_registry.yaml` entry and no tier-chain membership. On the native
+  engine, `mistral:` and `digitalocean:` ids now raise "served only by the
+  LangChain engine" instead of falling through to the bare-name OpenAI default,
+  which on a machine whose `OPENAI_BASE_URL` is another vendor's API would have
+  sent them to that vendor.
+- **Price label.** A registry entry explicitly curated `cost_lane: paid` now reads
+  `paid` ("curated as paid") instead of inheriting a provider-wide free
+  declaration (NVIDIA's, the `OPENAI_BASE_URL`-to-NVIDIA alias's when no price
+  speaks, or the `MISTRAL_FREE_TIER` opt-in). Live and curated prices still decide
+  first.
+
+## Unreleased - UI design guardrails
+
+- The design rules from the accessibility pass are now enforced in CI rather
+  than by periodic audits. `designDrift.test.ts` fails on text below 11px,
+  colour literals in TS/TSX, `transition-all` and layout-property transitions;
+  `tokens.contrast.test.ts` checks WCAG AA for every ink/surface pair in both
+  themes. Each rule carries its own mutation check.
+- `PRODUCT.md`, `DESIGN.md` and `.impeccable/design.json` are tracked at the repo
+  root, and `.claude/rules/ui-design.md` loads the rules automatically for any
+  change under `agentic-workflows-v2/ui/`.
+- `just ui-check` runs UI coverage, tests and the build in one step, plus the
+  Impeccable detector when `IMPECCABLE_DETECT` is set.
+
+## Unreleased - UI accessibility and design-system pass
+
+- Text contrast: muted and faint ink now pass WCAG AA (4.5:1) on every
+  surface in both themes; light faint was 2.95:1 and muted 4.41:1. Inputs,
+  selects and graph nodes get a 3:1 `--el-control-border`. The verified ratio
+  table lives in `ui/src/styles/tokens.css`.
+- Type floor: no essential text below 11px. The ~420 `text-[9–11px]` sites
+  now use the new `text-micro` (11px) or `text-xs` (12px) sizes.
+- Focus: every control shows a solid 2px `#9e321c` focus ring. This replaces
+  the 50%-tint rings and the `outline-none` sites that had no visible
+  replacement.
+- Navigation: `/live` now redirects to `/live/latest` instead of 404ing. The
+  duplicate "providers & tiers" entry is gone, leaving seven destinations;
+  `/settings` stays as a deep-link alias. On mobile, a labeled "More" sheet
+  reaches every page. The palette hint shows ⌘K on Apple platforms and Ctrl K
+  elsewhere.
+- API down: one shell-level banner with the `just dev` remedy, instead of
+  page banners stacking. Errors read as summary, server detail and remedy
+  rather than "API 502:". Run, save, send and compare actions are disabled
+  with a visible reason. Metrics with no data show "—" instead of 0.0%.
+- One status marker (icon plus sentence-case word) replaces the
+  `[ ok ]`/`[fail]` labels. A ruled scoreline replaces the KPI cards. The CLI
+  strip shows a real `agentic` command, or none, instead of invented ones.
+  Presentational Evaluations pills with no backend behind them are removed.
+- Motion and tokens:
+  - Reduced motion now stops loops and transform motion but keeps short
+    color feedback.
+  - Nothing animates width or padding, and nothing uses `transition-all`.
+  - Legacy `b-*` classes and graph colour literals are gone in favour of
+    `el-*` / `--el-graph-*` tokens.
+  - `dark:` follows the app's theme toggle.
+  - A theme-key collision that made every `border-b` draw a full box is
+    fixed.
+- UI tests: 446 → 664. Statement coverage 71.5% → 79.3%; branch coverage
+  65.6% → 75.8%.
+- Docs: the Evidence Ledger spec is updated; the matching Impeccable context
+  is tracked at the repo root (see `docs/ui/impeccable-context-changes.md`).
+
 ## Unreleased - plan_tribunal workflow
 
 - New bundled workflow `plan_tribunal`: five persona judges research proposed

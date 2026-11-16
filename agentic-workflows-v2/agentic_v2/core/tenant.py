@@ -101,11 +101,7 @@ def tenant_dataset_dir(
     create: bool = True,
 ) -> Path:
     """Return ``datasets/{tenant_id}``, creating it by default."""
-    root = Path(base_dir) if base_dir is not None else _DEFAULT_DATASETS_DIR
-    path = root / sanitize_tenant_id(tenant_id)
-    if create:
-        path.mkdir(parents=True, exist_ok=True)
-    return path
+    return _tenant_subdir(_DEFAULT_DATASETS_DIR, tenant_id, base_dir, create)
 
 
 def tenant_run_dir(
@@ -115,7 +111,13 @@ def tenant_run_dir(
     create: bool = True,
 ) -> Path:
     """Return ``runs/{tenant_id}``, creating it by default."""
-    root = Path(base_dir) if base_dir is not None else _DEFAULT_RUNS_DIR
+    return _tenant_subdir(_DEFAULT_RUNS_DIR, tenant_id, base_dir, create)
+
+
+def _tenant_subdir(
+    default_root: Path, tenant_id: str, base_dir: Path | str | None, create: bool
+) -> Path:
+    root = Path(base_dir) if base_dir is not None else default_root
     path = root / sanitize_tenant_id(tenant_id)
     if create:
         path.mkdir(parents=True, exist_ok=True)

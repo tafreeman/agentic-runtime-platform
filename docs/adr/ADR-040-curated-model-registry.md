@@ -78,7 +78,9 @@ spend tracking are follow-ups.
 - **`GH_BACKUP_MODELS`** stays in `langchain/model_utils.py` next to the provider
   gate (`PROVIDER_ENV_KEYS`) it belongs to. Pulling it into the registry would
   create a `model_utils` ↔ `model_registry` import cycle for a two-id fallback
-  whose ids are already declared in the registry catalog.
+  whose ids are already declared in the registry catalog. *(Removed 2026-10-12
+  along with the `gh:` tier rungs, after GitHub Models was retired upstream; see
+  ADR-016's update. The registry chain's local tail is now the last candidate.)*
 - **Named-agent model fields** (`agents.yaml` `default_model` /
   `fallback_models`) are *not* migrated. An audit found them vestigial: agent
   model selection flows through the agent's **tier** (now registry-sourced), and
@@ -94,7 +96,7 @@ has a `models:` entry (catches dangling references), and that every model's
 **not** `_KNOWN_PREFIXES` (a display superset that includes keyless namespaces
 like `azure:` / `windows-ai:`). Env-var precedence is preserved unchanged:
 per-step `model_override` → `AGENTIC_MODEL_TIER_{n}` → probed default → registry
-chain → `GH_BACKUP_MODELS`.
+chain → `GH_BACKUP_MODELS` (the last step was removed on 2026-10-12).
 
 ## Consequences
 

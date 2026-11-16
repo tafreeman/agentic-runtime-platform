@@ -89,6 +89,9 @@ langchain = [
     "langchain-openai>=1.2,<2",
     "langchain-anthropic>=1.4.6,<2",
     "langchain-google-genai>=4.2,<5",
+    # Mistral's first-party LangChain package: its API is only partly
+    # OpenAI-compatible, so mistral: ids do not go through ChatOpenAI.
+    "langchain-mistralai>=1.1,<2",
     "langchain-ollama>=1.1,<2",
     # langgraph-checkpoint is transitive but pinned explicitly: CVE-2026-27794
     # (RCE) is only fixed in 4.0.0, and CVE-2025-64439 in 3.0.0.
@@ -104,8 +107,8 @@ tracing = [
     "prometheus-client>=0.17,<1",
 ]
 claude = [
-    "anthropic>=0.40,<2",
-    "claude-agent-sdk>=0.1,<1",
+    "anthropic>=0.40,<3",
+    "claude-agent-sdk>=0.2.121,<1",
 ]
 devex = [
     "psutil>=6.0",
@@ -185,8 +188,8 @@ omit = [
     # Same shape as the EK bridge above: gated on the optional `claude` extra,
     # which the CI coverage job does not install (it installs
     # dev,server,mcp,langchain,tracing). Covered by the dedicated
-    # claude-subscription-tests job, which installs the extra and hard-guards
-    # the import so the skip cannot go green unnoticed.
+    # claude steps of the ek-delegation-tests job, which installs the extra and
+    # hard-guards the import so the skip cannot go green unnoticed.
     "agentic_v2/models/backends_claude.py",
     "agentic_v2/integrations/mcp/*",
     "agentic_v2/langchain/agents.py",
@@ -395,7 +398,6 @@ exclude = ["tests/", "examples/"]
 # ---------------------------------------------------------------------------
 [[tool.mypy.overrides]]
 module = [
-    "agentic_v2.tools.builtin.*",
     "agentic_v2.integrations.mcp.*",
     "agentic_v2.integrations.tracing",
     "agentic_v2.integrations.langchain",

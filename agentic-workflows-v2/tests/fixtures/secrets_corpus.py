@@ -14,6 +14,13 @@ string. The runtime values are identical to the original unsplit forms.
 _STRIPE_LIVE = "sk_" + "live_" + "ABCDEFGHIJKLMNOPabcdefghijklmno"
 _GITHUB_PAT = "ghp" + "_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmn"
 _GITHUB_OAUTH = "gho" + "_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmn"
+_PG_DRIVER_URL = "postgresql+asyncpg://user:" + "pass1234@db:5432/app"
+_PG_URL = "postgresql://user:" + "pass1234@host:5432/db"
+_MONGO_SRV_URL = "mongodb+srv://admin:" + "pass1234@cluster0.example.net/db"
+_REDIS_TLS_URL = "rediss://default:" + "pass1234@cache:6380/0"
+_REDIS_NO_USER_URL = "redis://:" + "pass1234@cache:6379"
+# No userinfo: the colon is the port's and the "@" sits in the query string.
+_PORT_AND_EMAIL_URL = "postgresql://db:" + "5432/app?contact=ops@example.com"
 
 # Positive cases — should be detected
 POSITIVE_SECRETS: list[tuple[str, str]] = [
@@ -36,6 +43,11 @@ POSITIVE_SECRETS: list[tuple[str, str]] = [
     ("secret: my_app_token_1234abcd", "env_secret"),
     ("mongodb://admin:password123@localhost:27017/mydb", "connection_string"),
     ("postgres://user:pass@host:5432/db", "connection_string"),
+    (_PG_URL, "connection_string"),
+    (_PG_DRIVER_URL, "connection_string"),
+    (_MONGO_SRV_URL, "connection_string"),
+    (_REDIS_TLS_URL, "connection_string"),
+    (_REDIS_NO_USER_URL, "connection_string"),
 ]
 
 # Negative cases — should NOT be detected (false positive avoidance)
@@ -49,4 +61,5 @@ NEGATIVE_SECRETS: list[str] = [
     "color = #ABCDEF1234567890",  # Hex color, not a secret
     "uuid: 550e8400-e29b-41d4-a716-446655440000",  # UUID, not secret
     "base64 encoded: SGVsbG8gV29ybGQ=",  # Short base64
+    _PORT_AND_EMAIL_URL,  # Port and an email in the query, no credentials
 ]

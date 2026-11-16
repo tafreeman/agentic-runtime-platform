@@ -4,6 +4,17 @@ import { recordLatency, readP95, InsufficientDataError } from './slo-storage';
 // Serial because the two tests share mutable state (first-span-latency.json):
 // the record-sample test must write before the p95 assertion test reads.
 test.describe.serial('SLO: time-to-first-span p95 <= 2s', () => {
+  // The SLO is defined on an isolated single-spec run (the nightly's dedicated
+  // "Record time-to-first-span sample" step). The nightly's full-suite 5x
+  // flake loop (scripts/run-e2e-5x.mjs sets E2E_REPEAT_RUN) runs this spec
+  // beside 3 other Playwright workers, where the sample is 4-7s of CPU
+  // contention, not a latency regression. Those samples would pollute the
+  // rolling window and trip the 2000ms gate (nightly red since 2026-10-19).
+  test.skip(
+    process.env.E2E_REPEAT_RUN === '1',
+    'SLO sample is only meaningful in an isolated run; skipped under the repeat-run flake loop',
+  );
+
   test('record single latency sample', async ({ page }) => {
     await page.goto('/');
     const t0 = Date.now();

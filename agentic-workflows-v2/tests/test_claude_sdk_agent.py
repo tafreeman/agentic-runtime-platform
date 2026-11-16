@@ -13,8 +13,8 @@ without an explicit blank the child authenticates with the API key instead of
 the subscription sign-in.
 
 Offline: ``query`` is monkeypatched and the SDK's own dataclasses are replayed.
-Skips without the optional ``claude`` extra; the ``claude-subscription-tests``
-CI job installs it and hard-guards the import.
+Skips without the optional ``claude`` extra; the claude steps of the
+``ek-delegation-tests`` CI job install it and hard-guard the import.
 """
 
 from __future__ import annotations

@@ -31,7 +31,7 @@ model-to-tool, tenant-to-storage, and process-to-external service.
 | --- | --- | --- |
 | LLM01 Prompt Injection | Request and model-loop sanitizers detect common instruction overrides, prompt extraction, delimiter escapes, and unsafe Unicode. | Pattern matching cannot identify every direct or indirect injection. Sanitization is a risk reduction layer, not proof that content is safe. |
 | LLM02 Sensitive Information Disclosure | Input secret and PII detection, output secret redaction, secret-provider support, tenant-scoped storage paths, and opt-in sensitive tracing controls. | PII patterns are limited, redaction is best effort, and client-supplied tenant headers are not an authorization boundary. |
-| LLM03 Supply Chain | Locked Python and npm dependencies, Dependabot, dependency-audit workflows, secret scanning, and SBOM generation. A local-model weight verifier exists. | Weight verification is not called by every local inference path. Third-party model, provider, MCP, action, and package provenance still needs deployment review. |
+| LLM03 Supply Chain | Locked Python and npm dependencies, Dependabot, dependency-audit workflows, secret scanning, and SBOM generation. A local-model weight verifier runs before local model loads. | Verification is non-strict by default and only warns on an unknown or mismatched hash unless `AGENTIC_STRICT_MODEL_VERIFY=1`. Third-party model, provider, MCP, action, and package provenance still needs deployment review. |
 | LLM04 Data and Model Poisoning | Dataset schemas, content-hash deduplication, evaluation datasets, and reviewable workflow configuration. | The runtime does not establish the provenance or truth of supplied datasets, remote models, or provider output. |
 | LLM05 Improper Output Handling | Pydantic API contracts, validated structured outputs in selected paths, response sanitization, restricted workflow expressions, SSRF checks, and tool argument validation. | Many agent results remain free text. Each downstream consumer must treat model output as untrusted data. |
 | LLM06 Excessive Agency | Per-step tool allowlists, approval gates, file sandbox roots, shell command allowlists, Git subcommand restrictions, HTTP egress checks, timeouts, and bounded agent iterations. | An allowed interpreter, Git command, or HTTP destination may still have broad effects. Approval requires a registered provider, and the dashboard does not yet provide a complete pause-and-resume approval flow. |
@@ -109,10 +109,12 @@ one process. Put shared enforcement at the gateway or in a durable service.
 
 ### Local model integrity
 
-`agentic_v2.models.weight_integrity` can verify configured local model files,
-but the native ONNX and LangChain local-model construction paths do not both
-invoke it. Until the verifier is wired into every load path, enforce model
-provenance and hashes in the deployment pipeline.
+`agentic_v2.models.weight_integrity` verifies configured local model files
+before the native ONNX backend and the shared-tools local provider load them.
+By default, an unknown or mismatched hash only logs a warning; set
+`AGENTIC_STRICT_MODEL_VERIFY=1` to fail closed. Hashes are only as trustworthy
+as their source, so also enforce model provenance in the deployment pipeline.
+See [Local model integrity](SUPPLY_CHAIN.md).
 
 ## Verification before release
 

@@ -58,6 +58,11 @@ class ParallelGroup:
     def __post_init__(self) -> None:
         if not self.steps:
             raise ValueError("ParallelGroup must have at least one step")
+        if self.max_concurrency is not None and self.max_concurrency < 1:
+            raise ValueError(
+                "ParallelGroup max_concurrency must be >= 1 or None, got "
+                f"{self.max_concurrency!r}"
+            )
 
 
 @dataclass
@@ -339,7 +344,7 @@ class PipelineExecutor:
     ) -> list[StepResult]:
         """Execute steps in parallel."""
 
-        if group.max_concurrency:
+        if group.max_concurrency is not None:
             # Limited concurrency with semaphore
             semaphore = asyncio.Semaphore(group.max_concurrency)
 

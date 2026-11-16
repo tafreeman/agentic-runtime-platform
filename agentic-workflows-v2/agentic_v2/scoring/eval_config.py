@@ -79,3 +79,12 @@ def _load_eval_config() -> dict[str, Any]:
     except (OSError, yaml.YAMLError, ValueError) as exc:
         logger.warning("Failed to load evaluation config: %s", exc)
         return {}
+
+
+def scoring_section(config: dict[str, Any]) -> dict[str, Any]:
+    """Return ``config["evaluation"]["scoring"]``, or ``{}`` when absent/falsy.
+
+    Takes the loaded config rather than loading it, so callers keep their own
+    ``_load_eval_config`` reference (tests patch it per module).
+    """
+    return (config.get("evaluation") or {}).get("scoring") or {}

@@ -63,8 +63,8 @@ Claim: Workflow inputs are validated against the selected workflow schema.
 Evidence level: TEST-VERIFIED
 Scope: FastAPI POST /api/run
 Evidence: agentic_v2/server/routes/workflows.py
-Command or test: python -m pytest tests/test_server_workflows.py -q
-Observed result: Invalid inputs returned HTTP 400 in the tested cases.
+Command or test: python -m pytest agentic-workflows-v2/tests/server/test_run_input_validation.py -q
+Observed result: Missing or empty required inputs returned HTTP 422 in the tested cases.
 Limits: Does not cover every workflow or external reverse-proxy behavior.
 Verified: 2026-07-28
 ```
@@ -225,11 +225,6 @@ These limits must remain visible in public summaries:
 
 - ARP ships no retrieval package or command; external retrieval evidence must
   name and verify the integrated system separately.
-- `tools.llm.model_inventory` currently fails to import its legacy
-  `llm_client` dependency.
-- ONNX discovery and exact-model LangChain chat do not use the same model-ID
-  prefix contract.
-- Local-model weight verification is not wired into every model load path.
 - MCP support is optional and not registered in normal workflow execution by
   default.
 - The dashboard does not provide a complete human approval pause-and-resume

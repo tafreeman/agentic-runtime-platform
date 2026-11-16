@@ -1,0 +1,330 @@
+<!DOCTYPE html><html lang="en" data-theme="paper"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agentic Runtime Platform — Repository Inventory</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            el: {
+              canvas: 'var(--el-canvas)',
+              surface: 'var(--el-surface)',
+              'surface-raised': 'var(--el-surface-raised)',
+              'surface-subtle': 'var(--el-surface-subtle)',
+              'surface-hover': 'var(--el-surface-hover)',
+              'surface-sunken': 'var(--el-surface-sunken)',
+              ink: 'var(--el-ink)',
+              'ink-secondary': 'var(--el-ink-secondary)',
+              'ink-muted': 'var(--el-ink-muted)',
+              'ink-faint': 'var(--el-ink-faint)',
+              divider: 'var(--el-divider)',
+              'divider-soft': 'var(--el-divider-soft)',
+              'control-border': 'var(--el-control-border)',
+              action: 'var(--el-action)',
+              'action-ink': 'var(--el-action-ink)',
+              accent: 'var(--el-accent)',
+              'accent-strong': 'var(--el-accent-strong)',
+              'accent-soft': 'var(--el-accent-soft)',
+              focus: 'var(--el-focus)',
+              'select-soft': 'var(--el-select-soft)',
+              success: 'var(--el-success)',
+              'success-soft': 'var(--el-success-soft)',
+              warning: 'var(--el-warning)',
+              'warning-soft': 'var(--el-warning-soft)',
+              danger: 'var(--el-danger)',
+              'danger-soft': 'var(--el-danger-soft)',
+              info: 'var(--el-info)',
+              'info-soft': 'var(--el-info-soft)',
+              plum: 'var(--el-plum)',
+              'plum-soft': 'var(--el-plum-soft)'
+            }
+          },
+          fontFamily: {
+            sans: ['"Geist"', '"Inter"', 'system-ui', 'sans-serif'],
+            display: ['Georgia', '"Times New Roman"', 'serif'],
+            mono: ['ui-monospace', '"Cascadia Code"', '"SFMono-Regular"', 'Consolas', 'monospace']
+          },
+          fontSize: {
+            micro: ['11px', '15px'],
+            xs: ['12px', '16px'],
+            sm: ['13px', '18px'],
+            base: ['14px', '22px'],
+            lg: ['15px', '24px']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root, [data-theme="paper"] {
+      --el-canvas: #f4f4f5;
+      --el-surface: #ffffff;
+      --el-surface-raised: #ffffff;
+      --el-surface-subtle: #eeeef0;
+      --el-surface-hover: #e6e6e9;
+      --el-surface-sunken: #f7f7f8;
+      --el-ink: #161616;
+      --el-ink-secondary: #3d3d42;
+      --el-ink-muted: #56565e;
+      --el-ink-faint: #64646d;
+      --el-divider: #d4d4d8;
+      --el-divider-soft: #e4e4e7;
+      --el-control-border: #7d7d86;
+      --el-action: #161616;
+      --el-action-ink: #ffffff;
+      --el-accent: #d9560f;
+      --el-accent-strong: #b5410a;
+      --el-accent-soft: #fbeee7;
+      --el-focus: #0b5bd3;
+      --el-select-soft: #e8efff;
+      --el-success: #2f7617;
+      --el-success-soft: #e6f4ec;
+      --el-warning: #8a5a00;
+      --el-warning-soft: #fbf0d9;
+      --el-danger: #c4222c;
+      --el-danger-soft: #fdecec;
+      --el-info: #0f62a8;
+      --el-info-soft: #e7f0fb;
+      --el-plum: #6e46c9;
+      --el-plum-soft: #eee9f9;
+    }
+    [data-theme="dark"] {
+      --el-canvas: #07090c;
+      --el-surface: #0d1014;
+      --el-surface-raised: #13171c;
+      --el-surface-subtle: #1a1f25;
+      --el-surface-hover: #212730;
+      --el-surface-sunken: #040608;
+      --el-ink: #edeef0;
+      --el-ink-secondary: #c3c7cd;
+      --el-ink-muted: #9ca2ab;
+      --el-ink-faint: #878e97;
+      --el-divider: #2a3038;
+      --el-divider-soft: #1c2128;
+      --el-control-border: #69707b;
+      --el-action: #edeef0;
+      --el-action-ink: #07090c;
+      --el-accent: #f26a1b;
+      --el-accent-strong: #ff9a5c;
+      --el-accent-soft: #321e15;
+      --el-focus: #78a9ff;
+      --el-select-soft: #13213f;
+      --el-success: #4fd154;
+      --el-success-soft: #0f2a1c;
+      --el-warning: #e9b44c;
+      --el-warning-soft: #2e230c;
+      --el-danger: #ed5d5d;
+      --el-danger-soft: #3a1618;
+      --el-info: #6cb6ff;
+      --el-info-soft: #10243d;
+      --el-plum: #c0a6ff;
+      --el-plum-soft: #262535;
+    }
+    body {
+      background-color: var(--el-canvas);
+      color: var(--el-ink);
+    }
+  </style>
+  <script>
+    function toggleTheme() {
+      const html = document.documentElement;
+      const currentTheme = html.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'paper' : 'dark';
+      html.setAttribute('data-theme', newTheme);
+    }
+  </script>
+</head>
+<body>
+  <div class="min-h-screen bg-el-canvas text-el-ink font-sans antialiased pb-24" data-sd-id="1">
+    <!-- Cover Band -->
+    <div class="bg-el-surface border-b border-el-divider pt-16 pb-12 px-10 relative" data-sd-id="2">
+      <button onclick="toggleTheme()" class="absolute top-6 right-10 p-2 text-el-ink-muted hover:text-el-ink transition-colors" aria-label="Toggle theme" id="theme-toggle" data-sd-id="3">
+        <iconify-icon icon="lucide:moon" class="text-xl"></iconify-icon>
+      </button>
+      
+      <div class="max-w-screen-xl mx-auto" data-sd-id="4">
+        <div class="text-micro font-mono uppercase tracking-widest text-el-ink-muted mb-4" data-sd-id="5">Repository Inventory · 2026-10-12</div>
+        <h1 class="text-4xl md:text-5xl font-display text-el-ink mb-4" data-sd-id="6">Agentic Runtime Platform</h1>
+        <p class="text-lg text-el-ink-secondary mb-6" data-sd-id="7">Repository Inventory and technical analysis</p>
+        <div class="text-sm font-mono text-el-ink-muted bg-el-surface-sunken border border-el-divider-soft py-2 px-3 rounded inline-flex items-center gap-4" data-sd-id="8">
+          <span data-sd-id="9">rev c3b2d328</span>
+          <span class="text-el-divider" data-sd-id="10">|</span>
+          <span data-sd-id="11">345 Python modules</span>
+          <span class="text-el-divider" data-sd-id="12">|</span>
+          <span data-sd-id="13">203 UI files</span>
+          <span class="text-el-divider" data-sd-id="14">|</span>
+          <span data-sd-id="15">9 workflows</span>
+          <span class="text-el-divider" data-sd-id="16">|</span>
+          <span data-sd-id="17">20 CI jobs</span>
+          <span class="text-el-divider" data-sd-id="18">|</span>
+          <span data-sd-id="19">55 ADRs</span>
+        </div>
+
+        <!-- Stat Tiles -->
+        <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mt-12 pt-8 border-t border-el-divider-soft" data-sd-id="20">
+          <div data-sd-id="21">
+            <div class="text-3xl font-display text-el-ink" data-sd-id="22">14,289</div>
+            <div class="text-micro uppercase font-mono text-el-ink-muted mt-1 tracking-wider" data-sd-id="23">Lines of Code</div>
+          </div>
+          <div data-sd-id="24">
+            <div class="text-3xl font-display text-el-ink" data-sd-id="25">94%</div>
+            <div class="text-micro uppercase font-mono text-el-ink-muted mt-1 tracking-wider" data-sd-id="26">Test Coverage</div>
+          </div>
+          <div data-sd-id="27">
+            <div class="text-3xl font-display text-el-accent" data-sd-id="28">6</div>
+            <div class="text-micro uppercase font-mono text-el-ink-muted mt-1 tracking-wider" data-sd-id="29">Open PRs</div>
+          </div>
+          <div data-sd-id="30">
+            <div class="text-3xl font-display text-el-ink" data-sd-id="31">0</div>
+            <div class="text-micro uppercase font-mono text-el-ink-muted mt-1 tracking-wider" data-sd-id="32">Open Issues</div>
+          </div>
+          <div data-sd-id="33">
+            <div class="text-3xl font-display text-el-warning" data-sd-id="34">3</div>
+            <div class="text-micro uppercase font-mono text-el-ink-muted mt-1 tracking-wider" data-sd-id="35">Stashes</div>
+          </div>
+          <div data-sd-id="36">
+            <div class="text-3xl font-display text-el-ink" data-sd-id="37">5</div>
+            <div class="text-micro uppercase font-mono text-el-ink-muted mt-1 tracking-wider" data-sd-id="38">Proposed ADRs</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="max-w-screen-xl mx-auto px-10 flex mt-8 gap-10" data-sd-id="39">
+      <!-- TOC Sidebar -->
+      <nav class="w-[216px] shrink-0 sticky top-8 self-start text-sm text-el-ink-secondary hidden md:block" data-sd-id="40">
+        <ul class="space-y-1" data-sd-id="41">
+          <li data-sd-id="42"><a href="#s0" class="block py-1.5 px-3 rounded hover:bg-el-surface-hover" id="toc-s0" data-sd-id="43">0 Executive summary</a></li>
+          <li data-sd-id="44"><a href="#s1" class="block py-1.5 px-3 rounded hover:bg-el-surface-hover" id="toc-s1" data-sd-id="45">1 Overview &amp; architecture</a></li>
+          <li data-sd-id="46"><a href="#s2" class="block py-1.5 px-3 rounded hover:bg-el-surface-hover" id="toc-s2" data-sd-id="47">2 Runtime backend</a></li>
+          <li data-sd-id="48"><a href="#s3" class="block py-1.5 px-3 rounded hover:bg-el-surface-hover" id="toc-s3" data-sd-id="49">3 Interfaces</a></li>
+          <li data-sd-id="50"><a href="#s4" class="block py-1.5 px-3 rounded hover:bg-el-surface-hover" id="toc-s4" data-sd-id="51">4 Frontend</a></li>
+          <li data-sd-id="52"><a href="#s5" class="block py-1.5 px-3 rounded hover:bg-el-surface-hover" id="toc-s5" data-sd-id="53">5 Workflows/eval/tools</a></li>
+          <li data-sd-id="54"><a href="#s6" class="block py-1.5 px-3 rounded hover:bg-el-surface-hover" id="toc-s6" data-sd-id="55">6 Build/CI/ops</a></li>
+          <li data-sd-id="56"><a href="#s7" class="block py-1.5 px-3 rounded hover:bg-el-surface-hover" id="toc-s7" data-sd-id="57">7 Folder inventory</a></li>
+          <li data-sd-id="58"><a href="#s8" class="block py-1.5 px-3 rounded hover:bg-el-surface-hover" id="toc-s8" data-sd-id="59">8 Docs &amp; ADRs</a></li>
+          <li class="relative" data-sd-id="60">
+            <div class="absolute left-0 top-0 bottom-0 w-[2px] bg-el-accent" data-sd-id="61"></div>
+            <a href="#s9" class="block py-1.5 px-3 font-medium text-el-ink bg-el-surface" id="toc-s9" data-sd-id="62">9 Work status</a>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Reading Column -->
+      <main class="max-w-[1040px] flex-1 bg-el-surface border border-el-divider rounded-md p-8 md:p-12 shadow-[0_16px_40px_rgb(22_22_22_/_0.04)] dark:shadow-none" data-sd-id="63">
+        
+        <div class="mb-8" data-sd-id="64">
+          <div class="text-micro font-mono uppercase tracking-widest text-el-ink-muted mb-2" data-sd-id="65">Section 9</div>
+          <h2 class="text-2xl font-display text-el-ink pb-4 border-b border-el-divider" data-sd-id="66">Work status — ongoing, stalled, and future</h2>
+        </div>
+
+        <div class="bg-el-surface-subtle p-4 border-l-2 border-el-info text-el-ink-secondary mb-8 rounded-r text-sm" data-sd-id="67">
+          Snapshot taken 2026-10-12/13 against <code class="font-mono text-xs bg-el-surface-sunken px-1 py-0.5 rounded border border-el-divider-soft">origin/main</code> = <code class="font-mono text-xs bg-el-surface-sunken px-1 py-0.5 rounded border border-el-divider-soft">c3b2d328</code> (tafreeman/agentic-runtime-platform#387, ADR-062). Git/PR state moves hourly in this repo (several concurrent sessions); counts below were re-read from git/gh at write time and several differ from the pre-extracted JSON. Where they differ, the live value is used and the difference is called out.
+        </div>
+
+        <!-- 9.0 -->
+        <h3 class="text-lg font-display text-el-ink mt-10 mb-4" data-sd-id="68">9.0 Headline numbers</h3>
+        
+        <div class="overflow-x-auto border border-el-divider rounded" data-sd-id="69">
+          <table class="w-full text-left border-collapse text-sm" data-sd-id="70">
+            <thead class="bg-el-surface-subtle text-el-ink-secondary sticky top-0" data-sd-id="71">
+              <tr data-sd-id="72">
+                <th class="py-2 px-3 font-medium border-b border-el-divider" data-sd-id="73">Metric</th>
+                <th class="py-2 px-3 font-medium border-b border-el-divider border-l" data-sd-id="74">Value</th>
+                <th class="py-2 px-3 font-medium border-b border-el-divider border-l" data-sd-id="75">Source</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-el-divider-soft" data-sd-id="76">
+              <tr class="hover:bg-el-surface-hover transition-colors" data-sd-id="77">
+                <td class="py-2 px-3 text-el-ink" data-sd-id="78">Open PRs</td>
+                <td class="py-2 px-3 font-mono text-xs border-l border-el-divider-soft" data-sd-id="79">6 (#382, #383, #384, #388, #389, #390)</td>
+                <td class="py-2 px-3 font-mono text-xs text-el-ink-muted border-l border-el-divider-soft" data-sd-id="80">gh pr list -R tafreeman/agentic-runtime-platform</td>
+              </tr>
+              <tr class="hover:bg-el-surface-hover transition-colors" data-sd-id="81">
+                <td class="py-2 px-3 text-el-ink" data-sd-id="82">Of which feature/UI work</td>
+                <td class="py-2 px-3 font-mono text-xs border-l border-el-divider-soft" data-sd-id="83">3 (#388, #389, #390)</td>
+                <td class="py-2 px-3 text-el-ink-muted border-l border-el-divider-soft" data-sd-id="84">same</td>
+              </tr>
+              <tr class="hover:bg-el-surface-hover transition-colors" data-sd-id="85">
+                <td class="py-2 px-3 text-el-ink" data-sd-id="86">Open GitHub issues</td>
+                <td class="py-2 px-3 font-mono text-xs border-l border-el-divider-soft" data-sd-id="87">0</td>
+                <td class="py-2 px-3 font-mono text-xs text-el-ink-muted border-l border-el-divider-soft" data-sd-id="88">meta_inventory.json git.open_issues</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 9.1 -->
+        <h3 class="text-lg font-display text-el-ink mt-12 mb-4" data-sd-id="89">9.1 Ongoing work</h3>
+        
+        <div class="overflow-x-auto border border-el-divider rounded" data-sd-id="90">
+          <table class="w-full text-left border-collapse text-[13px] leading-relaxed" data-sd-id="91">
+            <thead class="bg-el-surface-subtle text-el-ink-secondary sticky top-0" data-sd-id="92">
+              <tr data-sd-id="93">
+                <th class="py-2 px-3 font-medium border-b border-el-divider w-1/4" data-sd-id="94">Item</th>
+                <th class="py-2 px-3 font-medium border-b border-el-divider border-l w-1/5" data-sd-id="95">Branch / PR</th>
+                <th class="py-2 px-3 font-medium border-b border-el-divider border-l w-1/12" data-sd-id="96">State</th>
+                <th class="py-2 px-3 font-medium border-b border-el-divider border-l" data-sd-id="97">Next step</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-el-divider-soft align-top" data-sd-id="98">
+              <tr class="hover:bg-el-surface-hover transition-colors" data-sd-id="99">
+                <td class="py-3 px-3 text-el-ink" data-sd-id="100">
+                  <div class="font-medium mb-1" data-sd-id="101">Evidence Ledger UI redesign</div>
+                  <div class="text-el-ink-muted" data-sd-id="102">tokens, primitives, DataTable, FilterBar (ADR-054 follow-on)</div>
+                </td>
+                <td class="py-3 px-3 font-mono text-xs border-l border-el-divider-soft" data-sd-id="103">
+                  <div class="text-el-focus" data-sd-id="104">feature/evidence_ledger_port</div>
+                  <div class="text-el-ink-muted mt-1" data-sd-id="105">#388</div>
+                </td>
+                <td class="py-3 px-3 border-l border-el-divider-soft" data-sd-id="106">
+                  <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-el-info-soft text-el-info text-xs font-medium" data-sd-id="107">
+                    <span data-sd-id="108">◐</span> In review
+                  </span>
+                </td>
+                <td class="py-3 px-3 text-el-ink border-l border-el-divider-soft" data-sd-id="109">
+                  Wait for checks, get the single review (global rule: one approval, PRs &lt;~400 lines — this one is ~8x over), then merge. Consider splitting tokens vs components if review stalls
+                </td>
+              </tr>
+              <tr class="hover:bg-el-surface-hover transition-colors" data-sd-id="110">
+                <td class="py-3 px-3 text-el-ink" data-sd-id="111">
+                  <div class="font-medium mb-1" data-sd-id="112">Evidence Ledger screen restyle</div>
+                  <div class="text-el-ink-muted" data-sd-id="113">(existing screens re-themed)</div>
+                </td>
+                <td class="py-3 px-3 font-mono text-xs border-l border-el-divider-soft" data-sd-id="114">
+                  <div class="text-el-focus" data-sd-id="115">feature/el_screen_restyle</div>
+                  <div class="text-el-ink-muted mt-1" data-sd-id="116">@ 1d28dce3</div>
+                </td>
+                <td class="py-3 px-3 border-l border-el-divider-soft" data-sd-id="117">
+                  <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-el-warning-soft text-el-warning text-xs font-medium" data-sd-id="118">
+                    <span data-sd-id="119">▲</span> Stalled
+                  </span>
+                </td>
+                <td class="py-3 px-3 text-el-ink border-l border-el-divider-soft" data-sd-id="120">
+                  Hold until #388 merges, rebase, open PR
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Placeholder Figure -->
+        <div class="mt-10 p-1 border border-el-divider rounded bg-el-surface-subtle" data-sd-id="121">
+           <div class="bg-el-surface border border-el-divider-soft rounded p-8 flex items-center justify-center min-h-[200px] text-el-ink-muted" data-sd-id="122">
+              [ Mermaid Architecture Diagram Placeholder ]
+           </div>
+           <div class="text-xs text-center text-el-ink-muted py-2 font-mono" data-sd-id="123">Figure 9.1: Work tree dependencies</div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+</body></html>

@@ -48,11 +48,25 @@ place rather than replaced. See the disposition note immediately below.
 >   named, not the judge default — and, independently, the upstream service
 >   itself stopped serving requests entirely on 2026-07-30.
 >
+> **Update 2026-10-12.** The `gh:` rungs are now out of routing too. Leaving
+> them in cost a real run: on 2026-10-11 a `fullstack_generation` step failed
+> over from `ollama:qwen3-coder:30b` to `gh:openai/gpt-4o-mini` and died with
+> "Connection error", because the legacy `models.inference.ai.azure.com`
+> endpoint no longer resolves. Four downstream steps then failed their input
+> contracts. Removed: `gh:openai/gpt-4o-mini` from the tier-1 chain,
+> `gh:openai/gpt-4o` from the tier 2-5 chains, and the `GITHUB_TOKEN` backup
+> tail (`GH_BACKUP_MODELS`, `include_gh_backup`) that
+> `get_model_candidates_for_tier` appended after the local tail. Both ids stay
+> in `model_registry.yaml` as `deprecated`, `tiers: []`, curated `paid`. The
+> `gh:` builder, discovery and `GITHUB_TOKEN` gate are still in place, so an
+> explicit `gh:` id builds and then fails at the network.
+>
 > `docs/adr/ADR-INDEX.md` reflects this status change. A separate,
 > unrelated stale claim was also found while investigating this: `docs/
 > architecture-runtime.md`'s environment-variable table still describes
 > `GITHUB_TOKEN` as the "default E2E LLM provider" — flagged for a follow-up
-> fix, not corrected in this change.
+> fix, not corrected in this change. (Corrected 2026-10-12, with the update
+> above.)
 
 ---
 

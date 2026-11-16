@@ -2,6 +2,9 @@
 
 # ADR-008 cleanup: removed 3 duplicate tests (see docs/adr/ADR-008-testing-approach-overhaul.md)
 
+import json
+import logging
+
 import pytest
 
 from agentic_v2.agents import (
@@ -23,6 +26,7 @@ from agentic_v2.contracts import (
     CodeGenerationOutput,
     CodeReviewInput,
     CodeReviewOutput,
+    Severity,
 )
 from agentic_v2.models import ModelTier
 
@@ -358,6 +362,84 @@ class TestReviewerAgent:
 
         assert "summary" in result
         assert "issues" in result
+        # The backend-less mock returns one issue; it must survive parsing.
+        assert [i["description"] for i in result["issues"]] == [
+            "Consider adding type hints"
+        ]
+
+    @pytest.mark.asyncio
+    async def test_parse_output_critical_issue_blocks_approval(self):
+        """A critical issue maps onto CodeIssue and blocks approval."""
+        agent = ReviewerAgent()
+        task = CodeReviewInput(code='q = "SELECT " + uid', language="python")
+        response = json.dumps(
+            {
+                "summary": "SQL injection",
+                "issues": [
+                    {
+                        "severity": "critical",
+                        "category": "security",
+                        "line": 1,
+                        "description": "SQL built by string concatenation",
+                        "suggestion": "Use a parameterized query",
+                        "code_suggestion": 'cur.execute("SELECT ?", (uid,))',
+                    }
+                ],
+            }
+        )
+
+        result = await agent._parse_output(task, response)
+
+        assert result.success
+        assert len(result.issues) == 1
+        issue = result.issues[0]
+        assert issue.severity == Severity.CRITICAL
+        assert issue.message == "SQL built by string concatenation"
+        assert issue.code_snippet == 'cur.execute("SELECT ?", (uid,))'
+        assert result.approved is False
+
+    @pytest.mark.asyncio
+    async def test_parse_output_warns_on_malformed_issues(self, caplog):
+        """Malformed issues are dropped with a WARNING carrying the count."""
+        agent = ReviewerAgent()
+        task = CodeReviewInput(code="x = 1", language="python")
+        response = json.dumps(
+            {
+                "issues": [
+                    {"severity": "low", "description": "fine"},
+                    {"severity": "high", "description": ""},
+                    {"severity": "high", "description": "bad line", "line": 0},
+                ]
+            }
+        )
+
+        with caplog.at_level(logging.WARNING, logger="agentic_v2.agents.reviewer"):
+            result = await agent._parse_output(task, response)
+
+        assert [i.message for i in result.issues] == ["fine"]
+        assert "Dropped 2 of 3 malformed review issues" in caplog.text
+
+    @pytest.mark.asyncio
+    async def test_parse_output_unparseable_response_fails(self):
+        """A response with no JSON is a failed review, not a clean one."""
+        agent = ReviewerAgent()
+        task = CodeReviewInput(code="x = 1", language="python")
+
+        result = await agent._parse_output(task, "I could not review this.")
+
+        assert result.success is False
+        assert result.approved is False
+        assert result.error
+
+    @pytest.mark.asyncio
+    async def test_multi_pass_review_dedups_on_message(self):
+        """Identical issues from several passes collapse to one."""
+        agent = ReviewerAgent()
+        task = CodeReviewInput(code="x = 1", language="python")
+
+        result = await agent.multi_pass_review(task)
+
+        assert [i.message for i in result.issues] == ["Consider adding type hints"]
 
     @pytest.mark.asyncio
     async def test_severity_parsing(self):

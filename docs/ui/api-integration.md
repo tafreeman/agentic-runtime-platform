@@ -1,6 +1,6 @@
 # UI API integration
 
-**Current:** 2026-07-28
+**Current:** 2026-10-18
 **Client:** `agentic-workflows-v2/ui/src/api/client.ts`
 **Types:** `ui/src/api/types.ts` plus `*.generated.ts`
 
@@ -58,6 +58,7 @@ version, and all references are exact `{id, version}` values.
 | `POST /api/settings/model-packs/{id}/duplicate` | Create a new stable ID at v1 |
 | `POST /api/settings/model-packs/{id}/validate?version=N` | Validate chains/providers/capabilities |
 | `POST /api/settings/model-packs/{id}/activate?version=N` | Set global exact version |
+| `DELETE /api/settings/model-packs/active` | Clear the global active pack |
 | `PUT /api/settings/model-packs/{id}/bindings/{workflow}?version=N` | Bind exact version |
 | `DELETE /api/settings/model-packs/bindings/{workflow}` | Remove binding |
 | `GET /api/settings/model-packs/{id}/dependencies?version=N` | Active/binding/recent-run use |

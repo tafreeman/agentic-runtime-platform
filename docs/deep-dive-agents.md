@@ -15,8 +15,9 @@ classes when a workflow step needs a model-and-tool loop. Use a normal
 | `ArchitectAgent` | `ArchitectureInput` | `ArchitectureOutput` | Produce a structured system design |
 | `OrchestratorAgent` | `OrchestratorInput` | `OrchestratorOutput` | Decompose and delegate a task |
 
-The package exports these classes and their public input and output models
-from `agentic_v2.agents`.
+`agentic_v2.agents` exports the agent classes and the architecture, orchestrator and
+test-generation models. `CodeGenerationInput`/`Output` and `CodeReviewInput`/`Output`
+live in `agentic_v2.contracts`.
 
 ## BaseAgent contract
 

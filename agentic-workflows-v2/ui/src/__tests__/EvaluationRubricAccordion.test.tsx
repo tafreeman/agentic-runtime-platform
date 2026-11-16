@@ -96,7 +96,7 @@ describe("EvaluationRubricAccordion", () => {
 
     render(<EvaluationRubricAccordion filename="run.json" />);
 
-    expect(screen.getByText("step scores")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Step scores" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /review_code/i })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /review_code/i }));
@@ -184,5 +184,71 @@ describe("EvaluationRubricAccordion", () => {
 
     expect(screen.queryByText(/judge skipped/i)).toBeNull();
     expect(screen.getByText(/overlap term inactive/)).toBeInTheDocument();
+  });
+
+  it("renders rubric criteria rows with a score bar and floor flag", () => {
+    mockDetail({
+      criteria: [
+        {
+          criterion: "correctness",
+          weight: 0.6,
+          raw_score: 8.5,
+          normalized_score: 0.85,
+          weighted_contribution: 0.51,
+          floor_violated: false,
+        },
+        {
+          criterion: "safety",
+          weight: 0.4,
+          raw_score: 2,
+          normalized_score: 0.2,
+          weighted_contribution: 0.08,
+          floor: 0.5,
+          floor_violated: true,
+        },
+      ],
+    });
+
+    render(<EvaluationRubricAccordion filename="run.json" />);
+
+    expect(screen.getByRole("heading", { name: "Rubric criteria" })).toBeInTheDocument();
+    expect(screen.getByText("85.0%")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "85.0%" })).toHaveAttribute(
+      "aria-valuenow",
+      "85"
+    );
+    expect(screen.getByText("w 0.60")).toBeInTheDocument();
+    // Floor violation reads as the shared failed marker with a qualifier.
+    expect(screen.getByText("Below floor")).toBeInTheDocument();
+    expect(screen.queryByText("[FLOOR]")).not.toBeInTheDocument();
+  });
+
+  it("shows a readable error with a remedy when the rubric fails to load", () => {
+    mockUseRunEvaluationDetail.mockReturnValue({
+      isLoading: false,
+      isError: true,
+      error: new Error("API 500: "),
+    });
+
+    render(<EvaluationRubricAccordion filename="run.json" />);
+
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent(/failed to load rubric — The API failed \(HTTP 500\)/);
+    expect(alert).toHaveTextContent(/check the API server log/i);
+  });
+
+  it("keeps an unreachable API to a quiet note", () => {
+    mockUseRunEvaluationDetail.mockReturnValue({
+      isLoading: false,
+      isError: true,
+      error: new TypeError("Failed to fetch"),
+    });
+
+    render(<EvaluationRubricAccordion filename="run.json" />);
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/rubric unavailable while the API is unreachable/)
+    ).toBeInTheDocument();
   });
 });

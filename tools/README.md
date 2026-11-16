@@ -36,9 +36,8 @@ python -m tools.llm.check_provider_limits --help
 python -m tools.agents.benchmarks.runner --help
 ```
 
-The current `tools.llm.model_inventory` entry point has an import-path defect
-and exits with `No module named 'llm_client'`. Use `model_probe` for live
-discovery until that command is fixed.
+`python -m tools.llm.model_inventory` builds a passive capability inventory;
+`model_probe` is the tool for live discovery.
 
 Some commands contact model providers, download datasets, or write reports.
 Inspect `--help`, start with a small limit, and keep secrets and private data

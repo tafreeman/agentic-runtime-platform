@@ -53,6 +53,14 @@ vi.mock("../api/client", async () => {
   };
 });
 
+const availability = vi.hoisted(() => ({
+  current: { apiDown: false, checking: false, reason: undefined as string | undefined },
+}));
+
+vi.mock("../hooks/useApiAvailability", () => ({
+  useApiAvailability: () => availability.current,
+}));
+
 vi.mock("../components/dag/WorkflowDAG", () => ({
   default: () => <div>Workflow DAG</div>,
 }));
@@ -96,6 +104,7 @@ describe("WorkflowDetailPage", () => {
     vi.clearAllMocks();
     formSpy.lastProps = null;
     formSpy.values = defaultFormValues();
+    availability.current = { apiDown: false, checking: false, reason: undefined };
     mockFlag.mockReturnValue(true);
     mockUseWorkflowDAG.mockReturnValue({
       data: {
@@ -137,7 +146,7 @@ describe("WorkflowDetailPage", () => {
 
     renderPage();
 
-    expect(screen.getByText(/\$ loading workflow graph/i)).toBeInTheDocument();
+    expect(screen.getByText(/loading workflow graph/i)).toBeInTheDocument();
   });
 
   it("shows an API error state when the DAG fails to load", () => {
@@ -150,7 +159,74 @@ describe("WorkflowDetailPage", () => {
 
     renderPage();
 
-    expect(screen.getByText(/\[!\] dag unavailable/i)).toBeInTheDocument();
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent(/dag unavailable/i);
+    // Status is carried by an icon plus words, not an ASCII glyph.
+    expect(alert).not.toHaveTextContent("[!]");
+    expect(alert.querySelector("svg[aria-hidden='true']")).not.toBeNull();
+  });
+
+  it("keeps an unreachable-API DAG failure to a quiet note", () => {
+    mockUseWorkflowDAG.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: new Error("API 503: "),
+    });
+
+    renderPage();
+
+    expect(
+      screen.getByText(/workflow graph unavailable while the API is unreachable/i)
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("disables run and demo run with a visible reason while the API is down", () => {
+    availability.current = {
+      apiDown: true,
+      checking: false,
+      reason: "The API server is unreachable. Start it with `just dev`, then retry.",
+    };
+    mockUseWorkflowDAG.mockReturnValue({
+      data: {
+        name: "test_deterministic",
+        description: "Simple deterministic workflow for testing",
+        nodes: [{ id: "echo", agent: "tier0_echo", description: "", depends_on: [], tier: "tier0" }],
+        edges: [],
+        inputs: [],
+      },
+      isLoading: false,
+      isError: false,
+    });
+
+    renderPage("/workflows/test_deterministic");
+
+    const run = screen.getByTestId("run-button");
+    const demo = screen.getByRole("button", { name: /demo run/i });
+    expect(run).toBeDisabled();
+    expect(demo).toBeDisabled();
+    expect(run).toHaveAccessibleDescription(/API server is unreachable/);
+    expect(demo).toHaveAccessibleDescription(/API server is unreachable/);
+    expect(screen.getByText(/runs are disabled/i)).toBeVisible();
+    expect(screen.getByText("API offline")).toBeInTheDocument();
+    fireEvent.click(run);
+    expect(mockRunWorkflow).not.toHaveBeenCalled();
+  });
+
+  it("explains a rejected run with the server detail and a remedy", async () => {
+    mockRunWorkflow.mockRejectedValue(
+      new Error('API 422: {"detail": "unknown model pack review-stable@9"}')
+    );
+
+    renderPage();
+    fireEvent.click(screen.getByTestId("run-button"));
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(/unknown model pack review-stable@9/);
+    expect(alert).not.toHaveTextContent("[!]");
+    expect(alert).toHaveTextContent(/fix the input and try again/i);
+    expect(alert).not.toHaveTextContent(/API 422/);
   });
 
   it("shows an empty graph state when the workflow has no steps", () => {
@@ -168,7 +244,7 @@ describe("WorkflowDetailPage", () => {
 
     renderPage();
 
-    expect(screen.getByText(/\$ no workflow steps defined/i)).toBeInTheDocument();
+    expect(screen.getByText(/no workflow steps defined/i)).toBeInTheDocument();
   });
 
   it("starts a run from the page", async () => {
@@ -199,6 +275,10 @@ describe("WorkflowDetailPage", () => {
     expect(
       await screen.findByText(/required input 'prompt' must not be empty/i)
     ).toBeInTheDocument();
+    // A client-side validation failure points at the form, not the server log.
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      /fill in the required inputs, then run again/i
+    );
     expect(mockRunWorkflow).not.toHaveBeenCalled();
   });
 
@@ -269,9 +349,45 @@ describe("WorkflowDetailPage", () => {
 
     renderPage("/workflows/tiered_flow");
 
-    expect(screen.getByText("tier0")).toBeInTheDocument();
-    expect(screen.getByText("tier1")).toBeInTheDocument();
-    expect(screen.getByText("2 nodes · 1 edges")).toBeInTheDocument();
+    // Shared tier marks: the short "T0" form, explained by title + sr-only.
+    expect(screen.getByText("T0")).toBeInTheDocument();
+    expect(screen.getByText("T1")).toBeInTheDocument();
+    expect(screen.getByText("Tier 1 — capability tier")).toHaveClass("sr-only");
+    // Tier marks use the shared capability-tier tokens (T0–T2 = low).
+    expect(screen.getByTitle("Tier 1 — capability tier").className).toContain(
+      "text-el-tier-low",
+    );
+    expect(screen.getByText(/2 steps · 1 edge$/)).toBeInTheDocument();
+  });
+
+  it("colors tier marks mid for T3, high for T4+, and neutral when unparsable", () => {
+    mockUseWorkflowDAG.mockReturnValue({
+      data: {
+        name: "tiered_flow",
+        description: "",
+        nodes: [
+          { id: "a", agent: "x", description: "", depends_on: [], tier: "tier3" },
+          { id: "b", agent: "y", description: "", depends_on: [], tier: "tier5" },
+          { id: "c", agent: "z", description: "", depends_on: [], tier: "custom" },
+        ],
+        edges: [],
+        inputs: [],
+      },
+      isLoading: false,
+      isError: false,
+    });
+
+    renderPage("/workflows/tiered_flow");
+
+    expect(screen.getByTitle("Tier 3 — capability tier").className).toContain(
+      "text-el-tier-mid",
+    );
+    expect(screen.getByTitle("Tier 5 — capability tier").className).toContain(
+      "text-el-tier-high",
+    );
+    expect(screen.getByTitle("custom — capability tier").className).toContain(
+      "text-el-muted",
+    );
   });
 
   it("offers a deterministic no-LLM demo run for the built-in smoke workflow", async () => {

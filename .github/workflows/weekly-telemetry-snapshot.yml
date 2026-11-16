@@ -1,0 +1,296 @@
+name: Weekly Telemetry Snapshot
+
+# Weekly CI-run statistics (and, optionally, repository traffic) appended to a
+# rolling ledger issue. Read-only against the repo; never a PR check and never a
+# required status. Everything secret-dependent is OPTIONAL and degrades quietly:
+#   * GH_TRAFFIC_TOKEN (fine-grained PAT, "Administration: Read-only" on this
+#     repo -- the GITHUB_TOKEN cannot read /traffic). Unset => traffic is
+#     reported as NOT CONFIGURED and the job still succeeds.
+#   * SLACK_WEBHOOK_URL. Unset => no Slack digest.
+# The repo is public, so the ledger issue and job summary are world-readable
+# while the traffic API is admin-only: traffic detail is posted only to the
+# (private) Slack digest unless the repository variable
+# TELEMETRY_PUBLISH_TRAFFIC is set to "true".
+# Ledger hygiene: the first run creates the issue; pin it once by hand. The
+# comment body is capped at 60k characters and the issue grows one comment per
+# week, so rotate it (close it; the next run opens a fresh one) occasionally.
+# Durations are wall-clock including queue time (run_started_at -> updated_at);
+# treat p50 as the headline, p95 is inflated by re-run bumps.
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'   # Monday 08:00 UTC, after Dependabot's 05:00-05:45 window
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Write the job summary only; no issue comment, no Slack'
+        type: boolean
+        default: true
+
+permissions: {}
+
+concurrency:
+  group: telemetry-snapshot
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    name: Snapshot CI and traffic telemetry
+    if: github.repository == 'tafreeman/agentic-runtime-platform'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      issues: write
+      contents: read
+    env:
+      REPO: ${{ github.repository }}
+      GH_REPO: ${{ github.repository }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TRAFFIC_TOKEN: ${{ secrets.GH_TRAFFIC_TOKEN }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      PUBLISH_TRAFFIC: ${{ vars.TELEMETRY_PUBLISH_TRAFFIC }}
+    steps:
+      # No checkout and no third-party actions: stdlib Python plus the gh CLI,
+      # both preinstalled on ubuntu-latest. Secrets and contexts reach scripts
+      # only through `env:` above, never through `${{ }}` inside a run body.
+      - name: Collect telemetry via REST API
+        shell: bash
+        run: |
+          python3 - <<'PYEOF'
+          """Weekly CI + traffic telemetry collector (stdlib only, read-only API calls)."""
+          import datetime as dt
+          import json
+          import os
+          import re
+          import sys
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+
+          API = "https://api.github.com"
+          repo = os.environ["REPO"]
+          gh_token = os.environ["GH_TOKEN"]
+          traffic_token = os.environ.get("TRAFFIC_TOKEN", "").strip()
+          # The repo is public and the ledger issue / step summary are world-readable,
+          # while the traffic API is admin-only: traffic detail goes to the PRIVATE
+          # sink (Slack digest) unless a maintainer opts in with the repo variable
+          # TELEMETRY_PUBLISH_TRAFFIC=true.
+          publish_traffic = os.environ.get("PUBLISH_TRAFFIC", "").strip().lower() == "true"
+          now = dt.datetime.now(dt.timezone.utc)
+          today = now.date()
+          days = [today - dt.timedelta(days=n) for n in range(7, 0, -1)]  # 7 full UTC days
+          MAX_PAGES = 10  # GitHub caps filtered run searches at 1000 results (10 x 100)
+          errors = []
+
+
+          def gh_get(path, params, token):
+              qs = urllib.parse.urlencode(params, safe=":")
+              url = f"{API}/repos/{repo}{path}" + (f"?{qs}" if qs else "")
+              req = urllib.request.Request(
+                  url,
+                  headers={
+                      "Authorization": f"Bearer {token}",
+                      "Accept": "application/vnd.github+json",
+                      "X-GitHub-Api-Version": "2022-11-28",
+                  },
+              )
+              with urllib.request.urlopen(req, timeout=30) as resp:
+                  return json.loads(resp.read().decode("utf-8"))
+
+
+          def safe(text, limit=60):
+              """Neutralise markdown/mention/table syntax in repo- or PR-controlled strings."""
+              cleaned = re.sub(r"[^A-Za-z0-9 ._/()+-]", "", str(text))
+              return cleaned[:limit] or "unknown"
+
+
+          def parse_ts(value):
+              return dt.datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+
+          # 1. Traffic (14-day window; needs push/admin-level access, GITHUB_TOKEN cannot read it)
+          traffic = {"status": "NOT CONFIGURED (GH_TRAFFIC_TOKEN unset)"}
+          daily_clones = []
+          if traffic_token:
+              try:
+                  clones = gh_get("/traffic/clones", {}, traffic_token)
+                  views = gh_get("/traffic/views", {}, traffic_token)
+                  traffic = {
+                      "status": "LIVE",
+                      "clones": clones.get("count"),
+                      "unique_cloners": clones.get("uniques"),
+                      "views": views.get("count"),
+                      "unique_visitors": views.get("uniques"),
+                  }
+                  daily_clones = clones.get("clones", [])
+              except urllib.error.HTTPError as exc:
+                  traffic = {"status": f"UNVERIFIED (HTTP {exc.code})"}
+              except (urllib.error.URLError, TimeoutError, ValueError) as exc:
+                  traffic = {"status": f"UNVERIFIED ({type(exc).__name__})"}
+
+          # 2. Workflow runs, sliced per UTC day so each slice stays under the 1000-result cap
+          runs, truncated_days = [], []
+          for day in days:
+              fetched, total = 0, 0
+              for page in range(1, MAX_PAGES + 1):
+                  try:
+                      payload = gh_get(
+                          "/actions/runs",
+                          {"created": day.isoformat(), "per_page": 100, "page": page},
+                          gh_token,
+                      )
+                  except (urllib.error.URLError, TimeoutError, ValueError) as exc:
+                      errors.append(f"runs {day}: {type(exc).__name__}")
+                      break
+                  batch = payload.get("workflow_runs", [])
+                  total = payload.get("total_count", 0)
+                  runs.extend(batch)
+                  fetched += len(batch)
+                  if len(batch) < 100:
+                      break
+              if total > fetched and not errors:
+                  truncated_days.append(day.isoformat())
+
+          by_wf = {}
+          for run in runs:
+              path = run.get("path") or ""
+              prefix = ".github/workflows/"
+              key = path[len(prefix):] if path.startswith(prefix) else "(dynamic/other)"
+              rec = by_wf.setdefault(
+                  key,
+                  {
+                      "name": safe(run.get("name", key)),
+                      "runs": 0,
+                      "success": 0,
+                      "failure": 0,
+                      "cancelled": 0,
+                      "skipped": 0,
+                      "durations": [],
+                  },
+              )
+              rec["runs"] += 1
+              concl = run.get("conclusion")
+              if concl in ("success", "failure", "cancelled", "skipped"):
+                  rec[concl] += 1
+              if run.get("status") == "completed" and concl in ("success", "failure"):
+                  start = run.get("run_started_at") or run.get("created_at")
+                  end = run.get("updated_at")
+                  if start and end:
+                      minutes = (parse_ts(end) - parse_ts(start)).total_seconds() / 60.0
+                      rec["durations"].append(max(0.0, minutes))
+
+
+          def pct(values, q):
+              if not values:
+                  return None
+              ordered = sorted(values)
+              return ordered[min(len(ordered) - 1, round(q * (len(ordered) - 1)))]
+
+
+          def fmt(value):
+              return "n/a" if value is None else f"{value:.1f}"
+
+
+          total_runs = sum(r["runs"] for r in by_wf.values())
+          total_fail = sum(r["failure"] for r in by_wf.values())
+          window = f"{days[0]} .. {days[-1]}"
+          lines = [
+              f"## Weekly CI & traffic snapshot (`{today}`)",
+              "",
+              f"- Window (UTC): `{window}`",
+              f"- Traffic status: `{traffic['status']}`",
+          ]
+          if publish_traffic:
+              lines += [
+                  f"- 14d clones / unique cloners: `{traffic.get('clones', 'n/a')}` / `{traffic.get('unique_cloners', 'n/a')}`",
+                  f"- 14d views / unique visitors: `{traffic.get('views', 'n/a')}` / `{traffic.get('unique_visitors', 'n/a')}`",
+              ]
+          lines.append(f"- Workflow runs / failures (7d): `{total_runs}` / `{total_fail}`")
+          if truncated_days:
+              lines.append(f"- WARNING: run list truncated for days {', '.join(truncated_days)}")
+          if errors:
+              lines.append(f"- WARNING: API errors: {'; '.join(errors[:5])}")
+          lines += [
+              "",
+              "| Workflow file | Name | Runs | Success | Failed | Cancelled | Skipped | p50 min | p95 min |",
+              "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+          ]
+          for key, st in sorted(by_wf.items(), key=lambda kv: -kv[1]["runs"]):
+              lines.append(
+                  f"| `{safe(key)}` | {st['name']} | {st['runs']} | {st['success']} | {st['failure']} | "
+                  f"{st['cancelled']} | {st['skipped']} | {fmt(pct(st['durations'], 0.5))} | "
+                  f"{fmt(pct(st['durations'], 0.95))} |"
+              )
+          if daily_clones and publish_traffic:
+              lines += ["", "| Date (UTC) | Clones | Unique cloners |", "| --- | ---: | ---: |"]
+              for entry in daily_clones:
+                  stamp = safe(str(entry.get("timestamp", ""))[:10])
+                  lines.append(f"| `{stamp}` | {int(entry.get('count', 0))} | {int(entry.get('uniques', 0))} |")
+
+          machine = {
+              "date": str(today),
+              "window": window,
+              "traffic": traffic if publish_traffic else {"status": traffic["status"]},
+              "daily_clones": daily_clones if publish_traffic else [],
+              "runs_total": total_runs,
+              "failures_total": total_fail,
+              "truncated_days": truncated_days,
+              "workflows": {
+                  k: {kk: vv for kk, vv in v.items() if kk != "durations"}
+                  | {"p50": pct(v["durations"], 0.5), "p95": pct(v["durations"], 0.95)}
+                  for k, v in by_wf.items()
+              },
+          }
+          lines += ["", "<!-- telemetry-json " + json.dumps(machine, separators=(",", ":")) + " -->"]
+          body = "\n".join(lines)
+          if len(body) > 60000:  # GitHub comment limit is 65536
+              body = body[:60000] + "\n\n_(truncated)_"
+
+          out_dir = os.environ.get("RUNNER_TEMP", ".")
+          with open(os.path.join(out_dir, "telemetry_snapshot.md"), "w", encoding="utf-8") as fh:
+              fh.write(body)
+          status_word = traffic["status"].split(" (")[0]
+          digest = (
+              f"ARP weekly CI snapshot {window}: {total_runs} runs, {total_fail} failed; "
+              f"14d clones {traffic.get('clones', 'n/a')} (traffic: {status_word})."
+          )
+          with open(os.path.join(out_dir, "telemetry_digest.txt"), "w", encoding="utf-8") as fh:
+              fh.write(digest)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as fh:
+              fh.write(body + "\n")
+          if errors:
+              print(f"::error::Actions runs API failed: {errors[:3]}")
+              sys.exit(1)
+          PYEOF
+
+      - name: Append snapshot to the rolling ledger issue
+        if: ${{ github.event_name == 'schedule' || inputs.dry_run == false }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$RUNNER_TEMP/telemetry_snapshot.md"
+          num=$(gh issue list --label telemetry-snapshot --state open --limit 1 --json number --jq '.[0].number // empty')
+          if [ -z "$num" ]; then
+            gh label create telemetry-snapshot --color 1D76DB --force               --description "Automated weekly CI and traffic telemetry snapshots"
+            url=$(gh issue create --title "CI & Traffic Telemetry Ledger (weekly snapshots)"               --label telemetry-snapshot               --body "Rolling weekly CI-run snapshots. Maintainer: pin this issue once, manually.")
+            gh issue comment "$url" --body-file "$body"
+          else
+            gh issue comment "$num" --body-file "$body"
+          fi
+
+      - name: Post short digest to Slack (optional)
+        if: ${{ env.SLACK_WEBHOOK_URL != '' && (github.event_name == 'schedule' || inputs.dry_run == false) }}
+        continue-on-error: true
+        shell: bash
+        run: |
+          python3 - <<'PYEOF'
+          import json, os, urllib.request
+          text = open(os.path.join(os.environ["RUNNER_TEMP"], "telemetry_digest.txt"), encoding="utf-8").read()
+          req = urllib.request.Request(
+              os.environ["SLACK_WEBHOOK_URL"],
+              data=json.dumps({"text": text}).encode(),
+              headers={"Content-Type": "application/json"},
+          )
+          urllib.request.urlopen(req, timeout=15)
+          PYEOF

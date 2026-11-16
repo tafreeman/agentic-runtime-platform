@@ -98,6 +98,15 @@ class ExecutionConfig:
     debug_mode: bool = False
     trace_steps: bool = False
 
+    def __post_init__(self) -> None:
+        # Fail at construction: the default is only applied to steps after
+        # workflow-start bookkeeping, where it would surface as a failed run.
+        if self.step_default_timeout_seconds <= 0:
+            raise ValueError(
+                "step_default_timeout_seconds must be > 0, "
+                f"got {self.step_default_timeout_seconds!r}"
+            )
+
 
 @dataclass
 class ExecutionHistory:

@@ -813,8 +813,6 @@ class OrchestratorAgent(
             description=f"DAG generated from task: {task.task}",
         )
 
-        from ..engine.step import StepDefinition
-
         def _make_step_func(bound_agent, bound_input):
             """Create a step function with bound agent and task input."""
 

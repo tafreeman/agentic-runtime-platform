@@ -63,18 +63,46 @@ describe("BDagMini", () => {
       <BDagMini nodes={[node("classify", [], "T4")]} edges={[]} />,
     );
     const rect = container.querySelector("rect");
-    const style = rect?.getAttribute("style") ?? "";
-    // Tier no longer drives the stroke: every node uses the line token at 1px.
-    expect(style).toContain("rgb(var(--b-line))");
-    expect(style).not.toContain("rgb(var(--b-clay))");
+    const cls = rect?.getAttribute("class") ?? "";
+    // Tier no longer drives the stroke: every node uses the graph hairline
+    // token on the graph node fill.
+    expect(cls).toContain("stroke-el-graph-node-border");
+    expect(cls).toContain("fill-el-graph-node");
+    expect(cls).not.toContain("stroke-el-graph-node-selected");
   });
 
-  it("uses the clay accent only when selected", () => {
+  it("uses the graph selection colour only when selected", () => {
     const { container } = render(
       <BDagMini nodes={[node("classify", [], "T4")]} edges={[]} selected />,
     );
     const rect = container.querySelector("rect");
-    expect(rect?.getAttribute("style")).toContain("rgb(var(--b-clay))");
+    expect(rect?.getAttribute("class")).toContain("stroke-el-graph-node-selected");
+    expect(rect?.getAttribute("class")).not.toContain(
+      "stroke-el-graph-node-border",
+    );
+  });
+
+  it("styles edges and arrowheads with the idle edge token", () => {
+    const nodes = [node("a"), node("b", ["a"])];
+    const { container } = render(
+      <BDagMini nodes={nodes} edges={[{ source: "a", target: "b" }]} />,
+    );
+    expect(container.querySelector("line")?.getAttribute("class")).toContain(
+      "stroke-el-graph-edge",
+    );
+    expect(
+      container.querySelector("marker path")?.getAttribute("class"),
+    ).toContain("fill-el-graph-edge");
+  });
+
+  it("carries no legacy --b-* tokens or colour literals", () => {
+    const nodes = [node("a"), node("b", ["a"])];
+    const { container } = render(
+      <BDagMini nodes={nodes} edges={[{ source: "a", target: "b" }]} selected />,
+    );
+    expect(container.innerHTML).not.toMatch(/--b-|rgba?\(|#[0-9a-f]{3,6}\b/i);
+    const empty = render(<BDagMini nodes={[]} edges={[]} />);
+    expect(empty.container.innerHTML).not.toMatch(/--b-|rgba?\(|#[0-9a-f]{3,6}\b/i);
   });
 
   it("does not hardcode a node corner radius (theme token drives it)", () => {
@@ -83,7 +111,7 @@ describe("BDagMini", () => {
     );
     const rect = container.querySelector("rect");
     // The old hardcoded rx={2} attribute is gone; corner radius now flows from
-    // --b-rad-sm via the CSS `rx` geometry property (0 on paper). jsdom does not
+    // --el-radius-md via the CSS `rx` geometry property. jsdom does not
     // serialize the SVG `rx` style property, so we assert the hardcode is gone.
     expect(rect?.getAttribute("rx")).toBeNull();
   });

@@ -121,6 +121,23 @@ async def test_complete_chat_sanitizes_outbound_response_content() -> None:
     assert _ZWSP not in response["content"]
 
 
+async def test_complete_chat_sanitizes_outbound_thinking_channel() -> None:
+    """The reasoning channel (NIM ``reasoning_content`` surfaced as ``thinking``) is
+    model output too and must not bypass sanitization."""
+    backend = _StubBackend(
+        {"content": "", "thinking": f"reason{_ZWSP}ing", "tool_calls": None}
+    )
+    client = _client(backend)
+    client.with_sanitization(SanitizationMiddleware.default(), ResponseSanitizer())
+
+    response, _model, _tokens = await client.complete_chat(
+        tier=_TIER,
+        messages=[{"role": "user", "content": "hi"}],
+        use_cache=False,
+    )
+    assert response["thinking"] == "reasoning"
+
+
 async def test_complete_chat_no_op_without_sanitizer() -> None:
     """With no sanitizer attached, content passes through byte-for-byte."""
     backend = _StubBackend({"content": f"answer{_ZWSP}text", "tool_calls": None})

@@ -29,13 +29,13 @@ from ..integrations.base import TraceAdapter
 from .agents import create_agent
 from .config import StepConfig, WorkflowConfig
 from .graph_wiring import (
-    add_fan_out_edges,
     add_loop_edge,
     add_loop_edges,
+    add_loop_exit_nodes,
     add_start_edges,
     add_terminal_edges,
     build_graph,
-    build_outgoing_map,
+    build_loop_exit_map,
     build_task_description,
     coerce_message_content_to_text,
     compile_graph,
@@ -50,6 +50,7 @@ from .graph_wiring import (
     resolve_inputs_into_context,
     validate_dependencies,
     wire_dependency_edges,
+    wire_graph_edges,
     wrap_with_skip_check,
 )
 from .models import (
@@ -68,12 +69,10 @@ logger = logging.getLogger(__name__)
 # Private aliases (backward compat for topology helpers)
 # ---------------------------------------------------------------------------
 
-_add_fan_out_edges = add_fan_out_edges
 _add_loop_edge = add_loop_edge
 _add_loop_edges = add_loop_edges
 _add_start_edges = add_start_edges
 _add_terminal_edges = add_terminal_edges
-_build_outgoing_map = build_outgoing_map
 _compile_graph = compile_graph
 _validate_dependencies = validate_dependencies
 _wire_dependency_edges = wire_dependency_edges
@@ -176,15 +175,9 @@ def compile_workflow(
         raise ValueError(f"Workflow '{config.name}' has no steps.")
 
     graph: StateGraph = StateGraph(WorkflowState)
-    step_names = {s.name for s in config.steps}
-    root_steps = [s.name for s in config.steps if not s.depends_on]
 
     _add_step_nodes(graph, config, trace_adapter, validate_only=validate_only)
-    _add_start_edges(graph, root_steps)
-    _validate_dependencies(config, step_names)
-    _wire_dependency_edges(graph, _build_outgoing_map(config))
-    _add_terminal_edges(graph, config)
-    _add_loop_edges(graph, config)
+    wire_graph_edges(graph, config)
 
     return _compile_graph(graph, checkpointer)
 
@@ -200,13 +193,14 @@ __all__ = [
     "compile_graph",
     "wrap_with_skip_check",
     "add_start_edges",
-    "add_fan_out_edges",
     "wire_dependency_edges",
+    "wire_graph_edges",
     "add_terminal_edges",
     "add_loop_edge",
     "add_loop_edges",
+    "add_loop_exit_nodes",
     "validate_dependencies",
-    "build_outgoing_map",
+    "build_loop_exit_map",
     # output-parsing helpers
     "resolve_inputs_into_context",
     "next_iteration",

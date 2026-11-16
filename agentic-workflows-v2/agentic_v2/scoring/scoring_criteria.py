@@ -16,7 +16,7 @@ from typing import Any
 from ..contracts import StepStatus, WorkflowResult
 from ..evaluation.normalization import normalize_score
 from ..workflows.loader import WorkflowCriterion
-from .eval_config import _load_eval_config
+from .eval_config import _load_eval_config, scoring_section
 from .judge import JudgeCriterionDefinition
 
 # Dataset-loader/scorer contract: the loader inlines a sample's resolved
@@ -308,7 +308,7 @@ def _efficiency_slo_seconds() -> tuple[float, float]:
     half-configured band could silently invert or narrow the scale.
     """
     config = _load_eval_config()
-    slo = ((config.get("evaluation") or {}).get("scoring") or {}).get("efficiency_slo")
+    slo = scoring_section(config).get("efficiency_slo")
     if not isinstance(slo, dict):
         return _EFFICIENCY_SLO_GOOD_SECONDS, _EFFICIENCY_SLO_BAD_SECONDS
     try:

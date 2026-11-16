@@ -274,7 +274,10 @@ class BuildAppTool(BaseTool):
         if not pkg_path.exists():
             return {}
         try:
-            return json.loads(pkg_path.read_text(encoding="utf-8")).get("scripts", {})
+            scripts: dict[str, Any] = json.loads(
+                pkg_path.read_text(encoding="utf-8")
+            ).get("scripts", {})
+            return scripts
         except Exception:
             return {}
 
@@ -443,9 +446,8 @@ class BuildAppTool(BaseTool):
                 "reason": "dry_run" if cmd else "no_command",
                 "success": True,
             }
-        ready = not missing_files and all(
-            phase_results[p]["success"] for p in phase_results
-        )
+        # Every dry-run phase is recorded as success, so readiness is file presence.
+        ready = not missing_files
         return ToolResult(
             success=ready,
             data={

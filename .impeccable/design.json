@@ -1,0 +1,209 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-09T00:00:00Z",
+  "title": "Design System: Agentic Runtime Platform Dashboard",
+  "extensions": {
+    "colorMeta": {
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Canvas Paper",
+        "canonical": "#f2efe8"
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ledger Ink",
+        "canonical": "#1b1b18"
+      },
+      "accent": {
+        "role": "secondary",
+        "displayName": "Vermilion Mark",
+        "canonical": "#ef5a36"
+      },
+      "focus": {
+        "role": "secondary",
+        "displayName": "Oxblood Focus",
+        "canonical": "#9e321c"
+      },
+      "control-border": {
+        "role": "neutral",
+        "displayName": "Control Border",
+        "canonical": "#857f73"
+      },
+      "plum": {
+        "role": "tertiary",
+        "displayName": "Plum (categorical)",
+        "canonical": "#695385"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Document-style titles (serif)."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "UI text (Geist Variable)."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Run ids, step names, logs, JSON."
+      },
+      "micro": {
+        "displayName": "Micro",
+        "purpose": "Type floor: labels, IDs, timestamps, tags (11/15)."
+      }
+    },
+    "shadows": [
+      {
+        "name": "raised",
+        "value": "0 16px 40px rgb(27 27 24 / 0.12)",
+        "purpose": "Popovers and overlays only."
+      }
+    ],
+    "motion": [
+      {
+        "name": "motion-fast",
+        "value": "120ms",
+        "purpose": "Hover, focus and button feedback; the cap for color/opacity transitions under reduced motion."
+      },
+      {
+        "name": "motion-standard",
+        "value": "180ms",
+        "purpose": "Inspector, tab and content transitions."
+      },
+      {
+        "name": "motion-slow",
+        "value": "240ms",
+        "purpose": "Drawer and sheet entry, graph layout settle."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "prefers-reduced-motion: reduce",
+        "purpose": "Stop every loop, snap transform and size changes, keep paint-only feedback capped at 120ms."
+      }
+    ],
+    "breakpoints": []
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "description": "Default ink-filled action.",
+      "html": "<button class=\"ds-btn\">Run workflow</button>",
+      "css": ".ds-btn{height:40px;padding:0 16px;border:1px solid #1c1d19;border-radius:4px;background:#1c1d19;color:#f8f5ef;font:600 14px/1 'Geist Variable',Inter,system-ui,sans-serif;transition:background 150ms}.ds-btn:hover{background:rgb(27 27 24/.9)}.ds-btn:focus-visible{outline:2px solid #9e321c;outline-offset:2px}"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "description": "Secondary action with divider border.",
+      "html": "<button class=\"ds-btn-outline\">Cancel</button>",
+      "css": ".ds-btn-outline{height:40px;padding:0 16px;border:1px solid #bdb7aa;border-radius:4px;background:transparent;color:#1b1b18;font:600 14px/1 'Geist Variable',Inter,system-ui,sans-serif;transition:background 150ms}.ds-btn-outline:hover{background:#ede9e0}.ds-btn-outline:focus-visible{outline:2px solid #9e321c;outline-offset:2px}"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "description": "40px field on a raised sheet.",
+      "html": "<input class=\"ds-input\" placeholder=\"Search runs\">",
+      "css": ".ds-input{height:40px;width:220px;padding:8px 12px;border:1px solid #857f73;border-radius:4px;background:#fffdfa;color:#1b1b18;font:13px 'Geist Variable',Inter,system-ui,sans-serif}.ds-input::placeholder{color:#5a554c}.ds-input:focus-visible{border-color:#9e321c;outline:2px solid #9e321c;outline-offset:2px}"
+    },
+    {
+      "name": "Badge",
+      "kind": "chip",
+      "description": "Compact status chip (2px radius).",
+      "html": "<span class=\"ds-badge\">success</span>",
+      "css": ".ds-badge{display:inline-flex;align-items:center;height:20px;padding:2px 8px;border-radius:2px;background:#dce8df;color:#236c4b;font:500 12px 'Geist Variable',Inter,system-ui,sans-serif}"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "description": "Flat surface with hairline border.",
+      "html": "<div class=\"ds-card\"><strong>Run #42</strong><p>3 of 5 steps complete</p></div>",
+      "css": ".ds-card{padding:16px;border:1px solid #bdb7aa;border-radius:8px;background:#f8f5ef;color:#1b1b18;font:14px 'Geist Variable',Inter,system-ui,sans-serif}.ds-card p{margin:4px 0 0;color:#49453f}"
+    },
+    {
+      "name": "Status marker",
+      "kind": "chip",
+      "description": "The one status vocabulary: icon + sentence-case word + semantic color.",
+      "html": "<span class=\"ds-status ds-status--failed\"><svg aria-hidden=\"true\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m15 9-6 6M9 9l6 6\"/></svg>Failed</span>",
+      "css": ".ds-status { display: inline-flex; align-items: center; gap: 6px; font: 500 12px/16px 'Geist Variable', system-ui, sans-serif; } .ds-status--failed { color: #a33228; } .ds-status--success { color: #236c4b; } .ds-status--running { color: #2f6788; }"
+    },
+    {
+      "name": "Focus ring",
+      "kind": "custom",
+      "description": "2px --el-focus outline with 2px offset on :focus-visible; inset variant for rows and tabs.",
+      "html": "<button class=\"ds-focus\">Inspect run</button>",
+      "css": ".ds-focus { min-height: 36px; padding: 0 12px; border: 1px solid #857f73; border-radius: 4px; background: #f8f5ef; color: #1b1b18; } .ds-focus:focus-visible { outline: 2px solid #9e321c; outline-offset: 2px; }"
+    },
+    {
+      "name": "Scoreline",
+      "kind": "custom",
+      "description": "Ruled metric band that replaces KPI cards; em dash for no data.",
+      "html": "<dl class=\"ds-scoreline\"><div><dt>Total runs</dt><dd>42</dd></div><div><dt>Success rate</dt><dd>—</dd></div></dl>",
+      "css": ".ds-scoreline { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); border-top: 1px solid #bdb7aa; border-bottom: 1px solid #bdb7aa; margin: 0; } .ds-scoreline div { padding: 16px 0; } .ds-scoreline div + div { border-left: 1px solid #d3cec4; padding-left: 16px; } .ds-scoreline dt { font: 400 12px/16px system-ui, sans-serif; color: #5a554c; } .ds-scoreline dd { margin: 4px 0 0; font: 500 28px/1 Georgia, serif; font-variant-numeric: tabular-nums; color: #1b1b18; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Evidence Ledger",
+    "overview": "Each run is an auditable record: warm paper surfaces, near-black ink, hairline dividers instead of shadows, and one scarce vermilion accent.",
+    "keyCharacteristics": [
+      "Warm paper neutrals, never pure white or pure black.",
+      "One scarce vermilion accent; status uses its own semantic hues.",
+      "Hairline borders over shadows; small radii.",
+      "Tokens are RGB triplets so opacity modifiers work."
+    ],
+    "rules": [
+      {
+        "name": "The One Mark Rule",
+        "body": "Vermilion marks the thing the operator should look at now. It never decorates.",
+        "section": "colors"
+      },
+      {
+        "name": "The Triplet Rule",
+        "body": "Define colors as RGB triplets under --el-*; never use legacy --b-* aliases in new code.",
+        "section": "colors"
+      },
+      {
+        "name": "The Machine Text Rule",
+        "body": "Run ids, step names, logs and JSON are always mono.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-Ledger Rule",
+        "body": "Cards and panels never carry shadows; only popovers/overlays do.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Floor Rule",
+        "body": "No essential text below 11px, no text tier below 4.5:1, no control boundary below 3:1, no focus indicator below a solid 2px ring.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Signal Rule",
+        "body": "Vermilion marks one thing per view: the selection rail, a key mark, or the primary emphasis. Accent text and state rails use accent-strong.",
+        "section": "colors"
+      },
+      {
+        "name": "The Honest State Rule",
+        "body": "One shell banner for an unreachable API; em dashes for absent data; disabled actions say why; CLI equivalents only when real.",
+        "section": "colors"
+      }
+    ],
+    "dos": [
+      "Do use el-* or shadcn semantic tokens and keep the paper theme as default.",
+      "Do separate regions with 1px dividers and tonal steps.",
+      "Do keep vermilion to ≤ one emphasis per view.",
+      "Do use the Scoreline for metrics.",
+      "Do use StatusBadge for every status.",
+      "Do use focus-ring on custom controls."
+    ],
+    "donts": [
+      "Don't add new code against the legacy --b-* aliases.",
+      "Don't use pure #fff/#000 or drop shadows on panels.",
+      "Don't convey status by color alone; pair with a label or icon.",
+      "Don't use KPI card mosaics.",
+      "Don't use eyebrows above headings or decorative section numbers.",
+      "Don't use monospace as a costume.",
+      "Don't animate layout properties or use transition-all."
+    ]
+  }
+}

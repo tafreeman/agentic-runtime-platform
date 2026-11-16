@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { RunsSummary } from "../../api/types";
 import DurationDisplay from "../common/DurationDisplay";
+import NoData from "../states/NoData";
 
 interface RunSummaryCardsProps {
   summary: RunsSummary | undefined;
@@ -11,41 +12,37 @@ function MetricCard({
   label,
   value,
   helper,
-  accent,
+  valueClassName = "text-el-ink",
 }: {
   label: string;
   value: ReactNode;
-  helper?: string;
-  accent?: string;
+  helper?: ReactNode;
+  /** Text color class for the value (status tone), default ink. */
+  valueClassName?: string;
 }) {
   return (
-    <div
-      style={{
-        borderRadius: "var(--b-rad-lg)",
-        borderWidth: "var(--b-bw)",
-      }}
-      className="relative overflow-hidden border border-solid border-b-line bg-b-bg1 p-[18px]"
-    >
-      <div className="font-mono text-[9px] uppercase tracking-[1.2px] text-b-text-faint">
+    <div className="relative overflow-hidden rounded-lg border border-el-divider bg-el-surface p-[18px]">
+      <div className="font-mono text-micro uppercase tracking-[1.2px] text-el-muted">
         {label}
       </div>
       <div
-        className="mt-2 text-[34px] font-semibold leading-[0.9] tabular-nums text-b-text"
-        style={{
-          fontFamily: "var(--b-font-heading)",
-          letterSpacing: "-1px",
-          color: accent,
-        }}
+        className={`mt-2 font-display text-[34px] font-semibold leading-[0.9] tabular-nums ${valueClassName}`}
+        style={{ letterSpacing: "-1px" }}
       >
         {value}
       </div>
       {helper ? (
-        <div className="mt-2 truncate font-mono text-[10px] text-b-text-dim">
+        <div className="mt-2 truncate font-mono text-micro text-el-muted">
           {helper}
         </div>
       ) : null}
     </div>
   );
+}
+
+/** A count from the summary, or "—" when the summary didn't supply one. */
+function countOrNoData(value: number | undefined): ReactNode {
+  return typeof value === "number" ? value.toLocaleString() : <NoData />;
 }
 
 export default function RunSummaryCards({
@@ -58,47 +55,53 @@ export default function RunSummaryCards({
         {Array.from({ length: 4 }).map((_, index) => (
           <div
             key={index}
-            style={{
-              borderRadius: "var(--b-rad-lg)",
-              borderWidth: "var(--b-bw)",
-            }}
-            className="h-[96px] animate-pulse border border-solid border-b-line bg-b-bg1"
+            className="h-24 animate-pulse rounded-lg border border-el-divider bg-el-surface"
           />
         ))}
       </div>
     );
   }
 
-  const totalRuns = summary?.total_runs ?? 0;
-  const workflows = summary?.workflows ?? [];
-  const failed = summary?.failed ?? 0;
+  // No summary (failed or not fetched) → every value is "—", never a fake 0.
+  const totalRuns = summary?.total_runs;
+  const workflows = summary?.workflows;
+  const failed = summary?.failed;
+  const success = summary?.success;
+  // A rate over zero runs has no underlying data.
   const successRate =
-    totalRuns > 0
-      ? `${Math.min(100, Math.round(((summary?.success ?? 0) / totalRuns) * 100))}%`
-      : "--";
+    typeof totalRuns === "number" && totalRuns > 0 && typeof success === "number"
+      ? `${Math.min(100, Math.round((success / totalRuns) * 100))}%`
+      : <NoData />;
+  const avgMs = totalRuns === 0 ? null : summary?.avg_duration_ms;
 
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       <MetricCard
         label="Total Runs"
-        value={totalRuns.toLocaleString()}
-        helper={`${workflows.length} workflow${workflows.length === 1 ? "" : "s"}`}
+        value={countOrNoData(totalRuns)}
+        helper={
+          workflows
+            ? `${workflows.length} workflow${workflows.length === 1 ? "" : "s"}`
+            : undefined
+        }
       />
       <MetricCard
         label="Success"
-        value={(summary?.success ?? 0).toLocaleString()}
+        value={countOrNoData(success)}
         helper={successRate}
-        accent="rgb(var(--b-green))"
+        valueClassName={typeof success === "number" ? "text-el-success" : "text-el-ink"}
       />
       <MetricCard
         label="Failed"
-        value={failed.toLocaleString()}
-        helper="needs review"
-        accent={failed > 0 ? "rgb(var(--b-red))" : undefined}
+        value={countOrNoData(failed)}
+        helper={typeof failed === "number" && failed > 0 ? "needs review" : undefined}
+        valueClassName={
+          typeof failed === "number" && failed > 0 ? "text-el-danger" : "text-el-ink"
+        }
       />
       <MetricCard
         label="Avg Duration"
-        value={<DurationDisplay ms={summary?.avg_duration_ms} />}
+        value={avgMs == null ? <NoData /> : <DurationDisplay ms={avgMs} />}
         helper={undefined}
       />
     </div>

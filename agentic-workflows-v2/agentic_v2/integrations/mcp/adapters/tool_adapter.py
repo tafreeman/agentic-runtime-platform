@@ -124,7 +124,7 @@ class McpToolAdapter:
         logger.info(
             f"Executing MCP tool {self.tool_descriptor.name} on {self.server_name}"
         )
-        logger.debug(f"Tool arguments: {arguments}")
+        logger.debug("Tool arguments: %s", arguments)
 
         try:
             # Call remote tool with timeout

@@ -5,7 +5,7 @@ import json
 import logging
 import os
 import time
-from collections.abc import AsyncIterator, Mapping
+from collections.abc import AsyncIterator, Collection, Mapping
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -18,7 +18,7 @@ from .model_registry import is_quarantined, is_within_cost_lane, max_cost_lane_c
 from .model_stats import CircuitState, ModelStats
 from .rate_limit_tracker import RateLimitTracker, _extract_provider
 from .redis_state import _COUNTER_FIELDS, RedisCircuitBreakerStore
-from .router import ModelRouter, ModelTier
+from .router import ModelRouter, ModelTier, _env_tier_pin
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 # status is preferred over message-substring matching: only these mark a model
 # permanently unavailable, so a transient "model not found" message can no
 # longer evict a healthy model (see SmartModelRouter._classify_and_record_error).
-_PERMANENT_HTTP_STATUS = frozenset({401, 403, 404})
+_PERMANENT_HTTP_STATUS = frozenset({401, 403, 404, 410})
 _RATE_LIMIT_HTTP_STATUS = 429
 _TIMEOUT_HTTP_STATUS = 408
 
@@ -475,13 +475,26 @@ class SmartModelRouter(ModelRouter):
         prefer_healthy: bool = True,
         max_cost: float | None = None,
         allow_cross_tier: bool = True,
+        exclude: Collection[str] = (),
     ) -> str | None:
         """Get best available model for a tier with cross-tier degradation.
 
         After calling this method, inspect ``last_selection`` to determine
         whether cross-tier fallback was used (``is_degraded=True``).
+
+        ``exclude`` names models a retry loop already attempted in this
+        request. They are dropped from the tier's candidates, so a skipped
+        attempt (full bulkhead, resolved circuit) moves on to the next model
+        instead of reselecting the same one. When every eligible model in the
+        tier was already attempted this returns ``None`` -- the caller reports
+        its own last error -- rather than degrading across tiers or raising.
         """
         candidates = self._find_candidates_in_tier(tier, max_cost)
+        if exclude and candidates:
+            candidates = [c for c in candidates if c[0] not in exclude]
+            if not candidates:
+                self._last_selection = None
+                return None
         actual_tier = tier
         is_degraded = False
 
@@ -503,6 +516,20 @@ class SmartModelRouter(ModelRouter):
 
                 raise NoProviderConfiguredError()
             return None
+
+        # An eligible AGENTIC_MODEL_TIER_N pin is a deliberate choice: keep it
+        # ahead of health ranking, which would otherwise prefer an untried
+        # fallback (score 1.0) over a proven but slower pin after its first
+        # call. Health ranking still orders the fallbacks once the pin is
+        # unavailable, cooling down or circuit-open (it is then not a
+        # candidate). Only for the requested tier, never a degraded one, and
+        # not when a registered/scoped chain owns the tier (as in get_chain).
+        pinned = (
+            None if is_degraded or tier in self.custom_chains else _env_tier_pin(tier)
+        )
+        pinned_hit = next((c for c in candidates if c[0] == pinned), None)
+        if pinned_hit is not None:
+            candidates = [pinned_hit]
 
         if not prefer_healthy or len(candidates) == 1:
             selected = candidates[0][0]
@@ -718,9 +745,12 @@ class SmartModelRouter(ModelRouter):
         """Flush pending background tasks and release resources.
 
         Convenience alias for shutdown sequences that follow the
-        standard ``async with`` / ``aclose()`` convention.
+        standard ``async with`` / ``aclose()`` convention. Also closes the
+        Redis circuit-breaker store, if one is attached.
         """
         await self.drain_background_tasks()
+        if self._redis_store is not None:
+            await self._redis_store.close()
 
     def _save_stats_to_file(self) -> None:
         """Save stats to file atomically with cross-process file locking."""
@@ -935,8 +965,9 @@ class SmartModelRouter(ModelRouter):
     def _classify_and_record_error(self, model: str, error: Exception) -> None:
         """Classify a provider error and record it with the right cooldown.
 
-        HTTP status is authoritative: ``401/403/404`` mark the model permanently
-        unavailable, ``429`` is a rate limit, ``408`` is a timeout.  Message
+        HTTP status is authoritative: ``401/403/404`` and ``410`` (model retired
+        by the provider) mark the model permanently unavailable, ``429`` is a
+        rate limit, ``408`` is a timeout.  Message
         substrings are only a fallback for providers that do not surface a status
         code -- and a bare "not found"/"no access" message is treated as
         *transient*, so a briefly-unavailable model is no longer permanently
@@ -990,7 +1021,7 @@ class SmartModelRouter(ModelRouter):
         last_error: Exception | None = None
 
         for _ in range(max_retries):
-            model = self.get_model_for_tier(tier)
+            model = self.get_model_for_tier(tier, exclude=tried)
             if model is None or model in tried:
                 break
 

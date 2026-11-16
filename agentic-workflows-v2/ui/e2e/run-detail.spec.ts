@@ -56,7 +56,7 @@ test.describe('run detail', () => {
     const history = (await listRes.json()) as unknown[];
     expect(Array.isArray(history), 'GET /api/runs must return an array').toBe(true);
 
-    // Each populated row carries a deep-link ([↗], aria-label "Open run
+    // Each populated row carries a deep-link (↗, aria-label "Open run
     // <shortId>") to the standalone /runs/:filename route.
     const openLinks = page.getByRole('link', { name: /^Open run / });
     if (history.length === 0) {
@@ -122,7 +122,7 @@ test.describe('run detail', () => {
     // the persisted step list and never collides with the header's "steps N"
     // metric (no bullet glyph → no match).
     await expect(
-      page.getByText(new RegExp(`^steps\\s+\\S\\s+${steps.length}$`)),
+      page.getByText(new RegExp(`^steps\\s+\\S\\s+${steps.length}$`, 'i')),
     ).toBeVisible();
 
     // Drill into a concrete step from the record (step names are workflow-defined

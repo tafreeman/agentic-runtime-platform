@@ -24,6 +24,7 @@ from __future__ import annotations
 import logging
 import os
 import time
+from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Any
 
@@ -57,6 +58,11 @@ class OllamaModelInfo:
     running: bool = False
     size: int | None = None
     remote_host: str | None = None
+    # True when this record came from the local daemon's ``/api/tags`` (proxied
+    # cloud models included), False for the hosted ollama.com catalog. Lets a
+    # caller reuse one discovery pass as the local-name set instead of probing
+    # ``/api/tags`` again; deliberately absent from :meth:`to_dict`.
+    served_locally: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         """JSON-serialisable view for API responses."""
@@ -115,6 +121,7 @@ def _parse_tags(
     running: set[str],
     *,
     force_cloud: bool = False,
+    served_locally: bool = False,
 ) -> list[OllamaModelInfo]:
     """Map an ``/api/tags`` payload to :class:`OllamaModelInfo` records."""
     models: list[OllamaModelInfo] = []
@@ -145,6 +152,7 @@ def _parse_tags(
                 running=name in running,
                 size=size if isinstance(size, int) else None,
                 remote_host=remote_host if isinstance(remote_host, str) else None,
+                served_locally=served_locally,
             )
         )
     return models
@@ -156,26 +164,30 @@ def _parse_tags(
 # cache stores (expires_at, names); a failed probe caches an empty set so a
 # down daemon costs one timeout per window, not one per build.
 _LOCAL_TAGS_TTL_SECONDS = 60.0
-_local_tags_cache: tuple[float, frozenset[str]] | None = None
+# Keyed by daemon base URL, so a backend bound to a non-default daemon never
+# reads another daemon's answer. ``None`` means empty (tests reset it so).
+_local_tags_cache: dict[str, tuple[float, frozenset[str]]] | None = None
 
 
-def local_model_names() -> frozenset[str]:
-    """Return model names the local daemon can serve right now (cached).
+def local_model_names(base_url: str | None = None) -> frozenset[str]:
+    """Return model names the daemon at ``base_url`` can serve right now (cached).
 
-    Reads ``GET {OLLAMA_BASE_URL}/api/tags`` and caches the resulting name set
+    ``base_url`` defaults to ``OLLAMA_BASE_URL`` (else the local default). Reads
+    ``GET {base_url}/api/tags`` and caches the resulting name set per base URL
     for ``_LOCAL_TAGS_TTL_SECONDS``. Best-effort like the rest of this module:
     any probe failure yields (and caches) an empty set. Never raises.
     """
     global _local_tags_cache
     now = time.monotonic()
-    # Snapshot the global before checking: another thread may rebind or clear
-    # it between the null check and the tuple access.
-    cache = _local_tags_cache
-    if cache is not None and now < cache[0]:
-        return cache[1]
+    host = (base_url or os.environ.get(ENV_BASE_URL, DEFAULT_LOCAL_HOST)).rstrip("/")
+    # Snapshot the global before reading: another thread may rebind or clear
+    # it between the lookup and the tuple access.
+    cache = _local_tags_cache or {}
+    hit = cache.get(host)
+    if hit is not None and now < hit[0]:
+        return hit[1]
 
-    base_url = os.environ.get(ENV_BASE_URL, DEFAULT_LOCAL_HOST).rstrip("/")
-    data = _get_json(f"{base_url}{_TAGS_PATH}")
+    data = _get_json(f"{host}{_TAGS_PATH}")
     names: set[str] = set()
     for entry in (data or {}).get("models", []) or []:
         if not isinstance(entry, dict):
@@ -184,12 +196,28 @@ def local_model_names() -> frozenset[str]:
         if isinstance(name, str) and name:
             names.add(name)
     resolved = frozenset(names)
-    _local_tags_cache = (now + _LOCAL_TAGS_TTL_SECONDS, resolved)
+    _local_tags_cache = {**cache, host: (now + _LOCAL_TAGS_TTL_SECONDS, resolved)}
     return resolved
 
 
-def is_served_locally(model_name: str) -> bool:
-    """True when the local daemon's ``/api/tags`` can serve ``model_name``.
+def name_is_listed(model_name: str, names: Iterable[str]) -> bool:
+    """True when ``model_name`` matches one of the daemon tag ``names``.
+
+    The matching rule behind :func:`is_served_locally`, split out so a caller
+    that already holds a name set (one discovery pass) can apply it without
+    another ``/api/tags`` probe. A bare request name also matches its
+    ``:latest`` alias; matching is case-insensitive.
+    """
+    lowered = {name.lower() for name in names}
+    requested = model_name.lower()
+    return requested in lowered or f"{requested}:latest" in lowered
+
+
+def is_served_locally(model_name: str, base_url: str | None = None) -> bool:
+    """True when the daemon's ``/api/tags`` can serve ``model_name``.
+
+    ``base_url`` names the daemon to ask (default: ``OLLAMA_BASE_URL``, else
+    localhost); a backend bound to its own daemon must pass its own URL.
 
     Tag names are fully qualified (``qwen3-coder:30b``); a bare request name
     also matches its ``:latest`` alias, mirroring the daemon's own resolution.
@@ -206,9 +234,8 @@ def is_served_locally(model_name: str) -> bool:
     an ``AGENTIC_MAX_COST_LANE=local`` ceiling (ARP-IMPROVEMENTS F1) --
     both must agree, since they are answering the same question.
     """
-    names = {name.lower() for name in local_model_names()}
-    requested = model_name.lower()
-    return requested in names or f"{requested}:latest" in names
+    names = local_model_names() if base_url is None else local_model_names(base_url)
+    return name_is_listed(model_name, names)
 
 
 def discover_ollama_models() -> list[OllamaModelInfo]:
@@ -234,7 +261,7 @@ def discover_ollama_models() -> list[OllamaModelInfo]:
     running = _running_model_names(base_url)
     local_tags = _get_json(f"{base_url}{_TAGS_PATH}")
     if local_tags:
-        _add(_parse_tags(local_tags, running))
+        _add(_parse_tags(local_tags, running, served_locally=True))
 
     # Hosted cloud catalog — only with an API key; /api/ps is local-only so the
     # running set does not apply.
@@ -255,4 +282,5 @@ __all__ = [
     "discover_ollama_models",
     "is_served_locally",
     "local_model_names",
+    "name_is_listed",
 ]

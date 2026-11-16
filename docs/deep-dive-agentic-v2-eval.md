@@ -107,7 +107,7 @@ The core scoring engine. Three classes: `Criterion`, `ScoringResult`, and `Score
 - `criterion_scores: dict[str, float]` — raw (clamped) input value per criterion
 - `missing_criteria: list[str]` — criteria defined in the rubric but absent from the input dict
 
-**`Scorer`** constructor accepts a YAML file path, a `Path`, or an in-memory `dict`. The rubric dict must have a `"criteria"` key; missing criteria are silently skipped during parsing. The `name` and `version` fields are read from the rubric if present.
+**`Scorer`** constructor accepts a YAML file path, a `Path`, or an in-memory `dict`. The rubric dict is expected to have a `"criteria"` list; entries that are not mappings or lack a `name` are silently skipped during parsing. The `name` and `version` fields are read from the rubric if present.
 
 `score(results: dict[str, float]) -> ScoringResult` is the main method. For each criterion:
 
@@ -130,16 +130,16 @@ The registry accepts `type[Any]` rather than `type[Evaluator]` in `register()` t
 
 ### `evaluators/llm.py`
 
-**`Choice`** is a frozen dataclass: `choice: str` (the label the LLM should emit) and `score: float` (the normalized 0–1 value it maps to).
+**`Choice`** is a dataclass: `label: str` (the label the LLM should emit) and `score: float` (the normalized 0–1 value it maps to).
 
 **`STANDARD_CHOICES`** is the built-in five-point scale:
 ```python
 [Choice("1", 0.0), Choice("2", 0.25), Choice("3", 0.5), Choice("4", 0.75), Choice("5", 1.0)]
 ```
 
-**`LLMEvaluator`** is both a `@dataclass` and a subclass of `Evaluator`. Fields: `model_id`, `system_prompt`, `prompt_template`, `choices: list[Choice]`, `llm_client: LLMClientProtocol`.
+**`LLMEvaluator`** is both a `@dataclass` and a subclass of `Evaluator`. Fields: `model_id`, `system_prompt`, `prompt_template`, `choices: list[Choice]`, `llm_client: LLMClientProtocol`, `seed: int = 0`.
 
-`evaluate(output, **kwargs)` templates the prompt by replacing `{{variable}}` placeholders with values from `kwargs`. The system prompt is prepended with a `"System: "` prefix. The call to `llm_client.generate_text` uses `temperature=0.0`. The response is passed to `get_score_from_response`.
+`evaluate(output, **kwargs)` templates the prompt by replacing `{{variable}}` placeholders with values from `kwargs`. The system prompt is prepended with a `"System: "` prefix. The call to `llm_client.generate_text` uses `temperature=0.0` and passes the configured `seed`. The response is passed to `get_score_from_response`.
 
 `get_score_from_response` scans:
 1. Exact match on the **last line** of the response (stripped and lowercased).
@@ -153,7 +153,7 @@ If neither matches, returns `None` and the evaluator records score 0.0, `passed=
 
 - `universal_scores: dict[str, float]` — keyed by PIF/POI/PC/CA/SRC/PR/IR, each 0–5
 - `pattern_scores: dict[str, float]` — keyed by R1-R3, C1-C3, F1-F3, or G1-G3
-- `overall_universal: float` — sum of the six scored universal dimensions (PIF+POI+PC+CA+SRC+IR), max 30
+- `overall_universal: float` — sum of six universal dimensions (PIF+POI+PC+CA+SRC+IR), max 30; PR is gate-only
 - `overall_pattern: float` — sum of pattern-specific dimensions
 - `combined_score: float` — `overall_universal + overall_pattern`
 - `hard_gates_passed: bool`, `hard_gate_failures: list[str]`
@@ -181,7 +181,7 @@ The five built-in definitions are populated by `_load_definitions()` at import t
 
 ### `evaluators/standard.py`
 
-**`StandardScore`** — 10-field result. Key fields: `scores: dict[str, float]` (clarity/effectiveness/structure/specificity/completeness, each 0–10), `overall_score: float` (simple mean of five), `grade: str` (A/B/C/D/F), `passed: bool` (overall ≥ 7.0), `improvements: list[str]` (up to 5 deduplicated suggestions), `confidence: float` (median judge confidence).
+**`StandardScore`** — 12-field result. Key fields: `scores: dict[str, float]` (clarity/effectiveness/structure/specificity/completeness, each 0–10), `overall_score: float` (simple mean of five), `grade: str` (A/B/C/D/F), `passed: bool` (overall ≥ 7.0), `improvements: list[str]` (up to 5 deduplicated suggestions), `confidence: float` (median judge confidence).
 
 **`StandardEvaluator.score_prompt()`** — the main entry point. Handles input truncation at 18,000 characters (16,000 head + 1,000 tail). Calls the judge `N` times, collecting parseable JSON responses. Aggregates dimension scores via median. Deduplicates improvement suggestions (preserving insertion order using `dict.fromkeys`). Computes letter grade via `_get_grade()` using the percent-of-10 scale.
 
@@ -275,16 +275,16 @@ The `__getattr__` hook at module level implements lazy re-export: accessing `BEN
 
 ### `adapters/llm_client.py`
 
-Provides a lazy-loading bridge to `tools.llm.llm_client.LLMClient`. The actual `LLMClient` is imported on first call, not at module load. This allows `agentic-v2-eval` to be imported in environments where `agentic-tools` is not on `sys.path`.
+Provides a lazy-loading bridge to `tools.llm.llm_client.LLMClient`. The actual `LLMClient` is imported when `LLMClientAdapter` is constructed, not at module load. This allows `agentic-v2-eval` to be imported in environments where `agentic-tools` is not on `sys.path`.
 
 ### `sandbox/local.py`
 
 `LocalSubprocessSandbox` extends `BaseSandbox`. Key implementation details:
 
-- Runs code via `subprocess.run(["python", "-c", code], ...)` with a configurable `timeout` (default 30 s).
-- `safe_mode=True` (default) blocks 24 dangerous shell commands by scanning the code string before execution.
-- Path-escape prevention: if `code` contains absolute paths not under `sandbox_root`, execution is rejected.
-- `stdout` and `stderr` are captured and returned in the result dict.
+- `run_command(command: list[str], ...)` runs the command with `subprocess.run` in a temporary (or caller-supplied) root directory, with a configurable `timeout` (default 30 s).
+- `safe_mode=True` (default) blocks 20 dangerous commands (`rm`, `curl`, `kill`, and similar) by checking the executable name and scanning the command line before execution.
+- Path-escape prevention: a `cwd` outside the sandbox root is rejected, and `write_file` / `read_file` raise `ValueError` for paths that escape the root.
+- `stdout`, `stderr`, exit code, and duration are captured in an `ExecutionResult`.
 - `TimeoutExpired` is caught and returned as an error result rather than propagating.
 
 ---
@@ -369,7 +369,7 @@ description: "..."         # optional description
 
 criteria:
   - name: Accuracy         # required — key used in results dict
-    weight: 0.5            # required — relative weight
+    weight: 0.5            # optional, default 1.0 — relative weight
     description: "..."     # optional
     min_value: 0.0         # optional, default 0.0
     max_value: 1.0         # optional, default 1.0
@@ -390,21 +390,19 @@ metadata:                  # optional — arbitrary metadata
   author: "..."
 ```
 
-Only `criteria[].name` and `criteria[].weight` are required for `Scorer`. All other fields are advisory or used by specific evaluator types.
+Only `criteria[].name` is required for `Scorer`; `weight` defaults to 1.0. All other fields are advisory or used by specific evaluator types.
 
 ---
 
 ## Known limitations
 
-1. **One `# type: ignore[return-value]`** at `runners/streaming.py:199` — mypy cannot narrow the type through `inspect.isawaitable` at this location. The runtime behavior is correct; the ignore is intentional and documented.
+1. **`safe_mode` in `LocalSubprocessSandbox` is code-string scanning, not syscall interception.** It can be bypassed by obfuscated code. Use Docker for stronger isolation.
 
-2. **`safe_mode` in `LocalSubprocessSandbox` is code-string scanning, not syscall interception.** It can be bypassed by obfuscated code. Use Docker for stronger isolation.
-
-3. **`PatternEvaluator` defaults to `runs=1`.** More runs can reduce the effect
+2. **`PatternEvaluator` defaults to `runs=1`.** More runs can reduce the effect
    of one unusual judge response but increase calls and cost. Choose the count
    from a measured evaluation design; repeated calls do not establish judge
    validity by themselves.
 
-4. **`QualityEvaluator.evaluate()` returns `0.0` on LLM exception** — the exception is logged with `print()` rather than a structured logger. This was flagged in the original code review. Use `logging.getLogger(__name__)` in production wrappers.
+3. **`QualityEvaluator.evaluate()` returns `0.0` on LLM exception** — the exception is logged with `print()` rather than a structured logger. This was flagged in the original code review. Use `logging.getLogger(__name__)` in production wrappers.
 
-5. **Dataset loading requires `agentic-tools` installed and importable.** The lazy import means the failure is deferred to first access rather than raising at import time. Call `list_benchmarks()` early in your setup to verify availability.
+4. **Dataset loading requires `agentic-tools` installed and importable.** The lazy import means the failure is deferred to first access rather than raising at import time. Call `list_benchmarks()` early in your setup to verify availability.

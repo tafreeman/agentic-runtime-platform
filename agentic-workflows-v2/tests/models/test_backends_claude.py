@@ -16,8 +16,8 @@ dataclasses means an upstream field rename fails these tests rather than
 passing them and failing in production.
 
 The module skips without the optional ``claude`` extra; the
-``claude-subscription-tests`` CI job installs it and hard-guards the import so
-that skip cannot go green unnoticed.
+claude steps of the ``ek-delegation-tests`` CI job install it and hard-guard the
+import so that skip cannot go green unnoticed.
 """
 
 from __future__ import annotations

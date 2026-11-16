@@ -9,6 +9,8 @@ present, and the classification is REDACTED. Clean input round-trips byte-for-by
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from agentic_v2.contracts.sanitization import Classification, Severity
@@ -116,3 +118,42 @@ async def test_structured_hex_below_threshold_stays_clean(structured: str) -> No
 
     assert result.classification == Classification.CLEAN
     assert result.sanitized_text == structured
+
+
+async def test_masked_json_response_still_parses() -> None:
+    """A secret inside a JSON reply is masked without breaking the JSON (ADR-061).
+
+    Regression: a reviewer's fenced JSON report quoted a connection string in
+    a finding's ``code_before``. The mask ran to the next whitespace, removed
+    the string's closing quote and the member's comma, and the step lost the
+    whole report.
+    """
+    field = "Pass" + "word"  # split so repo secret scanners stay quiet
+    report = {
+        "review_report": {
+            "overall_status": "NEEDS_FIXES",
+            "findings": [
+                {
+                    "finding_id": "F-001",
+                    "code_before": (
+                        '"DefaultConnection": '
+                        f'"Host=db;Username=app;{field}=postgres"'
+                    ),
+                    "code_after": '"DefaultConnection": "${DB_CONNECTION}"',
+                    "references": ["CWE-312"],
+                }
+            ],
+        }
+    }
+    response = "```json\n" + json.dumps(report, indent=2) + "\n```"
+
+    result = await ResponseSanitizer().sanitize_response(response)
+
+    assert result.classification == Classification.REDACTED
+    assert result.sanitized_text is not None
+    assert f"{field}=postgres" not in result.sanitized_text
+    body = result.sanitized_text.removeprefix("```json\n").removesuffix("\n```")
+    finding = json.loads(body)["review_report"]["findings"][0]
+    assert finding["code_before"].endswith("[REDACTED:env_variable]")
+    assert finding["code_after"] == report["review_report"]["findings"][0]["code_after"]
+    assert finding["references"] == ["CWE-312"]

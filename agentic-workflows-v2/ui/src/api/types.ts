@@ -512,7 +512,16 @@ export interface ProbedModel {
   capabilities?: string[];
   /** True when the model is currently loaded in memory (/api/ps). */
   running?: boolean;
+  /**
+   * What a call costs: runs on this machine, free, paid, or unknown. A
+   * missing price is reported as unknown, never as free.
+   */
+  price_label?: PriceLabel;
+  /** Why the label was chosen, e.g. "both prices are 0". */
+  price_reason?: string;
 }
+
+export type PriceLabel = "local" | "free" | "paid" | "unknown";
 
 /**
  * Response from `GET /api/models/probe` — re-probes which LLM providers have
@@ -629,6 +638,8 @@ export interface TierModelInfo {
   provider: string;
   capabilities: string[];
   capability_overridden: boolean;
+  /** Client-only: displayed from a provider probe, not used by pack validation. */
+  capability_source?: "probe";
 }
 
 export interface TierSettingsResponse {
@@ -772,7 +783,9 @@ export interface EvalComparisonResponse {
 // Chat playground — POST /api/chat (SSE stream)
 // ---------------------------------------------------------------------------
 // Hand-maintained mirror of the Pydantic contract in
-// `agentic_v2/contracts/chat.py`. The endpoint answers HTTP 200 with
+// `agentic_v2/contracts/chat.py`, held to the generated wire types
+// (`chat_request.generated.ts`, `chat_stream_event.generated.ts`) by the
+// compile-time checks in `chatWireContract.ts`. The endpoint answers HTTP 200 with
 // `text/event-stream` frames (`data: <json>\n\n`); every stream terminates
 // with exactly one `done` OR one `error` event. Provider failures (unknown
 // prefix, missing key, 401, 429, connection refused) arrive as in-stream

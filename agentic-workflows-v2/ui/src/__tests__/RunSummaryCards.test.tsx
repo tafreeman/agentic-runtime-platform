@@ -52,4 +52,34 @@ describe("RunSummaryCards", () => {
     expect(screen.getByText("100%")).toBeInTheDocument();
     expect(screen.queryByText("150%")).not.toBeInTheDocument();
   });
+
+  it("renders em dashes with a no-data label when there is no summary", () => {
+    render(<RunSummaryCards isLoading={false} summary={undefined} />);
+
+    // Four values plus the rate helper, all "—" — never a fabricated 0 / 0%.
+    expect(screen.getAllByText("no data")).toHaveLength(5);
+    expect(screen.queryByText("0")).not.toBeInTheDocument();
+    expect(screen.queryByText(/%/)).not.toBeInTheDocument();
+    expect(screen.queryByText("needs review")).not.toBeInTheDocument();
+  });
+
+  it("keeps real zeros but shows no rate or average over zero runs", () => {
+    render(
+      <RunSummaryCards
+        isLoading={false}
+        summary={{
+          total_runs: 0,
+          success: 0,
+          failed: 0,
+          avg_duration_ms: 0,
+          workflows: [],
+        }}
+      />
+    );
+
+    expect(screen.getAllByText("0")).toHaveLength(3);
+    // Success rate helper + avg duration have no underlying data.
+    expect(screen.getAllByText("no data")).toHaveLength(2);
+    expect(screen.queryByText("0ms")).not.toBeInTheDocument();
+  });
 });

@@ -36,7 +36,8 @@ def _validate_cwd(cwd: str) -> Path:
             "AGENTIC_FILE_BASE_DIR must be set to use git tools. "
             "Set it to the directory agents are allowed to read and write."
         )
-    return ensure_within_base(cwd, file_base_dir)
+    resolved: Path = ensure_within_base(cwd, file_base_dir)
+    return resolved
 
 
 async def _run_git_command(

@@ -34,6 +34,13 @@ class ClassificationPolicy:
 
     def __init__(self, config: PolicyConfig | None = None) -> None:
         self._config = config or PolicyConfig()
+        # PolicyConfig is frozen, so the severity -> action map is built once.
+        self._severity_actions = {
+            Severity.CRITICAL: self._config.critical_action,
+            Severity.HIGH: self._config.high_action,
+            Severity.MEDIUM: self._config.medium_action,
+            Severity.LOW: self._config.low_action,
+        }
 
     def classify(self, findings: Sequence[Finding]) -> Classification:
         """Determine the overall classification based on all findings."""
@@ -42,19 +49,12 @@ class ClassificationPolicy:
 
         max_severity = max(f.severity for f in findings)
 
-        # Check for high-entropy-only findings (special case)
-        if max_severity == Severity.LOW:
-            if any(f.category == FindingCategory.HIGH_ENTROPY_STRING for f in findings):
-                return self._config.high_entropy_action
-            return self._config.low_action
-
-        severity_map = {
-            Severity.CRITICAL: self._config.critical_action,
-            Severity.HIGH: self._config.high_action,
-            Severity.MEDIUM: self._config.medium_action,
-            Severity.LOW: self._config.low_action,
-        }
-        return severity_map.get(max_severity, Classification.CLEAN)
+        # High-entropy strings are LOW severity but escalate on their own.
+        if max_severity == Severity.LOW and any(
+            f.category == FindingCategory.HIGH_ENTROPY_STRING for f in findings
+        ):
+            return self._config.high_entropy_action
+        return self._severity_actions.get(max_severity, Classification.CLEAN)
 
     @property
     def config(self) -> PolicyConfig:

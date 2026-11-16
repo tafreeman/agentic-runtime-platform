@@ -18,15 +18,16 @@ gh:openai/gpt-4o
 openai:gpt-4.1
 anthropic:claude-sonnet-4-6
 gemini:gemini-2.5-flash
-nvidia:meta/llama-3.1-8b-instruct
+nvidia:openai/gpt-oss-20b
 openrouter:publisher/model
+mistral:mistral-medium-latest
 ollama:qwen3:8b
 lmstudio:publisher/model
 onnx:path/to/model
 ```
 
 Supported prefixes differ between execution paths. The LangChain model builder
-supports GitHub Models, OpenAI, NVIDIA, OpenRouter, Anthropic, Gemini,
+supports GitHub Models, OpenAI, NVIDIA, OpenRouter, Mistral, Anthropic, Gemini,
 NotebookLM-as-Gemini, Ollama, LM Studio, local API, and its `local:` ONNX
 builder. The native backend also supports Azure, Azure Foundry, and `onnx:`.
 
@@ -57,8 +58,12 @@ this order:
 2. `AGENTIC_MODEL_TIER_<n>`;
 3. the saved UI setting for that tier;
 4. the current probed tier default;
-5. the registry fallback chain;
-6. GitHub backup models when a GitHub token is present.
+5. the registry fallback chain, which ends in the tier's local Ollama model.
+
+Nothing is appended after the local model, so a failover never leaves the local
+lane on its last attempt. GitHub Models was retired upstream on 2026-07-30
+(ADR-016): no chain routes to `gh:`, and a `GITHUB_TOKEN` no longer adds backup
+candidates. An explicit `gh:` id still builds, then fails at the network.
 
 Duplicate and quarantined entries are removed. Fallback candidates whose
 provider does not appear configured are skipped.
@@ -81,9 +86,10 @@ The availability gate checks for configuration, not network liveness:
 | Gemini | `GOOGLE_API_KEY` or `GEMINI_API_KEY` |
 | Anthropic | `ANTHROPIC_API_KEY` |
 | OpenAI | `OPENAI_API_KEY` |
-| GitHub Models | `GITHUB_TOKEN` |
+| GitHub Models (retired upstream) | `GITHUB_TOKEN` |
 | NVIDIA | `NVIDIA_API_KEY` |
 | OpenRouter | `OPENROUTER_API_KEY` |
+| Mistral | `MISTRAL_API_KEY` |
 | Ollama, LM Studio, local API, local ONNX | No key required by the gate |
 
 Secret-backed native clients can support additional aliases such as
@@ -110,7 +116,8 @@ Discovery currently covers:
 - local and cloud Ollama catalogs;
 - LM Studio's model catalog;
 - ONNX model directories;
-- OpenAI, Anthropic, Gemini, GitHub Models, NVIDIA, and OpenRouter catalogs.
+- OpenAI, Anthropic, Gemini, GitHub Models, NVIDIA, OpenRouter, and Mistral
+  catalogs.
 
 Cloud calls are skipped in no-LLM mode. Individual discovery failures degrade
 to the remaining static or discovered entries rather than failing the entire

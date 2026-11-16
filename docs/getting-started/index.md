@@ -60,13 +60,14 @@ Read these pages before connecting the runtime to another system:
 | HTTP, SSE, and WebSocket routes | [API contracts](../api-contracts-runtime.md) |
 | Environment variables | [Configuration](../configuration.md) |
 | Runtime and package boundaries | [Architecture](../ARCHITECTURE.md) |
+| Runnable Python examples for engines, cost caps, approvals, and scoring | [Integration recipes](adapter-recipes.md) |
 | Authentication and tool controls | [Security hardening](../operations/security-hardening.md) |
 | Deployment gaps and workarounds | [Known limitations](../KNOWN_LIMITATIONS.md) |
 
 ## Requirements
 
 - Python 3.11 or newer
-- Node.js 20 or newer for the dashboard
+- Node.js 22.22.2 or newer for the dashboard (CI uses Node 22)
 - npm
 - Git
 - `just` for the repository shortcuts, or the ability to run the equivalent

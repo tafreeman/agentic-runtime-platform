@@ -176,4 +176,28 @@ describe("GettingStartedCard", () => {
         screen.getByRole("link", { name: /docs/i })
     ).toBeInTheDocument();
   });
+
+  it("marks the provider guidance with an icon instead of the [i] glyph", () => {
+    render(
+      <MemoryRouter>
+        <GettingStartedCard />
+      </MemoryRouter>
+    );
+
+    const guidance = screen.getByText(/OPENAI_API_KEY/).parentElement!;
+    expect(guidance).not.toHaveTextContent("[i]");
+    expect(guidance.querySelector("svg")).not.toBeNull();
+  });
+
+  it("labels the card region by its heading", () => {
+    render(
+      <MemoryRouter>
+        <GettingStartedCard />
+      </MemoryRouter>
+    );
+
+    expect(
+      screen.getByRole("region", { name: "Get Started with Agentic" })
+    ).toBeInTheDocument();
+  });
 });

@@ -61,6 +61,7 @@ _CODE_TO_CATEGORY: dict[ErrorCode, ErrorCategory] = {
     ErrorCode.RATE_LIMITED: ErrorCategory.TRANSIENT,
     ErrorCode.AUTH_ERROR: ErrorCategory.PERMISSION,
     ErrorCode.NOT_FOUND: ErrorCategory.BUSINESS,
+    ErrorCode.MODEL_RETIRED: ErrorCategory.BUSINESS,
 }
 
 # Substrings that signal a *transient* failure (worth an unchanged retry).

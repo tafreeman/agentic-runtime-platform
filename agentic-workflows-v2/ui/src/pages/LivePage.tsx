@@ -1,6 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronDown,
+  ChevronRight,
+  CircleAlert,
+  CircleDot,
+  RotateCw,
+  TriangleAlert,
+  WifiOff,
+} from "lucide-react";
 import { useWorkflowStream } from "../hooks/useWorkflowStream";
 import { useRuns } from "../hooks/useRuns";
 import { useWorkflowDAG } from "../hooks/useWorkflows";
@@ -13,42 +22,35 @@ import StepLogPanel from "../components/live/StepLogPanel";
 import LiveStepDetails from "../components/live/LiveStepDetails";
 import TokenCounter from "../components/live/TokenCounter";
 import StatusBadge from "../components/common/StatusBadge";
+import Scoreline from "../components/common/Scoreline";
+import TierMark from "../components/common/TierMark";
 import BTopBar from "../components/layout/BTopBar";
-import BPill from "../components/common/BPill";
+import NoData from "../components/states/NoData";
+import { describeStreamError } from "../lib/apiErrors";
 import type { EvaluationResult } from "../api/types";
 
-const WIDTH_CLASS_BY_DECILE: Record<number, string> = {
-  0: "w-0",
-  10: "w-[10%]",
-  20: "w-[20%]",
-  30: "w-[30%]",
-  40: "w-[40%]",
-  50: "w-[50%]",
-  60: "w-[60%]",
-  70: "w-[70%]",
-  80: "w-[80%]",
-  90: "w-[90%]",
-  100: "w-full",
-};
+/**
+ * Bar fill geometry: a full-width fill scaled on X from the left edge, so a
+ * changing value animates `transform` (compositor-only) instead of `width`.
+ * Reduced motion drops the transition and jumps straight to the new value.
+ */
+const BAR_FILL_CLASS =
+  "h-full w-full origin-left transition-transform duration-150 ease-out motion-reduce:transition-none";
 
-function scoreWidthClass(percent: number): string {
+function barFillStyle(percent: number): { transform: string } {
   const clamped = Math.max(0, Math.min(100, percent));
-  const decile = Math.floor(clamped / 10) * 10;
-  return WIDTH_CLASS_BY_DECILE[decile] ?? "w-0";
+  return { transform: `scaleX(${clamped / 100})` };
 }
 
-/** Card chrome shared by the editorial live panels (theme-token radius/border). */
-const CARD_STYLE = {
-  borderRadius: "var(--b-rad-lg)",
-  borderWidth: "var(--b-bw)",
-} as const;
+/** Panel chrome shared by the editorial live panels: 8px radius, hairline. */
+const CARD_CLASS = "rounded-lg border border-el-divider bg-el-surface";
 
-const CHIP_STYLE = {
-  borderRadius: "var(--b-rad-sm)",
-  borderWidth: "var(--b-bw)",
-} as const;
+/** Small metadata chip: 4px radius, hairline. */
+const CHIP_CLASS = "rounded-md border border-el-divider";
 
-const HEADING_STYLE = { fontFamily: "var(--b-font-heading)" } as const;
+/** Panel heading: sans, sentence case (no tracked mono overlines). */
+const PANEL_HEADING_CLASS = "m-0 font-sans text-xs font-semibold text-el-ink";
+
 
 function formatElapsed(ms: number): string {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
@@ -107,28 +109,27 @@ function LatestRunGate() {
   return (
     <div className="flex h-full flex-col">
       <BTopBar path="live/latest" />
-      <div className="flex flex-1 items-center justify-center bg-b-bg0 p-[18px]">
+      <div className="flex flex-1 items-center justify-center bg-el-canvas p-[18px]">
         <div
-          className="border-b-line bg-b-bg1 px-[28px] py-[24px] text-center"
-          style={CARD_STYLE}
+          className={`${CARD_CLASS} px-[28px] py-[24px] text-center`}
           data-testid="live-idle-card"
         >
           {resolving ? (
-            <div className="font-mono text-[11px] text-b-text-dim">
-              $ resolving latest run…
+            <div className="text-xs text-el-muted">
+              Resolving the latest run…
             </div>
           ) : (
             <>
-              <div className="font-mono text-[11px] text-b-text-dim">
-                $ no active run — trigger one from workflows
+              <div className="text-xs text-el-muted">
+                No active run — start one from a workflow.
               </div>
               <Link
                 to="/workflows"
                 aria-label="Go to workflows"
                 data-testid="live-idle-workflows-link"
-                className="mt-3 inline-block font-mono text-[10.5px] text-b-clay hover:underline"
+                className="focus-ring mt-3 inline-flex min-h-9 items-center rounded-md px-2 text-xs font-semibold text-el-ink underline underline-offset-2 hover:text-el-accent-strong"
               >
-                workflows →
+                Go to workflows →
               </Link>
             </>
           )}
@@ -150,6 +151,8 @@ function LiveRunView({ runId }: Readonly<{ runId: string | undefined }>) {
     workflowStatus: streamWorkflowStatus,
     evaluation,
     error,
+    errorKind,
+    reconnect,
   } = useWorkflowStream(
     runId ?? null
   );
@@ -292,8 +295,9 @@ function LiveRunView({ runId }: Readonly<{ runId: string | undefined }>) {
     return () => window.clearInterval(id);
   }, [isActive, startTimeMs]);
 
+  // No step has started yet → elapsed is unknown, not 0:00.
   const elapsedFmt =
-    startTimeMs === null ? "0:00" : formatElapsed(nowMs - startTimeMs);
+    startTimeMs === null ? null : formatElapsed(nowMs - startTimeMs);
 
   // The step driving the ACTIVE STEP card: the selected one, else whatever runs.
   const focusName = selectedStep ?? runningStep;
@@ -301,12 +305,14 @@ function LiveRunView({ runId }: Readonly<{ runId: string | undefined }>) {
     ? stepStates.get(focusName)
     : undefined;
 
-  let runTone: "ok" | "err" | "clay" = "clay";
-  if (workflowStatus === "completed") {
-    runTone = "ok";
-  } else if (workflowStatus === "failed" || workflowStatus === "error") {
-    runTone = "err";
-  }
+  // Human copy for a stream failure — what failed, whether the data on
+  // screen still holds, and how to recover. Never the raw socket/server text.
+  const streamError = error
+    ? describeStreamError(error, errorKind ?? "server", {
+        hasSteps: stepStates.size > 0,
+      })
+    : null;
+  const isConnectionLoss = streamError?.canReconnect ?? false;
 
   // Run-header subtitle: the mockup appends " · <pattern> · <engine> engine"
   // after the run id. Build that suffix only from data the DAG response
@@ -331,92 +337,125 @@ function LiveRunView({ runId }: Readonly<{ runId: string | undefined }>) {
           type="button"
           aria-label="Go back"
           onClick={() => navigate(-1)}
-          className="btn-ghost"
+          className="focus-ring inline-flex h-9 items-center gap-1.5 rounded-md px-2 text-xs text-el-secondary transition-colors hover:bg-el-hover hover:text-el-ink"
         >
           <ArrowLeft aria-hidden="true" className="h-3 w-3" />
-          <span>[esc] back</span>
+          <span>Back</span>
         </button>
       </BTopBar>
 
       {workflowStatus === "evaluating" && (
-        <div role="status" className="border-b border-b-blue bg-b-blue/10 px-4 py-1.5 font-mono text-[11px] text-b-blue">
-          [~] evaluating workflow output…
+        <div role="status" className="flex items-center gap-1.5 border-b border-el-info bg-el-info-soft px-4 py-1.5 text-xs text-el-info">
+          <CircleDot aria-hidden="true" className="size-3.5 flex-none" />
+          Scoring the workflow output…
         </div>
       )}
-      {error && (
-        <div role="alert" className="border-b border-b-red bg-b-red/10 px-4 py-2 font-mono text-[11px] text-b-red">
-          [!] {error}
+      {streamError && (
+        <div
+          role="alert"
+          className={`flex flex-wrap items-start gap-x-3 gap-y-2 border-b px-4 py-2.5 text-xs ${
+            isConnectionLoss
+              ? "border-el-warning bg-el-warning-soft text-el-warning"
+              : "border-el-danger bg-el-danger-soft text-el-danger"
+          }`}
+        >
+          {isConnectionLoss ? (
+            <WifiOff aria-hidden="true" className="mt-0.5 size-4 flex-none" />
+          ) : (
+            <CircleAlert aria-hidden="true" className="mt-0.5 size-4 flex-none" />
+          )}
+          <div className="min-w-0 flex-1 space-y-0.5 leading-5">
+            <p className="font-semibold">{streamError.summary}</p>
+            <p className="text-el-ink">
+              {streamError.validity} {streamError.remedy}
+            </p>
+            {streamError.detail ? (
+              <details className="text-el-secondary">
+                <summary className="focus-ring inline-flex min-h-9 cursor-pointer items-center rounded-sm">
+                  Show details
+                </summary>
+                <code className="block whitespace-pre-wrap break-words font-mono text-micro">
+                  {streamError.detail}
+                </code>
+              </details>
+            ) : null}
+          </div>
+          {isConnectionLoss && reconnect ? (
+            <button
+              type="button"
+              onClick={reconnect}
+              className="focus-ring inline-flex min-h-9 flex-none items-center gap-1.5 rounded-md border border-el-warning/50 px-3 font-medium text-el-warning transition-colors hover:bg-el-warning/10"
+            >
+              <RotateCw aria-hidden="true" className="size-3.5" />
+              Reconnect
+            </button>
+          ) : null}
         </div>
       )}
 
       {/* Content — editorial two-column live layout */}
-      <div className="flex-1 overflow-y-auto bg-b-bg0 p-[18px]">
+      <div className="flex-1 overflow-y-auto bg-el-canvas p-[18px]">
         <div className="grid grid-cols-1 gap-[18px] lg:grid-cols-[1.62fr_1fr]">
           {/* Left column: run header + DAG, then stat tiles */}
           <div className="flex min-w-0 flex-col gap-[14px]">
-            <div
-              className="border-b-line bg-b-bg1 p-[16px_18px]"
-              style={CARD_STYLE}
-            >
+            <div className={`${CARD_CLASS} p-[16px_18px]`}>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <h1
                     data-testid="run-id"
                     data-run-id={runId ?? ""}
-                    className="truncate text-[15px] font-semibold text-b-text"
-                    style={HEADING_STYLE}
+                    className="truncate font-display text-[15px] font-semibold text-el-ink"
                   >
                     {wfName ?? "live execution"}
                   </h1>
-                  <div className="mt-[3px] truncate font-mono text-[10px] text-b-text-dim">
-                    run_{runId ?? "—"}
+                  <div className="mt-[3px] truncate font-mono text-micro text-el-muted">
+                    {runId ?? "—"}
                     {runMeta.map((part, i) => (
                       <span key={`${i}-${part}`}> · {part}</span>
                     ))}
                   </div>
                 </div>
                 <div className="shrink-0 text-right">
-                  <div
-                    className="text-[20px] font-semibold tabular-nums text-b-clay"
-                    style={HEADING_STYLE}
-                  >
-                    {elapsedFmt}
+                  <div className="font-display text-[20px] font-semibold tabular-nums text-el-ink">
+                    {elapsedFmt ?? <NoData />}
                   </div>
-                  <div className="font-mono text-[9.5px] uppercase tracking-[0.5px] text-b-text-faint">
-                    elapsed
-                  </div>
+                  <div className="text-micro text-el-muted">Elapsed</div>
                 </div>
               </div>
 
               <div className="mt-[14px] flex items-center gap-3">
                 <span data-testid="workflow-status">
-                  <BPill tone={runTone}>{workflowStatus}</BPill>
+                  <StatusBadge status={workflowStatus} pulse={isActive} />
                 </span>
                 {totalSteps > 0 && (
-                  <span className="font-mono text-[10px] text-b-text-dim">
+                  <span className="text-micro tabular-nums text-el-muted">
                     {completedCount}/{totalSteps} steps
                   </span>
                 )}
                 {permanentRun && (
                   <Link
                     to={`/runs/${encodeURIComponent(permanentRun.filename)}`}
-                    className="ml-auto font-mono text-[10px] font-semibold text-b-clay hover:underline"
+                    className="focus-ring relative ml-auto rounded-sm text-xs font-semibold text-el-ink underline-offset-2 after:absolute after:-inset-x-1 after:-inset-y-3 hover:text-el-accent-strong hover:underline"
                   >
                     Open run record →
                   </Link>
                 )}
               </div>
 
-              {/* Progress bar */}
-              <div className="mt-[12px] h-[4px] overflow-hidden rounded-[3px] bg-b-bg3">
+              {/* Progress bar — the view's one accent mark. Decorative: the
+                  "N/M steps" text beside the status pill carries the value. */}
+              <div
+                aria-hidden="true"
+                className="mt-[12px] h-[4px] overflow-hidden rounded-sm bg-el-hover"
+              >
                 <div
-                  className="h-full bg-b-clay transition-[width] duration-150"
-                  style={{ width: `${progressPct}%` }}
+                  className={`${BAR_FILL_CLASS} bg-el-accent`}
+                  style={barFillStyle(progressPct)}
                 />
               </div>
 
               {/* Live DAG — ReactFlow stays the engine */}
-              <div className="mt-[16px] h-[330px] min-w-0">
+              <div className="mt-[16px] h-[330px] min-w-0 lg:h-[440px]">
                 {dag ? (
                   <WorkflowDAG
                     dagNodes={dag.nodes}
@@ -429,52 +468,39 @@ function LiveRunView({ runId }: Readonly<{ runId: string | undefined }>) {
                   />
                 ) : dagLoading && wfName ? (
                   <div className="flex h-full items-center justify-center">
-                    <div className="h-32 w-full max-w-sm animate-pulse rounded-none bg-b-bg2" />
+                    <div className="h-32 w-full max-w-sm animate-pulse rounded-none bg-el-subtle motion-reduce:animate-none" />
                   </div>
                 ) : (
-                  <div className="flex h-full items-center justify-center font-mono text-[11px] text-b-text-dim">
+                  <div className="flex h-full items-center justify-center text-xs text-el-muted">
                     {workflowStatus === "connecting"
-                      ? "$ connecting…"
-                      : "$ waiting for dag…"}
+                      ? "Connecting to the run…"
+                      : "Waiting for the workflow graph…"}
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Stat tiles: TOKENS / STEPS */}
-            <div className="grid grid-cols-2 gap-[12px]">
-              <div
-                className="border-b-line bg-b-bg1 p-[15px_17px]"
-                style={CARD_STYLE}
-              >
-                <div className="font-mono text-[9.5px] uppercase tracking-[1.2px] text-b-text-faint">
-                  tokens
-                </div>
-                <div
-                  className="mt-[8px] text-[30px] font-semibold tabular-nums text-b-clay"
-                  style={{ ...HEADING_STYLE, letterSpacing: "-1px" }}
-                >
-                  <TokenCounter events={events} variant="stat" />
-                </div>
-              </div>
-              <div
-                className="border-b-line bg-b-bg1 p-[15px_17px]"
-                style={CARD_STYLE}
-              >
-                <div className="font-mono text-[9.5px] uppercase tracking-[1.2px] text-b-text-faint">
-                  steps
-                </div>
-                <div
-                  className="mt-[8px] text-[30px] font-semibold tabular-nums text-b-text"
-                  style={{ ...HEADING_STYLE, letterSpacing: "-1px" }}
-                >
-                  {completedCount}
-                  <span className="text-[18px] text-b-text-dim">
-                    /{totalSteps || 0}
-                  </span>
-                </div>
-              </div>
-            </div>
+            {/* Run progress as a ruled scoreline (§11.1), not KPI tiles. */}
+            <Scoreline
+              label="run progress"
+              items={[
+                { label: "Tokens", value: <TokenCounter events={events} variant="stat" /> },
+                {
+                  label: "Steps done",
+                  value:
+                    totalSteps === 0 && completedCount === 0 ? (
+                      <NoData />
+                    ) : (
+                      <>
+                        {completedCount}
+                        <span className="text-[20px] text-el-muted">
+                          /{totalSteps > 0 ? totalSteps : <NoData />}
+                        </span>
+                      </>
+                    ),
+                },
+              ]}
+            />
           </div>
 
           {/* Right column: active step, event log, evaluation */}
@@ -482,8 +508,7 @@ function LiveRunView({ runId }: Readonly<{ runId: string | undefined }>) {
             <ActiveStepCard focusName={focusName} step={focusStep} />
 
             <div
-              className="flex min-h-[200px] flex-1 flex-col border-b-line bg-b-bg1 p-[14px_16px]"
-              style={CARD_STYLE}
+              className={`flex min-h-[200px] flex-1 flex-col ${CARD_CLASS} p-[14px_16px]`}
             >
               <StepLogPanel events={events} />
             </div>
@@ -496,13 +521,8 @@ function LiveRunView({ runId }: Readonly<{ runId: string | undefined }>) {
             )}
 
             {/* Expandable per-step drill-down list, behind the active-step card */}
-            <div
-              className="border-b-line bg-b-bg1 p-[14px_16px]"
-              style={CARD_STYLE}
-            >
-              <div className="mb-[10px] font-mono text-[9.5px] uppercase tracking-[1.5px] text-b-text-faint">
-                step details
-              </div>
+            <div className={`${CARD_CLASS} p-[14px_16px]`}>
+              <h2 className={`mb-[10px] ${PANEL_HEADING_CLASS}`}>Step details</h2>
               <LiveStepDetails
                 stepStates={stepStates}
                 stepOrder={dag?.nodes.map((n) => n.id)}
@@ -519,22 +539,13 @@ function LiveRunView({ runId }: Readonly<{ runId: string | undefined }>) {
 
 /**
  * ACTIVE STEP card — focus label, agent/tier/model chips, and the streaming
- * output text with a blinking clay cursor while the step is still running.
+ * output text with a pulsing cursor while the step is still running.
  */
 function ActiveStepCard({
   focusName,
   step,
 }: Readonly<{ focusName: string | null; step: StepState | undefined }>) {
   const isRunning = step?.status === "running";
-
-  let focusStatus = "idle";
-  let focusTone = "text-b-text-dim";
-  if (step) {
-    focusStatus = step.status;
-    if (step.status === "running") focusTone = "text-b-clay";
-    else if (step.status === "success") focusTone = "text-b-green";
-    else if (step.status === "failed") focusTone = "text-b-red";
-  }
 
   const streamingText = useMemo(() => {
     if (!step) return "";
@@ -550,60 +561,40 @@ function ActiveStepCard({
   }, [step]);
 
   return (
-    <div
-      className="border-b-line bg-b-bg1 p-[16px_18px]"
-      style={CARD_STYLE}
-    >
-      <div className="flex items-center justify-between">
-        <span className="font-mono text-[9.5px] uppercase tracking-[1.5px] text-b-text-faint">
-          active step
-        </span>
-        <span className={`font-mono text-[9.5px] ${focusTone}`}>
-          {focusStatus}
-        </span>
+    <div className={`${CARD_CLASS} p-[16px_18px]`}>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className={PANEL_HEADING_CLASS}>Active step</h2>
+        {step ? (
+          <StatusBadge status={step.status} />
+        ) : (
+          <span className="text-xs text-el-muted">Idle</span>
+        )}
       </div>
 
-      <div
-        className="mt-[8px] truncate text-[15px] font-semibold text-b-text"
-        style={HEADING_STYLE}
-      >
-        {focusName ?? "no active step"}
+      <div className="mt-[8px] truncate font-mono text-[14px] font-semibold text-el-ink">
+        {focusName ?? "No active step"}
       </div>
 
-      <div className="mt-[10px] flex flex-wrap gap-[8px]">
-        {step?.tier != null && (
-          <span
-            className="border-b-line px-[8px] py-[3px] font-mono text-[9.5px] text-b-text-dim"
-            style={CHIP_STYLE}
-          >
-            tier {step.tier}
-          </span>
-        )}
-        {step && (
-          <span className="inline-flex items-center" style={CHIP_STYLE}>
-            <StatusBadge status={step.status} size="sm" />
-          </span>
-        )}
+      <div className="mt-[10px] flex flex-wrap items-center gap-[8px]">
+        {step?.tier != null && <TierMark tier={step.tier} />}
         {step?.modelUsed && (
           <span
-            className="border-b-line px-[8px] py-[3px] font-mono text-[9.5px] text-b-text-dim"
-            style={CHIP_STYLE}
+            className={`${CHIP_CLASS} px-[8px] py-[3px] font-mono text-micro text-el-secondary`}
           >
             {step.modelUsed}
             {step.modelInferred && (
-              <span className="ml-1 italic text-b-amber/80">(inferred)</span>
+              <span className="ml-1 italic text-el-warning">(inferred)</span>
             )}
           </span>
         )}
       </div>
 
       <div
-        className="mt-[14px] min-h-[96px] whitespace-pre-wrap wrap-break-word border border-b-line-soft bg-b-bg0 p-[12px_13px] font-mono text-[11px] leading-[1.6] text-b-text-mid"
-        style={{ borderRadius: "var(--b-rad-sm)" }}
+        className="mt-[14px] min-h-[96px] whitespace-pre-wrap wrap-break-word rounded-md border border-el-divider-soft bg-el-canvas p-[12px_13px] font-mono text-micro leading-[1.6] text-el-secondary"
       >
         {streamingText}
         {isRunning && (
-          <span aria-hidden="true" className="animate-b-blink text-b-clay">
+          <span aria-hidden="true" className="animate-pulse text-el-info motion-reduce:animate-none">
             ▍
           </span>
         )}
@@ -616,28 +607,24 @@ function CriterionRow({
   criterion: c,
 }: Readonly<{ criterion: EvaluationResult["criteria"][number] }>) {
   const pct = c.max_score > 0 ? (c.score / c.max_score) * 100 : 0;
-  const clampedPct = Math.min(pct, 100);
-  const widthClass = scoreWidthClass(clampedPct);
 
-  let barColor = "bg-b-red";
-  if (pct >= 80) barColor = "bg-b-green";
-  else if (pct >= 50) barColor = "bg-b-amber";
+  let barColor = "bg-el-danger";
+  if (pct >= 80) barColor = "bg-el-success";
+  else if (pct >= 50) barColor = "bg-el-warning";
 
   return (
     <div>
-      <div className="flex items-center justify-between font-mono text-[11px]">
-        <span className="truncate text-b-text-mid">{c.criterion}</span>
-        <span className="ml-2 shrink-0 tabular-nums text-b-text-dim">
+      <div className="flex items-center justify-between text-micro">
+        <span className="truncate text-el-secondary">{c.criterion}</span>
+        <span className="ml-2 shrink-0 tabular-nums text-el-muted">
           {c.score}/{c.max_score}
           {c.weight !== 1 && (
-            <span className="ml-0.5 text-b-text-dim">×{c.weight}</span>
+            <span className="ml-0.5 text-el-muted">×{c.weight}</span>
           )}
         </span>
       </div>
-      <div className="mt-0.5 h-[3px] w-full bg-b-bg3">
-        <div
-          className={`h-full ${barColor} ${widthClass} transition-all duration-150`}
-        />
+      <div aria-hidden="true" className="mt-0.5 h-[3px] w-full overflow-hidden bg-el-hover">
+        <div className={`${BAR_FILL_CLASS} ${barColor}`} style={barFillStyle(pct)} />
       </div>
     </div>
   );
@@ -665,25 +652,18 @@ function EvaluationCard({
 
   return (
     <div
-      className="bg-b-bg1 p-[15px_18px]"
-      style={{
-        borderRadius: "var(--b-rad-lg)",
-        borderWidth: "var(--b-bw)",
-        borderStyle: "solid",
-        borderColor: passed ? "rgb(var(--b-green))" : "rgb(var(--b-amber))",
-      }}
+      className={`rounded-lg border bg-el-surface p-[15px_18px] ${
+        passed ? "border-el-success" : "border-el-warning"
+      }`}
     >
-      <div className="flex items-center justify-between">
-        <span
-          className={`font-mono text-[9.5px] uppercase tracking-[1.5px] ${
-            passed ? "text-b-green" : "text-b-amber"
-          }`}
-        >
-          evaluation · {passed ? "passed" : "needs work"}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="flex items-center gap-2">
+          <h2 className={PANEL_HEADING_CLASS}>Evaluation</h2>
+          <StatusBadge status={passed ? "passed" : "failed"} />
         </span>
         <span
-          className={`font-mono text-[9.5px] ${
-            evaluation.judge_skipped ? "text-b-amber" : "text-b-text-faint"
+          className={`text-micro ${
+            evaluation.judge_skipped ? "text-el-warning" : "text-el-muted"
           }`}
           title={
             evaluation.judge_skipped
@@ -699,30 +679,30 @@ function EvaluationCard({
       </div>
 
       {evaluation.expected_text_present === false && (
-        <div className="mt-[6px] font-mono text-[9.5px] text-b-amber">
-          [!] no expected/golden text — score is shape-only
+        <div className="mt-[6px] flex items-start gap-1.5 text-micro text-el-warning">
+          <TriangleAlert aria-hidden="true" className="mt-0.5 size-3.5 flex-none" />
+          <span>no expected/golden text — score is shape-only</span>
         </div>
       )}
 
       <div className="mt-[10px] flex items-end gap-[14px]">
         <div
-          className={`text-[42px] font-bold leading-[0.9] ${
-            passed ? "text-b-green" : "text-b-amber"
+          className={`font-display text-[42px] font-bold leading-[0.9] ${
+            passed ? "text-el-success" : "text-el-warning"
           }`}
-          style={HEADING_STYLE}
         >
           {evaluation.grade}
         </div>
         <div className="min-w-0 pb-[4px]">
-          <div className="font-mono text-[11px] text-b-text-mid">
-            overall{" "}
-            <span className="font-semibold tabular-nums text-b-text">
+          <div className="text-micro text-el-secondary">
+            Overall{" "}
+            <span className="font-semibold tabular-nums text-el-ink">
               {evaluation.weighted_score.toFixed(1)}
             </span>
             {hasCriteria && ` · ${evaluation.criteria.length} dimensions`}
           </div>
           {hasCriteria && dimensionSummary && (
-            <div className="mt-[3px] truncate font-mono text-[9.5px] text-b-text-dim">
+            <div className="mt-[3px] truncate font-mono text-micro text-el-muted">
               {dimensionSummary}
             </div>
           )}
@@ -730,12 +710,13 @@ function EvaluationCard({
             <button
               type="button"
               onClick={() => setExpanded((prev) => !prev)}
-              className="mt-[3px] flex items-center gap-1 font-mono text-[9.5px] text-b-text-dim transition-colors hover:text-b-text focus:outline-hidden focus:ring-1 focus:ring-b-clay/50"
+              aria-expanded={expanded}
+              className="focus-ring relative mt-[3px] flex items-center gap-1 rounded-sm text-micro text-el-muted transition-colors after:absolute after:-inset-x-1 after:-inset-y-3 hover:text-el-ink"
             >
               {expanded ? (
-                <ChevronDown className="h-3 w-3" />
+                <ChevronDown aria-hidden="true" className="h-3 w-3" />
               ) : (
-                <ChevronRight className="h-3 w-3" />
+                <ChevronRight aria-hidden="true" className="h-3 w-3" />
               )}
               {evaluation.criteria.length} criteria
             </button>
@@ -744,15 +725,14 @@ function EvaluationCard({
         <button
           type="button"
           onClick={onOpenScorecard}
-          className="ml-auto flex-none self-center bg-transparent px-[9px] py-[5px] font-mono text-[10px] text-b-clay transition-colors hover:bg-b-clay-soft focus:outline-hidden focus:ring-1 focus:ring-b-clay/50"
-          style={CHIP_STYLE}
+          className={`focus-ring ml-auto inline-flex min-h-9 flex-none items-center self-center bg-transparent px-3 text-xs text-el-ink transition-colors hover:bg-el-hover ${CHIP_CLASS}`}
         >
-          scorecard →
+          Open scorecard →
         </button>
       </div>
 
       {hasCriteria && expanded && (
-        <div className="mt-[12px] space-y-1.5 border-t border-b-line-soft pt-[12px]">
+        <div className="mt-[12px] space-y-1.5 border-t border-el-divider-soft pt-[12px]">
           {evaluation.criteria.map((c) => (
             <CriterionRow key={c.criterion} criterion={c} />
           ))}

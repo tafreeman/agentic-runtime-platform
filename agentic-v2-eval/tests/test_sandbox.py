@@ -191,3 +191,22 @@ class TestLocalSubprocessSandbox:
         assert root.exists()
         sb.cleanup()
         assert not root.exists()
+
+
+class TestSandboxEnvIsolation:
+    """The sandboxed child must not inherit host secrets."""
+
+    def test_provider_keys_are_not_inherited(self, monkeypatch):
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-should-not-leak")
+        with LocalSubprocessSandbox() as sb:
+            env = sb._get_env()
+        assert "OPENAI_API_KEY" not in env
+        assert "PATH" in env
+
+    def test_base_and_extra_env_still_applied(self, monkeypatch):
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-should-not-leak")
+        with LocalSubprocessSandbox(env={"BASE_VAR": "1"}) as sb:
+            env = sb._get_env({"EXTRA_VAR": "2"})
+        assert env["BASE_VAR"] == "1"
+        assert env["EXTRA_VAR"] == "2"
+        assert "OPENAI_API_KEY" not in env

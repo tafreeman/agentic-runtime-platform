@@ -378,9 +378,13 @@ async def test_code_analysis_tool_syntax_error():
 
 
 @pytest.mark.asyncio
-async def test_code_analysis_tool_file():
+async def test_code_analysis_tool_file(monkeypatch):
     """Test CodeAnalysisTool with file input."""
+    from agentic_v2 import settings as settings_module
+
     tool = CodeAnalysisTool()
+    monkeypatch.setenv("AGENTIC_FILE_BASE_DIR", tempfile.gettempdir())
+    settings_module.get_settings.cache_clear()
 
     # Create temporary file
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:

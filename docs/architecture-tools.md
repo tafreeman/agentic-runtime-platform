@@ -40,8 +40,10 @@ graph TD
     workspace --> awv2
     workspace --> eval
 
-    awv2 -.->|"smart_router uses\nLLMClient prefixes"| llm
-    eval -.->|"BatchRunner calls\nllm_evaluator"| bench
+    awv2 -.->|"langchain/model_builders (legacy local: builder)\nimports LLMClient"| llm
+    awv2 -.->|"server/datasets reads\nbenchmark datasets + loader"| bench
+    eval -.->|"adapters/llm_client wraps LLMClient"| llm
+    eval -.->|"datasets bridges the\nbenchmark registry"| bench
 ```
 
 ---
@@ -56,14 +58,16 @@ graph TD
 | HTTP (sync) | `urllib.request` stdlib | Ollama, Azure Foundry, Azure OpenAI adapters |
 | HTTP (async) | `aiohttp` | Available for async provider backends |
 | Data validation | Pydantic v2 | `model_dump()` / `model_validate()` — not `.dict()` / `.parse_obj()` |
-| OpenAI SDK | `openai >=2.41.1,<3` | OpenAI and Azure OpenAI providers |
-| Anthropic SDK | `anthropic >=0.109.1,<1` | Claude provider |
-| Numeric | `numpy >=1.26.4,<3` | Upper bound for semver safety |
+| OpenAI SDK | `openai >=3.27.0,<4` | OpenAI and Azure OpenAI providers |
+| Anthropic SDK | `anthropic >=1.13.0,<2` | Claude provider |
+| Numeric | `numpy >=2.4.6,<3` | Upper bound for semver safety |
 | Optional: Google | `google-generativeai` | Gemini provider |
 | Optional: ONNX | `onnxruntime-genai` | Local ONNX model inference |
 | Optional: Windows AI | .NET bridge + WinRT | Phi Silica NPU (Copilot+ PC) |
-| GitHub Models | `gh` CLI subprocess | Rate-limit-aware; `GITHUB_TOKEN` required |
-| LangChain | `langchain-core >=1.4.7,<2` | Thin adapter in `langchain_adapter.py` |
+| GitHub Models | `gh` CLI subprocess | Retired upstream 2026-07-30; the `gh:` adapter remains but calls now fail ([ADR-016](adr/ADR-016-github-token-as-default-e2e-llm.md)) |
+| LangChain | `langchain-core >=1.6.9,<2` | Thin adapter in `langchain_adapter.py` |
+
+The ranges above mirror the repo-root `pyproject.toml`; that file and `uv.lock` are the source of truth.
 
 ---
 
@@ -228,17 +232,23 @@ account.
 
 | Property | Value |
 |----------|-------|
-| Algorithm | SHA-256 of `(model_name, prompt, system_instruction, temperature, max_tokens)` |
+| Algorithm | SHA-256 of `model`, system prompt and prompt content; temperature and max_tokens are folded into the prompt content by the caller |
 | TTL | 24 hours (configurable) |
-| Storage | `~/.cache/prompts-eval/responses/<sha256_hex>.json` |
-| Max size | 500 MB (LRU eviction) |
+| Storage | `~/.cache/prompts-eval/responses/<first-2-hex>/<sha256_hex>.json` plus `cache_index.json` |
+| Max size | `MAX_CACHE_SIZE_MB = 500` is defined but not enforced; entries expire by TTL only (`cleanup_expired()`) |
 | Thread safety | `threading.Lock` on all read/write operations |
 | Enable | `PROMPTS_CACHE_ENABLED=1` (default) |
 | Disable | `PROMPTS_CACHE_ENABLED=0` |
 
-The cache is transparent to callers. It is always consulted first inside `generate_text()` and
-populated on every successful response. It can be disabled at runtime by setting the environment
-variable without restarting the process.
+The cache is transparent to callers. When `PROMPTS_CACHE_ENABLED` is on, `generate_text()` consults
+it first and populates it after every successful response; the variable is re-read on each call.
+
+!!! warning "Known defect"
+    `llm_client.py` imports the cache as top-level modules (`from cache import ...`) and
+    `core/cache.py` does `from response_cache import ...`. Those names resolve only when
+    `tools/core` is itself on `sys.path`. In a normal editable install the import raises
+    `ImportError`, which `generate_text()` catches and treats as "caching unavailable", so the
+    cache is silently skipped even though `PROMPTS_CACHE_ENABLED` defaults to on.
 
 ---
 
@@ -276,7 +286,7 @@ Scoring combines:
 - Task completion score (0–100, per-task weighted checks)
 - Latency penalty (`min(elapsed_s, 120) × 0.15`)
 
-Output: JSON + Markdown reports written to `runs/` with a timestamp suffix.
+Output: JSON + Markdown reports written to `reports/model-bakeoff` by default (`--out-dir` overrides it).
 
 ---
 
@@ -367,7 +377,7 @@ pip install -e ".[dev]"
 | `GITHUB_TOKEN` / `GH_TOKEN` | GitHub Models | Required for `gh:*` |
 | `AZURE_OPENAI_ENDPOINT_0` | Azure OpenAI | Slot-indexed; `_0` through `_n` for failover |
 | `AZURE_OPENAI_API_KEY_0` | Azure OpenAI | Paired with endpoint slot |
-| `AZURE_OPENAI_API_VERSION` | Azure OpenAI | Default: `2024-02-15-preview` |
+| `AZURE_OPENAI_API_VERSION` | Azure OpenAI | Default in this package: `2024-02-15-preview` (the runtime's own backend defaults to `2024-10-21`) |
 | `AZURE_FOUNDRY_API_KEY` | Azure Foundry | Single key for all Foundry endpoints |
 | `AZURE_FOUNDRY_ENDPOINT_1` | Azure Foundry | Model slot 1 (phi4mini, phi4) |
 | `AZURE_FOUNDRY_ENDPOINT_2` | Azure Foundry | Model slot 2 (mistral) |

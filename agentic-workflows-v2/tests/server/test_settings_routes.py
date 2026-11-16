@@ -333,6 +333,19 @@ class TestTierSettings:
         assert updated["capabilities"] == ["fast", "vision"]
         assert updated["capability_overridden"] is True
 
+    def test_tier_settings_include_override_for_probe_only_model(self, client):
+        model_id = "mistral:labs-leanstral-1-5"
+        response = client.put(
+            "/api/settings/tiers",
+            json={"model_capabilities": {model_id: ["tools", "reasoning"]}},
+        )
+
+        assert response.status_code == 200
+        model = next(m for m in response.json()["models"] if m["id"] == model_id)
+        assert model["provider"] == "mistral"
+        assert model["capabilities"] == ["tools", "reasoning"]
+        assert model["capability_overridden"] is True
+
     def test_put_rejects_unknown_capability(self, client):
         models = client.get("/api/settings/tiers").json()["models"]
         target = models[0]["id"]

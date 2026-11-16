@@ -33,10 +33,11 @@ def _result(
     steps: list[StepResult] | None = None,
     end_time: datetime | None = None,
     workflow_id: str = "wf-test-1",
+    workflow_name: str = "test_workflow",
 ) -> WorkflowResult:
     return WorkflowResult(
         workflow_id=workflow_id,
-        workflow_name="test_workflow",
+        workflow_name=workflow_name,
         overall_status=status,
         steps=steps or [],
         final_output={},
@@ -478,3 +479,121 @@ class TestRunLogger:
         """ADR-008 Phase 3: RunLogger accepts string path, not just Path."""
         rl = RunLogger(runs_dir=str(tmp_path))
         assert isinstance(rl.runs_dir, Path)
+
+
+class TestRunLoggerHardening:
+    def test_list_runs_does_not_treat_name_as_glob(self, tmp_path):
+        rl = RunLogger(runs_dir=tmp_path)
+        rl.log(_result(workflow_name="alpha", workflow_id="a"))
+        rl.log(_result(workflow_name="beta", workflow_id="b"))
+        assert rl.list_runs(workflow_name="*") == []
+        assert rl.list_runs(workflow_name="[ab]*") == []
+        assert len(rl.list_runs(workflow_name="alpha")) == 1
+
+    def test_list_runs_confirms_recorded_name_on_sanitize_collision(self, tmp_path):
+        rl = RunLogger(runs_dir=tmp_path)
+        rl.log(_result(workflow_name="team/flow", workflow_id="t1"))
+        rl.log(_result(workflow_name="team_flow", workflow_id="t2"))
+        names = [rl.load_run(p)["workflow_name"] for p in rl.list_runs("team/flow")]
+        assert names == ["team/flow"]
+
+    def test_log_and_annotate_leave_no_temp_files(self, tmp_path):
+        rl = RunLogger(runs_dir=tmp_path)
+        path = rl.log(_result())
+        rl.annotate_run(path, evaluation={"overall_score": 0.5})
+        assert [p.suffix for p in tmp_path.iterdir()] == [".json"]
+
+    def test_failed_write_keeps_original_record(self, tmp_path, monkeypatch):
+        rl = RunLogger(runs_dir=tmp_path)
+        path = rl.log(_result())
+        before = path.read_text(encoding="utf-8")
+
+        def _boom(self, target):
+            raise OSError("disk full")
+
+        monkeypatch.setattr(Path, "replace", _boom)
+        with pytest.raises(OSError):
+            rl.annotate_run(path, evaluation={"overall_score": 0.5})
+        assert path.read_text(encoding="utf-8") == before
+        assert [p.name for p in tmp_path.iterdir()] == [path.name]
+
+    def test_list_runs_skips_non_mapping_json(self, tmp_path):
+        rl = RunLogger(runs_dir=tmp_path)
+        rl.log(_result(workflow_name="team/flow", workflow_id="t1"))
+        (tmp_path / "20260101T000000Z_team_flow_x_success.json").write_text(
+            "[1, 2]", encoding="utf-8"
+        )
+        assert len(rl.list_runs("team/flow")) == 1
+
+    def test_atomic_write_works_for_near_limit_filenames(self, tmp_path):
+        from agentic_v2.workflows.run_logger import _write_json_atomic
+
+        target = tmp_path / ("a" * 250 + ".json")
+        _write_json_atomic(target, {"ok": True})
+        assert json.loads(target.read_text(encoding="utf-8")) == {"ok": True}
+
+    @pytest.mark.skipif(
+        __import__("sys").platform == "win32", reason="POSIX permission bits"
+    )
+    def test_annotate_preserves_record_permissions(self, tmp_path):
+        rl = RunLogger(runs_dir=tmp_path)
+        path = rl.log(_result())
+        path.chmod(0o600)
+        rl.annotate_run(path, evaluation={"overall_score": 0.5})
+        assert path.stat().st_mode & 0o777 == 0o600
+
+    @pytest.mark.skipif(
+        __import__("sys").platform == "win32", reason="POSIX permission bits"
+    )
+    def test_temp_file_created_with_existing_mode(self, tmp_path, monkeypatch):
+        import os
+
+        from agentic_v2.workflows.run_logger import _write_json_atomic
+
+        target = tmp_path / "rec.json"
+        target.write_text("{}", encoding="utf-8")
+        target.chmod(0o600)
+        modes = []
+        real_open = os.open
+
+        def _spy(path, flags, mode=0o777):
+            modes.append(mode)
+            return real_open(path, flags, mode)
+
+        monkeypatch.setattr(os, "open", _spy)
+        _write_json_atomic(target, {"ok": 1})
+        assert modes == [0o600]
+
+    @pytest.mark.skipif(
+        __import__("sys").platform == "win32", reason="POSIX permission bits"
+    )
+    def test_atomic_write_preserves_mode_under_restrictive_umask(self, tmp_path):
+        import os
+
+        from agentic_v2.workflows.run_logger import _write_json_atomic
+
+        target = tmp_path / "rec.json"
+        target.write_text("{}", encoding="utf-8")
+        target.chmod(0o664)
+        old = os.umask(0o077)
+        try:
+            _write_json_atomic(target, {"ok": 1})
+        finally:
+            os.umask(old)
+        assert target.stat().st_mode & 0o777 == 0o664
+
+    @pytest.mark.skipif(__import__("sys").platform == "win32", reason="POSIX metadata")
+    def test_atomic_write_copies_extended_metadata(self, tmp_path, monkeypatch):
+        import shutil
+
+        from agentic_v2.workflows.run_logger import _write_json_atomic
+
+        target = tmp_path / "rec.json"
+        target.write_text("{}", encoding="utf-8")
+        seen = []
+        real = shutil.copystat
+        monkeypatch.setattr(
+            shutil, "copystat", lambda *a, **k: (seen.append(a), real(*a, **k))[1]
+        )
+        _write_json_atomic(target, {"ok": 1})
+        assert seen and seen[0][0] == target

@@ -1,18 +1,25 @@
 # Proof handoff — 2026-09-26
 
+> **Status (2026-10-18): superseded.** The delivery this note tracked is done:
+> PR #353 (iterative `DAG.validate` cycle check) and PR #354 (T1,
+> `ARP.timeout_fails_closed`) are merged to `main`, so the "open PR" and
+> "uncommitted proof" statements below describe the 2026-09-26 snapshot, not the
+> current repository. The note is kept only because its own rule says a human
+> deletes it; see [Proof ledger](PROOF_LEDGER.md) for current proof status.
+
 ## Scope lock
 
 # Scope lock
 
 - Repository: agentic-runtime-platform
-- Absolute local path: C:/Users/tandf/source/agentic-runtime-platform
+- Local path: the repository root of the checkout
 - Component: DAGExecutor scheduling model and replay legality under ADR-060
 - Locked: 2026-09-26
 - Reason: modelability 5/5, executable oracle 5/5, existing evidence 5/5; total 23/25, highest ranked candidate, continuing existing Lean work.
 
 All work is confined to this repo until a human deletes this file.
 
-Proof bookkeeping in C:/Users/tandf/proofs is permitted. All repository reads, edits, branches and PRs remain in the named repository. Future sessions skip portfolio discovery.
+Proof bookkeeping in the maintainer's private proofs workspace is permitted. All repository reads, edits, branches and PRs remain in the named repository. Future sessions skip portfolio discovery.
 
 ## Current ledger snapshot
 

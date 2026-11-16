@@ -171,10 +171,18 @@ steps:
       suggested_fixes: fixes
       fixes: fixes
 
-  # Phase 4.5: Rework pass (kickback path when review is not approved)
+  # Phase 4.5: Rework pass (kickback path when review is not approved).
+  # The steps after review_code form a single-dependency chain. On both
+  # engines a skipped step still unblocks the next, so assemble_feature runs
+  # whether or not the rework path ran.
   - name: developer_rework
     agent: tier2_coder
-    description: Rework generated artifacts based on reviewer feedback
+    description: >-
+      Rework generated artifacts based on reviewer feedback. Return
+      backend_code, frontend_code, migrations and integration_tests as
+      relative-path-to-source file maps with the full content of every file
+      you changed; files you leave out keep their generated version, and an
+      artifact you did not change can be omitted. Also return a rework_report.
     depends_on: [review_code]
     when: ${coalesce(steps.review_code.outputs.review_report.overall_status, steps.review_code.outputs.overall_status)} != 'APPROVED'
     inputs:
@@ -190,17 +198,72 @@ steps:
         required: true
     outputs:
       rework_report: rework_report
+      backend_code: reworked_backend
+      frontend_code: reworked_frontend
+      migrations: reworked_migrations
+      integration_tests: reworked_tests
 
-  # Phase 5: Final assembly (always runs after review)
+  # Phase 4.6: Deterministic merge (no LLM). Reworked files replace originals
+  # by path; files the rework left out are kept. `overridden` lists the slots
+  # that got usable reworked code, and gates the re-review.
+  - name: apply_rework
+    agent: tier0_overlay
+    description: Overlay reworked files on the generated artifacts
+    depends_on: [developer_rework]
+    when: ${coalesce(steps.review_code.outputs.review_report.overall_status, steps.review_code.outputs.overall_status)} != 'APPROVED'
+    inputs:
+      base:
+        backend: ${coalesce(steps.generate_api.outputs.backend_code, steps.generate_api.outputs.api_code)}
+        frontend: ${coalesce(steps.generate_frontend.outputs.ui_code, steps.generate_frontend.outputs.frontend_code)}
+        migrations: ${coalesce(steps.generate_migrations.outputs.migrations, steps.generate_migrations.outputs.db_migrations)}
+        tests: ${coalesce(steps.generate_integration_tests.outputs.integration_tests, steps.generate_integration_tests.outputs.e2e_tests)}
+      override:
+        backend: ${steps.developer_rework.outputs.backend_code}
+        frontend: ${steps.developer_rework.outputs.frontend_code}
+        migrations: ${steps.developer_rework.outputs.migrations}
+        tests: ${steps.developer_rework.outputs.integration_tests}
+    outputs:
+      backend: final_backend
+      frontend: final_frontend
+      migrations: final_migrations
+      tests: final_tests
+      overridden: overridden_artifacts
+
+  # Phase 4.7: One bounded re-review, only when the rework changed code, so
+  # the final verdict describes the code that ships.
+  - name: re_review_code
+    agent: tier3_reviewer
+    description: Re-review the reworked code against the first review's findings
+    depends_on: [apply_rework]
+    when: ${steps.apply_rework.outputs.overridden}
+    inputs:
+      backend: ${coalesce(steps.apply_rework.outputs.backend, steps.generate_api.outputs.backend_code, steps.generate_api.outputs.api_code)}
+      frontend: ${coalesce(steps.apply_rework.outputs.frontend, steps.generate_frontend.outputs.ui_code, steps.generate_frontend.outputs.frontend_code)}
+      migrations: ${coalesce(steps.apply_rework.outputs.migrations, steps.generate_migrations.outputs.migrations, steps.generate_migrations.outputs.db_migrations)}
+      tests: ${coalesce(steps.apply_rework.outputs.tests, steps.generate_integration_tests.outputs.integration_tests, steps.generate_integration_tests.outputs.e2e_tests)}
+      previous_review: ${coalesce(steps.review_code.outputs.review_report, steps.review_code.outputs.code_review)}
+      rework_report: ${steps.developer_rework.outputs.rework_report}
+    input_contracts:
+      backend:
+        kind: code_artifact
+        required: true
+    outputs:
+      review_report: code_review
+      code_review: code_review
+      overall_status: overall_status
+      suggested_fixes: fixes
+      fixes: fixes
+
+  # Phase 5: Final assembly (always runs; packages reworked code when present)
   - name: assemble_feature
     agent: tier1_assembler
     description: Assemble final feature package
-    depends_on: [review_code]
+    depends_on: [re_review_code]
     inputs:
-      backend: ${coalesce(steps.generate_api.outputs.backend_code, steps.generate_api.outputs.api_code)}
-      frontend: ${coalesce(steps.generate_frontend.outputs.ui_code, steps.generate_frontend.outputs.frontend_code)}
-      migrations: ${coalesce(steps.generate_migrations.outputs.migrations, steps.generate_migrations.outputs.db_migrations)}
-      tests: ${coalesce(steps.generate_integration_tests.outputs.integration_tests, steps.generate_integration_tests.outputs.e2e_tests)}
+      backend: ${coalesce(steps.apply_rework.outputs.backend, steps.generate_api.outputs.backend_code, steps.generate_api.outputs.api_code)}
+      frontend: ${coalesce(steps.apply_rework.outputs.frontend, steps.generate_frontend.outputs.ui_code, steps.generate_frontend.outputs.frontend_code)}
+      migrations: ${coalesce(steps.apply_rework.outputs.migrations, steps.generate_migrations.outputs.migrations, steps.generate_migrations.outputs.db_migrations)}
+      tests: ${coalesce(steps.apply_rework.outputs.tests, steps.generate_integration_tests.outputs.integration_tests, steps.generate_integration_tests.outputs.e2e_tests)}
     input_contracts:
       backend:
         kind: code_artifact
@@ -213,9 +276,9 @@ outputs:
     from: ${coalesce(steps.assemble_feature.outputs.package, steps.assemble_feature.outputs.feature_package)}
     optional: true
   review_report:
-    from: ${coalesce(steps.review_code.outputs.review_report, steps.review_code.outputs.code_review)}
+    from: ${coalesce(steps.re_review_code.outputs.review_report, steps.re_review_code.outputs.code_review, steps.review_code.outputs.review_report, steps.review_code.outputs.code_review)}
   all_code:
     from:
-      backend: ${coalesce(steps.generate_api.outputs.backend_code, steps.generate_api.outputs.api_code)}
-      frontend: ${coalesce(steps.generate_frontend.outputs.ui_code, steps.generate_frontend.outputs.frontend_code)}
-      migrations: ${coalesce(steps.generate_migrations.outputs.migrations, steps.generate_migrations.outputs.db_migrations)}
+      backend: ${coalesce(steps.apply_rework.outputs.backend, steps.generate_api.outputs.backend_code, steps.generate_api.outputs.api_code)}
+      frontend: ${coalesce(steps.apply_rework.outputs.frontend, steps.generate_frontend.outputs.ui_code, steps.generate_frontend.outputs.frontend_code)}
+      migrations: ${coalesce(steps.apply_rework.outputs.migrations, steps.generate_migrations.outputs.migrations, steps.generate_migrations.outputs.db_migrations)}

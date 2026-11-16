@@ -473,6 +473,15 @@ class TestSmartModelRouterHardening:
         router._classify_and_record_error(model, error)
         assert not router.is_model_available(model)
 
+    def test_classify_error_410_gone_is_permanent(self) -> None:
+        # A provider-retired model (NIM's end-of-life 410) never comes back, so
+        # it is evicted like a 404 rather than retried after a cooldown.
+        router = self._make_router()
+        model = "nvidia:meta/llama-3.1-8b-instruct"
+        error = _StatusError("Gone: model reached its end of life", status_code=410)
+        router._classify_and_record_error(model, error)
+        assert not router.is_model_available(model)
+
     def test_classify_error_transient_not_found_not_permanent(self) -> None:
         # A bare "not found" message with no HTTP status is transient: a briefly
         # unavailable model must not be evicted permanently on a substring match.
@@ -1017,3 +1026,29 @@ class TestAdaptiveThrottleFactor:
             tracker.record_error("gh:gpt-4o-mini")
         factor = tracker.compute_throttle_factor("gh:gpt-4o-mini")
         assert factor == pytest.approx(0.5, abs=0.01)
+
+
+class TestRouterAclose:
+    async def test_aclose_closes_redis_store(self) -> None:
+        from unittest.mock import AsyncMock
+
+        router = SmartModelRouter()
+        store = AsyncMock()
+        router._redis_store = store
+        await router.aclose()
+        store.close.assert_awaited_once()
+
+    async def test_aclose_survives_redis_teardown_errors(self) -> None:
+        from unittest.mock import AsyncMock, MagicMock
+
+        from agentic_v2.models.redis_state import RedisCircuitBreakerStore
+
+        store = RedisCircuitBreakerStore(redis_url="redis://fake")
+        store._client = MagicMock(aclose=AsyncMock(side_effect=OSError("boom")))
+        pool = MagicMock(disconnect=AsyncMock())
+        store._pool = pool
+        router = SmartModelRouter()
+        router._redis_store = store
+        await router.aclose()  # must not raise
+        pool.disconnect.assert_awaited_once()
+        assert store._client is None

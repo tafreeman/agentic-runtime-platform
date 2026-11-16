@@ -1,4 +1,6 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import ChatPlaygroundPanel from "../components/models/ChatPlaygroundPanel";
 import {
@@ -13,12 +15,15 @@ import type {
 } from "../api/types";
 
 const mockSendChat = vi.fn();
+const mockHealthCheck = vi.fn();
 
 vi.mock("../api/client", async () => {
   const actual = await vi.importActual("../api/client");
   return {
     ...actual,
     sendChat: (...args: unknown[]) => mockSendChat(...args),
+    // The panel gates "send" on the shared backend-health cache.
+    healthCheck: () => mockHealthCheck(),
   };
 });
 
@@ -53,12 +58,20 @@ function renderPanel(
   probeLoading = false,
   extraProps: { initialModel?: string; probeError?: Error | null } = {},
 ) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  // `wrapper` (not an inline provider) so `rerender` keeps the client.
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
   return render(
     <ChatPlaygroundPanel
       probe={probe}
       probeLoading={probeLoading}
       {...extraProps}
     />,
+    { wrapper },
   );
 }
 
@@ -78,6 +91,7 @@ describe("ChatPlaygroundPanel", () => {
     vi.clearAllMocks();
     localStorage.clear();
     mockSendChat.mockResolvedValue(undefined);
+    mockHealthCheck.mockResolvedValue({ status: "ok", version: "test" });
   });
 
   it("groups models per provider and defaults to the first available model", async () => {
@@ -217,7 +231,7 @@ describe("ChatPlaygroundPanel", () => {
     expect(rows[1]).toHaveTextContent("partial reply");
   });
 
-  it("shows the thrown message when the chat request itself fails", async () => {
+  it("shows a readable message, with the server detail, when the chat request itself fails", async () => {
     mockSendChat.mockRejectedValue(new Error("API 502: bad gateway"));
     renderPanel(makeChatProbe());
     await pickerWithDefault("anthropic:claude-haiku-4-5");
@@ -228,9 +242,53 @@ describe("ChatPlaygroundPanel", () => {
     fireEvent.click(screen.getByTestId("chat-send"));
 
     const alert = await screen.findByTestId("chat-error");
-    expect(alert).toHaveTextContent("API 502: bad gateway");
+    expect(alert).toHaveTextContent(
+      "The API server isn't responding (HTTP 502). Details: bad gateway.",
+    );
+    expect(alert).toHaveTextContent("Start it with `just dev`, then retry.");
+    expect(alert).not.toHaveTextContent("API 502:");
     // Only the user turn survives — the empty assistant bubble is dropped.
     expect(screen.getAllByTestId("chat-message")).toHaveLength(1);
+    // An unreachable API says nothing about the model: no failed verification.
+    expect(loadVerifications()).toEqual({});
+  });
+
+  it("records a failed verification for a non-gateway HTTP failure", async () => {
+    mockSendChat.mockRejectedValue(new Error('API 400: {"detail":"model not found"}'));
+    renderPanel(makeChatProbe());
+    await pickerWithDefault("anthropic:claude-haiku-4-5");
+
+    fireEvent.change(screen.getByTestId("chat-input"), {
+      target: { value: "hello" },
+    });
+    fireEvent.click(screen.getByTestId("chat-send"));
+
+    const alert = await screen.findByTestId("chat-error");
+    expect(alert).toHaveTextContent("model not found. Fix the input and try again.");
+    expect(loadVerifications()["anthropic:claude-haiku-4-5"]).toMatchObject({
+      status: "error",
+      message: "model not found. Fix the input and try again.",
+    });
+  });
+
+  it("disables send while the API is down and shows why", async () => {
+    mockHealthCheck.mockRejectedValue(new TypeError("Failed to fetch"));
+    renderPanel(makeChatProbe());
+    await pickerWithDefault("anthropic:claude-haiku-4-5");
+
+    fireEvent.change(screen.getByTestId("chat-input"), {
+      target: { value: "hello" },
+    });
+
+    const hint = await screen.findByText(/The API server is unreachable/);
+    expect(hint).toHaveTextContent("Send blocked —");
+    const send = screen.getByTestId("chat-send");
+    expect(send).toBeDisabled();
+    expect(send).toHaveAttribute("aria-describedby", hint.id);
+
+    // Enter is gated too, not only the button.
+    fireEvent.keyDown(screen.getByTestId("chat-input"), { key: "Enter" });
+    expect(mockSendChat).not.toHaveBeenCalled();
   });
 
   it("shows the placeholder-mode banner when the probe reports no-LLM mode", () => {
@@ -686,7 +744,10 @@ describe("ChatPlaygroundPanel", () => {
     fireEvent.change(screen.getByLabelText("Attach images"), {
       target: { files: [file] },
     });
-    expect(await screen.findByAltText("evidence.png")).toBeInTheDocument();
+    // The composer preview names the attachment in its alt text.
+    expect(
+      await screen.findByAltText("Attached image evidence.png"),
+    ).toBeInTheDocument();
     fireEvent.change(screen.getByTestId("chat-input"), {
       target: { value: "Describe this evidence" },
     });
@@ -733,6 +794,44 @@ describe("ChatPlaygroundPanel", () => {
     });
 
     const alert = screen.getByTestId("playground-probe-error");
-    expect(alert).toHaveTextContent("probe failed: API 500: probe exploded");
+    expect(alert).toHaveAttribute("role", "alert");
+    expect(alert).toHaveTextContent(
+      "probe failed: The API failed (HTTP 500): probe exploded. Check the API server log, then retry.",
+    );
+  });
+
+  it("keeps an unreachable-API probe failure to a quiet note (no second alert)", () => {
+    renderPanel(undefined, false, {
+      probeError: new TypeError("Failed to fetch"),
+    });
+
+    const note = screen.getByTestId("playground-probe-error");
+    expect(note).not.toHaveAttribute("role", "alert");
+    expect(note).toHaveTextContent("probe unavailable — Can't reach the API server.");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("gives every image a meaningful alt, including an empty model alt", async () => {
+    mockSendChat.mockImplementation(
+      async (_request: ChatRequest, onEvent: ChatEventHandler) => {
+        onEvent({
+          type: "media",
+          mime_type: "image/png",
+          url: "data:image/png;base64,aGVsbG8=",
+          alt: "",
+        });
+        onEvent({ type: "done", model: "anthropic:claude-haiku-4-5" });
+      },
+    );
+    renderPanel(makeChatProbe());
+    await pickerWithDefault("anthropic:claude-haiku-4-5");
+    fireEvent.change(screen.getByTestId("chat-input"), {
+      target: { value: "Draw" },
+    });
+    fireEvent.click(screen.getByTestId("chat-send"));
+
+    expect(
+      await screen.findByAltText("Image returned by the model"),
+    ).toBeInTheDocument();
   });
 });

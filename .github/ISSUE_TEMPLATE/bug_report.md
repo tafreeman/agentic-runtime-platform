@@ -23,7 +23,7 @@ What actually happened.
 ## Environment
 - OS:
 - Python version:
-- Package version:
+- Package version (`agentic version`):
 
 ## Logs / Stack Trace
 ```

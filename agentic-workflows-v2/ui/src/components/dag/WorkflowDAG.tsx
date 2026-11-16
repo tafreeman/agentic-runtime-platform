@@ -20,6 +20,8 @@ import StepNode, {
   type StepNodeData,
 } from "./StepNode";
 import { layoutDAG } from "./dagLayout";
+import { graphColor } from "./graphTokens";
+import { resolveEdgeAppearance } from "./edgeAppearance";
 import { useAutoPanZoom } from "../../hooks/useAutoPanZoom";
 import { usePrefersReducedMotion } from "../../hooks/usePrefersReducedMotion";
 import type { DAGNode, DAGEdge, StepStatus } from "../../api/types";
@@ -254,31 +256,15 @@ function WorkflowDAGInner({
       const isKickback = kickbackEdges?.has(edgeId) ?? false;
       const isSelected = edgeId === selectedEdgeId;
 
-      // Theme-aware design-token colors (CSS vars resolve per active theme).
-      const defaultColor = "rgb(var(--b-line))"; // pending/idle edge
-      let strokeColor = defaultColor;
-      let animated = false;
-      let strokeDasharray: string | undefined;
-      const isActiveEdge =
-        sourceState?.status === "success" &&
-        targetState?.status === "running" &&
-        !disconnected;
-
-      if (isKickback && traversalCount > 0) {
-        strokeColor = "rgb(var(--b-purple))";
-        strokeDasharray = "3 3";
-      } else if (sourceState?.status === "success" && targetState?.status === "running" && !disconnected) {
-        animated = true;
-      } else if (sourceState?.status === "success") {
-        strokeColor = "rgb(var(--b-green))"; // completed
-      } else if (sourceState?.status === "running") {
-        strokeColor = "rgb(var(--b-clay))"; // running source
-      } else if (sourceState?.status === "failed") {
-        strokeColor = "rgb(var(--b-red) / 0.5)"; // failed source, faint
-      }
-      if (isSelected) {
-        strokeColor = "rgb(var(--b-clay))";
-      }
+      const look = resolveEdgeAppearance({
+        sourceStatus: sourceState?.status,
+        targetStatus: targetState?.status,
+        traversalCount,
+        isKickback,
+        isSelected,
+        disconnected,
+      });
+      const strokeColor = graphColor(look.stroke);
 
       // Traversal counts (live view) win over declarative labels (editor view).
       let label: string | undefined;
@@ -293,16 +279,17 @@ function WorkflowDAGInner({
         source: de.source,
         target: de.target,
         type: "smoothstep" as const,
-        animated,
-        className: isActiveEdge ? "dag-edge--active" : undefined,
+        animated: look.active,
+        className: look.active ? "dag-edge--active" : undefined,
         label,
+        // 11px is the type floor (text-micro) for edge labels and counts.
         labelStyle: {
-          fill: isKickback ? "#be95ff" : "#c6c6c6",
-          fontSize: traversalCount > 0 ? 11 : 9,
+          fill: graphColor(look.labelInk),
+          fontSize: 11,
           fontWeight: 600,
         },
         labelBgStyle: {
-          fill: isKickback ? "rgba(88, 28, 135, 0.75)" : "rgba(17, 24, 39, 0.75)",
+          fill: graphColor(look.labelBg),
           fillOpacity: 1,
         },
         labelBgPadding: [6, 2] as [number, number],
@@ -310,7 +297,7 @@ function WorkflowDAGInner({
         style: {
           stroke: strokeColor,
           strokeWidth: isSelected ? 2 : 1,
-          strokeDasharray,
+          strokeDasharray: look.strokeDasharray,
         },
         markerEnd: {
           type: MarkerType.ArrowClosed,
@@ -375,7 +362,7 @@ function WorkflowDAGInner({
           variant={BackgroundVariant.Dots}
           gap={20}
           size={1}
-          color="rgb(var(--b-line-soft))"
+          color={graphColor("grid")}
         />
         <Controls showInteractive={false} className="dag-controls" />
       </ReactFlow>

@@ -25,14 +25,11 @@ def _get_pid_for_port(port: int) -> int | None:
     """Return the PID of the process listening on *port*, or None."""
     if _psutil is None:
         return None
-    _psutil_errors: tuple[type[Exception], ...] = (PermissionError, AttributeError)
-    if _psutil is not None:
-        _psutil_errors = (*_psutil_errors, _psutil.Error)
     try:
         for conn in _psutil.net_connections(kind="inet"):
             if conn.laddr.port == port and conn.status == "LISTEN":
                 return conn.pid
-    except _psutil_errors:
+    except (PermissionError, AttributeError, _psutil.Error):
         pass
     return None
 

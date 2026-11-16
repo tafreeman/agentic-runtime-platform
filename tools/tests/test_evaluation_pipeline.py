@@ -158,6 +158,16 @@ class TestGetGoldStandardForTask:
 # ===========================================================================
 
 
+def test_llm_evaluator_imports_resolve():
+    """Tier 1: the optional-import guard must not mask a broken in-repo import.
+
+    The guard exists for genuinely absent dependencies; when the reporting
+    helpers moved modules, the swallowed ImportError silently disabled the
+    LLM-judge path for every caller.
+    """
+    assert pipeline.HAS_LLM_EVALUATOR is True
+
+
 class TestEvaluateTaskOutputLlm:
     """Tier 1/2: main entry point routing and state transitions."""
 

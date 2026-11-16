@@ -9,7 +9,12 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Callable
 
-from agentic_v2.integrations.mcp.types import JsonRpcMessage
+from agentic_v2.integrations.mcp.types import (
+    JsonRpcMessage,
+    JsonRpcNotification,
+    JsonRpcRequest,
+    JsonRpcResponse,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -107,3 +112,20 @@ class McpTransport(ABC):
                     self._emit_error(
                         RuntimeError(f"Close handler raised exception: {e}")
                     )
+
+    def _parse_json_rpc(self, data: dict) -> JsonRpcMessage:
+        """Parse raw JSON into typed JSON-RPC message.
+
+        Args:
+            data: Deserialized JSON object
+
+        Returns:
+            Typed JsonRpcMessage (request, response, or notification)
+        """
+        if "id" in data:
+            if "method" in data:
+                return JsonRpcRequest(**data)
+            else:
+                return JsonRpcResponse(**data)
+        else:
+            return JsonRpcNotification(**data)

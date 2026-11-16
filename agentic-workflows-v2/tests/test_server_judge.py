@@ -778,6 +778,48 @@ def test_invoke_prompt_raises_when_no_backend():
         judge._invoke_prompt("test prompt")
 
 
+class _FakeJudgeClient:
+    """Minimal stand-in for LLMClientWrapper's complete_chat contract."""
+
+    backend = object()
+
+    def __init__(self, response: dict) -> None:
+        self._response = response
+
+    async def complete_chat(self, **_kwargs: object) -> tuple[dict, None, None]:
+        return self._response, None, None
+
+
+@pytest.mark.parametrize("content", [None, "", "   "])
+def test_invoke_prompt_names_a_reasoning_only_reply(content: str | None):
+    """NIM returns content=null when reasoning eats max_tokens; say so plainly."""
+    client = _FakeJudgeClient(
+        {"content": content, "finish_reason": "length", "model": "z-ai/glm-5.3"}
+    )
+    judge = LLMJudge(model="nvidia:z-ai/glm-5.3", client=client)
+
+    with pytest.raises(
+        ValueError,
+        match=r"nvidia:z-ai/glm-5\.3 returned no answer "
+        r"\(finish_reason=length, max_tokens=1200\)",
+    ):
+        judge._invoke_prompt("test prompt")
+
+
+def test_invoke_prompt_parses_content_and_records_model_version():
+    client = _FakeJudgeClient(
+        {
+            "content": '{"criteria": []}',
+            "finish_reason": "stop",
+            "model": "z-ai/glm-5.3",
+        }
+    )
+    judge = LLMJudge(model="nvidia:z-ai/glm-5.3", client=client)
+
+    assert judge._invoke_prompt("test prompt") == {"criteria": []}
+    assert judge.model_version == "z-ai/glm-5.3"
+
+
 # ---------------------------------------------------------------------------
 # LLMJudge.evaluate — pairwise inconsistency detection
 # ---------------------------------------------------------------------------

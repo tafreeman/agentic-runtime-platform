@@ -1,0 +1,307 @@
+{
+  "source_commit": "9e77f797748c9790281dc83d67bdcb78e7d290e9",
+  "source_path": "agentic-v2-eval/src/agentic_v2_eval/scorer.py",
+  "cases": [
+    {
+      "name": "complete",
+      "rubric": {
+        "criteria": [
+          {
+            "name": "A",
+            "weight": 2.0
+          },
+          {
+            "name": "B",
+            "weight": 1.0
+          }
+        ]
+      },
+      "values": {
+        "A": 0.75,
+        "B": 0.5
+      },
+      "expected": {
+        "total_score": 0.625,
+        "weighted_score": 0.6666666666666666,
+        "criterion_scores": {
+          "A": 0.75,
+          "B": 0.5
+        },
+        "missing_criteria": []
+      }
+    },
+    {
+      "name": "missing",
+      "rubric": {
+        "criteria": [
+          {
+            "name": "A",
+            "weight": 2.0
+          },
+          {
+            "name": "B",
+            "weight": 1.0
+          }
+        ]
+      },
+      "values": {
+        "A": 1.0
+      },
+      "expected": {
+        "total_score": 0.5,
+        "weighted_score": 0.6666666666666666,
+        "criterion_scores": {
+          "A": 1.0
+        },
+        "missing_criteria": [
+          "B"
+        ]
+      }
+    },
+    {
+      "name": "missing_all",
+      "rubric": {
+        "criteria": [
+          {
+            "name": "A",
+            "weight": 2.0
+          },
+          {
+            "name": "B",
+            "weight": 1.0
+          }
+        ]
+      },
+      "values": {},
+      "expected": {
+        "total_score": 0.0,
+        "weighted_score": 0.0,
+        "criterion_scores": {},
+        "missing_criteria": [
+          "A",
+          "B"
+        ]
+      }
+    },
+    {
+      "name": "observed_zero",
+      "rubric": {
+        "criteria": [
+          {
+            "name": "A",
+            "weight": 2.0
+          },
+          {
+            "name": "B",
+            "weight": 1.0
+          }
+        ]
+      },
+      "values": {
+        "A": 0.0,
+        "B": 0.0
+      },
+      "expected": {
+        "total_score": 0.0,
+        "weighted_score": 0.0,
+        "criterion_scores": {
+          "A": 0.0,
+          "B": 0.0
+        },
+        "missing_criteria": []
+      }
+    },
+    {
+      "name": "clamped",
+      "rubric": {
+        "criteria": [
+          {
+            "name": "A",
+            "weight": 2.0
+          },
+          {
+            "name": "B",
+            "weight": 1.0
+          }
+        ]
+      },
+      "values": {
+        "A": 2.0,
+        "B": -1.0
+      },
+      "expected": {
+        "total_score": 0.5,
+        "weighted_score": 0.6666666666666666,
+        "criterion_scores": {
+          "A": 1.0,
+          "B": 0.0
+        },
+        "missing_criteria": []
+      }
+    },
+    {
+      "name": "empty",
+      "rubric": {},
+      "values": {},
+      "expected": {
+        "total_score": 0.0,
+        "weighted_score": 0.0,
+        "criterion_scores": {},
+        "missing_criteria": []
+      }
+    },
+    {
+      "name": "zero_weight",
+      "rubric": {
+        "criteria": [
+          {
+            "name": "A",
+            "weight": 0.0
+          }
+        ]
+      },
+      "values": {
+        "A": 0.8
+      },
+      "expected": {
+        "total_score": 0.8,
+        "weighted_score": 0.0,
+        "criterion_scores": {
+          "A": 0.8
+        },
+        "missing_criteria": []
+      }
+    },
+    {
+      "name": "zero_weight_missing",
+      "rubric": {
+        "criteria": [
+          {
+            "name": "A"
+          },
+          {
+            "name": "B",
+            "weight": 0.0
+          }
+        ]
+      },
+      "values": {
+        "A": 0.8
+      },
+      "expected": {
+        "total_score": 0.4,
+        "weighted_score": 0.8,
+        "criterion_scores": {
+          "A": 0.8
+        },
+        "missing_criteria": [
+          "B"
+        ]
+      }
+    },
+    {
+      "name": "ranges",
+      "rubric": {
+        "criteria": [
+          {
+            "name": "A",
+            "min_value": -2,
+            "max_value": 2
+          },
+          {
+            "name": "B",
+            "min_value": 2,
+            "max_value": 6
+          }
+        ]
+      },
+      "values": {
+        "A": 1,
+        "B": 3
+      },
+      "expected": {
+        "total_score": 0.5,
+        "weighted_score": 0.5,
+        "criterion_scores": {
+          "A": 1.0,
+          "B": 3.0
+        },
+        "missing_criteria": []
+      }
+    },
+    {
+      "name": "zero_span",
+      "rubric": {
+        "criteria": [
+          {
+            "name": "A",
+            "min_value": 2,
+            "max_value": 2
+          }
+        ]
+      },
+      "values": {
+        "A": 0
+      },
+      "expected": {
+        "total_score": 2.0,
+        "weighted_score": 2.0,
+        "criterion_scores": {
+          "A": 2.0
+        },
+        "missing_criteria": []
+      }
+    },
+    {
+      "name": "duplicates",
+      "rubric": {
+        "criteria": [
+          {
+            "name": "A",
+            "weight": 1
+          },
+          {
+            "name": "A",
+            "weight": 2,
+            "max_value": 2
+          }
+        ]
+      },
+      "values": {
+        "A": 1
+      },
+      "expected": {
+        "total_score": 0.75,
+        "weighted_score": 0.6666666666666666,
+        "criterion_scores": {
+          "A": 1.0
+        },
+        "missing_criteria": []
+      }
+    },
+    {
+      "name": "ignored_entries",
+      "rubric": {
+        "criteria": [
+          null,
+          {},
+          {
+            "name": "A"
+          }
+        ]
+      },
+      "values": {
+        "A": 0.6,
+        "Unknown": 1
+      },
+      "expected": {
+        "total_score": 0.6,
+        "weighted_score": 0.6,
+        "criterion_scores": {
+          "A": 0.6
+        },
+        "missing_criteria": []
+      }
+    }
+  ]
+}

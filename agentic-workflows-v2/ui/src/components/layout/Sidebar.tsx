@@ -1,53 +1,22 @@
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "../../hooks/useTheme";
 import { useBackendHealth } from "../../hooks/useBackendHealth";
+import MobileNav from "./MobileNav";
+import PaletteShortcut from "./PaletteShortcut";
+import { NAV_ITEMS, isNavItemActive } from "./navigation";
 
-/**
- * Navigation entries, mapped onto the seven existing routes. The visible label
- * and ordinal follow the redesigned console; the `data-testid` (`nav-<testid>`)
- * is preserved per route so existing tests and screen-reader anchors stay valid.
- */
-interface NavItem {
-  readonly to: string;
-  readonly testid: string;
-  readonly label: string;
-  readonly num: string;
-  readonly title: string;
-  readonly end: boolean;
-  readonly live?: boolean;
-  /** Second key of the `g`-sequence shortcut (see useGoNav's GO_TARGETS). */
-  readonly goKey: string;
-}
-
-const links: readonly NavItem[] = [
-  { to: "/", testid: "dashboard", label: "overview", num: "01", title: "overview", end: true, goKey: "d" },
-  { to: "/live/latest", testid: "live", label: "live execution", num: "02", title: "live execution", end: false, live: true, goKey: "e" },
-  { to: "/runs", testid: "runs", label: "runs", num: "03", title: "runs", end: false, goKey: "r" },
-  { to: "/models", testid: "models", label: "model router", num: "04", title: "model router", end: false, goKey: "m" },
-  { to: "/evaluations", testid: "evals", label: "evaluations", num: "05", title: "evaluations", end: false, goKey: "l" },
-  { to: "/workflows", testid: "workflows", label: "workflow builder", num: "06", title: "workflow builder", end: false, goKey: "w" },
-  { to: "/datasets", testid: "datasets", label: "datasets", num: "07", title: "datasets", end: false, goKey: "a" },
-  { to: "/settings", testid: "settings", label: "providers & tiers", num: "08", title: "providers & tiers", end: false, goKey: "s" },
-];
-
-const mobileLinks = links.filter((link) =>
-  ["dashboard", "live", "runs", "workflows", "models"].includes(link.testid),
-);
-
-// Inline values for theme-driven tokens (radius / border-width / heading font)
-// that have no Tailwind utility. Colours flow through Tailwind b-* classes.
-const radSm = { borderRadius: "var(--b-rad-sm)" } as const;
-const headingFont = { fontFamily: "var(--b-font-heading)" } as const;
-const hardBorder = { borderWidth: "var(--b-bw)" } as const;
+// Small-caps overline (CONSOLE / SHORTCUTS).
+const OVERLINE = "text-micro font-medium tracking-[1.6px] text-el-muted";
 
 export default function Sidebar() {
   const [theme, setTheme] = useTheme();
   const [collapsed, setCollapsed] = useState(false);
+  const { pathname } = useLocation();
 
   // Footer engine-status dot wired to the shared backend health probe (see
   // useBackendHealth). The dot colour + label reflect the live connection
-  // state; the dot keeps the motion-safe pulse treatment.
+  // state.
   const health = useBackendHealth();
   const engineConnected = health.isSuccess;
   const engineChecking = health.isLoading || health.isFetching;
@@ -55,150 +24,131 @@ export default function Sidebar() {
   // not a client build-time flag, so it can never drift from how the server was
   // actually started.
   const noLlmMode = health.data?.no_llm_mode ?? false;
-
-  let engineDotClass = "bg-b-red";
-  let engineTextClass = "text-b-red";
-  let engineLabel = "engine: offline";
-  let engineTitle = "engine: offline";
-  if (engineConnected) {
-    engineDotClass = "bg-b-green";
-    engineTextClass = "text-b-green";
-    engineLabel = "engine: ready";
-    engineTitle = "engine: ready";
-  } else if (engineChecking) {
-    engineDotClass = "bg-b-amber";
-    engineTextClass = "text-b-amber";
-    engineLabel = "engine: checking";
-    engineTitle = "engine: checking";
+  // Unknown until the server reports it: show "—", never a guessed "off".
+  let noLlmTitle = "No-LLM mode unknown";
+  let noLlmWord = "—";
+  if (health.data !== undefined) {
+    noLlmTitle = noLlmMode ? "No-LLM mode active" : "No-LLM mode off";
+    noLlmWord = noLlmMode ? "on" : "off";
   }
+  const serverVersion = health.data?.version;
+
+  let engineDotClass = "bg-el-danger";
+  let engineTextClass = "text-el-danger";
+  let engineLabel = "engine: offline";
+  if (engineConnected) {
+    engineDotClass = "bg-el-success";
+    engineTextClass = "text-el-success";
+    engineLabel = "engine: ready";
+  } else if (engineChecking) {
+    // Only the transient "checking" state pulses (motion-safe).
+    engineDotClass = "bg-el-warning motion-safe:animate-pulse";
+    engineTextClass = "text-el-warning";
+    engineLabel = "engine: checking";
+  }
+  const engineTitle =
+    engineConnected && serverVersion
+      ? `${engineLabel} · server v${serverVersion}`
+      : engineLabel;
 
   // Toggle cycles only between the two supported themes (dark ⇄ paper).
   const nextTheme = theme === "dark" ? "paper" : "dark";
 
+  // Collapsed, labels stay in the accessibility tree (sr-only) so icon-width
+  // controls keep their names.
+  const labelClass = collapsed ? "sr-only" : "whitespace-nowrap";
+
   return (
     <>
+    {/* Width snaps between expanded and collapsed: animating `width` is a
+        layout transition (reflows the main column every frame). */}
     <aside
-      className={`hidden h-full flex-col border-r border-b-line bg-b-bg1 transition-[width] md:flex ${
+      className={`hidden h-full flex-none flex-col border-r border-el-divider bg-el-surface md:flex ${
         collapsed ? "w-16" : "w-[216px]"
       }`}
     >
-      {/* Brand */}
-      <div className="flex items-center gap-3 px-4 pb-4 pt-4">
-        <svg
-          width="30"
-          height="30"
-          viewBox="0 0 30 30"
-          fill="none"
-          className="flex-none"
-          aria-hidden="true"
-        >
-          <ellipse cx="15" cy="15" rx="13" ry="5.4" transform="rotate(-24 15 15)" stroke="rgb(var(--b-clay))" strokeWidth="1.5" fill="none" opacity="0.9" />
-          <ellipse cx="15" cy="15" rx="9" ry="3.6" transform="rotate(-24 15 15)" stroke="rgb(var(--b-clay))" strokeWidth="1" fill="none" opacity="0.45" />
-          <circle cx="15" cy="15" r="4.2" fill="rgb(var(--b-bg0))" />
-          <circle cx="15" cy="15" r="4.2" fill="none" stroke="rgb(var(--b-clay))" strokeWidth="1.5" />
-        </svg>
-        {!collapsed && (
-          <div className="leading-tight">
-            <div
-              className="text-[14px] font-semibold tracking-tight text-b-text"
-              style={headingFont}
-            >
-              Evidence
-            </div>
-            <div className="mt-[3px] text-[9.5px] tracking-[1px] text-b-text-faint">
-              LEDGER · v0.4.2
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Section label */}
+      {/* Section label. The brand lives once, in ConsoleHeader. */}
       {!collapsed && (
-        <div className="px-[18px] pb-2 pt-1.5 text-[9px] tracking-[1.6px] text-b-text-faint">
-          CONSOLE
-        </div>
+        <div className={`px-[18px] pt-4 pb-2 ${OVERLINE}`}>CONSOLE</div>
       )}
 
       {/* Navigation */}
-      <nav className="flex flex-col gap-0.5 px-2.5">
-        {links.map((link) => (
-          <NavLink
-            key={link.to}
-            to={link.to}
-            end={link.end}
-            title={link.title}
-            data-testid={`nav-${link.testid}`}
-            style={radSm}
-            className={({ isActive }) =>
-              `relative flex items-center gap-2.5 px-[11px] py-2.5 text-[12.5px] transition-colors focus:outline-hidden focus:ring-1 focus:ring-b-clay/50 ${
+      <nav
+        aria-label="Primary"
+        className={`flex flex-col gap-0.5 px-2.5 ${collapsed ? "pt-4" : ""}`}
+      >
+        {NAV_ITEMS.map((link) => {
+          const isActive = isNavItemActive(link, pathname);
+          const Icon = link.icon;
+          return (
+            <Link
+              key={link.to}
+              to={link.to}
+              title={link.label}
+              aria-current={isActive ? "page" : undefined}
+              data-testid={`nav-${link.testid}`}
+              className={`relative flex min-h-9 items-center gap-2.5 rounded-md px-[11px] py-2 text-[12.5px] transition-colors focus-ring-inset ${
                 isActive
-                  ? "bg-b-clay-soft text-b-clay"
-                  : "text-b-text-dim hover:bg-b-bg2 hover:text-b-text"
-              }`
-            }
-          >
-            {({ isActive }) => (
-              <>
-                {isActive && (
-                  <span
-                    aria-hidden="true"
-                    className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 bg-b-clay"
-                    style={{ borderRadius: "0 3px 3px 0" }}
-                  />
-                )}
-                <span className="w-3.5 flex-none text-center text-[9.5px] text-b-text-faint">
-                  {link.num}
+                  ? "bg-el-subtle font-medium text-el-ink"
+                  : "text-el-muted hover:bg-el-hover hover:text-el-ink"
+              }`}
+            >
+              {isActive && (
+                // Active state = a 2px rule (design system §8.1), not a
+                // coloured capsule.
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-y-2 left-0 w-0.5 bg-el-accent-strong"
+                />
+              )}
+              <Icon
+                aria-hidden="true"
+                className={`size-4 flex-none ${isActive ? "text-el-ink" : "text-el-muted"}`}
+              />
+              <span className={labelClass}>{link.label}</span>
+              {/* "Live" mark only while the API answers; an outage must not
+                  read as a healthy live surface. */}
+              {link.live && !collapsed && engineConnected && (
+                <span
+                  aria-hidden="true"
+                  className="ml-auto h-1.5 w-1.5 flex-none rounded-full bg-el-success"
+                />
+              )}
+              {!collapsed && (
+                <span
+                  className={`${link.live && engineConnected ? "" : "ml-auto "}flex-none font-mono text-micro text-el-muted`}
+                  aria-hidden="true"
+                >
+                  g {link.goKey}
                 </span>
-                {!collapsed && (
-                  <span className="whitespace-nowrap">{link.label}</span>
-                )}
-                {link.live && !collapsed && (
-                  <span
-                    aria-hidden="true"
-                    className="ml-auto h-1.5 w-1.5 flex-none rounded-full bg-b-green motion-safe:animate-pulse"
-                  />
-                )}
-                {!collapsed && (
-                  <span
-                    className={`${link.live ? "" : "ml-auto "}flex-none font-mono text-[9px] tracking-[1px] text-b-text-faint`}
-                    aria-hidden="true"
-                  >
-                    g {link.goKey}
-                  </span>
-                )}
-              </>
-            )}
-          </NavLink>
-        ))}
+              )}
+            </Link>
+          );
+        })}
       </nav>
 
       {/* Shortcuts legend — mirrors the design kit's sidebar footer block. */}
       {!collapsed && (
         <div className="mt-4 px-[18px]">
-          <div className="pb-2 text-[9px] tracking-[1.6px] text-b-text-faint">
-            SHORTCUTS
-          </div>
-          <div className="space-y-1 font-mono text-[10px] text-b-text-dim">
+          <div className={`pb-2 ${OVERLINE}`}>SHORTCUTS</div>
+          <div className="space-y-1 text-micro text-el-muted">
             <div>
-              <span className="text-b-text-mid">j k</span> move ·{" "}
-              <span className="text-b-text-mid">↵</span> inspect
+              <kbd className="font-mono text-el-secondary">j k</kbd> move ·{" "}
+              <kbd className="font-mono text-el-secondary">↵</kbd> inspect
             </div>
             <div>
-              <span className="text-b-text-mid">esc</span> close panel
+              <kbd className="font-mono text-el-secondary">esc</kbd> close panel
             </div>
             <div>
-              <span className="text-b-text-mid">⌘k</span> palette ·{" "}
-              <span className="text-b-text-mid">g</span>+key go to
+              <PaletteShortcut variant="inline" /> palette ·{" "}
+              <kbd className="font-mono text-el-secondary">g</kbd>+key go to
             </div>
           </div>
         </div>
       )}
 
       {/* Footer: engine status, no-LLM mode, theme toggle, collapse */}
-      <div
-        className="mx-2 mb-0 mt-auto flex flex-col gap-1 border-t border-b-line bg-b-bg0 p-2.5"
-        style={radSm}
-      >
+      <div className="mx-2 mt-auto mb-0 flex flex-col gap-1 rounded-md border-t border-el-divider bg-el-canvas p-2.5">
         {/* Engine / connection status — wired to the live /health probe */}
         <div
           className="flex items-center gap-2.5 px-2.5 py-[7px]"
@@ -206,31 +156,36 @@ export default function Sidebar() {
         >
           <span
             aria-hidden="true"
-            className={`h-2 w-2 flex-none rounded-full motion-safe:animate-pulse ${engineDotClass}`}
+            className={`h-2 w-2 flex-none rounded-full ${engineDotClass}`}
           />
-          {!collapsed && (
-            <span className={`whitespace-nowrap text-[11px] ${engineTextClass}`}>
-              {engineLabel}
+          <span className={`${labelClass} text-micro ${engineTextClass}`}>
+            {engineLabel}
+          </span>
+          {!collapsed && engineConnected && serverVersion && (
+            <span className="ml-auto font-mono text-micro text-el-muted">
+              v{serverVersion}
             </span>
           )}
         </div>
 
-        {/* No-LLM mode indicator (reflects the configured feature flag) */}
+        {/* No-LLM mode indicator (server-reported). The on/off word carries
+            the state; the dot is a supplement, never the only cue. */}
         <div
           className="flex items-center gap-2.5 px-2.5 py-[7px]"
-          title={noLlmMode ? "No-LLM mode active" : "No-LLM mode off"}
+          title={noLlmTitle}
         >
           <span
             aria-hidden="true"
             className={`h-2 w-2 flex-none rounded-full ${
-              noLlmMode ? "bg-b-green shadow-[0_0_6px] shadow-b-green" : "bg-b-text-faint"
+              noLlmMode ? "bg-el-warning" : "border border-el-muted"
             }`}
           />
-          {!collapsed && (
-            <span className="whitespace-nowrap text-[11px] text-b-text-mid">
-              No-LLM mode
+          <span className={`${labelClass} text-micro text-el-secondary`}>
+            No-LLM mode{" "}
+            <span className={noLlmMode ? "text-el-warning" : "text-el-muted"}>
+              {noLlmWord}
             </span>
-          )}
+          </span>
         </div>
 
         {/* Theme toggle: cycles dark ⇄ paper only */}
@@ -239,8 +194,7 @@ export default function Sidebar() {
           onClick={() => setTheme(nextTheme)}
           aria-pressed={theme === "paper"}
           title={`switch to ${nextTheme} theme`}
-          className="flex w-full items-center gap-2.5 bg-transparent px-2.5 py-[7px] text-left text-[11px] text-b-text-dim transition-colors hover:text-b-text focus:outline-hidden focus:ring-1 focus:ring-b-clay/50"
-          style={radSm}
+          className="flex min-h-9 w-full items-center gap-2.5 rounded-md bg-transparent px-2.5 text-left text-micro text-el-secondary transition-colors hover:bg-el-hover hover:text-el-ink focus-ring"
         >
           <svg
             width="16"
@@ -255,7 +209,9 @@ export default function Sidebar() {
           >
             <path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36A5.39 5.39 0 0 1 12 3z" />
           </svg>
-          {!collapsed && <span className="whitespace-nowrap">{theme} theme</span>}
+          <span className={labelClass}>
+            {theme === "dark" ? "Dark theme" : "Paper theme"}
+          </span>
         </button>
 
         {/* Collapse control */}
@@ -265,36 +221,16 @@ export default function Sidebar() {
           aria-pressed={collapsed}
           aria-label={collapsed ? "expand sidebar" : "collapse sidebar"}
           title={collapsed ? "expand sidebar" : "collapse sidebar"}
-          className="mt-1 flex w-full items-center gap-2.5 border border-b-line bg-b-bg1 px-2.5 py-2 text-left text-[11px] text-b-text-dim transition-colors hover:text-b-text focus:outline-hidden focus:ring-1 focus:ring-b-clay/50"
-          style={{ ...radSm, ...hardBorder }}
+          className="mt-1 flex min-h-9 w-full items-center gap-2.5 rounded-md border border-el-divider bg-el-surface px-2.5 text-left text-micro text-el-secondary transition-colors hover:bg-el-hover hover:text-el-ink focus-ring"
         >
           <span className="w-4 flex-none text-center text-[13px]" aria-hidden="true">
             {collapsed ? "»" : "«"}
           </span>
-          {!collapsed && <span className="whitespace-nowrap">collapse</span>}
+          {!collapsed && <span className="whitespace-nowrap">Collapse</span>}
         </button>
       </div>
     </aside>
-    <nav
-      aria-label="Mobile navigation"
-      className="fixed inset-x-0 bottom-9 z-40 grid h-14 grid-cols-5 border-t border-el-divider bg-el-raised md:hidden"
-    >
-      {mobileLinks.map((link) => (
-        <NavLink
-          key={link.to}
-          to={link.to}
-          end={link.end}
-          className={({ isActive }) =>
-            `flex flex-col items-center justify-center gap-1 text-[10px] font-medium ${
-              isActive ? "text-el-accent-strong" : "text-el-muted"
-            }`
-          }
-        >
-          <span className="font-mono text-[9px]" aria-hidden="true">{link.num}</span>
-          <span>{link.label.replace(" execution", "")}</span>
-        </NavLink>
-      ))}
-    </nav>
+    <MobileNav />
     </>
   );
 }

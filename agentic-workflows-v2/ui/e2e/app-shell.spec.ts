@@ -16,12 +16,12 @@ test.describe('app shell', () => {
     await page.goto('/');
 
     // SPA mounted: the brand link and the sidebar destinations are present.
-    // Nav labels carry a zero-padded ordinal prefix ("01 overview"), so match
-    // by regex and scope to the navigation landmark to stay unambiguous
-    // against content links on the dashboard.
+    // Nav labels are sentence-case names beside an icon ("Overview"); match
+    // case-insensitively and scope to the navigation landmark to stay
+    // unambiguous against content links on the dashboard.
     await expect(page.getByRole('link', { name: 'console home' })).toBeVisible();
     const nav = page.getByRole('navigation');
-    for (const label of [/overview/, /runs/, /model router/, /workflow builder/]) {
+    for (const label of [/overview/i, /runs/i, /model router/i, /workflow builder/i]) {
       await expect(nav.getByRole('link', { name: label })).toBeVisible();
     }
 
@@ -31,7 +31,7 @@ test.describe('app shell', () => {
     expect((await health.json()).status).toBe('ok');
 
     // Navigation routes: "workflow builder" lands on the workflows list.
-    await nav.getByRole('link', { name: /workflow builder/ }).click();
+    await nav.getByRole('link', { name: /workflow builder/i }).click();
     await expect(page).toHaveURL(/\/workflows$/);
 
     // The list renders one row per workflow the backend reports — each row

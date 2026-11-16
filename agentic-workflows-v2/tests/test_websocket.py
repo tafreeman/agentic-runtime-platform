@@ -531,6 +531,7 @@ class TestWebSocketEndpointAuth:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setenv("AGENTIC_API_KEY", "test-secret-key")
+        monkeypatch.setitem(websocket_module.manager._run_tenants, "run-1", "default")
         app = create_app()
 
         with (
@@ -549,6 +550,7 @@ class TestWebSocketEndpointAuth:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setenv("AGENTIC_API_KEY", "test-secret-key")
+        monkeypatch.setitem(websocket_module.manager._run_tenants, "run-1", "default")
         app = create_app()
 
         with (

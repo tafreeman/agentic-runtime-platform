@@ -124,10 +124,8 @@ def _load_definitions() -> dict[str, LLMEvaluatorDefinition]:
         raw_defs = yaml_data.get("definitions", {})
 
         for key, data in raw_defs.items():
-            # Map choice types
+            # Only the standard 5-point scale exists today.
             choices = STANDARD_CHOICES
-            if data.get("choices_type") == "standard_5_point":
-                choices = STANDARD_CHOICES
 
             definitions[key] = LLMEvaluatorDefinition(
                 name=key,

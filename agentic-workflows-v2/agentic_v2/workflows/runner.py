@@ -241,7 +241,7 @@ class WorkflowRunner:
         definition = self._loader.load(workflow_name, use_cache=False)
 
         # 2. Validate inputs
-        validated = self._validate_inputs(definition, inputs)
+        validated = validate_workflow_inputs(definition, inputs)
 
         # 3. Build context
         if ctx is None:
@@ -275,17 +275,16 @@ class WorkflowRunner:
                 execution_profile=execution_profile,
             )
 
-            # 5. Resolve outputs
-            result.final_output = self._resolve_outputs(definition, ctx, result)
-            result.workflow_name = definition.name
-            result.metadata["execution_profile"] = runtime_profile
-            result.metadata["runtime_artifacts"] = runtime_artifacts
-
-            # 6. Extract artifacts to disk
-            self._do_extract_artifacts(result)
-
-            # 7. Log run
-            self._log_run(result, dataset_meta=dataset_meta, workflow_inputs=validated)
+            # 5-7. Resolve outputs, extract artifacts, log run
+            self._finalize_result(
+                definition,
+                ctx,
+                result,
+                runtime_profile,
+                runtime_artifacts,
+                dataset_meta=dataset_meta,
+                workflow_inputs=validated,
+            )
 
             # Emit workflow_end trace event
             self._trace_adapter.emit_workflow_end(
@@ -310,7 +309,7 @@ class WorkflowRunner:
         **inputs: Any,
     ) -> WorkflowResult:
         """Run a pre-loaded WorkflowDefinition (useful for testing)."""
-        validated = self._validate_inputs(definition, inputs)
+        validated = validate_workflow_inputs(definition, inputs)
 
         if ctx is None:
             ctx = ExecutionContext(workflow_id=f"wf-{definition.name}")
@@ -324,18 +323,41 @@ class WorkflowRunner:
             execution_profile=execution_profile,
         )
 
-        result.final_output = self._resolve_outputs(definition, ctx, result)
-        result.workflow_name = definition.name
-        result.metadata["execution_profile"] = runtime_profile
-        result.metadata["runtime_artifacts"] = runtime_artifacts
-
-        self._do_extract_artifacts(result)
-        self._log_run(result, dataset_meta=dataset_meta, workflow_inputs=validated)
+        self._finalize_result(
+            definition,
+            ctx,
+            result,
+            runtime_profile,
+            runtime_artifacts,
+            dataset_meta=dataset_meta,
+            workflow_inputs=validated,
+        )
         return result
 
     def list_workflows(self, include_experimental: bool = False) -> list[str]:
         """List available workflow names."""
         return self._loader.list_workflows(include_experimental=include_experimental)
+
+    def _finalize_result(
+        self,
+        definition: WorkflowDefinition,
+        ctx: ExecutionContext,
+        result: WorkflowResult,
+        runtime_profile: dict[str, Any],
+        runtime_artifacts: dict[str, Any],
+        *,
+        dataset_meta: dict[str, Any] | None,
+        workflow_inputs: dict[str, Any],
+    ) -> None:
+        """Resolve outputs, stamp metadata, extract artifacts and log the run."""
+        result.final_output = resolve_workflow_outputs(definition, ctx, result)
+        result.workflow_name = definition.name
+        result.metadata["execution_profile"] = runtime_profile
+        result.metadata["runtime_artifacts"] = runtime_artifacts
+        self._do_extract_artifacts(result)
+        self._log_run(
+            result, dataset_meta=dataset_meta, workflow_inputs=workflow_inputs
+        )
 
     def _do_extract_artifacts(self, result: WorkflowResult) -> None:
         """Extract FILE blocks from step outputs to the artifacts directory."""
@@ -450,33 +472,6 @@ class WorkflowRunner:
         runtime_name = str(profile.get("runtime", "subprocess")).strip().lower()
         profile["runtime"] = runtime_name
         return profile
-
-    # --------------------------------------------------------------------- #
-    # Internal helpers
-    # --------------------------------------------------------------------- #
-
-    def _validate_inputs(
-        self, definition: WorkflowDefinition, supplied: dict[str, Any]
-    ) -> dict[str, Any]:
-        """Validate and apply defaults for workflow inputs."""
-        return validate_workflow_inputs(definition, supplied)
-
-    @staticmethod
-    def _resolve_outputs(
-        definition: WorkflowDefinition,
-        ctx: ExecutionContext,
-        result: WorkflowResult,
-    ) -> dict[str, Any]:
-        """Resolve declared outputs from the execution context."""
-        return resolve_workflow_outputs(definition, ctx, result)
-
-    @staticmethod
-    def _resolve_output_expr(
-        evaluator: ExpressionEvaluator,
-        from_expr: Any,
-    ) -> Any:
-        """Resolve workflow output expressions from string/dict/list mappings."""
-        return _resolve_workflow_output_expr(evaluator, from_expr)
 
 
 # -------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import RunList from "../components/runs/RunList";
@@ -108,7 +108,7 @@ describe("RunList", () => {
     expect(screen.getByText("A")).toBeInTheDocument();
   });
 
-  it("activates a run row via keyboard (Enter and Space)", () => {
+  it("gives each run one real link as its keyboard control (no role=button rows)", () => {
     mockNavigate.mockClear();
     render(
       <MemoryRouter>
@@ -116,18 +116,35 @@ describe("RunList", () => {
       </MemoryRouter>
     );
 
-    // shortId("run-1") → "1", so the row's accessible name is "Open run 1".
-    const row = screen.getByRole("button", { name: "Open run 1" });
-    expect(row).toHaveAttribute("tabindex", "0");
+    // Table semantics, and no row pretends to be a button that nests a link.
+    expect(screen.getByRole("table", { name: "Run history" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /open run/i })).not.toBeInTheDocument();
+    for (const row of screen.getAllByRole("row")) {
+      expect(row).not.toHaveAttribute("tabindex");
+      expect(row).not.toHaveAttribute("role", "button");
+    }
 
-    fireEvent.keyDown(row, { key: "Enter" });
-    expect(mockNavigate).toHaveBeenCalledWith("/runs/run-1.json");
-
-    fireEvent.keyDown(row, { key: " " });
-    expect(mockNavigate).toHaveBeenCalledTimes(2);
+    // The visible workflow name leads the link's name (label-in-name); the
+    // run id disambiguates rows of the same workflow. shortId("run-1") → "1".
+    const link = screen.getByRole("link", { name: "review_flow, run 1" });
+    expect(link).toHaveAttribute("href", "/runs/run-1.json");
+    expect(link.closest('[role="cell"]')).not.toBeNull();
   });
 
-  it("keeps the inner workflow link working without triggering row navigation", () => {
+  it("shows status with the shared marker words, not ASCII brackets", () => {
+    render(
+      <MemoryRouter>
+        <RunList runs={runs} isLoading={false} />
+      </MemoryRouter>
+    );
+
+    const table = screen.getByRole("table", { name: "Run history" });
+    expect(within(table).getByText("Success")).toBeInTheDocument();
+    expect(within(table).getByText("Failed")).toBeInTheDocument();
+    expect(table.textContent).not.toMatch(/\[ ?(ok|err) ?\]/);
+  });
+
+  it("keeps the pointer row-click shortcut, and the link doesn't double-navigate", () => {
     mockNavigate.mockClear();
     render(
       <MemoryRouter>
@@ -135,10 +152,14 @@ describe("RunList", () => {
       </MemoryRouter>
     );
 
-    const workflowLink = screen.getByRole("link", { name: "Open run 1" });
-    expect(workflowLink).toHaveAttribute("href", "/runs/run-1.json");
+    const link = screen.getByRole("link", { name: "review_flow, run 1" });
+    // Clicking a row's body (any cell) navigates for pointer users…
+    fireEvent.click(link.closest('[role="row"]')!.querySelector('[role="cell"]')!);
+    expect(mockNavigate).toHaveBeenCalledWith("/runs/run-1.json");
 
-    fireEvent.click(workflowLink);
+    // …while the link handles its own navigation without the row firing too.
+    mockNavigate.mockClear();
+    fireEvent.click(link);
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 });

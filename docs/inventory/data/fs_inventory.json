@@ -1,0 +1,1624 @@
+{
+  "totals": {
+    "tracked": 1432,
+    "untracked": 0
+  },
+  "top_level": [
+    {
+      "name": ".claude/",
+      "kb": 14.8,
+      "tracked": 4,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": ".devcontainer/",
+      "kb": 1.3,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": ".dockerignore",
+      "kb": 0.6,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": ".env.example",
+      "kb": 8.5,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": ".git",
+      "kb": null,
+      "tracked": 0,
+      "untracked": 0,
+      "status": "ignored/local-only"
+    },
+    {
+      "name": ".gitattributes",
+      "kb": 2.2,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": ".github/",
+      "kb": 135.2,
+      "tracked": 24,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": ".gitignore",
+      "kb": 9.8,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": ".impeccable/",
+      "kb": 9.2,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": ".mailmap",
+      "kb": 0.3,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": ".nvmrc",
+      "kb": 0.0,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": ".pre-commit-config.yaml",
+      "kb": 3.3,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": ".python-version",
+      "kb": 0.0,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": ".secrets.baseline",
+      "kb": 78.0,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "agentic-v2-eval/",
+      "kb": 272.8,
+      "tracked": 57,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "agentic-workflows-v2/",
+      "kb": 35449.7,
+      "tracked": 1033,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "AGENTS.md",
+      "kb": 3.3,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "AI_EVIDENCE_STANDARD.md",
+      "kb": 8.4,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "CHANGELOG.md",
+      "kb": 73.3,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "ci-constraints.txt",
+      "kb": 13.8,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "CLAUDE.md",
+      "kb": 2.3,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "CONTRIBUTING.md",
+      "kb": 9.4,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "datasets/",
+      "kb": 33.4,
+      "tracked": 6,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "DESIGN.md",
+      "kb": 10.7,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "docker-compose.yml",
+      "kb": 2.0,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "Dockerfile",
+      "kb": 2.9,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "Dockerfile.ui",
+      "kb": 1.0,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "docs/",
+      "kb": 1835.7,
+      "tracked": 143,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "eval_pipeline.png",
+      "kb": 27.0,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "examples/",
+      "kb": 60.4,
+      "tracked": 9,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "infra/",
+      "kb": 12.8,
+      "tracked": 3,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "justfile",
+      "kb": 3.7,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "LICENSE",
+      "kb": 1.1,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "load/",
+      "kb": 48.8,
+      "tracked": 15,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "mkdocs.yml",
+      "kb": 5.8,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "otel/",
+      "kb": 0.4,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "package-lock.json",
+      "kb": 2.2,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "package.json",
+      "kb": 0.8,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "PRODUCT.md",
+      "kb": 1.7,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "proofs/",
+      "kb": 167.6,
+      "tracked": 7,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "pyproject.toml",
+      "kb": 2.7,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "README.md",
+      "kb": 12.5,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "release-manifest.toml",
+      "kb": 1.0,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "scripts/",
+      "kb": 124.3,
+      "tracked": 12,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "SECURITY.md",
+      "kb": 2.1,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "sonar-project.properties",
+      "kb": 1.0,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "tests/",
+      "kb": 23.2,
+      "tracked": 2,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "tools/",
+      "kb": 790.8,
+      "tracked": 82,
+      "untracked": 0,
+      "status": "tracked"
+    },
+    {
+      "name": "uv.lock",
+      "kb": 1122.0,
+      "tracked": 1,
+      "untracked": 0,
+      "status": "tracked"
+    }
+  ],
+  "dirs": [
+    {
+      "dir": ".",
+      "tracked": 32,
+      "untracked": 0,
+      "kb": 1413.2,
+      "top_exts": {
+        "(none)": 9,
+        ".md": 9,
+        ".yml": 2,
+        ".json": 2
+      },
+      "last_commit": "2026-10-12",
+      "last_commit_age_days": 0,
+      "stale": false
+    },
+    {
+      "dir": ".claude/rules",
+      "tracked": 4,
+      "untracked": 0,
+      "kb": 14.8,
+      "top_exts": {
+        ".md": 4
+      },
+      "last_commit": "2026-10-09",
+      "last_commit_age_days": 3,
+      "stale": false
+    },
+    {
+      "dir": ".devcontainer",
+      "tracked": 1,
+      "untracked": 0,
+      "kb": 1.3,
+      "top_exts": {
+        ".json": 1
+      },
+      "last_commit": "2026-06-13",
+      "last_commit_age_days": 121,
+      "stale": true
+    },
+    {
+      "dir": ".github",
+      "tracked": 3,
+      "untracked": 0,
+      "kb": 8.8,
+      "top_exts": {
+        "(none)": 1,
+        ".md": 1,
+        ".yml": 1
+      },
+      "last_commit": "2026-09-23",
+      "last_commit_age_days": 18,
+      "stale": false
+    },
+    {
+      "dir": ".github/ISSUE_TEMPLATE",
+      "tracked": 3,
+      "untracked": 0,
+      "kb": 1.2,
+      "top_exts": {
+        ".md": 2,
+        ".yml": 1
+      },
+      "last_commit": "2026-05-27",
+      "last_commit_age_days": 138,
+      "stale": true
+    },
+    {
+      "dir": ".github/workflows",
+      "tracked": 18,
+      "untracked": 0,
+      "kb": 125.3,
+      "top_exts": {
+        ".yml": 18
+      },
+      "last_commit": "2026-10-12",
+      "last_commit_age_days": 0,
+      "stale": false
+    },
+    {
+      "dir": ".impeccable",
+      "tracked": 1,
+      "untracked": 0,
+      "kb": 9.2,
+      "top_exts": {
+        ".json": 1
+      },
+      "last_commit": "2026-10-09",
+      "last_commit_age_days": 3,
+      "stale": false
+    },
+    {
+      "dir": "agentic-v2-eval",
+      "tracked": 3,
+      "untracked": 0,
+      "kb": 6.9,
+      "top_exts": {
+        "(none)": 1,
+        ".md": 1,
+        ".toml": 1
+      },
+      "last_commit": "2026-07-29",
+      "last_commit_age_days": 75,
+      "stale": false
+    },
+    {
+      "dir": "agentic-v2-eval/scripts",
+      "tracked": 1,
+      "untracked": 0,
+      "kb": 0.1,
+      "top_exts": {
+        ".sh": 1
+      },
+      "last_commit": "2026-05-27",
+      "last_commit_age_days": 138,
+      "stale": true
+    },
+    {
+      "dir": "agentic-v2-eval/src/agentic_v2_eval",
+      "tracked": 38,
+      "untracked": 0,
+      "kb": 157.1,
+      "top_exts": {
+        ".py": 29,
+        ".yaml": 8,
+        ".md": 1
+      },
+      "last_commit": "2026-07-29",
+      "last_commit_age_days": 75,
+      "stale": false
+    },
+    {
+      "dir": "agentic-v2-eval/tests",
+      "tracked": 15,
+      "untracked": 0,
+      "kb": 108.7,
+      "top_exts": {
+        ".py": 15
+      },
+      "last_commit": "2026-07-12",
+      "last_commit_age_days": 92,
+      "stale": true
+    },
+    {
+      "dir": "agentic-workflows-v2",
+      "tracked": 10,
+      "untracked": 0,
+      "kb": 35.0,
+      "top_exts": {
+        ".md": 5,
+        "(none)": 2,
+        ".json": 1,
+        ".sh": 1
+      },
+      "last_commit": "2026-10-10",
+      "last_commit_age_days": 1,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/.github",
+      "tracked": 1,
+      "untracked": 0,
+      "kb": 1.0,
+      "top_exts": {
+        ".md": 1
+      },
+      "last_commit": "2026-07-29",
+      "last_commit_age_days": 75,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/.github/ISSUE_TEMPLATE",
+      "tracked": 3,
+      "untracked": 0,
+      "kb": 1.8,
+      "top_exts": {
+        ".yml": 3
+      },
+      "last_commit": "2026-05-27",
+      "last_commit_age_days": 138,
+      "stale": true
+    },
+    {
+      "dir": "agentic-workflows-v2/agentic_v2",
+      "tracked": 6,
+      "untracked": 0,
+      "kb": 65.5,
+      "top_exts": {
+        ".py": 6
+      },
+      "last_commit": "2026-10-12",
+      "last_commit_age_days": 0,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/agentic_v2/adapters",
+      "tracked": 8,
+      "untracked": 0,
+      "kb": 38.9,
+      "top_exts": {
+        ".py": 8
+      },
+      "last_commit": "2026-09-25",
+      "last_commit_age_days": 17,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/agentic_v2/agents",
+      "tracked": 18,
+      "untracked": 0,
+      "kb": 208.1,
+      "top_exts": {
+        ".py": 18
+      },
+      "last_commit": "2026-09-24",
+      "last_commit_age_days": 18,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/agentic_v2/cli",
+      "tracked": 4,
+      "untracked": 0,
+      "kb": 33.1,
+      "top_exts": {
+        ".py": 4
+      },
+      "last_commit": "2026-09-10",
+      "last_commit_age_days": 32,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/agentic_v2/config",
+      "tracked": 6,
+      "untracked": 0,
+      "kb": 36.0,
+      "top_exts": {
+        ".yaml": 5,
+        ".py": 1
+      },
+      "last_commit": "2026-10-12",
+      "last_commit_age_days": 0,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/agentic_v2/contracts",
+      "tracked": 8,
+      "untracked": 0,
+      "kb": 65.3,
+      "top_exts": {
+        ".py": 8
+      },
+      "last_commit": "2026-09-25",
+      "last_commit_age_days": 17,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/agentic_v2/core",
+      "tracked": 5,
+      "untracked": 0,
+      "kb": 28.0,
+      "top_exts": {
+        ".py": 5
+      },
+      "last_commit": "2026-10-11",
+      "last_commit_age_days": 0,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/agentic_v2/devex",
+      "tracked": 5,
+      "untracked": 0,
+      "kb": 13.5,
+      "top_exts": {
+        ".py": 5
+      },
+      "last_commit": "2026-07-12",
+      "last_commit_age_days": 92,
+      "stale": true
+    },
+    {
+      "dir": "agentic-workflows-v2/agentic_v2/engine",
+      "tracked": 19,
+      "untracked": 0,
+      "kb": 330.4,
+      "top_exts": {
+        ".py": 19
+      },
+      "last_commit": "2026-10-12",
+      "last_commit_age_days": 0,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/agentic_v2/evaluation",
+      "tracked": 2,
+      "untracked": 0,
+      "kb": 4.2,
+      "top_exts": {
+        ".py": 2
+      },
+      "last_commit": "2026-05-27",
+      "last_commit_age_days": 138,
+      "stale": true
+    },
+    {
+      "dir": "agentic-workflows-v2/agentic_v2/governance",
+      "tracked": 3,
+      "untracked": 0,
+      "kb": 19.5,
+      "top_exts": {
+        ".py": 3
+      },
+      "last_commit": "2026-07-12",
+      "last_commit_age_days": 92,
+      "stale": true
+    },
+    {
+      "dir": "agentic-workflows-v2/agentic_v2/integrations",
+      "tracked": 32,
+      "untracked": 0,
+      "kb": 192.4,
+      "top_exts": {
+        ".py": 31,
+        ".md": 1
+      },
+      "last_commit": "2026-10-11",
+      "last_commit_age_days": 0,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/agentic_v2/langchain",
+      "tracked": 16,
+      "untracked": 0,
+      "kb": 246.5,
+      "top_exts": {
+        ".py": 16
+      },
+      "last_commit": "2026-10-12",
+      "last_commit_age_days": 0,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/agentic_v2/middleware",
+      "tracked": 11,
+      "untracked": 0,
+      "kb": 34.4,
+      "top_exts": {
+        ".py": 11
+      },
+      "last_commit": "2026-10-12",
+      "last_commit_age_days": 0,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/agentic_v2/models",
+      "tracked": 32,
+      "untracked": 0,
+      "kb": 439.6,
+      "top_exts": {
+        ".py": 32
+      },
+      "last_commit": "2026-10-12",
+      "last_commit_age_days": 0,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/agentic_v2/prompts",
+      "tracked": 14,
+      "untracked": 0,
+      "kb": 70.1,
+      "top_exts": {
+        ".md": 12,
+        ".py": 2
+      },
+      "last_commit": "2026-10-01",
+      "last_commit_age_days": 12,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/agentic_v2/scoring",
+      "tracked": 14,
+      "untracked": 0,
+      "kb": 168.4,
+      "top_exts": {
+        ".py": 11,
+        ".yaml": 3
+      },
+      "last_commit": "2026-10-12",
+      "last_commit_age_days": 0,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/agentic_v2/security",
+      "tracked": 2,
+      "untracked": 0,
+      "kb": 17.4,
+      "top_exts": {
+        ".py": 2
+      },
+      "last_commit": "2026-06-18",
+      "last_commit_age_days": 116,
+      "stale": true
+    },
+    {
+      "dir": "agentic-workflows-v2/agentic_v2/server",
+      "tracked": 34,
+      "untracked": 0,
+      "kb": 426.6,
+      "top_exts": {
+        ".py": 34
+      },
+      "last_commit": "2026-10-10",
+      "last_commit_age_days": 1,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/agentic_v2/tools",
+      "tracked": 17,
+      "untracked": 0,
+      "kb": 162.4,
+      "top_exts": {
+        ".py": 17
+      },
+      "last_commit": "2026-07-22",
+      "last_commit_age_days": 82,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/agentic_v2/utils",
+      "tracked": 2,
+      "untracked": 0,
+      "kb": 2.6,
+      "top_exts": {
+        ".py": 2
+      },
+      "last_commit": "2026-08-09",
+      "last_commit_age_days": 64,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/agentic_v2/workflows",
+      "tracked": 16,
+      "untracked": 0,
+      "kb": 138.0,
+      "top_exts": {
+        ".yaml": 9,
+        ".py": 7
+      },
+      "last_commit": "2026-10-12",
+      "last_commit_age_days": 0,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/backend/src",
+      "tracked": 1,
+      "untracked": 0,
+      "kb": 0.3,
+      "top_exts": {
+        ".py": 1
+      },
+      "last_commit": "2026-05-27",
+      "last_commit_age_days": 138,
+      "stale": true
+    },
+    {
+      "dir": "agentic-workflows-v2/docs",
+      "tracked": 9,
+      "untracked": 0,
+      "kb": 28.4,
+      "top_exts": {
+        ".md": 9
+      },
+      "last_commit": "2026-10-12",
+      "last_commit_age_days": 0,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/docs/adr",
+      "tracked": 4,
+      "untracked": 0,
+      "kb": 5.4,
+      "top_exts": {
+        ".md": 4
+      },
+      "last_commit": "2026-07-27",
+      "last_commit_age_days": 77,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/docs/tutorials",
+      "tracked": 3,
+      "untracked": 0,
+      "kb": 6.1,
+      "top_exts": {
+        ".md": 3
+      },
+      "last_commit": "2026-07-29",
+      "last_commit_age_days": 75,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/evals/swe_ab",
+      "tracked": 152,
+      "untracked": 0,
+      "kb": 27832.6,
+      "top_exts": {
+        ".json": 47,
+        ".jsonl": 44,
+        ".py": 37,
+        ".md": 18
+      },
+      "last_commit": "2026-09-25",
+      "last_commit_age_days": 17,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/examples",
+      "tracked": 7,
+      "untracked": 0,
+      "kb": 20.9,
+      "top_exts": {
+        ".py": 5,
+        ".md": 1,
+        ".json": 1
+      },
+      "last_commit": "2026-07-29",
+      "last_commit_age_days": 75,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/fixtures",
+      "tracked": 3,
+      "untracked": 0,
+      "kb": 6.4,
+      "top_exts": {
+        ".json": 2,
+        ".md": 1
+      },
+      "last_commit": "2026-07-29",
+      "last_commit_age_days": 75,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/schemas",
+      "tracked": 2,
+      "untracked": 0,
+      "kb": 5.8,
+      "top_exts": {
+        ".json": 2
+      },
+      "last_commit": "2026-05-27",
+      "last_commit_age_days": 138,
+      "stale": true
+    },
+    {
+      "dir": "agentic-workflows-v2/scripts",
+      "tracked": 15,
+      "untracked": 0,
+      "kb": 73.9,
+      "top_exts": {
+        ".ps1": 8,
+        ".py": 6,
+        ".sh": 1
+      },
+      "last_commit": "2026-09-10",
+      "last_commit_age_days": 32,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/scripts/fixtures",
+      "tracked": 1,
+      "untracked": 0,
+      "kb": 0.0,
+      "top_exts": {
+        ".json": 1
+      },
+      "last_commit": "2026-05-27",
+      "last_commit_age_days": 138,
+      "stale": true
+    },
+    {
+      "dir": "agentic-workflows-v2/shared/src",
+      "tracked": 1,
+      "untracked": 0,
+      "kb": 0.1,
+      "top_exts": {
+        ".py": 1
+      },
+      "last_commit": "2026-05-27",
+      "last_commit_age_days": 138,
+      "stale": true
+    },
+    {
+      "dir": "agentic-workflows-v2/tests",
+      "tracked": 164,
+      "untracked": 0,
+      "kb": 1904.0,
+      "top_exts": {
+        ".py": 164
+      },
+      "last_commit": "2026-10-12",
+      "last_commit_age_days": 0,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/tests/contract",
+      "tracked": 2,
+      "untracked": 0,
+      "kb": 4.4,
+      "top_exts": {
+        ".py": 2
+      },
+      "last_commit": "2026-08-09",
+      "last_commit_age_days": 64,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/tests/devex",
+      "tracked": 4,
+      "untracked": 0,
+      "kb": 13.0,
+      "top_exts": {
+        ".py": 4
+      },
+      "last_commit": "2026-07-12",
+      "last_commit_age_days": 92,
+      "stale": true
+    },
+    {
+      "dir": "agentic-workflows-v2/tests/engine",
+      "tracked": 11,
+      "untracked": 0,
+      "kb": 151.2,
+      "top_exts": {
+        ".py": 11
+      },
+      "last_commit": "2026-10-01",
+      "last_commit_age_days": 11,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/tests/fixtures",
+      "tracked": 27,
+      "untracked": 0,
+      "kb": 85.9,
+      "top_exts": {
+        ".json": 21,
+        ".py": 5,
+        ".md": 1
+      },
+      "last_commit": "2026-10-12",
+      "last_commit_age_days": 0,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/tests/golden",
+      "tracked": 2,
+      "untracked": 0,
+      "kb": 8.7,
+      "top_exts": {
+        ".json": 2
+      },
+      "last_commit": "2026-07-18",
+      "last_commit_age_days": 86,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/tests/integrations",
+      "tracked": 9,
+      "untracked": 0,
+      "kb": 65.2,
+      "top_exts": {
+        ".py": 8,
+        ".md": 1
+      },
+      "last_commit": "2026-10-11",
+      "last_commit_age_days": 0,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/tests/langchain",
+      "tracked": 2,
+      "untracked": 0,
+      "kb": 7.3,
+      "top_exts": {
+        ".py": 2
+      },
+      "last_commit": "2026-07-12",
+      "last_commit_age_days": 92,
+      "stale": true
+    },
+    {
+      "dir": "agentic-workflows-v2/tests/models",
+      "tracked": 31,
+      "untracked": 0,
+      "kb": 369.7,
+      "top_exts": {
+        ".py": 31
+      },
+      "last_commit": "2026-10-12",
+      "last_commit_age_days": 0,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/tests/schemas",
+      "tracked": 32,
+      "untracked": 0,
+      "kb": 99.8,
+      "top_exts": {
+        ".json": 32
+      },
+      "last_commit": "2026-09-10",
+      "last_commit_age_days": 32,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/tests/server",
+      "tracked": 18,
+      "untracked": 0,
+      "kb": 168.4,
+      "top_exts": {
+        ".py": 18
+      },
+      "last_commit": "2026-10-11",
+      "last_commit_age_days": 0,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/tests/slo",
+      "tracked": 4,
+      "untracked": 0,
+      "kb": 2.6,
+      "top_exts": {
+        ".py": 2,
+        ".json": 2
+      },
+      "last_commit": "2026-07-18",
+      "last_commit_age_days": 86,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/tests/tools",
+      "tracked": 5,
+      "untracked": 0,
+      "kb": 19.3,
+      "top_exts": {
+        ".py": 5
+      },
+      "last_commit": "2026-07-22",
+      "last_commit_age_days": 82,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/ui",
+      "tracked": 11,
+      "untracked": 0,
+      "kb": 221.3,
+      "top_exts": {
+        ".json": 4,
+        ".ts": 3,
+        ".md": 1,
+        ".html": 1
+      },
+      "last_commit": "2026-10-12",
+      "last_commit_age_days": 0,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/ui/e2e",
+      "tracked": 16,
+      "untracked": 0,
+      "kb": 75.4,
+      "top_exts": {
+        ".ts": 15,
+        ".md": 1
+      },
+      "last_commit": "2026-10-12",
+      "last_commit_age_days": 0,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/ui/scripts",
+      "tracked": 2,
+      "untracked": 0,
+      "kb": 15.4,
+      "top_exts": {
+        ".mjs": 2
+      },
+      "last_commit": "2026-09-10",
+      "last_commit_age_days": 32,
+      "stale": false
+    },
+    {
+      "dir": "agentic-workflows-v2/ui/src",
+      "tracked": 207,
+      "untracked": 0,
+      "kb": 1479.4,
+      "top_exts": {
+        ".tsx": 141,
+        ".ts": 62,
+        ".css": 3,
+        ".snap": 1
+      },
+      "last_commit": "2026-10-11",
+      "last_commit_age_days": 1,
+      "stale": false
+    },
+    {
+      "dir": "datasets/default",
+      "tracked": 6,
+      "untracked": 0,
+      "kb": 33.4,
+      "top_exts": {
+        ".json": 5,
+        ".md": 1
+      },
+      "last_commit": "2026-07-29",
+      "last_commit_age_days": 75,
+      "stale": false
+    },
+    {
+      "dir": "docs",
+      "tracked": 39,
+      "untracked": 0,
+      "kb": 418.9,
+      "top_exts": {
+        ".md": 39
+      },
+      "last_commit": "2026-10-12",
+      "last_commit_age_days": 0,
+      "stale": false
+    },
+    {
+      "dir": "docs/adr",
+      "tracked": 56,
+      "untracked": 0,
+      "kb": 544.0,
+      "top_exts": {
+        ".md": 56
+      },
+      "last_commit": "2026-10-12",
+      "last_commit_age_days": 0,
+      "stale": false
+    },
+    {
+      "dir": "docs/adr/drafts",
+      "tracked": 6,
+      "untracked": 0,
+      "kb": 76.3,
+      "top_exts": {
+        ".md": 6
+      },
+      "last_commit": "2026-07-27",
+      "last_commit_age_days": 77,
+      "stale": false
+    },
+    {
+      "dir": "docs/assets",
+      "tracked": 2,
+      "untracked": 0,
+      "kb": 314.7,
+      "top_exts": {
+        ".jpg": 1,
+        ".png": 1
+      },
+      "last_commit": "2026-07-05",
+      "last_commit_age_days": 99,
+      "stale": true
+    },
+    {
+      "dir": "docs/assets/icons",
+      "tracked": 8,
+      "untracked": 0,
+      "kb": 4.1,
+      "top_exts": {
+        ".svg": 8
+      },
+      "last_commit": "2026-07-05",
+      "last_commit_age_days": 99,
+      "stale": true
+    },
+    {
+      "dir": "docs/evaluation",
+      "tracked": 5,
+      "untracked": 0,
+      "kb": 24.6,
+      "top_exts": {
+        ".md": 5
+      },
+      "last_commit": "2026-07-29",
+      "last_commit_age_days": 75,
+      "stale": false
+    },
+    {
+      "dir": "docs/getting-started",
+      "tracked": 4,
+      "untracked": 0,
+      "kb": 18.7,
+      "top_exts": {
+        ".md": 4
+      },
+      "last_commit": "2026-10-10",
+      "last_commit_age_days": 1,
+      "stale": false
+    },
+    {
+      "dir": "docs/operations",
+      "tracked": 3,
+      "untracked": 0,
+      "kb": 20.2,
+      "top_exts": {
+        ".md": 3
+      },
+      "last_commit": "2026-08-31",
+      "last_commit_age_days": 42,
+      "stale": false
+    },
+    {
+      "dir": "docs/screenshots",
+      "tracked": 2,
+      "untracked": 0,
+      "kb": 197.2,
+      "top_exts": {
+        ".html": 1,
+        ".png": 1
+      },
+      "last_commit": "2026-06-08",
+      "last_commit_age_days": 126,
+      "stale": true
+    },
+    {
+      "dir": "docs/stylesheets",
+      "tracked": 3,
+      "untracked": 0,
+      "kb": 32.8,
+      "top_exts": {
+        ".css": 3
+      },
+      "last_commit": "2026-07-05",
+      "last_commit_age_days": 99,
+      "stale": true
+    },
+    {
+      "dir": "docs/superpowers/specs",
+      "tracked": 1,
+      "untracked": 0,
+      "kb": 41.3,
+      "top_exts": {
+        ".md": 1
+      },
+      "last_commit": "2026-07-27",
+      "last_commit_age_days": 77,
+      "stale": false
+    },
+    {
+      "dir": "docs/tools",
+      "tracked": 7,
+      "untracked": 0,
+      "kb": 29.9,
+      "top_exts": {
+        ".md": 7
+      },
+      "last_commit": "2026-07-29",
+      "last_commit_age_days": 75,
+      "stale": false
+    },
+    {
+      "dir": "docs/ui",
+      "tracked": 6,
+      "untracked": 0,
+      "kb": 101.2,
+      "top_exts": {
+        ".md": 6
+      },
+      "last_commit": "2026-10-09",
+      "last_commit_age_days": 3,
+      "stale": false
+    },
+    {
+      "dir": "docs/workflows",
+      "tracked": 1,
+      "untracked": 0,
+      "kb": 12.0,
+      "top_exts": {
+        ".md": 1
+      },
+      "last_commit": "2026-10-12",
+      "last_commit_age_days": 0,
+      "stale": false
+    },
+    {
+      "dir": "examples",
+      "tracked": 9,
+      "untracked": 0,
+      "kb": 60.4,
+      "top_exts": {
+        ".py": 8,
+        ".md": 1
+      },
+      "last_commit": "2026-08-29",
+      "last_commit_age_days": 44,
+      "stale": false
+    },
+    {
+      "dir": "infra/azure",
+      "tracked": 3,
+      "untracked": 0,
+      "kb": 12.8,
+      "top_exts": {
+        ".md": 1,
+        ".bicep": 1,
+        ".example": 1
+      },
+      "last_commit": "2026-07-29",
+      "last_commit_age_days": 75,
+      "stale": false
+    },
+    {
+      "dir": "load",
+      "tracked": 8,
+      "untracked": 0,
+      "kb": 27.2,
+      "top_exts": {
+        ".py": 2,
+        ".load": 1,
+        ".md": 1,
+        ".json": 1
+      },
+      "last_commit": "2026-07-29",
+      "last_commit_age_days": 75,
+      "stale": false
+    },
+    {
+      "dir": "load/k6",
+      "tracked": 2,
+      "untracked": 0,
+      "kb": 6.7,
+      "top_exts": {
+        ".js": 2
+      },
+      "last_commit": "2026-06-14",
+      "last_commit_age_days": 120,
+      "stale": true
+    },
+    {
+      "dir": "load/results",
+      "tracked": 5,
+      "untracked": 0,
+      "kb": 15.0,
+      "top_exts": {
+        ".json": 4,
+        ".txt": 1
+      },
+      "last_commit": "2026-06-14",
+      "last_commit_age_days": 120,
+      "stale": true
+    },
+    {
+      "dir": "otel",
+      "tracked": 1,
+      "untracked": 0,
+      "kb": 0.4,
+      "top_exts": {
+        ".yaml": 1
+      },
+      "last_commit": "2026-05-27",
+      "last_commit_age_days": 138,
+      "stale": true
+    },
+    {
+      "dir": "proofs",
+      "tracked": 6,
+      "untracked": 0,
+      "kb": 139.8,
+      "top_exts": {
+        ".lean": 2,
+        ".md": 1,
+        ".json": 1,
+        ".toml": 1
+      },
+      "last_commit": "2026-09-30",
+      "last_commit_age_days": 12,
+      "stale": false
+    },
+    {
+      "dir": "proofs/Scheduler",
+      "tracked": 1,
+      "untracked": 0,
+      "kb": 27.9,
+      "top_exts": {
+        ".lean": 1
+      },
+      "last_commit": "2026-09-26",
+      "last_commit_age_days": 16,
+      "stale": false
+    },
+    {
+      "dir": "scripts",
+      "tracked": 12,
+      "untracked": 0,
+      "kb": 124.3,
+      "top_exts": {
+        ".py": 11,
+        ".ps1": 1
+      },
+      "last_commit": "2026-09-25",
+      "last_commit_age_days": 17,
+      "stale": false
+    },
+    {
+      "dir": "tests/e2e",
+      "tracked": 2,
+      "untracked": 0,
+      "kb": 23.2,
+      "top_exts": {
+        ".py": 2
+      },
+      "last_commit": "2026-07-18",
+      "last_commit_age_days": 86,
+      "stale": false
+    },
+    {
+      "dir": "tools",
+      "tracked": 2,
+      "untracked": 0,
+      "kb": 2.6,
+      "top_exts": {
+        ".md": 1,
+        ".py": 1
+      },
+      "last_commit": "2026-07-29",
+      "last_commit_age_days": 75,
+      "stale": false
+    },
+    {
+      "dir": "tools/agents",
+      "tracked": 1,
+      "untracked": 0,
+      "kb": 0.2,
+      "top_exts": {
+        ".py": 1
+      },
+      "last_commit": "2026-05-27",
+      "last_commit_age_days": 138,
+      "stale": true
+    },
+    {
+      "dir": "tools/agents/benchmarks",
+      "tracked": 14,
+      "untracked": 0,
+      "kb": 133.1,
+      "top_exts": {
+        ".py": 12,
+        "(none)": 1,
+        ".md": 1
+      },
+      "last_commit": "2026-07-29",
+      "last_commit_age_days": 75,
+      "stale": false
+    },
+    {
+      "dir": "tools/agents/repo_analyzer",
+      "tracked": 3,
+      "untracked": 0,
+      "kb": 25.1,
+      "top_exts": {
+        ".py": 3
+      },
+      "last_commit": "2026-07-12",
+      "last_commit_age_days": 92,
+      "stale": true
+    },
+    {
+      "dir": "tools/core",
+      "tracked": 10,
+      "untracked": 0,
+      "kb": 69.5,
+      "top_exts": {
+        ".py": 10
+      },
+      "last_commit": "2026-07-12",
+      "last_commit_age_days": 92,
+      "stale": true
+    },
+    {
+      "dir": "tools/llm",
+      "tracked": 28,
+      "untracked": 0,
+      "kb": 332.0,
+      "top_exts": {
+        ".py": 27,
+        ".ps1": 1
+      },
+      "last_commit": "2026-10-12",
+      "last_commit_age_days": 0,
+      "stale": false
+    },
+    {
+      "dir": "tools/llm/windows_ai_bridge",
+      "tracked": 6,
+      "untracked": 0,
+      "kb": 26.8,
+      "top_exts": {
+        ".ps1": 2,
+        ".md": 1,
+        ".csproj": 1,
+        ".cs": 1
+      },
+      "last_commit": "2026-07-29",
+      "last_commit_age_days": 75,
+      "stale": false
+    },
+    {
+      "dir": "tools/tests",
+      "tracked": 18,
+      "untracked": 0,
+      "kb": 201.5,
+      "top_exts": {
+        ".py": 18
+      },
+      "last_commit": "2026-08-09",
+      "last_commit_age_days": 64,
+      "stale": false
+    }
+  ],
+  "untracked_files": [],
+  "large_tracked_files": [
+    {
+      "path": "agentic-workflows-v2/evals/swe_ab/reports/arm-b-review-loop-minimax1.json",
+      "bytes": 2361726
+    },
+    {
+      "path": "agentic-workflows-v2/evals/swe_ab/reports/arm-a-direct-run3backfill.json",
+      "bytes": 2278932
+    },
+    {
+      "path": "agentic-workflows-v2/evals/swe_ab/reports/arm-a-direct-minimax1.json",
+      "bytes": 2157192
+    },
+    {
+      "path": "agentic-workflows-v2/evals/swe_ab/reports/arm-b-review-loop-armb-completion.json",
+      "bytes": 2023768
+    },
+    {
+      "path": "agentic-workflows-v2/evals/swe_ab/reports/arm-b-review-loop-glm53.json",
+      "bytes": 2020716
+    },
+    {
+      "path": "agentic-workflows-v2/evals/swe_ab/reports/arm-a-direct-glm53.json",
+      "bytes": 1550480
+    },
+    {
+      "path": "agentic-workflows-v2/evals/swe_ab/reports/arm-a-direct-nimbackfill.json",
+      "bytes": 1421971
+    },
+    {
+      "path": "agentic-workflows-v2/evals/swe_ab/ledger/export/trial.jsonl",
+      "bytes": 1163639
+    },
+    {
+      "path": "agentic-workflows-v2/evals/swe_ab/reports/arm-a-direct.json",
+      "bytes": 1162375
+    },
+    {
+      "path": "uv.lock",
+      "bytes": 1148957
+    },
+    {
+      "path": "agentic-workflows-v2/evals/swe_ab/reports/arm-b-review-loop.json",
+      "bytes": 1062668
+    }
+  ],
+  "orphan_pycache_dirs": [],
+  "ignored_entries": []
+}

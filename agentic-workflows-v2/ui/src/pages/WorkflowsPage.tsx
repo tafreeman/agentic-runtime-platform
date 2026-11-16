@@ -1,23 +1,18 @@
 import { useMemo, useRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ChevronRight, Pencil } from "lucide-react";
+import { ChevronRight, Pencil, CircleAlert, Search } from "lucide-react";
 import { useWorkflows } from "../hooks/useWorkflows";
 import { useRuns } from "../hooks/useRuns";
 import BTopBar from "../components/layout/BTopBar";
-import BPill from "../components/common/BPill";
+import StatusBadge from "../components/common/StatusBadge";
+import NoData from "../components/states/NoData";
 import { isWorkflowBuilderEnabled } from "../config/featureFlags";
+import { describeApiError, formatApiError } from "../lib/apiErrors";
 import type { RunSummary } from "../api/types";
 
 function latestRunFor(runs: RunSummary[] | undefined, name: string) {
   if (!runs) return null;
   return runs.find((r) => r.workflow_name === name) ?? null;
-}
-
-function statusTone(status: string | null | undefined) {
-  if (status === "success") return "ok" as const;
-  if (status === "failed" || status === "error") return "err" as const;
-  if (status === "running" || status === "in_progress") return "clay" as const;
-  return "dim" as const;
 }
 
 export default function WorkflowsPage() {
@@ -26,8 +21,10 @@ export default function WorkflowsPage() {
   const workflowBuilderEnabled = isWorkflowBuilderEnabled();
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
-  const errorMessage =
-    error instanceof Error ? error.message : "failed to load workflows";
+  const loadFailure = isError ? describeApiError(error) : null;
+  // A failed refetch keeps the last good catalog; only an empty-handed
+  // failure replaces the list.
+  const showLoadError = loadFailure != null && !workflows;
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -48,7 +45,8 @@ export default function WorkflowsPage() {
     );
   }, [workflows, query]);
 
-  const definitionCount = workflows?.length ?? 0;
+  // Unknown (not zero) until the catalog has loaded.
+  const definitionCount = workflows?.length;
 
   return (
     <div className="flex h-full flex-col">
@@ -56,67 +54,39 @@ export default function WorkflowsPage() {
 
       <div className="h-full overflow-y-auto">
         <div className="mx-auto max-w-3xl space-y-5 p-6">
-          {/* Header — editorial serif title + stat numeric */}
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <h1
-                className="text-b-text"
-                style={{
-                  fontFamily: "var(--b-font-heading)",
-                  fontSize: "30px",
-                  fontWeight: 600,
-                  letterSpacing: "-0.8px",
-                  lineHeight: 1,
-                }}
-              >
-                Workflows
-              </h1>
-              <div className="mt-2 font-mono text-[11px] text-b-text-dim">
-                $ {definitionCount} definitions · filter with{" "}
-                <span className="text-b-clay">/</span>
-              </div>
-            </div>
-            <div className="text-right">
-              <div
-                className="text-b-text tabular-nums"
-                style={{
-                  fontFamily: "var(--b-font-heading)",
-                  fontSize: "34px",
-                  fontWeight: 600,
-                  letterSpacing: "-1.2px",
-                  lineHeight: 1,
-                }}
-              >
-                {definitionCount}
-              </div>
-              <div className="mt-1 font-mono text-[9px] uppercase tracking-[1.5px] text-b-text-faint">
-                Definitions
-              </div>
-            </div>
+          {/* Header — editorial serif title + one plain scope line (the count
+              lives here once; no second hero numeral). */}
+          <div>
+            <h1 className="font-display text-[30px] font-semibold leading-none tracking-[-0.8px] text-el-ink">
+              Workflows
+            </h1>
+            <p className="mt-2 text-xs text-el-muted">
+              <span className="tabular-nums">{definitionCount ?? <NoData />}</span>{" "}
+              definitions · open one to preview its graph and run it · filter
+              with{" "}
+              <kbd className="rounded-sm border border-el-divider px-1 font-mono text-micro text-el-ink">
+                /
+              </kbd>
+            </p>
           </div>
 
-          {/* Search — card with theme tokens */}
-          <div
-            className="flex items-center gap-2 border border-b-line bg-b-bg1 px-3 py-2 focus-within:ring-1 focus-within:ring-b-clay/50"
-            style={{
-              borderRadius: "var(--b-rad-sm)",
-              borderWidth: "var(--b-bw)",
-            }}
-          >
-            <span className="font-mono text-[13px] font-bold text-b-clay">
-              /
-            </span>
+          {/* Search — the wrapper draws a full-strength focus-within ring (the
+              compliant replacement), so the bare input inside suppresses its
+              own outline instead of drawing a second ring. */}
+          <div className="flex items-center gap-2 rounded-md border border-el-control-border bg-el-surface h-10 px-3 focus-within:ring-2 focus-within:ring-el-focus focus-within:ring-offset-2 focus-within:ring-offset-el-canvas">
+            <Search aria-hidden="true" className="size-3.5 flex-none text-el-muted" />
             <input
               ref={inputRef}
               type="text"
-              aria-label="Filter workflows by name or tag"
-              placeholder="filter by name, tag…"
+              aria-label="Filter workflows by name"
+              aria-keyshortcuts="/"
+              placeholder="Filter by name…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="flex-1 bg-transparent font-mono text-[11px] text-b-text placeholder:text-b-text-faint focus:outline-hidden focus:ring-0"
+              className="min-h-0 flex-1 self-stretch bg-transparent text-xs text-el-ink outline-none placeholder:text-el-muted"
             />
             {query && (
-              <span className="font-mono text-[10px] text-b-text-dim">
+              <span className="text-micro tabular-nums text-el-muted" aria-live="polite">
                 {filtered.length} match
               </span>
             )}
@@ -128,113 +98,112 @@ export default function WorkflowsPage() {
               {(["sk-0", "sk-1", "sk-2"] as const).map((skId) => (
                 <div
                   key={skId}
-                  className="h-[58px] animate-pulse border border-b-line bg-b-bg1"
-                  style={{
-                    borderRadius: "var(--b-rad-lg)",
-                    borderWidth: "var(--b-bw)",
-                  }}
+                  className="h-[58px] animate-pulse rounded-lg border border-el-divider bg-el-surface motion-reduce:animate-none"
                 />
               ))}
             </div>
           )}
 
-          {isError && !isLoading && (
-            <div
-              className="border border-b-red/40 bg-b-red/10 px-3 py-3 font-mono text-[11px] text-b-red"
-              style={{
-                borderRadius: "var(--b-rad-sm)",
-                borderWidth: "var(--b-bw)",
-              }}
-            >
-              [!] {errorMessage}
-            </div>
+          {showLoadError &&
+            !isLoading &&
+            (loadFailure.unreachable ? (
+              // The shell's offline banner already announces an unreachable
+              // API; keep this to a quiet note instead of a second alert.
+              <p className="py-6 text-center text-xs text-el-muted">
+                Workflows can't load while the API is unreachable.
+              </p>
+            ) : (
+              <div
+                role="alert"
+                className="rounded-md border border-el-danger/40 bg-el-danger-soft px-3 py-3 text-xs text-el-danger"
+              >
+                <span className="flex items-start gap-1.5">
+                  <CircleAlert
+                    aria-hidden="true"
+                    className="mt-0.5 size-3.5 flex-none"
+                  />
+                  <span>{loadFailure.summary}</span>
+                </span>
+                <span className="block pl-5 text-el-ink">{loadFailure.remedy}</span>
+              </div>
+            ))}
+
+          {loadFailure && !showLoadError && (
+            <p role="status" className="text-xs text-el-muted">
+              Showing the last loaded workflows — refresh failed:{" "}
+              {loadFailure.unreachable
+                ? "the API is unreachable."
+                : formatApiError(error)}
+            </p>
           )}
 
-          {!isError &&
+          {!showLoadError &&
             !isLoading &&
             definitionCount === 0 &&
             !query && (
-              <div
-                className="border border-dashed border-b-line py-12 text-center font-mono text-[11px] text-b-text-dim"
-                style={{ borderRadius: "var(--b-rad-lg)" }}
-              >
-                $ no workflow definitions found
+              <div className="rounded-lg border border-dashed border-el-divider py-12 text-center text-xs text-el-muted">
+                No workflow definitions found — add a workflow YAML
+                definition, then reload this page
               </div>
             )}
 
-          {/* List — hairline cards, clay accent bar on hover */}
-          {!isError && definitionCount > 0 && (
-            <div className="space-y-[3px]">
-              <div className="flex items-center gap-3 px-3 pb-1 font-mono text-[9px] uppercase tracking-[1px] text-b-text-faint">
-                <span className="w-[14px]" aria-hidden="true" />
+          {/* List — hairline-ruled rows, a quiet hover tint */}
+          {!showLoadError && definitionCount != null && definitionCount > 0 && (
+            <div>
+              <div className="flex items-center gap-3 px-3 pb-2 text-micro font-semibold uppercase tracking-[0.8px] text-el-muted">
                 <span className="flex-1">Workflow</span>
                 <span>Last run</span>
-                {workflowBuilderEnabled && <span className="w-[62px]">Edit</span>}
+                {workflowBuilderEnabled && <span aria-hidden="true" className="w-[62px]" />}
               </div>
+              {/* Hairline-ruled ledger rows (no card per row). */}
+              <ul className="divide-y divide-el-divider-soft border-y border-el-divider">
               {filtered.map((name) => {
                 const latest = latestRunFor(runs, name);
                 return (
-                  <div
+                  <li
                     key={name}
-                    className="group relative flex items-stretch overflow-hidden border border-b-line bg-b-bg1 transition-colors hover:bg-b-bg2 focus-within:ring-1 focus-within:ring-b-clay/50"
-                    style={{
-                      borderRadius: "var(--b-rad-lg)",
-                      borderWidth: "var(--b-bw)",
-                    }}
+                    className="group relative flex min-h-14 items-stretch transition-colors hover:bg-el-hover"
                   >
-                    {/* clay accent bar — primary/active card pattern */}
-                    <span
-                      aria-hidden="true"
-                      className="pointer-events-none absolute inset-x-0 top-0 h-[2px] origin-left scale-x-0 bg-b-clay transition-transform group-hover:scale-x-100 group-focus-within:scale-x-100"
-                    />
                     <Link
                       to={`/workflows/${name}`}
                       data-testid={`workflow-link-${name}`}
-                      className="flex min-w-0 flex-1 items-center gap-3 px-3 py-[14px] focus:outline-hidden"
+                      className="focus-ring-inset flex min-w-0 flex-1 items-center gap-3 px-3 py-[14px]"
                     >
-                      <span className="font-mono text-[14px] text-b-blue">
-                        ▣
+                      <span className="min-w-0 flex-1 truncate font-mono text-[14px] font-semibold text-el-ink">
+                        {name}
                       </span>
-                      <div className="min-w-0 flex-1">
-                        <div
-                          className="truncate font-mono text-[14px] font-semibold text-b-text"
-                          style={{ fontFamily: "var(--b-font-mono)" }}
-                        >
-                          {name}
-                        </div>
-                        <div className="mt-0.5 truncate font-mono text-[10px] text-b-text-dim">
-                          #{name.replaceAll("_", "-")}
-                        </div>
-                      </div>
                       {latest && (
-                        <BPill tone={statusTone(latest.status)}>
-                          {latest.status ?? "—"}
-                        </BPill>
+                        <span className="flex-none">
+                          <span className="sr-only">Last run: </span>
+                          <StatusBadge status={latest.status} />
+                        </span>
                       )}
-                      <ChevronRight className="h-4 w-4 text-b-text-faint group-hover:text-b-clay" />
+                      <ChevronRight
+                        aria-hidden="true"
+                        className="h-4 w-4 text-el-muted group-hover:text-el-ink"
+                      />
                     </Link>
                     {workflowBuilderEnabled && (
                       <Link
                         to={`/workflows/${name}/edit`}
                         aria-label={`Edit ${name} workflow`}
                         data-testid={`workflow-edit-${name}`}
-                        className="relative z-10 flex w-[74px] shrink-0 flex-col items-center justify-center gap-1 border-l border-b-line font-mono text-[9px] uppercase tracking-[0.8px] text-b-text-dim transition-colors hover:bg-b-clay/10 hover:text-b-clay focus:outline-hidden focus:ring-1 focus:ring-inset focus:ring-b-clay/60"
+                        className="focus-ring-inset relative z-10 flex w-[74px] shrink-0 items-center justify-center gap-1.5 border-l border-el-divider-soft text-xs text-el-secondary transition-colors hover:bg-el-subtle hover:text-el-ink"
                       >
                         <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-                        edit
+                        Edit
                       </Link>
                     )}
-                  </div>
+                  </li>
                 );
               })}
+              </ul>
 
               {filtered.length === 0 && !isLoading && (
-                <div
-                  className="border border-dashed border-b-line py-12 text-center font-mono text-[11px] text-b-text-dim"
-                  style={{ borderRadius: "var(--b-rad-lg)" }}
-                >
+                <div className="mt-3 rounded-lg border border-dashed border-el-divider py-12 text-center text-xs text-el-muted">
                   no workflows match "
-                  <span className="text-b-text">{query}</span>"
+                  <span className="text-el-ink">{query}</span>" — clear the
+                  filter to see all {definitionCount}
                 </div>
               )}
             </div>

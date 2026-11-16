@@ -76,6 +76,13 @@ PREFIX_MAP: dict[str, str] = {
     "onnx:": "onnx",  # onnx: models run on the local onnxruntime-genai backend
 }
 
+# Providers served only by the LangChain engine: they have a ``build_*`` there
+# but no native backend. Their ids must fail loudly here, never reach the bare-name
+# OpenAI default in ``MultiBackend._get_backend`` -- on a machine whose
+# ``OPENAI_BASE_URL`` points at another vendor's API (e.g. NVIDIA's) that would
+# silently send them to the wrong provider.
+LANGCHAIN_ONLY_PREFIXES: tuple[str, ...] = ("digitalocean:", "mistral:")
+
 
 @dataclass
 class MultiBackend(LLMBackend):
@@ -97,6 +104,12 @@ class MultiBackend(LLMBackend):
                         f"(model: {model})"
                     )
                 return backend
+
+        if model.startswith(LANGCHAIN_ONLY_PREFIXES):
+            raise RuntimeError(
+                f"Model '{model}' is served only by the LangChain engine; the "
+                "native engine has no backend for its provider."
+            )
 
         # No prefix -- try OpenAI as default (bare model names like "gpt-4o")
         if "openai" in self.backends:

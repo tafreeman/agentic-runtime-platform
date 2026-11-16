@@ -9,13 +9,11 @@ local bytes match the configured digest.
 ## Current enforcement boundary
 
 `agentic_v2.models.weight_integrity.verify_model_weights()` implements the
-check. `tools/llm/provider_adapters.py` calls it before its local-model load
-path.
-
-The native `OnnxBackend` and the LangChain local ONNX builder do not currently
-call the verifier. Setting strict mode therefore does not make every runtime
-model-loading path fail closed. See
-[known limitations](KNOWN_LIMITATIONS.md) before relying on this control.
+check. It runs before both local-model load paths: `tools/llm/provider_adapters.py`
+and the native `OnnxBackend` (once per cached model path; the LangChain `onnx:`
+builder uses that backend). The legacy LangChain `local:` builder delegates to
+the shared-tools provider, which also verifies. Strict mode therefore makes
+these loaders fail closed; in non-strict mode problems only log warnings.
 
 ## Trust file
 

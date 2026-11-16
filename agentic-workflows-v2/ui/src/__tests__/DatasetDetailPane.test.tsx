@@ -98,4 +98,33 @@ describe("DatasetDetailPane", () => {
     fireEvent.click(toggle);
     expect(toggle).toHaveAttribute("aria-expanded", "true");
   });
+
+  it("explains a failed sample load with the server detail and a remedy", () => {
+    mockUseDatasetSampleDetail.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: new Error('API 404: {"detail": "sample 2 out of range"}'),
+    });
+
+    renderPane();
+
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent(/failed to load sample: Not found: sample 2 out of range/);
+    expect(alert).toHaveTextContent(/check the name or link/i);
+  });
+
+  it("keeps an unreachable API to a quiet note", () => {
+    mockUseDatasetSampleDetail.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: new TypeError("Failed to fetch"),
+    });
+
+    renderPane();
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/sample unavailable while the API is unreachable/)
+    ).toBeInTheDocument();
+  });
 });

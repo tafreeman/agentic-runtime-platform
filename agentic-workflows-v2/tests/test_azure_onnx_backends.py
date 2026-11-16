@@ -252,3 +252,172 @@ class TestOnnxBackend:
         monkeypatch.setattr(builtins, "__import__", fake_import)
         with pytest.raises(RuntimeError, match="onnxruntime-genai is not installed"):
             _load_onnxruntime_genai()
+
+
+class TestOnnxBackendWeightVerification:
+    """OnnxBackend must honor AGENTIC_STRICT_MODEL_VERIFY before loading."""
+
+    def _backend(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Any) -> OnnxBackend:
+        loaded: list[str] = []
+
+        class _TrackingOg(_FakeOg):
+            Model = staticmethod(lambda path: loaded.append(path) or {"path": path})
+
+        monkeypatch.setattr(
+            "agentic_v2.models.backends_local._load_onnxruntime_genai",
+            lambda: _TrackingOg,
+        )
+        folder = tmp_path / "phi4"
+        folder.mkdir()
+        (folder / "model.onnx").write_bytes(b"weights")
+        (folder / "genai_config.json").write_text("{}", encoding="utf-8")
+        backend = OnnxBackend(model_dir=str(tmp_path))
+        backend.loaded = loaded  # type: ignore[attr-defined]
+        return backend
+
+    async def test_strict_mode_blocks_unverified_model(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+    ) -> None:
+        from agentic_v2.models.weight_integrity import ModelWeightVerificationError
+
+        backend = self._backend(monkeypatch, tmp_path)
+        monkeypatch.setenv("AGENTIC_STRICT_MODEL_VERIFY", "1")
+        with pytest.raises(ModelWeightVerificationError):
+            await backend.complete("onnx:phi4", "hi")
+        assert backend.loaded == []  # type: ignore[attr-defined]
+
+    async def test_verification_runs_once_per_cached_path(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+    ) -> None:
+        backend = self._backend(monkeypatch, tmp_path)
+        monkeypatch.delenv("AGENTIC_STRICT_MODEL_VERIFY", raising=False)
+        calls: list[str] = []
+        monkeypatch.setattr(
+            "agentic_v2.models.backends_local._verify_weights", calls.append
+        )
+        await backend.complete("onnx:phi4", "hi")
+        await backend.complete("onnx:phi4", "again")
+        assert len(calls) == 1
+        assert len(backend.loaded) == 1  # type: ignore[attr-defined]
+
+
+class TestOnnxBackendHardening:
+    @pytest.mark.parametrize(
+        "name", ["onnx:/", "onnx:../outside", "onnx:a/../../b", ""]
+    )
+    def test_resolve_path_rejects_escapes(self, tmp_path: Any, name: str) -> None:
+        backend = OnnxBackend(model_dir=str(tmp_path))
+        with pytest.raises(ValueError):
+            backend._resolve_path(name)
+
+    def test_non_strict_verifier_errors_fail_open(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+    ) -> None:
+        from agentic_v2.models import backends_local
+
+        monkeypatch.delenv("AGENTIC_STRICT_MODEL_VERIFY", raising=False)
+
+        def _boom(path: Any) -> None:
+            raise PermissionError("unreadable")
+
+        monkeypatch.setattr(
+            "agentic_v2.models.weight_integrity.verify_model_weights", _boom
+        )
+        backends_local._verify_weights(str(tmp_path))  # must not raise
+        monkeypatch.setenv("AGENTIC_STRICT_MODEL_VERIFY", "1")
+        with pytest.raises(PermissionError):
+            backends_local._verify_weights(str(tmp_path))
+
+
+class TestOnnxBackendModelFolderAndCache:
+    def test_non_model_directory_rejected_before_hashing(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+    ) -> None:
+        monkeypatch.setattr(
+            "agentic_v2.models.backends_local._load_onnxruntime_genai",
+            lambda: _FakeOg,
+        )
+        calls: list[str] = []
+        monkeypatch.setattr(
+            "agentic_v2.models.backends_local._verify_weights", calls.append
+        )
+        backend = OnnxBackend(model_dir=str(tmp_path))
+        with pytest.raises(ValueError, match="genai_config.json"):
+            backend._get_model("onnx:.")
+        assert calls == []
+
+    def test_cache_evicts_least_recently_used(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+    ) -> None:
+        monkeypatch.setattr(
+            "agentic_v2.models.backends_local._load_onnxruntime_genai",
+            lambda: _FakeOg,
+        )
+        monkeypatch.setattr(
+            "agentic_v2.models.backends_local._verify_weights", lambda p: None
+        )
+        for name in ("a", "b"):
+            (tmp_path / name).mkdir()
+            (tmp_path / name / "genai_config.json").write_text("{}", encoding="utf-8")
+        backend = OnnxBackend(model_dir=str(tmp_path), max_cached_models=1)
+        backend._get_model("onnx:a")
+        backend._get_model("onnx:b")
+        assert len(backend._models) == 1
+        assert next(iter(backend._models)).endswith("b")
+
+
+def test_generation_is_serialized_so_eviction_cannot_unload_active_model(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+) -> None:
+    import threading
+
+    monkeypatch.setattr(
+        "agentic_v2.models.backends_local._load_onnxruntime_genai", lambda: _FakeOg
+    )
+    monkeypatch.setattr(
+        "agentic_v2.models.backends_local._verify_weights", lambda p: None
+    )
+    for name in ("a", "b"):
+        (tmp_path / name).mkdir()
+        (tmp_path / name / "genai_config.json").write_text("{}", encoding="utf-8")
+    backend = OnnxBackend(model_dir=str(tmp_path), max_cached_models=1)
+    active = 0
+    peak = 0
+    guard = threading.Lock()
+    original = backend._generate_locked
+
+    def _tracked(*args: Any) -> str:
+        nonlocal active, peak
+        with guard:
+            active += 1
+            peak = max(peak, active)
+        try:
+            return original(*args)
+        finally:
+            with guard:
+                active -= 1
+
+    monkeypatch.setattr(backend, "_generate_locked", _tracked)
+    threads = [
+        threading.Thread(
+            target=backend._generate_sync, args=(f"onnx:{n}", "hi", 8, 0.0)
+        )
+        for n in ("a", "b", "a", "b")
+    ]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert peak == 1
+
+
+def test_resolve_path_skips_shadow_directory_in_earlier_root(tmp_path: Any) -> None:
+    first, second = tmp_path / "r1", tmp_path / "r2"
+    (first / "phi").mkdir(parents=True)  # ordinary folder, not a model
+    (second / "phi").mkdir(parents=True)
+    (second / "phi" / "genai_config.json").write_text("{}", encoding="utf-8")
+    import os
+
+    backend = OnnxBackend(model_dir=f"{first}{os.pathsep}{second}")
+    resolved = backend._resolve_path("onnx:phi")
+    assert resolved == str(second / "phi")

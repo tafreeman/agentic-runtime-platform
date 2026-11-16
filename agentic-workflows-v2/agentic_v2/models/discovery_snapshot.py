@@ -70,7 +70,7 @@ VerifiedBy = Literal["listing", "completion"]
 class DiscoveredModel:
     """One model, from any serving path, in a single uniform shape."""
 
-    id: str  # provider-prefixed, e.g. "ollama:qwen3:1.7b", "nvidia:meta/llama-3.1-8b-instruct"
+    id: str  # provider-prefixed, e.g. "ollama:qwen3:1.7b", "nvidia:openai/gpt-oss-20b"
     provider: str
     endpoint: str | None
     cost_lane: Literal["local", "free", "paid"]

@@ -580,8 +580,41 @@ describe("RunConfigForm", () => {
       />
     );
 
-    expect(
-      await screen.findByText(/API 422: dataset 'local-smoke' has no samples/)
-    ).toBeInTheDocument();
+    // Human-readable copy: what failed + the server detail + a remedy, not
+    // the raw "API 422: …" string.
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(/couldn't load the sample preview/i);
+    expect(alert).toHaveTextContent("dataset 'local-smoke' has no samples");
+    expect(alert).toHaveTextContent(/fix the input and try again/i);
+    expect(alert).not.toHaveTextContent("API 422");
+  });
+
+  it("explains a dataset-list failure with a retry", async () => {
+    clientMocks.listEvaluationDatasets.mockRejectedValue(
+      new Error("API 500: catalog index corrupt")
+    );
+    const onChange = vi.fn();
+
+    renderForm(<RunConfigForm inputs={[]} workflowName="test" onChange={onChange} />);
+    fireEvent.click(screen.getByTestId("advanced-toggle"));
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(/couldn't load datasets/i);
+    expect(alert).toHaveTextContent("catalog index corrupt");
+    expect(alert).toHaveTextContent(/check the api server log/i);
+
+    clientMocks.listEvaluationDatasets.mockClear();
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await waitFor(() =>
+      expect(clientMocks.listEvaluationDatasets).toHaveBeenCalledTimes(1)
+    );
+  });
+
+  it("exposes the advanced disclosure state", () => {
+    renderForm(<RunConfigForm inputs={[]} workflowName="test" onChange={vi.fn()} />);
+    const toggle = screen.getByTestId("advanced-toggle");
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
   });
 });

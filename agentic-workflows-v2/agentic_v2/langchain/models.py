@@ -1,7 +1,7 @@
 """Model provider registry for the LangChain workflow engine.
 
 Supported providers:
-- GitHub Models          (prefix ``gh:``)            via OpenAI-compatible API
+- GitHub Models          (prefix ``gh:``)            retired upstream 2026-07-30 (ADR-016)
 - Ollama                 (prefix ``ollama:``)        local or remote Ollama
 - OpenAI                 (prefix ``openai:``)        direct OpenAI API
 - Anthropic              (prefix ``anthropic:`` / ``claude:``)
@@ -14,7 +14,8 @@ Supported providers:
 Environment variables
 ---------------------
 GITHUB_TOKEN
-    Personal access token for GitHub Models API.
+    Personal access token for the retired GitHub Models API. Only an explicit
+    ``gh:`` model id reads it; no tier chain does.
 OLLAMA_BASE_URL
     Override Ollama server URL (default: ``http://localhost:11434``).
 OPENAI_API_KEY
@@ -26,7 +27,7 @@ GOOGLE_API_KEY / GEMINI_API_KEY
 NOTEBOOKLM_MODEL / NOTEBOOKLM_GEMINI_MODEL
     Optional default Gemini model used by ``notebooklm:`` alias.
 AGENTIC_MODEL_TIER_{N}
-    Force a specific model ID for tier N (e.g. ``AGENTIC_MODEL_TIER_2=gh:openai/gpt-4o``).
+    Force a specific model ID for tier N (e.g. ``AGENTIC_MODEL_TIER_2=gemini:gemini-2.5-flash``).
 AGENTIC_MAX_COST_LANE
     ``local``, ``free``, or ``paid`` (default). Ceiling enforced by
     :func:`get_model_candidates_for_tier` against each candidate's curated
@@ -66,6 +67,7 @@ from ..models.local_discovery import (
     discover_onnx_models,
 )
 from ..models.ollama_discovery import discover_ollama_models
+from ..models.price_annotation import annotate_price_labels
 from .model_builders import (
     _resolve_notebooklm_model_name,
     build_anthropic_model,
@@ -75,19 +77,21 @@ from .model_builders import (
     build_lmstudio_model,
     build_local_api_model,
     build_local_onnx_model,
+    build_mistral_model,
     build_notebooklm_model,
     build_nvidia_model,
     build_ollama_model,
+    build_onnx_model,
     build_openai_model,
     build_openrouter_model,
     build_placeholder_model,
 )
 from .model_utils import (
-    GH_BACKUP_MODELS,
     PROVIDER_ENV_KEYS,
     dedupe_keep_order,
     is_provider_available,
     is_retryable_model_error,
+    probe_available_providers,
     provider_prefix,
     resolve_model_override,
 )
@@ -164,11 +168,6 @@ _resolve_model_override = resolve_model_override
 # ---------------------------------------------------------------------------
 # Provider availability probe
 # ---------------------------------------------------------------------------
-
-
-def probe_available_providers() -> dict[str, bool]:
-    """Probe which LLM providers have credentials configured."""
-    return {prov: is_provider_available(prov) for prov in PROVIDER_ENV_KEYS}
 
 
 def probe_and_update_tier_defaults(
@@ -355,7 +354,7 @@ def detect_registry_drift(
     )
 
 
-def _merge_ollama_models(models: list[dict[str, Any]]) -> None:
+def _merge_ollama_models(models: list[dict[str, Any]]) -> frozenset[str]:
     """Enrich/append live Ollama discovery into ``models`` in place.
 
     Models already in the catalog get marked available and enriched with
@@ -363,8 +362,14 @@ def _merge_ollama_models(models: list[dict[str, Any]]) -> None:
     ``/api/ps`` payloads; models absent from every tier chain are
     appended at tier 0 so the console reflects everything currently
     runnable.
+
+    Returns the tag names the local daemon listed during this one discovery pass
+    (empty when it listed none or was unreachable), so price annotation can
+    answer "is this undiscovered id served locally?" without a second
+    ``/api/tags`` probe -- and without a second timeout against a dead daemon.
     """
     discovered = discover_ollama_models()
+    local_names = frozenset(info.name for info in discovered if info.served_locally)
     by_id = {info.id: info for info in discovered}
     catalog_ids = {m["id"] for m in models}
     for model in models:
@@ -388,6 +393,7 @@ def _merge_ollama_models(models: list[dict[str, Any]]) -> None:
                 "running": info.running,
             }
         )
+    return local_names
 
 
 def _enrich_local_model(model: dict[str, Any], info: LocalModelInfo) -> None:
@@ -434,8 +440,12 @@ def _merge_local_models(models: list[dict[str, Any]]) -> None:
 def _merge_cloud_models(
     models: list[dict[str, Any]],
     cloud_listing: Sequence[CloudModelInfo] | None = None,
-) -> None:
+) -> Sequence[CloudModelInfo]:
     """Append live cloud-provider listings as tier-0 catalog entries.
+
+    A listing that advertises capabilities (Mistral's) has them copied onto its
+    row as ``capabilities``, like the Ollama and LM Studio rows; rows for
+    providers that publish none carry no ``capabilities`` key.
 
     Skipped entirely in no-LLM mode: every tier routes to the placeholder
     there, so a live listing would mislead and cost network (it also keeps the
@@ -443,26 +453,29 @@ def _merge_cloud_models(
     env — OpenRouter's public catalog entries honestly show False without the
     key still required for inference.
     ``cloud_listing`` is the probe route's pre-fetched sweep (shared with the
-    drift pass); ``None`` means fetch here.
+    drift pass); ``None`` means fetch here. Returns the listing merged (empty in
+    no-LLM mode) so the caller can read its published prices without a re-fetch.
     """
     from ..settings import is_agentic_no_llm_enabled
 
     if is_agentic_no_llm_enabled():
-        return
+        return ()
     listing = discover_cloud_models() if cloud_listing is None else cloud_listing
     known_ids = {m["id"] for m in models}
     for info in listing:
         if info.id in known_ids:
             continue
         known_ids.add(info.id)
-        models.append(
-            {
-                "id": info.id,
-                "provider": provider_prefix(info.id),
-                "tier": 0,
-                "available": is_provider_available(provider_prefix(info.id)),
-            }
-        )
+        entry: dict[str, Any] = {
+            "id": info.id,
+            "provider": provider_prefix(info.id),
+            "tier": 0,
+            "available": is_provider_available(provider_prefix(info.id)),
+        }
+        if info.capabilities:
+            entry["capabilities"] = list(info.capabilities)
+        models.append(entry)
+    return listing
 
 
 def enumerate_known_models(
@@ -478,6 +491,10 @@ def enumerate_known_models(
     LM Studio servers, the ONNX cache, and (when keyed) the Ollama cloud expose
     right now, so the console shows everything currently runnable — not just the
     static fallback chains.
+
+    Every entry also carries ``price_label`` (``local`` / ``free`` / ``paid`` /
+    ``unknown``) and ``price_reason``; a missing price is ``unknown``, never
+    free (see :mod:`agentic_v2.models.price_label`).
     """
     lowest_tier: dict[str, int] = {}
     for tier, chain in _TIER_FALLBACK_CHAINS.items():
@@ -496,10 +513,11 @@ def enumerate_known_models(
         for model_id, tier in lowest_tier.items()
     ]
 
-    _merge_ollama_models(models)
+    local_ollama_names = _merge_ollama_models(models)
     _merge_local_models(models)
-    _merge_cloud_models(models, cloud_listing)
+    listing = _merge_cloud_models(models, cloud_listing)
 
+    models = annotate_price_labels(models, listing, local_ollama_names)
     models.sort(key=lambda m: (m["tier"], str(m["provider"]), str(m["id"])))
     return models
 
@@ -594,6 +612,7 @@ _PREFIX_BUILDERS: tuple[tuple[str, Any], ...] = (
     ("nvidia:", build_nvidia_model),
     ("openrouter:", build_openrouter_model),
     ("digitalocean:", build_digitalocean_model),
+    ("mistral:", build_mistral_model),
     ("anthropic:", build_anthropic_model),
     ("claude:", build_anthropic_model),
     ("gemini:", build_gemini_model),
@@ -603,6 +622,7 @@ _PREFIX_BUILDERS: tuple[tuple[str, Any], ...] = (
     ("local-api:", build_local_api_model),
     ("local:", build_local_onnx_model),
     ("lmstudio:", build_lmstudio_model),
+    ("onnx:", build_onnx_model),
 )
 
 # Prefixes that are recognized provider namespaces.  A bare name that does not
@@ -612,6 +632,7 @@ _KNOWN_PREFIXES: tuple[str, ...] = (
     "nvidia:",
     "openrouter:",
     "digitalocean:",
+    "mistral:",
     "azure:",
     "local:",
     "windows-ai:",
@@ -621,6 +642,7 @@ _KNOWN_PREFIXES: tuple[str, ...] = (
     "notebooklm:",
     "lmstudio:",
     "local-api:",
+    "onnx:",
 )
 
 
@@ -700,7 +722,6 @@ def get_model_for_tier(
         tier,
         model_override,
         include_unavailable=False,
-        include_gh_backup=True,
     )
     last_err: Exception | None = None
     for model_id in chain:
@@ -755,7 +776,6 @@ def get_model_candidates_for_tier(
     model_override: str | None = None,
     *,
     include_unavailable: bool = False,
-    include_gh_backup: bool = True,
     max_cost_lane: Literal["local", "free", "paid"] | None = None,
 ) -> list[str]:
     """Return ordered candidate model IDs for a tier, including fallbacks.
@@ -766,8 +786,8 @@ def get_model_candidates_for_tier(
     3. UI settings tier override (``agentic_v2.ui_settings``, set via the
        settings API / web UI)
     4. Probed tier default from ``_TIER_DEFAULTS``
-    5. Tier fallback chain from ``_TIER_FALLBACK_CHAINS``
-    6. GitHub backup models (when ``GITHUB_TOKEN`` is configured)
+    5. Tier fallback chain from ``_TIER_FALLBACK_CHAINS``, which ends in the
+       tier's local tail; nothing is appended after it
 
     A cost-lane ceiling is then enforced (unless ``include_unavailable``):
     ``max_cost_lane`` when given, otherwise ``AGENTIC_MAX_COST_LANE``
@@ -802,9 +822,6 @@ def get_model_candidates_for_tier(
         pinned.append(default_id)
 
     fallback = list(_TIER_FALLBACK_CHAINS.get(tier, _TIER_FALLBACK_CHAINS.get(2, [])))
-
-    if include_gh_backup and os.environ.get("GITHUB_TOKEN"):
-        fallback.extend(GH_BACKUP_MODELS)
 
     ordered_pinned = dedupe_keep_order(pinned)
     ordered_fallback = dedupe_keep_order(fallback)
@@ -853,6 +870,7 @@ __all__ = [
     "build_nvidia_model",
     "build_openrouter_model",
     "build_digitalocean_model",
+    "build_mistral_model",
     "build_anthropic_model",
     "build_gemini_model",
     "build_notebooklm_model",
@@ -860,6 +878,7 @@ __all__ = [
     "build_lmstudio_model",
     "build_local_api_model",
     "build_local_onnx_model",
+    "build_onnx_model",
     "_resolve_notebooklm_model_name",
     # re-exported from model_utils
     "is_retryable_model_error",
@@ -868,5 +887,4 @@ __all__ = [
     "dedupe_keep_order",
     "resolve_model_override",
     "PROVIDER_ENV_KEYS",
-    "GH_BACKUP_MODELS",
 ]

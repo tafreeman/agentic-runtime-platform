@@ -51,7 +51,7 @@ class GuardedResolver(AbstractResolver):
     async def resolve(
         self, host: str, port: int = 0, family: int = socket.AF_INET
     ) -> list[dict[str, Any]]:
-        infos = await self._inner.resolve(host, port, family)
+        infos: list[dict[str, Any]] = await self._inner.resolve(host, port, family)
         for info in infos:
             err = check_resolved_address(
                 str(info["host"]), block_private=self._block_private

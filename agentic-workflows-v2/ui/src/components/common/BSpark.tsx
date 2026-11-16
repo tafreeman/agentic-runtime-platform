@@ -7,7 +7,7 @@ interface BSparkProps {
 
 export default function BSpark({
   values,
-  color = "rgb(var(--b-green))",
+  color = "rgb(var(--el-success))",
   height = 24,
   className = "",
 }: Readonly<BSparkProps>) {

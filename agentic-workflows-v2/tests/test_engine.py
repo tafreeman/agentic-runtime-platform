@@ -658,7 +658,7 @@ class TestAgentResolverTooling:
         monkeypatch.setattr(
             client.router,
             "get_model_for_tier",
-            lambda _: "openai:gpt-4o-mini",
+            lambda _, **__: "openai:gpt-4o-mini",
         )
 
         step = StepDefinition(

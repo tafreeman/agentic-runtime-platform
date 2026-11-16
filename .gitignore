@@ -421,6 +421,8 @@ directory_analysis.log
 *.sln
 ANALYSIS.md
 REVIEW.md
+# The root REVIEW.md is the AI-reviewer rules file and is tracked.
+!/REVIEW.md
 REFACTORING_PLAN.md
 system.md
 
@@ -476,6 +478,27 @@ docs/project-scan-report.json
 .agents/
 docs/screenshots/b-redesign/
 .claude/worktrees/
+# Impeccable session state (design.json is tracked; live sessions and caches are not)
+.impeccable/live/
+.impeccable/hook.cache.json
+
+# Design-tool working material under docs/ui/. The design system itself is
+# tracked (docs/ui/evidence-ledger-design-system.md and the other .md files);
+# these are a vendored copy of the Impeccable skill, per-session critique
+# output, and generated mockups. MkDocs copies non-Markdown files in docs/
+# straight into the built site, so committing them would publish ~6MB of
+# scratch to Pages.
+docs/ui/_impeccable/
+docs/ui/.impeccable/
+docs/ui/superdesign-local/
+docs/ui/*.html
+# The exported design-system bundle (tokens, previews, index.html) and its
+# tarball are local porting references; the tracked .md docs describe it.
+docs/ui/design-system/
+docs/ui/_design-system.tgz
+
+# Local Evidence Ledger design reference bundle at the repo root
+/evidence-ledger-design-system/
 
 # MkDocs local build output and plugin cache
 site/
@@ -509,3 +532,6 @@ tools/llm/filename.json
 
 # Lean build products
 proofs/.lake/
+
+# Local Evidence Ledger design reference bundle
+/evidence-ledger-design-system/

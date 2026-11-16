@@ -16,38 +16,20 @@ Environment variables:
 from __future__ import annotations
 
 import logging
-import os
 import re
 from typing import Any
 
+# Shared with the tracing setup so metrics and traces report one service name.
+from .otel import _truthy_env, get_service_name
+
 logger = logging.getLogger(__name__)
 
-# Re-use the service name constant from the tracing module
-DEFAULT_SERVICE_NAME = "agentic-workflows-v2"
 METRIC_LLM_PROVIDER = "llm.provider"
-
-_TRUTHY_VALUES = frozenset({"1", "true", "yes"})
-
-
-def _truthy_env(name: str) -> bool:
-    raw = os.environ.get(name)
-    if raw is None:
-        return False
-    return raw.strip().lower() in _TRUTHY_VALUES
 
 
 def is_metrics_enabled() -> bool:
     """Return True when metrics collection is enabled via environment variable."""
     return _truthy_env("AGENTIC_METRICS")
-
-
-def get_service_name() -> str:
-    """Return the OTEL service name from environment or default."""
-    raw = os.environ.get("OTEL_SERVICE_NAME")
-    if raw is None:
-        return DEFAULT_SERVICE_NAME
-    stripped = raw.strip()
-    return stripped or DEFAULT_SERVICE_NAME
 
 
 # ---------------------------------------------------------------------------

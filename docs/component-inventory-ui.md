@@ -1,7 +1,7 @@
 # UI component inventory — Evidence Ledger
 
 **Source:** `agentic-workflows-v2/ui/src/`
-**Audited:** 2026-07-28
+**Audited:** 2026-10-18
 **System:** [Evidence Ledger](ui/evidence-ledger-design-system.md)
 
 This inventory describes the production component boundaries after the
@@ -89,6 +89,18 @@ code/JSON evidence, and compact route headers. They inherit `el-*` values via
 the compatibility token map. New generic interaction behavior must use an
 owned primitive instead of adding another helper.
 
+## Unrouted Evidence Ledger components (`components/el/`)
+
+`components/el/` holds a second set of Evidence Ledger building blocks:
+`ApprovalGate`, `Button`, `DataTable`, `EventLog`, `Evidence`, `FilterBar`,
+`LiveSteps`, `Meter`, `ModelChain`, `PageIntro`, `ReRunSheet`, `StatusPill`,
+`TierLanes`, `ViewSwitch` and `Waterfall`. They are unit-tested
+(`__tests__/ElPrimitives.test.tsx`, `ElDataTable.test.tsx`) but no routed page
+or other production component imports them; only each other do. Treat them as
+available, not shipped UI. In particular `ApprovalGate` is presentational and
+has no backend pause/resume contract (see
+[Known limitations section 4.3](KNOWN_LIMITATIONS.md#43-human-approval-gates-are-programmatic-only-no-ui-pauseresume-yet)).
+
 ## Owned shadcn/ui primitives
 
 The following source is committed and may be changed locally:
@@ -103,8 +115,8 @@ tabs            textarea        tooltip
 ```
 
 Evidence Ledger customizations include 2 px radii, 40 px standard controls,
-warm raised input surfaces, ink text, orange focus treatment, hairline tables,
-editorial dialog titles, and warm overlays. Radix supplies behavior; the repo
+raised input surfaces with a 3:1 control border, ink text, a blue focus ring,
+hairline tables, and editorial dialog titles. Radix supplies behavior; the repo
 owns appearance and composition.
 
 ## Icons and feedback

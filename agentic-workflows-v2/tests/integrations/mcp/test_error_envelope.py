@@ -76,6 +76,7 @@ class TestClassifyToolError:
             "Issue #123 is already closed",
             "Account balance is insufficient for transfer",
             "The requested record does not satisfy business rules",
+            "Error code: 410 - The model has reached its end of life",
         ],
     )
     def test_business_errors_default_not_retryable(self, message: str) -> None:

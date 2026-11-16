@@ -1,7 +1,7 @@
 # Evidence Ledger page guide
 
-This guide describes the production UI as of 2026-07-28. All pages share the
-responsive Evidence Ledger shell, warm-paper tokens, route Suspense state,
+This guide describes the production UI as of 2026-10-18. All pages share the
+responsive Evidence Ledger shell, the paper-theme tokens, route Suspense state,
 focus rules, semantic status treatment, and CLI parity where a command exists.
 
 ## Overview — `/`
@@ -60,7 +60,8 @@ multiple runs per record. Successful launch navigates to live execution.
 
 ## Workflow editor — `/workflows/:name/edit`
 
-When the feature flag is enabled, visual and YAML modes share one document.
+When the build-time workflow-builder flag is enabled (on in `npm run dev`; a
+production build needs `VITE_AGENTIC_ENABLE_WORKFLOW_BUILDER=1`), visual and YAML modes share one document.
 The editor exposes validation, node/edge inspection, explicit save, dirty
 protection, and query invalidation. The visual graph retains React Flow and a
 keyboard/semantic alternative. Saving is disabled when the server marks the

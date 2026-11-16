@@ -19,16 +19,17 @@ function bucket(raw: string): 'success' | 'failed' | 'other' {
  * Full-stack workflow run — "making a full-stack workflow".
  *
  * Drives the whole stack end-to-end against the `fullstack_generation`
- * workflow (an 8-step generate → review → test DAG): the SPA POSTs /api/run,
- * the server executes the DAG and streams step events over the WebSocket, the
- * client redirects to /live/{run_id}, the graph renders, and the run reaches a
- * terminal status that agrees with the persisted server run record.
+ * workflow (a 10-step generate → review → rework → re-review DAG): the SPA
+ * POSTs /api/run, the server executes the DAG and streams step events over the
+ * WebSocket, the client redirects to /live/{run_id}, the graph renders, and the
+ * run reaches a terminal status that agrees with the persisted server run
+ * record.
  *
  * If the fullstack_generation definition changes step count, update
  * EXPECTED_STEP_COUNT.
  */
 test.describe('full-stack workflow run', () => {
-  const EXPECTED_STEP_COUNT = 8;
+  const EXPECTED_STEP_COUNT = 10;
 
   test('runs fullstack_generation end-to-end and matches the server record', async ({
     page,

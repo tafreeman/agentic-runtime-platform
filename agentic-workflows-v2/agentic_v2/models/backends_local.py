@@ -21,6 +21,8 @@ call time.
 from __future__ import annotations
 
 import asyncio
+import logging
+import os
 import threading
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -31,6 +33,8 @@ import ollama
 from .backends_base import LLMBackend
 from .local_discovery import onnx_roots, parse_onnx_roots
 from .secrets import get_first_secret
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Ollama
@@ -66,11 +70,45 @@ class OllamaBackend(LLMBackend):
     timeout: float = 300.0  # Local models can be slower
     think: bool | None = None
     _client: ollama.AsyncClient | None = field(default=None, repr=False)
+    _cloud_client: ollama.AsyncClient | None = field(default=None, repr=False)
+    _cloud_key: str | None = field(default=None, repr=False)
 
     def _get_client(self) -> ollama.AsyncClient:
         if self._client is None:
             self._client = ollama.AsyncClient(host=self.base_url, timeout=self.timeout)
         return self._client
+
+    async def _client_for(self, model_name: str) -> ollama.AsyncClient:
+        """Return the local client, or the ollama.com client for a cloud model.
+
+        Same rule as the LangChain builder
+        (:func:`agentic_v2.langchain.model_builders.build_ollama_model`,
+        ADR-051): with ``OLLAMA_API_KEY`` set and the model not served by the
+        local daemon, call the account-bound ``https://ollama.com`` API with
+        bearer auth. Without this, a CI runner (no daemon) could never reach a
+        cloud model on the native engine.
+        """
+        from .ollama_discovery import CLOUD_HOST, ENV_API_KEY, is_served_locally
+
+        api_key = os.environ.get(ENV_API_KEY)
+        if not api_key:
+            return self._get_client()
+        # Ask the daemon THIS backend talks to, not the process default. The
+        # tags probe is a blocking HTTP call (cached per URL); keep it off the
+        # loop.
+        if await asyncio.to_thread(is_served_locally, model_name, self.base_url):
+            return self._get_client()
+        if self._cloud_client is None or self._cloud_key != api_key:
+            # First use, or the key was rotated: never keep sending an old one.
+            await self._close_client(self._cloud_client)
+            self._cloud_client = ollama.AsyncClient(
+                host=CLOUD_HOST,
+                timeout=self.timeout,
+                headers={"Authorization": f"Bearer {api_key}"},
+            )
+            self._cloud_key = api_key
+            logger.debug("Using Ollama cloud for %s at %s", model_name, CLOUD_HOST)
+        return self._cloud_client
 
     def _resolve_think(self, model_name: str) -> bool | None:
         """Decide whether to request a separated ``thinking`` channel.
@@ -106,10 +144,9 @@ class OllamaBackend(LLMBackend):
         **kwargs: Any,
     ) -> str:
         """Send a raw-prompt completion request to Ollama (``/api/generate``)."""
-        client = self._get_client()
-
         # Strip provider prefix if present
         model_name = model.replace("ollama:", "")
+        client = await self._client_for(model_name)
 
         try:
             response = await client.generate(
@@ -146,10 +183,9 @@ class OllamaBackend(LLMBackend):
         so no inline-marker fold-in is needed — reasoning-only turns keep an
         empty ``content`` and a populated ``thinking``.
         """
-        client = self._get_client()
-
         # Strip provider prefix if present
         model_name = model.replace("ollama:", "")
+        client = await self._client_for(model_name)
 
         try:
             response = await client.chat(
@@ -172,9 +208,9 @@ class OllamaBackend(LLMBackend):
             "_raw_ollama": response.model_dump(),
         }
 
-    async def close(self) -> None:
-        """Close the HTTP client owned by the Ollama SDK."""
-        client = self._client
+    @staticmethod
+    async def _close_client(client: ollama.AsyncClient | None) -> None:
+        """Release one SDK client's connection pool (no-op for ``None``)."""
         if client is None:
             return
         # ``ollama.AsyncClient`` owns an inner ``httpx.AsyncClient``; close it
@@ -183,7 +219,14 @@ class OllamaBackend(LLMBackend):
         inner = getattr(client, "_client", None)
         if inner is not None and not getattr(inner, "is_closed", False):
             await inner.aclose()
+
+    async def close(self) -> None:
+        """Close the HTTP clients (local and cloud) owned by the Ollama SDK."""
+        await self._close_client(self._client)
+        await self._close_client(self._cloud_client)
         self._client = None
+        self._cloud_client = None
+        self._cloud_key = None
 
 
 # ---------------------------------------------------------------------------
@@ -209,6 +252,32 @@ def _load_onnxruntime_genai() -> Any:
     return og
 
 
+def _verify_weights(path: str) -> None:
+    """Run weight-integrity verification before the model folder is loaded.
+
+    Honors ``AGENTIC_STRICT_MODEL_VERIFY``: strict mode raises
+    ``ModelWeightVerificationError`` (a ``RuntimeError``); otherwise problems
+    only log warnings. A path that does not exist is skipped.
+    """
+    from .weight_integrity import (
+        ModelWeightVerificationError,
+        _strict_model_verify_enabled,
+        verify_model_weights,
+    )
+
+    model_path = Path(path)
+    if not model_path.exists():
+        return  # Nothing to hash; the runtime load reports the missing path.
+    try:
+        verify_model_weights(model_path)
+    except ModelWeightVerificationError:
+        raise
+    except Exception as exc:
+        if _strict_model_verify_enabled():
+            raise
+        logger.warning("Model weight verification skipped for %s: %s", path, exc)
+
+
 @dataclass
 class OnnxBackend(LLMBackend):
     """Backend for local ONNX models via onnxruntime-genai.
@@ -228,9 +297,17 @@ class OnnxBackend(LLMBackend):
         ),
     )
     max_tokens_cap: int = 4096
+    # Most-recently-used models kept loaded; older ones are evicted so a
+    # long-lived process cannot accumulate every model it has ever served.
+    max_cached_models: int = 1
     # Cache of resolved path -> (og_module, model, tokenizer).
     _models: dict[str, tuple[Any, Any, Any]] = field(default_factory=dict, repr=False)
     _lock: threading.Lock = field(
+        default_factory=threading.Lock, init=False, compare=False, repr=False
+    )
+    # Held for a whole generation so cache eviction can never unload a model
+    # another thread is still generating with (generation is serialized).
+    _generation_lock: threading.Lock = field(
         default_factory=threading.Lock, init=False, compare=False, repr=False
     )
 
@@ -249,25 +326,52 @@ class OnnxBackend(LLMBackend):
 
     def _resolve_path(self, model: str) -> str:
         name = model.removeprefix("onnx:")
+        rel = Path(name)
+        if not name or rel.is_absolute() or rel.drive or ".." in rel.parts:
+            raise ValueError(
+                f"Invalid ONNX model path (must be a relative folder): {name!r}"
+            )
         roots = self._candidate_roots()
+        shadow: Path | None = None
         for root in roots:
-            if (root / name).exists():
-                return str(root / name)
+            candidate = root / rel
+            if not candidate.exists():
+                continue
+            if not candidate.resolve().is_relative_to(root.resolve()):
+                raise ValueError(f"ONNX model path escapes its root: {name!r}")
+            if (candidate / "genai_config.json").is_file():
+                return str(candidate)
+            # An ordinary folder shadowing a model in a later root: keep
+            # looking, and only fall back to it for a clear load-time error.
+            shadow = shadow or candidate
+        if shadow is not None:
+            return str(shadow)
         # Not present under any root yet: return a deterministic, expanded path
         # under the first root so load errors point somewhere sensible and the
         # per-path model cache stays stable across calls.
-        return str(roots[0] / name) if roots else name
+        return str(roots[0] / rel) if roots else name
 
     def _get_model(self, model: str) -> tuple[Any, Any, Any]:
         path = self._resolve_path(model)
         with self._lock:
-            cached = self._models.get(path)
+            cached = self._models.pop(path, None)
             if cached is None:
+                model_dir = Path(path)
+                if (
+                    model_dir.exists()
+                    and not (model_dir / "genai_config.json").is_file()
+                ):
+                    raise ValueError(
+                        f"Not an onnxruntime-genai model folder (no genai_config.json): {path}"
+                    )
                 og = _load_onnxruntime_genai()
+                _verify_weights(path)
                 loaded = og.Model(path)
                 tokenizer = og.Tokenizer(loaded)
                 cached = (og, loaded, tokenizer)
-                self._models[path] = cached
+            self._models[path] = cached  # re-insert: most recently used last
+            while len(self._models) > max(1, self.max_cached_models):
+                del self._models[next(iter(self._models))]
             return cached
 
     @staticmethod
@@ -291,6 +395,12 @@ class OnnxBackend(LLMBackend):
     def _generate_sync(
         self, model: str, prompt: str, max_tokens: int, temperature: float
     ) -> str:
+        with self._generation_lock:
+            return self._generate_locked(model, prompt, max_tokens, temperature)
+
+    def _generate_locked(
+        self, model: str, prompt: str, max_tokens: int, temperature: float
+    ) -> str:
         og, loaded, tokenizer = self._get_model(model)
         input_tokens = tokenizer.encode(prompt)
         max_len = len(input_tokens) + min(max_tokens, self.max_tokens_cap)
@@ -312,6 +422,18 @@ class OnnxBackend(LLMBackend):
         # decode only the newly generated tail.
         new_tokens = output[len(input_tokens) :]
         return str(tokenizer.decode(new_tokens))
+
+    def generate_chat_sync(
+        self,
+        model: str,
+        messages: list[dict[str, Any]],
+        max_tokens: int = 4096,
+        temperature: float = 0.7,
+    ) -> str:
+        """Blocking chat completion for synchronous callers (e.g. LangChain)."""
+        return self._generate_sync(
+            model, self._messages_to_prompt(messages), max_tokens, temperature
+        )
 
     async def complete(
         self,

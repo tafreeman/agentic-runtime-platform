@@ -82,11 +82,6 @@ def _resolve_model_path(model_key: str | None) -> Path | None:
     return None
 
 
-def check_model_available() -> bool:
-    """Check if a local model is available."""
-    return _resolve_model_path(None) is not None
-
-
 def get_model_info() -> dict[str, Any]:
     """Get information about available local models."""
     info: dict[str, Any] = {

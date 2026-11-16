@@ -122,6 +122,63 @@ class TestEvaluateCondition:
         assert evaluate_condition("${inputs.missing_key} == 'value'", state) is False
 
 
+_REVIEW_GATE = (
+    "${coalesce(steps.review.outputs.review_report.overall_status, "
+    "steps.review.outputs.overall_status)} != 'APPROVED'"
+)
+
+
+class TestEvaluateConditionCoalesce:
+    """Coalesce() inside a condition resolves as it does in step inputs.
+
+    It used to be walked as a dotted path, resolving to None, so
+    fullstack_generation's rework gate ran even on an APPROVED review.
+    """
+
+    def test_approved_review_closes_the_gate(self) -> None:
+        state = {
+            "steps": {
+                "review": {"outputs": {"review_report": {"overall_status": "APPROVED"}}}
+            }
+        }
+        assert evaluate_condition(_REVIEW_GATE, state) is False
+
+    def test_needs_fixes_review_opens_the_gate(self) -> None:
+        state = {
+            "steps": {
+                "review": {
+                    "outputs": {"review_report": {"overall_status": "NEEDS_FIXES"}}
+                }
+            }
+        }
+        assert evaluate_condition(_REVIEW_GATE, state) is True
+
+    def test_falls_back_to_later_argument(self) -> None:
+        state = {"steps": {"review": {"outputs": {"overall_status": "APPROVED"}}}}
+        assert evaluate_condition(_REVIEW_GATE, state) is False
+
+    def test_all_arguments_missing_resolves_to_none(self) -> None:
+        assert evaluate_condition(_REVIEW_GATE, {"steps": {}}) is True
+
+    def test_multiline_coalesce(self) -> None:
+        state = {"steps": {"review": {"outputs": {"overall_status": "APPROVED"}}}}
+        expr = (
+            "${coalesce(\n  steps.review.outputs.review_report.overall_status,\n"
+            "  steps.review.outputs.overall_status\n)} != 'APPROVED'"
+        )
+        assert evaluate_condition(expr, state) is False
+
+    @pytest.mark.parametrize(
+        ("overridden", "expected"),
+        [(["backend"], True), ([], False), (None, False)],
+    )
+    def test_list_output_truthiness(self, overridden, expected) -> None:
+        state = {"steps": {"apply": {"outputs": {"overridden": overridden}}}}
+        assert (
+            evaluate_condition("${steps.apply.outputs.overridden}", state) is expected
+        )
+
+
 class TestResolveExpression:
     """Tests for resolve_expression."""
 

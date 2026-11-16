@@ -33,6 +33,7 @@ Usage::
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import time
@@ -484,6 +485,10 @@ class SqliteReplayStore:
         self.max_events = max_events
         self.retention_seconds = retention_seconds
         self._db: Any = None
+        # Serialises the read-MAX(seq) / INSERT / trim sequence in append():
+        # concurrent appends (parallel DAG steps) would otherwise read the
+        # same MAX, collide on PRIMARY KEY (run_id, seq) and drop the event.
+        self._append_lock = asyncio.Lock()
 
     @classmethod
     async def connect(
@@ -568,41 +573,42 @@ class SqliteReplayStore:
         if self._db is None:
             return
 
-        try:
-            serialized = json.dumps(event)
-            # Determine next seq
-            async with self._db.execute(
-                "SELECT COALESCE(MAX(seq), -1) + 1 FROM replay_events WHERE run_id = ?",
-                (run_id,),
-            ) as cursor:
-                row = await cursor.fetchone()
-                next_seq: int = row[0] if row else 0
+        async with self._append_lock:
+            try:
+                serialized = json.dumps(event)
+                # Determine next seq
+                async with self._db.execute(
+                    "SELECT COALESCE(MAX(seq), -1) + 1 FROM replay_events WHERE run_id = ?",
+                    (run_id,),
+                ) as cursor:
+                    row = await cursor.fetchone()
+                    next_seq: int = row[0] if row else 0
 
-            await self._db.execute(
-                "INSERT INTO replay_events (run_id, seq, event, created_at) VALUES (?, ?, ?, ?)",
-                (run_id, next_seq, serialized, time.time()),
-            )
+                await self._db.execute(
+                    "INSERT INTO replay_events (run_id, seq, event, created_at) VALUES (?, ?, ?, ?)",
+                    (run_id, next_seq, serialized, time.time()),
+                )
 
-            # Enforce cap: delete oldest rows beyond max_events
-            await self._db.execute(
-                """
-                DELETE FROM replay_events
-                WHERE run_id = ?
-                  AND seq < (
-                      SELECT seq FROM replay_events
-                      WHERE run_id = ?
-                      ORDER BY seq DESC
-                      LIMIT 1 OFFSET ?
-                  )
-                """,
-                (run_id, run_id, self.max_events - 1),
-            )
-            await self._db.commit()
-            await self._purge_expired()
-        except Exception as exc:
-            logger.warning(
-                "SqliteReplayStore.append failed for run %s: %s", run_id, exc
-            )
+                # Enforce cap: delete oldest rows beyond max_events
+                await self._db.execute(
+                    """
+                    DELETE FROM replay_events
+                    WHERE run_id = ?
+                      AND seq < (
+                          SELECT seq FROM replay_events
+                          WHERE run_id = ?
+                          ORDER BY seq DESC
+                          LIMIT 1 OFFSET ?
+                      )
+                    """,
+                    (run_id, run_id, self.max_events - 1),
+                )
+                await self._db.commit()
+                await self._purge_expired()
+            except Exception as exc:
+                logger.warning(
+                    "SqliteReplayStore.append failed for run %s: %s", run_id, exc
+                )
 
     async def get_events(self, run_id: str) -> list[dict[str, Any]]:
         """Return all events for *run_id* ordered by insertion sequence.

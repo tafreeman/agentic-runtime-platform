@@ -136,20 +136,12 @@ def _check_always_blocked(hostname: str) -> str | None:
     return None
 
 
-def _check_ip_literal(hostname: str) -> str | None:
-    """If *hostname* is an IP literal, return error string if restricted, else None.
+def _prefer_ipv4(ips: list[str]) -> str:
+    """Pick the first IPv4 address, else the first address (non-empty *ips*).
 
-    Returns ``None`` when the hostname is not an IP literal (caller must do DNS).
+    Preferring IPv4 minimises breakage on hosts without a routable IPv6 path.
     """
-    addr = _parse_ip_literal(hostname)
-    if addr is None:
-        return None  # not an IP literal — caller handles DNS
-
-    if _is_restricted_address(addr):
-        return (
-            f"Access to private/reserved/loopback IP address '{hostname}' is blocked."
-        )
-    return ""  # empty string = "is an IP literal, and it passed"
+    return min(ips, key=lambda ip: ":" in ip)
 
 
 def check_resolved_address(ip_str: str, *, block_private: bool) -> str | None:
@@ -213,38 +205,6 @@ def _resolve_and_collect(
         if raw_ip not in ips:
             ips.append(raw_ip)
     return None, ips
-
-
-def _resolve_and_check(hostname: str) -> str | None:
-    """Resolve *hostname* via DNS; block if ANY address is restricted."""
-    err, _ips = _resolve_and_collect(hostname, block_private=True)
-    return err
-
-
-def _resolve_and_check_metadata_only(hostname: str) -> str | None:
-    """Resolve *hostname* via DNS and block only if it points at a metadata IP.
-
-    Used on the ``block_private=False`` opt-out path: private addresses are
-    permitted (the guard is off), but a DNS name that resolves to a cloud
-    metadata endpoint (e.g. ``169.254.169.254``) must still be blocked.  The
-    string/literal checks never resolve, so without this a hostname aliasing a
-    metadata IP would sail straight through.
-
-    Best-effort: resolution failure falls through to ``None`` (the operator
-    disabled the guard; an unresolvable host fails on connect anyway), matching
-    the synchronous ``_validate_url_core`` opt-out behaviour.
-    """
-    try:
-        infos = socket.getaddrinfo(hostname, None, proto=socket.IPPROTO_TCP)
-    except (socket.gaierror, OSError):
-        return None
-    for info in infos:
-        resolved = _parse_ip_literal(str(info[4][0]))
-        if resolved is not None and _is_metadata_address(resolved):
-            return (
-                f"Host '{hostname}' resolves to a metadata endpoint " "and is blocked."
-            )
-    return None
 
 
 # ---------------------------------------------------------------------------
@@ -317,15 +277,18 @@ def _validate_url_core(
             resolved_ips.append(str(resolved))
         if not resolved_ips:
             return None, None
-        # Prefer IPv4 to minimise breakage on hosts without a routable IPv6 path.
-        return None, sorted(resolved_ips, key=lambda ip: ":" in ip)[0]
+        return None, _prefer_ipv4(resolved_ips)
 
     # IP literal path — client dials the literal directly, no DNS to pin.
-    ip_result = _check_ip_literal(hostname)
-    if ip_result == "":
-        return None, None  # literal IP, passed
-    if ip_result:
-        return ip_result, None  # literal IP, blocked
+    literal = _parse_ip_literal(hostname)
+    if literal is not None:
+        if _is_restricted_address(literal):
+            return (
+                f"Access to private/reserved/loopback IP address '{hostname}' "
+                "is blocked.",
+                None,
+            )
+        return None, None
 
     # Hostname is a DNS name — resolve once, validate every address, and
     # return one for the caller to pin the connection to.
@@ -338,9 +301,7 @@ def _validate_url_core(
             "Request blocked (fail-closed).",
             None,
         )
-    # Prefer IPv4 to minimise breakage on hosts without a routable IPv6 path.
-    pinned = sorted(ips, key=lambda ip: ":" in ip)[0]
-    return None, pinned
+    return None, _prefer_ipv4(ips)
 
 
 def validate_url(url: str, *, block_private: bool) -> str | None:
@@ -388,8 +349,10 @@ def validate_url_pinned(
 async def validate_url_async(url: str, *, block_private: bool) -> str | None:
     """Validate *url* for SSRF safety (asynchronous).
 
-    DNS resolution is run in a thread via ``asyncio.to_thread`` so the event
-    loop is not blocked.
+    Runs the same checks as :func:`validate_url` in a thread via
+    ``asyncio.to_thread`` so the blocking ``getaddrinfo`` never stalls the
+    event loop. Sharing one implementation keeps the sync and async guards
+    from drifting apart.
 
     Args:
         url: The URL to validate.
@@ -399,40 +362,4 @@ async def validate_url_async(url: str, *, block_private: bool) -> str | None:
     Returns:
         An error string if the URL is blocked, or ``None`` if it is allowed.
     """
-    try:
-        parsed = urlparse(url)
-    except Exception:
-        return "Invalid URL: could not be parsed."
-
-    if parsed.scheme not in _ALLOWED_SCHEMES:
-        return (
-            f"URL scheme '{parsed.scheme}' is not allowed. "
-            "Only http and https are permitted."
-        )
-
-    hostname = parsed.hostname or ""
-    if not hostname:
-        return "Invalid URL: no hostname."
-
-    # Always-blocked metadata endpoints (no I/O needed)
-    metadata_err = _check_always_blocked(hostname)
-    if metadata_err:
-        return metadata_err
-
-    if not block_private:
-        # Private IPs are permitted here, but a DNS name aliasing a metadata
-        # endpoint must still be blocked. An IP literal was already screened
-        # by ``_check_always_blocked`` above, so only DNS names need resolving;
-        # offload the blocking getaddrinfo to a thread.
-        if _parse_ip_literal(hostname) is not None:
-            return None
-        return await asyncio.to_thread(_resolve_and_check_metadata_only, hostname)
-
-    # IP literal — no I/O needed
-    ip_result = _check_ip_literal(hostname)
-    if ip_result is not None:
-        # Non-empty = blocked; empty = passed
-        return ip_result if ip_result else None
-
-    # DNS name — offload blocking getaddrinfo to a thread
-    return await asyncio.to_thread(_resolve_and_check, hostname)
+    return await asyncio.to_thread(validate_url, url, block_private=block_private)

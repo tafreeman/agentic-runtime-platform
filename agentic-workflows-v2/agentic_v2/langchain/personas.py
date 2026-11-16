@@ -16,10 +16,12 @@ from pathlib import Path
 
 import yaml
 
+from ..prompts import PROMPTS_DIR
+
 logger = logging.getLogger(__name__)
 
 _PERSONAS_PATH = Path(__file__).parent.parent / "config" / "defaults" / "personas.yaml"
-_PROMPTS_DIR = Path(__file__).parent.parent / "prompts"
+_PROMPTS_DIR = PROMPTS_DIR
 
 
 @dataclass(frozen=True)

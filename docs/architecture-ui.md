@@ -1,12 +1,13 @@
 # UI architecture — Evidence Ledger
 
 > **Scope:** `agentic-workflows-v2/ui/`
-> **Current:** 2026-07-28
+> **Current:** 2026-10-18
 > **Decision:** [ADR-054](adr/ADR-054-evidence-ledger-ui-and-model-packs.md)
 
 The dashboard is the evidence and control surface for workflow execution. It
-uses a light-first editorial system: warm paper, ink typography, hairline
-structure, restrained orange emphasis, and semantic green/red states. The
+uses a light-first editorial system: cool-grey paper with white surfaces, ink
+typography, hairline structure, restrained orange emphasis, blue focus and
+selection, and semantic green/red states. The
 former terminal vocabulary remains only where it communicates genuine CLI,
 log, identifier, or machine-output semantics.
 
@@ -14,13 +15,13 @@ log, identifier, or machine-output semantics.
 
 | Concern | Implementation | Boundary |
 |---|---|---|
-| Application | React 19 + TypeScript 6 | Components never execute runtime work directly |
+| Application | React 19 + TypeScript 7 | Components never execute runtime work directly |
 | Build | Vite 8 + route-level dynamic imports | Every page is an independent production chunk |
 | Navigation | React Router 7 | Shareable view state uses paths/query parameters |
 | Server state | TanStack Query 5 | No duplicate application-wide server cache |
 | UI primitives | Owned shadcn/ui source + Radix | Customized to Evidence Ledger, not a stock theme |
 | Workflow graph | React Flow 12 | Specialized canvas with semantic list equivalents |
-| Styling | Tailwind 3 + semantic CSS variables | Canonical `el-*` tokens; temporary `b-*` aliases |
+| Styling | Tailwind 4 (`@tailwindcss/postcss`) + semantic CSS variables | Canonical `el-*` tokens; temporary `b-*` aliases |
 | Live execution | WebSocket reducer | Bounded retry/history and terminal-state handoff |
 | Playground | Fetch streaming over SSE | Abortable text and image input/output |
 | Verification | Vitest + Playwright | Contract tests live with the Python API |
@@ -54,8 +55,8 @@ StrictMode
 The desktop shell has a 216 px evidence index. Below the `md` breakpoint it
 becomes a five-item bottom navigation and reserves room above the CLI strip.
 The main landmark is focusable and every routed page has a Suspense fallback.
-Warm paper is the default theme; warm charcoal remains an optional operator
-preference.
+The paper (light) theme is the default; a near-black dark theme remains an
+optional operator preference selected with `data-theme`.
 
 ## Routing
 
@@ -65,7 +66,7 @@ All page modules are loaded with `React.lazy` in `App.tsx`.
 |---|---|
 | `/` | Overview |
 | `/runs`, `/runs/:filename` | Run ledger and permanent evidence |
-| `/live/:runId`, `/live/latest` | Live execution |
+| `/live/:runId`, `/live/latest` (`/live` redirects to `/live/latest`) | Live execution |
 | `/workflows`, `/workflows/:name` | Workflow registry and launch |
 | `/workflows/:name/edit` | Feature-gated visual/YAML editor |
 | `/datasets` | Dataset/sample evidence |
@@ -73,14 +74,13 @@ All page modules are loaded with `React.lazy` in `App.tsx`.
 | `/models?tab=...` | Model Router: models, providers, tiers, packs, playground, hardware |
 | `/settings` | Compatibility redirect to `/models?tab=providers` |
 
-The former `/prototypes` production route was removed. Prototype source files
-may exist as untracked design evidence, but no production module imports them.
+The former `/prototypes` production route was removed. `src/pages/PrototypeLabPage.tsx` and `src/styles/prototype-lab.css` are still tracked as an intentional design lab, but `App.tsx` does not route them and no production module imports them.
 
 ## Design system
 
 `src/styles/tokens.css` is the canonical semantic layer. Representative light
-values are paper `#F2EFE8`, surface `#F8F5EF`, raised `#FFFDFA`, ink `#1B1B18`,
-and accent `#EF5A36`. Status is never encoded by color alone. Georgia supplies
+values are canvas `#F4F4F5`, surface and raised `#FFFFFF`, ink `#161616`,
+accent `#D9560F` and focus/select `#0B5BD3`; see [DESIGN.md](https://github.com/tafreeman/agentic-runtime-platform/blob/main/DESIGN.md) for the full table. Status is never encoded by color alone. Georgia supplies
 editorial display headings; Geist supplies interface text; monospace is
 reserved for IDs, versions, commands, JSON/YAML, and telemetry.
 
@@ -141,7 +141,7 @@ tuple expansion is less useful, but drift tests still prove the wire shape.
 - A skip link targets the focusable main landmark.
 - Owned Radix primitives provide dialog/sheet focus containment and escape
   behavior.
-- Focus rings use a visible orange semantic token.
+- Focus rings use the blue `--el-focus` token (at least 3:1 on every surface); orange is never used for focus.
 - Forms retain native labels, required state, keyboard operation, and live
   mutation/stream statuses.
 - The DAG exposes an equivalent list/table path for non-spatial use.

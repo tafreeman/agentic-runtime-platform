@@ -80,7 +80,9 @@ async def run_with_fallback(
         enforce_cost_lane_ceiling(model)
 
     for _ in range(max_retries):
-        selected_model: str | None = model or router.get_model_for_tier(tier)
+        selected_model: str | None = model or router.get_model_for_tier(
+            tier, exclude=tried
+        )
         if selected_model is None or selected_model in tried:
             break
 

@@ -39,6 +39,7 @@ from enum import Enum
 from types import MappingProxyType
 from typing import Any, Mapping
 
+from agentic_v2.evaluation.normalization import clamp01
 from agentic_v2.workflows.lib import ci_calculator
 
 logger = logging.getLogger(__name__)
@@ -273,7 +274,7 @@ def compute_ci_tiebreaker(
     weighted_sum = sum(
         float(scores.get(dim, 0.0)) * float(w) for dim, w in effective_weights.items()
     )
-    return max(0.0, min(1.0, weighted_sum / weight_total))
+    return clamp01(weighted_sum / weight_total)
 
 
 # ---------------------------------------------------------------------------
@@ -321,7 +322,7 @@ def evaluate_research_round(
     min_tier = ResearchTier.HIGH
     dimensions: list[DimensionResult] = []
     for dim in RESEARCH_DIMENSIONS:
-        score = max(0.0, min(1.0, raw_scores.get(dim, 0.0)))
+        score = clamp01(raw_scores.get(dim, 0.0))
         tier = classify_dimension(dim, score, thresholds)
         dimensions.append(
             DimensionResult(

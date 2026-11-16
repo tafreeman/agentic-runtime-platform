@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import type { RunSummary } from "../../api/types";
 import DurationDisplay from "../common/DurationDisplay";
+import StatusBadge from "../common/StatusBadge";
 import { gradeColorClass, gradeLetter } from "../../lib/grades";
 
 type StatusFilter = "all" | "success" | "failed" | "running";
@@ -9,21 +10,6 @@ type StatusFilter = "all" | "success" | "failed" | "running";
 interface RunListProps {
   runs: RunSummary[] | undefined;
   isLoading: boolean;
-}
-
-/** ASCII status glyph + its CSS color variable, colored by run status. */
-function statusAscii(status: string | null | undefined): {
-  label: string;
-  color: string;
-} {
-  if (status === "success") return { label: "[ ok ]", color: "var(--b-green)" };
-  if (status === "failed" || status === "error") {
-    return { label: "[err ]", color: "var(--b-red)" };
-  }
-  if (status === "running" || status === "in_progress") {
-    return { label: "[ .. ]", color: "var(--b-clay)" };
-  }
-  return { label: `[${status ?? "?"}]`, color: "var(--b-text-faint)" };
 }
 
 function shortId(run: RunSummary): string {
@@ -43,6 +29,14 @@ function formatWhen(iso: string | null | undefined): string {
     minute: "2-digit",
   });
 }
+
+/**
+ * Status · run (workflow + start time) · duration · score. Sized for the
+ * 340px run-history panel: the status column fits "Success", and the start
+ * time rides under the run link instead of taking a fifth column.
+ */
+const GRID_COLS =
+  "min-w-[280px] grid-cols-[84px_minmax(0,1fr)_56px_36px]";
 
 export default function RunList({ runs, isLoading }: RunListProps) {
   const navigate = useNavigate();
@@ -82,11 +76,7 @@ export default function RunList({ runs, isLoading }: RunListProps) {
         {Array.from({ length: 5 }).map((_, index) => (
           <div
             key={index}
-            style={{
-              borderRadius: "var(--b-rad-sm)",
-              borderWidth: "var(--b-bw)",
-            }}
-            className="h-[44px] animate-pulse border border-solid border-b-line bg-b-bg1"
+            className="h-11 animate-pulse rounded-md border border-el-divider bg-el-surface"
           />
         ))}
       </div>
@@ -109,19 +99,16 @@ export default function RunList({ runs, isLoading }: RunListProps) {
             <button
               key={value}
               type="button"
+              aria-pressed={active}
               onClick={() => setFilter(value)}
-              style={{
-                borderRadius: "var(--b-rad-sm)",
-                borderWidth: "var(--b-bw)",
-              }}
-              className={`border border-solid px-3 py-1 font-mono text-[10px] uppercase tracking-[0.5px] transition-colors ${
+              className={`focus-ring min-h-9 rounded-md border px-3 text-xs transition-colors ${
                 active
-                  ? "border-b-clay bg-b-clay-soft text-b-clay"
-                  : "border-b-line text-b-text-dim hover:border-b-line hover:text-b-text"
+                  ? "border-el-ink bg-el-subtle text-el-ink"
+                  : "border-el-divider text-el-muted hover:bg-el-hover hover:text-el-ink"
               }`}
             >
               {label}
-              <span aria-hidden="true" className="ml-1 text-b-text-faint">
+              <span aria-hidden="true" className="ml-1 tabular-nums text-el-muted">
                 · {counts[value]}
               </span>
             </button>
@@ -130,84 +117,76 @@ export default function RunList({ runs, isLoading }: RunListProps) {
       </div>
 
       {filteredRuns.length === 0 ? (
-        <div
-          style={{
-            borderRadius: "var(--b-rad-sm)",
-            borderWidth: "var(--b-bw)",
-          }}
-          className="border border-dashed border-b-line px-3 py-8 text-center font-mono text-[11px] text-b-text-dim"
-        >
+        <div className="rounded-md border border-dashed border-el-divider px-3 py-8 text-center text-xs text-el-muted">
           No runs found
         </div>
       ) : (
+        // ARIA table on the CSS grid. Rows are not controls: each row's one
+        // keyboard/screen-reader control is the run link in its identity
+        // cell; the row-wide click stays as a pointer shortcut only.
         <div
-          style={{
-            borderRadius: "var(--b-rad-lg)",
-            borderWidth: "var(--b-bw)",
-          }}
-          className="overflow-hidden border border-solid border-b-line bg-b-bg1"
+          role="table"
+          aria-label="Run history"
+          className="relative overflow-x-auto rounded-lg border border-el-divider bg-el-surface"
         >
-          {/* Column headers */}
-          <div
-            style={{ borderBottomWidth: "var(--b-bw)" }}
-            className="grid grid-cols-[80px_1.5fr_78px_50px_72px] gap-2.5 border-b border-solid border-b-line px-3 py-2 font-mono text-[9px] uppercase tracking-[1px] text-b-text-faint"
-          >
-            <span>Status</span>
-            <span>Workflow</span>
-            <span className="text-right">Duration</span>
-            <span className="text-center">Score</span>
-            <span className="text-right">When</span>
+          <div role="rowgroup">
+            <div
+              role="row"
+              className={`grid ${GRID_COLS} gap-2 border-b border-el-divider px-3 py-2 text-micro font-semibold uppercase tracking-[0.5px] text-el-muted`}
+            >
+              <span role="columnheader">Status</span>
+              <span role="columnheader" className="min-w-0 truncate">Run</span>
+              <span role="columnheader" className="text-right">Duration</span>
+              <span role="columnheader" className="text-center">Score</span>
+            </div>
           </div>
 
-          {filteredRuns.map((run) => {
-            const ascii = statusAscii(run.status);
-            const grade = gradeLetter(run.evaluation_grade, run.evaluation_score);
-            const target = `/runs/${encodeURIComponent(run.filename)}`;
-            return (
-              <div
-                key={run.filename}
-                role="button"
-                tabIndex={0}
-                aria-label={`Open run ${shortId(run)}`}
-                onClick={() => navigate(target)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    navigate(target);
-                  }
-                }}
-                className="grid cursor-pointer grid-cols-[80px_1.5fr_78px_50px_72px] items-center gap-2.5 border-b border-solid border-b-line-soft px-3 py-2 font-mono text-[11px] transition-colors last:border-b-0 hover:bg-b-bg2 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-b-clay"
-              >
-                <span
-                  className="text-[9px] tracking-[0.5px]"
-                  style={{ color: ascii.color }}
+          <div role="rowgroup">
+            {filteredRuns.map((run) => {
+              const grade = gradeLetter(run.evaluation_grade, run.evaluation_score);
+              const target = `/runs/${encodeURIComponent(run.filename)}`;
+              return (
+                <div
+                  key={run.filename}
+                  role="row"
+                  onClick={() => navigate(target)}
+                  className={`grid min-h-12 cursor-pointer ${GRID_COLS} items-center gap-2 border-b border-el-divider-soft px-3 py-2 text-micro transition-colors last:border-b-0 hover:bg-el-hover`}
                 >
-                  {ascii.label}
-                </span>
-                <span className="min-w-0 truncate text-b-text">
-                  <Link
-                    to={target}
-                    onClick={(e) => e.stopPropagation()}
-                    aria-label={`Open run ${shortId(run)}`}
-                    className="hover:text-b-clay"
+                  <div role="cell" className="min-w-0">
+                    <StatusBadge status={run.status} />
+                  </div>
+                  <div role="cell" className="min-w-0 text-el-ink">
+                    {/* The visible workflow name leads the accessible name
+                        (label-in-name); the run id disambiguates rows of the
+                        same workflow for screen readers. */}
+                    <Link
+                      to={target}
+                      onClick={(e) => e.stopPropagation()}
+                      title={run.run_id ?? run.filename}
+                      // No overflow clipping on the link itself: it would clip
+                      // the ::after hit area; the inner span truncates.
+                      className="focus-ring relative block rounded-sm font-mono underline-offset-2 after:absolute after:-inset-y-2 after:inset-x-0 hover:text-el-accent-strong hover:underline"
+                    >
+                      <span className="block truncate">{run.workflow_name ?? "--"}</span>
+                      <span className="sr-only">, run {shortId(run)}</span>
+                    </Link>
+                    <span className="block truncate tabular-nums text-el-muted">
+                      {formatWhen(run.start_time)}
+                    </span>
+                  </div>
+                  <div role="cell" className="text-right tabular-nums text-el-secondary">
+                    <DurationDisplay ms={run.total_duration_ms} />
+                  </div>
+                  <div
+                    role="cell"
+                    className={`text-center font-semibold ${gradeColorClass(grade)}`}
                   >
-                    {run.workflow_name ?? "--"}
-                  </Link>
-                </span>
-                <span className="text-right tabular-nums text-b-text-dim">
-                  <DurationDisplay ms={run.total_duration_ms} />
-                </span>
-                <span
-                  className={`text-center font-semibold ${gradeColorClass(grade)}`}
-                >
-                  {grade ?? "--"}
-                </span>
-                <span className="text-right text-[10px] text-b-text-dim">
-                  {formatWhen(run.start_time)}
-                </span>
-              </div>
-            );
-          })}
+                    {grade ?? "--"}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

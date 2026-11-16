@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from agentic_v2.contracts.sanitization import Severity
@@ -77,3 +79,87 @@ class TestSecretDetectorEntropy:
     async def test_short_strings_not_flagged(self, detector: SecretDetector) -> None:
         findings = await detector.scan("short")
         assert len(findings) == 0
+
+
+# Built at runtime so the source does not trip repo secret scanners.
+_PW = "Pass" + "word"
+_DB_URL = "postgresql+asyncpg://user:" + "hunter22@db:5432/app"
+_API_KEY_LINE = (
+    "api" + '_key = "abcdef1234567890' + 'abcdef12"'  # pragma: allowlist secret
+)
+
+JSON_PAYLOADS = {
+    "connection_string_in_csharp": {
+        "code_before": f'"DefaultConnection": "Host=db;Username=app;{_PW}=postgres"',
+        "code_after": '"DefaultConnection": "${DB_CONNECTION}"',
+        "references": ["CWE-312"],
+    },
+    "quoted_python_value": {
+        "code_before": f'hashed_{_PW.lower()}="secret123"',
+        "code_after": "hashed = hash_password(raw)",
+    },
+    "driver_url": {"code": f'DATABASE_URL = "{_DB_URL}"', "line": 7},
+    "api_key": {"code": _API_KEY_LINE, "line": 9},
+}
+
+
+class TestSecretDetectorJsonSafeMasking:
+    """Masks inside JSON strings stop at the string's terminator (ADR-061)."""
+
+    @pytest.mark.parametrize("indent", [2, None], ids=["pretty", "compact"])
+    @pytest.mark.parametrize("name", JSON_PAYLOADS)
+    def test_masked_json_still_parses(
+        self, detector: SecretDetector, name: str, indent: int | None
+    ) -> None:
+        payload = JSON_PAYLOADS[name]
+        text = json.dumps(payload, indent=indent)
+
+        masked, findings = detector.scan_and_mask_sync(text)
+
+        assert findings
+        parsed = json.loads(masked)
+        assert parsed.keys() == payload.keys()
+        assert "[REDACTED:" in json.dumps(parsed)
+        for key, value in payload.items():
+            if "[REDACTED:" not in json.dumps(parsed[key]):
+                assert parsed[key] == value
+
+    def test_span_ends_before_the_string_terminator(
+        self, detector: SecretDetector
+    ) -> None:
+        text = f'"x": "{_PW}=postgres\\"",\n'
+
+        masked, findings = detector.scan_and_mask_sync(text)
+
+        assert masked == '"x": "[REDACTED:env_variable]",\n'
+        start = text.index(_PW)
+        assert findings[0].location == f"text[{start}:{text.rindex(chr(34))}]"
+
+    def test_secret_with_an_escaped_quote_is_masked_whole(
+        self, detector: SecretDetector
+    ) -> None:
+        text = f'"x": "{_PW.lower()}=ab\\"cdefghij"'
+
+        masked, _ = detector.scan_and_mask_sync(text)
+
+        assert masked == '"x": "[REDACTED:env_variable]"'
+
+    def test_unquoted_raw_text_keeps_the_full_span(
+        self, detector: SecretDetector
+    ) -> None:
+        """A quote that opens the value is not a terminator; mask as before."""
+        text = f'{_PW.lower()}="hunter2hunter2"; connect()'
+
+        masked, _ = detector.scan_and_mask_sync(text)
+
+        assert masked == "[REDACTED:env_variable] connect()"
+
+    def test_short_value_before_the_quote_keeps_the_full_span(
+        self, detector: SecretDetector
+    ) -> None:
+        """Ending at the quote would mask less than the pattern requires."""
+        text = 'token=abc","b":"defgh"'
+
+        masked, _ = detector.scan_and_mask_sync(text)
+
+        assert masked == "[REDACTED:env_variable]"

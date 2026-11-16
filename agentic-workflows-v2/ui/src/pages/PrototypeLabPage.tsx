@@ -132,7 +132,7 @@ function ControlRoom() {
             <div className="inspector-title"><span>RUN INSPECTOR</span><button type="button">•••</button></div>
             <h2>{selected.name}</h2>
             <p>{selected.id} · started 2m 14s ago</p>
-            <div className="run-progress"><span style={{ width: paused ? "68%" : "76%" }} /></div>
+            <div className="run-progress"><span style={{ transform: `scaleX(${paused ? 0.68 : 0.76})` }} /></div>
             <div className="progress-copy"><span>{paused ? "Paused" : "Step 4 of 5"}</span><b>{paused ? "68" : "76"}%</b></div>
             <ol className="step-list">
               <li className="done"><Check /><span><b>Load context</b><small>1.2s · 12.4k tokens</small></span></li>
@@ -266,6 +266,11 @@ function FlowCanvas() {
   );
 }
 
+/**
+ * Isolated, unrouted reference prototype (no /prototypes route in App.tsx) that
+ * keeps three early design concepts as references; intentionally exempt from
+ * Evidence Ledger tokens, fonts and backgrounds — see styles/prototype-lab.css.
+ */
 export default function PrototypeLabPage() {
   const [concept, setConcept] = useState<Concept>("control");
 

@@ -42,7 +42,8 @@ describe("RunDetailSteps", () => {
     );
 
     expect(screen.getByText("gpt-4o-mini")).toBeInTheDocument();
-    expect(screen.getByText("Tier: 1")).toBeInTheDocument();
+    // The step's tier renders as the shared, self-describing tier mark.
+    expect(screen.getByTitle("Tier 1 — capability tier")).toHaveTextContent("T1");
     expect(screen.getByText('"files"')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Input" }));
