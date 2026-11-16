@@ -12,3 +12,8 @@ name = "Scheduler"
 [[lean_exe]]
 name = "replay"
 root = "Main"
+
+# specdiff's trace oracle: checks engine events against the model one at a time.
+[[lean_exe]]
+name = "specdiff-oracle"
+root = "Oracle"

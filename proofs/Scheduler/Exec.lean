@@ -704,7 +704,64 @@ theorem legal_run_is_accepted (p : Plan) (limit : Int) (actions : List Action)
       c.s = schedulingLoop p limit actions (initial p) :=
   legal_run_is_accepted_from p limit actions (start p) trivial h
 
+/-! ## Configuration -/
+
+/-- What `DAGExecutor.execute` decides before it schedules anything: accept the
+configuration, reject the concurrency limit, or reject the plan with
+`DAG.validate`'s verdict. `execute` checks the limit first. -/
+inductive ConfigVerdict where
+  | ok
+  | badLimit
+  | invalid (v : Verdict)
+  deriving Repr, DecidableEq
+
+/-- `limit` is `none` when the caller's value is not an integer at all. -/
+def configVerdict (limit : Option Int) (deps : List (List Nat)) : ConfigVerdict :=
+  match limit with
+  | none => .badLimit
+  | some l =>
+    if l < 1 then .badLimit else
+    match validate deps with
+    | .ok => .ok
+    | v => .invalid v
+
+/-- An accepted configuration has an integer limit of at least 1 and a plan
+`validate` accepts: the hypotheses of the `validated_` theorems. -/
+theorem configVerdict_ok (limit : Option Int) (deps : List (List Nat))
+    (h : configVerdict limit deps = .ok) :
+    ∃ l, limit = some l ∧ 1 ≤ l ∧ validate deps = .ok := by
+  unfold configVerdict at h
+  cases limit with
+  | none => cases h
+  | some l =>
+    refine ⟨l, rfl, ?_⟩
+    simp only at h
+    split at h
+    · cases h
+    · rename_i hl
+      split at h
+      · rename_i hv
+        exact ⟨by omega, hv⟩
+      · cases h
+
+/-- An accepted run of an accepted configuration never takes the deadlock
+branch: `validated_run_never_deadlocks`, carried over to events. -/
+theorem accepted_config_never_deadlocks (p : Plan) (limit : Int)
+    (hcfg : configVerdict (some limit) (p.map Node.deps) = .ok)
+    (evs : List Event) (c : Cfg) (h : run p limit evs (start p) = .ok c)
+    (hend : c.phase = .ended) : c.s.deadlocked = false := by
+  obtain ⟨l, hl, hone, hv⟩ := configVerdict_ok _ _ hcfg
+  cases hl
+  rw [← accepted_run_is_model_run p limit evs c h hend]
+  exact validated_run_never_deadlocks p hv limit hone c.acts
+    (accepted_run_is_legal p limit evs c h hend)
+
 /-! Axiom pins: the build fails if any of these changes. -/
+
+/-- info: 'ARP.Exec.configVerdict_ok' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms configVerdict_ok
+/-- info: 'ARP.Exec.accepted_config_never_deadlocks' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms accepted_config_never_deadlocks
 
 /-- info: 'ARP.Exec.step_good' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in #print axioms step_good
