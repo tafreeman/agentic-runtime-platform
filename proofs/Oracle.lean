@@ -427,6 +427,11 @@ def onEvent (t : Trace) (ev : String) (j : Json) : Check Trace := do
   | "child_reap" =>
     let child ← decode (j.getObjVal? "child" >>= Json.getNat?)
     pure { t with live := t.live.filter (·.1 != child) }
+  | "leak" =>
+    -- EXTENSION: `_cancel_in_flight` promises no step task outlives the run.
+    ext s!"{(j.getObjValD "count").compress} task(s) still pending after execute() returned"
+  | "fault" =>
+    .error ⟨.protocol, s!"harness fault: {(j.getObjValD "error").compress}"⟩
   | "interrupted" =>
     model s!"a completion's processing was interrupted (step {(j.getObjValD "step").compress}); the model applies a timeout only at the wait"
   | "crash" =>
