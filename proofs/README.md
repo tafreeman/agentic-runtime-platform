@@ -10,6 +10,20 @@ unproved is listed under outstanding obligations. The package uses Lean 4.34.0
 core and its standard library only; there are no Batteries or Mathlib
 dependencies.
 
+## Timeouts, concurrency and reaping
+
+`Scheduler/TimeoutConfig.lean` and `Scheduler/Timeout.lean` extend the model to
+the timeout and concurrency configuration, a step's own deadline, the workflow
+deadline taken one event at a time (the deadline fires, each cancelled task is
+collected or abandoned, results are recorded) and the code-execution child.
+Each definition takes an `Engine`: `.asIs` is the Python at 9beeb37a, `.fixed`
+the change proposed on branch `timeout_fix`. Three of the five guarantees are
+false for `.asIs`; the counterexamples are theorems named `asis_...` and each
+has a failing test in `tests/engine/test_timeout_guarantees.py` on that branch.
+What these files leave out is in `MODEL_GAPS.md`; the statements and their
+status are in `TIMEOUT_PROOFS_REPORT.md` at the repository root. No replay ties
+the new events to the engine.
+
 ## Run
 
 Install the toolchain with [elan](https://github.com/leanprover/elan), which
@@ -17,7 +31,8 @@ reads `lean-toolchain`. From this directory, `lake build` checks every theorem
 and builds `.lake/build/bin/replay` (`replay.exe` on Windows). The build fails
 if any declaration uses `sorry` (`warningAsError` in `lakefile.toml`) or if a
 theorem's axioms differ from its `#guard_msgs` pin at the end of
-`Scheduler.lean`. `lake env leanchecker Scheduler Scheduler.Validate`
+`Scheduler.lean`. `lake env leanchecker Scheduler Scheduler.Validate
+Scheduler.Exec Scheduler.TimeoutConfig Scheduler.Timeout Main`
 re-checks the compiled declarations in the kernel. CI runs both, plus axiom-audit over every
 declaration in the library (`.github/workflows/lean-proofs.yml`).
 
