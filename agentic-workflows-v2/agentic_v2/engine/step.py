@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import math
 import re
 from dataclasses import dataclass, field
 from enum import Enum
@@ -85,11 +86,19 @@ HookFunction = Callable[[ExecutionContext, "StepDefinition"], Awaitable[None]]
 ConditionFunction = Callable[[ExecutionContext], bool]
 
 
-def _validate_timeout_seconds(seconds: float | None) -> None:
-    """Reject non-positive timeouts; ``None`` means no timeout."""
-    if seconds is not None and seconds <= 0:
+def _validate_timeout_seconds(
+    seconds: float | None, name: str = "timeout_seconds"
+) -> None:
+    """Reject a timeout that is not a finite number above zero.
+
+    ``None`` means no timeout. ``seconds <= 0`` alone lets NaN through, because
+    every ordered comparison with NaN is false; an infinite timeout never
+    fires, which is what ``None`` is for.
+    """
+    if seconds is not None and not (seconds > 0 and math.isfinite(seconds)):
         raise ValueError(
-            f"timeout_seconds must be > 0 or None (no timeout), got {seconds!r}"
+            f"{name} must be a finite number > 0 or None (no timeout), "
+            f"got {seconds!r}"
         )
 
 
@@ -354,13 +363,19 @@ class StepExecutor:
         # func is guaranteed non-None by execute()'s None-guard before the retry loop.
         func = step_def.func
         assert func is not None
+        deadline: asyncio.Timeout | None = None
         try:
             timeout = step_def.timeout_seconds
             if timeout is not None:
-                async with asyncio.timeout(timeout):
+                async with asyncio.timeout(timeout) as deadline:
                     output = await self._execute_with_timeout(
                         func, child_ctx, step_def.name
                     )
+                if deadline.expired():
+                    # The function suppressed the cancellation and returned, so
+                    # asyncio.timeout raised nothing. It still ran past its
+                    # deadline: that is a timeout, not a success.
+                    raise TimeoutError
             else:
                 output = await self._execute_with_timeout(
                     func, child_ctx, step_def.name
@@ -371,6 +386,10 @@ class StepExecutor:
         except TimeoutError:
             return await self._handle_timeout(step_def, ctx, result)
         except Exception as e:
+            if deadline is not None and deadline.expired():
+                # Raised while unwinding from the deadline's cancellation.
+                # Timeouts do not retry, whatever the function raised.
+                return await self._handle_timeout(step_def, ctx, result)
             return await self._handle_exception(step_def, ctx, result, e, attempt)
 
     async def _handle_success(

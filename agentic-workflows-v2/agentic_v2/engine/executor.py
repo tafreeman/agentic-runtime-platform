@@ -39,7 +39,7 @@ from .context import ExecutionContext
 from .dag import DAG
 from .dag_executor import DAGExecutor
 from .pipeline import ConditionalBranch, ParallelGroup, Pipeline, PipelineExecutor
-from .step import StepDefinition, StepExecutor
+from .step import StepDefinition, StepExecutor, _validate_timeout_seconds
 
 
 class ExecutorEvent(str, Enum):
@@ -101,11 +101,14 @@ class ExecutionConfig:
     def __post_init__(self) -> None:
         # Fail at construction: the default is only applied to steps after
         # workflow-start bookkeeping, where it would surface as a failed run.
-        if self.step_default_timeout_seconds <= 0:
-            raise ValueError(
-                "step_default_timeout_seconds must be > 0, "
-                f"got {self.step_default_timeout_seconds!r}"
-            )
+        if self.step_default_timeout_seconds is None:
+            raise ValueError("step_default_timeout_seconds must be > 0, got None")
+        _validate_timeout_seconds(
+            self.step_default_timeout_seconds, "step_default_timeout_seconds"
+        )
+        # None means unlimited. Zero used to mean that too, through a
+        # truthiness test in execute().
+        _validate_timeout_seconds(self.global_timeout_seconds, "global_timeout_seconds")
 
 
 @dataclass
@@ -262,7 +265,7 @@ class WorkflowExecutor:
 
         try:
             # Execute with global timeout
-            if self.config.global_timeout_seconds:
+            if self.config.global_timeout_seconds is not None:
                 result = await asyncio.wait_for(
                     self._execute_workflow(workflow, ctx, result),
                     timeout=self.config.global_timeout_seconds,
