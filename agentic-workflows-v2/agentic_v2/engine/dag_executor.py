@@ -27,7 +27,7 @@ from ..contracts import StepResult, StepStatus, WorkflowResult
 from ..integrations.otel import get_tracer as _get_tracer
 from .context import ExecutionContext, get_context
 from .dag import DAG
-from .step import StepExecutor
+from .step import StepExecutor, _validate_timeout_seconds
 from .step_state import StepState, StepStateManager
 
 logger = logging.getLogger(__name__)
@@ -36,6 +36,11 @@ logger = logging.getLogger(__name__)
 _TERMINAL_STATUSES = frozenset(
     {StepStatus.SUCCESS, StepStatus.FAILED, StepStatus.SKIPPED}
 )
+
+# How long timeout and cancellation cleanup waits for cancelled step tasks.
+# A step that suppresses its cancellation would otherwise hold the cleanup,
+# and with it the workflow timeout, for ever.
+_CANCEL_GRACE_SECONDS = 5.0
 
 # OpenTelemetry status APIs — optional (bundled in the `tracing` extra).
 # Guarded so the engine imports cleanly without OTel installed.
@@ -444,20 +449,42 @@ async def _scheduling_loop(state: _RunState) -> None:
             await _process_done_task(state, task)
 
 
-async def _cancel_in_flight(state: _RunState) -> None:
-    """Cancel every in-flight step task and wait for each one to finish.
+async def _cancel_in_flight(state: _RunState) -> list[str]:
+    """Cancel every in-flight step task and wait, within a bound, for each.
 
-    Awaiting them prevents "Task was destroyed but it is pending"
-    warnings and guarantees no step keeps running after the scheduler
-    has stopped. A step that suppresses its cancellation delays this
-    indefinitely.
+    Awaiting them prevents "Task was destroyed but it is pending" warnings
+    and means no cooperative step keeps running after the scheduler has
+    stopped. The wait is bounded by ``_CANCEL_GRACE_SECONDS``: a step that
+    suppresses its cancellation is abandoned, not awaited for ever. Python
+    cannot stop such a task, so it may go on running; nothing it returns is
+    read, and no step is started after this point.
+
+    Returns:
+        Names of the steps whose tasks were abandoned, sorted.
     """
     if not state.tasks:
-        return
+        return []
     for task in state.tasks:
         task.cancel()
-    await asyncio.gather(*state.tasks, return_exceptions=True)
+    # gather() keeps a reference to every task and retrieves its exception,
+    # including for tasks that finish after the grace period. shield() keeps
+    # the cancellation wait_for issues on expiry away from it.
+    cleanup = asyncio.gather(*state.tasks, return_exceptions=True)
+    try:
+        await asyncio.wait_for(asyncio.shield(cleanup), timeout=_CANCEL_GRACE_SECONDS)
+    except TimeoutError:
+        pass
+    abandoned = sorted(task.get_name() for task in state.tasks if not task.done())
+    if abandoned:
+        logger.error(
+            "DAG cleanup abandoned step task(s) that ignored cancellation for "
+            "%ss: workflow=%r steps=%s",
+            _CANCEL_GRACE_SECONDS,
+            state.dag.name,
+            abandoned,
+        )
     state.tasks.clear()
+    return abandoned
 
 
 async def _handle_timeout(state: _RunState) -> None:
@@ -482,13 +509,15 @@ async def _handle_timeout(state: _RunState) -> None:
     )
 
     # 2. Cancel every in-flight asyncio task and await its cleanup.
-    await _cancel_in_flight(state)
+    abandoned = await _cancel_in_flight(state)
 
     # 3. Transition every step still in RUNNING state to FAILED and
     #    record a StepResult for it.
     now = datetime.now(UTC)
+    timed_out: list[str] = []
     for step_name in state.running:
         if step_name not in state.completed:
+            timed_out.append(step_name)
             step_result = StepResult(step_name=step_name, status=StepStatus.FAILED)
             step_result.error = timeout_msg
             step_result.error_type = "TimeoutError"
@@ -508,6 +537,17 @@ async def _handle_timeout(state: _RunState) -> None:
     state.result.metadata["timeout_exceeded"] = True
     state.result.metadata["timeout_seconds"] = state.timeout
     state.result.metadata["error"] = timeout_msg
+    if abandoned:
+        state.result.metadata["abandoned_steps"] = abandoned
+
+    # Awaits come last, as in _process_done_task. A step that swallowed its
+    # cancellation and returned was marked complete in the context by its
+    # executor; the context must agree with the FAILED result recorded above.
+    for step_name in timed_out:
+        if step_name in state.ctx.completed_steps or not state.ctx.is_step_failed(
+            step_name
+        ):
+            await _mark_context_failed(state.ctx, step_name, timeout_msg)
 
 
 class DAGExecutor:
@@ -602,6 +642,9 @@ class DAGExecutor:
         effective_timeout: float | None = (
             timeout if timeout is not None else kwargs.get("timeout")
         )
+        # Before any step is scheduled: zero, a negative, NaN or infinity used
+        # to launch the run and fail it (or never time it out) afterwards.
+        _validate_timeout_seconds(effective_timeout, "timeout")
         if ctx is None:
             ctx = get_context()
 
