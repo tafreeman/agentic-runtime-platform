@@ -448,9 +448,9 @@ def _expected_weighted_score(
     eval_gate: ModuleType, workflow_result: WorkflowResult, case: dict[str, Any]
 ) -> float:
     """Compute the ground-truth weighted_score for one mocked run the same way
-    score_case_live does internally (derive_criteria + CriterionScorer), so tests assert against
-    the module's own real scoring logic rather than a hand-computed constant that could
-    silently drift from the rubric."""
+    score_case_live does internally (derive_criteria + CriterionScorer), so tests assert
+    against the module's own real scoring logic rather than a hand-computed constant
+    that could silently drift from the rubric."""
     golden = workflow_result.model_dump(mode="json")
     criteria = eval_gate.derive_criteria(golden, case)
     scorer = eval_gate.CriterionScorer(
@@ -605,9 +605,9 @@ class TestScoreCaseLiveMedian:
     async def test_placeholder_output_fails_the_case(
         self, eval_gate: ModuleType
     ) -> None:
-        """A step whose model call failed still reports SUCCESS with the
-        agent_resolver placeholder payload; scoring step structure alone would
-        pass it, so the live gate must fail the case instead."""
+        """A step whose model call failed still reports SUCCESS with the agent_resolver
+        placeholder payload; scoring step structure alone would pass it, so the live
+        gate must fail the case instead."""
         result_obj = _make_workflow_result(
             "test_deterministic",
             step_statuses=[StepStatus.SUCCESS, StepStatus.SUCCESS],

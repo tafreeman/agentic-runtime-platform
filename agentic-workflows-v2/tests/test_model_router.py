@@ -487,8 +487,8 @@ class TestSmartModelRouter:
         assert second_cooldown > first_cooldown
 
     def test_env_tier_pin_stays_selected_after_a_slow_success(self, monkeypatch):
-        """Health ranking scores an untried model above a proven but slow one;
-        an eligible AGENTIC_MODEL_TIER_N pin must still be chosen every time."""
+        """Health ranking scores an untried model above a proven but slow one; an
+        eligible AGENTIC_MODEL_TIER_N pin must still be chosen every time."""
         monkeypatch.setenv("AGENTIC_MODEL_TIER_2", "ollama:beam:cloud")
         router = SmartModelRouter()
 

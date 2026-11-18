@@ -156,9 +156,10 @@ def score_criteria(
 ) -> float:
     """Score an EvalKit rubric using ARP's fixed-denominator rule.
 
-    Missing criteria keep their weight in the denominator. EvalKit's composite
-    grader instead excludes unavailable criteria; the policies are distinct.
-    The optional EvalKit dependency and its rubric validation remain required.
+    Missing criteria keep their weight in the denominator. EvalKit's
+    composite grader instead excludes unavailable criteria; the policies
+    are distinct. The optional EvalKit dependency and its rubric
+    validation remain required.
     """
     _require_evalkit()
 
