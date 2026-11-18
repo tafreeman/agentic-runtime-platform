@@ -197,8 +197,8 @@ def test_to_dict_is_json_shaped() -> None:
 def test_only_the_local_daemons_tags_are_marked_served_locally(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Local ``/api/tags`` rows (proxied cloud ones too) are local; ollama.com's
-    hosted catalog is not -- and the flag stays out of the API payload."""
+    """Local ``/api/tags`` rows (proxied cloud ones too) are local; ollama.com's hosted
+    catalog is not -- and the flag stays out of the API payload."""
     monkeypatch.setenv("OLLAMA_API_KEY", "secret-key")
     routes = {
         _LOCAL_PS: {"models": []},

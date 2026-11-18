@@ -97,7 +97,10 @@ def load_cases(path: Path) -> list[dict[str, Any]]:
 
 
 def band_of(meta: dict[str, Any], band_by: str) -> Any:
-    """Band key for a case. Numeric scores band directly; labels pass through."""
+    """Band key for a case.
+
+    Numeric scores band directly; labels pass through.
+    """
     value = (meta or {}).get(band_by)
     return "unknown" if value is None else value
 
