@@ -8,7 +8,15 @@ warningAsError = true
 
 [[lean_lib]]
 name = "Scheduler"
+# Build every module under Scheduler/, not only those Scheduler.lean imports:
+# Exec, TimeoutConfig and Timeout are reached from no default target otherwise.
+globs = ["Scheduler", "Scheduler.*"]
 
 [[lean_exe]]
 name = "replay"
 root = "Main"
+
+# specdiff's trace oracle: checks engine events against the model one at a time.
+[[lean_exe]]
+name = "specdiff-oracle"
+root = "Oracle"
