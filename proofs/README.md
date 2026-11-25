@@ -12,7 +12,8 @@ dependencies.
 
 ## Timeouts, concurrency and reaping
 
-`Scheduler/TimeoutConfig.lean` and `Scheduler/Timeout.lean` extend the model to
+`Scheduler/TimeoutConfig.lean` and `Scheduler/Timeout.lean` (with its parts in
+`Scheduler/Timeout/`: `Model`, `Lemmas`, `Loop`, `Run`, `Guarantees`) extend the model to
 the timeout and concurrency configuration, a step's own deadline, the workflow
 deadline taken one event at a time (the deadline fires, each cancelled task is
 collected or abandoned, results are recorded) and the code-execution child.
@@ -32,7 +33,9 @@ and builds `.lake/build/bin/replay` (`replay.exe` on Windows). The build fails
 if any declaration uses `sorry` (`warningAsError` in `lakefile.toml`) or if a
 theorem's axioms differ from its `#guard_msgs` pin at the end of
 `Scheduler.lean`. `lake env leanchecker Scheduler Scheduler.Validate
-Scheduler.Exec Scheduler.TimeoutConfig Scheduler.Timeout Main`
+Scheduler.Exec Scheduler.TimeoutConfig Scheduler.Timeout.Model
+Scheduler.Timeout.Lemmas Scheduler.Timeout.Loop Scheduler.Timeout.Run
+Scheduler.Timeout.Guarantees Scheduler.Timeout Main`
 re-checks the compiled declarations in the kernel. CI runs both, plus axiom-audit over every
 declaration in the library (`.github/workflows/lean-proofs.yml`).
 

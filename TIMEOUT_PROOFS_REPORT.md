@@ -19,8 +19,7 @@ the citations in the source, the 16 tests on `timeout_fix`, and nothing else:
 there is no replay of the new events against the engine (see Limits).
 
 `lake build` is green with no `sorry`, `admit`, `native_decide` or new axiom.
-`lake env leanchecker Scheduler Scheduler.Validate Scheduler.Exec
-Scheduler.TimeoutConfig Scheduler.Timeout Main` passes. A local audit over all
+`lake env leanchecker` over every `Scheduler` module and `Main` passes. A local audit over all
 1,995 declarations in the `Scheduler` modules finds none using an axiom other
 than `propext` and `Quot.sound`. All 46 new public theorems carry a
 `#guard_msgs in #print axioms` pin.
@@ -71,7 +70,9 @@ definitions or theorems changed.
 - `proofs/Scheduler/TimeoutConfig.lean` (632 lines): the timeout checks added
   to `configVerdict` (`decideConfig`), one attempt of a step whose deadline
   expired (`expiredAttempt`), and the code-execution child (`toolStep`).
-- `proofs/Scheduler/Timeout.lean` (1,417 lines): `Exec.step`'s single
+- `proofs/Scheduler/Timeout.lean` plus its parts in `proofs/Scheduler/Timeout/`
+  (`Model`, `Lemmas`, `Loop`, `Run`, `Guarantees`; 1,417 lines before the
+  split): `Exec.step`'s single
   `.timeout` event refined into `fire`, `reaped i`, `abandon`, `settle`, with
   an environment `Env` saying which step tasks hang and which end when
   cancelled. Other events are `Exec.step` unchanged
@@ -328,7 +329,6 @@ selection 4,913 passed, 118 skipped, 2 xfailed, 0 failed.
 - `fixed_run_can_continue` discharges the open-batch case with `fire`, which
   the model allows mid-batch; it does not separately show the loop's own next
   event is accepted there.
-- `Timeout.lean` is 1,417 lines, above the repo's file-size guideline.
 - Everything in `proofs/MODEL_GAPS.md`.
 
 ## Other findings
