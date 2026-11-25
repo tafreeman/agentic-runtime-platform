@@ -133,7 +133,8 @@ DEFAULT_CHAINS: dict[ModelTier, FallbackChain] = _build_default_chains()
 def _env_tier_pin(tier: ModelTier) -> str | None:
     """Return ``AGENTIC_MODEL_TIER_{N}`` for ``tier`` when set, else ``None``.
 
-    Read per call, not at import, so a test or a CI step can set it late.
+    Read per call, not at import, so a test or a CI step can set it
+    late.
     """
     if tier == ModelTier.TIER_0:
         return None
