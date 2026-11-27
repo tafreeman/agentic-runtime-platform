@@ -235,9 +235,11 @@ $env:AGENTIC_SHELL_ALLOWED_COMMANDS = "git,python"
 
 ### Code execution blocks an import
 
-The local code sandbox intentionally blocks imports and traversal techniques
-that could escape its boundary. Use the dedicated file or shell tool when the
-workflow legitimately needs those capabilities.
+The local code runner uses a best-effort denylist, not a security sandbox.
+Code execution requires approval, and the child process retains the file and
+network permissions of its operating-system user. Run only trusted code in a
+local environment; do not use approval or the denylist as a substitute for
+isolation. See [Known limitations](../KNOWN_LIMITATIONS.md).
 
 ## Dashboard
 
