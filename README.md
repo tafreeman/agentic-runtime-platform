@@ -97,7 +97,7 @@ covers today and what is still missing (a UI-driven pause/resume flow).
 
 Clone and install the workspace on Windows:
 
-```bash
+```powershell
 git clone https://github.com/tafreeman/agentic-runtime-platform.git
 cd agentic-runtime-platform
 just setup
@@ -251,6 +251,11 @@ The runtime supports OpenAI, Anthropic, Gemini, Azure OpenAI, Azure AI Foundry,
 NVIDIA NIM, OpenRouter, DigitalOcean Serverless Inference, Mistral La
 Plateforme, Ollama, and compatible local endpoints. Provider
 packages and credentials depend on the selected execution path.
+
+For Ollama, the runtime tries the local daemon first. If the requested model is
+not served locally and `OLLAMA_API_KEY` is set, it can send requests to Ollama
+Cloud. Leave that key unset and use a model installed on the local daemon when
+you want Ollama requests to stay local.
 
 Copy the environment template before using a real provider:
 
