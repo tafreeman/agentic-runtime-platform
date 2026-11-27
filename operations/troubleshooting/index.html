@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.0">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
@@ -3982,9 +3982,11 @@ basenames. Keep it as small as possible:</p>
 <div class="language-powershell highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="nv">$env:AGENTIC_SHELL_ALLOWED_COMMANDS</span> <span class="p">=</span> <span class="s2">"git,python"</span>
 </span></code></pre></div>
 <h3 id="code-execution-blocks-an-import">Code execution blocks an import<a class="headerlink" href="#code-execution-blocks-an-import" title="Permanent link">&para;</a></h3>
-<p>The local code sandbox intentionally blocks imports and traversal techniques
-that could escape its boundary. Use the dedicated file or shell tool when the
-workflow legitimately needs those capabilities.</p>
+<p>The local code runner uses a best-effort denylist, not a security sandbox.
+Code execution requires approval, and the child process retains the file and
+network permissions of its operating-system user. Run only trusted code in a
+local environment; do not use approval or the denylist as a substitute for
+isolation. See <a href="../../KNOWN_LIMITATIONS/">Known limitations</a>.</p>
 <h2 id="dashboard">Dashboard<a class="headerlink" href="#dashboard" title="Permanent link">&para;</a></h2>
 <h3 id="the-page-loads-but-api-calls-fail">The page loads but API calls fail<a class="headerlink" href="#the-page-loads-but-api-calls-fail" title="Permanent link">&para;</a></h3>
 <p>Confirm that FastAPI is on port <code>8010</code>. If it is elsewhere, set
@@ -4072,7 +4074,7 @@ Do not hide a content error by disabling strict mode.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 31, 2026 12:55:56 UTC">August 31, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="November 27, 2026 03:48:07 UTC">November 27, 2026</span>
   </span>
 
     
@@ -4188,7 +4190,7 @@ Do not hide a content error by disabling strict mode.</p>
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.instant", "navigation.tracking", "navigation.indexes", "navigation.footer", "toc.follow", "search.highlight", "search.suggest", "search.share", "content.code.copy", "content.code.annotate", "content.tooltips", "content.action.edit", "content.action.view"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": {"Architecture": "architecture", "Evaluation": "evaluation", "Tooling": "tooling", "Workflow": "workflow"}, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.c21346df.min.js"></script>
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
       
     
   </body>
