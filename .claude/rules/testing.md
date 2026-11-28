@@ -14,12 +14,8 @@ rather than inventing new ones.
 
 ## Structure and naming
 
-- Tests live under the owning package's `tests/` directory
-  (`agentic-workflows-v2/tests/`, `agentic-v2-eval/tests/`); cross-package
-  end-to-end tests live in the repo-root `tests/e2e/`.
 - Mirror the source layout: a test for `agentic_v2/engine/context.py` belongs in
   `tests/engine/` or a top-level `tests/test_context_*.py`.
-- Files are `test_*.py`; functions are `test_*`.
 - `asyncio_mode = "auto"` is configured, so `async def test_*` functions run
   without an explicit `@pytest.mark.asyncio` decorator.
 
@@ -60,9 +56,3 @@ the model client) instead of calling a real provider.
 - Pydantic wire-format schemas under `tests/schemas/` are generated artifacts —
   a contract change must regenerate and commit them (the `wire-format-drift`
   CI job enforces this). Do not edit them by hand.
-
-## Coverage expectation
-
-New backend code should clear the repo's enforced coverage gate on changed
-lines — see `.claude/rules/ci.md` for the exact threshold and the rounding
-gotcha that makes 79.93% fail.

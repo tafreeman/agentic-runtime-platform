@@ -1,24 +1,8 @@
 # CI gates and local validation
 
 These are the gates a change must clear before it can merge. They are enforced
-in `.github/workflows/ci.yml`; run the local equivalents before pushing.
-
-## Test commands
-
-Run from the repo root unless a per-package entrypoint is noted.
-
-| Scope | Command |
-|-------|---------|
-| Everything (backend + eval + UI) | `just test` |
-| Runtime unit suite | `cd agentic-workflows-v2 && python -m pytest tests/ -q` |
-| Runtime + coverage | `cd agentic-workflows-v2 && python -m pytest tests/ -q --cov=agentic_v2 --cov-report=term-missing` |
-| Eval package | `cd agentic-v2-eval && python -m pytest tests/ -q` |
-| UI unit | `cd agentic-workflows-v2/ui && npm test` |
-| Docs link/fence check | `just docs` |
-
-CI runs the unit suite with `-m "not integration and not slow"` and
-`--ignore=tests/e2e` (marker conventions and the `asyncio_mode` setting are in
-the imported testing rules).
+in `.github/workflows/ci.yml`; the exact commands CI runs are in
+`portfolio-context.md`.
 
 ## Running without provider credentials
 
@@ -27,36 +11,22 @@ Set `AGENTIC_NO_LLM=1` to force every tier-1/tier-2 agent onto the deterministic
 `no-llm-smoke` CI job uses it); a contributor with no keys should be able to run
 the whole unit suite green this way.
 
-## Coverage threshold
+## Coverage
 
-The gate is **80%** on `agentic-workflows-v2/agentic_v2` (`[tool.coverage.report]
-fail_under = 80`, `precision = 2` so 79.93% fails rather than rounding up). New
-backend code targets 80% coverage on changed lines. CI collects coverage
-without `--cov-fail-under` and enforces it in a dedicated
-`coverage report --fail-under=80` step (pytest-cov 7.x does not propagate the
-failure exit code reliably).
+- Runtime: `fail_under = 80` with `precision = 2`, so 79.93% fails rather than
+  rounding up. CI collects coverage without `--cov-fail-under` and enforces it in
+  a dedicated `coverage report --fail-under=80` step (pytest-cov 7.x does not
+  propagate the failure exit code reliably).
+- UI: floors live in `ui/vitest.config.ts`. The branches floor is a deliberate
+  ratchet — it may only move up, never down.
+- Modules listed under `[tool.coverage.run] omit` need live providers or an
+  optional `executionkit` install — do not add new code to an omitted module
+  expecting it to be measured.
 
-UI: vitest coverage floors (branches ≥56, ratcheting toward 60; statements/
-functions/lines ≥60) defined in `ui/vitest.config.ts` and enforced by the
-`frontend-test` CI job (`npm run test:coverage`, which runs `vitest run
---coverage`). The branches floor is a deliberate ratchet — it may only move up
-as coverage improves, never down; see the comment above the thresholds in
-`vitest.config.ts` for the full policy.
+## Lint
 
-Some modules are listed under `[tool.coverage.run] omit` because they require
-live providers or an optional `executionkit` install — do not add new code to an
-omitted module expecting it to be measured.
-
-## Lint and types
-
-- **Ruff** (`E,F,W,I,N,UP,S,B,A,C4,SIM,TCH,RUF`, line-length 88) must be clean on
-  changed files: `cd agentic-workflows-v2 && python -m ruff check agentic_v2/ tests/`.
-  CI also fails if `ruff check --fix` would still change anything, so apply
-  autofixes and commit them.
-- **mypy** runs strict on `agentic_v2/engine` + `agentic_v2/contracts`
-  (`--disallow-untyped-defs --warn-return-any`).
-- `pre-commit run --all-files` covers black, isort (profile=black), ruff,
-  docformatter, detect-secrets, and the scoped mypy/pydocstyle hooks.
+CI fails if `ruff check --fix` would still change anything, so apply autofixes
+and commit them.
 
 ## Wire-format drift
 
@@ -70,15 +40,11 @@ mismatch. See ADR-014.
 ## Review criteria
 
 This repo is built solo with AI-assisted tooling, so correctness is gated by
-**automated evidence**, not peer sign-off. Treat AI-generated code as untrusted
-input: run the full lint + type-check + test set before accepting it. Before
-opening a PR, confirm:
+**automated evidence**, not peer sign-off. Before opening a PR, confirm:
 
-- Tests added or updated; coverage holds on changed lines.
 - `just test && just docs && pre-commit run --all-files` are green locally.
 - Conventional-commit subject (`type(scope): subject`); scope matches the
   package/subsystem (`engine`, `contracts`, `server`, `mcp/results`, `eval`, …).
 - An ADR is added when the change warrants one — see CONTRIBUTING.md's "Write
   an ADR" section for the criteria, and `docs/adr/ADR-INDEX.md` for the next
   free number.
-- No secrets committed — configuration flows through env vars and `.env.example`.

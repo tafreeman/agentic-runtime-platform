@@ -1,12 +1,5 @@
 # Portfolio context and CI gotchas
 
-> Moved here from `C:/Users/tandf/source/CLAUDE.md` §2 on 2026-07-28 so it loads with this
-> repo rather than in every workspace session. Cross-repo coupling stays in the
-> workspace-root file. Follows this repo's own convention: detail lives in `.claude/rules/`,
-> `CLAUDE.md` stays thin.
-
-Tier-routed multi-agent LLM runtime: YAML workflows compile to a DAG that runs on either a native Kahn's-algorithm asyncio executor or a LangGraph adapter, behind a circuit-breaking multi-provider router, with a FastAPI + React 19 streaming dashboard and a fail-closed governance layer (HITL tool approval, SSRF egress guard).
-
 ## Command catalogue
 
 ```bash
@@ -28,15 +21,17 @@ python -m mypy agentic_v2/engine agentic_v2/contracts --config-file pyproject.to
   --follow-imports=skip --disallow-untyped-defs --warn-return-any --no-incremental
 python scripts/check_suppression_ratchet.py
 python -m scripts.generate_ts_types          # then, from ui/: npm run generate:types
-python -m pytest tests/engine/test_step_ek_delegation.py -q --timeout=120   # single file (CI's own form)
-python -m pytest tests/ -k "server or api or evaluation"                    # name filter
 ```
 
-Single cross-package E2E, from the repo root: `python -m pytest tests/e2e/test_cross_package.py -q -m e2e`. `pyproject.toml` sets `timeout = 30`, so a long single test needs an explicit `--timeout=`; `asyncio_mode = "auto"` in all three pyprojects means `async def test_*` needs no decorator.
+Single cross-package E2E, from the repo root: `python -m pytest tests/e2e/test_cross_package.py -q -m e2e`. `pyproject.toml` sets `timeout = 30`, so a long single test needs an explicit `--timeout=`.
 
-## Architecture
+## Architecture invariants
 
-Engines swap behind `typing.Protocol` seams (`ExecutionEngine`, `SupportsStreaming`, `AgentProtocol`…) via a thread-safe `AdapterRegistry`; `"langchain"` is the default for named YAML workflows, `"native"` for runtime-generated DAGs. Steps name a **capability tier**, never a model — `models/smart_router.py` resolves it with three-state circuit breakers (HALF_OPEN single-probe, `CircuitResolvedError`), bulkheads, and HTTP-status-based error classification, with breaker state shared via filelock/Redis. Python↔TypeScript is a *compiled* contract: 8 Pydantic models → 8 JSON Schemas → 8 `.generated.ts` mirrors. Governance interposes the approval gate **before** validation at both tool dispatch points; with no `ApprovalProvider` registered the call is DENIED. Only the root `tools/` package is shared — zero cross-imports between the two workspace packages.
+- Steps name a **capability tier**, never a model — `models/smart_router.py` resolves it.
+- `"langchain"` is the default engine for named YAML workflows, `"native"` for runtime-generated DAGs.
+- Python↔TypeScript is a *compiled* contract: Pydantic models → JSON Schemas → `.generated.ts` mirrors.
+- Governance interposes the approval gate **before** validation at both tool dispatch points; with no `ApprovalProvider` registered the call is DENIED.
+- Only the root `tools/` package is shared — zero cross-imports between the two workspace packages.
 
 ## Gotchas beyond the other rules files
 
@@ -48,4 +43,4 @@ Engines swap behind `typing.Protocol` seams (`ExecutionEngine`, `SupportsStreami
 - `docs/adr/ADR-INDEX.md` is authoritative for the next free ADR number and for which numbers are intentionally unused.
 - Install paths diverge: `just setup` uses pip+constraints, but `windows-workflows-ci.yml` uses `uv sync --frozen` (no `ek` extra) with `PYTHONIOENCODING=utf-8` / `PYTHONUTF8=1` — replicate those when debugging Rich output on a cp1252 console.
 - `agentic-v2-eval` is held to a stricter bar than the runtime: `strict = true` mypy, `ruff format --check` enforced, its own 80% gate, and a Windows + py3.12 matrix.
-- `ci.yml` defines **17** blocking jobs; `eval-package-ci.yml`'s `eval-golden-gate` is a required check on `main` (hence no paths filter). Nightly 50× streaming + flake/SLO gates block a *release cut*, not a PR. `manifest-temperature-check.yml` is dead — both its script (`scripts/validate_manifest.py`) and its path-filter file (`run-manifest.yaml`) are absent.
+- `eval-package-ci.yml`'s `eval-golden-gate` is a required check on `main` (hence no paths filter). Nightly 50× streaming + flake/SLO gates block a *release cut*, not a PR.
