@@ -139,7 +139,8 @@ def _check_always_blocked(hostname: str) -> str | None:
 def _prefer_ipv4(ips: list[str]) -> str:
     """Pick the first IPv4 address, else the first address (non-empty *ips*).
 
-    Preferring IPv4 minimises breakage on hosts without a routable IPv6 path.
+    Preferring IPv4 minimises breakage on hosts without a routable IPv6
+    path.
     """
     return min(ips, key=lambda ip: ":" in ip)
 
