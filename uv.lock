@@ -241,7 +241,7 @@ requires-dist = [
     { name = "aiosqlite", marker = "extra == 'sqlite'", specifier = ">=0.19,<1" },
     { name = "anthropic", marker = "extra == 'claude'", specifier = ">=0.40,<3" },
     { name = "black", marker = "extra == 'dev'", specifier = ">=23.0" },
-    { name = "cachetools", specifier = ">=5.0,<8" },
+    { name = "cachetools", specifier = ">=5.0,<9" },
     { name = "claude-agent-sdk", marker = "extra == 'claude'", specifier = ">=0.2.121,<1" },
     { name = "executionkit", marker = "extra == 'ek'", specifier = ">=0.4.0,<0.5.0" },
     { name = "fakeredis", extras = ["lua"], marker = "extra == 'dev'", specifier = ">=2.21,<3" },
