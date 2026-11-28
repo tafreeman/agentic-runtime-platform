@@ -526,8 +526,8 @@ class RedisCircuitBreakerStore:
     async def close(self) -> None:
         """Close the Redis connection pool.
 
-        Teardown errors are logged, not raised, so one failing step cannot
-        abort shutdown or leave the remaining resources open.
+        Teardown errors are logged, not raised, so one failing step
+        cannot abort shutdown or leave the remaining resources open.
         """
         client, pool = self._client, self._pool
         self._client = None

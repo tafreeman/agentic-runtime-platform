@@ -290,9 +290,9 @@ class TestRunWithFallback:
     async def test_skipped_pin_moves_on_with_a_real_router(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """With a real SmartModelRouter and a tier pin, a skipped attempt on
-        the pin (circuit resolved by another probe) must reach the next model
-        rather than reselecting the pin and stopping."""
+        """With a real SmartModelRouter and a tier pin, a skipped attempt on the pin
+        (circuit resolved by another probe) must reach the next model rather than
+        reselecting the pin and stopping."""
         from agentic_v2.models.model_stats import CircuitState
         from agentic_v2.models.smart_router import CircuitResolvedError
 

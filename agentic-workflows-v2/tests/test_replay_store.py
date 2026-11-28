@@ -290,9 +290,10 @@ class TestSqliteReplayStore:
     async def test_concurrent_appends_all_stored_in_order(self, tmp_path) -> None:
         """Gathered appends to one run are all stored with contiguous seq.
 
-        Regression for FIX #10: append() read MAX(seq)+1 and INSERTed without
-        serialisation, so concurrent appends collided on the primary key and
-        the losing events were dropped with only a log warning.
+        Regression for FIX #10: append() read MAX(seq)+1 and INSERTed
+        without serialisation, so concurrent appends collided on the
+        primary key and the losing events were dropped with only a log
+        warning.
         """
         count = 50
         store = await SqliteReplayStore.connect(

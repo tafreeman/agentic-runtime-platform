@@ -244,8 +244,8 @@ async def test_complete_prompt_path_falls_back_to_thinking() -> None:
 
 
 class _RecordingClientFactory:
-    """Stands in for ``ollama.AsyncClient``: records constructor kwargs and
-    hands back a stub, so no request leaves the process."""
+    """Stands in for ``ollama.AsyncClient``: records constructor kwargs and hands back a
+    stub, so no request leaves the process."""
 
     def __init__(self, response: Any) -> None:
         self.response = response
@@ -363,8 +363,8 @@ async def test_close_releases_local_and_cloud_clients() -> None:
 async def test_probe_asks_the_backends_own_daemon(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """A backend bound to a non-default daemon must ask THAT daemon whether it
-    serves the model, not the process-level OLLAMA_BASE_URL."""
+    """A backend bound to a non-default daemon must ask THAT daemon whether it serves
+    the model, not the process-level OLLAMA_BASE_URL."""
     monkeypatch.setenv("OLLAMA_API_KEY", "test-key")
     monkeypatch.setenv("OLLAMA_BASE_URL", "http://elsewhere:11434")
     seen: list[str | None] = []

@@ -105,8 +105,9 @@ def patched_files(patch: str) -> list[str]:
 def locate_source(image: str, path: str) -> tuple[str, str] | None:
     """Read one file out of the image, probing for the checkout root.
 
-    Returns (workdir, contents), or None if the file was not found under any
-    candidate root. Never guesses silently — the caller reports what was tried.
+    Returns (workdir, contents), or None if the file was not found under
+    any candidate root. Never guesses silently — the caller reports what
+    was tried.
     """
     for root in WORKDIR_CANDIDATES:
         code, out = docker(["run", "--rm", image, "cat", f"{root}/{path}"], timeout=600)
@@ -151,7 +152,10 @@ def created_date(row: dict[str, Any]) -> str:
 
 
 def difficulty_of(meta: dict[str, Any]) -> tuple[int | None, str]:
-    """Dataset-supplied difficulty. Absent on the leaderboard subset."""
+    """Dataset-supplied difficulty.
+
+    Absent on the leaderboard subset.
+    """
     score = ((meta or {}).get("llm_score") or {}).get("difficulty_score")
     if score is None:
         return None, "unknown"
@@ -177,7 +181,10 @@ def source_file_count(patch: str) -> int:
 
 
 def load_rows(source: str, split: str, config: str | None) -> Iterator[dict[str, Any]]:
-    """Stream the dataset. Streaming is mandatory for the full corpus."""
+    """Stream the dataset.
+
+    Streaming is mandatory for the full corpus.
+    """
     from datasets import load_dataset
 
     streaming = source in STREAM_ONLY_SOURCES
@@ -225,8 +232,8 @@ def passes_filters(row: dict[str, Any], args: argparse.Namespace) -> str | None:
 def fetch_source(row: dict[str, Any]) -> tuple[str, str, str, str] | None:
     """Pull the instance image and read the target file out of it.
 
-    Returns (target, image, workdir, source), or None after printing why the
-    instance was skipped.
+    Returns (target, image, workdir, source), or None after printing why
+    the instance was skipped.
     """
     instance_id = row["instance_id"]
     targets = patched_files(row.get("patch") or "")

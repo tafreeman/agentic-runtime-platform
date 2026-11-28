@@ -207,8 +207,8 @@ def test_null_case_threshold_uses_global(gate, case):
 
 
 def test_committed_golden_replayed_as_live_is_rejected(gate, case):
-    """The committed code_review golden is placeholder output; replayed through
-    the live path it must fail, not score 1.0."""
+    """The committed code_review golden is placeholder output; replayed through the live
+    path it must fail, not score 1.0."""
     golden = gate._load_json(gate._DEFAULT_CASES.parent / case["golden_output_path"])
     mocked = SimpleNamespace(model_dump=lambda **kwargs: golden)
     with patch("agentic_v2.workflows.run_workflow", AsyncMock(return_value=mocked)):

@@ -167,8 +167,9 @@ class ConnectionManager:
     def bind_run_tenant(self, run_id: str, tenant_id: str) -> bool:
         """Record which tenant owns *run_id* (first binding wins).
 
-        Returns False when another tenant already owns the id, so callers can
-        refuse the submit instead of sharing buffers and listeners with it.
+        Returns False when another tenant already owns the id, so
+        callers can refuse the submit instead of sharing buffers and
+        listeners with it.
         """
         return self._run_tenants.setdefault(run_id, tenant_id) == tenant_id
 
@@ -544,9 +545,7 @@ async def websocket_endpoint(websocket: WebSocket, run_id: str):
 
     tenant = get_tenant_context(websocket)  # type: ignore[arg-type]
     # The disk fallback scans run records synchronously; keep it off the loop.
-    if not await asyncio.to_thread(
-        manager.is_run_accessible, run_id, tenant.tenant_id
-    ):
+    if not await asyncio.to_thread(manager.is_run_accessible, run_id, tenant.tenant_id):
         # Same outcome as a missing run: never reveal another tenant's run.
         await websocket.close(code=1008, reason="Run not found")
         logger.warning(
